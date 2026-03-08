@@ -12,6 +12,7 @@ import ProjectDetailPage from "@/pages/ProjectDetailPage";
 import CalendarPage from "@/pages/CalendarPage";
 import FlowModePage from "@/pages/FlowModePage";
 import SmartboardsPage from "@/pages/SmartboardsPage";
+import MarketplacePage from "@/pages/MarketplacePage";
 import SmartboardDetailPage from "@/pages/SmartboardDetailPage";
 import ProfilesPage from "@/pages/ProfilesPage";
 import MessagesPage from "@/pages/MessagesPage";
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/flow" element={<FlowModePage />} />
               <Route path="/smartboards" element={<SmartboardsPage />} />
               <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
+              <Route path="/marketplace" element={<MarketplacePage />} />
               <Route path="/profiles" element={<ProfilesPage />} />
               <Route path="/messages" element={<MessagesPage />} />
               <Route path="/settings" element={<SettingsPage />} />
