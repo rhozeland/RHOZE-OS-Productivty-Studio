@@ -95,7 +95,7 @@ const SmartboardDetailPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("smartboard_messages")
-        .select("*, profiles(display_name)")
+        .select("*")
         .eq("smartboard_id", id!)
         .order("created_at", { ascending: true });
       if (error) throw error;
