@@ -6,6 +6,7 @@ import {
   Calendar,
   Compass,
   LayoutGrid,
+  Store,
   Users,
   MessageSquare,
   Settings,
