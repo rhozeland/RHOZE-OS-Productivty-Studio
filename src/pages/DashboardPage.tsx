@@ -55,17 +55,18 @@ const DashboardPage = () => {
   return (
     <div className="space-y-8">
       <div>
+        <p className="text-sm font-medium text-muted-foreground mb-1">✦ Crafting Visions, Building Futures</p>
         <h1 className="font-display text-3xl font-bold text-foreground">
-          Welcome back<span className="gradient-text">{user?.email ? `, ${user.email.split("@")[0]}` : ""}</span>
+          Welcome back{user?.email ? `, ${user.email.split("@")[0]}` : ""}
         </h1>
         <p className="mt-1 text-muted-foreground">Here's what's happening in your creative world.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={FolderKanban} label="Projects" value={projects?.length ?? 0} color="bg-primary/20 text-primary" />
-        <StatCard icon={CheckSquare} label="Tasks Done" value={completedTasks} color="bg-accent/20 text-accent" />
-        <StatCard icon={Calendar} label="Events" value={events?.length ?? 0} color="bg-warm/20 text-warm" />
-        <StatCard icon={Zap} label="Active" value={projects?.filter((p) => p.status === "active").length ?? 0} color="bg-primary/20 text-primary" />
+        <StatCard icon={FolderKanban} label="Projects" value={projects?.length ?? 0} color="bg-primary/15 text-primary" />
+        <StatCard icon={CheckSquare} label="Tasks Done" value={completedTasks} color="bg-primary/15 text-primary" />
+        <StatCard icon={Calendar} label="Events" value={events?.length ?? 0} color="bg-primary/15 text-primary" />
+        <StatCard icon={Zap} label="Active" value={projects?.filter((p) => p.status === "active").length ?? 0} color="bg-primary/15 text-primary" />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -80,7 +81,7 @@ const DashboardPage = () => {
             <div className="space-y-3">
               {projects?.slice(0, 5).map((project) => (
                 <div key={project.id} className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
-                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: project.cover_color ?? "#7c3aed" }} />
+                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: project.cover_color ?? "#2dd4a8" }} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{project.title}</p>
                     <p className="text-xs text-muted-foreground capitalize">{project.status}</p>
@@ -102,7 +103,7 @@ const DashboardPage = () => {
             <div className="space-y-3">
               {events?.slice(0, 5).map((event) => (
                 <div key={event.id} className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
-                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: event.color ?? "#7c3aed" }} />
+                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: event.color ?? "#2dd4a8" }} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{event.title}</p>
                     <p className="text-xs text-muted-foreground">
