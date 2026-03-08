@@ -83,7 +83,7 @@ const SmartboardDetailPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("smartboard_members")
-        .select("*, profiles(display_name, avatar_url)")
+        .select("*")
         .eq("smartboard_id", id!);
       if (error) throw error;
       return data ?? [];
