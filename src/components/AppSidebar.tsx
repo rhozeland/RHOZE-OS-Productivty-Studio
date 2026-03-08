@@ -22,6 +22,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
+import logo from "@/assets/logo.png";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -44,13 +45,11 @@ const AppSidebar = () => {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border bg-sidebar">
+    <Sidebar collapsible="icon" className="border-r border-border">
       <div className={cn("flex h-16 items-center gap-3 px-4", collapsed && "justify-center px-2")}>
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary">
-          <Zap className="h-5 w-5 text-primary-foreground" />
-        </div>
+        <img src={logo} alt="Rhozeland" className="h-8 w-8 shrink-0" />
         {!collapsed && (
-          <span className="font-display text-xl font-bold tracking-tight text-foreground">
+          <span className="font-display text-lg font-bold tracking-tight text-foreground">
             Rhozeland
           </span>
         )}
