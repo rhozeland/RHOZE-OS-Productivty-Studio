@@ -195,9 +195,12 @@ const MessagesPage = () => {
         <p className="text-muted-foreground">Connect with other creators</p>
       </div>
 
-      <div className="surface-card flex h-[calc(100vh-14rem)] overflow-hidden">
+      <div className="surface-card flex h-[calc(100vh-16rem)] overflow-hidden">
         {/* Sidebar - Contacts */}
-        <div className="flex w-80 flex-col border-r border-border">
+        <div className={cn(
+          "flex flex-col border-r border-border",
+          selectedUser ? "hidden md:flex md:w-80" : "w-full md:w-80"
+        )}>
           <div className="p-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
