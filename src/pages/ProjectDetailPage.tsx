@@ -5,15 +5,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Plus, Trash2, Upload, Image, X } from "lucide-react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [newTask, setNewTask] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: project } = useQuery({
     queryKey: ["project", id],
@@ -28,6 +31,15 @@ const ProjectDetailPage = () => {
     queryKey: ["project-tasks", id],
     queryFn: async () => {
       const { data, error } = await supabase.from("tasks").select("*").eq("project_id", id!).order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: moodboardItems } = useQuery({
+    queryKey: ["moodboard", id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("moodboard_items").select("*").eq("project_id", id!).order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -65,7 +77,73 @@ const ProjectDetailPage = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["project-tasks", id] }),
   });
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !user) return;
+
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        if (file.size > 20 * 1024 * 1024) {
+          toast.error(`${file.name} is too large (max 20MB)`);
+          continue;
+        }
+
+        const fileExt = file.name.split(".").pop();
+        const filePath = `${user.id}/${id}/${crypto.randomUUID()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("moodboard")
+          .upload(filePath, file);
+
+        if (uploadError) {
+          toast.error(`Failed to upload ${file.name}`);
+          continue;
+        }
+
+        const { data: urlData } = supabase.storage.from("moodboard").getPublicUrl(filePath);
+
+        const { error: dbError } = await supabase.from("moodboard_items").insert({
+          project_id: id!,
+          user_id: user.id,
+          file_url: urlData.publicUrl,
+          file_name: file.name,
+          file_type: file.type,
+        });
+
+        if (dbError) toast.error(`Failed to save ${file.name}`);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["moodboard", id] });
+      toast.success("Files uploaded!");
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const deleteMoodboardItem = useMutation({
+    mutationFn: async (item: { id: string; file_url: string }) => {
+      // Extract path from URL
+      const url = new URL(item.file_url);
+      const pathParts = url.pathname.split("/storage/v1/object/public/moodboard/");
+      if (pathParts[1]) {
+        await supabase.storage.from("moodboard").remove([decodeURIComponent(pathParts[1])]);
+      }
+      const { error } = await supabase.from("moodboard_items").delete().eq("id", item.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["moodboard", id] });
+      toast.success("Removed from moodboard");
+    },
+  });
+
   if (!project) return <div className="text-muted-foreground">Loading...</div>;
+
+  const isImage = (type: string | null) => type?.startsWith("image/");
 
   return (
     <div className="space-y-8">
@@ -77,21 +155,15 @@ const ProjectDetailPage = () => {
         <p className="mt-1 text-muted-foreground">{project.description || "No description"}</p>
       </div>
 
+      {/* Tasks */}
       <div className="surface-card p-6">
         <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Tasks</h2>
         <form
           onSubmit={(e) => { e.preventDefault(); if (newTask.trim()) addTask.mutate(); }}
           className="mb-4 flex gap-2"
         >
-          <Input
-            value={newTask}
-            onChange={(e) => setNewTask(e.target.value)}
-            placeholder="Add a task..."
-            className="flex-1"
-          />
-          <Button type="submit" size="icon" disabled={!newTask.trim()}>
-            <Plus className="h-4 w-4" />
-          </Button>
+          <Input value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder="Add a task..." className="flex-1" />
+          <Button type="submit" size="icon" disabled={!newTask.trim()}><Plus className="h-4 w-4" /></Button>
         </form>
         <div className="space-y-2">
           {tasks?.map((task) => (
@@ -110,6 +182,75 @@ const ProjectDetailPage = () => {
           ))}
           {tasks?.length === 0 && <p className="text-sm text-muted-foreground">No tasks yet</p>}
         </div>
+      </div>
+
+      {/* Moodboard */}
+      <div className="surface-card p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Image className="h-5 w-5 text-accent" />
+            <h2 className="font-display text-lg font-semibold text-foreground">Moodboard</h2>
+          </div>
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,video/*,application/pdf"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+              <Upload className="mr-2 h-4 w-4" />
+              {uploading ? "Uploading..." : "Upload"}
+            </Button>
+          </div>
+        </div>
+
+        {(!moodboardItems || moodboardItems.length === 0) ? (
+          <div
+            className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border py-12 cursor-pointer hover:border-primary/40 transition-colors"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className="mb-3 h-10 w-10 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Drop images or click to upload</p>
+            <p className="mt-1 text-xs text-muted-foreground">Supports images, videos, PDFs (max 20MB)</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+            {moodboardItems.map((item, i) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.03 }}
+                className="group relative aspect-square overflow-hidden rounded-xl border border-border bg-muted"
+              >
+                {isImage(item.file_type) ? (
+                  <img src={item.file_url} alt={item.file_name} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center p-3">
+                    <Image className="mb-2 h-8 w-8 text-muted-foreground" />
+                    <p className="text-center text-xs text-muted-foreground truncate w-full">{item.file_name}</p>
+                  </div>
+                )}
+                <button
+                  onClick={() => deleteMoodboardItem.mutate({ id: item.id, file_url: item.file_url })}
+                  className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-background/80 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </motion.div>
+            ))}
+            {/* Add more button */}
+            <div
+              className="flex aspect-square cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-border hover:border-primary/40 transition-colors"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Plus className="h-8 w-8 text-muted-foreground" />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
