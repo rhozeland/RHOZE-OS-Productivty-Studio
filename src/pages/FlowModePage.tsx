@@ -66,7 +66,7 @@ const FlowModePage = () => {
   const { data: flowItems } = useQuery({
     queryKey: ["flow-items", selectedCategories],
     queryFn: async () => {
-      let query = supabase.from("flow_items").select("*, profiles(display_name, avatar_url)").order("created_at", { ascending: false }).limit(50);
+      let query = supabase.from("flow_items").select("*").order("created_at", { ascending: false }).limit(50);
       if (selectedCategories.length > 0) {
         query = query.in("category", selectedCategories);
       }
