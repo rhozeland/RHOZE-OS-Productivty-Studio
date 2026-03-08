@@ -334,7 +334,7 @@ const SmartboardDetailPage = () => {
           <Users className="h-4 w-4" />
           {members.map((m: any) => (
             <span key={m.id} className="rounded-full bg-muted px-2.5 py-0.5 text-xs">
-              {(m.profiles as any)?.display_name ?? "User"} · {m.role}
+              {m.user_id?.slice(0, 8) ?? "User"} · {m.role}
             </span>
           ))}
         </div>
