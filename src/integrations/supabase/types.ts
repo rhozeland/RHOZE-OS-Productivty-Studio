@@ -61,6 +61,87 @@ export type Database = {
           },
         ]
       }
+      flow_interactions: {
+        Row: {
+          action: string
+          created_at: string
+          flow_item_id: string
+          id: string
+          smartboard_id: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          flow_item_id: string
+          id?: string
+          smartboard_id?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          flow_item_id?: string
+          id?: string
+          smartboard_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flow_interactions_flow_item_id_fkey"
+            columns: ["flow_item_id"]
+            isOneToOne: false
+            referencedRelation: "flow_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flow_interactions_smartboard_id_fkey"
+            columns: ["smartboard_id"]
+            isOneToOne: false
+            referencedRelation: "smartboards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flow_items: {
+        Row: {
+          category: string
+          content_type: string
+          created_at: string
+          description: string | null
+          file_url: string | null
+          id: string
+          link_url: string | null
+          tags: string[] | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          content_type?: string
+          created_at?: string
+          description?: string | null
+          file_url?: string | null
+          id?: string
+          link_url?: string | null
+          tags?: string[] | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          content_type?: string
+          created_at?: string
+          description?: string | null
+          file_url?: string | null
+          id?: string
+          link_url?: string | null
+          tags?: string[] | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
@@ -192,6 +273,153 @@ export type Database = {
           description?: string | null
           id?: string
           status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      smartboard_items: {
+        Row: {
+          content: string | null
+          content_type: string
+          created_at: string
+          file_url: string | null
+          id: string
+          link_url: string | null
+          position_x: number | null
+          position_y: number | null
+          smartboard_id: string
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          content_type?: string
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          link_url?: string | null
+          position_x?: number | null
+          position_y?: number | null
+          smartboard_id: string
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          content_type?: string
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          link_url?: string | null
+          position_x?: number | null
+          position_y?: number | null
+          smartboard_id?: string
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smartboard_items_smartboard_id_fkey"
+            columns: ["smartboard_id"]
+            isOneToOne: false
+            referencedRelation: "smartboards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      smartboard_members: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          smartboard_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string
+          smartboard_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          smartboard_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smartboard_members_smartboard_id_fkey"
+            columns: ["smartboard_id"]
+            isOneToOne: false
+            referencedRelation: "smartboards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      smartboard_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          smartboard_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          smartboard_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          smartboard_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smartboard_messages_smartboard_id_fkey"
+            columns: ["smartboard_id"]
+            isOneToOne: false
+            referencedRelation: "smartboards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      smartboards: {
+        Row: {
+          cover_color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cover_color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cover_color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
           title?: string
           updated_at?: string
           user_id?: string
