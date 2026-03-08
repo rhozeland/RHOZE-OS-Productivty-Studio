@@ -419,7 +419,7 @@ const SmartboardDetailPage = () => {
                   className={`flex flex-col ${msg.user_id === user?.id ? "items-end" : "items-start"}`}
                 >
                   <span className="text-[10px] text-muted-foreground mb-0.5">
-                    {(msg.profiles as any)?.display_name ?? "User"}
+                    {msg.user_id === user?.id ? "You" : "User"}
                   </span>
                   <div
                     className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
