@@ -83,7 +83,7 @@ const SmartboardDetailPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("smartboard_members")
-        .select("*, profiles(display_name, avatar_url)")
+        .select("*")
         .eq("smartboard_id", id!);
       if (error) throw error;
       return data ?? [];
@@ -95,7 +95,7 @@ const SmartboardDetailPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("smartboard_messages")
-        .select("*, profiles(display_name)")
+        .select("*")
         .eq("smartboard_id", id!)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -334,7 +334,7 @@ const SmartboardDetailPage = () => {
           <Users className="h-4 w-4" />
           {members.map((m: any) => (
             <span key={m.id} className="rounded-full bg-muted px-2.5 py-0.5 text-xs">
-              {(m.profiles as any)?.display_name ?? "User"} · {m.role}
+              {m.user_id?.slice(0, 8) ?? "User"} · {m.role}
             </span>
           ))}
         </div>
@@ -419,7 +419,7 @@ const SmartboardDetailPage = () => {
                   className={`flex flex-col ${msg.user_id === user?.id ? "items-end" : "items-start"}`}
                 >
                   <span className="text-[10px] text-muted-foreground mb-0.5">
-                    {(msg.profiles as any)?.display_name ?? "User"}
+                    {msg.user_id === user?.id ? "You" : "User"}
                   </span>
                   <div
                     className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
