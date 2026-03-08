@@ -53,6 +53,7 @@ const App = () => (
               <Route path="/flow" element={<FlowModePage />} />
               <Route path="/smartboards" element={<SmartboardsPage />} />
               <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
+              <Route path="/marketplace" element={<MarketplacePage />} />
               <Route path="/profiles" element={<ProfilesPage />} />
               <Route path="/messages" element={<MessagesPage />} />
               <Route path="/settings" element={<SettingsPage />} />
