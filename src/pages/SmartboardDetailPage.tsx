@@ -457,7 +457,4 @@ const SmartboardDetailPage = () => {
   );
 };
 
-// Need Users icon import for members strip
-import { Users } from "lucide-react";
-
 export default SmartboardDetailPage;

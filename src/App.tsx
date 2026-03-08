@@ -11,6 +11,8 @@ import ProjectsPage from "@/pages/ProjectsPage";
 import ProjectDetailPage from "@/pages/ProjectDetailPage";
 import CalendarPage from "@/pages/CalendarPage";
 import FlowModePage from "@/pages/FlowModePage";
+import SmartboardsPage from "@/pages/SmartboardsPage";
+import SmartboardDetailPage from "@/pages/SmartboardDetailPage";
 import ProfilesPage from "@/pages/ProfilesPage";
 import MessagesPage from "@/pages/MessagesPage";
 import SettingsPage from "@/pages/SettingsPage";
@@ -48,6 +50,8 @@ const App = () => (
               <Route path="/projects/:id" element={<ProjectDetailPage />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/flow" element={<FlowModePage />} />
+              <Route path="/smartboards" element={<SmartboardsPage />} />
+              <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
               <Route path="/profiles" element={<ProfilesPage />} />
               <Route path="/messages" element={<MessagesPage />} />
               <Route path="/settings" element={<SettingsPage />} />
