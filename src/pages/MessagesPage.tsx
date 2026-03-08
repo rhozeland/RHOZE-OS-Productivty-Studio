@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Send, User, MessageSquare } from "lucide-react";
+import { Search, Send, User, MessageSquare, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRef } from "react";
 
@@ -195,9 +195,12 @@ const MessagesPage = () => {
         <p className="text-muted-foreground">Connect with other creators</p>
       </div>
 
-      <div className="surface-card flex h-[calc(100vh-14rem)] overflow-hidden">
+      <div className="surface-card flex h-[calc(100vh-16rem)] overflow-hidden">
         {/* Sidebar - Contacts */}
-        <div className="flex w-80 flex-col border-r border-border">
+        <div className={cn(
+          "flex flex-col border-r border-border",
+          selectedUser ? "hidden md:flex md:w-80" : "w-full md:w-80"
+        )}>
           <div className="p-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -264,7 +267,10 @@ const MessagesPage = () => {
         </div>
 
         {/* Chat Area */}
-        <div className="flex flex-1 flex-col">
+        <div className={cn(
+          "flex flex-1 flex-col",
+          !selectedUser ? "hidden md:flex" : "flex"
+        )}>
           {!selectedUser ? (
             <div className="flex flex-1 flex-col items-center justify-center text-muted-foreground">
               <MessageSquare className="mb-4 h-12 w-12" />
@@ -274,7 +280,10 @@ const MessagesPage = () => {
           ) : (
             <>
               {/* Chat header */}
-              <div className="flex items-center gap-3 border-b border-border px-6 py-4">
+              <div className="flex items-center gap-3 border-b border-border px-4 md:px-6 py-4">
+                <Button variant="ghost" size="icon" className="md:hidden shrink-0" onClick={() => setSelectedUser(null)}>
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
                   {selectedUser.avatar_url ? (
                     <img src={selectedUser.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
