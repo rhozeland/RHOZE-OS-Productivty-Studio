@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   User,
-  Briefcase,
+  Store,
   RefreshCw,
   Network,
   FolderKanban,
