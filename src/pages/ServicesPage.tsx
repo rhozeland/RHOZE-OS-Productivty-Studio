@@ -48,8 +48,11 @@ const categoryColors: Record<string, string> = {
 const ServicesPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedService, setSelectedService] = useState<any>(null);
+  const [payMode, setPayMode] = useState<"credits" | "fiat">("credits");
+  const [cardProcessing, setCardProcessing] = useState(false);
 
   const { data: services, isLoading } = useQuery({
     queryKey: ["rhozeland-services", activeCategory],
