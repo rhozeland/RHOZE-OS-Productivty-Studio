@@ -410,6 +410,15 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
               </p>
             </div>
 
+            {/* Square card form for card payments */}
+            {paymentMethod === "card" && (
+              <SquareCardForm
+                amount={usdPrice}
+                onTokenize={handleCardTokenize}
+                disabled={loading}
+              />
+            )}
+
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStep("payment")} className="flex-1">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
@@ -423,10 +432,10 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
                     label={`Pay ${solPrice} SOL & Book`}
                   />
                 </div>
-              ) : (
+              ) : paymentMethod === "credits" ? (
                 <Button
                   className="flex-1"
-                  onClick={handleConfirm}
+                  onClick={() => handleConfirm()}
                   disabled={loading}
                 >
                   {loading ? (
@@ -435,7 +444,7 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
                     <><Check className="mr-2 h-4 w-4" /> Confirm Booking</>
                   )}
                 </Button>
-              )}
+              ) : null}
             </div>
           </div>
         )}
