@@ -512,16 +512,16 @@ const ProfileDetailPage = () => {
         )}
 
         {/* Public Smartboards */}
-        {publicSmartboards && publicSmartboards.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25, duration: 0.4 }}
-            className="space-y-3"
-          >
-            <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-              <Eye className="h-4 w-4 text-primary" /> Public Boards
-            </h2>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25, duration: 0.4 }}
+          className="space-y-3"
+        >
+          <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
+            <Eye className="h-4 w-4 text-primary" /> Public Boards
+          </h2>
+          {publicSmartboards && publicSmartboards.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {publicSmartboards.map((board: any) => (
                 <div
@@ -537,8 +537,20 @@ const ProfileDetailPage = () => {
                 </div>
               ))}
             </div>
-          </motion.div>
-        )}
+          ) : (
+            <div className="rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 p-8 text-center">
+              <Eye className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">
+                {isOwnProfile ? "You haven't made any boards public yet" : "No public boards yet"}
+              </p>
+              {isOwnProfile && (
+                <Button variant="outline" size="sm" className="mt-3" onClick={() => navigate("/smartboards")}>
+                  Manage Boards
+                </Button>
+              )}
+            </div>
+          )}
+        </motion.div>
 
         {/* Projects — own profile only */}
         {isOwnProfile && publicProjects && publicProjects.length > 0 && (
