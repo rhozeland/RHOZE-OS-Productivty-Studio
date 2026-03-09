@@ -87,6 +87,8 @@ const CreditShopPage = () => {
   const [alaCarteCredits, setAlaCarteCredits] = useState(1);
   const [cardPaymentOpen, setCardPaymentOpen] = useState(false);
   const [pendingCardCredits, setPendingCardCredits] = useState(0);
+  const [subPaymentOpen, setSubPaymentOpen] = useState(false);
+  const [pendingTier, setPendingTier] = useState<(typeof TIERS)[number] | null>(null);
 
   const { data: userCredits } = useQuery({
     queryKey: ["user-credits", user?.id],
@@ -278,8 +280,11 @@ const CreditShopPage = () => {
                   <Button
                     className="w-full mt-3"
                     variant={isCurrentTier ? "outline" : "default"}
-                    disabled={isCurrentTier || subscribeTier.isPending}
-                    onClick={() => subscribeTier.mutate(tier)}
+                    disabled={isCurrentTier}
+                    onClick={() => {
+                      setPendingTier(tier);
+                      setSubPaymentOpen(true);
+                    }}
                   >
                     {isCurrentTier ? "Current Plan" : `Subscribe — $${tier.price}/mo`}
                   </Button>
@@ -394,6 +399,51 @@ const CreditShopPage = () => {
               setCardPaymentOpen(false);
             }}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Square Subscription Payment Modal */}
+      <Dialog open={subPaymentOpen} onOpenChange={setSubPaymentOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl">
+              Subscribe to {pendingTier?.name}
+            </DialogTitle>
+          </DialogHeader>
+          {pendingTier && (
+            <>
+              <div className="rounded-lg bg-muted/50 border border-border p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-foreground">{pendingTier.name} Plan</span>
+                  <span className="text-lg font-bold text-primary">${pendingTier.price.toFixed(2)}/mo</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {pendingTier.credits} credits/month • Billed monthly
+                </p>
+              </div>
+              <SquareCardForm
+                amount={pendingTier.price}
+                onTokenize={async (token) => {
+                  const { data, error } = await supabase.functions.invoke("square-payment", {
+                    body: {
+                      amount_cents: pendingTier.price * 100,
+                      currency: "USD",
+                      description: `Rhozeland: ${pendingTier.name} subscription`,
+                      source_id: token,
+                      location_id: SQUARE_LOCATION_ID,
+                    },
+                  });
+                  if (error) throw error;
+                  if (!data?.success) throw new Error(data?.error || "Payment failed");
+
+                  // Payment succeeded — activate subscription
+                  await subscribeTier.mutateAsync(pendingTier);
+                  setSubPaymentOpen(false);
+                  setPendingTier(null);
+                }}
+              />
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>
