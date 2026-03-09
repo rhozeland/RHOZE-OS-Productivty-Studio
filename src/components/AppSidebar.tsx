@@ -35,10 +35,10 @@ import {
 } from "@/components/ui/sidebar";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-const essentialItems = [
+const getEssentialItems = (userId?: string) => [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: MessageSquare, label: "Messages", path: "/messages", hasBadge: true },
-  { icon: User, label: "My Profile", path: "/settings" },
+  { icon: User, label: "My Profile", path: userId ? `/profiles/${userId}` : "/settings" },
   { icon: Briefcase, label: "Services", path: "/services" },
   { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: Calendar, label: "Calendar", path: "/calendar" },
