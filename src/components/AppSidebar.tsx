@@ -14,9 +14,11 @@ import {
   LogOut,
   Briefcase,
   Coins,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 import {
   Sidebar,
   SidebarContent,
@@ -50,8 +52,13 @@ const AppSidebar = () => {
   const location = useLocation();
   const { signOut } = useAuth();
   const { theme } = useTheme();
+  const { isAdmin } = useAdminCheck();
   const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
+
+  const allNavItems = isAdmin
+    ? [...navItems, { icon: ShieldCheck, label: "Admin", path: "/admin" }]
+    : navItems;
 
   const currentLogo = theme === "dark" ? logoWhite : logoColor;
 
@@ -81,7 +88,7 @@ const AppSidebar = () => {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
-              {navItems.map((item) => {
+              {allNavItems.map((item) => {
                 const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + "/");
                 return (
                   <SidebarMenuItem key={item.path}>
