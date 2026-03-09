@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import {
   User,
-  CalendarStar,
+  Star,
   RefreshCw,
   Network,
   FolderKanban,
