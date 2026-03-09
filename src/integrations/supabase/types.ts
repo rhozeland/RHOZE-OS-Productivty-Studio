@@ -1049,6 +1049,10 @@ export type Database = {
         Args: { _contract_id: string; _user_id: string }
         Returns: boolean
       }
+      lock_escrow_credits: {
+        Args: { _amount: number; _client_id: string; _contract_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
