@@ -829,6 +829,41 @@ export type Database = {
         }
         Relationships: []
       }
+      purchases: {
+        Row: {
+          buyer_id: string
+          created_at: string
+          credits_paid: number
+          id: string
+          listing_id: string
+          seller_id: string
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string
+          credits_paid: number
+          id?: string
+          listing_id: string
+          seller_id: string
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string
+          credits_paid?: number
+          id?: string
+          listing_id?: string
+          seller_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchases_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           category: string
@@ -1183,6 +1218,10 @@ export type Database = {
       lock_escrow_credits: {
         Args: { _amount: number; _client_id: string; _contract_id: string }
         Returns: undefined
+      }
+      purchase_listing: {
+        Args: { _buyer_id: string; _listing_id: string }
+        Returns: string
       }
       release_milestone_credits: {
         Args: { _approver_id: string; _milestone_id: string }

@@ -32,6 +32,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Play,
+  ShoppingCart,
+  CheckCircle,
+  Loader2,
+  Download,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -101,6 +105,51 @@ const ListingDetailPage = () => {
     enabled: !!listing,
   });
 
+  const { data: userCredits } = useQuery({
+    queryKey: ["user-credits", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_credits")
+        .select("*")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const { data: existingPurchase } = useQuery({
+    queryKey: ["purchase-check", id, user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("purchases" as any)
+        .select("id")
+        .eq("buyer_id", user!.id)
+        .eq("listing_id", id!)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user && !!id,
+  });
+
+  const purchaseMutation = useMutation({
+    mutationFn: async () => {
+      if (!user || !listing) throw new Error("Missing data");
+      const { data, error } = await supabase.rpc("purchase_listing" as any, {
+        _listing_id: listing.id,
+        _buyer_id: user.id,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-credits"] });
+      queryClient.invalidateQueries({ queryKey: ["purchase-check", id] });
+      toast.success("Purchase complete! 🎉");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const sendInquiry = useMutation({
     mutationFn: async () => {
       if (!user || !listing) throw new Error("Missing data");
@@ -133,6 +182,9 @@ const ListingDetailPage = () => {
   const TypeIcon = typeMeta.icon;
   const CatIcon = catMeta.icon;
   const isOwner = listing.user_id === user?.id;
+  const alreadyPurchased = !!(existingPurchase as any)?.id;
+  const canBuyInstantly = listing.listing_type === "digital_product" && listing.credits_price != null && listing.credits_price > 0;
+  const hasEnoughCredits = (userCredits?.balance ?? 0) >= (listing.credits_price ?? 0);
 
   const images = media?.filter((m) => m.file_type?.startsWith("image")) ?? [];
   const audioFiles = media?.filter((m) => m.file_type?.startsWith("audio")) ?? [];
@@ -341,7 +393,69 @@ const ListingDetailPage = () => {
             {/* CTA */}
             {!isOwner && (
               <div className="space-y-2 pt-2">
-                <Button className="w-full rounded-full" onClick={() => setInquiryOpen(true)}>
+                {/* Instant buy for digital products */}
+                {canBuyInstantly && !alreadyPurchased && (
+                  <Button
+                    className="w-full rounded-full"
+                    onClick={() => purchaseMutation.mutate()}
+                    disabled={purchaseMutation.isPending || !hasEnoughCredits}
+                  >
+                    {purchaseMutation.isPending ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
+                    ) : !hasEnoughCredits ? (
+                      <><Coins className="mr-2 h-4 w-4" />Not enough credits</>
+                    ) : (
+                      <><ShoppingCart className="mr-2 h-4 w-4" />Buy Now — {listing.credits_price} credits</>
+                    )}
+                  </Button>
+                )}
+
+                {/* Already purchased */}
+                {canBuyInstantly && alreadyPurchased && (
+                  <div className="space-y-2">
+                    <Button variant="outline" className="w-full rounded-full pointer-events-none" disabled>
+                      <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                      Purchased
+                    </Button>
+                    {/* Download links for purchased media */}
+                    {media && media.length > 0 && (
+                      <div className="space-y-1.5">
+                        {media.map((m) => (
+                          <a
+                            key={m.id}
+                            href={m.file_url}
+                            download={m.file_name}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm text-primary hover:bg-muted transition-colors"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            {m.file_name}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Credit balance hint */}
+                {canBuyInstantly && !alreadyPurchased && !hasEnoughCredits && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-xs text-muted-foreground"
+                    onClick={() => navigate("/credits")}
+                  >
+                    You have {userCredits?.balance ?? 0} credits — Get more →
+                  </Button>
+                )}
+
+                {/* Inquiry for non-digital or always available */}
+                <Button
+                  variant={canBuyInstantly ? "outline" : "default"}
+                  className="w-full rounded-full"
+                  onClick={() => setInquiryOpen(true)}
+                >
                   <MessageCircle className="mr-2 h-4 w-4" />
                   Send Inquiry
                 </Button>
