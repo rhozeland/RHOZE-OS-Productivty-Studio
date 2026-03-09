@@ -307,15 +307,7 @@ const SettingsPage = () => {
 
   const initials = (displayName || "?").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 
-  const SectionCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-    <div className={`surface-card max-w-2xl p-6 ${className}`}>{children}</div>
-  );
-
-  const SectionTitle = ({ icon: Icon, children }: { icon: any; children: React.ReactNode }) => (
-    <h2 className="mb-4 font-display text-lg font-semibold text-foreground flex items-center gap-2">
-      <Icon className="h-5 w-5 text-primary" /> {children}
-    </h2>
-  );
+  // SectionCard and SectionTitle moved outside component to prevent remount on every render
 
   return (
     <div className="space-y-6 pb-12">
