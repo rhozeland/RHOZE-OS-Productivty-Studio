@@ -240,7 +240,7 @@ const CreditShopPage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const currentTier = userCredits?.tier ?? "none";
+  const currentTier = userCredits?.tier && userCredits.tier !== "none" ? userCredits.tier : "spark";
 
   // Purchases data
   const { data: purchases, isLoading: purchasesLoading } = useQuery({
