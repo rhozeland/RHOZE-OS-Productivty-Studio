@@ -16,6 +16,7 @@ import CalendarPage from "@/pages/CalendarPage";
 import FlowModePage from "@/pages/FlowModePage";
 import SmartboardsPage from "@/pages/SmartboardsPage";
 import MarketplacePage from "@/pages/MarketplacePage";
+import ListingDetailPage from "@/pages/ListingDetailPage";
 import SmartboardDetailPage from "@/pages/SmartboardDetailPage";
 import SmartboardPresentationPage from "@/pages/SmartboardPresentationPage";
 import ProfilesPage from "@/pages/ProfilesPage";
