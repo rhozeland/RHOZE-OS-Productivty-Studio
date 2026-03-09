@@ -100,7 +100,7 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
     return setMinutes(setHours(selectedDate, h), m);
   };
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (tokenOverride?: string) => {
     if (!user || !service) return;
     const startTime = getStartTime();
     if (!startTime) return;
@@ -114,14 +114,12 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
           setLoading(false);
           return;
         }
-        // Deduct credits
         const { error: creditError } = await supabase
           .from("user_credits")
           .update({ balance: userCredits - service.credits_cost })
           .eq("user_id", user.id);
         if (creditError) throw creditError;
 
-        // Record transaction
         await supabase.from("credit_transactions").insert({
           user_id: user.id,
           amount: -service.credits_cost,
@@ -129,19 +127,24 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
           description: `Booking: ${service.title}`,
         });
       } else if (paymentMethod === "card") {
-        // Call Square edge function
+        const token = tokenOverride || cardToken;
+        if (!token) {
+          toast.error("Please enter your card details");
+          setLoading(false);
+          return;
+        }
         const { data, error } = await supabase.functions.invoke("square-payment", {
           body: {
             amount_cents: usdPrice * 100,
             currency: "USD",
             description: `Rhozeland: ${service.title}`,
-            source_id: "EXTERNAL", // In production, collect card nonce from Square Web SDK
+            source_id: token,
+            location_id: SQUARE_LOCATION_ID,
           },
         });
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || "Payment failed");
       }
-      // crypto is handled by the PayWithSolButton component separately
 
       // Create booking
       const endTime = addHours(startTime, service.duration_hours);
@@ -179,6 +182,11 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCardTokenize = async (token: string) => {
+    setCardToken(token);
+    await handleConfirm(token);
   };
 
   return (
