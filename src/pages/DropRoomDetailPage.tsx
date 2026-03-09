@@ -16,9 +16,11 @@ import {
   Lightbulb,
   LogOut,
   Zap,
+  Video,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, isPast, format } from "date-fns";
+import DropRoomVideo from "@/components/droproom/DropRoomVideo";
 
 interface Post {
   id: string;
