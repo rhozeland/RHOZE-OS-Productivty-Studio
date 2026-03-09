@@ -336,81 +336,108 @@ const FlowModePage = () => {
           {onboardingStep === 1 && (
             <motion.div
               key="swipe"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              exit={{ opacity: 0, y: -30 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="w-full max-w-md text-center px-6"
             >
-              <h2 className="font-display text-xl font-bold text-foreground mb-2">How it works</h2>
-              <p className="text-sm text-muted-foreground mb-10 max-w-xs mx-auto">
+              <motion.h2
+                className="font-display text-2xl font-bold text-foreground mb-1.5"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.5 }}
+              >
+                How it works
+              </motion.h2>
+              <motion.p
+                className="text-sm text-muted-foreground mb-8 max-w-[260px] mx-auto leading-relaxed"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.25, duration: 0.5 }}
+              >
                 Swipe or use arrow keys to interact with content.
-              </p>
+              </motion.p>
 
-              <div className="relative mx-auto mb-10" style={{ width: 280, height: 340 }}>
-                {/* Direction labels — positioned outside card with space */}
+              <div className="relative mx-auto mb-10" style={{ width: 260, height: 320 }}>
+                {/* SAVE — top */}
                 <motion.div
-                  className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center"
-                  style={{ top: -36 }}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
+                  className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5"
+                  style={{ top: -40 }}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: [0, -4, 0] }}
+                  transition={{ delay: 0.5, duration: 2, repeat: Infinity, repeatDelay: 3 }}
                 >
-                  <ChevronUp className="h-4 w-4 text-foreground/50" />
-                  <span className="text-[11px] font-semibold text-foreground/50 tracking-widest">SAVE</span>
+                  <ChevronUp className="h-4 w-4 text-primary/60" />
+                  <span className="text-[10px] font-semibold text-primary/60 tracking-[0.2em]">SAVE</span>
                 </motion.div>
 
+                {/* DISLIKE — bottom */}
                 <motion.div
-                  className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center"
-                  style={{ bottom: -36 }}
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
+                  className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5"
+                  style={{ bottom: -40 }}
+                  initial={{ opacity: 0, y: -12 }}
+                  animate={{ opacity: 1, y: [0, 4, 0] }}
+                  transition={{ delay: 0.7, duration: 2, repeat: Infinity, repeatDelay: 3 }}
                 >
-                  <span className="text-[11px] font-semibold text-foreground/50 tracking-widest">DISLIKE</span>
-                  <ChevronDown className="h-4 w-4 text-foreground/50" />
+                  <span className="text-[10px] font-semibold text-destructive/50 tracking-[0.2em]">DISLIKE</span>
+                  <ChevronDown className="h-4 w-4 text-destructive/50" />
                 </motion.div>
 
+                {/* SHARE — left */}
                 <motion.div
                   className="absolute top-1/2 -translate-y-1/2 flex items-center gap-1"
-                  style={{ left: -72 }}
-                  initial={{ opacity: 0, x: 8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 }}
+                  style={{ left: -76 }}
+                  initial={{ opacity: 0, x: 12 }}
+                  animate={{ opacity: 1, x: [0, -4, 0] }}
+                  transition={{ delay: 0.6, duration: 2, repeat: Infinity, repeatDelay: 3 }}
                 >
-                  <ChevronLeft className="h-4 w-4 text-foreground/50" />
-                  <span className="text-[11px] font-semibold text-foreground/50 tracking-widest">SHARE</span>
+                  <ChevronLeft className="h-4 w-4 text-muted-foreground/50" />
+                  <span className="text-[10px] font-semibold text-muted-foreground/50 tracking-[0.2em]">SHARE</span>
                 </motion.div>
 
+                {/* NEXT — right */}
                 <motion.div
                   className="absolute top-1/2 -translate-y-1/2 flex items-center gap-1"
                   style={{ right: -68 }}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 }}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: [0, 4, 0] }}
+                  transition={{ delay: 0.6, duration: 2, repeat: Infinity, repeatDelay: 3 }}
                 >
-                  <span className="text-[11px] font-semibold text-foreground/50 tracking-widest">NEXT</span>
-                  <ChevronRight className="h-4 w-4 text-foreground/50" />
+                  <span className="text-[10px] font-semibold text-muted-foreground/50 tracking-[0.2em]">NEXT</span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
                 </motion.div>
 
                 {/* Card */}
                 <motion.div
-                  className="w-full h-full rounded-3xl bg-card shadow-xl border border-border/40 flex items-center justify-center"
-                  initial={{ scale: 0.9, opacity: 0 }}
+                  className="w-full h-full rounded-[28px] bg-card/90 backdrop-blur-sm shadow-2xl shadow-primary/5 border border-border/30 flex items-center justify-center"
+                  initial={{ scale: 0.85, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 20 }}
+                  transition={{ delay: 0.3, duration: 0.6, type: "spring", stiffness: 160, damping: 18 }}
                 >
-                  <Fingerprint className="h-12 w-12 text-muted-foreground/20" />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.6, duration: 0.4 }}
+                  >
+                    <Fingerprint className="h-10 w-10 text-muted-foreground/15" />
+                  </motion.div>
                 </motion.div>
               </div>
 
-              <div className="flex gap-3 justify-center">
-                <Button variant="outline" onClick={() => setOnboardingStep(0)} className="rounded-full px-6">
+              <motion.div
+                className="flex gap-3 justify-center"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.4 }}
+              >
+                <Button variant="outline" onClick={() => setOnboardingStep(0)} className="rounded-full px-7 h-10 text-sm shadow-sm">
                   Back
                 </Button>
-                <Button onClick={finishCalibration} className="rounded-full px-8">
+                <Button onClick={finishCalibration} className="rounded-full px-8 h-10 text-sm shadow-md">
                   Let's try it
                 </Button>
-              </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
