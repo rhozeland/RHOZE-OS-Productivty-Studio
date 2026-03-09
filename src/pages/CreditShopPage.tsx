@@ -318,18 +318,19 @@ const CreditShopPage = () => {
 
         <TabsContent value="shop" className="space-y-8 mt-4">
 
-      {/* Subscription tiers */}
+      {/* Membership tiers */}
       <div>
         <h2 className="font-display text-lg font-semibold text-foreground mb-1">
-          Recharge{" "}
+          Membership{" "}
           <span className="text-sm font-normal text-muted-foreground">
-            (monthly — select one of the plans to continue)
+            — choose your creative tier
           </span>
         </h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 mt-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-4">
           {TIERS.map((tier, i) => {
             const TierIcon = tier.icon;
             const isCurrentTier = currentTier === tier.key;
+            const isFree = (tier as any).isFree;
             return (
               <motion.div
                 key={tier.key}
