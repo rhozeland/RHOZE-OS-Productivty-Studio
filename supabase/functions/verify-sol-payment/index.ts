@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 const TREASURY_ADDRESS = "6znjR2ttDJ5c6ScePsE4jU8e2g29dChX7cCVk6xjizr";
-const NETWORK = "devnet";
+const NETWORK = "mainnet-beta";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
