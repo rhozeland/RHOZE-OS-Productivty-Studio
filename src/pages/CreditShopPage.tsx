@@ -99,11 +99,14 @@ const CREDIT_PRICE = 75;
 const CreditShopPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [alaCarteCredits, setAlaCarteCredits] = useState(1);
   const [cardPaymentOpen, setCardPaymentOpen] = useState(false);
   const [pendingCardCredits, setPendingCardCredits] = useState(0);
   const [subPaymentOpen, setSubPaymentOpen] = useState(false);
   const [pendingTier, setPendingTier] = useState<(typeof TIERS)[number] | null>(null);
+
+  const activeTab = searchParams.get("tab") || "shop";
 
   const { data: userCredits } = useQuery({
     queryKey: ["user-credits", user?.id],
