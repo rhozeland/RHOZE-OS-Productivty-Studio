@@ -7,6 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Coins,
   Zap,
   Crown,
@@ -17,6 +23,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import PayWithSolButton from "@/components/PayWithSolButton";
+import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
 
 const TIERS = [
   {
@@ -78,6 +85,8 @@ const CreditShopPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [alaCarteCredits, setAlaCarteCredits] = useState(1);
+  const [cardPaymentOpen, setCardPaymentOpen] = useState(false);
+  const [pendingCardCredits, setPendingCardCredits] = useState(0);
 
   const { data: userCredits } = useQuery({
     queryKey: ["user-credits", user?.id],
@@ -310,14 +319,10 @@ const CreditShopPage = () => {
         <div className="flex flex-col gap-3 sm:flex-row">
           <Button
             className="flex-1"
-            onClick={() =>
-              purchaseCredits.mutate({
-                amount: alaCarteCredits,
-                description: `${alaCarteCredits} credit(s) à la carte`,
-                method: "card",
-              })
-            }
-            disabled={purchaseCredits.isPending}
+            onClick={() => {
+              setPendingCardCredits(alaCarteCredits);
+              setCardPaymentOpen(true);
+            }}
           >
             <CreditCard className="mr-2 h-4 w-4" />
             Buy {alaCarteCredits} Credit{alaCarteCredits > 1 ? "s" : ""} @ $
@@ -343,6 +348,54 @@ const CreditShopPage = () => {
 
       {/* Transaction history */}
       <TransactionHistory userId={user?.id} />
+
+      {/* Square Card Payment Modal */}
+      <Dialog open={cardPaymentOpen} onOpenChange={setCardPaymentOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl">
+              Buy {pendingCardCredits} Credit{pendingCardCredits > 1 ? "s" : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="rounded-lg bg-muted/50 border border-border p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Coins className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium text-foreground">
+                {pendingCardCredits} credit{pendingCardCredits > 1 ? "s" : ""}
+              </span>
+            </div>
+            <span className="text-lg font-bold text-primary">
+              ${(pendingCardCredits * CREDIT_PRICE).toFixed(2)}
+            </span>
+          </div>
+          <SquareCardForm
+            amount={pendingCardCredits * CREDIT_PRICE}
+            onTokenize={async (token) => {
+              // Process real payment via Square
+              const { data, error } = await supabase.functions.invoke("square-payment", {
+                body: {
+                  amount_cents: pendingCardCredits * CREDIT_PRICE * 100,
+                  currency: "USD",
+                  description: `Rhozeland: ${pendingCardCredits} credit(s)`,
+                  source_id: token,
+                  location_id: SQUARE_LOCATION_ID,
+                },
+              });
+              if (error) throw error;
+              if (!data?.success) throw new Error(data?.error || "Payment failed");
+
+              // Payment succeeded — now add credits
+              await purchaseCredits.mutateAsync({
+                amount: pendingCardCredits,
+                description: `${pendingCardCredits} credit(s) à la carte`,
+                method: "card",
+              });
+
+              setCardPaymentOpen(false);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
