@@ -87,6 +87,28 @@ const MarketplacePage = () => {
     enabled: listingIds.length > 0,
   });
 
+  // Fetch review stats for all listings
+  const { data: reviewStats } = useQuery({
+    queryKey: ["listing-reviews-bulk", listingIds],
+    queryFn: async () => {
+      if (listingIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("reviews" as any)
+        .select("listing_id, rating")
+        .in("listing_id", listingIds);
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: listingIds.length > 0,
+  });
+
+  const getReviewStatsForListing = (listingId: string) => {
+    const reviews = reviewStats?.filter((r: any) => r.listing_id === listingId) ?? [];
+    if (reviews.length === 0) return null;
+    const avg = reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length;
+    return { avg: Math.round(avg * 10) / 10, count: reviews.length };
+  };
+
   const deleteListing = useMutation({
     mutationFn: async (listingId: string) => {
       const { error } = await supabase.from("marketplace_listings").delete().eq("id", listingId);
