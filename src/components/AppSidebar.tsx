@@ -88,7 +88,7 @@ const AppSidebar = () => {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
-              {navItems.map((item) => {
+              {allNavItems.map((item) => {
                 const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + "/");
                 return (
                   <SidebarMenuItem key={item.path}>
