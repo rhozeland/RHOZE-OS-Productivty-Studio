@@ -65,6 +65,7 @@ const App = () => (
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
+    </SolanaWalletProvider>
   </QueryClientProvider>
 );
 
