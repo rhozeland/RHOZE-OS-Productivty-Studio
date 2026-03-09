@@ -18,7 +18,7 @@ import {
   Sparkles,
   Flower2,
   Sun,
-  Triangle,
+  Gamepad,
   Check,
   CreditCard,
   Wallet,
