@@ -280,8 +280,11 @@ const CreditShopPage = () => {
                   <Button
                     className="w-full mt-3"
                     variant={isCurrentTier ? "outline" : "default"}
-                    disabled={isCurrentTier || subscribeTier.isPending}
-                    onClick={() => subscribeTier.mutate(tier)}
+                    disabled={isCurrentTier}
+                    onClick={() => {
+                      setPendingTier(tier);
+                      setSubPaymentOpen(true);
+                    }}
                   >
                     {isCurrentTier ? "Current Plan" : `Subscribe — $${tier.price}/mo`}
                   </Button>
