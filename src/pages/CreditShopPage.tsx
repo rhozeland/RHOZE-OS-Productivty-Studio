@@ -414,9 +414,9 @@ const CreditShopPage = () => {
       {/* À la carte */}
       <div className="surface-card p-6 space-y-5">
         <h2 className="font-display text-lg font-semibold text-foreground">
-          Recharge{" "}
+          Top Up{" "}
           <span className="text-sm font-normal text-muted-foreground">
-            (fixed amount — slide to select more credits)
+            — add individual credits anytime
           </span>
         </h2>
 

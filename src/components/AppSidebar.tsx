@@ -42,7 +42,7 @@ const getEssentialItems = (userId?: string) => [
   { icon: Briefcase, label: "Services", path: "/services" },
   { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: Calendar, label: "Calendar", path: "/calendar" },
-  { icon: Coins, label: "Credit Shop", path: "/credits" },
+  { icon: Coins, label: "Studio Pass", path: "/credits" },
 ];
 
 const creativeItems = [
