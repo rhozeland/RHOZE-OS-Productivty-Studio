@@ -20,6 +20,8 @@ import SmartboardDetailPage from "@/pages/SmartboardDetailPage";
 import ProfilesPage from "@/pages/ProfilesPage";
 import MessagesPage from "@/pages/MessagesPage";
 import SettingsPage from "@/pages/SettingsPage";
+import ServicesPage from "@/pages/ServicesPage";
+import CreditShopPage from "@/pages/CreditShopPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,10 +54,12 @@ const App = () => (
             <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/services" element={<ServicesPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/projects/:id" element={<ProjectDetailPage />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/bookings" element={<BookingsPage />} />
+              <Route path="/credits" element={<CreditShopPage />} />
               <Route path="/flow" element={<FlowModePage />} />
               <Route path="/smartboards" element={<SmartboardsPage />} />
               <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />

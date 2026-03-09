@@ -12,6 +12,8 @@ import {
   MessageSquare,
   Settings,
   LogOut,
+  Briefcase,
+  Coins,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -31,9 +33,11 @@ import logoWhite from "@/assets/toybox-logo-white.png";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+  { icon: Briefcase, label: "Services", path: "/services" },
   { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: Calendar, label: "Calendar", path: "/calendar" },
   { icon: CalendarCheck, label: "Bookings", path: "/bookings" },
+  { icon: Coins, label: "Credit Shop", path: "/credits" },
   { icon: Compass, label: "Flow", path: "/flow" },
   { icon: LayoutGrid, label: "Smartboards", path: "/smartboards" },
   { icon: Store, label: "Marketplace", path: "/marketplace" },

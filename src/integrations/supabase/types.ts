@@ -111,6 +111,39 @@ export type Database = {
           },
         ]
       }
+      credit_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          payment_method: string | null
+          payment_reference: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          type?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       flow_interactions: {
         Row: {
           action: string
@@ -700,6 +733,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_credits: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          subscription_end: string | null
+          subscription_start: string | null
+          tier: string
+          tier_credits_monthly: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          subscription_end?: string | null
+          subscription_start?: string | null
+          tier?: string
+          tier_credits_monthly?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          subscription_end?: string | null
+          subscription_start?: string | null
+          tier?: string
+          tier_credits_monthly?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
