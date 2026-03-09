@@ -22,7 +22,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
-import PayWithSolButton from "@/components/PayWithSolButton";
+import PaySolAndVerify from "@/components/PaySolAndVerify";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
 
 const TIERS = [
