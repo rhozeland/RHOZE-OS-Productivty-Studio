@@ -264,7 +264,60 @@ const FlowModePage = () => {
     return () => window.removeEventListener("keydown", handler);
   }, [calibrated, currentItem, performAction]);
 
-  // ──── ONBOARDING ────
+  // ──── ONBOARDING / TUTORIAL ────
+  const [tutorialDirection, setTutorialDirection] = useState<string | null>(null);
+  const [tutorialCompleted, setTutorialCompleted] = useState<string[]>([]);
+  const tutorialX = useMotionValue(0);
+  const tutorialY = useMotionValue(0);
+  const tutorialRotate = useTransform(tutorialX, [-200, 200], [-15, 15]);
+
+  const TUTORIAL_STEPS = [
+    { direction: "up", action: "SAVE", label: "Swipe up to save to a Smartboard", icon: ChevronUp, color: "text-primary" },
+    { direction: "down", action: "PASS", label: "Swipe down to pass on content", icon: ChevronDown, color: "text-destructive" },
+    { direction: "left", action: "SHARE", label: "Swipe left to share with others", icon: ChevronLeft, color: "text-muted-foreground" },
+    { direction: "right", action: "NEXT", label: "Swipe right to skip to next", icon: ChevronRight, color: "text-muted-foreground" },
+  ];
+
+  const currentTutorialStep = TUTORIAL_STEPS.find((s) => !tutorialCompleted.includes(s.direction));
+
+  const handleTutorialSwipe = useCallback((dir: string) => {
+    if (!currentTutorialStep || dir !== currentTutorialStep.direction) {
+      setTutorialDirection(null);
+      return;
+    }
+    setTutorialDirection(dir);
+    setTimeout(() => {
+      setTutorialCompleted((prev) => [...prev, dir]);
+      setTutorialDirection(null);
+    }, 400);
+  }, [currentTutorialStep]);
+
+  const handleTutorialDragEnd = useCallback((_: any, info: PanInfo) => {
+    const { offset } = info;
+    const threshold = 60;
+
+    if (Math.abs(offset.x) > Math.abs(offset.y)) {
+      if (offset.x > threshold) handleTutorialSwipe("right");
+      else if (offset.x < -threshold) handleTutorialSwipe("left");
+    } else {
+      if (offset.y < -threshold) handleTutorialSwipe("up");
+      else if (offset.y > threshold) handleTutorialSwipe("down");
+    }
+  }, [handleTutorialSwipe]);
+
+  // Keyboard support for tutorial
+  useEffect(() => {
+    if (calibrated || onboardingStep !== 2) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "ArrowUp") handleTutorialSwipe("up");
+      if (e.key === "ArrowDown") handleTutorialSwipe("down");
+      if (e.key === "ArrowLeft") handleTutorialSwipe("left");
+      if (e.key === "ArrowRight") handleTutorialSwipe("right");
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [calibrated, onboardingStep, handleTutorialSwipe]);
+
   if (!calibrated) {
     return (
       <div className="relative flex items-center justify-center min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8 overflow-hidden gradient-hero">
@@ -273,6 +326,7 @@ const FlowModePage = () => {
         <div className="absolute bottom-20 right-1/4 w-72 h-72 bg-pink/10 rounded-full blur-3xl" />
 
         <AnimatePresence mode="wait">
+          {/* Step 0: Category Calibration */}
           {onboardingStep === 0 && (
             <motion.div
               key="types"
@@ -333,9 +387,10 @@ const FlowModePage = () => {
             </motion.div>
           )}
 
+          {/* Step 1: Video Tutorial */}
           {onboardingStep === 1 && (
             <motion.div
-              key="swipe"
+              key="video"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -30 }}
@@ -346,97 +401,243 @@ const FlowModePage = () => {
                 className="font-display text-2xl font-bold text-foreground mb-1.5"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15, duration: 0.5 }}
+                transition={{ delay: 0.15 }}
               >
-                How it works
+                How Flow Mode works
               </motion.h2>
               <motion.p
-                className="text-sm text-muted-foreground mb-8 max-w-[260px] mx-auto leading-relaxed"
+                className="text-sm text-muted-foreground mb-6 max-w-[280px] mx-auto leading-relaxed"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.25, duration: 0.5 }}
+                transition={{ delay: 0.25 }}
               >
-                Swipe or use arrow keys to interact with content.
+                Watch how swiping works, then try it yourself.
               </motion.p>
 
-              <div className="relative mx-auto mb-10" style={{ width: 260, height: 320 }}>
-                {/* SAVE — top */}
-                <motion.div
-                  className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5"
-                  style={{ top: -40 }}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: [0, -4, 0] }}
-                  transition={{ delay: 0.5, duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                >
-                  <ChevronUp className="h-4 w-4 text-primary/60" />
-                  <span className="text-[10px] font-semibold text-primary/60 tracking-[0.2em]">SAVE</span>
-                </motion.div>
-
-                {/* DISLIKE — bottom */}
-                <motion.div
-                  className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5"
-                  style={{ bottom: -40 }}
-                  initial={{ opacity: 0, y: -12 }}
-                  animate={{ opacity: 1, y: [0, 4, 0] }}
-                  transition={{ delay: 0.7, duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                >
-                  <span className="text-[10px] font-semibold text-destructive/50 tracking-[0.2em]">DISLIKE</span>
-                  <ChevronDown className="h-4 w-4 text-destructive/50" />
-                </motion.div>
-
-                {/* SHARE — left */}
-                <motion.div
-                  className="absolute top-1/2 -translate-y-1/2 flex items-center gap-1"
-                  style={{ left: -76 }}
-                  initial={{ opacity: 0, x: 12 }}
-                  animate={{ opacity: 1, x: [0, -4, 0] }}
-                  transition={{ delay: 0.6, duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                >
-                  <ChevronLeft className="h-4 w-4 text-muted-foreground/50" />
-                  <span className="text-[10px] font-semibold text-muted-foreground/50 tracking-[0.2em]">SHARE</span>
-                </motion.div>
-
-                {/* NEXT — right */}
-                <motion.div
-                  className="absolute top-1/2 -translate-y-1/2 flex items-center gap-1"
-                  style={{ right: -68 }}
-                  initial={{ opacity: 0, x: -12 }}
-                  animate={{ opacity: 1, x: [0, 4, 0] }}
-                  transition={{ delay: 0.6, duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                >
-                  <span className="text-[10px] font-semibold text-muted-foreground/50 tracking-[0.2em]">NEXT</span>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-                </motion.div>
-
-                {/* Card */}
-                <motion.div
-                  className="w-full h-full rounded-[28px] bg-card/90 backdrop-blur-sm shadow-2xl shadow-primary/5 border border-border/30 flex items-center justify-center"
-                  initial={{ scale: 0.85, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.3, duration: 0.6, type: "spring", stiffness: 160, damping: 18 }}
-                >
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.6, duration: 0.4 }}
-                  >
-                    <Fingerprint className="h-10 w-10 text-muted-foreground/15" />
-                  </motion.div>
-                </motion.div>
-              </div>
+              <motion.div
+                className="relative mx-auto mb-8 rounded-2xl overflow-hidden shadow-2xl shadow-primary/10 border border-border/30 bg-card"
+                style={{ maxWidth: 320 }}
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.3, type: "spring", stiffness: 160, damping: 20 }}
+              >
+                <video
+                  src="/videos/flow-tutorial.mov"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full aspect-[9/16] object-cover"
+                />
+              </motion.div>
 
               <motion.div
                 className="flex gap-3 justify-center"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.4 }}
+                transition={{ delay: 0.5 }}
               >
-                <Button variant="outline" onClick={() => setOnboardingStep(0)} className="rounded-full px-7 h-10 text-sm shadow-sm">
+                <Button variant="outline" onClick={() => setOnboardingStep(0)} className="rounded-full px-7 h-10 text-sm">
                   Back
                 </Button>
-                <Button onClick={finishCalibration} className="rounded-full px-8 h-10 text-sm shadow-md">
-                  Let's try it
+                <Button onClick={() => { setTutorialCompleted([]); setOnboardingStep(2); }} className="rounded-full px-8 h-10 text-sm shadow-md">
+                  Try it yourself
                 </Button>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {/* Step 2: Interactive Swipe Practice */}
+          {onboardingStep === 2 && (
+            <motion.div
+              key="practice"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="w-full max-w-md text-center px-6 flex flex-col items-center"
+            >
+              <motion.h2
+                className="font-display text-2xl font-bold text-foreground mb-1"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+              >
+                Your turn
+              </motion.h2>
+              <motion.p
+                className="text-sm text-muted-foreground mb-2 max-w-[260px] mx-auto leading-relaxed"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.25 }}
+              >
+                Practice each gesture to continue.
+              </motion.p>
+
+              {/* Progress dots */}
+              <div className="flex gap-2 mb-6">
+                {TUTORIAL_STEPS.map((step) => (
+                  <div
+                    key={step.direction}
+                    className={`h-2 w-2 rounded-full transition-all duration-300 ${
+                      tutorialCompleted.includes(step.direction) ? "bg-primary scale-125" : "bg-muted-foreground/20"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Swipe area */}
+              <div className="relative" style={{ width: 280, height: 380 }}>
+                {/* Directional hints */}
+                {currentTutorialStep && (
+                  <>
+                    {/* Active direction indicator */}
+                    {currentTutorialStep.direction === "up" && (
+                      <motion.div
+                        className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 z-20"
+                        style={{ top: -44 }}
+                        animate={{ y: [0, -6, 0] }}
+                        transition={{ duration: 1.2, repeat: Infinity }}
+                      >
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                        <span className="text-[11px] font-bold text-primary tracking-[0.15em]">SAVE</span>
+                      </motion.div>
+                    )}
+                    {currentTutorialStep.direction === "down" && (
+                      <motion.div
+                        className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 z-20"
+                        style={{ bottom: -44 }}
+                        animate={{ y: [0, 6, 0] }}
+                        transition={{ duration: 1.2, repeat: Infinity }}
+                      >
+                        <span className="text-[11px] font-bold text-destructive tracking-[0.15em]">PASS</span>
+                        <ChevronDown className="h-5 w-5 text-destructive" />
+                      </motion.div>
+                    )}
+                    {currentTutorialStep.direction === "left" && (
+                      <motion.div
+                        className="absolute top-1/2 -translate-y-1/2 flex items-center gap-1 z-20"
+                        style={{ left: -70 }}
+                        animate={{ x: [0, -6, 0] }}
+                        transition={{ duration: 1.2, repeat: Infinity }}
+                      >
+                        <ChevronLeft className="h-5 w-5 text-foreground/60" />
+                        <span className="text-[11px] font-bold text-foreground/60 tracking-[0.15em]">SHARE</span>
+                      </motion.div>
+                    )}
+                    {currentTutorialStep.direction === "right" && (
+                      <motion.div
+                        className="absolute top-1/2 -translate-y-1/2 flex items-center gap-1 z-20"
+                        style={{ right: -60 }}
+                        animate={{ x: [0, 6, 0] }}
+                        transition={{ duration: 1.2, repeat: Infinity }}
+                      >
+                        <span className="text-[11px] font-bold text-foreground/60 tracking-[0.15em]">NEXT</span>
+                        <ChevronRight className="h-5 w-5 text-foreground/60" />
+                      </motion.div>
+                    )}
+                  </>
+                )}
+
+                {/* All 4 completed */}
+                {tutorialCompleted.length === 4 ? (
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="w-full h-full rounded-[28px] bg-card/90 backdrop-blur-sm shadow-2xl shadow-primary/10 border border-primary/20 flex flex-col items-center justify-center gap-4"
+                  >
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.2 }}
+                      className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center"
+                    >
+                      <Check className="h-8 w-8 text-primary" />
+                    </motion.div>
+                    <p className="font-display text-lg font-bold text-foreground">You're ready!</p>
+                    <p className="text-sm text-muted-foreground max-w-[200px]">You've mastered all four gestures.</p>
+                  </motion.div>
+                ) : (
+                  /* Draggable practice card */
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={currentTutorialStep?.direction}
+                      drag
+                      dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
+                      dragElastic={0.9}
+                      onDragEnd={handleTutorialDragEnd}
+                      style={{
+                        x: tutorialX,
+                        y: tutorialY,
+                        rotateZ: tutorialRotate,
+                        touchAction: "none",
+                      }}
+                      initial={{ scale: 0.9, opacity: 0 }}
+                      animate={
+                        tutorialDirection
+                          ? {
+                              scale: 1,
+                              opacity: 0,
+                              x: tutorialDirection === "left" ? -300 : tutorialDirection === "right" ? 300 : 0,
+                              y: tutorialDirection === "up" ? -400 : tutorialDirection === "down" ? 400 : 0,
+                            }
+                          : { scale: 1, opacity: 1, x: 0, y: 0 }
+                      }
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={
+                        tutorialDirection
+                          ? { duration: 0.35, ease: "easeOut" }
+                          : { type: "spring", stiffness: 200, damping: 20 }
+                      }
+                      whileDrag={{ scale: 1.04 }}
+                      className="w-full h-full rounded-[28px] bg-card/90 backdrop-blur-sm shadow-2xl shadow-primary/5 border border-border/30 flex flex-col items-center justify-center gap-5 cursor-grab active:cursor-grabbing select-none"
+                    >
+                      {currentTutorialStep && (
+                        <>
+                          <motion.div
+                            animate={{ y: currentTutorialStep.direction === "up" ? [0, -8, 0] : currentTutorialStep.direction === "down" ? [0, 8, 0] : 0, x: currentTutorialStep.direction === "left" ? [0, -8, 0] : currentTutorialStep.direction === "right" ? [0, 8, 0] : 0 }}
+                            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                          >
+                            <currentTutorialStep.icon className={`h-12 w-12 ${currentTutorialStep.color}/40`} strokeWidth={1.5} />
+                          </motion.div>
+                          <div className="text-center px-6">
+                            <p className="font-display text-base font-bold text-foreground mb-1">{currentTutorialStep.action}</p>
+                            <p className="text-sm text-muted-foreground leading-relaxed">{currentTutorialStep.label}</p>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground/50 tracking-wider mt-2">
+                            SWIPE · DRAG · OR PRESS ARROW KEY
+                          </p>
+                        </>
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
+                )}
+              </div>
+
+              {/* Buttons */}
+              <motion.div
+                className="flex gap-3 justify-center mt-8"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <Button variant="outline" onClick={() => setOnboardingStep(1)} className="rounded-full px-7 h-10 text-sm">
+                  Watch again
+                </Button>
+                {tutorialCompleted.length === 4 ? (
+                  <Button onClick={finishCalibration} className="rounded-full px-8 h-10 text-sm shadow-md">
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Enter Flow Mode
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    onClick={finishCalibration}
+                    className="rounded-full px-6 h-10 text-sm text-muted-foreground"
+                  >
+                    Skip tutorial
+                  </Button>
+                )}
               </motion.div>
             </motion.div>
           )}
