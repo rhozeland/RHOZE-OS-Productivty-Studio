@@ -202,7 +202,7 @@ const ServicesPage = () => {
       )}
 
       {/* Category sections — studio menu board */}
-      {sortedCategories.map((catKey, catIndex) => {
+      {visibleCategories.map((catKey, catIndex) => {
         const meta = CATEGORY_META[catKey] || {
           label: catKey,
           icon: Sparkles,
