@@ -241,6 +241,17 @@ const CreditShopPage = () => {
         </div>
       </div>
 
+      <Tabs value={activeTab} onValueChange={(v) => {
+        if (v === "shop") { searchParams.delete("tab"); } else { searchParams.set("tab", v); }
+        setSearchParams(searchParams, { replace: true });
+      }}>
+        <TabsList>
+          <TabsTrigger value="shop" className="gap-1.5"><Coins className="h-3.5 w-3.5" /> Shop</TabsTrigger>
+          <TabsTrigger value="purchases" className="gap-1.5"><ShoppingBag className="h-3.5 w-3.5" /> My Purchases</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="shop" className="space-y-8 mt-4">
+
       {/* Subscription tiers */}
       <div>
         <h2 className="font-display text-lg font-semibold text-foreground mb-1">
