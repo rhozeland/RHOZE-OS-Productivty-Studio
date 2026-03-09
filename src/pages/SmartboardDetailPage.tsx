@@ -469,7 +469,13 @@ const SmartboardDetailPage = () => {
         </div>
       </div>
 
-      {/* Content grid + chat */}
+      <SmartboardBackground
+        color={board.background_color}
+        url={board.background_url}
+        blur={board.background_blur ?? 0}
+        opacity={board.background_opacity ?? 100}
+        className="rounded-2xl p-4"
+      >
       <div className={`grid gap-4 ${chatOpen ? "grid-cols-1 lg:grid-cols-3" : "grid-cols-1"}`}>
         {/* Multi-modal masonry grid */}
         <div className={chatOpen ? "lg:col-span-2" : ""}>
@@ -480,14 +486,13 @@ const SmartboardDetailPage = () => {
               <p className="text-sm text-muted-foreground mt-1">Add notes, links, images, or media to get started</p>
             </div>
           ) : (
-            <div className="columns-2 md:columns-3 gap-3 space-y-3">
+            <div className={editMode ? "flex flex-wrap gap-3" : "columns-2 md:columns-3 gap-3 space-y-3"}>
               <AnimatePresence>
                 {items.map((item, i) => {
                   const isImage = item.content_type === "image" && item.file_url;
                   const isVideo = item.content_type === "video" && item.file_url;
                   const isAudio = item.content_type === "audio" && item.file_url;
                   const isPdf = item.content_type === "pdf" && item.file_url;
-                  const isVisualMedia = isImage || isVideo;
                   return (
                     <motion.div
                       key={item.id}
@@ -495,11 +500,18 @@ const SmartboardDetailPage = () => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ delay: i * 0.03 }}
-                      className="break-inside-avoid group relative rounded-xl overflow-hidden bg-card border border-border shadow-sm hover:shadow-md transition-all"
+                      className={editMode ? "" : "break-inside-avoid"}
                     >
+                      <ResizableItem
+                        itemId={item.id}
+                        initialWidth={item.item_width}
+                        initialHeight={item.item_height}
+                        editMode={editMode}
+                        className="group relative rounded-xl overflow-hidden bg-card border border-border shadow-sm hover:shadow-md transition-all"
+                      >
                       {isImage && (
-                        <div className="relative">
-                          <img src={item.file_url!} alt={item.title || "Image"} className="w-full object-cover" loading="lazy" />
+                        <div className="relative h-full">
+                          <img src={item.file_url!} alt={item.title || "Image"} className="w-full h-full object-cover" loading="lazy" />
                           {item.title && (
                             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-foreground/60 to-transparent p-3">
                               <span className="text-card text-sm font-medium">{item.title}</span>
@@ -575,10 +587,10 @@ const SmartboardDetailPage = () => {
 
                       {/* Edit mode overlay */}
                       {editMode && item.user_id === user?.id && (
-                        <div className="absolute inset-0 bg-foreground/10 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute inset-0 bg-foreground/10 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                           <button
                             onClick={() => deleteItem.mutate(item.id)}
-                            className="h-9 w-9 rounded-full bg-card shadow-md flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                            className="h-9 w-9 rounded-full bg-card shadow-md flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-colors pointer-events-auto"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -594,6 +606,7 @@ const SmartboardDetailPage = () => {
                           <X className="h-3.5 w-3.5" />
                         </button>
                       )}
+                      </ResizableItem>
                     </motion.div>
                   );
                 })}
