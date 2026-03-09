@@ -28,7 +28,7 @@ serve(async (req) => {
     }
 
     const payload: CancellationEmailPayload = await req.json();
-    const { to_email, user_name, service_title, date, time, duration_hours } = payload;
+    const { to_email, user_name, service_title, date, time, duration_hours, credits_refunded } = payload;
 
     if (!to_email || !service_title) {
       return new Response(
