@@ -31,9 +31,11 @@ import {
   Sparkles,
   X,
   DollarSign,
+  MessageCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import PayWithSolButton from "@/components/PayWithSolButton";
 import { isValidSolanaAddress } from "@/lib/solana";
 
@@ -49,6 +51,7 @@ const CATEGORIES = [
 const MarketplacePage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
@@ -319,21 +322,19 @@ const MarketplacePage = () => {
                               label={`${listing.price} SOL`}
                             />
                           )}
-                        {listing.contact_info && (
-                          <a
-                            href={
-                              listing.contact_info.includes("@")
-                                ? `mailto:${listing.contact_info}`
-                                : listing.contact_info.startsWith("http")
-                                ? listing.contact_info
-                                : `mailto:${listing.contact_info}`
-                            }
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-primary hover:underline font-medium"
+                        {listing.user_id !== user?.id && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs gap-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`);
+                            }}
                           >
-                            Contact
-                          </a>
+                            <MessageCircle className="h-3 w-3" />
+                            Inquire
+                          </Button>
                         )}
                       </div>
                     </div>

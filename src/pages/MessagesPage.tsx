@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Send, User, MessageSquare, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 
 type Profile = {
   user_id: string;
@@ -27,10 +27,12 @@ type Message = {
 const MessagesPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [messageText, setMessageText] = useState("");
   const [search, setSearch] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inquiryHandled = useRef(false);
 
   // Get all profiles (potential contacts)
   const { data: profiles } = useQuery({
@@ -134,6 +136,25 @@ const MessagesPage = () => {
         .then(() => queryClient.invalidateQueries({ queryKey: ["conversations"] }));
     }
   }, [messages, selectedUser, user, queryClient]);
+
+  // Handle inquiry deep-link from marketplace
+  useEffect(() => {
+    if (inquiryHandled.current || !profiles) return;
+    const toUserId = searchParams.get("to");
+    const listingTitle = searchParams.get("listing");
+    if (!toUserId) return;
+
+    const targetProfile = profiles.find((p) => p.user_id === toUserId);
+    if (targetProfile) {
+      setSelectedUser(targetProfile);
+      if (listingTitle) {
+        setMessageText(`Hi! I'm interested in your listing "${decodeURIComponent(listingTitle)}". Could we discuss the details?`);
+      }
+      // Clean up URL params
+      setSearchParams({}, { replace: true });
+      inquiryHandled.current = true;
+    }
+  }, [profiles, searchParams, setSearchParams]);
 
   const sendMessage = useMutation({
     mutationFn: async () => {
