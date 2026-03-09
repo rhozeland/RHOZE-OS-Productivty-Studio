@@ -220,6 +220,7 @@ const MarketplacePage = () => {
                 key={listing.id}
                 listing={listing}
                 media={getMediaForListing(listing.id)}
+                reviewStats={getReviewStatsForListing(listing.id)}
                 index={i}
                 isOwner={listing.user_id === user?.id}
                 onInquire={() =>

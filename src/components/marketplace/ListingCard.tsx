@@ -161,6 +161,13 @@ const ListingCard = ({
         {/* Footer */}
         <div className="flex items-center justify-between pt-1 border-t border-border/50">
           <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+            {reviewStats && (
+              <span className="flex items-center gap-1">
+                <StarRating rating={reviewStats.avg} size="sm" />
+                <span className="font-medium text-foreground">{reviewStats.avg}</span>
+                <span>({reviewStats.count})</span>
+              </span>
+            )}
             {listing.delivery_days && (
               <span className="flex items-center gap-0.5">
                 <Clock className="h-3 w-3" /> {listing.delivery_days}d
