@@ -294,6 +294,7 @@ const DropRoomsPage = () => {
                         {room.category}
                       </Badge>
                     </div>
+                  </div>
                   {room.description && (
                     <p className="text-sm text-muted-foreground line-clamp-2">{room.description}</p>
                   )}
