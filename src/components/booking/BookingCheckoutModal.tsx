@@ -440,13 +440,15 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
               </Button>
 
               {paymentMethod === "crypto" ? (
-                <div className="flex-1">
-                  <PayWithSolButton
-                    recipientAddress={STUDIO_WALLET}
-                    solAmount={solPrice}
-                    label={`Pay ${solPrice} SOL & Book`}
-                  />
-                </div>
+                <PaySolAndVerify
+                  solAmount={solPrice}
+                  creditsToAdd={0}
+                  description={`Booking: ${service.title}`}
+                  type="usage"
+                  label={`Pay ${solPrice} SOL & Book`}
+                  className="flex-1"
+                  onSuccess={() => handleConfirm()}
+                />
               ) : paymentMethod === "credits" ? (
                 <Button
                   className="flex-1"
