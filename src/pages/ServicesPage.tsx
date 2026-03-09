@@ -253,11 +253,12 @@ const ServicesPage = () => {
                 )}
 
                 <div className="flex gap-2 pt-2">
-                  <Link to="/bookings" className="flex-1">
-                    <Button className="w-full">
-                      Book Service
-                    </Button>
-                  </Link>
+                  <Button className="flex-1" onClick={() => {
+                    setCheckoutService(selectedService);
+                    setSelectedService(null);
+                  }}>
+                    Book Service
+                  </Button>
                   <Link to="/credits">
                     <Button variant="outline">
                       <Coins className="mr-1.5 h-4 w-4" />
@@ -270,6 +271,13 @@ const ServicesPage = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <BookingCheckoutModal
+        open={!!checkoutService}
+        onOpenChange={(open) => { if (!open) setCheckoutService(null); }}
+        service={checkoutService}
+        userCredits={userCredits?.balance ?? 0}
+      />
     </div>
   );
 };
