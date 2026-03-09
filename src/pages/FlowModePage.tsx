@@ -426,9 +426,19 @@ const FlowModePage = () => {
       <div className={`absolute bottom-10 right-1/4 w-96 h-96 ${gradient.blur2} rounded-full blur-3xl`} />
 
       {/* Top bar */}
-      <div className="relative z-10 flex items-center justify-center gap-3 px-4 py-4 md:px-6">
+      <div className="relative z-10 flex items-center justify-between gap-3 px-4 py-4 md:px-6">
+        {/* Search toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9 shrink-0"
+          onClick={() => setSearchOpen(!searchOpen)}
+        >
+          <Search className="h-4 w-4" />
+        </Button>
+
         {/* Category pills */}
-        <div className="flex items-center gap-2 flex-wrap justify-center">
+        <div className="flex items-center gap-2 flex-wrap justify-center flex-1">
           {CATEGORIES.map((cat) => (
             <Badge
               key={cat}
@@ -446,7 +456,53 @@ const FlowModePage = () => {
             </Badge>
           ))}
         </div>
+
+        {/* Share button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9 shrink-0"
+          onClick={() => setAddOpen(true)}
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
       </div>
+
+      {/* Search bar (expandable) */}
+      <AnimatePresence>
+        {searchOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="relative z-10 px-4 md:px-6 overflow-hidden"
+          >
+            <div className="max-w-md mx-auto pb-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search Flow content..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentIndex(0);
+                  }}
+                  className="pl-9 pr-9 rounded-full bg-card/80 backdrop-blur-sm border-border/50"
+                  autoFocus
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => { setSearchQuery(""); setCurrentIndex(0); }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Card area — centered */}
       <div className="relative z-10 flex-1 flex items-center justify-center px-4">
