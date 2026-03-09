@@ -4,13 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
-  Star,
+  Briefcase,
   RefreshCw,
   Network,
   FolderKanban,
   Calendar,
   CheckSquare,
   Zap,
+  Coins,
   MessageSquare,
   Layers,
   Compass,
