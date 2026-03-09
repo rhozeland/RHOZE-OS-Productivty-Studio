@@ -273,7 +273,63 @@ const SettingsPage = () => {
               e.target.value = "";
             }}
           />
+      </div>
+
+      {/* Banner Gradient */}
+      <div className="surface-card max-w-2xl p-6">
+        <h2 className="mb-2 font-display text-lg font-semibold text-foreground">Banner Gradient</h2>
+        <p className="text-xs text-muted-foreground mb-4">Choose a gradient for your profile banner</p>
+
+        {/* Preview */}
+        <div
+          className="h-20 rounded-xl mb-4 border border-border"
+          style={{
+            background: bannerGradient || "linear-gradient(135deg, hsl(var(--primary) / 0.3), hsl(var(--accent) / 0.2), hsl(var(--primary) / 0.1))",
+          }}
+        />
+
+        {/* Gradient presets */}
+        <div className="grid grid-cols-5 gap-2">
+          {BANNER_GRADIENTS.map((g) => (
+            <button
+              key={g.label}
+              onClick={async () => {
+                setBannerGradient(g.value);
+                await supabase.from("profiles").update({ banner_gradient: g.value } as any).eq("user_id", user!.id);
+                queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+                queryClient.invalidateQueries({ queryKey: ["profile"] });
+                toast.success(`Banner set to ${g.label}`);
+              }}
+              className={`group relative rounded-lg overflow-hidden border-2 transition-all h-10 ${
+                bannerGradient === g.value ? "border-primary shadow-md" : "border-border hover:border-primary/40"
+              }`}
+              style={{ background: g.value }}
+              title={g.label}
+            >
+              <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-foreground/20 text-[9px] font-semibold text-card tracking-wide">
+                {g.label}
+              </span>
+            </button>
+          ))}
         </div>
+
+        {bannerGradient && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-3 text-xs"
+            onClick={async () => {
+              setBannerGradient("");
+              await supabase.from("profiles").update({ banner_gradient: null } as any).eq("user_id", user!.id);
+              queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+              queryClient.invalidateQueries({ queryKey: ["profile"] });
+              toast.success("Reset to default gradient");
+            }}
+          >
+            <X className="mr-1 h-3 w-3" /> Reset to default
+          </Button>
+        )}
+      </div>
 
         {showAvatarPicker && (
           <div className="mt-4 p-4 rounded-lg border border-border bg-muted/30">
