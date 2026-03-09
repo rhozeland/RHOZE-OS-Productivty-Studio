@@ -2,6 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   User,
   Briefcase,
@@ -50,17 +51,17 @@ const heroVariants = [
 
 /* ── All available quick-link options ──────────────────────── */
 const allQuickLinks = [
-  { id: "profile", icon: User, label: "MY PROFILE", path: "/profiles" },
-  { id: "services", icon: Briefcase, label: "RHOZELAND\nSERVICES", path: "/services" },
-  { id: "credits", icon: Coins, label: "CREDIT\nSHOP", path: "/credits" },
-  { id: "bookings", icon: RefreshCw, label: "MY BOOKINGS", path: "/bookings" },
-  { id: "network", icon: Network, label: "NETWORK", path: "/messages" },
-  { id: "projects", icon: FolderKanban, label: "PROJECTS", path: "/projects" },
-  { id: "calendar", icon: Calendar, label: "CALENDAR", path: "/calendar" },
-  { id: "smartboards", icon: Layers, label: "SMARTBOARDS", path: "/smartboards" },
-  { id: "flow", icon: Compass, label: "FLOW MODE", path: "/flow" },
-  { id: "messages", icon: MessageSquare, label: "MESSAGES", path: "/messages" },
-  { id: "settings", icon: Settings, label: "SETTINGS", path: "/settings" },
+  { id: "profile", icon: User, label: "MY PROFILE", path: "/settings", gradient: "linear-gradient(135deg, hsl(175 45% 65%), hsl(190 50% 50%))", isProfile: true },
+  { id: "services", icon: Briefcase, label: "RHOZELAND\nSERVICES", path: "/services", gradient: "linear-gradient(135deg, hsl(30 60% 60%), hsl(25 50% 45%))" },
+  { id: "credits", icon: Coins, label: "CREDIT\nSHOP", path: "/credits", gradient: "linear-gradient(135deg, hsl(50 85% 55%), hsl(40 80% 45%))" },
+  { id: "bookings", icon: RefreshCw, label: "MY\nBOOKINGS", path: "/bookings", gradient: "linear-gradient(135deg, hsl(260 50% 65%), hsl(280 45% 55%))" },
+  { id: "network", icon: Network, label: "NETWORK", path: "/messages", gradient: "linear-gradient(135deg, hsl(200 60% 60%), hsl(220 55% 50%))" },
+  { id: "projects", icon: FolderKanban, label: "PROJECTS", path: "/projects", gradient: "linear-gradient(135deg, hsl(340 55% 60%), hsl(350 50% 50%))" },
+  { id: "calendar", icon: Calendar, label: "CALENDAR", path: "/calendar", gradient: "linear-gradient(135deg, hsl(150 45% 55%), hsl(165 50% 45%))" },
+  { id: "smartboards", icon: Layers, label: "SMART\nBOARDS", path: "/smartboards", gradient: "linear-gradient(135deg, hsl(290 50% 60%), hsl(310 45% 50%))" },
+  { id: "flow", icon: Compass, label: "FLOW\nMODE", path: "/flow", gradient: "linear-gradient(135deg, hsl(15 65% 60%), hsl(5 55% 50%))" },
+  { id: "messages", icon: MessageSquare, label: "MESSAGES", path: "/messages", gradient: "linear-gradient(135deg, hsl(210 55% 60%), hsl(230 50% 50%))" },
+  { id: "settings", icon: Settings, label: "SETTINGS", path: "/settings", gradient: "linear-gradient(135deg, hsl(0 0% 55%), hsl(0 0% 40%))" },
 ];
 
 const DEFAULT_LINKS = ["profile", "services", "bookings", "network"];
@@ -127,6 +128,19 @@ const DashboardPage = () => {
   const visibleLinks = allQuickLinks.filter((l) => selectedIds.includes(l.id));
 
   // Data queries
+  const { data: profile } = useQuery({
+    queryKey: ["my-profile", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   const { data: projects } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
@@ -297,7 +311,7 @@ const DashboardPage = () => {
           </AnimatePresence>
 
           {/* Cards grid */}
-          <div className={`grid gap-4 md:gap-6 ${
+          <div className={`grid gap-4 md:gap-5 ${
             visibleLinks.length <= 4 ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2 md:grid-cols-3 lg:grid-cols-6"
           }`}>
             {visibleLinks.map((item, i) => (
@@ -309,12 +323,51 @@ const DashboardPage = () => {
               >
                 <Link
                   to={item.path}
-                  className="group flex flex-col items-center gap-4 rounded-2xl bg-card border border-border p-6 md:p-8 transition-all hover:shadow-lg hover:-translate-y-1 hover:border-primary/30"
+                  className="group flex flex-col items-center gap-3 rounded-2xl bg-card border border-border p-5 md:p-6 transition-all hover:shadow-lg hover:-translate-y-1 hover:border-primary/30"
                 >
-                  <div className="flex h-16 w-16 md:h-20 md:w-20 items-center justify-center rounded-2xl bg-muted group-hover:bg-primary/10 transition-colors">
-                    <item.icon className="h-8 w-8 md:h-10 md:w-10 text-foreground group-hover:text-primary transition-colors" strokeWidth={1.5} />
-                  </div>
-                  <span className="font-display text-xs md:text-sm font-semibold text-foreground uppercase tracking-wider text-center whitespace-pre-line leading-tight">
+                  {item.isProfile ? (
+                    <div className="relative">
+                      <div
+                        className="absolute inset-0 rounded-full opacity-30 blur-lg group-hover:opacity-50 transition-opacity"
+                        style={{ background: item.gradient }}
+                      />
+                      <Avatar className="h-16 w-16 md:h-20 md:w-20 ring-2 ring-border group-hover:ring-primary/40 transition-all relative">
+                        <AvatarImage src={profile?.avatar_url || ""} />
+                        <AvatarFallback
+                          className="text-lg md:text-xl font-bold text-white"
+                          style={{ background: item.gradient }}
+                        >
+                          {(profile?.display_name || user?.email || "?")[0].toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <div
+                        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-30 blur-lg transition-opacity duration-300"
+                        style={{ background: item.gradient }}
+                      />
+                      <div
+                        className="relative flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-2xl transition-all duration-300 overflow-hidden"
+                        style={{ background: `${item.gradient.replace(')', ', 0.12)')}` }}
+                      >
+                        <div
+                          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          style={{ background: item.gradient }}
+                        />
+                        <item.icon
+                          className="h-7 w-7 md:h-8 md:w-8 relative z-10 transition-colors duration-300"
+                          style={{ color: `hsl(${item.gradient.match(/hsl\(([^)]+)\)/)?.[1] || '0 0% 50%'})` }}
+                          strokeWidth={1.5}
+                        />
+                        <item.icon
+                          className="h-7 w-7 md:h-8 md:w-8 absolute z-10 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          strokeWidth={1.5}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <span className="font-display text-[10px] md:text-xs font-semibold text-muted-foreground group-hover:text-foreground uppercase tracking-wider text-center whitespace-pre-line leading-tight transition-colors">
                     {item.label}
                   </span>
                 </Link>
