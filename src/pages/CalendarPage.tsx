@@ -19,7 +19,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, Clock, X, CalendarDays, RefreshCw, Coins } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, X, CalendarDays, RefreshCw, Coins, CreditCard, Wallet, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
+import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
+import PaySolAndVerify from "@/components/PaySolAndVerify";
 import {
   format,
   startOfWeek,
@@ -41,6 +44,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 type ViewMode = "month" | "week";
 type TabMode = "upcoming" | "history" | "cancelled";
+type PaymentMethod = "credits" | "card" | "crypto";
 
 interface CalendarEvent {
   id: string;
@@ -62,7 +66,8 @@ const CalendarPage = () => {
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState(searchParams.get("service") || "");
   const [bookingNotes, setBookingNotes] = useState("");
-
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("credits");
+  const [bookingLoading, setBookingLoading] = useState(false);
   // Google Calendar
   const [googleEvents, setGoogleEvents] = useState<CalendarEvent[]>([]);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -107,37 +112,96 @@ const CalendarPage = () => {
     },
   });
 
-  const createBooking = useMutation({
-    mutationFn: async () => {
-      if (!dragDate || dragStartHour === null || dragEndHour === null) return;
-      const startH = Math.min(dragStartHour, dragEndHour);
-      const endH = Math.max(dragStartHour, dragEndHour) + 1;
-      const start = setMinutes(setHours(dragDate, startH), 0);
-      const end = setMinutes(setHours(dragDate, endH), 0);
-      const service = services?.find((s) => s.id === selectedService);
+  const { data: userCredits } = useQuery({
+    queryKey: ["user-credits", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_credits")
+        .select("*")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
 
+  const createBookingWithPayment = async (cardToken?: string) => {
+    if (!dragDate || dragStartHour === null || dragEndHour === null || !user) return;
+    const startH = Math.min(dragStartHour, dragEndHour);
+    const endH = Math.max(dragStartHour, dragEndHour) + 1;
+    const start = setMinutes(setHours(dragDate, startH), 0);
+    const end = setMinutes(setHours(dragDate, endH), 0);
+    const service = services?.find((s) => s.id === selectedService);
+    const duration = endH - startH;
+
+    setBookingLoading(true);
+    try {
+      // Process payment
+      if (paymentMethod === "credits" && service) {
+        const balance = userCredits?.balance ?? 0;
+        if (balance < service.credits_cost) {
+          toast.error("Not enough credits");
+          return;
+        }
+        const { error: creditError } = await supabase
+          .from("user_credits")
+          .update({ balance: balance - service.credits_cost })
+          .eq("user_id", user.id);
+        if (creditError) throw creditError;
+
+        await supabase.from("credit_transactions").insert({
+          user_id: user.id,
+          amount: -service.credits_cost,
+          type: "usage",
+          description: `Booking: ${service.title}`,
+        });
+      } else if (paymentMethod === "card" && service) {
+        if (!cardToken) {
+          toast.error("Please enter your card details");
+          return;
+        }
+        const usdPrice = service.non_member_rate ?? 0;
+        const { data, error } = await supabase.functions.invoke("square-payment", {
+          body: {
+            amount_cents: Math.round(usdPrice * 100),
+            currency: "USD",
+            description: `Rhozeland: ${service.title}`,
+            source_id: cardToken,
+            location_id: SQUARE_LOCATION_ID,
+          },
+        });
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || "Payment failed");
+      }
+      // crypto is handled by PaySolAndVerify callback
+
+      // Create booking
       const { error } = await supabase.from("bookings").insert({
-        user_id: user!.id,
+        user_id: user.id,
         service_id: selectedService || null,
         title: service?.title || "Studio Booking",
         start_time: start.toISOString(),
         end_time: end.toISOString(),
-        duration_hours: endH - startH,
+        duration_hours: duration,
         notes: bookingNotes || null,
         status: "upcoming",
       });
       if (error) throw error;
-    },
-    onSuccess: () => {
+
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["user-credits"] });
       resetDrag();
       setBookingDialogOpen(false);
       setSelectedService("");
       setBookingNotes("");
-      toast.success("Booking created!");
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
+      setPaymentMethod("credits");
+      toast.success("Booking confirmed!");
+    } catch (err: any) {
+      toast.error(err.message || "Booking failed");
+    } finally {
+      setBookingLoading(false);
+    }
+  };
 
   const cancelBooking = useMutation({
     mutationFn: async (id: string) => {
@@ -605,11 +669,12 @@ const CalendarPage = () => {
           resetDrag();
           if (!searchParams.get("service")) setSelectedService("");
           setBookingNotes("");
+          setPaymentMethod("credits");
           setSearchParams({}, { replace: true });
         }
         setBookingDialogOpen(open);
       }}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display">Confirm Booking</DialogTitle>
           </DialogHeader>
@@ -632,10 +697,10 @@ const CalendarPage = () => {
                 <SelectTrigger><SelectValue placeholder="Select a service" /></SelectTrigger>
                 <SelectContent>
                   {services?.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.title} — {s.credits_cost} cr · up to {s.duration_hours}h
-                      </SelectItem>
-                    ))}
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.title} — {s.credits_cost} cr · up to {s.duration_hours}h
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -658,17 +723,119 @@ const CalendarPage = () => {
               </div>
             )}
 
+            {/* Payment method selection */}
+            {selectedServiceObj && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground block">Payment Method</label>
+                <div className="grid gap-2">
+                  {/* Credits */}
+                  <button
+                    onClick={() => setPaymentMethod("credits")}
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl border p-3 transition-all text-left",
+                      paymentMethod === "credits" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+                    )}
+                  >
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                      <Coins className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">Pay with Credits</p>
+                      <p className="text-xs text-muted-foreground">
+                        {selectedServiceObj.credits_cost} credits • Balance: {userCredits?.balance ?? 0}
+                        {(userCredits?.balance ?? 0) < selectedServiceObj.credits_cost && " (insufficient)"}
+                      </p>
+                    </div>
+                    {paymentMethod === "credits" && <Check className="h-4 w-4 text-primary" />}
+                  </button>
+
+                  {/* Card */}
+                  {selectedServiceObj.non_member_rate && (
+                    <button
+                      onClick={() => setPaymentMethod("card")}
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl border p-3 transition-all text-left",
+                        paymentMethod === "card" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+                      )}
+                    >
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10">
+                        <CreditCard className="h-4 w-4 text-blue-500" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">Pay with Card</p>
+                        <p className="text-xs text-muted-foreground">
+                          ${selectedServiceObj.non_member_rate} • Visa, Mastercard, Amex
+                        </p>
+                      </div>
+                      {paymentMethod === "card" && <Check className="h-4 w-4 text-primary" />}
+                    </button>
+                  )}
+
+                  {/* SOL */}
+                  <button
+                    onClick={() => setPaymentMethod("crypto")}
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl border p-3 transition-all text-left",
+                      paymentMethod === "crypto" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+                    )}
+                  >
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-500/10">
+                      <Wallet className="h-4 w-4 text-orange-500" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">Pay with SOL</p>
+                      <p className="text-xs text-muted-foreground">
+                        ~{((selectedServiceObj.non_member_rate ?? selectedServiceObj.credits_cost * 75) / 150).toFixed(4)} SOL via Phantom/Solflare
+                      </p>
+                    </div>
+                    {paymentMethod === "crypto" && <Check className="h-4 w-4 text-primary" />}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">Notes (optional)</label>
-              <Textarea placeholder="What is the project about?" value={bookingNotes} onChange={(e) => setBookingNotes(e.target.value)} rows={3} />
+              <Textarea placeholder="What is the project about?" value={bookingNotes} onChange={(e) => setBookingNotes(e.target.value)} rows={2} />
             </div>
 
-            <Button className="w-full" onClick={() => createBooking.mutate()} disabled={!selectedService || createBooking.isPending || isOverMax}>
-              {selectedServiceObj
-                ? `Book Session · ${selectedServiceObj.credits_cost} credits`
-                : "Book Session"
-              }
-            </Button>
+            {/* Card form inline */}
+            {paymentMethod === "card" && selectedServiceObj?.non_member_rate && (
+              <SquareCardForm
+                amount={selectedServiceObj.non_member_rate}
+                disabled={bookingLoading}
+                onTokenize={async (token) => {
+                  await createBookingWithPayment(token);
+                }}
+              />
+            )}
+
+            {/* SOL payment */}
+            {paymentMethod === "crypto" && selectedServiceObj && (
+              <PaySolAndVerify
+                solAmount={Number(((selectedServiceObj.non_member_rate ?? selectedServiceObj.credits_cost * 75) / 150).toFixed(4))}
+                creditsToAdd={0}
+                description={`Booking: ${selectedServiceObj.title}`}
+                label="Pay with SOL & Book"
+                onSuccess={async () => {
+                  await createBookingWithPayment();
+                }}
+              />
+            )}
+
+            {/* Credits confirm button */}
+            {paymentMethod === "credits" && (
+              <Button
+                className="w-full"
+                onClick={() => createBookingWithPayment()}
+                disabled={!selectedService || bookingLoading || isOverMax || (selectedServiceObj && (userCredits?.balance ?? 0) < selectedServiceObj.credits_cost)}
+              >
+                {bookingLoading ? "Processing..." : selectedServiceObj
+                  ? `Book Session · ${selectedServiceObj.credits_cost} credits`
+                  : "Book Session"
+                }
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
