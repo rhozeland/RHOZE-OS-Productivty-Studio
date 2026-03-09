@@ -7,6 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Coins,
   Zap,
   Crown,
@@ -17,6 +23,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import PayWithSolButton from "@/components/PayWithSolButton";
+import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
 
 const TIERS = [
   {
