@@ -29,8 +29,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import logoColor from "@/assets/toybox-logo-color.webp";
-import logoWhite from "@/assets/toybox-logo-white.png";
+import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
