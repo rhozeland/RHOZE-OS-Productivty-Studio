@@ -452,22 +452,28 @@ const CalendarPage = () => {
       </div>
 
       {/* Legend */}
-      {googleConnected && (
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-primary" />
-            Bookings
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-accent" />
-            Events
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#4285F4" }} />
-            Google
-          </span>
-        </div>
-      )}
+      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+          Your Bookings
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/20" />
+          Available
+        </span>
+        {googleConnected && (
+          <>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-accent" />
+              Events
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#4285F4" }} />
+              Google
+            </span>
+          </>
+        )}
+      </div>
 
       {/* Tabs */}
       <div className="flex items-center gap-1 rounded-lg bg-muted p-1 w-fit">
