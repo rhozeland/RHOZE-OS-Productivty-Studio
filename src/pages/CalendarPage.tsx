@@ -295,11 +295,10 @@ const CalendarPage = () => {
     [services, selectedService]
   );
 
-  const creditRatePerHour = selectedServiceObj
-    ? Number(selectedServiceObj.credits_cost) / Math.max(Number(selectedServiceObj.duration_hours), 1)
-    : 0;
-
-  const estimatedCredits = Math.round(selectedDuration * creditRatePerHour * 100) / 100;
+  // Fixed credit model: credits_cost is the flat session price,
+  // duration_hours is the max time that credit unlocks
+  const maxDragHours = selectedServiceObj ? Number(selectedServiceObj.duration_hours) : 24;
+  const isOverMax = selectedDuration > maxDragHours;
 
   return (
     <div className="space-y-6">
