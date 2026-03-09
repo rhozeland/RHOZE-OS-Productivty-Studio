@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,8 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Upload, Image, X } from "lucide-react";
-import { useState, useRef } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Plus, Trash2, LayoutGrid, Link2, X } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import GoalsList from "@/components/project/GoalsList";
@@ -21,8 +27,7 @@ const ProjectDetailPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [newTask, setNewTask] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
 
   const { data: project } = useQuery({
     queryKey: ["project", id],
@@ -51,26 +56,49 @@ const ProjectDetailPage = () => {
     },
   });
 
-  const { data: moodboardItems } = useQuery({
-    queryKey: ["moodboard", id],
+  const { data: contract } = useQuery({
+    queryKey: ["project-contract", id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("moodboard_items").select("*").eq("project_id", id!).order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("project_contracts").select("*").eq("project_id", id!).maybeSingle();
       if (error) throw error;
       return data;
     },
   });
 
-  const { data: contract } = useQuery({
-    queryKey: ["project-contract", id],
+  // Linked smartboards
+  const { data: linkedSmartboards } = useQuery({
+    queryKey: ["project-smartboards", id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("project_contracts")
+        .from("project_smartboards" as any)
         .select("*")
-        .eq("project_id", id!)
-        .maybeSingle();
+        .eq("project_id", id!);
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
+  const linkedIds = linkedSmartboards?.map((ls: any) => ls.smartboard_id) ?? [];
+
+  const { data: smartboardDetails } = useQuery({
+    queryKey: ["smartboard-details", linkedIds],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("smartboards").select("*").in("id", linkedIds);
       if (error) throw error;
       return data;
     },
+    enabled: linkedIds.length > 0,
+  });
+
+  // All user's smartboards for linking
+  const { data: mySmartboards } = useQuery({
+    queryKey: ["my-smartboards", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("smartboards").select("*").eq("user_id", user!.id).order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user && linkDialogOpen,
   });
 
   const addTask = useMutation({
@@ -98,41 +126,38 @@ const ProjectDetailPage = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["project-tasks", id] }),
   });
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0 || !user) return;
-    setUploading(true);
-    try {
-      for (const file of Array.from(files)) {
-        if (file.size > 20 * 1024 * 1024) { toast.error(`${file.name} is too large (max 20MB)`); continue; }
-        const fileExt = file.name.split(".").pop();
-        const filePath = `${user.id}/${id}/${crypto.randomUUID()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage.from("moodboard").upload(filePath, file);
-        if (uploadError) { toast.error(`Failed to upload ${file.name}`); continue; }
-        const { data: urlData } = supabase.storage.from("moodboard").getPublicUrl(filePath);
-        const { error: dbError } = await supabase.from("moodboard_items").insert({ project_id: id!, user_id: user.id, file_url: urlData.publicUrl, file_name: file.name, file_type: file.type });
-        if (dbError) toast.error(`Failed to save ${file.name}`);
-      }
-      queryClient.invalidateQueries({ queryKey: ["moodboard", id] });
-      toast.success("Files uploaded!");
-    } catch (err: any) { toast.error(err.message); }
-    finally { setUploading(false); if (fileInputRef.current) fileInputRef.current.value = ""; }
-  };
-
-  const deleteMoodboardItem = useMutation({
-    mutationFn: async (item: { id: string; file_url: string }) => {
-      const url = new URL(item.file_url);
-      const pathParts = url.pathname.split("/storage/v1/object/public/moodboard/");
-      if (pathParts[1]) await supabase.storage.from("moodboard").remove([decodeURIComponent(pathParts[1])]);
-      const { error } = await supabase.from("moodboard_items").delete().eq("id", item.id);
+  const linkSmartboard = useMutation({
+    mutationFn: async (smartboardId: string) => {
+      const { error } = await supabase.from("project_smartboards" as any).insert({
+        project_id: id!, smartboard_id: smartboardId, linked_by: user!.id,
+      } as any);
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["moodboard", id] }); toast.success("Removed"); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-smartboards", id] });
+      toast.success("Smartboard linked!");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const unlinkSmartboard = useMutation({
+    mutationFn: async (smartboardId: string) => {
+      const { error } = await supabase
+        .from("project_smartboards" as any)
+        .delete()
+        .eq("project_id", id!)
+        .eq("smartboard_id", smartboardId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-smartboards", id] });
+      toast.success("Smartboard unlinked");
+    },
   });
 
   if (!project) return <div className="text-muted-foreground">Loading...</div>;
 
-  const isImage = (type: string | null) => type?.startsWith("image/");
+  const availableToLink = mySmartboards?.filter((s) => !linkedIds.includes(s.id)) ?? [];
 
   return (
     <div className="space-y-6">
@@ -153,7 +178,7 @@ const ProjectDetailPage = () => {
           <TabsTrigger value="roadmap">Roadmap</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
           {contract && <TabsTrigger value="milestones">Milestones</TabsTrigger>}
-          <TabsTrigger value="moodboard">Moodboard</TabsTrigger>
+          <TabsTrigger value="smartboards">Smartboards</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
         </TabsList>
 
@@ -192,44 +217,59 @@ const ProjectDetailPage = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="moodboard">
+        <TabsContent value="smartboards">
           <div className="surface-card p-6">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Image className="h-5 w-5 text-accent" />
-                <h2 className="font-display text-lg font-semibold text-foreground">Moodboard</h2>
+                <LayoutGrid className="h-5 w-5 text-primary" />
+                <h2 className="font-display text-lg font-semibold text-foreground">Linked Smartboards</h2>
               </div>
-              <div>
-                <input ref={fileInputRef} type="file" multiple accept="image/*,video/*,application/pdf" onChange={handleFileUpload} className="hidden" />
-                <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-                  <Upload className="mr-2 h-4 w-4" />{uploading ? "Uploading..." : "Upload"}
-                </Button>
-              </div>
+              <Button variant="outline" onClick={() => setLinkDialogOpen(true)} className="gap-1.5">
+                <Link2 className="h-4 w-4" /> Link Smartboard
+              </Button>
             </div>
-            {(!moodboardItems || moodboardItems.length === 0) ? (
-              <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border py-12 cursor-pointer hover:border-primary/40 transition-colors" onClick={() => fileInputRef.current?.click()}>
-                <Upload className="mb-3 h-10 w-10 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">Drop images or click to upload</p>
-                <p className="mt-1 text-xs text-muted-foreground">Supports images, videos, PDFs (max 20MB)</p>
+
+            {(!smartboardDetails || smartboardDetails.length === 0) ? (
+              <div
+                className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border py-12 cursor-pointer hover:border-primary/40 transition-colors"
+                onClick={() => setLinkDialogOpen(true)}
+              >
+                <LayoutGrid className="mb-3 h-10 w-10 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">No smartboards linked yet</p>
+                <p className="mt-1 text-xs text-muted-foreground">Link your smartboards as project resources</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-                {moodboardItems.map((item, i) => (
-                  <motion.div key={item.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.03 }} className="group relative aspect-square overflow-hidden rounded-xl border border-border bg-muted">
-                    {isImage(item.file_type) ? (
-                      <img src={item.file_url} alt={item.file_name} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full flex-col items-center justify-center p-3">
-                        <Image className="mb-2 h-8 w-8 text-muted-foreground" />
-                        <p className="text-center text-xs text-muted-foreground truncate w-full">{item.file_name}</p>
-                      </div>
-                    )}
-                    <button onClick={() => deleteMoodboardItem.mutate({ id: item.id, file_url: item.file_url })} className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-background/80 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                {smartboardDetails.map((board, i) => (
+                  <motion.div
+                    key={board.id}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.04 }}
+                    className="group relative overflow-hidden rounded-xl border border-border bg-card hover:shadow-md transition-all"
+                  >
+                    <Link to={`/smartboards/${board.id}`} className="block p-4">
+                      <div
+                        className="mb-3 h-20 rounded-lg"
+                        style={{ background: board.cover_color || "hsl(var(--muted))" }}
+                      />
+                      <h3 className="font-display font-semibold text-foreground text-sm truncate">{board.title}</h3>
+                      {board.description && (
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{board.description}</p>
+                      )}
+                    </Link>
+                    <button
+                      onClick={() => unlinkSmartboard.mutate(board.id)}
+                      className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-background/80 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground"
+                    >
                       <X className="h-3.5 w-3.5" />
                     </button>
                   </motion.div>
                 ))}
-                <div className="flex aspect-square cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-border hover:border-primary/40 transition-colors" onClick={() => fileInputRef.current?.click()}>
+                <div
+                  className="flex items-center justify-center rounded-xl border-2 border-dashed border-border cursor-pointer hover:border-primary/40 transition-colors min-h-[140px]"
+                  onClick={() => setLinkDialogOpen(true)}
+                >
                   <Plus className="h-8 w-8 text-muted-foreground" />
                 </div>
               </div>
@@ -241,6 +281,47 @@ const ProjectDetailPage = () => {
           <Collaborators projectId={id!} />
         </TabsContent>
       </Tabs>
+
+      {/* Link Smartboard Dialog */}
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display">Link a Smartboard</DialogTitle>
+          </DialogHeader>
+          {availableToLink.length === 0 ? (
+            <div className="text-center py-8">
+              <LayoutGrid className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+              <p className="text-sm text-muted-foreground">
+                {mySmartboards?.length === 0
+                  ? "You don't have any smartboards yet"
+                  : "All your smartboards are already linked"}
+              </p>
+              <Link to="/smartboards">
+                <Button variant="outline" className="mt-3 rounded-full" size="sm">
+                  Create a Smartboard
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {availableToLink.map((board) => (
+                <button
+                  key={board.id}
+                  onClick={() => { linkSmartboard.mutate(board.id); setLinkDialogOpen(false); }}
+                  className="flex w-full items-center gap-3 rounded-lg p-3 text-left hover:bg-muted/60 transition-colors"
+                >
+                  <div className="h-10 w-10 rounded-lg shrink-0" style={{ background: board.cover_color || "hsl(var(--muted))" }} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{board.title}</p>
+                    {board.description && <p className="text-xs text-muted-foreground truncate">{board.description}</p>}
+                  </div>
+                  <Link2 className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
+                </button>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
