@@ -182,6 +182,9 @@ const ListingDetailPage = () => {
   const TypeIcon = typeMeta.icon;
   const CatIcon = catMeta.icon;
   const isOwner = listing.user_id === user?.id;
+  const alreadyPurchased = !!(existingPurchase as any)?.id;
+  const canBuyInstantly = listing.listing_type === "digital_product" && listing.credits_price != null && listing.credits_price > 0;
+  const hasEnoughCredits = (userCredits?.balance ?? 0) >= (listing.credits_price ?? 0);
 
   const images = media?.filter((m) => m.file_type?.startsWith("image")) ?? [];
   const audioFiles = media?.filter((m) => m.file_type?.startsWith("audio")) ?? [];
