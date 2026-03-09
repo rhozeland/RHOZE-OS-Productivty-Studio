@@ -21,6 +21,7 @@ import {
   Users,
   Palette,
   FolderOpen,
+  Settings,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
