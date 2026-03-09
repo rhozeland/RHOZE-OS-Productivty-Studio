@@ -387,7 +387,7 @@ const CalendarPage = () => {
   };
 
   // Touch support: resolve which slot the finger is over
-  const resolveSlotFromTouch = useCallback((touch: Touch) => {
+  const resolveSlotFromTouch = useCallback((touch: { clientX: number; clientY: number }) => {
     const el = document.elementFromPoint(touch.clientX, touch.clientY);
     if (!el) return null;
     const slotEl = el.closest('[data-slot]') as HTMLElement | null;
