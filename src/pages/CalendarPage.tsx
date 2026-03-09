@@ -814,6 +814,9 @@ const CalendarPage = () => {
             {paymentMethod === "crypto" && selectedServiceObj && (
               <PaySolAndVerify
                 solAmount={Number(((selectedServiceObj.non_member_rate ?? selectedServiceObj.credits_cost * 75) / 150).toFixed(4))}
+                creditsToAdd={0}
+                description={`Booking: ${selectedServiceObj.title}`}
+                label="Pay with SOL & Book"
                 onSuccess={async () => {
                   await createBookingWithPayment();
                 }}
