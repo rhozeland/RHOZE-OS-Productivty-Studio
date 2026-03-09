@@ -263,7 +263,7 @@ const ProfileDetailPage = () => {
 
   return (
     <div
-      className="min-h-screen -m-4 sm:-m-6 p-4 sm:p-6 transition-colors duration-500"
+      className="min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8 p-4 md:p-8 transition-colors duration-500"
       style={{
         background: profileBg || undefined,
       }}
