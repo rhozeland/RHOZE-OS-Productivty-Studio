@@ -284,10 +284,14 @@ const SmartboardDetailPage = () => {
               <FileText className="h-5 w-5" />
             </button>
             <button
-              onClick={() => {
+              onClick={async () => {
+                if (!board.is_public) {
+                  await supabase.from("smartboards").update({ is_public: true }).eq("id", id!);
+                  queryClient.invalidateQueries({ queryKey: ["smartboard", id] });
+                }
                 const url = `${window.location.origin}/boards/${id}`;
                 navigator.clipboard.writeText(url);
-                toast.success("Share link copied!");
+                toast.success(board.is_public ? "Share link copied!" : "Board made public & link copied!");
               }}
               className="text-muted-foreground hover:text-foreground transition-colors"
               title="Copy share link"
