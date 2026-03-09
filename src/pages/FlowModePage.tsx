@@ -220,6 +220,7 @@ const FlowModePage = () => {
   const performAction = useCallback((action: string, smartboardId?: string) => {
     if (!currentItem) return;
     if (navigator.vibrate) navigator.vibrate(20);
+    playSwipeSound(action === "save" ? "up" : action === "dislike" ? "down" : action === "share" ? "left" : "right");
 
     if (action === "save") {
       if (smartboardId) {
