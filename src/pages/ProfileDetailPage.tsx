@@ -262,6 +262,28 @@ const ProfileDetailPage = () => {
 
   const hasSellerContent = (sellerListings?.length ?? 0) > 0;
 
+  // Section visibility preferences
+  const showSellerStats = (profile as any).show_seller_stats !== false;
+  const showOfferings = (profile as any).show_offerings !== false;
+  const showPublicBoards = (profile as any).show_public_boards !== false;
+
+  // Toggle section visibility mutation
+  const toggleSectionMutation = useMutation({
+    mutationFn: async ({ field, value }: { field: string; value: boolean }) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ [field]: value } as any)
+        .eq("user_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile", id] });
+    },
+    onError: () => {
+      toast.error("Failed to update section visibility");
+    },
+  });
+
   return (
     <div
       className="min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8 p-4 md:p-8 transition-colors duration-500"
@@ -461,16 +483,46 @@ const ProfileDetailPage = () => {
         </motion.div>
 
         {/* Seller Stats — public stats for everyone, private analytics for owner */}
-        <ProfileSellerStats userId={id!} isOwnProfile={isOwnProfile} />
+        {(showSellerStats || isOwnProfile) && (
+          <div className="relative">
+            {isOwnProfile && (
+              <button
+                onClick={() => toggleSectionMutation.mutate({ field: "show_seller_stats", value: !showSellerStats })}
+                className="absolute -top-1 right-0 z-10 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                title={showSellerStats ? "Hide from public" : "Show to public"}
+              >
+                {showSellerStats ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+              </button>
+            )}
+            {!showSellerStats && isOwnProfile && (
+              <div className="absolute inset-0 rounded-xl border-2 border-dashed border-muted-foreground/20 pointer-events-none z-0" />
+            )}
+            <div className={!showSellerStats && isOwnProfile ? "opacity-50" : ""}>
+              <ProfileSellerStats userId={id!} isOwnProfile={isOwnProfile} />
+            </div>
+          </div>
+        )}
 
         {/* Seller Listings — subtle section */}
-        {hasSellerContent && (
+        {(showOfferings || isOwnProfile) && hasSellerContent && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.4 }}
-            className="space-y-3"
+            className={`space-y-3 relative ${!showOfferings && isOwnProfile ? "opacity-50" : ""}`}
           >
+            {isOwnProfile && (
+              <button
+                onClick={() => toggleSectionMutation.mutate({ field: "show_offerings", value: !showOfferings })}
+                className="absolute -top-1 right-0 z-10 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                title={showOfferings ? "Hide from public" : "Show to public"}
+              >
+                {showOfferings ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+              </button>
+            )}
+            {!showOfferings && isOwnProfile && (
+              <div className="absolute inset-0 rounded-xl border-2 border-dashed border-muted-foreground/20 pointer-events-none z-0" />
+            )}
             <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
               <ShoppingBag className="h-4 w-4 text-primary" /> Offerings
             </h2>
@@ -512,12 +564,25 @@ const ProfileDetailPage = () => {
         )}
 
         {/* Public Smartboards */}
+        {(showPublicBoards || isOwnProfile) && (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.4 }}
-          className="space-y-3"
+          className={`space-y-3 relative ${!showPublicBoards && isOwnProfile ? "opacity-50" : ""}`}
         >
+          {isOwnProfile && (
+            <button
+              onClick={() => toggleSectionMutation.mutate({ field: "show_public_boards", value: !showPublicBoards })}
+              className="absolute -top-1 right-0 z-10 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              title={showPublicBoards ? "Hide from public" : "Show to public"}
+            >
+              {showPublicBoards ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+            </button>
+          )}
+          {!showPublicBoards && isOwnProfile && (
+            <div className="absolute inset-0 rounded-xl border-2 border-dashed border-muted-foreground/20 pointer-events-none z-0" />
+          )}
           <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
             <Eye className="h-4 w-4 text-primary" /> Public Boards
           </h2>
@@ -551,6 +616,7 @@ const ProfileDetailPage = () => {
             </div>
           )}
         </motion.div>
+        )}
 
         {/* Projects — own profile only */}
         {isOwnProfile && publicProjects && publicProjects.length > 0 && (
