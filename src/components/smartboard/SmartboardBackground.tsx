@@ -15,10 +15,13 @@ const SmartboardBackground = ({
   children,
   className = "",
 }: SmartboardBackgroundProps) => {
-  const hasBackground = color || url;
+  const isGradient = color?.includes("gradient");
 
   return (
-    <div className={`relative ${className}`} style={{ background: !url && color ? color : undefined }}>
+    <div
+      className={`relative ${isGradient ? "animated-gradient" : ""} ${className}`}
+      style={{ background: !url && color ? color : undefined }}
+    >
       {url && (
         <div
           className="absolute inset-0 bg-cover bg-center"

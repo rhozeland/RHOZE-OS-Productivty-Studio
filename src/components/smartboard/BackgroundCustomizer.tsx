@@ -107,7 +107,9 @@ const BackgroundCustomizer = ({
         <div className="space-y-5">
           {/* Preview */}
           <div
-            className="h-28 rounded-xl border border-border overflow-hidden relative"
+            className={`h-28 rounded-xl border border-border overflow-hidden relative ${
+              !imageUrl && color?.includes("gradient") ? "animated-gradient" : ""
+            }`}
             style={{
               background: imageUrl ? undefined : (color || "hsl(var(--muted))"),
             }}
@@ -134,6 +136,8 @@ const BackgroundCustomizer = ({
                   key={c}
                   onClick={() => { setColor(c); setImageUrl(""); }}
                   className={`h-8 w-full rounded-lg border-2 transition-all ${
+                    c.includes("gradient") ? "animated-gradient" : ""
+                  } ${
                     color === c ? "border-primary scale-110" : "border-transparent hover:scale-105"
                   }`}
                   style={{ background: c }}
