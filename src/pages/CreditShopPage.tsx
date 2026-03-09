@@ -240,7 +240,9 @@ const CreditShopPage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const currentTier = userCredits?.tier && userCredits.tier !== "none" ? userCredits.tier : "spark";
+  const LEGACY_TIER_MAP: Record<string, string> = { bronze: "spark", gold: "bloom", diamond: "glow", prism: "play" };
+  const rawTier = userCredits?.tier && userCredits.tier !== "none" ? userCredits.tier : "spark";
+  const currentTier = LEGACY_TIER_MAP[rawTier] || rawTier;
 
   // Purchases data
   const { data: purchases, isLoading: purchasesLoading } = useQuery({
