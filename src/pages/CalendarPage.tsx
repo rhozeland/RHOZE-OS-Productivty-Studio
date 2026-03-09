@@ -206,6 +206,34 @@ const CalendarPage = () => {
 
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       queryClient.invalidateQueries({ queryKey: ["user-credits"] });
+
+      // Send confirmation email with payment method
+      if (user.email && service) {
+        const paymentLabel = paymentMethod === "credits"
+          ? "Credits"
+          : paymentMethod === "card"
+          ? "Card (Square)"
+          : "SOL (Crypto)";
+        const paymentAmountStr = paymentMethod === "credits"
+          ? `${service.credits_cost} credits`
+          : paymentMethod === "card"
+          ? `$${(service.non_member_rate ?? 0).toFixed(2)}`
+          : `SOL`;
+        supabase.functions.invoke("send-booking-confirmation", {
+          body: {
+            to_email: user.email,
+            user_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "there",
+            service_title: service.title,
+            date: format(start, "MMMM d, yyyy"),
+            time: format(start, "h:mm a"),
+            duration_hours: duration,
+            payment_method: paymentLabel,
+            payment_amount: paymentAmountStr,
+            notes: bookingNotes || undefined,
+          },
+        }).catch((err) => console.error("Confirmation email failed:", err));
+      }
+
       resetDrag();
       setBookingDialogOpen(false);
       setSelectedService("");
