@@ -1,71 +1,166 @@
-import { useState, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, ChevronLeft, ChevronRight, RefreshCw, Calendar as CalendarIcon } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { ChevronLeft, ChevronRight, Clock, X, CalendarDays, RefreshCw } from "lucide-react";
+import {
+  format,
+  startOfWeek,
+  addDays,
+  addWeeks,
+  subWeeks,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameDay,
+  isSameMonth,
+  addMonths,
+  subMonths,
+  setHours,
+  setMinutes,
+} from "date-fns";
 import { toast } from "sonner";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths } from "date-fns";
+import { motion, AnimatePresence } from "framer-motion";
+
+type ViewMode = "month" | "week";
+type TabMode = "upcoming" | "history" | "cancelled";
 
 interface CalendarEvent {
   id: string;
   title: string;
-  description?: string | null;
   start_time: string;
   end_time: string;
-  color?: string | null;
-  source?: "rhozeland" | "google";
+  source: "google";
 }
+
+const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 8am - 8pm
 
 const CalendarPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<ViewMode>("month");
+  const [activeTab, setActiveTab] = useState<TabMode>("upcoming");
+  const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState("");
+  const [bookingNotes, setBookingNotes] = useState("");
+
+  // Google Calendar
   const [googleEvents, setGoogleEvents] = useState<CalendarEvent[]>([]);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
 
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  const startDay = monthStart.getDay();
-  const paddedDays = Array(startDay).fill(null).concat(days);
+  // Drag state for weekly view
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragDay, setDragDay] = useState<number | null>(null);
+  const [dragStartHour, setDragStartHour] = useState<number | null>(null);
+  const [dragEndHour, setDragEndHour] = useState<number | null>(null);
+  const [dragDate, setDragDate] = useState<Date | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
 
-  const { data: events } = useQuery({
-    queryKey: ["events"],
+  // Queries
+  const { data: services } = useQuery({
+    queryKey: ["services"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("calendar_events").select("*").order("start_time");
+      const { data, error } = await supabase.from("services").select("*").eq("is_active", true);
       if (error) throw error;
-      return (data ?? []).map((e) => ({ ...e, source: "rhozeland" as const }));
+      return data;
     },
   });
 
-  const createEvent = useMutation({
+  const { data: bookings } = useQuery({
+    queryKey: ["bookings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*, services(title, category, credits_cost)")
+        .order("start_time", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: calendarEvents } = useQuery({
+    queryKey: ["calendar-events"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("calendar_events").select("*").order("start_time");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const createBooking = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("calendar_events").insert({
-        title,
-        start_time: new Date(startDate).toISOString(),
-        end_time: new Date(endDate || startDate).toISOString(),
+      if (!dragDate || dragStartHour === null || dragEndHour === null) return;
+      const startH = Math.min(dragStartHour, dragEndHour);
+      const endH = Math.max(dragStartHour, dragEndHour) + 1;
+      const start = setMinutes(setHours(dragDate, startH), 0);
+      const end = setMinutes(setHours(dragDate, endH), 0);
+      const service = services?.find((s) => s.id === selectedService);
+
+      const { error } = await supabase.from("bookings").insert({
         user_id: user!.id,
+        service_id: selectedService || null,
+        title: service?.title || "Studio Booking",
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
+        duration_hours: endH - startH,
+        notes: bookingNotes || null,
+        status: "upcoming",
       });
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      setOpen(false);
-      setTitle("");
-      setStartDate("");
-      setEndDate("");
-      toast.success("Event created!");
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      resetDrag();
+      setBookingDialogOpen(false);
+      setSelectedService("");
+      setBookingNotes("");
+      toast.success("Booking created!");
     },
     onError: (e: any) => toast.error(e.message),
+  });
+
+  const cancelBooking = useMutation({
+    mutationFn: async (id: string) => {
+      const { data: booking } = await supabase.from("bookings").select("*").eq("id", id).single();
+      const { error } = await supabase.from("bookings").update({ status: "cancelled" }).eq("id", id);
+      if (error) throw error;
+      return booking;
+    },
+    onSuccess: (booking) => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      toast.success("Booking cancelled");
+
+      if (booking && user?.email) {
+        supabase.functions.invoke("send-booking-cancellation", {
+          body: {
+            to_email: user.email,
+            user_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "there",
+            service_title: booking.title,
+            date: format(new Date(booking.start_time), "MMMM d, yyyy"),
+            time: format(new Date(booking.start_time), "h:mm a"),
+            duration_hours: booking.duration_hours,
+          },
+        }).catch((err) => console.error("Cancellation email failed:", err));
+      }
+    },
   });
 
   const fetchGoogleCalendar = useCallback(async () => {
@@ -75,13 +170,13 @@ const CalendarPage = () => {
       const providerToken = session?.provider_token;
 
       if (!providerToken) {
-        toast.error("Please sign in with Google to import your calendar. Sign out and sign back in with Google.");
+        toast.error("Please sign in with Google to import your calendar.");
         setGoogleLoading(false);
         return;
       }
 
-      const timeMin = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1).toISOString();
-      const timeMax = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 2, 0).toISOString();
+      const timeMin = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1).toISOString();
+      const timeMax = new Date(currentDate.getFullYear(), currentDate.getMonth() + 2, 0).toISOString();
 
       const { data, error } = await supabase.functions.invoke("google-calendar", {
         body: { provider_token: providerToken, time_min: timeMin, time_max: timeMax },
@@ -99,66 +194,126 @@ const CalendarPage = () => {
     } finally {
       setGoogleLoading(false);
     }
-  }, [currentMonth]);
+  }, [currentDate]);
 
-  // Merge Rhozeland + Google events
-  const allEvents: CalendarEvent[] = [
-    ...(events ?? []),
-    ...googleEvents,
-  ];
+  const resetDrag = () => {
+    setIsDragging(false);
+    setDragDay(null);
+    setDragStartHour(null);
+    setDragEndHour(null);
+    setDragDate(null);
+  };
 
-  const getEventsForDay = (day: Date) =>
-    allEvents.filter((e) => isSameDay(new Date(e.start_time), day));
+  // Week view dates
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const weekDays = Array.from({ length: 5 }, (_, i) => addDays(weekStart, i));
+
+  // Month view dates
+  const mStart = startOfMonth(currentDate);
+  const mEnd = endOfMonth(currentDate);
+  const monthDays = eachDayOfInterval({ start: mStart, end: mEnd });
+  const monthPadding = (mStart.getDay() + 6) % 7;
+  const paddedMonthDays: (Date | null)[] = Array(monthPadding).fill(null).concat(monthDays);
+
+  // Filter bookings by tab
+  const now = new Date();
+  const filteredBookings = bookings?.filter((b) => {
+    if (activeTab === "upcoming") return b.status === "upcoming" && new Date(b.start_time) >= now;
+    if (activeTab === "history") return b.status === "upcoming" && new Date(b.end_time) < now;
+    if (activeTab === "cancelled") return b.status === "cancelled";
+    return true;
+  }) ?? [];
+
+  // Get bookings + events for a day
+  const getItemsForDay = (day: Date) => {
+    const dayBookings = bookings?.filter((b) => b.status !== "cancelled" && isSameDay(new Date(b.start_time), day)) ?? [];
+    const dayCalEvents = calendarEvents?.filter((e) => isSameDay(new Date(e.start_time), day)) ?? [];
+    const dayGoogleEvents = googleEvents.filter((e) => isSameDay(new Date(e.start_time), day));
+    return { bookings: dayBookings, events: dayCalEvents, google: dayGoogleEvents };
+  };
+
+  // Drag handlers
+  const handleMouseDown = (dayIndex: number, hour: number) => {
+    setIsDragging(true);
+    setDragDay(dayIndex);
+    setDragStartHour(hour);
+    setDragEndHour(hour);
+    setDragDate(weekDays[dayIndex]);
+  };
+
+  const handleMouseEnter = (dayIndex: number, hour: number) => {
+    if (isDragging && dayIndex === dragDay) setDragEndHour(hour);
+  };
+
+  const handleMouseUp = () => {
+    if (isDragging && dragStartHour !== null && dragEndHour !== null) setBookingDialogOpen(true);
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    const handler = () => { if (isDragging) handleMouseUp(); };
+    window.addEventListener("mouseup", handler);
+    return () => window.removeEventListener("mouseup", handler);
+  }, [isDragging, dragStartHour, dragEndHour]);
+
+  const isSlotSelected = (dayIndex: number, hour: number) => {
+    if (dragDay !== dayIndex || dragStartHour === null || dragEndHour === null) return false;
+    const minH = Math.min(dragStartHour, dragEndHour);
+    const maxH = Math.max(dragStartHour, dragEndHour);
+    return hour >= minH && hour <= maxH;
+  };
+
+  const isSlotBooked = (dayIndex: number, hour: number) => {
+    const day = weekDays[dayIndex];
+    return bookings?.some((b) => {
+      if (b.status === "cancelled") return false;
+      const bStart = new Date(b.start_time);
+      const bEnd = new Date(b.end_time);
+      if (!isSameDay(bStart, day)) return false;
+      return hour >= bStart.getHours() && hour < bEnd.getHours();
+    }) ?? false;
+  };
+
+  const getBookingForSlot = (dayIndex: number, hour: number) => {
+    const day = weekDays[dayIndex];
+    return bookings?.find((b) => {
+      if (b.status === "cancelled") return false;
+      const bStart = new Date(b.start_time);
+      if (!isSameDay(bStart, day)) return false;
+      return hour === bStart.getHours();
+    });
+  };
+
+  const selectedDuration = dragStartHour !== null && dragEndHour !== null
+    ? Math.abs(dragEndHour - dragStartHour) + 1
+    : 0;
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-3xl font-bold text-foreground">Calendar</h1>
-          <p className="text-muted-foreground">Schedule your creative sessions</p>
+          <p className="text-muted-foreground">Schedule and manage your creative sessions</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchGoogleCalendar}
-            disabled={googleLoading}
-          >
-            {googleLoading ? (
-              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-              </svg>
-            )}
-            {googleConnected ? "Refresh Google" : "Import Google Calendar"}
-          </Button>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" />New Event</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Create Event</DialogTitle></DialogHeader>
-              <form onSubmit={(e) => { e.preventDefault(); createEvent.mutate(); }} className="space-y-4">
-                <Input placeholder="Event title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm text-muted-foreground">Start</label>
-                    <Input type="datetime-local" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
-                  </div>
-                  <div>
-                    <label className="text-sm text-muted-foreground">End</label>
-                    <Input type="datetime-local" value={endDate} onChange={(e) => setEndDate(e.target.value)} required />
-                  </div>
-                </div>
-                <Button type="submit" className="w-full" disabled={createEvent.isPending}>Create</Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={fetchGoogleCalendar}
+          disabled={googleLoading}
+        >
+          {googleLoading ? (
+            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+            </svg>
+          )}
+          {googleConnected ? "Refresh Google" : "Import Google Calendar"}
+        </Button>
       </div>
 
       {/* Legend */}
@@ -166,70 +321,304 @@ const CalendarPage = () => {
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-primary" />
-            Rhozeland
+            Bookings
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-accent" />
+            Events
           </span>
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#4285F4" }} />
-            Google Calendar
+            Google
           </span>
         </div>
       )}
 
+      {/* Tabs */}
+      <div className="flex items-center gap-1 rounded-lg bg-muted p-1 w-fit">
+        {(["upcoming", "history", "cancelled"] as TabMode[]).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 text-sm font-medium rounded-md capitalize transition-colors ${
+              activeTab === tab
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* Calendar */}
       <div className="surface-card p-6">
-        <div className="mb-6 flex items-center justify-between">
-          <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date())}>today</Button>
+            <Button variant="outline" size="icon" className="h-8 w-8"
+              onClick={() => setCurrentDate(viewMode === "month" ? subMonths(currentDate, 1) : subWeeks(currentDate, 1))}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="h-8 w-8"
+              onClick={() => setCurrentDate(viewMode === "month" ? addMonths(currentDate, 1) : addWeeks(currentDate, 1))}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+
           <h2 className="font-display text-xl font-semibold text-foreground">
-            {format(currentMonth, "MMMM yyyy")}
+            {viewMode === "month"
+              ? format(currentDate, "MMMM yyyy")
+              : `${format(weekDays[0], "MMM d")} – ${format(weekDays[4], "d, yyyy")}`}
           </h2>
-          <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
-            <ChevronRight className="h-5 w-5" />
-          </Button>
+
+          <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
+            {(["month", "week"] as ViewMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={`px-3 py-1.5 text-sm font-medium rounded-md capitalize transition-colors ${
+                  viewMode === mode
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {mode}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="grid grid-cols-7 gap-px">
-          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-            <div key={d} className="p-2 text-center text-xs font-medium text-muted-foreground">{d}</div>
-          ))}
-          {paddedDays.map((day, i) => {
-            const dayEvents = day ? getEventsForDay(day) : [];
-            return (
+        {/* Month view */}
+        {viewMode === "month" && (
+          <div className="grid grid-cols-7 border border-border rounded-lg overflow-hidden">
+            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+              <div key={d} className="p-3 text-center text-sm font-medium text-muted-foreground bg-muted/30 border-b border-border">{d}</div>
+            ))}
+            {paddedMonthDays.map((day, i) => {
+              const items = day ? getItemsForDay(day) : { bookings: [], events: [], google: [] };
+              const totalItems = items.bookings.length + items.events.length + items.google.length;
+              return (
+                <div
+                  key={i}
+                  className={`min-h-[80px] p-2 border-b border-r border-border cursor-pointer hover:bg-muted/20 transition-colors ${
+                    day && isSameDay(day, new Date()) ? "bg-primary/5" : ""
+                  } ${!day ? "bg-muted/10" : ""}`}
+                  onClick={() => { if (day) { setCurrentDate(day); setViewMode("week"); } }}
+                >
+                  {day && (
+                    <>
+                      <span className={`text-sm ${
+                        isSameDay(day, new Date()) ? "font-bold text-primary" :
+                        !isSameMonth(day, currentDate) ? "text-muted-foreground/50" : "text-foreground"
+                      }`}>
+                        {format(day, "d")}
+                      </span>
+                      <div className="mt-1 space-y-0.5">
+                        {items.bookings.slice(0, 2).map((b) => (
+                          <div key={b.id} className="truncate rounded bg-primary/15 px-1.5 py-0.5 text-[10px] text-primary">
+                            {format(new Date(b.start_time), "ha")} {b.title}
+                          </div>
+                        ))}
+                        {items.events.slice(0, totalItems > 2 ? 1 : 2).map((e) => (
+                          <div key={e.id} className="truncate rounded bg-accent/15 px-1.5 py-0.5 text-[10px] text-accent-foreground">
+                            {e.title}
+                          </div>
+                        ))}
+                        {items.google.slice(0, 1).map((e) => (
+                          <div key={e.id} className="truncate rounded px-1.5 py-0.5 text-[10px]" style={{ backgroundColor: "rgba(66,133,244,0.15)", color: "#4285F4" }}>
+                            {e.title}
+                          </div>
+                        ))}
+                        {totalItems > 3 && (
+                          <span className="text-[10px] text-muted-foreground">+{totalItems - 3} more</span>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Week view with draggable slots */}
+        {viewMode === "week" && (
+          <div
+            ref={gridRef}
+            className="grid border border-border rounded-lg overflow-hidden select-none"
+            style={{ gridTemplateColumns: "60px repeat(5, 1fr)" }}
+            onMouseLeave={() => { if (isDragging) handleMouseUp(); }}
+          >
+            <div className="bg-muted/30 border-b border-r border-border" />
+            {weekDays.map((day, i) => (
               <div
                 key={i}
-                className={`min-h-[80px] rounded-lg border border-border/50 p-1.5 ${
-                  day && isSameDay(day, new Date()) ? "bg-primary/5 border-primary/30" : "bg-muted/20"
-                } ${!day ? "bg-transparent border-transparent" : ""}`}
+                className={`p-3 text-center border-b border-r border-border bg-muted/30 ${
+                  isSameDay(day, new Date()) ? "bg-primary/10" : ""
+                }`}
               >
-                {day && (
-                  <>
-                    <span className={`text-xs ${isSameDay(day, new Date()) ? "font-bold text-primary" : "text-muted-foreground"}`}>
-                      {format(day, "d")}
-                    </span>
-                    <div className="mt-1 space-y-0.5">
-                      {dayEvents.slice(0, 3).map((e) => (
-                        <div
-                          key={e.id}
-                          className="truncate rounded px-1 py-0.5 text-[10px] font-medium"
-                          style={{
-                            backgroundColor: e.source === "google" ? "rgba(66,133,244,0.15)" : "hsl(var(--primary) / 0.15)",
-                            color: e.source === "google" ? "#4285F4" : "hsl(var(--primary))",
-                          }}
+                <div className="text-xs text-muted-foreground">{format(day, "EEE")}</div>
+                <div className={`text-sm font-semibold ${isSameDay(day, new Date()) ? "text-primary" : "text-foreground"}`}>
+                  {format(day, "M/d")}
+                </div>
+              </div>
+            ))}
+
+            {HOURS.map((hour) => (
+              <>
+                <div
+                  key={`label-${hour}`}
+                  className="flex items-start justify-end pr-2 pt-1 text-xs text-muted-foreground border-r border-b border-border bg-muted/10"
+                  style={{ height: 60 }}
+                >
+                  {format(setHours(new Date(), hour), "ha").toLowerCase()}
+                </div>
+                {weekDays.map((_, dayIndex) => {
+                  const booked = isSlotBooked(dayIndex, hour);
+                  const selected = isSlotSelected(dayIndex, hour);
+                  const booking = getBookingForSlot(dayIndex, hour);
+
+                  return (
+                    <div
+                      key={`${dayIndex}-${hour}`}
+                      className={`border-r border-b border-border relative transition-colors cursor-pointer ${
+                        booked ? "bg-muted/40 cursor-not-allowed" : selected ? "bg-primary/20" : "hover:bg-muted/20"
+                      }`}
+                      style={{ height: 60 }}
+                      onMouseDown={() => !booked && handleMouseDown(dayIndex, hour)}
+                      onMouseEnter={() => handleMouseEnter(dayIndex, hour)}
+                    >
+                      {booking && (
+                        <div className="absolute inset-1 rounded bg-primary/25 border border-primary/30 px-1.5 py-0.5 overflow-hidden z-10"
+                          style={{ height: `${(Number(booking.duration_hours)) * 60 - 8}px` }}
                         >
-                          {e.title}
+                          <p className="text-[10px] font-medium text-primary truncate">{booking.title}</p>
+                          <p className="text-[9px] text-primary/70">
+                            {format(new Date(booking.start_time), "h:mma")} - {format(new Date(booking.end_time), "h:mma")}
+                          </p>
                         </div>
-                      ))}
-                      {dayEvents.length > 3 && (
-                        <span className="text-[9px] text-muted-foreground">+{dayEvents.length - 3} more</span>
                       )}
                     </div>
-                  </>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                  );
+                })}
+              </>
+            ))}
+          </div>
+        )}
+
+        {viewMode === "week" && (
+          <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5" />
+            Click and drag across time slots to select your booking duration
+          </p>
+        )}
       </div>
+
+      {/* Booking list */}
+      <div className="surface-card p-6">
+        <h3 className="font-display text-lg font-semibold text-foreground mb-4 capitalize">
+          {activeTab} Bookings
+        </h3>
+        {filteredBookings.length === 0 ? (
+          <div className="text-center py-12 rounded-xl bg-muted/30">
+            <CalendarDays className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+            <p className="text-foreground font-medium">No {activeTab} bookings</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Switch to week view and drag to select time slots
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <AnimatePresence>
+              {filteredBookings.map((booking) => (
+                <motion.div
+                  key={booking.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="flex items-center justify-between rounded-lg border border-border p-4 hover:bg-muted/20 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                      <Clock className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">{booking.title}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {format(new Date(booking.start_time), "EEE, MMM d · h:mma")} – {format(new Date(booking.end_time), "h:mma")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge variant={booking.status === "cancelled" ? "destructive" : "secondary"} className="capitalize">
+                      {booking.status}
+                    </Badge>
+                    {booking.status === "upcoming" && new Date(booking.start_time) > now && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={() => cancelBooking.mutate(booking.id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+
+      {/* Booking confirmation dialog */}
+      <Dialog open={bookingDialogOpen} onOpenChange={(open) => {
+        if (!open) { resetDrag(); setSelectedService(""); setBookingNotes(""); }
+        setBookingDialogOpen(open);
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-display">Confirm Booking</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {dragDate && dragStartHour !== null && dragEndHour !== null && (
+              <div className="rounded-lg bg-muted/50 p-4">
+                <p className="text-sm font-medium text-foreground">
+                  {format(dragDate, "EEEE, MMMM d, yyyy")}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {format(setHours(new Date(), Math.min(dragStartHour, dragEndHour)), "h:mma")} – {format(setHours(new Date(), Math.max(dragStartHour, dragEndHour) + 1), "h:mma")}
+                  {" "}({selectedDuration} hour{selectedDuration !== 1 ? "s" : ""})
+                </p>
+              </div>
+            )}
+
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Service</label>
+              <Select value={selectedService} onValueChange={setSelectedService}>
+                <SelectTrigger><SelectValue placeholder="Select a service" /></SelectTrigger>
+                <SelectContent>
+                  {services?.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.title} — {s.credits_cost} credit{Number(s.credits_cost) !== 1 ? "s" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Notes (optional)</label>
+              <Textarea placeholder="What is the project about?" value={bookingNotes} onChange={(e) => setBookingNotes(e.target.value)} rows={3} />
+            </div>
+
+            <Button className="w-full" onClick={() => createBooking.mutate()} disabled={!selectedService || createBooking.isPending}>
+              Book Session
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
