@@ -152,6 +152,7 @@ const ProjectDetailPage = () => {
         <TabsList className="mb-4">
           <TabsTrigger value="roadmap">Roadmap</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
+          {contract && <TabsTrigger value="milestones">Milestones</TabsTrigger>}
           <TabsTrigger value="moodboard">Moodboard</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
         </TabsList>
