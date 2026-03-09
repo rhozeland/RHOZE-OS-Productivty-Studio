@@ -174,6 +174,22 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
       queryClient.invalidateQueries({ queryKey: ["user-credits"] });
       queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
 
+      // Send confirmation email (fire-and-forget, don't block checkout)
+      const timeSlot = TIME_SLOTS.find(s => `${s.hour}:${s.min.toString().padStart(2, "0")}` === selectedTime);
+      supabase.functions.invoke("send-booking-confirmation", {
+        body: {
+          to_email: user.email,
+          user_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "there",
+          service_title: service.title,
+          date: format(selectedDate!, "MMMM d, yyyy"),
+          time: timeSlot?.label || selectedTime,
+          duration_hours: service.duration_hours,
+          payment_method: paymentMethod,
+          payment_amount: paymentMethod === "credits" ? `${service.credits_cost} credits` : paymentMethod === "card" ? `$${usdPrice}` : `~${solPrice} SOL`,
+          notes: notes || undefined,
+        },
+      }).catch((err) => console.error("Confirmation email failed:", err));
+
       toast.success("Booking confirmed!");
       onOpenChange(false);
       resetForm();
