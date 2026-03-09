@@ -319,14 +319,10 @@ const CreditShopPage = () => {
         <div className="flex flex-col gap-3 sm:flex-row">
           <Button
             className="flex-1"
-            onClick={() =>
-              purchaseCredits.mutate({
-                amount: alaCarteCredits,
-                description: `${alaCarteCredits} credit(s) à la carte`,
-                method: "card",
-              })
-            }
-            disabled={purchaseCredits.isPending}
+            onClick={() => {
+              setPendingCardCredits(alaCarteCredits);
+              setCardPaymentOpen(true);
+            }}
           >
             <CreditCard className="mr-2 h-4 w-4" />
             Buy {alaCarteCredits} Credit{alaCarteCredits > 1 ? "s" : ""} @ $
