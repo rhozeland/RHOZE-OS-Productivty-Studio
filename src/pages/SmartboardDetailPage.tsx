@@ -31,9 +31,15 @@ import {
   Send,
   X,
   Users,
-  Bookmark,
+  FileText,
   Share2,
-  Heart,
+  Edit3,
+  Trash2,
+  Download,
+  Check,
+  Video,
+  AudioLines,
+  ExternalLink,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -48,11 +54,17 @@ const SmartboardDetailPage = () => {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("viewer");
-  const [itemType, setItemType] = useState<"note" | "link">("note");
+  const [editMode, setEditMode] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [itemType, setItemType] = useState<"note" | "link" | "image">("note");
   const [itemTitle, setItemTitle] = useState("");
   const [itemContent, setItemContent] = useState("");
   const [itemLink, setItemLink] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: board } = useQuery({
     queryKey: ["smartboard", id],
@@ -113,15 +125,35 @@ const SmartboardDetailPage = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
+  useEffect(() => {
+    if (board) {
+      setEditTitle(board.title);
+      setEditDesc(board.description || "");
+    }
+  }, [board]);
+
   const addItem = useMutation({
     mutationFn: async () => {
+      let fileUrl: string | null = null;
+
+      // Upload image if provided
+      if (itemType === "image" && imageFile) {
+        const ext = imageFile.name.split(".").pop();
+        const path = `${id}/${Date.now()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from("smartboard-files").upload(path, imageFile);
+        if (uploadErr) throw uploadErr;
+        const { data: urlData } = supabase.storage.from("smartboard-files").getPublicUrl(path);
+        fileUrl = urlData.publicUrl;
+      }
+
       const { error } = await supabase.from("smartboard_items").insert({
         smartboard_id: id!,
         user_id: user!.id,
         content_type: itemType,
         title: itemTitle || null,
         content: itemContent || null,
-        link_url: itemLink || null,
+        link_url: itemType === "link" ? itemLink : null,
+        file_url: fileUrl,
       });
       if (error) throw error;
     },
@@ -131,6 +163,7 @@ const SmartboardDetailPage = () => {
       setItemTitle("");
       setItemContent("");
       setItemLink("");
+      setImageFile(null);
       toast.success("Item added!");
     },
     onError: (e: any) => toast.error(e.message),
@@ -142,6 +175,21 @@ const SmartboardDetailPage = () => {
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["smartboard-items", id] }),
+  });
+
+  const updateBoard = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("smartboards").update({
+        title: editTitle,
+        description: editDesc || null,
+      }).eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["smartboard", id] });
+      setAboutOpen(false);
+      toast.success("Board updated!");
+    },
   });
 
   const sendChat = useMutation({
@@ -190,11 +238,21 @@ const SmartboardDetailPage = () => {
     </div>
   );
 
+  const getContentIcon = (type: string) => {
+    switch (type) {
+      case "image": return <ImageIcon className="h-3.5 w-3.5 text-primary" />;
+      case "link": return <Link2 className="h-3.5 w-3.5 text-primary" />;
+      case "video": return <Video className="h-3.5 w-3.5 text-primary" />;
+      case "audio": return <AudioLines className="h-3.5 w-3.5 text-primary" />;
+      default: return <StickyNote className="h-3.5 w-3.5 text-primary" />;
+    }
+  };
+
   return (
     <div className="space-y-4">
-      {/* Header — reference style */}
+      {/* Header */}
       <div className="surface-card rounded-2xl overflow-hidden">
-        <div className="p-5 md:p-6">
+        <div className="p-4 md:p-6">
           <div className="flex items-center gap-3 mb-3">
             <Link to="/smartboards">
               <Button variant="outline" size="icon" className="rounded-full h-9 w-9">
@@ -202,20 +260,33 @@ const SmartboardDetailPage = () => {
               </Button>
             </Link>
             <h1 className="font-display text-xl md:text-2xl font-bold text-foreground flex-1 text-center md:text-left">
-              {board.title}
+              {editMode ? "Edit Mode" : board.title}
             </h1>
           </div>
 
           {/* Action strip */}
-          <div className="flex items-center justify-center gap-5">
-            <button className="text-muted-foreground hover:text-foreground transition-colors">
-              <Bookmark className="h-5 w-5" />
+          <div className="flex items-center justify-center gap-4">
+            <button
+              onClick={() => setAboutOpen(true)}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              title="About"
+            >
+              <FileText className="h-5 w-5" />
             </button>
-            <button className="text-muted-foreground hover:text-foreground transition-colors">
+            <button className="text-muted-foreground hover:text-foreground transition-colors" title="Share">
               <Share2 className="h-5 w-5" />
             </button>
-            <button className="text-muted-foreground hover:text-foreground transition-colors">
-              <Heart className="h-5 w-5" />
+            {isOwner && (
+              <button
+                onClick={() => setEditMode(!editMode)}
+                className={`transition-colors ${editMode ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                title="Edit"
+              >
+                <Edit3 className="h-5 w-5" />
+              </button>
+            )}
+            <button className="text-muted-foreground hover:text-foreground transition-colors" title="Download">
+              <Download className="h-5 w-5" />
             </button>
           </div>
         </div>
@@ -272,18 +343,67 @@ const SmartboardDetailPage = () => {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Add to Board</DialogTitle></DialogHeader>
-              <div className="flex gap-2 mb-4">
-                <Button variant={itemType === "note" ? "default" : "outline"} size="sm" className="rounded-full" onClick={() => setItemType("note")}>
-                  <StickyNote className="mr-1 h-4 w-4" /> Note
-                </Button>
-                <Button variant={itemType === "link" ? "default" : "outline"} size="sm" className="rounded-full" onClick={() => setItemType("link")}>
-                  <Link2 className="mr-1 h-4 w-4" /> Link
-                </Button>
+              {/* Content type tabs */}
+              <div className="flex gap-2 mb-4 flex-wrap">
+                {(["note", "link", "image"] as const).map((type) => (
+                  <Button
+                    key={type}
+                    variant={itemType === type ? "default" : "outline"}
+                    size="sm"
+                    className="rounded-full capitalize"
+                    onClick={() => setItemType(type)}
+                  >
+                    {type === "note" && <StickyNote className="mr-1 h-4 w-4" />}
+                    {type === "link" && <Link2 className="mr-1 h-4 w-4" />}
+                    {type === "image" && <ImageIcon className="mr-1 h-4 w-4" />}
+                    {type}
+                  </Button>
+                ))}
               </div>
               <form onSubmit={(e) => { e.preventDefault(); addItem.mutate(); }} className="space-y-4">
-                <Input placeholder="Title" value={itemTitle} onChange={(e) => setItemTitle(e.target.value)} />
-                {itemType === "note" && <Textarea placeholder="Write your note..." value={itemContent} onChange={(e) => setItemContent(e.target.value)} rows={4} />}
-                {itemType === "link" && <Input placeholder="https://..." value={itemLink} onChange={(e) => setItemLink(e.target.value)} />}
+                <Input placeholder="Title (optional)" value={itemTitle} onChange={(e) => setItemTitle(e.target.value)} />
+
+                {itemType === "note" && (
+                  <Textarea placeholder="Write your note..." value={itemContent} onChange={(e) => setItemContent(e.target.value)} rows={4} />
+                )}
+                {itemType === "link" && (
+                  <>
+                    <Input placeholder="https://..." value={itemLink} onChange={(e) => setItemLink(e.target.value)} />
+                    <Textarea placeholder="Description (optional)" value={itemContent} onChange={(e) => setItemContent(e.target.value)} rows={2} />
+                  </>
+                )}
+                {itemType === "image" && (
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*,video/*,.pdf"
+                      className="hidden"
+                      onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                    />
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-primary/30 transition-colors"
+                    >
+                      {imageFile ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <Check className="h-4 w-4 text-primary" />
+                          <span className="text-sm text-foreground">{imageFile.name}</span>
+                        </div>
+                      ) : (
+                        <>
+                          <ImageIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                          <p className="text-sm text-muted-foreground">Upload from library</p>
+                          <p className="text-xs text-muted-foreground/60 mt-1">Images, video, PDF up to 20MB</p>
+                        </>
+                      )}
+                    </div>
+                    <div className="mt-3">
+                      <Input placeholder="Or add image from URL" value={itemLink} onChange={(e) => setItemLink(e.target.value)} />
+                    </div>
+                  </div>
+                )}
+
                 <Button type="submit" className="w-full rounded-full">Add to Board</Button>
               </form>
             </DialogContent>
@@ -291,20 +411,21 @@ const SmartboardDetailPage = () => {
         </div>
       </div>
 
+      {/* Content grid + chat */}
       <div className={`grid gap-4 ${chatOpen ? "grid-cols-1 lg:grid-cols-3" : "grid-cols-1"}`}>
-        {/* Masonry grid */}
+        {/* Multi-modal masonry grid */}
         <div className={chatOpen ? "lg:col-span-2" : ""}>
           {(!items || items.length === 0) ? (
             <div className="flex flex-col items-center justify-center py-20 text-center rounded-2xl bg-muted/20 border border-border">
               <StickyNote className="mb-3 h-10 w-10 text-muted-foreground/50" />
               <p className="text-foreground font-medium">This board is empty</p>
-              <p className="text-sm text-muted-foreground mt-1">Add notes, links, or media to get started</p>
+              <p className="text-sm text-muted-foreground mt-1">Add notes, links, images, or media to get started</p>
             </div>
           ) : (
             <div className="columns-2 md:columns-3 gap-3 space-y-3">
               <AnimatePresence>
                 {items.map((item, i) => {
-                  const isImage = item.content_type === "image" && item.file_url;
+                  const isMedia = (item.content_type === "image" || item.content_type === "video") && item.file_url;
                   return (
                     <motion.div
                       key={item.id}
@@ -312,19 +433,33 @@ const SmartboardDetailPage = () => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ delay: i * 0.03 }}
-                      className="break-inside-avoid group relative rounded-xl overflow-hidden bg-card border border-border shadow-sm hover:shadow-md transition-shadow"
+                      className="break-inside-avoid group relative rounded-xl overflow-hidden bg-card border border-border shadow-sm hover:shadow-md transition-all"
                     >
-                      {isImage ? (
-                        <img
-                          src={item.file_url!}
-                          alt={item.title || "Board item"}
-                          className="w-full object-cover"
-                        />
+                      {isMedia ? (
+                        <div className="relative">
+                          <img
+                            src={item.file_url!}
+                            alt={item.title || "Board item"}
+                            className="w-full object-cover"
+                            loading="lazy"
+                          />
+                          {item.content_type === "video" && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="h-12 w-12 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center">
+                                <Video className="h-5 w-5 text-foreground" />
+                              </div>
+                            </div>
+                          )}
+                          {item.title && (
+                            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-foreground/60 to-transparent p-3">
+                              <span className="text-card text-sm font-medium">{item.title}</span>
+                            </div>
+                          )}
+                        </div>
                       ) : (
                         <div className="p-4">
                           <div className="flex items-center gap-2 mb-2">
-                            {item.content_type === "note" && <StickyNote className="h-3.5 w-3.5 text-primary" />}
-                            {item.content_type === "link" && <Link2 className="h-3.5 w-3.5 text-primary" />}
+                            {getContentIcon(item.content_type)}
                             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
                               {item.content_type}
                             </span>
@@ -342,16 +477,29 @@ const SmartboardDetailPage = () => {
                               href={item.link_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="mt-2 block truncate text-xs text-primary hover:underline"
+                              className="mt-2 flex items-center gap-1 text-xs text-primary hover:underline truncate"
                             >
+                              <ExternalLink className="h-3 w-3 flex-shrink-0" />
                               {item.link_url}
                             </a>
                           )}
                         </div>
                       )}
 
-                      {/* Delete overlay */}
-                      {item.user_id === user?.id && (
+                      {/* Edit mode overlay */}
+                      {editMode && item.user_id === user?.id && (
+                        <div className="absolute inset-0 bg-foreground/10 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => deleteItem.mutate(item.id)}
+                            className="h-9 w-9 rounded-full bg-card shadow-md flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Normal delete button */}
+                      {!editMode && item.user_id === user?.id && (
                         <button
                           onClick={() => deleteItem.mutate(item.id)}
                           className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-card/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground shadow-sm"
@@ -408,6 +556,63 @@ const SmartboardDetailPage = () => {
           </motion.div>
         )}
       </div>
+
+      {/* About / Edit Info overlay */}
+      <Dialog open={aboutOpen} onOpenChange={setAboutOpen}>
+        <DialogContent className="max-w-sm">
+          <div className="text-center mb-4">
+            <FileText className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+            <span className="text-xs uppercase tracking-widest text-muted-foreground font-medium">ABOUT</span>
+          </div>
+          {isOwner ? (
+            <form onSubmit={(e) => { e.preventDefault(); updateBoard.mutate(); }} className="space-y-4">
+              <Input
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="font-display font-bold text-lg"
+                placeholder="Title of concept"
+              />
+              <Textarea
+                value={editDesc}
+                onChange={(e) => setEditDesc(e.target.value)}
+                placeholder="Description (optional)"
+                rows={3}
+              />
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>Items</span>
+                <span>{items?.length || 0}</span>
+              </div>
+              <Button type="submit" className="w-full rounded-full">Confirm</Button>
+            </form>
+          ) : (
+            <div className="space-y-3">
+              <h2 className="font-display font-bold text-lg text-foreground">{board.title}</h2>
+              {board.description && <p className="text-sm text-muted-foreground">{board.description}</p>}
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>Items</span>
+                <span>{items?.length || 0}</span>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit mode confirm bar */}
+      {editMode && (
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-card border border-border shadow-xl rounded-full px-4 py-2"
+        >
+          <div className="flex items-center gap-2">
+            <Trash2 className="h-4 w-4 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Tap items to remove</span>
+          </div>
+          <Button size="sm" className="rounded-full" onClick={() => setEditMode(false)}>
+            Confirm
+          </Button>
+        </motion.div>
+      )}
     </div>
   );
 };
