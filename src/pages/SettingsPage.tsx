@@ -160,6 +160,7 @@ const SettingsPage = () => {
           location: location || null,
           available,
           is_public: isPublic,
+          banner_gradient: bannerGradient || null,
         } as any)
         .eq("user_id", user!.id);
       if (error) throw error;
