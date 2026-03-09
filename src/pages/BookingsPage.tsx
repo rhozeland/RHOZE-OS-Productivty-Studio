@@ -486,7 +486,20 @@ const BookingsPage = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant={booking.status === "cancelled" ? "destructive" : "secondary"} className="capitalize">
+                    {(booking as any).project_id && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5 text-xs"
+                        onClick={() => navigate(`/projects/${(booking as any).project_id}`)}
+                      >
+                        <FolderOpen className="h-3.5 w-3.5" /> View Project
+                      </Button>
+                    )}
+                    <Badge variant={
+                      booking.status === "confirmed" ? "default" :
+                      booking.status === "cancelled" ? "destructive" : "secondary"
+                    } className="capitalize">
                       {booking.status}
                     </Badge>
                     {booking.status === "upcoming" && new Date(booking.start_time) > now && (
