@@ -47,6 +47,7 @@ const SettingsPage = () => {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [bannerGradient, setBannerGradient] = useState("");
 
   const { data: profile } = useQuery({
     queryKey: ["my-profile"],
