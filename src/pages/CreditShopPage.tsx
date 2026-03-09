@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -20,10 +21,24 @@ import {
   Check,
   CreditCard,
   Wallet,
+  ShoppingBag,
+  Download,
+  Music,
+  Palette,
+  Camera,
+  Video,
+  PenTool,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { Link, useSearchParams } from "react-router-dom";
 import PaySolAndVerify from "@/components/PaySolAndVerify";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
+
+const CAT_ICONS: Record<string, any> = {
+  music: Music, design: Palette, photo: Camera, video: Video, writing: PenTool,
+};
 
 const TIERS = [
   {
