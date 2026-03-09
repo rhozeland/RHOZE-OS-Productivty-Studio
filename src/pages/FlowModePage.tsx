@@ -454,7 +454,7 @@ const FlowModePage = () => {
       {/* Dynamic gradient background */}
       {viewMode === "swipe" && (
         <>
-          <div className={`absolute inset-0 bg-gradient-to-br ${gradient.bg} transition-all duration-700`} />
+          <div className={`absolute inset-0 bg-gradient-to-br ${gradient.bg} transition-all duration-700 animated-gradient`} />
           <div className={`absolute top-10 left-1/4 w-80 h-80 ${gradient.blur1} rounded-full blur-3xl animate-pulse`} />
           <div className={`absolute bottom-10 right-1/4 w-96 h-96 ${gradient.blur2} rounded-full blur-3xl`} />
         </>
