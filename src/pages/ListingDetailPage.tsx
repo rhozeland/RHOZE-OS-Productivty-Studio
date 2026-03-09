@@ -393,7 +393,69 @@ const ListingDetailPage = () => {
             {/* CTA */}
             {!isOwner && (
               <div className="space-y-2 pt-2">
-                <Button className="w-full rounded-full" onClick={() => setInquiryOpen(true)}>
+                {/* Instant buy for digital products */}
+                {canBuyInstantly && !alreadyPurchased && (
+                  <Button
+                    className="w-full rounded-full"
+                    onClick={() => purchaseMutation.mutate()}
+                    disabled={purchaseMutation.isPending || !hasEnoughCredits}
+                  >
+                    {purchaseMutation.isPending ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
+                    ) : !hasEnoughCredits ? (
+                      <><Coins className="mr-2 h-4 w-4" />Not enough credits</>
+                    ) : (
+                      <><ShoppingCart className="mr-2 h-4 w-4" />Buy Now — {listing.credits_price} credits</>
+                    )}
+                  </Button>
+                )}
+
+                {/* Already purchased */}
+                {canBuyInstantly && alreadyPurchased && (
+                  <div className="space-y-2">
+                    <Button variant="outline" className="w-full rounded-full pointer-events-none" disabled>
+                      <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                      Purchased
+                    </Button>
+                    {/* Download links for purchased media */}
+                    {media && media.length > 0 && (
+                      <div className="space-y-1.5">
+                        {media.map((m) => (
+                          <a
+                            key={m.id}
+                            href={m.file_url}
+                            download={m.file_name}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm text-primary hover:bg-muted transition-colors"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            {m.file_name}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Credit balance hint */}
+                {canBuyInstantly && !alreadyPurchased && !hasEnoughCredits && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-xs text-muted-foreground"
+                    onClick={() => navigate("/credits")}
+                  >
+                    You have {userCredits?.balance ?? 0} credits — Get more →
+                  </Button>
+                )}
+
+                {/* Inquiry for non-digital or always available */}
+                <Button
+                  variant={canBuyInstantly ? "outline" : "default"}
+                  className="w-full rounded-full"
+                  onClick={() => setInquiryOpen(true)}
+                >
                   <MessageCircle className="mr-2 h-4 w-4" />
                   Send Inquiry
                 </Button>
