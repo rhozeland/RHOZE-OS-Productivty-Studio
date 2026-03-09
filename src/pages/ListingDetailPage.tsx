@@ -39,7 +39,9 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { format } from "date-fns";
 import AudioPreview from "@/components/marketplace/AudioPreview";
+import StarRating from "@/components/marketplace/StarRating";
 
 const CATEGORIES: Record<string, { label: string; icon: any; color: string }> = {
   music: { label: "Music", icon: Music, color: "hsl(280, 60%, 55%)" },
