@@ -284,6 +284,19 @@ const DropRoomDetailPage = () => {
         )}
       </div>
 
+      {/* Video area */}
+      {room.enable_video && !expired && (
+        <div className="pt-4 shrink-0">
+          <DropRoomVideo
+            roomId={room.id}
+            enableVideo={room.enable_video}
+            allowSpectators={room.allow_spectators}
+            enableRecording={room.enable_recording}
+            isMember={isMember}
+          />
+        </div>
+      )}
+
       <div className="flex flex-1 min-h-0 gap-4 pt-4">
         {/* Posts feed */}
         <div className="flex-1 flex flex-col min-w-0">
