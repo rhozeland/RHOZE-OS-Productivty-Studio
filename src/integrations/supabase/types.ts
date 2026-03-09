@@ -685,6 +685,10 @@ export type Database = {
           bio: string | null
           created_at: string
           display_name: string | null
+          email_notif_inquiries: boolean | null
+          email_notif_messages: boolean | null
+          email_notif_purchases: boolean | null
+          email_notif_reviews: boolean | null
           headline: string | null
           id: string
           is_public: boolean | null
@@ -692,6 +696,12 @@ export type Database = {
           mediums: string[] | null
           portfolio_url: string | null
           profile_background: string | null
+          shipping_address_line1: string | null
+          shipping_address_line2: string | null
+          shipping_city: string | null
+          shipping_country: string | null
+          shipping_state: string | null
+          shipping_zip: string | null
           skills: string[] | null
           updated_at: string
           user_id: string
@@ -703,6 +713,10 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          email_notif_inquiries?: boolean | null
+          email_notif_messages?: boolean | null
+          email_notif_purchases?: boolean | null
+          email_notif_reviews?: boolean | null
           headline?: string | null
           id?: string
           is_public?: boolean | null
@@ -710,6 +724,12 @@ export type Database = {
           mediums?: string[] | null
           portfolio_url?: string | null
           profile_background?: string | null
+          shipping_address_line1?: string | null
+          shipping_address_line2?: string | null
+          shipping_city?: string | null
+          shipping_country?: string | null
+          shipping_state?: string | null
+          shipping_zip?: string | null
           skills?: string[] | null
           updated_at?: string
           user_id: string
@@ -721,6 +741,10 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          email_notif_inquiries?: boolean | null
+          email_notif_messages?: boolean | null
+          email_notif_purchases?: boolean | null
+          email_notif_reviews?: boolean | null
           headline?: string | null
           id?: string
           is_public?: boolean | null
@@ -728,6 +752,12 @@ export type Database = {
           mediums?: string[] | null
           portfolio_url?: string | null
           profile_background?: string | null
+          shipping_address_line1?: string | null
+          shipping_address_line2?: string | null
+          shipping_city?: string | null
+          shipping_country?: string | null
+          shipping_state?: string | null
+          shipping_zip?: string | null
           skills?: string[] | null
           updated_at?: string
           user_id?: string
