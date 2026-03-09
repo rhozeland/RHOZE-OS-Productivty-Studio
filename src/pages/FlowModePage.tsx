@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/select";
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import { toast } from "sonner";
+import { playSwipeSound } from "@/lib/swipe-sound";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
@@ -219,6 +220,7 @@ const FlowModePage = () => {
   const performAction = useCallback((action: string, smartboardId?: string) => {
     if (!currentItem) return;
     if (navigator.vibrate) navigator.vibrate(20);
+    playSwipeSound(action === "save" ? "up" : action === "dislike" ? "down" : action === "share" ? "left" : "right");
 
     if (action === "save") {
       if (smartboardId) {
@@ -288,6 +290,7 @@ const FlowModePage = () => {
     }
     // Haptic feedback on mobile
     if (navigator.vibrate) navigator.vibrate(30);
+    playSwipeSound(dir as "up" | "down" | "left" | "right");
     setTutorialDirection(dir);
     setTimeout(() => {
       setTutorialCompleted((prev) => [...prev, dir]);
