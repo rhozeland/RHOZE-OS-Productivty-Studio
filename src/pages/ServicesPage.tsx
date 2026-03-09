@@ -69,6 +69,7 @@ const ServicesPage = () => {
   const [selectedService, setSelectedService] = useState<any>(null);
   const [payMode, setPayMode] = useState<"credits" | "fiat">("credits");
   const [cardProcessing, setCardProcessing] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string>("all");
 
   const { data: services, isLoading } = useQuery({
     queryKey: ["rhozeland-services"],
@@ -105,6 +106,7 @@ const ServicesPage = () => {
 
   const categoryOrder = ["audio", "design", "video", "photo"];
   const sortedCategories = categoryOrder.filter((c) => grouped[c]);
+  const visibleCategories = activeCategory === "all" ? sortedCategories : sortedCategories.filter((c) => c === activeCategory);
 
   return (
     <div className="space-y-8">
@@ -135,6 +137,46 @@ const ServicesPage = () => {
         </div>
       </div>
 
+      {/* Category filter tabs */}
+      {!isLoading && sortedCategories.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setActiveCategory("all")}
+            className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-all ${
+              activeCategory === "all"
+                ? "bg-foreground text-background shadow-sm"
+                : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/20"
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            All
+          </button>
+          {sortedCategories.map((catKey) => {
+            const meta = CATEGORY_META[catKey] || { label: catKey, icon: Sparkles, color: "hsl(var(--primary))", gradient: "" };
+            const CatIcon = meta.icon;
+            const isActive = activeCategory === catKey;
+            return (
+              <button
+                key={catKey}
+                onClick={() => setActiveCategory(catKey)}
+                className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                  isActive
+                    ? "text-white shadow-sm"
+                    : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/20"
+                }`}
+                style={isActive ? { background: meta.gradient } : undefined}
+              >
+                <CatIcon className="h-3.5 w-3.5" />
+                {meta.label}
+                <span className={`text-xs ${isActive ? "text-white/70" : "text-muted-foreground"}`}>
+                  {grouped[catKey].length}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Loading skeleton */}
       {isLoading && (
         <div className="space-y-8">
@@ -160,7 +202,7 @@ const ServicesPage = () => {
       )}
 
       {/* Category sections — studio menu board */}
-      {sortedCategories.map((catKey, catIndex) => {
+      {visibleCategories.map((catKey, catIndex) => {
         const meta = CATEGORY_META[catKey] || {
           label: catKey,
           icon: Sparkles,
