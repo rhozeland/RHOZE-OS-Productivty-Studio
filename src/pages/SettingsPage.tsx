@@ -345,6 +345,46 @@ const SettingsPage = () => {
         )}
       </div>
 
+      {/* Page Background */}
+      <div className="surface-card max-w-2xl p-6">
+        <h2 className="mb-2 font-display text-lg font-semibold text-foreground">Profile Page Background</h2>
+        <p className="text-xs text-muted-foreground mb-4">Set a full-page background for your public profile — make it yours</p>
+
+        {/* Preview */}
+        <div
+          className="h-16 rounded-xl mb-4 border border-border flex items-center justify-center"
+          style={{
+            background: profileBackground || "hsl(var(--background))",
+          }}
+        >
+          <span className="text-[10px] text-muted-foreground/60 font-medium tracking-wide">Preview</span>
+        </div>
+
+        <div className="grid grid-cols-5 gap-2">
+          {PAGE_BACKGROUNDS.map((bg) => (
+            <button
+              key={bg.label}
+              onClick={async () => {
+                setProfileBackground(bg.value);
+                await supabase.from("profiles").update({ profile_background: bg.value || null } as any).eq("user_id", user!.id);
+                queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+                queryClient.invalidateQueries({ queryKey: ["profile"] });
+                toast.success(`Page background: ${bg.label}`);
+              }}
+              className={`group relative rounded-lg overflow-hidden border-2 transition-all h-10 ${
+                profileBackground === bg.value ? "border-primary shadow-md" : "border-border hover:border-primary/40"
+              }`}
+              style={{ background: bg.value || "hsl(var(--background))" }}
+              title={bg.label}
+            >
+              <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-foreground/20 text-[9px] font-semibold text-card tracking-wide">
+                {bg.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
         {showAvatarPicker && (
           <div className="mt-4 p-4 rounded-lg border border-border bg-muted/30">
             <p className="text-sm font-medium text-foreground mb-3">Choose an avatar</p>
