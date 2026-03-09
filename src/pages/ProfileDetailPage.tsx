@@ -460,6 +460,9 @@ const ProfileDetailPage = () => {
           </div>
         </motion.div>
 
+        {/* Seller Stats — public stats for everyone, private analytics for owner */}
+        <ProfileSellerStats userId={id!} isOwnProfile={isOwnProfile} />
+
         {/* Seller Listings — subtle section */}
         {hasSellerContent && (
           <motion.div
