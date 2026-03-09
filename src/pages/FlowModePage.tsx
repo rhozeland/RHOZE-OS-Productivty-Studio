@@ -23,6 +23,7 @@ import {
   Share2,
   Check,
   Upload,
+  Search,
 } from "lucide-react";
 import {
   Dialog,
