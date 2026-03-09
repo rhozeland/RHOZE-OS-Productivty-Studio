@@ -147,13 +147,18 @@ const SmartboardDetailPage = () => {
         fileUrl = urlData.publicUrl;
       }
 
+      // For image/video/audio/pdf with URL but no file upload, use link as file_url
+      if (!fileUrl && uploadTypes.includes(itemType) && itemLink) {
+        fileUrl = itemLink;
+      }
+
       const { error } = await supabase.from("smartboard_items").insert({
         smartboard_id: id!,
         user_id: user!.id,
         content_type: itemType,
         title: itemTitle || null,
         content: itemContent || null,
-        link_url: itemType === "link" ? itemLink : (uploadTypes.includes(itemType) && itemLink ? itemLink : null),
+        link_url: itemType === "link" ? itemLink : null,
         file_url: fileUrl,
       });
       if (error) throw error;
