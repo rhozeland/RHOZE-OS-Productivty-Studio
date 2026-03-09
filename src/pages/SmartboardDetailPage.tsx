@@ -283,9 +283,27 @@ const SmartboardDetailPage = () => {
             >
               <FileText className="h-5 w-5" />
             </button>
-            <button className="text-muted-foreground hover:text-foreground transition-colors" title="Share">
+            <button
+              onClick={() => {
+                const url = `${window.location.origin}/boards/${id}`;
+                navigator.clipboard.writeText(url);
+                toast.success("Share link copied!");
+              }}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              title="Copy share link"
+            >
               <Share2 className="h-5 w-5" />
             </button>
+            {isOwner && (
+              <BackgroundCustomizer
+                boardId={id!}
+                currentColor={board.background_color}
+                currentUrl={board.background_url}
+                currentBlur={board.background_blur ?? 0}
+                currentOpacity={board.background_opacity ?? 100}
+                onUpdate={() => queryClient.invalidateQueries({ queryKey: ["smartboard", id] })}
+              />
+            )}
             {isOwner && (
               <button
                 onClick={() => setEditMode(!editMode)}
