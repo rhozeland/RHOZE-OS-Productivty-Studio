@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Send, User, MessageSquare, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 
 type Profile = {
   user_id: string;
