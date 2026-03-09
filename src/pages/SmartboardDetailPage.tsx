@@ -656,6 +656,7 @@ const SmartboardDetailPage = () => {
           </motion.div>
         )}
       </div>
+      </SmartboardBackground>
 
       {/* About / Edit Info overlay */}
       <Dialog open={aboutOpen} onOpenChange={setAboutOpen}>
