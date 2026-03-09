@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Users, Clock, Flame, Zap } from "lucide-react";
+import { Plus, Users, Clock, Flame, Zap, Video } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, isPast } from "date-fns";
 
@@ -71,6 +72,9 @@ const DropRoomsPage = () => {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("general");
   const [durationHours, setDurationHours] = useState(24);
+  const [enableVideo, setEnableVideo] = useState(false);
+  const [allowSpectators, setAllowSpectators] = useState(false);
+  const [enableRecording, setEnableRecording] = useState(false);
   const [, setTick] = useState(0);
 
   // Countdown timer – re-render every 30s
@@ -127,7 +131,10 @@ const DropRoomsPage = () => {
       category,
       created_by: user.id,
       expires_at: expiresAt,
-    });
+      enable_video: enableVideo,
+      allow_spectators: allowSpectators,
+      enable_recording: enableRecording,
+    } as any);
 
     if (error) {
       toast.error("Failed to create room");
@@ -141,6 +148,9 @@ const DropRoomsPage = () => {
     setDescription("");
     setCategory("general");
     setDurationHours(24);
+    setEnableVideo(false);
+    setAllowSpectators(false);
+    setEnableRecording(false);
     setCreating(false);
     fetchRooms();
   };
@@ -212,6 +222,28 @@ const DropRoomsPage = () => {
                   </Select>
                 </div>
               </div>
+              {/* Video options */}
+              <div className="space-y-3 rounded-lg border border-border p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Video className="h-4 w-4 text-primary" />
+                    <Label className="cursor-pointer">Enable Video</Label>
+                  </div>
+                  <Switch checked={enableVideo} onCheckedChange={setEnableVideo} />
+                </div>
+                {enableVideo && (
+                  <>
+                    <div className="flex items-center justify-between pl-6">
+                      <Label className="text-xs text-muted-foreground cursor-pointer">Allow spectators</Label>
+                      <Switch checked={allowSpectators} onCheckedChange={setAllowSpectators} />
+                    </div>
+                    <div className="flex items-center justify-between pl-6">
+                      <Label className="text-xs text-muted-foreground cursor-pointer">Enable recording</Label>
+                      <Switch checked={enableRecording} onCheckedChange={setEnableRecording} />
+                    </div>
+                  </>
+                )}
+              </div>
               <Button onClick={handleCreate} disabled={creating || !title.trim()} className="w-full">
                 {creating ? "Creating…" : "Launch Room"}
               </Button>
@@ -252,9 +284,16 @@ const DropRoomsPage = () => {
                     <h3 className="font-semibold text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors">
                       {room.title}
                     </h3>
-                    <Badge variant="outline" className={`shrink-0 capitalize text-xs ${CATEGORY_COLORS[room.category] || ""}`}>
-                      {room.category}
-                    </Badge>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {(room as any).enable_video && (
+                        <Badge variant="secondary" className="text-[10px] gap-1 py-0">
+                          <Video className="h-2.5 w-2.5" /> Live
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className={`capitalize text-xs ${CATEGORY_COLORS[room.category] || ""}`}>
+                        {room.category}
+                      </Badge>
+                    </div>
                   </div>
                   {room.description && (
                     <p className="text-sm text-muted-foreground line-clamp-2">{room.description}</p>

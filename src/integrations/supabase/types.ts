@@ -256,11 +256,14 @@ export type Database = {
       }
       drop_rooms: {
         Row: {
+          allow_spectators: boolean
           category: string
           cover_color: string | null
           created_at: string
           created_by: string
           description: string | null
+          enable_recording: boolean
+          enable_video: boolean
           expires_at: string
           id: string
           is_active: boolean
@@ -269,11 +272,14 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          allow_spectators?: boolean
           category?: string
           cover_color?: string | null
           created_at?: string
           created_by: string
           description?: string | null
+          enable_recording?: boolean
+          enable_video?: boolean
           expires_at: string
           id?: string
           is_active?: boolean
@@ -282,11 +288,14 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          allow_spectators?: boolean
           category?: string
           cover_color?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
+          enable_recording?: boolean
+          enable_video?: boolean
           expires_at?: string
           id?: string
           is_active?: boolean

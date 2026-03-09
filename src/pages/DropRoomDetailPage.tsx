@@ -16,9 +16,11 @@ import {
   Lightbulb,
   LogOut,
   Zap,
+  Video,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, isPast, format } from "date-fns";
+import DropRoomVideo from "@/components/droproom/DropRoomVideo";
 
 interface Post {
   id: string;
@@ -255,6 +257,11 @@ const DropRoomDetailPage = () => {
             <span className="flex items-center gap-1 capitalize">
               <Badge variant="outline" className="text-[10px] py-0">{room.category}</Badge>
             </span>
+            {room.enable_video && (
+              <Badge variant="secondary" className="text-[10px] py-0 gap-1">
+                <Video className="h-2.5 w-2.5" /> Video
+              </Badge>
+            )}
             <span className="flex items-center gap-1">
               <Users className="h-3 w-3" /> {members.length}
             </span>
@@ -276,6 +283,19 @@ const DropRoomDetailPage = () => {
           )
         )}
       </div>
+
+      {/* Video area */}
+      {room.enable_video && !expired && (
+        <div className="pt-4 shrink-0">
+          <DropRoomVideo
+            roomId={room.id}
+            enableVideo={room.enable_video}
+            allowSpectators={room.allow_spectators}
+            enableRecording={room.enable_recording}
+            isMember={isMember}
+          />
+        </div>
+      )}
 
       <div className="flex flex-1 min-h-0 gap-4 pt-4">
         {/* Posts feed */}
