@@ -65,6 +65,7 @@ const App = () => (
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/bookings" element={<CalendarPage />} /> {/* redirect old route */}
               <Route path="/credits" element={<CreditShopPage />} />
+              <Route path="/purchases" element={<PurchasesPage />} />
               <Route path="/flow" element={<FlowModePage />} />
               <Route path="/smartboards" element={<SmartboardsPage />} />
               <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
