@@ -83,6 +83,7 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
     setPaymentMethod("credits");
     setNotes("");
     setLoading(false);
+    setCardToken(null);
   };
 
   if (!service) return null;
