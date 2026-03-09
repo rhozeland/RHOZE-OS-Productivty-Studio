@@ -12,24 +12,19 @@ import DashboardPage from "@/pages/DashboardPage";
 import ProjectsPage from "@/pages/ProjectsPage";
 import ProjectDetailPage from "@/pages/ProjectDetailPage";
 import CalendarPage from "@/pages/CalendarPage";
-// BookingsPage removed — merged into CalendarPage
 import FlowModePage from "@/pages/FlowModePage";
 import SmartboardsPage from "@/pages/SmartboardsPage";
-import MarketplacePage from "@/pages/MarketplacePage";
+import CreatorsHubPage from "@/pages/CreatorsHubPage";
 import ListingDetailPage from "@/pages/ListingDetailPage";
 import SmartboardDetailPage from "@/pages/SmartboardDetailPage";
 import SmartboardPresentationPage from "@/pages/SmartboardPresentationPage";
-import ProfilesPage from "@/pages/ProfilesPage";
 import ProfileDetailPage from "@/pages/ProfileDetailPage";
 import MessagesPage from "@/pages/MessagesPage";
 import SettingsPage from "@/pages/SettingsPage";
 import ServicesPage from "@/pages/ServicesPage";
 import CreditShopPage from "@/pages/CreditShopPage";
-import PurchasesPage from "@/pages/PurchasesPage";
-import InquiriesPage from "@/pages/InquiriesPage";
 import DropRoomsPage from "@/pages/DropRoomsPage";
 import DropRoomDetailPage from "@/pages/DropRoomDetailPage";
-import SellerDashboardPage from "@/pages/SellerDashboardPage";
 import AdminPage from "@/pages/AdminPage";
 import NotFound from "./pages/NotFound";
 
@@ -67,20 +62,23 @@ const App = () => (
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/projects/:id" element={<ProjectDetailPage />} />
               <Route path="/calendar" element={<CalendarPage />} />
-              <Route path="/bookings" element={<CalendarPage />} /> {/* redirect old route */}
+              <Route path="/bookings" element={<CalendarPage />} />
               <Route path="/credits" element={<CreditShopPage />} />
-              <Route path="/purchases" element={<PurchasesPage />} />
+              <Route path="/purchases" element={<Navigate to="/credits?tab=purchases" replace />} />
               <Route path="/flow" element={<FlowModePage />} />
               <Route path="/smartboards" element={<SmartboardsPage />} />
               <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
-              <Route path="/marketplace" element={<MarketplacePage />} />
-              <Route path="/marketplace/:id" element={<ListingDetailPage />} />
-              <Route path="/seller" element={<SellerDashboardPage />} />
-              <Route path="/inquiries" element={<InquiriesPage />} />
+              <Route path="/creators" element={<CreatorsHubPage />} />
+              <Route path="/creators/:id" element={<ListingDetailPage />} />
+              {/* Legacy redirects */}
+              <Route path="/marketplace" element={<Navigate to="/creators" replace />} />
+              <Route path="/marketplace/:id" element={<Navigate to="/creators" replace />} />
+              <Route path="/seller" element={<Navigate to="/settings" replace />} />
+              <Route path="/inquiries" element={<Navigate to="/messages?tab=inquiries" replace />} />
+              <Route path="/profiles" element={<Navigate to="/creators?tab=creators" replace />} />
+              <Route path="/profiles/:id" element={<ProfileDetailPage />} />
               <Route path="/drop-rooms" element={<DropRoomsPage />} />
               <Route path="/drop-rooms/:id" element={<DropRoomDetailPage />} />
-              <Route path="/profiles" element={<ProfilesPage />} />
-              <Route path="/profiles/:id" element={<ProfileDetailPage />} />
               <Route path="/messages" element={<MessagesPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/admin" element={<AdminPage />} />
