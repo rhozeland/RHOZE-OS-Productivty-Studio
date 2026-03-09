@@ -255,7 +255,7 @@ const CreditShopPage = () => {
               >
                 {/* Gradient header */}
                 <div
-                  className="px-5 py-8 text-center text-white relative overflow-hidden"
+                  className="px-5 py-8 text-center text-white relative overflow-hidden animated-gradient"
                   style={{ background: tier.gradient }}
                 >
                   <div className="absolute inset-0 opacity-20" style={{
