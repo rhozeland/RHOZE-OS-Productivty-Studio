@@ -75,6 +75,8 @@ const App = () => (
               <Route path="/marketplace" element={<MarketplacePage />} />
               <Route path="/marketplace/:id" element={<ListingDetailPage />} />
               <Route path="/inquiries" element={<InquiriesPage />} />
+              <Route path="/drop-rooms" element={<DropRoomsPage />} />
+              <Route path="/drop-rooms/:id" element={<DropRoomDetailPage />} />
               <Route path="/profiles" element={<ProfilesPage />} />
               <Route path="/profiles/:id" element={<ProfileDetailPage />} />
               <Route path="/messages" element={<MessagesPage />} />
