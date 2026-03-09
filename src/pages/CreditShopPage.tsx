@@ -238,47 +238,58 @@ const CreditShopPage = () => {
             return (
               <motion.div
                 key={tier.key}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className={`relative rounded-2xl overflow-hidden border transition-all ${
+                transition={{ delay: i * 0.12, type: "spring", stiffness: 180 }}
+                whileHover={{ y: -6, scale: 1.02 }}
+                className={`relative rounded-2xl overflow-hidden transition-all ${
                   isCurrentTier
-                    ? "border-primary shadow-lg"
-                    : "border-border hover:shadow-md"
+                    ? "border-2 border-primary shadow-xl"
+                    : "border border-border hover:shadow-xl"
                 }`}
+                style={{
+                  boxShadow: isCurrentTier
+                    ? `0 12px 40px -8px ${tier.glowColor}50`
+                    : undefined,
+                }}
               >
-                {/* Colored header */}
+                {/* Gradient header */}
                 <div
-                  className="px-5 py-6 text-center text-white"
-                  style={{ background: `linear-gradient(135deg, ${tier.color}, ${tier.color.replace("55%", "40%")})` }}
+                  className="px-5 py-8 text-center text-white relative overflow-hidden"
+                  style={{ background: tier.gradient }}
                 >
-                  <p className="text-sm font-medium opacity-90">{tier.name}</p>
-                  <p className="font-display text-2xl font-bold mt-1">
+                  <div className="absolute inset-0 opacity-20" style={{
+                    background: "radial-gradient(circle at 30% 20%, rgba(255,255,255,0.4) 0%, transparent 60%)"
+                  }} />
+                  <p className="text-sm font-semibold tracking-wide uppercase opacity-90 relative z-10">{tier.name}</p>
+                  <p className="font-display text-3xl font-bold mt-1.5 relative z-10 drop-shadow-sm">
                     {tier.credits} Credits/monthly
                   </p>
-                  <p className="text-sm opacity-80">
+                  <p className="text-sm opacity-80 mt-0.5 relative z-10">
                     ${tier.price.toFixed(2)}/monthly
                   </p>
                 </div>
 
                 {/* Features */}
-                <div className="p-5 bg-card space-y-3">
-                  <p className="text-xs text-muted-foreground">
+                <div className="p-6 bg-card space-y-4">
+                  <p className="text-xs text-muted-foreground font-medium">
                     {tier.bestFor}
                   </p>
-                  <ul className="space-y-2">
+                  <ul className="space-y-2.5">
                     {tier.features.map((f) => (
                       <li
                         key={f}
-                        className="flex items-center gap-2 text-sm text-foreground"
+                        className="flex items-center gap-2.5 text-sm text-foreground font-medium"
                       >
-                        <Check className="h-3.5 w-3.5 text-primary shrink-0" />
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15">
+                          <Check className="h-3 w-3 text-primary" />
+                        </span>
                         {f}
                       </li>
                     ))}
                   </ul>
                   <Button
-                    className="w-full mt-3"
+                    className="w-full mt-4 h-11 font-semibold text-sm"
                     variant={isCurrentTier ? "outline" : "default"}
                     disabled={isCurrentTier}
                     onClick={() => {
