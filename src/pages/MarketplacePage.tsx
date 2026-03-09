@@ -31,9 +31,11 @@ import {
   Sparkles,
   X,
   DollarSign,
+  MessageCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import PayWithSolButton from "@/components/PayWithSolButton";
 import { isValidSolanaAddress } from "@/lib/solana";
 
