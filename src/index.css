@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --font-display: 'Space Grotesk', sans-serif;
+    --font-display: 'Neue Haas Grotesk Display Pro', 'Helvetica Neue', 'Arial', sans-serif;
     --font-body: 'Inter', sans-serif;
 
     --background: 0 0% 98%;
