@@ -346,17 +346,20 @@ const SmartboardDetailPage = () => {
               <DialogHeader><DialogTitle>Add to Board</DialogTitle></DialogHeader>
               {/* Content type tabs */}
               <div className="flex gap-2 mb-4 flex-wrap">
-                {(["note", "link", "image"] as const).map((type) => (
+                {(["note", "link", "image", "video", "audio", "pdf"] as const).map((type) => (
                   <Button
                     key={type}
                     variant={itemType === type ? "default" : "outline"}
                     size="sm"
                     className="rounded-full capitalize"
-                    onClick={() => setItemType(type)}
+                    onClick={() => { setItemType(type); setImageFile(null); setItemLink(""); }}
                   >
                     {type === "note" && <StickyNote className="mr-1 h-4 w-4" />}
                     {type === "link" && <Link2 className="mr-1 h-4 w-4" />}
                     {type === "image" && <ImageIcon className="mr-1 h-4 w-4" />}
+                    {type === "video" && <Video className="mr-1 h-4 w-4" />}
+                    {type === "audio" && <AudioLines className="mr-1 h-4 w-4" />}
+                    {type === "pdf" && <FileText className="mr-1 h-4 w-4" />}
                     {type}
                   </Button>
                 ))}
@@ -373,12 +376,17 @@ const SmartboardDetailPage = () => {
                     <Textarea placeholder="Description (optional)" value={itemContent} onChange={(e) => setItemContent(e.target.value)} rows={2} />
                   </>
                 )}
-                {itemType === "image" && (
+                {(itemType === "image" || itemType === "video" || itemType === "audio" || itemType === "pdf") && (
                   <div>
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept="image/*,video/*,.pdf"
+                      accept={
+                        itemType === "image" ? "image/*" :
+                        itemType === "video" ? "video/*" :
+                        itemType === "audio" ? "audio/*" :
+                        ".pdf"
+                      }
                       className="hidden"
                       onChange={(e) => setImageFile(e.target.files?.[0] || null)}
                     />
@@ -389,18 +397,40 @@ const SmartboardDetailPage = () => {
                       {imageFile ? (
                         <div className="flex items-center justify-center gap-2">
                           <Check className="h-4 w-4 text-primary" />
-                          <span className="text-sm text-foreground">{imageFile.name}</span>
+                          <span className="text-sm text-foreground truncate max-w-[200px]">{imageFile.name}</span>
                         </div>
                       ) : (
                         <>
-                          <ImageIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                          <p className="text-sm text-muted-foreground">Upload from library</p>
-                          <p className="text-xs text-muted-foreground/60 mt-1">Images, video, PDF up to 20MB</p>
+                          {itemType === "image" && <ImageIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />}
+                          {itemType === "video" && <Video className="h-8 w-8 text-muted-foreground mx-auto mb-2" />}
+                          {itemType === "audio" && <AudioLines className="h-8 w-8 text-muted-foreground mx-auto mb-2" />}
+                          {itemType === "pdf" && <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />}
+                          <p className="text-sm text-muted-foreground">
+                            {itemType === "image" ? "Upload image" :
+                             itemType === "video" ? "Upload video" :
+                             itemType === "audio" ? "Upload audio" :
+                             "Upload PDF"}
+                          </p>
+                          <p className="text-xs text-muted-foreground/60 mt-1">
+                            {itemType === "image" ? "JPG, PNG, WEBP up to 20MB" :
+                             itemType === "video" ? "MP4, MOV, WEBM up to 20MB" :
+                             itemType === "audio" ? "MP3, WAV, FLAC up to 20MB" :
+                             "PDF files up to 20MB"}
+                          </p>
                         </>
                       )}
                     </div>
                     <div className="mt-3">
-                      <Input placeholder="Or add image from URL" value={itemLink} onChange={(e) => setItemLink(e.target.value)} />
+                      <Input
+                        placeholder={
+                          itemType === "image" ? "Or paste image URL" :
+                          itemType === "video" ? "Or paste YouTube / Vimeo link" :
+                          itemType === "audio" ? "Or paste Spotify / SoundCloud link" :
+                          "Or paste link to PDF"
+                        }
+                        value={itemLink}
+                        onChange={(e) => setItemLink(e.target.value)}
+                      />
                     </div>
                   </div>
                 )}
