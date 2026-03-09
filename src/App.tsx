@@ -40,6 +40,7 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <ThemeProvider>
     <SolanaWalletProvider>
     <TooltipProvider>
       <Toaster />
