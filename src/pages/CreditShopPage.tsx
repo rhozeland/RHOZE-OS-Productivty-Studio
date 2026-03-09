@@ -394,14 +394,15 @@ const CreditShopPage = () => {
                   </ul>
                   <Button
                     className="w-full mt-2 h-10 font-semibold text-sm"
-                    variant={isCurrentTier ? "outline" : "default"}
+                    variant={isCurrentTier ? "outline" : isFree ? "secondary" : "default"}
                     disabled={isCurrentTier}
                     onClick={() => {
+                      if (isFree) return;
                       setPendingTier(tier);
                       setSubPaymentOpen(true);
                     }}
                   >
-                    {isCurrentTier ? "Current Plan" : `Subscribe — $${tier.price}/mo`}
+                    {isCurrentTier ? "Current Plan" : isFree ? "Included" : `Subscribe — $${tier.price}/mo`}
                   </Button>
                 </div>
               </motion.div>
