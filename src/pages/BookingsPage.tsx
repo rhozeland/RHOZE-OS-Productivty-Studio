@@ -117,12 +117,29 @@ const BookingsPage = () => {
 
   const cancelBooking = useMutation({
     mutationFn: async (id: string) => {
+      // Fetch booking details before cancelling (for the email)
+      const { data: booking } = await supabase.from("bookings").select("*").eq("id", id).single();
       const { error } = await supabase.from("bookings").update({ status: "cancelled" }).eq("id", id);
       if (error) throw error;
+      return booking;
     },
-    onSuccess: () => {
+    onSuccess: (booking) => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       toast.success("Booking cancelled");
+
+      // Send cancellation email (fire-and-forget)
+      if (booking && user?.email) {
+        supabase.functions.invoke("send-booking-cancellation", {
+          body: {
+            to_email: user.email,
+            user_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "there",
+            service_title: booking.title,
+            date: format(new Date(booking.start_time), "MMMM d, yyyy"),
+            time: format(new Date(booking.start_time), "h:mm a"),
+            duration_hours: booking.duration_hours,
+          },
+        }).catch((err) => console.error("Cancellation email failed:", err));
+      }
     },
   });
 
