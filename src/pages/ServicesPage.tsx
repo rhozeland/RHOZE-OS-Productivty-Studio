@@ -24,6 +24,7 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import BookingCheckoutModal from "@/components/booking/BookingCheckoutModal";
 
 const CATEGORIES = [
   { key: "all", label: "All Services", icon: Sparkles },
