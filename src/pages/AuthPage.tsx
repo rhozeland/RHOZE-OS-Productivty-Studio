@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import logoLarge from "@/assets/logo-large.jpg";
+import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
 const AuthPage = () => {
   const [isSignUp, setIsSignUp] = useState(false);
