@@ -112,6 +112,19 @@ const CalendarPage = () => {
     },
   });
 
+  const { data: userCredits } = useQuery({
+    queryKey: ["user-credits", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_credits")
+        .select("*")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   const createBooking = useMutation({
     mutationFn: async () => {
       if (!dragDate || dragStartHour === null || dragEndHour === null) return;
