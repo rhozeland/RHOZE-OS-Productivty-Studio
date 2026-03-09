@@ -436,10 +436,30 @@ const CreditShopPage = () => {
                   if (error) throw error;
                   if (!data?.success) throw new Error(data?.error || "Payment failed");
 
-                  // Payment succeeded — activate subscription
-                  await subscribeTier.mutateAsync(pendingTier);
-                  setSubPaymentOpen(false);
-                  setPendingTier(null);
+                   const paymentId = data?.payment_id;
+
+                   // Payment succeeded — activate subscription
+                   await subscribeTier.mutateAsync(pendingTier);
+
+                   // Send receipt email (fire-and-forget)
+                   const now = new Date();
+                   const endDate = new Date(now);
+                   endDate.setMonth(endDate.getMonth() + 1);
+                   supabase.functions.invoke("send-subscription-receipt", {
+                     body: {
+                       to_email: user?.email,
+                       user_name: user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Creator",
+                       tier_name: pendingTier.name,
+                       credits: pendingTier.credits,
+                       amount: pendingTier.price.toFixed(2),
+                       payment_id: paymentId,
+                       subscription_start: now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+                       subscription_end: endDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+                     },
+                   }).catch((err) => console.error("Receipt email failed:", err));
+
+                   setSubPaymentOpen(false);
+                   setPendingTier(null);
                 }}
               />
             </>
