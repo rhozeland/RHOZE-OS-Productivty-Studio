@@ -89,6 +89,7 @@ const SettingsPage = () => {
       setIsPublic((profile as any).is_public !== false);
       setAvatarUrl(profile.avatar_url ?? "");
       setBannerGradient((profile as any).banner_gradient ?? "");
+      setProfileBackground((profile as any).profile_background ?? "");
     }
   }, [profile]);
 
