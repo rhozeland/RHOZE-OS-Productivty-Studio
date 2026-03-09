@@ -322,8 +322,8 @@ const FlowModePage = () => {
     return (
       <div className="relative flex items-center justify-center min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8 overflow-hidden gradient-hero">
         {/* Decorative blurs */}
-        <div className="absolute top-20 left-1/4 w-64 h-64 bg-teal/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-1/4 w-72 h-72 bg-pink/10 rounded-full blur-3xl" />
+        <div className="absolute top-20 left-1/4 w-64 h-64 bg-teal/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-20 right-1/4 w-72 h-72 bg-pink/10 rounded-full blur-3xl pointer-events-none" />
 
         <AnimatePresence mode="wait">
           {/* Step 0: Category Calibration */}
