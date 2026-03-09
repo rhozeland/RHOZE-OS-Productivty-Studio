@@ -377,6 +377,60 @@ const CreditShopPage = () => {
 
       {/* Transaction history */}
       <TransactionHistory userId={user?.id} />
+        </TabsContent>
+
+        <TabsContent value="purchases" className="mt-4">
+          {purchasesLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
+          ) : !purchases?.length ? (
+            <div className="text-center py-20 space-y-4">
+              <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground/40" />
+              <p className="text-muted-foreground">No purchases yet</p>
+              <Link to="/creators">
+                <Button variant="outline" className="rounded-full">Browse Creators Hub</Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {purchases.map((purchase: any) => {
+                const listing = purchaseListingsMap.get(purchase.listing_id);
+                const media = purchaseMediaMap.get(purchase.listing_id) ?? [];
+                const CatIcon = CAT_ICONS[listing?.category] ?? Sparkles;
+                return (
+                  <div key={purchase.id} className="surface-card p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <CatIcon className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                          <Link to={`/creators/${purchase.listing_id}`} className="font-semibold text-foreground hover:text-primary transition-colors truncate block">
+                            {listing?.title ?? "Listing"}
+                          </Link>
+                          <p className="text-xs text-muted-foreground">{format(new Date(purchase.created_at), "MMM d, yyyy 'at' h:mm a")}</p>
+                        </div>
+                      </div>
+                      <Badge variant="secondary" className="gap-1 flex-shrink-0"><Coins className="h-3 w-3" />{purchase.credits_paid}</Badge>
+                    </div>
+                    {media.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {media.map((m: any) => (
+                          <a key={m.id} href={m.file_url} download={m.file_name} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-xs text-primary hover:bg-muted/80 transition-colors">
+                            <Download className="h-3 w-3" />{m.file_name}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Square Card Payment Modal */}
       <Dialog open={cardPaymentOpen} onOpenChange={setCardPaymentOpen}>
