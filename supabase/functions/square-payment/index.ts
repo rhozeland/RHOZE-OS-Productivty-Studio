@@ -1,10 +1,19 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const PaymentSchema = z.object({
+  amount_cents: z.number().int().positive().max(10000000),
+  currency: z.string().length(3),
+  description: z.string().max(500).optional(),
+  source_id: z.string().min(1).max(500),
+  location_id: z.string().min(1).max(100),
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -17,13 +26,18 @@ serve(async (req) => {
       throw new Error("SQUARE_ACCESS_TOKEN is not configured");
     }
 
-    const { amount_cents, currency, description, source_id } = await req.json();
+    const body = await req.json();
+    const parsed = PaymentSchema.safeParse(body);
 
-    if (!amount_cents || !currency) {
-      throw new Error("amount_cents and currency are required");
+    if (!parsed.success) {
+      return new Response(
+        JSON.stringify({ success: false, error: parsed.error.issues.map(i => i.message).join(", ") }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Create a payment via Square Payments API
+    const { amount_cents, currency, description, source_id, location_id } = parsed.data;
+
     const idempotencyKey = crypto.randomUUID();
 
     const squareResponse = await fetch("https://connect.squareup.com/v2/payments", {
@@ -39,7 +53,8 @@ serve(async (req) => {
           amount: amount_cents,
           currency: currency,
         },
-        source_id: source_id || "EXTERNAL",
+        source_id: source_id,
+        location_id: location_id,
         note: description || "Rhozeland Studio Booking",
         autocomplete: true,
       }),
