@@ -317,7 +317,7 @@ const SettingsPage = () => {
 
   const initials = (displayName || "?").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 
-  // SectionCard and SectionTitle moved outside component to prevent remount on every render
+  
 
   return (
     <div className="space-y-6 pb-12">
