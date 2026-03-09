@@ -691,6 +691,7 @@ export type Database = {
           location: string | null
           mediums: string[] | null
           portfolio_url: string | null
+          profile_background: string | null
           skills: string[] | null
           updated_at: string
           user_id: string
@@ -708,6 +709,7 @@ export type Database = {
           location?: string | null
           mediums?: string[] | null
           portfolio_url?: string | null
+          profile_background?: string | null
           skills?: string[] | null
           updated_at?: string
           user_id: string
@@ -725,6 +727,7 @@ export type Database = {
           location?: string | null
           mediums?: string[] | null
           portfolio_url?: string | null
+          profile_background?: string | null
           skills?: string[] | null
           updated_at?: string
           user_id?: string
