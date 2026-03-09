@@ -107,7 +107,9 @@ const BackgroundCustomizer = ({
         <div className="space-y-5">
           {/* Preview */}
           <div
-            className="h-28 rounded-xl border border-border overflow-hidden relative"
+            className={`h-28 rounded-xl border border-border overflow-hidden relative ${
+              !imageUrl && color?.includes("gradient") ? "animated-gradient" : ""
+            }`}
             style={{
               background: imageUrl ? undefined : (color || "hsl(var(--muted))"),
             }}
