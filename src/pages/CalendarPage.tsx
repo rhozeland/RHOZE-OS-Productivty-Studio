@@ -250,13 +250,34 @@ const CalendarPage = () => {
   const cancelBooking = useMutation({
     mutationFn: async (id: string) => {
       const { data: booking } = await supabase.from("bookings").select("*").eq("id", id).single();
+      if (!booking) throw new Error("Booking not found");
+
       const { error } = await supabase.from("bookings").update({ status: "cancelled" }).eq("id", id);
       if (error) throw error;
+
+      // Refund credits if the booking had a linked service
+      if (booking.service_id && user) {
+        const { data: service } = await supabase.from("services").select("credits_cost").eq("id", booking.service_id).single();
+        if (service && service.credits_cost > 0) {
+          const { data: creditRow } = await supabase.from("user_credits").select("balance").eq("user_id", user.id).single();
+          if (creditRow) {
+            await supabase.from("user_credits").update({ balance: creditRow.balance + service.credits_cost }).eq("user_id", user.id);
+            await supabase.from("credit_transactions").insert({
+              user_id: user.id,
+              amount: service.credits_cost,
+              type: "refund",
+              description: `Refund: ${booking.title} (cancelled)`,
+            });
+          }
+        }
+      }
+
       return booking;
     },
     onSuccess: (booking) => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
-      toast.success("Booking cancelled");
+      queryClient.invalidateQueries({ queryKey: ["user-credits"] });
+      toast.success("Booking cancelled — credits refunded");
 
       if (booking && user?.email) {
         supabase.functions.invoke("send-booking-cancellation", {
