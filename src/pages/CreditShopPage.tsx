@@ -39,7 +39,7 @@ const TIERS = [
       "4 credits/month",
       "Studio access",
       "Livestream workshops",
-      "Community Discord",
+      "Community Telegram",
     ],
   },
   {
