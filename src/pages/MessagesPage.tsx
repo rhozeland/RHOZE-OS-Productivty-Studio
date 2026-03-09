@@ -25,6 +25,12 @@ import { toast } from "sonner";
 import QuoteBuilder from "@/components/messages/QuoteBuilder";
 import QuoteCard, { isQuoteMessage } from "@/components/messages/QuoteCard";
 
+const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
+  pending: { label: "Pending", color: "bg-amber-500/15 text-amber-600", icon: Clock },
+  accepted: { label: "Accepted", color: "bg-green-500/15 text-green-600", icon: CheckCircle },
+  declined: { label: "Declined", color: "bg-red-500/15 text-red-500", icon: XCircle },
+};
+
 type Profile = {
   user_id: string;
   display_name: string | null;
