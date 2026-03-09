@@ -333,7 +333,7 @@ const MessagesPage = () => {
                     return (
                       <div key={msg.id} className={cn("flex", isMine ? "justify-end" : "justify-start")}>
                         {isQuoteMessage(msg.content) ? (
-                          <QuoteCard content={msg.content} isMine={isMine} />
+                          <QuoteCard content={msg.content} isMine={isMine} messageId={msg.id} senderId={msg.sender_id} />
                         ) : (
                         <div
                           className={cn(
