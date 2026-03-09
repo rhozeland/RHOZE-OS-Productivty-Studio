@@ -27,6 +27,8 @@ import ServicesPage from "@/pages/ServicesPage";
 import CreditShopPage from "@/pages/CreditShopPage";
 import PurchasesPage from "@/pages/PurchasesPage";
 import InquiriesPage from "@/pages/InquiriesPage";
+import DropRoomsPage from "@/pages/DropRoomsPage";
+import DropRoomDetailPage from "@/pages/DropRoomDetailPage";
 import AdminPage from "@/pages/AdminPage";
 import NotFound from "./pages/NotFound";
 
@@ -73,6 +75,8 @@ const App = () => (
               <Route path="/marketplace" element={<MarketplacePage />} />
               <Route path="/marketplace/:id" element={<ListingDetailPage />} />
               <Route path="/inquiries" element={<InquiriesPage />} />
+              <Route path="/drop-rooms" element={<DropRoomsPage />} />
+              <Route path="/drop-rooms/:id" element={<DropRoomDetailPage />} />
               <Route path="/profiles" element={<ProfilesPage />} />
               <Route path="/profiles/:id" element={<ProfileDetailPage />} />
               <Route path="/messages" element={<MessagesPage />} />
