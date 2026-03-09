@@ -146,12 +146,29 @@ const FlowModePage = () => {
 
   const createFlowItem = useMutation({
     mutationFn: async () => {
+      let fileUrl: string | null = null;
+
+      if (newFile) {
+        const ext = newFile.name.split(".").pop();
+        const path = `${user!.id}/${Date.now()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from("flow-uploads").upload(path, newFile);
+        if (uploadErr) throw uploadErr;
+        const { data: urlData } = supabase.storage.from("flow-uploads").getPublicUrl(path);
+        fileUrl = urlData.publicUrl;
+      }
+
+      const contentType = newFile
+        ? (newFile.type.startsWith("image") ? "image" : newFile.type.startsWith("video") ? "video" : newFile.type.startsWith("audio") ? "audio" : "file")
+        : (newLink ? "link" : "text");
+
       const { error } = await supabase.from("flow_items").insert({
         user_id: user!.id,
         title: newTitle,
         description: newDesc || null,
         category: newCategory,
         link_url: newLink || null,
+        file_url: fileUrl,
+        content_type: contentType,
       });
       if (error) throw error;
     },
@@ -161,6 +178,7 @@ const FlowModePage = () => {
       setNewTitle("");
       setNewDesc("");
       setNewLink("");
+      setNewFile(null);
       toast.success("Content shared to Flow!");
     },
     onError: (e: any) => toast.error(e.message),
