@@ -122,6 +122,7 @@ const BookingsPage = () => {
       // Fetch booking details before cancelling (for the email + refund)
       const { data: booking } = await supabase.from("bookings").select("*").eq("id", id).single();
       if (!booking) throw new Error("Booking not found");
+      if (new Date(booking.start_time) <= new Date()) throw new Error("Cannot cancel a booking that has already started");
 
       const { error } = await supabase.from("bookings").update({ status: "cancelled" }).eq("id", id);
       if (error) throw error;
