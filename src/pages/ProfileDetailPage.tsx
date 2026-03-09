@@ -274,11 +274,11 @@ const ProfileDetailPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="rounded-2xl overflow-hidden bg-card/80 backdrop-blur-sm border border-border/50 shadow-lg"
+          className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 shadow-lg"
         >
           {/* Banner */}
           <div
-            className="h-36 sm:h-44 relative"
+            className="h-36 sm:h-44 relative rounded-t-2xl overflow-hidden"
             style={{ background: bannerGradient }}
           >
             {/* Edit button for own profile */}
@@ -295,7 +295,7 @@ const ProfileDetailPage = () => {
           </div>
 
           <div className="px-5 sm:px-8 pb-6">
-            <div className="-mt-14 sm:-mt-16 flex flex-col sm:flex-row sm:items-end gap-4">
+            <div className="-mt-14 sm:-mt-16 flex flex-col sm:flex-row sm:items-end gap-4 relative z-10">
               {/* Avatar */}
               <div className="flex h-24 w-24 sm:h-28 sm:w-28 items-center justify-center rounded-full border-4 border-card bg-muted shadow-xl overflow-hidden shrink-0 ring-2 ring-background/50">
                 {profile.avatar_url ? (
