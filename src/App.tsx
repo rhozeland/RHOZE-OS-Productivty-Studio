@@ -12,7 +12,7 @@ import DashboardPage from "@/pages/DashboardPage";
 import ProjectsPage from "@/pages/ProjectsPage";
 import ProjectDetailPage from "@/pages/ProjectDetailPage";
 import CalendarPage from "@/pages/CalendarPage";
-import BookingsPage from "@/pages/BookingsPage";
+// BookingsPage removed — merged into CalendarPage
 import FlowModePage from "@/pages/FlowModePage";
 import SmartboardsPage from "@/pages/SmartboardsPage";
 import MarketplacePage from "@/pages/MarketplacePage";
