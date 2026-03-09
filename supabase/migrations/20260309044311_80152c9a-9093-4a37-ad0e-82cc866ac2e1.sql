@@ -1,0 +1,1 @@
+ALTER TABLE public.flow_interactions ADD CONSTRAINT flow_interactions_user_item_unique UNIQUE (user_id, flow_item_id);
