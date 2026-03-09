@@ -31,8 +31,8 @@ const TIERS = [
     name: "Bronze",
     price: 240,
     credits: 4,
-    color: "hsl(30, 55%, 55%)",
-    bgClass: "from-[hsl(30,55%,55%)] to-[hsl(30,45%,45%)]",
+    gradient: "linear-gradient(135deg, hsl(30, 60%, 60%), hsl(25, 50%, 42%), hsl(20, 45%, 35%))",
+    glowColor: "hsl(30, 55%, 55%)",
     icon: Zap,
     bestFor: "New creators, freelancers, side-hustlers",
     features: [
@@ -47,8 +47,8 @@ const TIERS = [
     name: "Gold",
     price: 560,
     credits: 10,
-    color: "hsl(45, 90%, 50%)",
-    bgClass: "from-[hsl(45,90%,50%)] to-[hsl(40,80%,40%)]",
+    gradient: "linear-gradient(135deg, hsl(50, 95%, 58%), hsl(43, 90%, 48%), hsl(35, 85%, 40%))",
+    glowColor: "hsl(45, 90%, 50%)",
     icon: Crown,
     bestFor: "Semi-pros, scaling micro-influencers",
     features: [
@@ -64,8 +64,8 @@ const TIERS = [
     name: "Diamond",
     price: 1500,
     credits: 25,
-    color: "hsl(200, 60%, 70%)",
-    bgClass: "from-[hsl(200,60%,70%)] to-[hsl(210,50%,55%)]",
+    gradient: "linear-gradient(135deg, hsl(200, 65%, 78%), hsl(210, 55%, 62%), hsl(220, 50%, 50%))",
+    glowColor: "hsl(200, 60%, 70%)",
     icon: Diamond,
     bestFor: "Full-time creators, funded artists",
     features: [
