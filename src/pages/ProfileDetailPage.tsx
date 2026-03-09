@@ -328,7 +328,7 @@ const ProfileDetailPage = () => {
                 )}
               </div>
 
-              <div className="flex-1 min-w-0 pb-1">
+              <div className="flex-1 min-w-0 pt-14 sm:pt-0 sm:pb-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
                     {profile.display_name || "Creator"}
