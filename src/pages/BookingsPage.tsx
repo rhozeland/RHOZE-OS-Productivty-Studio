@@ -147,7 +147,8 @@ const BookingsPage = () => {
     },
     onSuccess: (booking) => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
-      toast.success("Booking cancelled");
+      queryClient.invalidateQueries({ queryKey: ["user-credits"] });
+      toast.success("Booking cancelled — credits refunded");
 
       // Send cancellation email (fire-and-forget)
       if (booking && user?.email) {

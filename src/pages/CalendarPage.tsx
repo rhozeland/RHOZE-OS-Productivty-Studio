@@ -276,7 +276,8 @@ const CalendarPage = () => {
     },
     onSuccess: (booking) => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
-      toast.success("Booking cancelled");
+      queryClient.invalidateQueries({ queryKey: ["user-credits"] });
+      toast.success("Booking cancelled — credits refunded");
 
       if (booking && user?.email) {
         supabase.functions.invoke("send-booking-cancellation", {
