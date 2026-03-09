@@ -29,6 +29,7 @@ import PurchasesPage from "@/pages/PurchasesPage";
 import InquiriesPage from "@/pages/InquiriesPage";
 import DropRoomsPage from "@/pages/DropRoomsPage";
 import DropRoomDetailPage from "@/pages/DropRoomDetailPage";
+import SellerDashboardPage from "@/pages/SellerDashboardPage";
 import AdminPage from "@/pages/AdminPage";
 import NotFound from "./pages/NotFound";
 
