@@ -61,7 +61,6 @@ const TIME_SLOTS = Array.from({ length: 24 }, (_, i) => {
   return { hour, min, label: format(setMinutes(setHours(new Date(), hour), min), "h:mm a") };
 }).filter(Boolean) as { hour: number; min: number; label: string }[];
 
-const STUDIO_WALLET = "2Kp2cR3JKEBGd3jE7G3MQRfNhwbxzTpSkvSKbHKfhJn"; // placeholder
 const CREDIT_RATE = 75;
 
 const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: BookingCheckoutModalProps) => {
