@@ -348,6 +348,54 @@ const CreditShopPage = () => {
 
       {/* Transaction history */}
       <TransactionHistory userId={user?.id} />
+
+      {/* Square Card Payment Modal */}
+      <Dialog open={cardPaymentOpen} onOpenChange={setCardPaymentOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl">
+              Buy {pendingCardCredits} Credit{pendingCardCredits > 1 ? "s" : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="rounded-lg bg-muted/50 border border-border p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Coins className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium text-foreground">
+                {pendingCardCredits} credit{pendingCardCredits > 1 ? "s" : ""}
+              </span>
+            </div>
+            <span className="text-lg font-bold text-primary">
+              ${(pendingCardCredits * CREDIT_PRICE).toFixed(2)}
+            </span>
+          </div>
+          <SquareCardForm
+            amount={pendingCardCredits * CREDIT_PRICE}
+            onTokenize={async (token) => {
+              // Process real payment via Square
+              const { data, error } = await supabase.functions.invoke("square-payment", {
+                body: {
+                  amount_cents: pendingCardCredits * CREDIT_PRICE * 100,
+                  currency: "USD",
+                  description: `Rhozeland: ${pendingCardCredits} credit(s)`,
+                  source_id: token,
+                  location_id: SQUARE_LOCATION_ID,
+                },
+              });
+              if (error) throw error;
+              if (!data?.success) throw new Error(data?.error || "Payment failed");
+
+              // Payment succeeded — now add credits
+              await purchaseCredits.mutateAsync({
+                amount: pendingCardCredits,
+                description: `${pendingCardCredits} credit(s) à la carte`,
+                method: "card",
+              });
+
+              setCardPaymentOpen(false);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
