@@ -311,7 +311,7 @@ const DashboardPage = () => {
           </AnimatePresence>
 
           {/* Cards grid */}
-          <div className={`grid gap-4 md:gap-6 ${
+          <div className={`grid gap-4 md:gap-5 ${
             visibleLinks.length <= 4 ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2 md:grid-cols-3 lg:grid-cols-6"
           }`}>
             {visibleLinks.map((item, i) => (
@@ -323,12 +323,51 @@ const DashboardPage = () => {
               >
                 <Link
                   to={item.path}
-                  className="group flex flex-col items-center gap-4 rounded-2xl bg-card border border-border p-6 md:p-8 transition-all hover:shadow-lg hover:-translate-y-1 hover:border-primary/30"
+                  className="group flex flex-col items-center gap-3 rounded-2xl bg-card border border-border p-5 md:p-6 transition-all hover:shadow-lg hover:-translate-y-1 hover:border-primary/30"
                 >
-                  <div className="flex h-16 w-16 md:h-20 md:w-20 items-center justify-center rounded-2xl bg-muted group-hover:bg-primary/10 transition-colors">
-                    <item.icon className="h-8 w-8 md:h-10 md:w-10 text-foreground group-hover:text-primary transition-colors" strokeWidth={1.5} />
-                  </div>
-                  <span className="font-display text-xs md:text-sm font-semibold text-foreground uppercase tracking-wider text-center whitespace-pre-line leading-tight">
+                  {item.isProfile ? (
+                    <div className="relative">
+                      <div
+                        className="absolute inset-0 rounded-full opacity-30 blur-lg group-hover:opacity-50 transition-opacity"
+                        style={{ background: item.gradient }}
+                      />
+                      <Avatar className="h-16 w-16 md:h-20 md:w-20 ring-2 ring-border group-hover:ring-primary/40 transition-all relative">
+                        <AvatarImage src={profile?.avatar_url || ""} />
+                        <AvatarFallback
+                          className="text-lg md:text-xl font-bold text-white"
+                          style={{ background: item.gradient }}
+                        >
+                          {(profile?.display_name || user?.email || "?")[0].toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <div
+                        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-30 blur-lg transition-opacity duration-300"
+                        style={{ background: item.gradient }}
+                      />
+                      <div
+                        className="relative flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-2xl transition-all duration-300 overflow-hidden"
+                        style={{ background: `${item.gradient.replace(')', ', 0.12)')}` }}
+                      >
+                        <div
+                          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          style={{ background: item.gradient }}
+                        />
+                        <item.icon
+                          className="h-7 w-7 md:h-8 md:w-8 relative z-10 transition-colors duration-300"
+                          style={{ color: `hsl(${item.gradient.match(/hsl\(([^)]+)\)/)?.[1] || '0 0% 50%'})` }}
+                          strokeWidth={1.5}
+                        />
+                        <item.icon
+                          className="h-7 w-7 md:h-8 md:w-8 absolute z-10 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          strokeWidth={1.5}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <span className="font-display text-[10px] md:text-xs font-semibold text-muted-foreground group-hover:text-foreground uppercase tracking-wider text-center whitespace-pre-line leading-tight transition-colors">
                     {item.label}
                   </span>
                 </Link>
