@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, Clock, X, CalendarDays } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, X, CalendarDays, FolderOpen } from "lucide-react";
 import {
   format,
   startOfWeek,
