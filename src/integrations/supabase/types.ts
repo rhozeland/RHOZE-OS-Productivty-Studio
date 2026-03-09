@@ -369,6 +369,7 @@ export type Database = {
         Row: {
           available: boolean | null
           avatar_url: string | null
+          banner_gradient: string | null
           bio: string | null
           created_at: string
           display_name: string | null
@@ -385,6 +386,7 @@ export type Database = {
         Insert: {
           available?: boolean | null
           avatar_url?: string | null
+          banner_gradient?: string | null
           bio?: string | null
           created_at?: string
           display_name?: string | null
@@ -401,6 +403,7 @@ export type Database = {
         Update: {
           available?: boolean | null
           avatar_url?: string | null
+          banner_gradient?: string | null
           bio?: string | null
           created_at?: string
           display_name?: string | null
