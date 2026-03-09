@@ -255,33 +255,35 @@ const CreditShopPage = () => {
               >
                 {/* Gradient header */}
                 <div
-                  className="px-5 py-8 text-center text-white relative overflow-hidden animated-gradient"
-                  style={{ background: tier.gradient }}
+                  className="px-5 py-6 text-center text-white relative overflow-hidden animated-gradient"
+                  style={{ background: tier.gradient, backgroundSize: "200% 200%" }}
                 >
                   <div className="absolute inset-0 opacity-20" style={{
                     background: "radial-gradient(circle at 30% 20%, rgba(255,255,255,0.4) 0%, transparent 60%)"
                   }} />
-                  <p className="text-sm font-semibold tracking-wide uppercase opacity-90 relative z-10">{tier.name}</p>
-                  <p className="font-display text-3xl font-bold mt-1.5 relative z-10 drop-shadow-sm">
-                    {tier.credits} Credits/monthly
-                  </p>
-                  <p className="text-sm opacity-80 mt-0.5 relative z-10">
-                    ${tier.price.toFixed(2)}/monthly
+                  <p className="text-xs font-semibold tracking-widest uppercase opacity-90 relative z-10">{tier.name}</p>
+                  <div className="flex items-center justify-center gap-2 mt-2 relative z-10">
+                    <TierIcon className="h-6 w-6 drop-shadow-sm" />
+                    <span className="font-display text-4xl font-bold drop-shadow-sm">{tier.credits}</span>
+                  </div>
+                  <p className="text-sm opacity-80 mt-1 relative z-10">credits / month</p>
+                  <p className="text-xs opacity-60 mt-0.5 relative z-10">
+                    ${tier.price.toFixed(0)}/mo
                   </p>
                 </div>
 
                 {/* Features */}
-                <div className="p-6 bg-card space-y-4">
+                <div className="p-5 bg-card space-y-4">
                   <p className="text-xs text-muted-foreground font-medium">
                     {tier.bestFor}
                   </p>
-                  <ul className="space-y-2.5">
+                  <ul className="space-y-2">
                     {tier.features.map((f) => (
                       <li
                         key={f}
-                        className="flex items-center gap-2.5 text-sm text-foreground font-medium"
+                        className="flex items-center gap-2.5 text-sm text-foreground"
                       >
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 shrink-0">
                           <Check className="h-3 w-3 text-primary" />
                         </span>
                         {f}
@@ -289,7 +291,7 @@ const CreditShopPage = () => {
                     ))}
                   </ul>
                   <Button
-                    className="w-full mt-4 h-11 font-semibold text-sm"
+                    className="w-full mt-2 h-10 font-semibold text-sm"
                     variant={isCurrentTier ? "outline" : "default"}
                     disabled={isCurrentTier}
                     onClick={() => {
