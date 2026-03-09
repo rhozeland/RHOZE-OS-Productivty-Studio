@@ -29,8 +29,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import logoColor from "@/assets/toybox-logo-color.webp";
-import logoWhite from "@/assets/toybox-logo-white.png";
+import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -58,7 +57,7 @@ const AppSidebar = () => {
     ? [...navItems, { icon: ShieldCheck, label: "Admin", path: "/admin" }]
     : navItems;
 
-  const currentLogo = theme === "dark" ? logoWhite : logoColor;
+  const currentLogo = rhozelandLogo;
 
   const handleNavClick = () => {
     if (isMobile) setOpenMobile(false);
@@ -72,7 +71,7 @@ const AppSidebar = () => {
       )}>
         <img
           src={currentLogo}
-          alt="Toybox"
+          alt="Rhozeland"
           className="h-8 w-8 shrink-0 object-contain"
         />
         {!collapsed && (
