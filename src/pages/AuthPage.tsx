@@ -99,7 +99,7 @@ const AuthPage = () => {
           className="w-full max-w-sm"
         >
           <div className="mb-8 lg:hidden flex items-center gap-3">
-            <img src={logoLarge} alt="Rhozeland" className="h-10 w-10" />
+            <img src={rhozelandLogo} alt="Rhozeland" className="h-10 w-10" />
             <span className="font-display text-xl font-bold text-foreground">Rhozeland</span>
           </div>
 
