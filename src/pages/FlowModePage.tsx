@@ -332,33 +332,68 @@ const FlowModePage = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="w-full max-w-sm text-center px-6"
+              className="w-full max-w-md text-center px-6"
             >
-              <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
+              <h2 className="font-display text-xl font-bold text-foreground mb-2">How it works</h2>
+              <p className="text-sm text-muted-foreground mb-10 max-w-xs mx-auto">
                 Swipe or use arrow keys to interact with content.
               </p>
 
-              <div className="relative mx-auto mb-8">
-                <div className="relative mx-auto w-56 h-72 rounded-2xl border border-border bg-card/80 backdrop-blur-sm shadow-lg flex items-center justify-center">
-                  <Fingerprint className="h-10 w-10 text-muted-foreground/30" />
+              <div className="relative mx-auto mb-10" style={{ width: 280, height: 340 }}>
+                {/* Direction labels — positioned outside card with space */}
+                <motion.div
+                  className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center"
+                  style={{ top: -36 }}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <ChevronUp className="h-4 w-4 text-foreground/50" />
+                  <span className="text-[11px] font-semibold text-foreground/50 tracking-widest">SAVE</span>
+                </motion.div>
 
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex flex-col items-center">
-                    <ChevronUp className="h-5 w-5 text-foreground/60" />
-                    <span className="text-xs font-medium text-foreground/60 tracking-wider">SAVE</span>
-                  </div>
-                  <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center">
-                    <span className="text-xs font-medium text-foreground/60 tracking-wider">DISLIKE</span>
-                    <ChevronDown className="h-5 w-5 text-foreground/60" />
-                  </div>
-                  <div className="absolute top-1/2 -left-16 -translate-y-1/2 flex items-center gap-1">
-                    <ChevronLeft className="h-5 w-5 text-foreground/60" />
-                    <span className="text-xs font-medium text-foreground/60 tracking-wider">SHARE</span>
-                  </div>
-                  <div className="absolute top-1/2 -right-16 -translate-y-1/2 flex items-center gap-1">
-                    <span className="text-xs font-medium text-foreground/60 tracking-wider">NEXT</span>
-                    <ChevronRight className="h-5 w-5 text-foreground/60" />
-                  </div>
-                </div>
+                <motion.div
+                  className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center"
+                  style={{ bottom: -36 }}
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <span className="text-[11px] font-semibold text-foreground/50 tracking-widest">DISLIKE</span>
+                  <ChevronDown className="h-4 w-4 text-foreground/50" />
+                </motion.div>
+
+                <motion.div
+                  className="absolute top-1/2 -translate-y-1/2 flex items-center gap-1"
+                  style={{ left: -72 }}
+                  initial={{ opacity: 0, x: 8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <ChevronLeft className="h-4 w-4 text-foreground/50" />
+                  <span className="text-[11px] font-semibold text-foreground/50 tracking-widest">SHARE</span>
+                </motion.div>
+
+                <motion.div
+                  className="absolute top-1/2 -translate-y-1/2 flex items-center gap-1"
+                  style={{ right: -68 }}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <span className="text-[11px] font-semibold text-foreground/50 tracking-widest">NEXT</span>
+                  <ChevronRight className="h-4 w-4 text-foreground/50" />
+                </motion.div>
+
+                {/* Card */}
+                <motion.div
+                  className="w-full h-full rounded-3xl bg-card shadow-xl border border-border/40 flex items-center justify-center"
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 20 }}
+                >
+                  <Fingerprint className="h-12 w-12 text-muted-foreground/20" />
+                </motion.div>
               </div>
 
               <div className="flex gap-3 justify-center">
