@@ -74,6 +74,7 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("credits");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
+  const [cardToken, setCardToken] = useState<string | null>(null);
 
   const resetForm = () => {
     setStep("datetime");
