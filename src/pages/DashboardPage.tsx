@@ -6,6 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   User,
   Briefcase,
+  Store,
   RefreshCw,
   Network,
   FolderKanban,
@@ -54,13 +55,14 @@ const allQuickLinks = [
   { id: "profile", icon: User, label: "MY PROFILE", path: "/settings", gradient: "linear-gradient(135deg, hsl(175 45% 65%), hsl(190 50% 50%))", isProfile: true },
   { id: "services", icon: Briefcase, label: "RHOZELAND\nSERVICES", path: "/services", gradient: "linear-gradient(135deg, hsl(30 60% 60%), hsl(25 50% 45%))" },
   { id: "credits", icon: Coins, label: "CREDIT\nSHOP", path: "/credits", gradient: "linear-gradient(135deg, hsl(50 85% 55%), hsl(40 80% 45%))" },
-  { id: "bookings", icon: RefreshCw, label: "MY\nBOOKINGS", path: "/bookings", gradient: "linear-gradient(135deg, hsl(260 50% 65%), hsl(280 45% 55%))" },
+  { id: "bookings", icon: RefreshCw, label: "MY\nBOOKINGS", path: "/calendar", gradient: "linear-gradient(135deg, hsl(260 50% 65%), hsl(280 45% 55%))" },
   { id: "network", icon: Network, label: "NETWORK", path: "/messages", gradient: "linear-gradient(135deg, hsl(200 60% 60%), hsl(220 55% 50%))" },
   { id: "projects", icon: FolderKanban, label: "PROJECTS", path: "/projects", gradient: "linear-gradient(135deg, hsl(340 55% 60%), hsl(350 50% 50%))" },
   { id: "calendar", icon: Calendar, label: "CALENDAR", path: "/calendar", gradient: "linear-gradient(135deg, hsl(150 45% 55%), hsl(165 50% 45%))" },
   { id: "smartboards", icon: Layers, label: "SMART\nBOARDS", path: "/smartboards", gradient: "linear-gradient(135deg, hsl(290 50% 60%), hsl(310 45% 50%))" },
   { id: "flow", icon: Compass, label: "FLOW\nMODE", path: "/flow", gradient: "linear-gradient(135deg, hsl(15 65% 60%), hsl(5 55% 50%))" },
   { id: "messages", icon: MessageSquare, label: "MESSAGES", path: "/messages", gradient: "linear-gradient(135deg, hsl(210 55% 60%), hsl(230 50% 50%))" },
+  { id: "creators", icon: Store, label: "CREATORS\nHUB", path: "/creators", gradient: "linear-gradient(135deg, hsl(320 50% 60%), hsl(340 45% 50%))" },
   { id: "settings", icon: Settings, label: "SETTINGS", path: "/settings", gradient: "linear-gradient(135deg, hsl(0 0% 55%), hsl(0 0% 40%))" },
 ];
 

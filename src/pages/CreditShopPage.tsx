@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -20,10 +21,24 @@ import {
   Check,
   CreditCard,
   Wallet,
+  ShoppingBag,
+  Download,
+  Music,
+  Palette,
+  Camera,
+  Video,
+  PenTool,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { Link, useSearchParams } from "react-router-dom";
 import PaySolAndVerify from "@/components/PaySolAndVerify";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
+
+const CAT_ICONS: Record<string, any> = {
+  music: Music, design: Palette, photo: Camera, video: Video, writing: PenTool,
+};
 
 const TIERS = [
   {
@@ -84,11 +99,14 @@ const CREDIT_PRICE = 75;
 const CreditShopPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [alaCarteCredits, setAlaCarteCredits] = useState(1);
   const [cardPaymentOpen, setCardPaymentOpen] = useState(false);
   const [pendingCardCredits, setPendingCardCredits] = useState(0);
   const [subPaymentOpen, setSubPaymentOpen] = useState(false);
   const [pendingTier, setPendingTier] = useState<(typeof TIERS)[number] | null>(null);
+
+  const activeTab = searchParams.get("tab") || "shop";
 
   const { data: userCredits } = useQuery({
     queryKey: ["user-credits", user?.id],
@@ -197,6 +215,45 @@ const CreditShopPage = () => {
 
   const currentTier = userCredits?.tier ?? "none";
 
+  // Purchases data
+  const { data: purchases, isLoading: purchasesLoading } = useQuery({
+    queryKey: ["my-purchases", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("purchases" as any).select("*").eq("buyer_id", user!.id).order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!user,
+  });
+
+  const purchaseListingIds = purchases?.map((p: any) => p.listing_id) ?? [];
+  const { data: purchaseListings } = useQuery({
+    queryKey: ["purchased-listings", purchaseListingIds],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("marketplace_listings").select("*").in("id", purchaseListingIds);
+      if (error) throw error;
+      return data;
+    },
+    enabled: purchaseListingIds.length > 0,
+  });
+
+  const { data: purchaseMedia } = useQuery({
+    queryKey: ["purchased-media", purchaseListingIds],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("listing_media").select("*").in("listing_id", purchaseListingIds).order("sort_order");
+      if (error) throw error;
+      return data;
+    },
+    enabled: purchaseListingIds.length > 0,
+  });
+
+  const purchaseListingsMap = new Map(purchaseListings?.map((l) => [l.id, l]) ?? []);
+  const purchaseMediaMap = new Map<string, any[]>();
+  purchaseMedia?.forEach((m) => {
+    if (!purchaseMediaMap.has(m.listing_id)) purchaseMediaMap.set(m.listing_id, []);
+    purchaseMediaMap.get(m.listing_id)!.push(m);
+  });
+
   return (
     <div className="space-y-8">
       {/* Header with balance */}
@@ -222,6 +279,17 @@ const CreditShopPage = () => {
           )}
         </div>
       </div>
+
+      <Tabs value={activeTab} onValueChange={(v) => {
+        if (v === "shop") { searchParams.delete("tab"); } else { searchParams.set("tab", v); }
+        setSearchParams(searchParams, { replace: true });
+      }}>
+        <TabsList>
+          <TabsTrigger value="shop" className="gap-1.5"><Coins className="h-3.5 w-3.5" /> Shop</TabsTrigger>
+          <TabsTrigger value="purchases" className="gap-1.5"><ShoppingBag className="h-3.5 w-3.5" /> My Purchases</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="shop" className="space-y-8 mt-4">
 
       {/* Subscription tiers */}
       <div>
@@ -359,6 +427,60 @@ const CreditShopPage = () => {
 
       {/* Transaction history */}
       <TransactionHistory userId={user?.id} />
+        </TabsContent>
+
+        <TabsContent value="purchases" className="mt-4">
+          {purchasesLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
+          ) : !purchases?.length ? (
+            <div className="text-center py-20 space-y-4">
+              <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground/40" />
+              <p className="text-muted-foreground">No purchases yet</p>
+              <Link to="/creators">
+                <Button variant="outline" className="rounded-full">Browse Creators Hub</Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {purchases.map((purchase: any) => {
+                const listing = purchaseListingsMap.get(purchase.listing_id);
+                const media = purchaseMediaMap.get(purchase.listing_id) ?? [];
+                const CatIcon = CAT_ICONS[listing?.category] ?? Sparkles;
+                return (
+                  <div key={purchase.id} className="surface-card p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <CatIcon className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                          <Link to={`/creators/${purchase.listing_id}`} className="font-semibold text-foreground hover:text-primary transition-colors truncate block">
+                            {listing?.title ?? "Listing"}
+                          </Link>
+                          <p className="text-xs text-muted-foreground">{format(new Date(purchase.created_at), "MMM d, yyyy 'at' h:mm a")}</p>
+                        </div>
+                      </div>
+                      <Badge variant="secondary" className="gap-1 flex-shrink-0"><Coins className="h-3 w-3" />{purchase.credits_paid}</Badge>
+                    </div>
+                    {media.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {media.map((m: any) => (
+                          <a key={m.id} href={m.file_url} download={m.file_name} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-xs text-primary hover:bg-muted/80 transition-colors">
+                            <Download className="h-3 w-3" />{m.file_name}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Square Card Payment Modal */}
       <Dialog open={cardPaymentOpen} onOpenChange={setCardPaymentOpen}>
