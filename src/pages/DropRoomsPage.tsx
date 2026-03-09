@@ -148,6 +148,9 @@ const DropRoomsPage = () => {
     setDescription("");
     setCategory("general");
     setDurationHours(24);
+    setEnableVideo(false);
+    setAllowSpectators(false);
+    setEnableRecording(false);
     setCreating(false);
     fetchRooms();
   };
