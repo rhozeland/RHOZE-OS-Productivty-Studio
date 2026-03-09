@@ -504,13 +504,25 @@ const ProfileDetailPage = () => {
         )}
 
         {/* Seller Listings — subtle section */}
-        {hasSellerContent && (
+        {(showOfferings || isOwnProfile) && hasSellerContent && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.4 }}
-            className="space-y-3"
+            className={`space-y-3 relative ${!showOfferings && isOwnProfile ? "opacity-50" : ""}`}
           >
+            {isOwnProfile && (
+              <button
+                onClick={() => toggleSectionMutation.mutate({ field: "show_offerings", value: !showOfferings })}
+                className="absolute -top-1 right-0 z-10 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                title={showOfferings ? "Hide from public" : "Show to public"}
+              >
+                {showOfferings ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+              </button>
+            )}
+            {!showOfferings && isOwnProfile && (
+              <div className="absolute inset-0 rounded-xl border-2 border-dashed border-muted-foreground/20 pointer-events-none z-0" />
+            )}
             <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
               <ShoppingBag className="h-4 w-4 text-primary" /> Offerings
             </h2>
