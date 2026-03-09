@@ -623,20 +623,34 @@ const CalendarPage = () => {
                   return (
                     <div
                       key={`${dayIndex}-${hour}`}
-                      className={`border-r border-b border-border relative transition-colors cursor-pointer ${
-                        booked ? "bg-muted/40 cursor-not-allowed" : selected ? "bg-primary/20" : "hover:bg-muted/20"
-                      }`}
+                      className={cn(
+                        "border-r border-b border-border relative transition-colors cursor-pointer",
+                        booked
+                          ? "bg-primary/10 cursor-not-allowed"
+                          : selected
+                          ? "bg-primary/20"
+                          : "hover:bg-muted/20"
+                      )}
                       style={{ height: 60 }}
                       onMouseDown={() => !booked && handleMouseDown(dayIndex, hour)}
                       onMouseEnter={() => handleMouseEnter(dayIndex, hour)}
                     >
+                      {/* Booked indicator stripe */}
+                      {booked && !booking && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="h-0.5 w-4/5 rounded-full bg-primary/20" />
+                        </div>
+                      )}
                       {booking && (
-                        <div className="absolute inset-1 rounded bg-primary/25 border border-primary/30 px-1.5 py-0.5 overflow-hidden z-10"
+                        <div className="absolute inset-1 rounded-md bg-primary/20 border border-primary/30 px-1.5 py-0.5 overflow-hidden z-10 shadow-sm"
                           style={{ height: `${(Number(booking.duration_hours)) * 60 - 8}px` }}
                         >
-                          <p className="text-[10px] font-medium text-primary truncate">{booking.title}</p>
+                          <div className="flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                            <p className="text-[10px] font-semibold text-primary truncate">{booking.title}</p>
+                          </div>
                           <p className="text-[9px] text-primary/70">
-                            {format(new Date(booking.start_time), "h:mma")} - {format(new Date(booking.end_time), "h:mma")}
+                            {format(new Date(booking.start_time), "h:mma")} – {format(new Date(booking.end_time), "h:mma")}
                           </p>
                         </div>
                       )}
