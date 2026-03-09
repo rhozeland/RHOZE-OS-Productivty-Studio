@@ -483,7 +483,25 @@ const ProfileDetailPage = () => {
         </motion.div>
 
         {/* Seller Stats — public stats for everyone, private analytics for owner */}
-        <ProfileSellerStats userId={id!} isOwnProfile={isOwnProfile} />
+        {(showSellerStats || isOwnProfile) && (
+          <div className="relative">
+            {isOwnProfile && (
+              <button
+                onClick={() => toggleSectionMutation.mutate({ field: "show_seller_stats", value: !showSellerStats })}
+                className="absolute -top-1 right-0 z-10 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                title={showSellerStats ? "Hide from public" : "Show to public"}
+              >
+                {showSellerStats ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+              </button>
+            )}
+            {!showSellerStats && isOwnProfile && (
+              <div className="absolute inset-0 rounded-xl border-2 border-dashed border-muted-foreground/20 pointer-events-none z-0" />
+            )}
+            <div className={!showSellerStats && isOwnProfile ? "opacity-50" : ""}>
+              <ProfileSellerStats userId={id!} isOwnProfile={isOwnProfile} />
+            </div>
+          </div>
+        )}
 
         {/* Seller Listings — subtle section */}
         {hasSellerContent && (
