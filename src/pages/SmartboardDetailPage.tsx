@@ -27,11 +27,13 @@ import {
   UserPlus,
   StickyNote,
   Link2,
-  Image,
+  ImageIcon,
   Send,
-  Trash2,
   X,
   Users,
+  Bookmark,
+  Share2,
+  Heart,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -55,11 +57,7 @@ const SmartboardDetailPage = () => {
   const { data: board } = useQuery({
     queryKey: ["smartboard", id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("smartboards")
-        .select("*")
-        .eq("id", id!)
-        .single();
+      const { data, error } = await supabase.from("smartboards").select("*").eq("id", id!).single();
       if (error) throw error;
       return data;
     },
@@ -81,10 +79,7 @@ const SmartboardDetailPage = () => {
   const { data: members } = useQuery({
     queryKey: ["smartboard-members", id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("smartboard_members")
-        .select("*")
-        .eq("smartboard_id", id!);
+      const { data, error } = await supabase.from("smartboard_members").select("*").eq("smartboard_id", id!);
       if (error) throw error;
       return data ?? [];
     },
@@ -103,7 +98,6 @@ const SmartboardDetailPage = () => {
     },
   });
 
-  // Realtime chat
   useEffect(() => {
     if (!id) return;
     const channel = supabase
@@ -147,9 +141,7 @@ const SmartboardDetailPage = () => {
       const { error } = await supabase.from("smartboard_items").delete().eq("id", itemId);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["smartboard-items", id] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["smartboard-items", id] }),
   });
 
   const sendChat = useMutation({
@@ -161,15 +153,12 @@ const SmartboardDetailPage = () => {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
-      setChatMsg("");
-    },
+    onSuccess: () => setChatMsg(""),
     onError: (e: any) => toast.error(e.message),
   });
 
   const inviteMember = useMutation({
     mutationFn: async () => {
-      // Look up user by display_name or email-like match in profiles
       const { data: profiles, error: pErr } = await supabase
         .from("profiles")
         .select("user_id, display_name")
@@ -177,7 +166,6 @@ const SmartboardDetailPage = () => {
         .limit(1);
       if (pErr) throw pErr;
       if (!profiles || profiles.length === 0) throw new Error("User not found");
-
       const { error } = await supabase.from("smartboard_members").insert({
         smartboard_id: id!,
         user_id: profiles[0].user_id,
@@ -196,61 +184,74 @@ const SmartboardDetailPage = () => {
 
   const isOwner = board?.user_id === user?.id;
 
-  if (!board) return <div className="text-muted-foreground">Loading...</div>;
+  if (!board) return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+    </div>
+  );
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Link to="/smartboards">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div className="flex-1">
-          <h1 className="font-display text-2xl font-bold text-foreground">{board.title}</h1>
-          {board.description && (
-            <p className="text-sm text-muted-foreground">{board.description}</p>
+    <div className="space-y-4">
+      {/* Header — reference style */}
+      <div className="surface-card rounded-2xl overflow-hidden">
+        <div className="p-5 md:p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <Link to="/smartboards">
+              <Button variant="outline" size="icon" className="rounded-full h-9 w-9">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <h1 className="font-display text-xl md:text-2xl font-bold text-foreground flex-1 text-center md:text-left">
+              {board.title}
+            </h1>
+          </div>
+
+          {/* Action strip */}
+          <div className="flex items-center justify-center gap-5">
+            <button className="text-muted-foreground hover:text-foreground transition-colors">
+              <Bookmark className="h-5 w-5" />
+            </button>
+            <button className="text-muted-foreground hover:text-foreground transition-colors">
+              <Share2 className="h-5 w-5" />
+            </button>
+            <button className="text-muted-foreground hover:text-foreground transition-colors">
+              <Heart className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {members && members.length > 0 && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Users className="h-3.5 w-3.5" />
+              <span>{members.length + 1}</span>
+            </div>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           {isOwner && (
             <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Invite
+                <Button variant="outline" size="sm" className="rounded-full text-xs">
+                  <UserPlus className="mr-1.5 h-3.5 w-3.5" /> Invite
                 </Button>
               </DialogTrigger>
               <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Invite Collaborator</DialogTitle>
-                </DialogHeader>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (inviteEmail.trim()) inviteMember.mutate();
-                  }}
-                  className="space-y-4"
-                >
-                  <Input
-                    placeholder="Search by display name..."
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                  />
+                <DialogHeader><DialogTitle>Invite Collaborator</DialogTitle></DialogHeader>
+                <form onSubmit={(e) => { e.preventDefault(); if (inviteEmail.trim()) inviteMember.mutate(); }} className="space-y-4">
+                  <Input placeholder="Search by display name..." value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} />
                   <Select value={inviteRole} onValueChange={setInviteRole}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="viewer">Viewer</SelectItem>
                       <SelectItem value="editor">Editor</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button type="submit" className="w-full">
-                    Send Invite
-                  </Button>
+                  <Button type="submit" className="w-full rounded-full">Send Invite</Button>
                 </form>
               </DialogContent>
             </Dialog>
@@ -258,144 +259,109 @@ const SmartboardDetailPage = () => {
           <Button
             variant={chatOpen ? "default" : "outline"}
             size="sm"
+            className="rounded-full text-xs"
             onClick={() => setChatOpen(!chatOpen)}
           >
-            <MessageSquare className="mr-2 h-4 w-4" />
-            Chat
+            <MessageSquare className="mr-1.5 h-3.5 w-3.5" /> Chat
           </Button>
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Item
+              <Button size="sm" className="rounded-full text-xs">
+                <Plus className="mr-1.5 h-3.5 w-3.5" /> Add
               </Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add to Board</DialogTitle>
-              </DialogHeader>
+              <DialogHeader><DialogTitle>Add to Board</DialogTitle></DialogHeader>
               <div className="flex gap-2 mb-4">
-                <Button
-                  variant={itemType === "note" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setItemType("note")}
-                >
-                  <StickyNote className="mr-1 h-4 w-4" />
-                  Note
+                <Button variant={itemType === "note" ? "default" : "outline"} size="sm" className="rounded-full" onClick={() => setItemType("note")}>
+                  <StickyNote className="mr-1 h-4 w-4" /> Note
                 </Button>
-                <Button
-                  variant={itemType === "link" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setItemType("link")}
-                >
-                  <Link2 className="mr-1 h-4 w-4" />
-                  Link
+                <Button variant={itemType === "link" ? "default" : "outline"} size="sm" className="rounded-full" onClick={() => setItemType("link")}>
+                  <Link2 className="mr-1 h-4 w-4" /> Link
                 </Button>
               </div>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  addItem.mutate();
-                }}
-                className="space-y-4"
-              >
-                <Input
-                  placeholder="Title"
-                  value={itemTitle}
-                  onChange={(e) => setItemTitle(e.target.value)}
-                />
-                {itemType === "note" && (
-                  <Textarea
-                    placeholder="Write your note..."
-                    value={itemContent}
-                    onChange={(e) => setItemContent(e.target.value)}
-                    rows={4}
-                  />
-                )}
-                {itemType === "link" && (
-                  <Input
-                    placeholder="https://..."
-                    value={itemLink}
-                    onChange={(e) => setItemLink(e.target.value)}
-                  />
-                )}
-                <Button type="submit" className="w-full">
-                  Add to Board
-                </Button>
+              <form onSubmit={(e) => { e.preventDefault(); addItem.mutate(); }} className="space-y-4">
+                <Input placeholder="Title" value={itemTitle} onChange={(e) => setItemTitle(e.target.value)} />
+                {itemType === "note" && <Textarea placeholder="Write your note..." value={itemContent} onChange={(e) => setItemContent(e.target.value)} rows={4} />}
+                {itemType === "link" && <Input placeholder="https://..." value={itemLink} onChange={(e) => setItemLink(e.target.value)} />}
+                <Button type="submit" className="w-full rounded-full">Add to Board</Button>
               </form>
             </DialogContent>
           </Dialog>
         </div>
       </div>
 
-      {/* Members strip */}
-      {members && members.length > 0 && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Users className="h-4 w-4" />
-          {members.map((m: any) => (
-            <span key={m.id} className="rounded-full bg-muted px-2.5 py-0.5 text-xs">
-              {m.user_id?.slice(0, 8) ?? "User"} · {m.role}
-            </span>
-          ))}
-        </div>
-      )}
-
-      <div className={`grid gap-6 ${chatOpen ? "grid-cols-1 lg:grid-cols-3" : "grid-cols-1"}`}>
-        {/* Items grid */}
+      <div className={`grid gap-4 ${chatOpen ? "grid-cols-1 lg:grid-cols-3" : "grid-cols-1"}`}>
+        {/* Masonry grid */}
         <div className={chatOpen ? "lg:col-span-2" : ""}>
           {(!items || items.length === 0) ? (
-            <div className="surface-card flex flex-col items-center justify-center py-20">
-              <StickyNote className="mb-3 h-10 w-10 text-muted-foreground" />
-              <p className="text-muted-foreground">This board is empty. Add notes, links, or media!</p>
+            <div className="flex flex-col items-center justify-center py-20 text-center rounded-2xl bg-muted/20 border border-border">
+              <StickyNote className="mb-3 h-10 w-10 text-muted-foreground/50" />
+              <p className="text-foreground font-medium">This board is empty</p>
+              <p className="text-sm text-muted-foreground mt-1">Add notes, links, or media to get started</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="columns-2 md:columns-3 gap-3 space-y-3">
               <AnimatePresence>
-                {items.map((item, i) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ delay: i * 0.03 }}
-                    className="surface-card group relative overflow-hidden p-5"
-                  >
-                    <div className="mb-2 flex items-center gap-2">
-                      {item.content_type === "note" && <StickyNote className="h-4 w-4 text-warm" />}
-                      {item.content_type === "link" && <Link2 className="h-4 w-4 text-blue" />}
-                      {item.content_type === "image" && <Image className="h-4 w-4 text-pink" />}
-                      <span className="text-xs uppercase tracking-wider text-muted-foreground">
-                        {item.content_type}
-                      </span>
-                    </div>
-                    {item.title && (
-                      <h3 className="mb-1 font-display font-semibold text-foreground text-sm">
-                        {item.title}
-                      </h3>
-                    )}
-                    {item.content && (
-                      <p className="text-sm text-muted-foreground line-clamp-4">{item.content}</p>
-                    )}
-                    {item.link_url && (
-                      <a
-                        href={item.link_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 block truncate text-sm text-primary hover:underline"
-                      >
-                        {item.link_url}
-                      </a>
-                    )}
-                    {item.user_id === user?.id && (
-                      <button
-                        onClick={() => deleteItem.mutate(item.id)}
-                        className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    )}
-                  </motion.div>
-                ))}
+                {items.map((item, i) => {
+                  const isImage = item.content_type === "image" && item.file_url;
+                  return (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ delay: i * 0.03 }}
+                      className="break-inside-avoid group relative rounded-xl overflow-hidden bg-card border border-border shadow-sm hover:shadow-md transition-shadow"
+                    >
+                      {isImage ? (
+                        <img
+                          src={item.file_url!}
+                          alt={item.title || "Board item"}
+                          className="w-full object-cover"
+                        />
+                      ) : (
+                        <div className="p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            {item.content_type === "note" && <StickyNote className="h-3.5 w-3.5 text-primary" />}
+                            {item.content_type === "link" && <Link2 className="h-3.5 w-3.5 text-primary" />}
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                              {item.content_type}
+                            </span>
+                          </div>
+                          {item.title && (
+                            <h3 className="font-display font-semibold text-foreground text-sm leading-snug mb-1">
+                              {item.title}
+                            </h3>
+                          )}
+                          {item.content && (
+                            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-6">{item.content}</p>
+                          )}
+                          {item.link_url && (
+                            <a
+                              href={item.link_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-2 block truncate text-xs text-primary hover:underline"
+                            >
+                              {item.link_url}
+                            </a>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Delete overlay */}
+                      {item.user_id === user?.id && (
+                        <button
+                          onClick={() => deleteItem.mutate(item.id)}
+                          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-card/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground shadow-sm"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </motion.div>
+                  );
+                })}
               </AnimatePresence>
             </div>
           )}
@@ -406,28 +372,24 @@ const SmartboardDetailPage = () => {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="surface-card flex flex-col overflow-hidden lg:col-span-1"
+            className="rounded-2xl bg-card border border-border flex flex-col overflow-hidden lg:col-span-1"
             style={{ height: "60vh" }}
           >
-            <div className="border-b border-border px-4 py-3">
+            <div className="border-b border-border px-4 py-3 flex items-center justify-between">
               <h3 className="font-display font-semibold text-foreground text-sm">Board Chat</h3>
+              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full" onClick={() => setChatOpen(false)}>
+                <X className="h-3.5 w-3.5" />
+              </Button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {chatMessages?.map((msg: any) => (
-                <div
-                  key={msg.id}
-                  className={`flex flex-col ${msg.user_id === user?.id ? "items-end" : "items-start"}`}
-                >
+                <div key={msg.id} className={`flex flex-col ${msg.user_id === user?.id ? "items-end" : "items-start"}`}>
                   <span className="text-[10px] text-muted-foreground mb-0.5">
-                    {msg.user_id === user?.id ? "You" : "User"}
+                    {msg.user_id === user?.id ? "You" : "Member"}
                   </span>
-                  <div
-                    className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
-                      msg.user_id === user?.id
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-foreground"
-                    }`}
-                  >
+                  <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm ${
+                    msg.user_id === user?.id ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
+                  }`}>
                     {msg.content}
                   </div>
                 </div>
@@ -435,19 +397,11 @@ const SmartboardDetailPage = () => {
               <div ref={chatEndRef} />
             </div>
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (chatMsg.trim()) sendChat.mutate();
-              }}
+              onSubmit={(e) => { e.preventDefault(); if (chatMsg.trim()) sendChat.mutate(); }}
               className="border-t border-border p-3 flex gap-2"
             >
-              <Input
-                value={chatMsg}
-                onChange={(e) => setChatMsg(e.target.value)}
-                placeholder="Type a message..."
-                className="flex-1"
-              />
-              <Button type="submit" size="icon" disabled={!chatMsg.trim()}>
+              <Input value={chatMsg} onChange={(e) => setChatMsg(e.target.value)} placeholder="Message..." className="flex-1 rounded-full" />
+              <Button type="submit" size="icon" className="rounded-full" disabled={!chatMsg.trim()}>
                 <Send className="h-4 w-4" />
               </Button>
             </form>

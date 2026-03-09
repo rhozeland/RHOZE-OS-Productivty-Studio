@@ -13,8 +13,15 @@ import {
   Share2,
   ExternalLink,
   Sparkles,
-  Heart,
   Plus,
+  X,
+  Type,
+  Video,
+  ImageIcon,
+  AudioLines,
+  Quote,
+  Link as LinkIcon,
+  Fingerprint,
 } from "lucide-react";
 import {
   Dialog,
@@ -31,30 +38,46 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import { toast } from "sonner";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
-const CALIBRATION_QUESTIONS = [
-  { q: "What kind of content are you interested in seeing Today?", options: CATEGORIES },
-  { q: "What inspires you most?", options: ["Color", "Texture", "Typography", "Motion", "Sound"] },
+
+const CONTENT_TYPES = [
+  { icon: Type, label: "TEXT", angle: -90 },
+  { icon: Video, label: "VIDEO", angle: -150 },
+  { icon: ImageIcon, label: "IMAGE", angle: -30 },
+  { icon: AudioLines, label: "AUDIO", angle: 150 },
+  { icon: Quote, label: "QUOTE", angle: 30 },
+  { icon: LinkIcon, label: "LINK", angle: 90 },
 ];
+
+const CATEGORY_GRADIENTS: Record<string, string> = {
+  design: "from-teal/20 via-muted to-accent/20",
+  music: "from-pink/30 via-muted to-warm/20",
+  photo: "from-warm/20 via-muted to-teal/20",
+  video: "from-accent/20 via-muted to-pink/20",
+  writing: "from-muted via-teal/10 to-accent/10",
+};
 
 const FlowModePage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [calibrated, setCalibrated] = useState(false);
-  const [calibrationStep, setCalibrationStep] = useState(0);
+  const [onboardingStep, setOnboardingStep] = useState(0); // 0=types, 1=swipe tutorial, 2=ready
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [direction, setDirection] = useState(0);
+  const [expandedCard, setExpandedCard] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [newCategory, setNewCategory] = useState("design");
   const [newLink, setNewLink] = useState("");
 
-  // Check if user has done calibration before
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const rotateZ = useTransform(x, [-200, 200], [-15, 15]);
+
   useEffect(() => {
     const saved = localStorage.getItem(`flow-calibrated-${user?.id}`);
     if (saved) {
@@ -105,9 +128,7 @@ const FlowModePage = () => {
       }, { onConflict: "user_id,flow_item_id" });
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["flow-interactions"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flow-interactions"] }),
   });
 
   const createFlowItem = useMutation({
@@ -132,7 +153,6 @@ const FlowModePage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
-  // Filter out already-interacted items
   const unseenItems = flowItems?.filter((item) => !interactions?.has(item.id)) ?? [];
   const currentItem = unseenItems[currentIndex];
 
@@ -150,23 +170,17 @@ const FlowModePage = () => {
     setCalibrated(true);
   };
 
-  const swipe = (dir: "up" | "down" | "left" | "right") => {
+  const performAction = useCallback((action: string) => {
     if (!currentItem) return;
-    const actions: Record<string, string> = { up: "learn_more", down: "save", left: "share", right: "skip" };
-    const action = actions[dir];
-    const dirMap: Record<string, number> = { up: -1, down: 1, left: -1, right: 1 };
-    setDirection(dirMap[dir]);
 
     if (action === "save" && smartboards && smartboards.length > 0) {
       interact.mutate({ itemId: currentItem.id, action, smartboardId: smartboards[0].id });
-      toast.success("Saved to your Smartboard!");
+      toast.success("Saved to Smartboard!");
     } else if (action === "share") {
       interact.mutate({ itemId: currentItem.id, action });
       toast("Shared!");
-    } else if (action === "learn_more") {
-      if (currentItem.link_url) {
-        window.open(currentItem.link_url, "_blank");
-      }
+    } else if (action === "learn_more" && currentItem.link_url) {
+      window.open(currentItem.link_url, "_blank");
       interact.mutate({ itemId: currentItem.id, action });
     } else {
       interact.mutate({ itemId: currentItem.id, action });
@@ -174,184 +188,310 @@ const FlowModePage = () => {
 
     setTimeout(() => {
       setCurrentIndex((i) => Math.min(i + 1, unseenItems.length - 1));
-      setDirection(0);
-    }, 300);
-  };
+      setExpandedCard(false);
+    }, 200);
+  }, [currentItem, smartboards, interact, unseenItems.length]);
 
-  // Calibration screen
+  const handleDragEnd = useCallback((_: any, info: PanInfo) => {
+    const { offset } = info;
+    const threshold = 80;
+
+    if (Math.abs(offset.x) > Math.abs(offset.y)) {
+      if (offset.x > threshold) performAction("skip");       // Right = Next
+      else if (offset.x < -threshold) performAction("share"); // Left = Back/Share
+    } else {
+      if (offset.y < -threshold) performAction("save");       // Up = Save
+      else if (offset.y > threshold) performAction("dislike"); // Down = Dislike
+    }
+  }, [performAction]);
+
+  // Keyboard support
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!calibrated || !currentItem) return;
+      if (e.key === "ArrowUp") performAction("save");
+      if (e.key === "ArrowDown") performAction("dislike");
+      if (e.key === "ArrowLeft") performAction("share");
+      if (e.key === "ArrowRight") performAction("skip");
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [calibrated, currentItem, performAction]);
+
+  // ──── ONBOARDING ────
   if (!calibrated) {
-    const step = CALIBRATION_QUESTIONS[calibrationStep];
     return (
-      <div className="flex min-h-[70vh] items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="surface-card mx-auto max-w-md p-8 text-center"
-        >
-          <Sparkles className="mx-auto mb-4 h-10 w-10 text-primary" />
-          <h1 className="font-display text-2xl font-bold text-foreground mb-2">Find Your Flow</h1>
-          <p className="text-muted-foreground mb-6">{step.q}</p>
-          <div className="flex flex-wrap justify-center gap-2 mb-6">
-            {step.options.map((opt) => (
-              <Button
-                key={opt}
-                variant={selectedCategories.includes(opt.toLowerCase()) ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleCalibrationSelect(opt.toLowerCase())}
-                className="capitalize"
-              >
-                {opt}
+      <div className="flex min-h-[80vh] items-center justify-center px-4">
+        <AnimatePresence mode="wait">
+          {/* Step 0: Content Types */}
+          {onboardingStep === 0 && (
+            <motion.div
+              key="types"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="w-full max-w-sm text-center"
+            >
+              {/* Content type icons in circular arrangement */}
+              <div className="relative mx-auto mb-8 h-48 w-48">
+                {CONTENT_TYPES.map((ct, i) => {
+                  const rad = (ct.angle * Math.PI) / 180;
+                  const radius = 80;
+                  const cx = Math.cos(rad) * radius;
+                  const cy = Math.sin(rad) * radius;
+                  return (
+                    <motion.div
+                      key={ct.label}
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.1 + 0.2 }}
+                      className="absolute flex flex-col items-center gap-1"
+                      style={{
+                        left: `calc(50% + ${cx}px - 24px)`,
+                        top: `calc(50% + ${cy}px - 20px)`,
+                      }}
+                    >
+                      <ct.icon className="h-7 w-7 text-muted-foreground/60" strokeWidth={1.5} />
+                      <span className="text-[10px] font-medium text-muted-foreground/60 tracking-wider">
+                        {ct.label}
+                      </span>
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              <h2 className="font-display text-xl font-bold text-foreground mb-2">What are you into?</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-8 max-w-xs mx-auto">
+                We're interested in redefining the experience of how you view meaningful content. Let's get to know each other by introducing our Flow Mode.
+              </p>
+
+              <div className="flex flex-wrap justify-center gap-2 mb-6">
+                {CATEGORIES.map((cat) => (
+                  <Button
+                    key={cat}
+                    variant={selectedCategories.includes(cat) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleCalibrationSelect(cat)}
+                    className="capitalize rounded-full"
+                  >
+                    {cat}
+                  </Button>
+                ))}
+              </div>
+
+              <Button onClick={() => setOnboardingStep(1)} className="rounded-full px-8">
+                Next
               </Button>
-            ))}
-          </div>
-          <div className="flex gap-3 justify-center">
-            {calibrationStep > 0 && (
-              <Button variant="outline" onClick={() => setCalibrationStep((s) => s - 1)}>
-                Back
-              </Button>
-            )}
-            {calibrationStep < CALIBRATION_QUESTIONS.length - 1 ? (
-              <Button onClick={() => setCalibrationStep((s) => s + 1)}>Next</Button>
-            ) : (
-              <Button onClick={finishCalibration}>Start Flowing</Button>
-            )}
-          </div>
-        </motion.div>
+            </motion.div>
+          )}
+
+          {/* Step 1: Swipe Tutorial */}
+          {onboardingStep === 1 && (
+            <motion.div
+              key="swipe"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="w-full max-w-sm text-center"
+            >
+              <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
+                Swipe in the direction shown to interact with content.
+              </p>
+
+              {/* Swipe card preview */}
+              <div className="relative mx-auto mb-8">
+                <div className="relative mx-auto w-56 h-72 rounded-2xl border border-border bg-card shadow-lg flex items-center justify-center">
+                  <Fingerprint className="h-10 w-10 text-muted-foreground/30" />
+
+                  {/* Direction labels */}
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex flex-col items-center">
+                    <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground tracking-wider">SAVE</span>
+                  </div>
+                  <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center">
+                    <span className="text-xs font-medium text-muted-foreground tracking-wider">DISLIKE</span>
+                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="absolute top-1/2 -left-16 -translate-y-1/2 flex items-center gap-1">
+                    <ChevronLeft className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground tracking-wider">BACK</span>
+                  </div>
+                  <div className="absolute top-1/2 -right-16 -translate-y-1/2 flex items-center gap-1">
+                    <span className="text-xs font-medium text-muted-foreground tracking-wider">NEXT</span>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-center">
+                <Button variant="outline" onClick={() => setOnboardingStep(0)} className="rounded-full px-6">
+                  Back
+                </Button>
+                <Button onClick={finishCalibration} className="rounded-full px-8">
+                  Let's try it
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   }
 
+  // ──── MAIN FLOW VIEW ────
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">Flow</h1>
-          <p className="text-muted-foreground">Discover and interact with creative content</p>
+    <div className="relative">
+      {/* Top bar */}
+      <div className="flex items-center justify-between mb-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full"
+          onClick={() => { setCalibrated(false); setOnboardingStep(0); }}
+        >
+          <X className="h-5 w-5" />
+        </Button>
+        <div className="flex items-center gap-2">
+          {CATEGORIES.map((cat) => (
+            <Badge
+              key={cat}
+              variant={selectedCategories.includes(cat) ? "default" : "outline"}
+              className="cursor-pointer capitalize text-xs rounded-full"
+              onClick={() => {
+                const updated = selectedCategories.includes(cat)
+                  ? selectedCategories.filter((c) => c !== cat)
+                  : [...selectedCategories, cat];
+                setSelectedCategories(updated);
+                localStorage.setItem(`flow-calibrated-${user?.id}`, JSON.stringify(updated));
+              }}
+            >
+              {cat}
+            </Badge>
+          ))}
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => { setCalibrated(false); setCalibrationStep(0); }}>
-            Recalibrate
-          </Button>
-          <Button size="sm" onClick={() => setAddOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Share Content
-          </Button>
-        </div>
+        <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setAddOpen(true)}>
+          <Plus className="h-5 w-5" />
+        </Button>
       </div>
 
-      {/* Category filters */}
-      <div className="flex flex-wrap gap-2">
-        {CATEGORIES.map((cat) => (
-          <Badge
-            key={cat}
-            variant={selectedCategories.includes(cat) ? "default" : "outline"}
-            className="cursor-pointer capitalize"
-            onClick={() => {
-              const updated = selectedCategories.includes(cat)
-                ? selectedCategories.filter((c) => c !== cat)
-                : [...selectedCategories, cat];
-              setSelectedCategories(updated);
-              localStorage.setItem(`flow-calibrated-${user?.id}`, JSON.stringify(updated));
-            }}
-          >
-            {cat}
-          </Badge>
-        ))}
-      </div>
-
-      {/* Content card */}
-      <div className="flex justify-center">
-        <div className="relative w-full max-w-lg">
-          <AnimatePresence mode="wait">
-            {currentItem ? (
-              <motion.div
-                key={currentItem.id}
-                initial={{ opacity: 0, x: direction * 100 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -direction * 100 }}
-                transition={{ duration: 0.3 }}
-                className="surface-card overflow-hidden"
-              >
-                {/* Content area */}
-                <div className="aspect-[4/3] bg-gradient-to-br from-primary/10 via-muted to-accent/10 flex items-center justify-center p-8">
-                  <div className="text-center">
-                    <Badge variant="outline" className="mb-4 capitalize">
-                      {currentItem.category}
-                    </Badge>
-                    <h2 className="font-display text-2xl font-bold text-foreground mb-2">
-                      {currentItem.title}
-                    </h2>
-                    {currentItem.description && (
-                      <p className="text-muted-foreground max-w-sm mx-auto">
-                        {currentItem.description}
-                      </p>
-                    )}
-                  </div>
+      {/* Card area */}
+      <div className="flex justify-center items-center min-h-[65vh]">
+        <AnimatePresence mode="wait">
+          {currentItem ? (
+            <motion.div
+              key={currentItem.id}
+              className="w-full max-w-sm cursor-grab active:cursor-grabbing"
+              drag
+              dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+              dragElastic={0.7}
+              onDragEnd={handleDragEnd}
+              style={{ x, y, rotateZ }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
+            >
+              <div className="rounded-3xl bg-card border border-border shadow-xl overflow-hidden">
+                {/* Content visual */}
+                <div className={`aspect-square bg-gradient-to-br ${CATEGORY_GRADIENTS[currentItem.category] || CATEGORY_GRADIENTS.design} flex items-center justify-center p-8 relative`}>
+                  {currentItem.file_url ? (
+                    <img
+                      src={currentItem.file_url}
+                      alt={currentItem.title}
+                      className="w-full h-full object-cover rounded-2xl shadow-lg"
+                    />
+                  ) : (
+                    <div className="text-center">
+                      <Badge variant="outline" className="mb-4 capitalize rounded-full bg-card/60 backdrop-blur-sm">
+                        {currentItem.category}
+                      </Badge>
+                      <h2 className="font-display text-2xl font-bold text-foreground leading-tight">
+                        {currentItem.title}
+                      </h2>
+                    </div>
+                  )}
                 </div>
 
-                {/* Creator info */}
+                {/* Actions & info */}
                 <div className="p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
-                        {((currentItem as any).profiles?.display_name ?? "?")[0].toUpperCase()}
-                      </div>
-                      <span className="text-sm font-medium text-foreground">
-                        {(currentItem as any).profiles?.display_name ?? "Creator"}
-                      </span>
-                    </div>
+                  {/* Action icons */}
+                  <div className="flex items-center justify-center gap-6 mb-4">
+                    <button
+                      onClick={() => performAction("save")}
+                      className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      <Bookmark className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => performAction("share")}
+                      className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      <Share2 className="h-5 w-5" />
+                    </button>
                     {currentItem.link_url && (
-                      <a href={currentItem.link_url} target="_blank" rel="noopener noreferrer">
-                        <Button variant="ghost" size="sm">
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
+                      <a href={currentItem.link_url} target="_blank" rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        <ExternalLink className="h-5 w-5" />
                       </a>
                     )}
                   </div>
 
-                  {/* Swipe actions */}
-                  <div className="grid grid-cols-4 gap-2">
-                    <Button variant="outline" className="flex flex-col gap-1 h-auto py-3" onClick={() => swipe("up")}>
-                      <ChevronUp className="h-5 w-5" />
-                      <span className="text-[10px]">Learn More</span>
-                    </Button>
-                    <Button variant="outline" className="flex flex-col gap-1 h-auto py-3" onClick={() => swipe("down")}>
-                      <Bookmark className="h-5 w-5" />
-                      <span className="text-[10px]">Save</span>
-                    </Button>
-                    <Button variant="outline" className="flex flex-col gap-1 h-auto py-3" onClick={() => swipe("left")}>
-                      <Share2 className="h-5 w-5" />
-                      <span className="text-[10px]">Share</span>
-                    </Button>
-                    <Button variant="outline" className="flex flex-col gap-1 h-auto py-3" onClick={() => swipe("right")}>
-                      <ChevronRight className="h-5 w-5" />
-                      <span className="text-[10px]">Next</span>
-                    </Button>
-                  </div>
+                  {/* Expandable info */}
+                  {currentItem.file_url && (
+                    <h3 className="font-display font-semibold text-foreground mb-1">{currentItem.title}</h3>
+                  )}
+                  {currentItem.description && (
+                    <p
+                      className={`text-sm text-muted-foreground leading-relaxed ${
+                        expandedCard ? "" : "line-clamp-3"
+                      }`}
+                      onClick={() => setExpandedCard(!expandedCard)}
+                    >
+                      {currentItem.description}
+                    </p>
+                  )}
+                  {currentItem.description && currentItem.description.length > 120 && (
+                    <button
+                      onClick={() => setExpandedCard(!expandedCard)}
+                      className="mt-1 flex items-center justify-center w-full"
+                    >
+                      <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${expandedCard ? "rotate-180" : ""}`} />
+                    </button>
+                  )}
                 </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="surface-card flex flex-col items-center justify-center py-20 text-center"
-              >
-                <Sparkles className="mb-4 h-12 w-12 text-primary" />
-                <h2 className="font-display text-xl font-bold text-foreground mb-2">
-                  You're all caught up!
-                </h2>
-                <p className="text-muted-foreground mb-4 max-w-xs">
-                  Share your own content or check back later for new discoveries.
-                </p>
-                <Button onClick={() => setAddOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Share Your Work
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center px-4"
+            >
+              <div className="mx-auto mb-6 h-20 w-20 rounded-full bg-muted/50 flex items-center justify-center">
+                <Sparkles className="h-8 w-8 text-primary" />
+              </div>
+              <h2 className="font-display text-xl font-bold text-foreground mb-2">You're all caught up!</h2>
+              <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
+                Share your own content or check back later for new discoveries.
+              </p>
+              <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
+                <Plus className="mr-2 h-4 w-4" />
+                Share Your Work
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
+
+      {/* Desktop swipe hint */}
+      {currentItem && (
+        <div className="hidden md:flex justify-center mt-4 gap-8 text-muted-foreground/50">
+          <span className="flex items-center gap-1 text-xs"><ChevronUp className="h-3.5 w-3.5" /> Save</span>
+          <span className="flex items-center gap-1 text-xs"><ChevronLeft className="h-3.5 w-3.5" /> Share</span>
+          <span className="flex items-center gap-1 text-xs"><ChevronRight className="h-3.5 w-3.5" /> Next</span>
+          <span className="flex items-center gap-1 text-xs"><ChevronDown className="h-3.5 w-3.5" /> Dislike</span>
+        </div>
+      )}
 
       {/* Add content dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
@@ -369,9 +509,7 @@ const FlowModePage = () => {
             <Input placeholder="Title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
             <Textarea placeholder="Description" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={3} />
             <Select value={newCategory} onValueChange={setNewCategory}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {CATEGORIES.map((cat) => (
                   <SelectItem key={cat} value={cat} className="capitalize">{cat}</SelectItem>
@@ -379,9 +517,7 @@ const FlowModePage = () => {
               </SelectContent>
             </Select>
             <Input placeholder="Link URL (optional)" value={newLink} onChange={(e) => setNewLink(e.target.value)} />
-            <Button type="submit" className="w-full" disabled={!newTitle.trim()}>
-              Share to Flow
-            </Button>
+            <Button type="submit" className="w-full rounded-full" disabled={!newTitle.trim()}>Share to Flow</Button>
           </form>
         </DialogContent>
       </Dialog>
