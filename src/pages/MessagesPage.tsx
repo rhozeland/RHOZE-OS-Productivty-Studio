@@ -137,6 +137,25 @@ const MessagesPage = () => {
     }
   }, [messages, selectedUser, user, queryClient]);
 
+  // Handle inquiry deep-link from marketplace
+  useEffect(() => {
+    if (inquiryHandled.current || !profiles) return;
+    const toUserId = searchParams.get("to");
+    const listingTitle = searchParams.get("listing");
+    if (!toUserId) return;
+
+    const targetProfile = profiles.find((p) => p.user_id === toUserId);
+    if (targetProfile) {
+      setSelectedUser(targetProfile);
+      if (listingTitle) {
+        setMessageText(`Hi! I'm interested in your listing "${decodeURIComponent(listingTitle)}". Could we discuss the details?`);
+      }
+      // Clean up URL params
+      setSearchParams({}, { replace: true });
+      inquiryHandled.current = true;
+    }
+  }, [profiles, searchParams, setSearchParams]);
+
   const sendMessage = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("messages").insert({
