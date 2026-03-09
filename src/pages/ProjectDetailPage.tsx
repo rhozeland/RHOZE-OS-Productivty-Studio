@@ -60,6 +60,19 @@ const ProjectDetailPage = () => {
     },
   });
 
+  const { data: contract } = useQuery({
+    queryKey: ["project-contract", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_contracts")
+        .select("*")
+        .eq("project_id", id!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const addTask = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("tasks").insert({ title: newTask, project_id: id!, user_id: user!.id });
