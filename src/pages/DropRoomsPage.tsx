@@ -29,11 +29,11 @@ import { formatDistanceToNow, isPast } from "date-fns";
 
 const CATEGORIES = ["general", "music", "design", "video", "writing", "code", "business"];
 const DURATIONS = [
+  { label: "30 minutes", hours: 0.5 },
   { label: "1 hour", hours: 1 },
+  { label: "3 hours", hours: 3 },
   { label: "6 hours", hours: 6 },
-  { label: "12 hours", hours: 12 },
   { label: "24 hours", hours: 24 },
-  { label: "48 hours", hours: 48 },
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
