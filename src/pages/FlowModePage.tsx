@@ -218,6 +218,7 @@ const FlowModePage = () => {
 
   const performAction = useCallback((action: string, smartboardId?: string) => {
     if (!currentItem) return;
+    if (navigator.vibrate) navigator.vibrate(20);
 
     if (action === "save") {
       if (smartboardId) {
