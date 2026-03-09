@@ -154,6 +154,63 @@ const ListingDetailPage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
+  // Reviews
+  const { data: reviews } = useQuery({
+    queryKey: ["listing-reviews", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reviews" as any)
+        .select("*")
+        .eq("listing_id", id!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!id,
+  });
+
+  // Reviewer profiles
+  const reviewerIds = reviews?.map((r: any) => r.reviewer_id) ?? [];
+  const { data: reviewerProfiles } = useQuery({
+    queryKey: ["reviewer-profiles", reviewerIds],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, avatar_url")
+        .in("user_id", reviewerIds);
+      if (error) throw error;
+      return data;
+    },
+    enabled: reviewerIds.length > 0,
+  });
+
+  const reviewersMap = new Map(reviewerProfiles?.map((p) => [p.user_id, p]) ?? []);
+  const avgRating = reviews?.length
+    ? Math.round((reviews.reduce((s: number, r: any) => s + r.rating, 0) / reviews.length) * 10) / 10
+    : null;
+  const myReview = reviews?.find((r: any) => r.reviewer_id === user?.id);
+
+  const submitReview = useMutation({
+    mutationFn: async () => {
+      if (!user || !listing) throw new Error("Missing data");
+      const { error } = await supabase.from("reviews" as any).insert({
+        listing_id: listing.id,
+        reviewer_id: user.id,
+        seller_id: listing.user_id,
+        rating: reviewRating,
+        comment: reviewComment || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["listing-reviews", id] });
+      setReviewComment("");
+      setReviewRating(5);
+      toast.success("Review submitted!");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const sendInquiry = useMutation({
     mutationFn: async () => {
       if (!user || !listing) throw new Error("Missing data");
