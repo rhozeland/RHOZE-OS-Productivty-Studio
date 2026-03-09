@@ -702,6 +702,9 @@ export type Database = {
           shipping_country: string | null
           shipping_state: string | null
           shipping_zip: string | null
+          show_offerings: boolean | null
+          show_public_boards: boolean | null
+          show_seller_stats: boolean | null
           skills: string[] | null
           updated_at: string
           user_id: string
@@ -730,6 +733,9 @@ export type Database = {
           shipping_country?: string | null
           shipping_state?: string | null
           shipping_zip?: string | null
+          show_offerings?: boolean | null
+          show_public_boards?: boolean | null
+          show_seller_stats?: boolean | null
           skills?: string[] | null
           updated_at?: string
           user_id: string
@@ -758,6 +764,9 @@ export type Database = {
           shipping_country?: string | null
           shipping_state?: string | null
           shipping_zip?: string | null
+          show_offerings?: boolean | null
+          show_public_boards?: boolean | null
+          show_seller_stats?: boolean | null
           skills?: string[] | null
           updated_at?: string
           user_id?: string
