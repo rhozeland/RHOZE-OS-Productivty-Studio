@@ -19,6 +19,7 @@ import MarketplacePage from "@/pages/MarketplacePage";
 import SmartboardDetailPage from "@/pages/SmartboardDetailPage";
 import ProfilesPage from "@/pages/ProfilesPage";
 import ProfileDetailPage from "@/pages/ProfileDetailPage";
+import MessagesPage from "@/pages/MessagesPage";
 import SettingsPage from "@/pages/SettingsPage";
 import ServicesPage from "@/pages/ServicesPage";
 import CreditShopPage from "@/pages/CreditShopPage";
