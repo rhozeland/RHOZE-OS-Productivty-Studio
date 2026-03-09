@@ -309,22 +309,33 @@ const MarketplacePage = () => {
                       <span className="text-xs text-muted-foreground">
                         {new Date(listing.created_at).toLocaleDateString()}
                       </span>
-                      {listing.contact_info && (
-                        <a
-                          href={
-                            listing.contact_info.includes("@")
-                              ? `mailto:${listing.contact_info}`
-                              : listing.contact_info.startsWith("http")
-                              ? listing.contact_info
-                              : `mailto:${listing.contact_info}`
-                          }
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-primary hover:underline font-medium"
-                        >
-                          Contact
-                        </a>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {listing.price != null &&
+                          listing.contact_info &&
+                          isValidSolanaAddress(listing.contact_info) && (
+                            <PayWithSolButton
+                              recipientAddress={listing.contact_info}
+                              solAmount={listing.price}
+                              label={`${listing.price} SOL`}
+                            />
+                          )}
+                        {listing.contact_info && (
+                          <a
+                            href={
+                              listing.contact_info.includes("@")
+                                ? `mailto:${listing.contact_info}`
+                                : listing.contact_info.startsWith("http")
+                                ? listing.contact_info
+                                : `mailto:${listing.contact_info}`
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-primary hover:underline font-medium"
+                          >
+                            Contact
+                          </a>
+                        )}
+                      </div>
                     </div>
                   </div>
 
