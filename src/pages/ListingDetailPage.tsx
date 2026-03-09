@@ -480,6 +480,15 @@ const ListingDetailPage = () => {
               {listing.title}
             </h1>
 
+            {/* Rating summary */}
+            {avgRating && (
+              <div className="flex items-center gap-2">
+                <StarRating rating={avgRating} />
+                <span className="text-sm font-bold text-foreground">{avgRating}</span>
+                <span className="text-xs text-muted-foreground">({reviews?.length} review{reviews?.length !== 1 ? "s" : ""})</span>
+              </div>
+            )}
+
             {/* Price */}
             {listing.credits_price != null && (
               <div className="flex items-center gap-2 text-2xl font-display font-bold text-foreground">
