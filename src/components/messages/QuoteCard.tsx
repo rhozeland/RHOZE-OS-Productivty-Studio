@@ -55,17 +55,25 @@ const QuoteCard = ({ content, isMine, messageId, senderId }: QuoteCardProps) => 
     if (!contractId || !user) return;
     setActing(true);
     try {
-      // Update contract status
-      const newStatus = accept ? "active" : "declined";
-      const { error: contractErr } = await supabase
-        .from("project_contracts")
-        .update({ status: newStatus })
-        .eq("id", contractId);
-      if (contractErr) throw contractErr;
+      if (accept) {
+        // Call escrow edge function to atomically lock credits
+        const { data, error: fnErr } = await supabase.functions.invoke("escrow-lock", {
+          body: { contract_id: contractId },
+        });
+        if (fnErr) throw fnErr;
+        if (data?.error) throw new Error(data.error);
+      } else {
+        // Decline: just update contract status
+        const { error: contractErr } = await supabase
+          .from("project_contracts")
+          .update({ status: "declined" })
+          .eq("id", contractId);
+        if (contractErr) throw contractErr;
+      }
 
       // Send a response message
       const responseMsg = accept
-        ? `✅ **Accepted** the quote for **${title}** (${total} credits)`
+        ? `✅ **Accepted** the quote for **${title}** (${total} credits locked in escrow)`
         : `❌ **Declined** the quote for **${title}**`;
 
       const { error: msgErr } = await supabase.from("messages").insert({
@@ -77,7 +85,7 @@ const QuoteCard = ({ content, isMine, messageId, senderId }: QuoteCardProps) => 
 
       queryClient.invalidateQueries({ queryKey: ["messages"] });
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
-      toast.success(accept ? "Quote accepted!" : "Quote declined");
+      toast.success(accept ? "Quote accepted — credits locked in escrow!" : "Quote declined");
     } catch (e: any) {
       toast.error(e.message);
     } finally {
