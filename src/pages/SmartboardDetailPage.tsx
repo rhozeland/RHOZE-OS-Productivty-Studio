@@ -58,7 +58,7 @@ const SmartboardDetailPage = () => {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDesc, setEditDesc] = useState("");
-  const [itemType, setItemType] = useState<"note" | "link" | "image">("note");
+  const [itemType, setItemType] = useState<"note" | "link" | "image" | "video" | "audio" | "pdf">("note");
   const [itemTitle, setItemTitle] = useState("");
   const [itemContent, setItemContent] = useState("");
   const [itemLink, setItemLink] = useState("");
