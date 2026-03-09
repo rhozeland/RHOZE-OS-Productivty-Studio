@@ -40,9 +40,13 @@ import {
   Video,
   AudioLines,
   ExternalLink,
+  Copy,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import BackgroundCustomizer from "@/components/smartboard/BackgroundCustomizer";
+import SmartboardBackground from "@/components/smartboard/SmartboardBackground";
+import ResizableItem from "@/components/smartboard/ResizableItem";
 
 const SmartboardDetailPage = () => {
   const { id } = useParams<{ id: string }>();
