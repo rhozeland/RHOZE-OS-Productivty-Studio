@@ -34,6 +34,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import PayWithSolButton from "@/components/PayWithSolButton";
+import { isValidSolanaAddress } from "@/lib/solana";
 
 const CATEGORIES = [
   { key: "all", label: "All", icon: Sparkles, color: "hsl(var(--primary))" },
