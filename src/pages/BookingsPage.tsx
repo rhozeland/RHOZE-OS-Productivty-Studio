@@ -47,6 +47,7 @@ const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 8am - 8pm
 const BookingsPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [activeTab, setActiveTab] = useState<TabMode>("upcoming");
