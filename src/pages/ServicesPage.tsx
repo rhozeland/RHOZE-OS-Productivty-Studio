@@ -212,7 +212,7 @@ const ServicesPage = () => {
       )}
 
       {/* Service detail dialog */}
-      <Dialog open={!!selectedService} onOpenChange={() => setSelectedService(null)}>
+      <Dialog open={!!selectedService} onOpenChange={(open) => { if (!open) { setSelectedService(null); setPayMode("credits"); } }}>
         <DialogContent className="sm:max-w-lg">
           {selectedService && (
             <>
@@ -236,7 +236,14 @@ const ServicesPage = () => {
 
                 {/* Pricing info — rate-based */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-xl bg-primary/10 border border-primary/20 p-4 text-center">
+                  <button
+                    onClick={() => setPayMode("credits")}
+                    className={`rounded-xl p-4 text-center transition-all border ${
+                      payMode === "credits"
+                        ? "bg-primary/10 border-primary/40 ring-2 ring-primary/20"
+                        : "bg-muted border-border hover:border-primary/20"
+                    }`}
+                  >
                     <div className="flex items-center justify-center gap-1 text-primary font-display text-2xl font-bold">
                       <Coins className="h-5 w-5" />
                       {Number(creditRatePerHour(selectedService)).toFixed(
@@ -244,20 +251,20 @@ const ServicesPage = () => {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">Credits / hour</p>
-                  </div>
-                  <div className="rounded-xl bg-muted border border-border p-4 text-center">
+                  </button>
+                  <button
+                    onClick={() => setPayMode("fiat")}
+                    className={`rounded-xl p-4 text-center transition-all border ${
+                      payMode === "fiat"
+                        ? "bg-primary/10 border-primary/40 ring-2 ring-primary/20"
+                        : "bg-muted border-border hover:border-primary/20"
+                    }`}
+                  >
                     <div className="font-display text-2xl font-bold text-foreground">
                       ${selectedService.non_member_rate ?? "N/A"}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">Non-member / hr</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3">
-                  <CalendarDays className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <p className="text-xs text-muted-foreground">
-                    Drag across the calendar to book exactly the time you need — credits are calculated based on your selected duration.
-                  </p>
+                    <p className="text-xs text-muted-foreground mt-1">Pay with Card / hr</p>
+                  </button>
                 </div>
 
                 {selectedService.revisions_info && (
@@ -270,21 +277,72 @@ const ServicesPage = () => {
                   </div>
                 )}
 
-                <div className="flex gap-2 pt-2">
-                  <Button className="flex-1" onClick={() => {
-                    setSelectedService(null);
-                    navigate(`/bookings?service=${selectedService.id}`);
-                  }}>
-                    <CalendarDays className="mr-1.5 h-4 w-4" />
-                    Book on Calendar
-                  </Button>
-                  <Link to="/credits">
-                    <Button variant="outline">
-                      <Coins className="mr-1.5 h-4 w-4" />
-                      Get Credits
-                    </Button>
-                  </Link>
-                </div>
+                {/* Credits path → calendar drag */}
+                {payMode === "credits" && (
+                  <>
+                    <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3">
+                      <CalendarDays className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <p className="text-xs text-muted-foreground">
+                        Drag across the calendar to book exactly the time you need — credits are calculated based on your selected duration.
+                      </p>
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <Button className="flex-1" onClick={() => {
+                        setSelectedService(null);
+                        navigate(`/bookings?service=${selectedService.id}`);
+                      }}>
+                        <CalendarDays className="mr-1.5 h-4 w-4" />
+                        Book on Calendar
+                      </Button>
+                      <Link to="/credits">
+                        <Button variant="outline">
+                          <Coins className="mr-1.5 h-4 w-4" />
+                          Get Credits
+                        </Button>
+                      </Link>
+                    </div>
+                  </>
+                )}
+
+                {/* Fiat path → Square card form */}
+                {payMode === "fiat" && selectedService.non_member_rate && (
+                  <>
+                    <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3">
+                      <CreditCard className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <p className="text-xs text-muted-foreground">
+                        Pay ${selectedService.non_member_rate}/hr with a card. After payment, you'll select your session time on the calendar.
+                      </p>
+                    </div>
+                    <SquareCardForm
+                      amount={selectedService.non_member_rate}
+                      disabled={cardProcessing}
+                      onTokenize={async (token) => {
+                        setCardProcessing(true);
+                        try {
+                          const { data, error } = await supabase.functions.invoke("square-payment", {
+                            body: {
+                              amount_cents: Math.round(selectedService.non_member_rate * 100),
+                              currency: "USD",
+                              description: `Rhozeland: ${selectedService.title} (1hr)`,
+                              source_id: token,
+                              location_id: SQUARE_LOCATION_ID,
+                            },
+                          });
+                          if (error) throw error;
+                          if (!data?.success) throw new Error(data?.error || "Payment failed");
+                          toast.success("Payment successful! Redirecting to calendar...");
+                          setSelectedService(null);
+                          setPayMode("credits");
+                          navigate(`/bookings?service=${selectedService.id}`);
+                        } catch (err: any) {
+                          toast.error(err.message || "Payment failed");
+                        } finally {
+                          setCardProcessing(false);
+                        }
+                      }}
+                    />
+                  </>
+                )}
               </div>
             </>
           )}
