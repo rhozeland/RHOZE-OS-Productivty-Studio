@@ -13,6 +13,7 @@ interface CancellationEmailPayload {
   date: string;
   time: string;
   duration_hours: number;
+  credits_refunded?: number;
 }
 
 serve(async (req) => {
