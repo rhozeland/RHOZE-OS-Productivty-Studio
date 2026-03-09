@@ -125,37 +125,83 @@ const CalendarPage = () => {
     enabled: !!user,
   });
 
-  const createBooking = useMutation({
-    mutationFn: async () => {
-      if (!dragDate || dragStartHour === null || dragEndHour === null) return;
-      const startH = Math.min(dragStartHour, dragEndHour);
-      const endH = Math.max(dragStartHour, dragEndHour) + 1;
-      const start = setMinutes(setHours(dragDate, startH), 0);
-      const end = setMinutes(setHours(dragDate, endH), 0);
-      const service = services?.find((s) => s.id === selectedService);
+  const createBookingWithPayment = async (cardToken?: string) => {
+    if (!dragDate || dragStartHour === null || dragEndHour === null || !user) return;
+    const startH = Math.min(dragStartHour, dragEndHour);
+    const endH = Math.max(dragStartHour, dragEndHour) + 1;
+    const start = setMinutes(setHours(dragDate, startH), 0);
+    const end = setMinutes(setHours(dragDate, endH), 0);
+    const service = services?.find((s) => s.id === selectedService);
+    const duration = endH - startH;
 
+    setBookingLoading(true);
+    try {
+      // Process payment
+      if (paymentMethod === "credits" && service) {
+        const balance = userCredits?.balance ?? 0;
+        if (balance < service.credits_cost) {
+          toast.error("Not enough credits");
+          return;
+        }
+        const { error: creditError } = await supabase
+          .from("user_credits")
+          .update({ balance: balance - service.credits_cost })
+          .eq("user_id", user.id);
+        if (creditError) throw creditError;
+
+        await supabase.from("credit_transactions").insert({
+          user_id: user.id,
+          amount: -service.credits_cost,
+          type: "usage",
+          description: `Booking: ${service.title}`,
+        });
+      } else if (paymentMethod === "card" && service) {
+        if (!cardToken) {
+          toast.error("Please enter your card details");
+          return;
+        }
+        const usdPrice = service.non_member_rate ?? 0;
+        const { data, error } = await supabase.functions.invoke("square-payment", {
+          body: {
+            amount_cents: Math.round(usdPrice * 100),
+            currency: "USD",
+            description: `Rhozeland: ${service.title}`,
+            source_id: cardToken,
+            location_id: SQUARE_LOCATION_ID,
+          },
+        });
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || "Payment failed");
+      }
+      // crypto is handled by PaySolAndVerify callback
+
+      // Create booking
       const { error } = await supabase.from("bookings").insert({
-        user_id: user!.id,
+        user_id: user.id,
         service_id: selectedService || null,
         title: service?.title || "Studio Booking",
         start_time: start.toISOString(),
         end_time: end.toISOString(),
-        duration_hours: endH - startH,
+        duration_hours: duration,
         notes: bookingNotes || null,
         status: "upcoming",
       });
       if (error) throw error;
-    },
-    onSuccess: () => {
+
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["user-credits"] });
       resetDrag();
       setBookingDialogOpen(false);
       setSelectedService("");
       setBookingNotes("");
-      toast.success("Booking created!");
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
+      setPaymentMethod("credits");
+      toast.success("Booking confirmed!");
+    } catch (err: any) {
+      toast.error(err.message || "Booking failed");
+    } finally {
+      setBookingLoading(false);
+    }
+  };
 
   const cancelBooking = useMutation({
     mutationFn: async (id: string) => {
