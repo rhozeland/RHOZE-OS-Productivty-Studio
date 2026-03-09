@@ -290,6 +290,7 @@ const FlowModePage = () => {
     }
     // Haptic feedback on mobile
     if (navigator.vibrate) navigator.vibrate(30);
+    playSwipeSound(dir as "up" | "down" | "left" | "right");
     setTutorialDirection(dir);
     setTimeout(() => {
       setTutorialCompleted((prev) => [...prev, dir]);
