@@ -19,7 +19,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, Clock, X, CalendarDays, RefreshCw, Coins } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, X, CalendarDays, RefreshCw, Coins, CreditCard, Wallet, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
+import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
+import PaySolAndVerify from "@/components/PaySolAndVerify";
 import {
   format,
   startOfWeek,
