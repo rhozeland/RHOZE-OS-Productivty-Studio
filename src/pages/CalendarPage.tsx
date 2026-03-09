@@ -680,8 +680,11 @@ const CalendarPage = () => {
                   return (
                     <div
                       key={`${dayIndex}-${hour}`}
+                      data-slot
+                      data-day={dayIndex}
+                      data-hour={hour}
                       className={cn(
-                        "border-r border-b border-border relative transition-colors cursor-pointer",
+                        "border-r border-b border-border relative transition-colors cursor-pointer touch-none",
                         booked
                           ? "bg-primary/10 cursor-not-allowed"
                           : selected
@@ -691,6 +694,10 @@ const CalendarPage = () => {
                       style={{ height: 60 }}
                       onMouseDown={() => !booked && handleMouseDown(dayIndex, hour)}
                       onMouseEnter={() => handleMouseEnter(dayIndex, hour)}
+                      onTouchStart={(e) => !booked && handleTouchStart(dayIndex, hour, e)}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={handleTouchEnd}
+                    >
                     >
                       {/* Booked indicator stripe */}
                       {booked && !booking && (
