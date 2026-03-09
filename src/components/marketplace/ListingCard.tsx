@@ -15,9 +15,11 @@ import {
   FileText,
   Package,
   Play,
+  Star,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import AudioPreview from "./AudioPreview";
+import StarRating from "./StarRating";
 
 const CATEGORIES: Record<string, { label: string; icon: any; color: string }> = {
   music: { label: "Music", icon: Music, color: "hsl(280, 60%, 55%)" },
@@ -37,6 +39,7 @@ const TYPE_META: Record<string, { label: string; icon: any }> = {
 interface ListingCardProps {
   listing: any;
   media?: any[];
+  reviewStats?: { avg: number; count: number } | null;
   index: number;
   isOwner: boolean;
   onInquire: () => void;
@@ -47,6 +50,7 @@ interface ListingCardProps {
 const ListingCard = ({
   listing,
   media,
+  reviewStats,
   index,
   isOwner,
   onInquire,
