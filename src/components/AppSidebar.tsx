@@ -4,7 +4,7 @@ import {
   LayoutDashboard,
   FolderKanban,
   Calendar,
-  CalendarCheck,
+  Calendar,
   Compass,
   LayoutGrid,
   Store,
