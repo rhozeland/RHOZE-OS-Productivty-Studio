@@ -592,7 +592,7 @@ const FlowModePage = () => {
           >
             <Input placeholder="Title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
             <Textarea placeholder="Description (optional)" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={3} />
-            <Select value={newCategory} onValueChange={setNewCategory}>
+            <Select value={newCategory} onValueChange={(val) => { setNewCategory(val); setNewFile(null); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {CATEGORIES.map((cat) => (
@@ -600,8 +600,46 @@ const FlowModePage = () => {
                 ))}
               </SelectContent>
             </Select>
-            <Input placeholder="Link URL (optional)" value={newLink} onChange={(e) => setNewLink(e.target.value)} />
-            <Button type="submit" className="w-full rounded-full" disabled={!newTitle.trim()}>Share to Flow</Button>
+
+            {/* File upload area */}
+            <div>
+              <input
+                ref={(el) => { fileInputRef.current = el; }}
+                type="file"
+                accept={CATEGORY_UPLOAD_HINTS[newCategory]?.accept || "*/*"}
+                className="hidden"
+                onChange={(e) => setNewFile(e.target.files?.[0] || null)}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full border-2 border-dashed border-border rounded-xl p-5 text-center hover:border-primary/30 transition-colors"
+              >
+                {newFile ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Check className="h-4 w-4 text-primary" />
+                    <span className="text-sm text-foreground truncate max-w-[200px]">{newFile.name}</span>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); setNewFile(null); }} className="text-muted-foreground hover:text-destructive">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="h-6 w-6 text-muted-foreground mx-auto mb-1.5" />
+                    <p className="text-sm text-muted-foreground">{CATEGORY_UPLOAD_HINTS[newCategory]?.hint || "Upload a file"}</p>
+                  </>
+                )}
+              </button>
+            </div>
+
+            <Input
+              placeholder={CATEGORY_UPLOAD_HINTS[newCategory]?.linkHint || "Link URL (optional)"}
+              value={newLink}
+              onChange={(e) => setNewLink(e.target.value)}
+            />
+            <Button type="submit" className="w-full rounded-full" disabled={!newTitle.trim() || createFlowItem.isPending}>
+              {createFlowItem.isPending ? "Sharing..." : "Share to Flow"}
+            </Button>
           </form>
         </DialogContent>
       </Dialog>
