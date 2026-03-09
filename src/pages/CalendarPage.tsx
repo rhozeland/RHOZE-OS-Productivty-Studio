@@ -368,7 +368,7 @@ const CalendarPage = () => {
     return { bookings: dayBookings, events: dayCalEvents, google: dayGoogleEvents };
   };
 
-  // Drag handlers
+  // Drag handlers (mouse + touch)
   const handleMouseDown = (dayIndex: number, hour: number) => {
     setIsDragging(true);
     setDragDay(dayIndex);
@@ -385,6 +385,37 @@ const CalendarPage = () => {
     if (isDragging && dragStartHour !== null && dragEndHour !== null) setBookingDialogOpen(true);
     setIsDragging(false);
   };
+
+  // Touch support: resolve which slot the finger is over
+  const resolveSlotFromTouch = useCallback((touch: { clientX: number; clientY: number }) => {
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (!el) return null;
+    const slotEl = el.closest('[data-slot]') as HTMLElement | null;
+    if (!slotEl) return null;
+    const dayIndex = Number(slotEl.dataset.day);
+    const hour = Number(slotEl.dataset.hour);
+    if (isNaN(dayIndex) || isNaN(hour)) return null;
+    return { dayIndex, hour };
+  }, []);
+
+  const handleTouchStart = useCallback((dayIndex: number, hour: number, e: React.TouchEvent) => {
+    e.preventDefault(); // prevent scroll while dragging
+    handleMouseDown(dayIndex, hour);
+  }, [weekDays]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const slot = resolveSlotFromTouch(touch);
+    if (slot && slot.dayIndex === dragDay) {
+      setDragEndHour(slot.hour);
+    }
+  }, [isDragging, dragDay, resolveSlotFromTouch]);
+
+  const handleTouchEnd = useCallback(() => {
+    handleMouseUp();
+  }, [isDragging, dragStartHour, dragEndHour]);
 
   useEffect(() => {
     const handler = () => { if (isDragging) handleMouseUp(); };
@@ -649,8 +680,11 @@ const CalendarPage = () => {
                   return (
                     <div
                       key={`${dayIndex}-${hour}`}
+                      data-slot
+                      data-day={dayIndex}
+                      data-hour={hour}
                       className={cn(
-                        "border-r border-b border-border relative transition-colors cursor-pointer",
+                        "border-r border-b border-border relative transition-colors cursor-pointer touch-none",
                         booked
                           ? "bg-primary/10 cursor-not-allowed"
                           : selected
@@ -660,6 +694,9 @@ const CalendarPage = () => {
                       style={{ height: 60 }}
                       onMouseDown={() => !booked && handleMouseDown(dayIndex, hour)}
                       onMouseEnter={() => handleMouseEnter(dayIndex, hour)}
+                      onTouchStart={(e) => !booked && handleTouchStart(dayIndex, hour, e)}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={handleTouchEnd}
                     >
                       {/* Booked indicator stripe */}
                       {booked && !booking && (
@@ -691,7 +728,7 @@ const CalendarPage = () => {
         {viewMode === "week" && (
           <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5" />
-            Click and drag across time slots to select your booking duration
+            Tap and drag across time slots to select your booking duration
           </p>
         )}
       </div>
