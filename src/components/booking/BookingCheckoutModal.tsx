@@ -34,6 +34,7 @@ import { format, setHours, setMinutes, addHours } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import PayWithSolButton from "@/components/PayWithSolButton";
+import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
 
 type Step = "datetime" | "payment" | "confirm";
 type PaymentMethod = "credits" | "card" | "crypto";
