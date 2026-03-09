@@ -37,6 +37,7 @@ const navItems = [
   { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: Calendar, label: "Calendar", path: "/calendar" },
   { icon: Coins, label: "Credit Shop", path: "/credits" },
+  { icon: ShoppingBag, label: "Purchases", path: "/purchases" },
   { icon: Compass, label: "Flow", path: "/flow" },
   { icon: LayoutGrid, label: "Smartboards", path: "/smartboards" },
   { icon: Store, label: "Marketplace", path: "/marketplace" },
