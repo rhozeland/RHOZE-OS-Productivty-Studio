@@ -100,13 +100,13 @@ const TIERS = [
     limits: { smartboards: 50, dropRoomHours: 12 },
   },
   {
-    key: "prism",
-    name: "Prism",
+    key: "play",
+    name: "Play",
     price: 1500,
     credits: 25,
     gradient: "linear-gradient(135deg, hsl(50, 90%, 58%), hsl(43, 85%, 48%), hsl(38, 80%, 40%))",
     glowColor: "hsl(45, 85%, 52%)",
-    icon: Triangle,
+    icon: Gamepad2,
     bestFor: "Full-time creators, funded artists",
     features: [
       "25 credits/month",
