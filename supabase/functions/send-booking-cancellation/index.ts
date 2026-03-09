@@ -87,6 +87,7 @@ function buildCancellationHtml(data: {
   date: string;
   time: string;
   duration_hours: number;
+  credits_refunded: number;
 }) {
   const destructive = "hsl(0, 72%, 55%)";
   const destructiveLight = "hsl(0, 72%, 95%)";
