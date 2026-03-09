@@ -417,25 +417,44 @@ const FlowModePage = () => {
     );
   }
 
-  // ──── MAIN FLOW VIEW — immersive fullscreen ────
+  const [viewMode, setViewMode] = useState<"swipe" | "browse">("swipe");
+
+  // ──── MAIN FLOW VIEW ────
   return (
     <div className="relative flex flex-col min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8">
       {/* Dynamic gradient background */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradient.bg} transition-all duration-700`} />
-      <div className={`absolute top-10 left-1/4 w-80 h-80 ${gradient.blur1} rounded-full blur-3xl animate-pulse`} />
-      <div className={`absolute bottom-10 right-1/4 w-96 h-96 ${gradient.blur2} rounded-full blur-3xl`} />
+      {viewMode === "swipe" && (
+        <>
+          <div className={`absolute inset-0 bg-gradient-to-br ${gradient.bg} transition-all duration-700`} />
+          <div className={`absolute top-10 left-1/4 w-80 h-80 ${gradient.blur1} rounded-full blur-3xl animate-pulse`} />
+          <div className={`absolute bottom-10 right-1/4 w-96 h-96 ${gradient.blur2} rounded-full blur-3xl`} />
+        </>
+      )}
+      {viewMode === "browse" && (
+        <div className="absolute inset-0 bg-background" />
+      )}
 
       {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between gap-3 px-4 py-4 md:px-6">
-        {/* Search toggle */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9 shrink-0"
-          onClick={() => setSearchOpen(!searchOpen)}
-        >
-          <Search className="h-4 w-4" />
-        </Button>
+        {/* View mode toggle */}
+        <div className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm p-1 border border-border/30">
+          <button
+            onClick={() => setViewMode("swipe")}
+            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
+              viewMode === "swipe" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Swipe
+          </button>
+          <button
+            onClick={() => { setViewMode("browse"); setSearchOpen(true); }}
+            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
+              viewMode === "browse" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Browse
+          </button>
+        </div>
 
         {/* Category pills */}
         <div className="flex items-center gap-2 flex-wrap justify-center flex-1">
@@ -468,9 +487,9 @@ const FlowModePage = () => {
         </Button>
       </div>
 
-      {/* Search bar (expandable) */}
+      {/* Search bar — always visible in browse, toggleable in swipe */}
       <AnimatePresence>
-        {searchOpen && (
+        {(viewMode === "browse" || searchOpen) && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
@@ -487,8 +506,10 @@ const FlowModePage = () => {
                     setSearchQuery(e.target.value);
                     setCurrentIndex(0);
                   }}
-                  className="pl-9 pr-9 rounded-full bg-card/80 backdrop-blur-sm border-border/50"
-                  autoFocus
+                  className={`pl-9 pr-9 rounded-full border-border/50 ${
+                    viewMode === "browse" ? "bg-muted/50" : "bg-card/80 backdrop-blur-sm"
+                  }`}
+                  autoFocus={viewMode === "browse"}
                 />
                 {searchQuery && (
                   <button
@@ -504,121 +525,190 @@ const FlowModePage = () => {
         )}
       </AnimatePresence>
 
-      {/* Card area — centered */}
-      <div className="relative z-10 flex-1 flex items-center justify-center px-4">
-        <AnimatePresence mode="wait">
-          {currentItem ? (
-            <motion.div
-              key={currentItem.id}
-              className="w-full max-w-xs md:max-w-sm cursor-grab active:cursor-grabbing"
-              drag
-              dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-              dragElastic={0.7}
-              onDragEnd={handleDragEnd}
-              style={{ x, y, rotateZ, opacity: cardOpacity }}
-              initial={{ opacity: 0, scale: 0.9, y: 30 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
-            >
-              {/* Polaroid card */}
-              <div className="rounded-2xl bg-card shadow-2xl overflow-hidden border border-border/50">
-                {/* Image / Visual area */}
-                <div className="aspect-[4/5] bg-muted/30 relative overflow-hidden">
-                  {currentItem.file_url ? (
-                    <img
-                      src={currentItem.file_url}
-                      alt={currentItem.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className={`w-full h-full bg-gradient-to-br ${gradient.bg} flex items-center justify-center p-8`}>
-                      <div className="text-center">
-                        <Badge variant="outline" className="mb-4 capitalize rounded-full bg-card/60 backdrop-blur-sm text-xs">
-                          {currentItem.category}
-                        </Badge>
-                        <h2 className="font-display text-xl md:text-2xl font-bold text-foreground leading-tight">
-                          {currentItem.title}
-                        </h2>
+      {/* ═══════ SWIPE MODE ═══════ */}
+      {viewMode === "swipe" && (
+        <>
+          {/* Card area — centered */}
+          <div className="relative z-10 flex-1 flex items-center justify-center px-4">
+            <AnimatePresence mode="wait">
+              {currentItem ? (
+                <motion.div
+                  key={currentItem.id}
+                  className="w-full max-w-xs md:max-w-sm cursor-grab active:cursor-grabbing"
+                  drag
+                  dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                  dragElastic={0.7}
+                  onDragEnd={handleDragEnd}
+                  style={{ x, y, rotateZ, opacity: cardOpacity }}
+                  initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
+                >
+                  {/* Polaroid card */}
+                  <div className="rounded-2xl bg-card shadow-2xl overflow-hidden border border-border/50">
+                    {/* Image / Visual area */}
+                    <div className="aspect-[4/5] bg-muted/30 relative overflow-hidden">
+                      {currentItem.file_url ? (
+                        <img
+                          src={currentItem.file_url}
+                          alt={currentItem.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className={`w-full h-full bg-gradient-to-br ${gradient.bg} flex items-center justify-center p-8`}>
+                          <div className="text-center">
+                            <Badge variant="outline" className="mb-4 capitalize rounded-full bg-card/60 backdrop-blur-sm text-xs">
+                              {currentItem.category}
+                            </Badge>
+                            <h2 className="font-display text-xl md:text-2xl font-bold text-foreground leading-tight">
+                              {currentItem.title}
+                            </h2>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Category label on images */}
+                      {currentItem.file_url && (
+                        <div className="absolute top-3 left-3">
+                          <span className="text-[10px] font-medium uppercase tracking-widest text-card bg-foreground/60 backdrop-blur-sm px-2 py-1 rounded-full">
+                            {currentItem.category}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Info section */}
+                    <div className="p-4">
+                      {/* Action icons */}
+                      <div className="flex items-center gap-4 mb-3">
+                        <button
+                          onClick={() => performAction("save")}
+                          className="text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <FileText className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => performAction("share")}
+                          className="text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <Share2 className="h-5 w-5" />
+                        </button>
                       </div>
-                    </div>
-                  )}
 
-                  {/* Category label on images */}
-                  {currentItem.file_url && (
-                    <div className="absolute top-3 left-3">
-                      <span className="text-[10px] font-medium uppercase tracking-widest text-card bg-foreground/60 backdrop-blur-sm px-2 py-1 rounded-full">
-                        {currentItem.category}
-                      </span>
-                    </div>
-                  )}
-                </div>
+                      <h3 className="font-display font-bold text-foreground text-sm md:text-base leading-snug">
+                        {currentItem.title}
+                      </h3>
 
-                {/* Info section */}
-                <div className="p-4">
-                  {/* Action icons */}
-                  <div className="flex items-center gap-4 mb-3">
-                    <button
-                      onClick={() => performAction("save")}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <FileText className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => performAction("share")}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <Share2 className="h-5 w-5" />
-                    </button>
+                      {currentItem.description && (
+                        <p
+                          className={`text-sm text-muted-foreground leading-relaxed mt-1 ${
+                            expandedCard ? "" : "line-clamp-2"
+                          }`}
+                          onClick={() => setExpandedCard(!expandedCard)}
+                        >
+                          {currentItem.description}
+                        </p>
+                      )}
+                    </div>
                   </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center px-4"
+                >
+                  <div className="mx-auto mb-6 h-20 w-20 rounded-full bg-card/60 backdrop-blur-sm flex items-center justify-center">
+                    <Sparkles className="h-8 w-8 text-primary" />
+                  </div>
+                  <h2 className="font-display text-xl font-bold text-foreground mb-2">You're all caught up!</h2>
+                  <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
+                    Share your own content or check back later.
+                  </p>
+                  <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Share Your Work
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
-                  <h3 className="font-display font-bold text-foreground text-sm md:text-base leading-snug">
-                    {currentItem.title}
-                  </h3>
+          {/* Bottom swipe hints */}
+          {currentItem && (
+            <div className="relative z-10 flex justify-center items-center pb-4">
+              <div className="flex items-center gap-8 text-foreground/40">
+                <span className="flex items-center gap-1 text-xs"><ChevronUp className="h-3.5 w-3.5" /> Save</span>
+                <span className="flex items-center gap-1 text-xs"><ChevronLeft className="h-3.5 w-3.5" /> Share</span>
+                <span className="flex items-center gap-1 text-xs"><ChevronRight className="h-3.5 w-3.5" /> Next</span>
+                <span className="flex items-center gap-1 text-xs"><ChevronDown className="h-3.5 w-3.5" /> Dislike</span>
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
-                  {currentItem.description && (
-                    <p
-                      className={`text-sm text-muted-foreground leading-relaxed mt-1 ${
-                        expandedCard ? "" : "line-clamp-2"
-                      }`}
-                      onClick={() => setExpandedCard(!expandedCard)}
-                    >
-                      {currentItem.description}
-                    </p>
+      {/* ═══════ BROWSE MODE ═══════ */}
+      {viewMode === "browse" && (
+        <div className="relative z-10 flex-1 px-4 md:px-6 pb-8 overflow-y-auto">
+          {/* Results count */}
+          <div className="max-w-4xl mx-auto mb-4">
+            <p className="text-sm text-muted-foreground">
+              {flowItems?.length ?? 0} item{flowItems?.length !== 1 ? "s" : ""} found
+            </p>
+          </div>
+
+          {/* Grid of cards */}
+          <div className="max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {flowItems?.map((item, i) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.03 }}
+                className="group rounded-xl bg-card border border-border overflow-hidden hover:shadow-lg hover:border-primary/20 transition-all cursor-pointer"
+                onClick={() => {
+                  // Switch to swipe mode at this item
+                  const idx = unseenItems.findIndex((u) => u.id === item.id);
+                  if (idx >= 0) setCurrentIndex(idx);
+                  setViewMode("swipe");
+                }}
+              >
+                <div className="aspect-square bg-muted/30 relative overflow-hidden">
+                  {item.file_url ? (
+                    <img src={item.file_url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  ) : (
+                    <div className={`w-full h-full bg-gradient-to-br ${(CATEGORY_GRADIENTS[item.category] || CATEGORY_GRADIENTS.design).bg} flex items-center justify-center p-3`}>
+                      <h4 className="font-display text-xs font-bold text-foreground text-center leading-tight line-clamp-3">
+                        {item.title}
+                      </h4>
+                    </div>
+                  )}
+                  <div className="absolute top-2 left-2">
+                    <span className="text-[9px] font-medium uppercase tracking-wider text-card bg-foreground/50 backdrop-blur-sm px-1.5 py-0.5 rounded-full">
+                      {item.category}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-2.5">
+                  <h4 className="font-display font-semibold text-foreground text-xs leading-snug truncate">
+                    {item.title}
+                  </h4>
+                  {item.description && (
+                    <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{item.description}</p>
                   )}
                 </div>
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center px-4"
-            >
-              <div className="mx-auto mb-6 h-20 w-20 rounded-full bg-card/60 backdrop-blur-sm flex items-center justify-center">
-                <Sparkles className="h-8 w-8 text-primary" />
-              </div>
-              <h2 className="font-display text-xl font-bold text-foreground mb-2">You're all caught up!</h2>
-              <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
-                Share your own content or check back later.
-              </p>
-              <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
-                <Plus className="mr-2 h-4 w-4" />
-                Share Your Work
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Bottom bar — only show swipe hints when there's a card */}
-      {currentItem && (
-        <div className="relative z-10 flex justify-center items-center pb-4">
-          <div className="hidden md:flex items-center gap-8 text-foreground/40">
-            <span className="flex items-center gap-1 text-xs"><ChevronUp className="h-3.5 w-3.5" /> Save</span>
-            <span className="flex items-center gap-1 text-xs"><ChevronLeft className="h-3.5 w-3.5" /> Share</span>
-            <span className="flex items-center gap-1 text-xs"><ChevronRight className="h-3.5 w-3.5" /> Next</span>
-            <span className="flex items-center gap-1 text-xs"><ChevronDown className="h-3.5 w-3.5" /> Dislike</span>
+              </motion.div>
+            ))}
           </div>
+
+          {(!flowItems || flowItems.length === 0) && (
+            <div className="text-center py-20">
+              <Search className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+              <h3 className="font-display text-lg font-bold text-foreground mb-1">No content found</h3>
+              <p className="text-sm text-muted-foreground">Try adjusting your filters or search query</p>
+            </div>
+          )}
         </div>
       )}
 
