@@ -1204,6 +1204,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      convert_inquiry_to_project: {
+        Args: {
+          _inquiry_id: string
+          _receiver_id: string
+          _total_credits?: number
+        }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
