@@ -66,7 +66,8 @@ const CalendarPage = () => {
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState(searchParams.get("service") || "");
   const [bookingNotes, setBookingNotes] = useState("");
-
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("credits");
+  const [bookingLoading, setBookingLoading] = useState(false);
   // Google Calendar
   const [googleEvents, setGoogleEvents] = useState<CalendarEvent[]>([]);
   const [googleLoading, setGoogleLoading] = useState(false);
