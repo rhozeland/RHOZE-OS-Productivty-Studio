@@ -66,6 +66,8 @@ const ListingDetailPage = () => {
   const [galleryIdx, setGalleryIdx] = useState(0);
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const [inquiryMsg, setInquiryMsg] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
 
   const { data: listing } = useQuery({
     queryKey: ["listing", id],
