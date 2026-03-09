@@ -735,7 +735,7 @@ const CalendarPage = () => {
                     <Badge variant={booking.status === "cancelled" ? "destructive" : "secondary"} className="capitalize">
                       {booking.status}
                     </Badge>
-                    {booking.status === "upcoming" && new Date(booking.start_time) > now && (
+                    {(booking.status === "upcoming" || booking.status === "confirmed") && new Date(booking.start_time) > now && (
                       <Button
                         variant="ghost"
                         size="icon"
