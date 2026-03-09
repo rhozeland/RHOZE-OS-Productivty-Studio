@@ -131,7 +131,10 @@ const DropRoomsPage = () => {
       category,
       created_by: user.id,
       expires_at: expiresAt,
-    });
+      enable_video: enableVideo,
+      allow_spectators: allowSpectators,
+      enable_recording: enableRecording,
+    } as any);
 
     if (error) {
       toast.error("Failed to create room");
