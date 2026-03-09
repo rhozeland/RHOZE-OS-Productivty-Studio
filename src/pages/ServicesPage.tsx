@@ -45,6 +45,7 @@ const ServicesPage = () => {
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedService, setSelectedService] = useState<any>(null);
+  const [checkoutService, setCheckoutService] = useState<any>(null);
 
   const { data: services, isLoading } = useQuery({
     queryKey: ["rhozeland-services", activeCategory],
