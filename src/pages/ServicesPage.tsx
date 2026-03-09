@@ -24,6 +24,7 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import BookingCheckoutModal from "@/components/booking/BookingCheckoutModal";
 
 const CATEGORIES = [
   { key: "all", label: "All Services", icon: Sparkles },
@@ -44,6 +45,7 @@ const ServicesPage = () => {
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedService, setSelectedService] = useState<any>(null);
+  const [checkoutService, setCheckoutService] = useState<any>(null);
 
   const { data: services, isLoading } = useQuery({
     queryKey: ["rhozeland-services", activeCategory],
@@ -251,11 +253,12 @@ const ServicesPage = () => {
                 )}
 
                 <div className="flex gap-2 pt-2">
-                  <Link to="/bookings" className="flex-1">
-                    <Button className="w-full">
-                      Book Service
-                    </Button>
-                  </Link>
+                  <Button className="flex-1" onClick={() => {
+                    setCheckoutService(selectedService);
+                    setSelectedService(null);
+                  }}>
+                    Book Service
+                  </Button>
                   <Link to="/credits">
                     <Button variant="outline">
                       <Coins className="mr-1.5 h-4 w-4" />
@@ -268,6 +271,13 @@ const ServicesPage = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <BookingCheckoutModal
+        open={!!checkoutService}
+        onOpenChange={(open) => { if (!open) setCheckoutService(null); }}
+        service={checkoutService}
+        userCredits={userCredits?.balance ?? 0}
+      />
     </div>
   );
 };
