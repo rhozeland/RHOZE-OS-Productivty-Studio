@@ -17,6 +17,7 @@ import FlowModePage from "@/pages/FlowModePage";
 import SmartboardsPage from "@/pages/SmartboardsPage";
 import MarketplacePage from "@/pages/MarketplacePage";
 import SmartboardDetailPage from "@/pages/SmartboardDetailPage";
+import SmartboardPresentationPage from "@/pages/SmartboardPresentationPage";
 import ProfilesPage from "@/pages/ProfilesPage";
 import ProfileDetailPage from "@/pages/ProfileDetailPage";
 import MessagesPage from "@/pages/MessagesPage";
