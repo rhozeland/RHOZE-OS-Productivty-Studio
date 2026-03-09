@@ -103,11 +103,14 @@ const FlowModePage = () => {
   }, [user]);
 
   const { data: flowItems } = useQuery({
-    queryKey: ["flow-items", selectedCategories],
+    queryKey: ["flow-items", selectedCategories, searchQuery],
     queryFn: async () => {
       let query = supabase.from("flow_items").select("*").order("created_at", { ascending: false }).limit(50);
       if (selectedCategories.length > 0) {
         query = query.in("category", selectedCategories);
+      }
+      if (searchQuery.trim()) {
+        query = query.or(`title.ilike.%${searchQuery.trim()}%,description.ilike.%${searchQuery.trim()}%`);
       }
       const { data, error } = await query;
       if (error) throw error;
