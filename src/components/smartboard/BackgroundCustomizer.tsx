@@ -136,6 +136,8 @@ const BackgroundCustomizer = ({
                   key={c}
                   onClick={() => { setColor(c); setImageUrl(""); }}
                   className={`h-8 w-full rounded-lg border-2 transition-all ${
+                    c.includes("gradient") ? "animated-gradient" : ""
+                  } ${
                     color === c ? "border-primary scale-110" : "border-transparent hover:scale-105"
                   }`}
                   style={{ background: c }}
