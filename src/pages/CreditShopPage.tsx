@@ -360,12 +360,18 @@ const CreditShopPage = () => {
                   <p className="text-xs font-semibold tracking-widest uppercase opacity-90 relative z-10">{tier.name}</p>
                   <div className="flex items-center justify-center gap-2 mt-2 relative z-10">
                     <TierIcon className="h-6 w-6 drop-shadow-sm" />
-                    <span className="font-display text-4xl font-bold drop-shadow-sm">{tier.credits}</span>
+                    <span className="font-display text-4xl font-bold drop-shadow-sm">
+                      {isFree ? "Free" : tier.credits}
+                    </span>
                   </div>
-                  <p className="text-sm opacity-80 mt-1 relative z-10">credits / month</p>
-                  <p className="text-xs opacity-60 mt-0.5 relative z-10">
-                    ${tier.price.toFixed(0)}/mo
+                  <p className="text-sm opacity-80 mt-1 relative z-10">
+                    {isFree ? "forever" : "credits / month"}
                   </p>
+                  {!isFree && (
+                    <p className="text-xs opacity-60 mt-0.5 relative z-10">
+                      ${tier.price.toFixed(0)}/mo
+                    </p>
+                  )}
                 </div>
 
                 {/* Features */}
