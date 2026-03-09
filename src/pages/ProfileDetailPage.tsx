@@ -241,7 +241,12 @@ const ProfileDetailPage = () => {
         animate={{ opacity: 1, y: 0 }}
         className="surface-card overflow-hidden"
       >
-        <div className="h-32 bg-gradient-to-r from-primary/30 via-accent/20 to-primary/10" />
+        <div
+          className="h-32"
+          style={{
+            background: (profile as any).banner_gradient || "linear-gradient(135deg, hsl(175,60%,80%), hsl(200,40%,90%), hsl(330,30%,92%))",
+          }}
+        />
         <div className="px-6 pb-6">
           <div className="-mt-16 flex flex-col sm:flex-row sm:items-end gap-4">
             {/* Avatar */}
