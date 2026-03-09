@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,10 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Moon, Sun } from "lucide-react";
 import { toast } from "sonner";
 
 const SettingsPage = () => {
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const queryClient = useQueryClient();
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
@@ -63,6 +66,22 @@ const SettingsPage = () => {
         <p className="text-muted-foreground">Manage your profile and preferences</p>
       </div>
 
+      {/* Appearance */}
+      <div className="surface-card max-w-2xl p-6">
+        <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Appearance</h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {theme === "light" ? <Sun className="h-5 w-5 text-warm" /> : <Moon className="h-5 w-5 text-primary" />}
+            <div>
+              <Label className="text-sm font-medium">Dark Mode</Label>
+              <p className="text-xs text-muted-foreground">Switch between light and dark themes</p>
+            </div>
+          </div>
+          <Switch checked={theme === "dark"} onCheckedChange={toggleTheme} />
+        </div>
+      </div>
+
+      {/* Profile */}
       <div className="surface-card max-w-2xl p-6">
         <h2 className="mb-6 font-display text-lg font-semibold text-foreground">Profile</h2>
         <form onSubmit={(e) => { e.preventDefault(); updateProfile.mutate(); }} className="space-y-5">

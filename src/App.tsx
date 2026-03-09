@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { SolanaWalletProvider } from "@/contexts/SolanaWalletContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import AppLayout from "@/components/AppLayout";
 import AuthPage from "@/pages/AuthPage";
 import DashboardPage from "@/pages/DashboardPage";
@@ -39,6 +40,7 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <ThemeProvider>
     <SolanaWalletProvider>
     <TooltipProvider>
       <Toaster />
@@ -68,6 +70,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
     </SolanaWalletProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

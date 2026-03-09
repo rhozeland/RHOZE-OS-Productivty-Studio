@@ -22,6 +22,7 @@ import {
   FileText,
   Share2,
   Check,
+  Upload,
 } from "lucide-react";
 import {
   Dialog,
@@ -60,6 +61,14 @@ const CATEGORY_GRADIENTS: Record<string, { bg: string; blur1: string; blur2: str
   writing: { bg: "from-muted via-teal/10 to-accent/15", blur1: "bg-teal/15", blur2: "bg-accent/10" },
 };
 
+const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; linkHint: string }> = {
+  design: { accept: "image/*,.pdf,.ai,.psd,.fig", hint: "JPG, PNG, PDF, or design files", linkHint: "Behance, Dribbble, Figma link" },
+  music: { accept: "audio/*,.mp3,.wav,.flac,.aac", hint: "MP3, WAV, FLAC, or audio files", linkHint: "Spotify, YouTube Music, SoundCloud link" },
+  photo: { accept: "image/*,.raw,.cr2,.nef", hint: "JPG, PNG, TIFF, or RAW files", linkHint: "Flickr, 500px, or direct image link" },
+  video: { accept: "video/*,.mp4,.mov,.webm", hint: "MP4, MOV, WebM, or video files", linkHint: "YouTube, Vimeo link" },
+  writing: { accept: ".txt,.md,.pdf,.doc,.docx", hint: "TXT, PDF, DOC, or text files", linkHint: "Medium, Substack, or blog link" },
+};
+
 const FlowModePage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -74,6 +83,8 @@ const FlowModePage = () => {
   const [newDesc, setNewDesc] = useState("");
   const [newCategory, setNewCategory] = useState("design");
   const [newLink, setNewLink] = useState("");
+  const [newFile, setNewFile] = useState<File | null>(null);
+  const fileInputRef = { current: null as HTMLInputElement | null };
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -135,12 +146,29 @@ const FlowModePage = () => {
 
   const createFlowItem = useMutation({
     mutationFn: async () => {
+      let fileUrl: string | null = null;
+
+      if (newFile) {
+        const ext = newFile.name.split(".").pop();
+        const path = `${user!.id}/${Date.now()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from("flow-uploads").upload(path, newFile);
+        if (uploadErr) throw uploadErr;
+        const { data: urlData } = supabase.storage.from("flow-uploads").getPublicUrl(path);
+        fileUrl = urlData.publicUrl;
+      }
+
+      const contentType = newFile
+        ? (newFile.type.startsWith("image") ? "image" : newFile.type.startsWith("video") ? "video" : newFile.type.startsWith("audio") ? "audio" : "file")
+        : (newLink ? "link" : "text");
+
       const { error } = await supabase.from("flow_items").insert({
         user_id: user!.id,
         title: newTitle,
         description: newDesc || null,
         category: newCategory,
         link_url: newLink || null,
+        file_url: fileUrl,
+        content_type: contentType,
       });
       if (error) throw error;
     },
@@ -150,6 +178,7 @@ const FlowModePage = () => {
       setNewTitle("");
       setNewDesc("");
       setNewLink("");
+      setNewFile(null);
       toast.success("Content shared to Flow!");
     },
     onError: (e: any) => toast.error(e.message),
@@ -563,7 +592,7 @@ const FlowModePage = () => {
           >
             <Input placeholder="Title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
             <Textarea placeholder="Description (optional)" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={3} />
-            <Select value={newCategory} onValueChange={setNewCategory}>
+            <Select value={newCategory} onValueChange={(val) => { setNewCategory(val); setNewFile(null); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {CATEGORIES.map((cat) => (
@@ -571,8 +600,46 @@ const FlowModePage = () => {
                 ))}
               </SelectContent>
             </Select>
-            <Input placeholder="Link URL (optional)" value={newLink} onChange={(e) => setNewLink(e.target.value)} />
-            <Button type="submit" className="w-full rounded-full" disabled={!newTitle.trim()}>Share to Flow</Button>
+
+            {/* File upload area */}
+            <div>
+              <input
+                ref={(el) => { fileInputRef.current = el; }}
+                type="file"
+                accept={CATEGORY_UPLOAD_HINTS[newCategory]?.accept || "*/*"}
+                className="hidden"
+                onChange={(e) => setNewFile(e.target.files?.[0] || null)}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full border-2 border-dashed border-border rounded-xl p-5 text-center hover:border-primary/30 transition-colors"
+              >
+                {newFile ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Check className="h-4 w-4 text-primary" />
+                    <span className="text-sm text-foreground truncate max-w-[200px]">{newFile.name}</span>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); setNewFile(null); }} className="text-muted-foreground hover:text-destructive">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="h-6 w-6 text-muted-foreground mx-auto mb-1.5" />
+                    <p className="text-sm text-muted-foreground">{CATEGORY_UPLOAD_HINTS[newCategory]?.hint || "Upload a file"}</p>
+                  </>
+                )}
+              </button>
+            </div>
+
+            <Input
+              placeholder={CATEGORY_UPLOAD_HINTS[newCategory]?.linkHint || "Link URL (optional)"}
+              value={newLink}
+              onChange={(e) => setNewLink(e.target.value)}
+            />
+            <Button type="submit" className="w-full rounded-full" disabled={!newTitle.trim() || createFlowItem.isPending}>
+              {createFlowItem.isPending ? "Sharing..." : "Share to Flow"}
+            </Button>
           </form>
         </DialogContent>
       </Dialog>

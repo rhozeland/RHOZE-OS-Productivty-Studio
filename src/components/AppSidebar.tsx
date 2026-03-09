@@ -14,6 +14,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import {
   Sidebar,
   SidebarContent,
@@ -25,7 +26,8 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import logo from "@/assets/logo.png";
+import logoColor from "@/assets/toybox-logo-color.webp";
+import logoWhite from "@/assets/toybox-logo-white.png";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -43,8 +45,11 @@ const navItems = [
 const AppSidebar = () => {
   const location = useLocation();
   const { signOut } = useAuth();
+  const { theme } = useTheme();
   const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
+
+  const currentLogo = theme === "dark" ? logoWhite : logoColor;
 
   const handleNavClick = () => {
     if (isMobile) setOpenMobile(false);
@@ -56,7 +61,11 @@ const AppSidebar = () => {
         "flex h-16 items-center gap-3 px-4 border-b border-sidebar-border",
         collapsed && "justify-center px-2"
       )}>
-        <img src={logo} alt="Rhozeland" className="h-9 w-9 shrink-0 drop-shadow-sm" />
+        <img
+          src={currentLogo}
+          alt="Toybox"
+          className="h-8 w-8 shrink-0 object-contain"
+        />
         {!collapsed && (
           <span className="font-display text-lg font-bold tracking-tight text-foreground">
             Rhozeland
