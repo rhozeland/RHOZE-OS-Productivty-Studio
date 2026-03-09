@@ -218,6 +218,7 @@ const FlowModePage = () => {
 
   const performAction = useCallback((action: string, smartboardId?: string) => {
     if (!currentItem) return;
+    if (navigator.vibrate) navigator.vibrate(20);
 
     if (action === "save") {
       if (smartboardId) {
@@ -285,6 +286,8 @@ const FlowModePage = () => {
       setTutorialDirection(null);
       return;
     }
+    // Haptic feedback on mobile
+    if (navigator.vibrate) navigator.vibrate(30);
     setTutorialDirection(dir);
     setTimeout(() => {
       setTutorialCompleted((prev) => [...prev, dir]);
