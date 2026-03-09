@@ -413,25 +413,16 @@ const FlowModePage = () => {
 
   // ──── MAIN FLOW VIEW — immersive fullscreen ────
   return (
-    <div className="fixed inset-0 z-40 flex flex-col">
+    <div className="relative flex flex-col min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8">
       {/* Dynamic gradient background */}
       <div className={`absolute inset-0 bg-gradient-to-br ${gradient.bg} transition-all duration-700`} />
       <div className={`absolute top-10 left-1/4 w-80 h-80 ${gradient.blur1} rounded-full blur-3xl animate-pulse`} />
       <div className={`absolute bottom-10 right-1/4 w-96 h-96 ${gradient.blur2} rounded-full blur-3xl`} />
 
       {/* Top bar */}
-      <div className="relative z-10 flex items-center justify-between px-4 py-3 md:px-6">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9"
-          onClick={() => { setCalibrated(false); setOnboardingStep(0); }}
-        >
-          <X className="h-5 w-5" />
-        </Button>
-
-        {/* Category pills — hidden on small screens */}
-        <div className="hidden md:flex items-center gap-2">
+      <div className="relative z-10 flex items-center justify-center gap-3 px-4 py-4 md:px-6">
+        {/* Category pills */}
+        <div className="flex items-center gap-2 flex-wrap justify-center">
           {CATEGORIES.map((cat) => (
             <Badge
               key={cat}
@@ -449,15 +440,6 @@ const FlowModePage = () => {
             </Badge>
           ))}
         </div>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9"
-          onClick={() => setAddOpen(true)}
-        >
-          <Plus className="h-5 w-5" />
-        </Button>
       </div>
 
       {/* Card area — centered */}
