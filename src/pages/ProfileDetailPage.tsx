@@ -286,6 +286,16 @@ const ProfileDetailPage = () => {
             </div>
 
             {/* Action buttons */}
+            {isOwnProfile && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/settings")}
+                className="shrink-0 gap-1.5"
+              >
+                <Settings className="h-4 w-4" /> Edit Profile
+              </Button>
+            )}
             {!isOwnProfile && user && (
               <div className="flex gap-2 shrink-0">
                 <Button

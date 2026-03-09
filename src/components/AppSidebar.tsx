@@ -179,7 +179,7 @@ const AppSidebar = () => {
           )}
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
-              {essentialItems.map(renderNavItem)}
+              {getEssentialItems(user?.id).map(renderNavItem)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
