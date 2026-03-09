@@ -478,15 +478,30 @@ const FlowModePage = () => {
           ))}
         </div>
 
-        {/* Share button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9 shrink-0"
-          onClick={() => setAddOpen(true)}
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Tutorial replay */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9"
+            onClick={() => {
+              setCalibrated(false);
+              setOnboardingStep(0);
+            }}
+            title="Replay tutorial"
+          >
+            <Sparkles className="h-4 w-4" />
+          </Button>
+          {/* Share button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9"
+            onClick={() => setAddOpen(true)}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Search bar — always visible in browse, toggleable in swipe */}
