@@ -548,15 +548,26 @@ const FlowModePage = () => {
         </AnimatePresence>
       </div>
 
-      {/* Desktop swipe hint */}
-      {currentItem && (
-        <div className="relative z-10 hidden md:flex justify-center pb-4 gap-8 text-foreground/40">
-          <span className="flex items-center gap-1 text-xs"><ChevronUp className="h-3.5 w-3.5" /> Save</span>
-          <span className="flex items-center gap-1 text-xs"><ChevronLeft className="h-3.5 w-3.5" /> Share</span>
-          <span className="flex items-center gap-1 text-xs"><ChevronRight className="h-3.5 w-3.5" /> Next</span>
-          <span className="flex items-center gap-1 text-xs"><ChevronDown className="h-3.5 w-3.5" /> Dislike</span>
-        </div>
-      )}
+      {/* Bottom bar */}
+      <div className="relative z-10 flex justify-center items-center pb-4 gap-6">
+        {currentItem && (
+          <div className="hidden md:flex items-center gap-8 text-foreground/40">
+            <span className="flex items-center gap-1 text-xs"><ChevronUp className="h-3.5 w-3.5" /> Save</span>
+            <span className="flex items-center gap-1 text-xs"><ChevronLeft className="h-3.5 w-3.5" /> Share</span>
+            <span className="flex items-center gap-1 text-xs"><ChevronRight className="h-3.5 w-3.5" /> Next</span>
+            <span className="flex items-center gap-1 text-xs"><ChevronDown className="h-3.5 w-3.5" /> Dislike</span>
+          </div>
+        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 text-xs gap-1.5"
+          onClick={() => setAddOpen(true)}
+        >
+          <Plus className="h-4 w-4" />
+          Share Your Work
+        </Button>
+      </div>
 
       {/* Save to Board picker */}
       <Dialog open={savePickerOpen} onOpenChange={setSavePickerOpen}>
