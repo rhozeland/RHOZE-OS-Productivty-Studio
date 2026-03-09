@@ -27,10 +27,12 @@ type Message = {
 const MessagesPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [messageText, setMessageText] = useState("");
   const [search, setSearch] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inquiryHandled = useRef(false);
 
   // Get all profiles (potential contacts)
   const { data: profiles } = useQuery({
