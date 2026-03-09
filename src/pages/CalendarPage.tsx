@@ -728,7 +728,7 @@ const CalendarPage = () => {
         {viewMode === "week" && (
           <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5" />
-            Click and drag across time slots to select your booking duration
+            Tap and drag across time slots to select your booking duration
           </p>
         )}
       </div>
