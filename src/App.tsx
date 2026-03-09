@@ -25,6 +25,7 @@ import MessagesPage from "@/pages/MessagesPage";
 import SettingsPage from "@/pages/SettingsPage";
 import ServicesPage from "@/pages/ServicesPage";
 import CreditShopPage from "@/pages/CreditShopPage";
+import PurchasesPage from "@/pages/PurchasesPage";
 import AdminPage from "@/pages/AdminPage";
 import NotFound from "./pages/NotFound";
 
