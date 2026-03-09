@@ -332,6 +332,9 @@ const MessagesPage = () => {
                     const isMine = msg.sender_id === user?.id;
                     return (
                       <div key={msg.id} className={cn("flex", isMine ? "justify-end" : "justify-start")}>
+                        {isQuoteMessage(msg.content) ? (
+                          <QuoteCard content={msg.content} isMine={isMine} />
+                        ) : (
                         <div
                           className={cn(
                             "max-w-[70%] rounded-2xl px-4 py-2.5",
@@ -348,6 +351,7 @@ const MessagesPage = () => {
                             {formatTime(msg.created_at)}
                           </p>
                         </div>
+                        )}
                       </div>
                     );
                   })}
