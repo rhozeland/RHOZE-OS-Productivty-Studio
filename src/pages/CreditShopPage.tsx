@@ -22,7 +22,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
-import PayWithSolButton from "@/components/PayWithSolButton";
+import PaySolAndVerify from "@/components/PaySolAndVerify";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
 
 const TIERS = [
@@ -344,21 +344,14 @@ const CreditShopPage = () => {
             Buy {alaCarteCredits} Credit{alaCarteCredits > 1 ? "s" : ""} @ $
             {(alaCarteCredits * CREDIT_PRICE).toFixed(2)}
           </Button>
-          <Button
-            variant="outline"
+          <PaySolAndVerify
+            solAmount={+(alaCarteCredits * CREDIT_PRICE / 150).toFixed(4)}
+            creditsToAdd={alaCarteCredits}
+            description={`${alaCarteCredits} credit(s) à la carte (SOL)`}
+            label={`Pay ~${(alaCarteCredits * CREDIT_PRICE / 150).toFixed(4)} SOL`}
             className="flex-1"
-            onClick={() =>
-              purchaseCredits.mutate({
-                amount: alaCarteCredits,
-                description: `${alaCarteCredits} credit(s) à la carte (crypto)`,
-                method: "crypto",
-              })
-            }
-            disabled={purchaseCredits.isPending}
-          >
-            <Wallet className="mr-2 h-4 w-4" />
-            Buy with Crypto (${(alaCarteCredits * CREDIT_PRICE).toFixed(2)})
-          </Button>
+            onSuccess={() => queryClient.invalidateQueries({ queryKey: ["user-credits"] })}
+          />
         </div>
       </div>
 

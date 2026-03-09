@@ -33,7 +33,7 @@ import {
 import { format, setHours, setMinutes, addHours } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import PayWithSolButton from "@/components/PayWithSolButton";
+import PaySolAndVerify from "@/components/PaySolAndVerify";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
 
 type Step = "datetime" | "payment" | "confirm";
@@ -61,7 +61,6 @@ const TIME_SLOTS = Array.from({ length: 24 }, (_, i) => {
   return { hour, min, label: format(setMinutes(setHours(new Date(), hour), min), "h:mm a") };
 }).filter(Boolean) as { hour: number; min: number; label: string }[];
 
-const STUDIO_WALLET = "2Kp2cR3JKEBGd3jE7G3MQRfNhwbxzTpSkvSKbHKfhJn"; // placeholder
 const CREDIT_RATE = 75;
 
 const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: BookingCheckoutModalProps) => {
@@ -441,13 +440,15 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
               </Button>
 
               {paymentMethod === "crypto" ? (
-                <div className="flex-1">
-                  <PayWithSolButton
-                    recipientAddress={STUDIO_WALLET}
-                    solAmount={solPrice}
-                    label={`Pay ${solPrice} SOL & Book`}
-                  />
-                </div>
+                <PaySolAndVerify
+                  solAmount={solPrice}
+                  creditsToAdd={0}
+                  description={`Booking: ${service.title}`}
+                  type="usage"
+                  label={`Pay ${solPrice} SOL & Book`}
+                  className="flex-1"
+                  onSuccess={() => handleConfirm()}
+                />
               ) : paymentMethod === "credits" ? (
                 <Button
                   className="flex-1"
