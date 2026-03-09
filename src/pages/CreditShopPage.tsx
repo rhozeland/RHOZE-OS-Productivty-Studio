@@ -287,10 +287,10 @@ const CreditShopPage = () => {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-3xl font-bold text-foreground">
-            Credit Shop
+            Studio Pass
           </h1>
           <p className="text-muted-foreground">
-            Power your creative workflow with credits
+            Your creative membership & credits
           </p>
         </div>
         <div className="surface-card flex items-center gap-3 px-5 py-3">
