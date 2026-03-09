@@ -21,6 +21,7 @@ export type Database = {
           end_time: string
           id: string
           notes: string | null
+          project_id: string | null
           service_id: string | null
           start_time: string
           status: string
@@ -34,6 +35,7 @@ export type Database = {
           end_time: string
           id?: string
           notes?: string | null
+          project_id?: string | null
           service_id?: string | null
           start_time: string
           status?: string
@@ -47,6 +49,7 @@ export type Database = {
           end_time?: string
           id?: string
           notes?: string | null
+          project_id?: string | null
           service_id?: string | null
           start_time?: string
           status?: string
@@ -55,6 +58,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bookings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bookings_service_id_fkey"
             columns: ["service_id"]
