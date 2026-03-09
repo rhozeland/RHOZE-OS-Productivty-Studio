@@ -9,11 +9,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Bookmark,
-  Share2,
-  ExternalLink,
-  Sparkles,
-  Plus,
   X,
   Type,
   Video,
@@ -22,6 +17,11 @@ import {
   Quote,
   Link as LinkIcon,
   Fingerprint,
+  Sparkles,
+  Plus,
+  FileText,
+  Share2,
+  Check,
 } from "lucide-react";
 import {
   Dialog,
@@ -52,23 +52,24 @@ const CONTENT_TYPES = [
   { icon: LinkIcon, label: "LINK", angle: 90 },
 ];
 
-const CATEGORY_GRADIENTS: Record<string, string> = {
-  design: "from-teal/20 via-muted to-accent/20",
-  music: "from-pink/30 via-muted to-warm/20",
-  photo: "from-warm/20 via-muted to-teal/20",
-  video: "from-accent/20 via-muted to-pink/20",
-  writing: "from-muted via-teal/10 to-accent/10",
+const CATEGORY_GRADIENTS: Record<string, { bg: string; blur1: string; blur2: string }> = {
+  design: { bg: "from-teal/30 via-accent/20 to-pink/20", blur1: "bg-teal/20", blur2: "bg-accent/20" },
+  music: { bg: "from-pink/30 via-accent/20 to-warm/20", blur1: "bg-pink/25", blur2: "bg-warm/15" },
+  photo: { bg: "from-warm/25 via-muted to-teal/20", blur1: "bg-warm/20", blur2: "bg-teal/15" },
+  video: { bg: "from-accent/25 via-pink/15 to-teal/15", blur1: "bg-accent/20", blur2: "bg-pink/15" },
+  writing: { bg: "from-muted via-teal/10 to-accent/15", blur1: "bg-teal/15", blur2: "bg-accent/10" },
 };
 
 const FlowModePage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [calibrated, setCalibrated] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState(0); // 0=types, 1=swipe tutorial, 2=ready
+  const [onboardingStep, setOnboardingStep] = useState(0);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expandedCard, setExpandedCard] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [savePickerOpen, setSavePickerOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [newCategory, setNewCategory] = useState("design");
@@ -76,7 +77,8 @@ const FlowModePage = () => {
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const rotateZ = useTransform(x, [-200, 200], [-15, 15]);
+  const rotateZ = useTransform(x, [-200, 200], [-12, 12]);
+  const cardOpacity = useTransform(x, [-200, -100, 0, 100, 200], [0.7, 0.9, 1, 0.9, 0.7]);
 
   useEffect(() => {
     const saved = localStorage.getItem(`flow-calibrated-${user?.id}`);
@@ -112,7 +114,7 @@ const FlowModePage = () => {
   const { data: smartboards } = useQuery({
     queryKey: ["smartboards-for-flow"],
     queryFn: async () => {
-      const { data } = await supabase.from("smartboards").select("id, title").eq("user_id", user!.id);
+      const { data } = await supabase.from("smartboards").select("id, title, cover_color").eq("user_id", user!.id);
       return data ?? [];
     },
     enabled: calibrated,
@@ -155,6 +157,7 @@ const FlowModePage = () => {
 
   const unseenItems = flowItems?.filter((item) => !interactions?.has(item.id)) ?? [];
   const currentItem = unseenItems[currentIndex];
+  const gradient = currentItem ? (CATEGORY_GRADIENTS[currentItem.category] || CATEGORY_GRADIENTS.design) : CATEGORY_GRADIENTS.design;
 
   const handleCalibrationSelect = (option: string) => {
     const updated = selectedCategories.includes(option)
@@ -170,42 +173,49 @@ const FlowModePage = () => {
     setCalibrated(true);
   };
 
-  const performAction = useCallback((action: string) => {
-    if (!currentItem) return;
-
-    if (action === "save" && smartboards && smartboards.length > 0) {
-      interact.mutate({ itemId: currentItem.id, action, smartboardId: smartboards[0].id });
-      toast.success("Saved to Smartboard!");
-    } else if (action === "share") {
-      interact.mutate({ itemId: currentItem.id, action });
-      toast("Shared!");
-    } else if (action === "learn_more" && currentItem.link_url) {
-      window.open(currentItem.link_url, "_blank");
-      interact.mutate({ itemId: currentItem.id, action });
-    } else {
-      interact.mutate({ itemId: currentItem.id, action });
-    }
-
+  const advanceCard = useCallback(() => {
     setTimeout(() => {
       setCurrentIndex((i) => Math.min(i + 1, unseenItems.length - 1));
       setExpandedCard(false);
     }, 200);
-  }, [currentItem, smartboards, interact, unseenItems.length]);
+  }, [unseenItems.length]);
+
+  const performAction = useCallback((action: string, smartboardId?: string) => {
+    if (!currentItem) return;
+
+    if (action === "save") {
+      if (smartboardId) {
+        interact.mutate({ itemId: currentItem.id, action, smartboardId });
+        toast.success("Saved to board!");
+        setSavePickerOpen(false);
+        advanceCard();
+      } else {
+        setSavePickerOpen(true);
+        return;
+      }
+    } else if (action === "share") {
+      interact.mutate({ itemId: currentItem.id, action });
+      toast("Shared!");
+      advanceCard();
+    } else {
+      interact.mutate({ itemId: currentItem.id, action });
+      advanceCard();
+    }
+  }, [currentItem, interact, advanceCard]);
 
   const handleDragEnd = useCallback((_: any, info: PanInfo) => {
     const { offset } = info;
     const threshold = 80;
 
     if (Math.abs(offset.x) > Math.abs(offset.y)) {
-      if (offset.x > threshold) performAction("skip");       // Right = Next
-      else if (offset.x < -threshold) performAction("share"); // Left = Back/Share
+      if (offset.x > threshold) performAction("skip");
+      else if (offset.x < -threshold) performAction("share");
     } else {
-      if (offset.y < -threshold) performAction("save");       // Up = Save
-      else if (offset.y > threshold) performAction("dislike"); // Down = Dislike
+      if (offset.y < -threshold) performAction("save");
+      else if (offset.y > threshold) performAction("dislike");
     }
   }, [performAction]);
 
-  // Keyboard support
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!calibrated || !currentItem) return;
@@ -221,18 +231,20 @@ const FlowModePage = () => {
   // ──── ONBOARDING ────
   if (!calibrated) {
     return (
-      <div className="flex min-h-[80vh] items-center justify-center px-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center gradient-hero">
+        {/* Decorative blurs */}
+        <div className="absolute top-20 left-1/4 w-64 h-64 bg-teal/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-1/4 w-72 h-72 bg-pink/10 rounded-full blur-3xl" />
+
         <AnimatePresence mode="wait">
-          {/* Step 0: Content Types */}
           {onboardingStep === 0 && (
             <motion.div
               key="types"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="w-full max-w-sm text-center"
+              className="w-full max-w-sm text-center px-6"
             >
-              {/* Content type icons in circular arrangement */}
               <div className="relative mx-auto mb-8 h-48 w-48">
                 {CONTENT_TYPES.map((ct, i) => {
                   const rad = (ct.angle * Math.PI) / 180;
@@ -251,8 +263,8 @@ const FlowModePage = () => {
                         top: `calc(50% + ${cy}px - 20px)`,
                       }}
                     >
-                      <ct.icon className="h-7 w-7 text-muted-foreground/60" strokeWidth={1.5} />
-                      <span className="text-[10px] font-medium text-muted-foreground/60 tracking-wider">
+                      <ct.icon className="h-7 w-7 text-foreground/40" strokeWidth={1.5} />
+                      <span className="text-[10px] font-medium text-foreground/40 tracking-wider">
                         {ct.label}
                       </span>
                     </motion.div>
@@ -262,7 +274,7 @@ const FlowModePage = () => {
 
               <h2 className="font-display text-xl font-bold text-foreground mb-2">What are you into?</h2>
               <p className="text-sm text-muted-foreground leading-relaxed mb-8 max-w-xs mx-auto">
-                We're interested in redefining the experience of how you view meaningful content. Let's get to know each other by introducing our Flow Mode.
+                We're redefining how you discover meaningful content. Let's calibrate your Flow.
               </p>
 
               <div className="flex flex-wrap justify-center gap-2 mb-6">
@@ -285,40 +297,37 @@ const FlowModePage = () => {
             </motion.div>
           )}
 
-          {/* Step 1: Swipe Tutorial */}
           {onboardingStep === 1 && (
             <motion.div
               key="swipe"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="w-full max-w-sm text-center"
+              className="w-full max-w-sm text-center px-6"
             >
               <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
-                Swipe in the direction shown to interact with content.
+                Swipe or use arrow keys to interact with content.
               </p>
 
-              {/* Swipe card preview */}
               <div className="relative mx-auto mb-8">
-                <div className="relative mx-auto w-56 h-72 rounded-2xl border border-border bg-card shadow-lg flex items-center justify-center">
+                <div className="relative mx-auto w-56 h-72 rounded-2xl border border-border bg-card/80 backdrop-blur-sm shadow-lg flex items-center justify-center">
                   <Fingerprint className="h-10 w-10 text-muted-foreground/30" />
 
-                  {/* Direction labels */}
                   <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex flex-col items-center">
-                    <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-xs font-medium text-muted-foreground tracking-wider">SAVE</span>
+                    <ChevronUp className="h-5 w-5 text-foreground/60" />
+                    <span className="text-xs font-medium text-foreground/60 tracking-wider">SAVE</span>
                   </div>
                   <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center">
-                    <span className="text-xs font-medium text-muted-foreground tracking-wider">DISLIKE</span>
-                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-xs font-medium text-foreground/60 tracking-wider">DISLIKE</span>
+                    <ChevronDown className="h-5 w-5 text-foreground/60" />
                   </div>
                   <div className="absolute top-1/2 -left-16 -translate-y-1/2 flex items-center gap-1">
-                    <ChevronLeft className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-xs font-medium text-muted-foreground tracking-wider">BACK</span>
+                    <ChevronLeft className="h-5 w-5 text-foreground/60" />
+                    <span className="text-xs font-medium text-foreground/60 tracking-wider">SHARE</span>
                   </div>
                   <div className="absolute top-1/2 -right-16 -translate-y-1/2 flex items-center gap-1">
-                    <span className="text-xs font-medium text-muted-foreground tracking-wider">NEXT</span>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-xs font-medium text-foreground/60 tracking-wider">NEXT</span>
+                    <ChevronRight className="h-5 w-5 text-foreground/60" />
                   </div>
                 </div>
               </div>
@@ -338,25 +347,32 @@ const FlowModePage = () => {
     );
   }
 
-  // ──── MAIN FLOW VIEW ────
+  // ──── MAIN FLOW VIEW — immersive fullscreen ────
   return (
-    <div className="relative">
+    <div className="fixed inset-0 z-40 flex flex-col">
+      {/* Dynamic gradient background */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${gradient.bg} transition-all duration-700`} />
+      <div className={`absolute top-10 left-1/4 w-80 h-80 ${gradient.blur1} rounded-full blur-3xl animate-pulse`} />
+      <div className={`absolute bottom-10 right-1/4 w-96 h-96 ${gradient.blur2} rounded-full blur-3xl`} />
+
       {/* Top bar */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="relative z-10 flex items-center justify-between px-4 py-3 md:px-6">
         <Button
           variant="ghost"
           size="icon"
-          className="rounded-full"
+          className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9"
           onClick={() => { setCalibrated(false); setOnboardingStep(0); }}
         >
           <X className="h-5 w-5" />
         </Button>
-        <div className="flex items-center gap-2">
+
+        {/* Category pills — hidden on small screens */}
+        <div className="hidden md:flex items-center gap-2">
           {CATEGORIES.map((cat) => (
             <Badge
               key={cat}
               variant={selectedCategories.includes(cat) ? "default" : "outline"}
-              className="cursor-pointer capitalize text-xs rounded-full"
+              className="cursor-pointer capitalize text-xs rounded-full backdrop-blur-sm"
               onClick={() => {
                 const updated = selectedCategories.includes(cat)
                   ? selectedCategories.filter((c) => c !== cat)
@@ -369,94 +385,97 @@ const FlowModePage = () => {
             </Badge>
           ))}
         </div>
-        <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setAddOpen(true)}>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9"
+          onClick={() => setAddOpen(true)}
+        >
           <Plus className="h-5 w-5" />
         </Button>
       </div>
 
-      {/* Card area */}
-      <div className="flex justify-center items-center min-h-[65vh]">
+      {/* Card area — centered */}
+      <div className="relative z-10 flex-1 flex items-center justify-center px-4">
         <AnimatePresence mode="wait">
           {currentItem ? (
             <motion.div
               key={currentItem.id}
-              className="w-full max-w-sm cursor-grab active:cursor-grabbing"
+              className="w-full max-w-xs md:max-w-sm cursor-grab active:cursor-grabbing"
               drag
               dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
               dragElastic={0.7}
               onDragEnd={handleDragEnd}
-              style={{ x, y, rotateZ }}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
+              style={{ x, y, rotateZ, opacity: cardOpacity }}
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
             >
-              <div className="rounded-3xl bg-card border border-border shadow-xl overflow-hidden">
-                {/* Content visual */}
-                <div className={`aspect-square bg-gradient-to-br ${CATEGORY_GRADIENTS[currentItem.category] || CATEGORY_GRADIENTS.design} flex items-center justify-center p-8 relative`}>
+              {/* Polaroid card */}
+              <div className="rounded-2xl bg-card shadow-2xl overflow-hidden border border-border/50">
+                {/* Image / Visual area */}
+                <div className="aspect-[4/5] bg-muted/30 relative overflow-hidden">
                   {currentItem.file_url ? (
                     <img
                       src={currentItem.file_url}
                       alt={currentItem.title}
-                      className="w-full h-full object-cover rounded-2xl shadow-lg"
+                      className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="text-center">
-                      <Badge variant="outline" className="mb-4 capitalize rounded-full bg-card/60 backdrop-blur-sm">
+                    <div className={`w-full h-full bg-gradient-to-br ${gradient.bg} flex items-center justify-center p-8`}>
+                      <div className="text-center">
+                        <Badge variant="outline" className="mb-4 capitalize rounded-full bg-card/60 backdrop-blur-sm text-xs">
+                          {currentItem.category}
+                        </Badge>
+                        <h2 className="font-display text-xl md:text-2xl font-bold text-foreground leading-tight">
+                          {currentItem.title}
+                        </h2>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Category label on images */}
+                  {currentItem.file_url && (
+                    <div className="absolute top-3 left-3">
+                      <span className="text-[10px] font-medium uppercase tracking-widest text-card bg-foreground/60 backdrop-blur-sm px-2 py-1 rounded-full">
                         {currentItem.category}
-                      </Badge>
-                      <h2 className="font-display text-2xl font-bold text-foreground leading-tight">
-                        {currentItem.title}
-                      </h2>
+                      </span>
                     </div>
                   )}
                 </div>
 
-                {/* Actions & info */}
-                <div className="p-5">
+                {/* Info section */}
+                <div className="p-4">
                   {/* Action icons */}
-                  <div className="flex items-center justify-center gap-6 mb-4">
+                  <div className="flex items-center gap-4 mb-3">
                     <button
                       onClick={() => performAction("save")}
-                      className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <Bookmark className="h-5 w-5" />
+                      <FileText className="h-5 w-5" />
                     </button>
                     <button
                       onClick={() => performAction("share")}
-                      className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <Share2 className="h-5 w-5" />
                     </button>
-                    {currentItem.link_url && (
-                      <a href={currentItem.link_url} target="_blank" rel="noopener noreferrer"
-                        className="text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        <ExternalLink className="h-5 w-5" />
-                      </a>
-                    )}
                   </div>
 
-                  {/* Expandable info */}
-                  {currentItem.file_url && (
-                    <h3 className="font-display font-semibold text-foreground mb-1">{currentItem.title}</h3>
-                  )}
+                  <h3 className="font-display font-bold text-foreground text-sm md:text-base leading-snug">
+                    {currentItem.title}
+                  </h3>
+
                   {currentItem.description && (
                     <p
-                      className={`text-sm text-muted-foreground leading-relaxed ${
-                        expandedCard ? "" : "line-clamp-3"
+                      className={`text-sm text-muted-foreground leading-relaxed mt-1 ${
+                        expandedCard ? "" : "line-clamp-2"
                       }`}
                       onClick={() => setExpandedCard(!expandedCard)}
                     >
                       {currentItem.description}
                     </p>
-                  )}
-                  {currentItem.description && currentItem.description.length > 120 && (
-                    <button
-                      onClick={() => setExpandedCard(!expandedCard)}
-                      className="mt-1 flex items-center justify-center w-full"
-                    >
-                      <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${expandedCard ? "rotate-180" : ""}`} />
-                    </button>
                   )}
                 </div>
               </div>
@@ -467,12 +486,12 @@ const FlowModePage = () => {
               animate={{ opacity: 1 }}
               className="text-center px-4"
             >
-              <div className="mx-auto mb-6 h-20 w-20 rounded-full bg-muted/50 flex items-center justify-center">
+              <div className="mx-auto mb-6 h-20 w-20 rounded-full bg-card/60 backdrop-blur-sm flex items-center justify-center">
                 <Sparkles className="h-8 w-8 text-primary" />
               </div>
               <h2 className="font-display text-xl font-bold text-foreground mb-2">You're all caught up!</h2>
               <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
-                Share your own content or check back later for new discoveries.
+                Share your own content or check back later.
               </p>
               <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
                 <Plus className="mr-2 h-4 w-4" />
@@ -485,7 +504,7 @@ const FlowModePage = () => {
 
       {/* Desktop swipe hint */}
       {currentItem && (
-        <div className="hidden md:flex justify-center mt-4 gap-8 text-muted-foreground/50">
+        <div className="relative z-10 hidden md:flex justify-center pb-4 gap-8 text-foreground/40">
           <span className="flex items-center gap-1 text-xs"><ChevronUp className="h-3.5 w-3.5" /> Save</span>
           <span className="flex items-center gap-1 text-xs"><ChevronLeft className="h-3.5 w-3.5" /> Share</span>
           <span className="flex items-center gap-1 text-xs"><ChevronRight className="h-3.5 w-3.5" /> Next</span>
@@ -493,9 +512,45 @@ const FlowModePage = () => {
         </div>
       )}
 
+      {/* Save to Board picker */}
+      <Dialog open={savePickerOpen} onOpenChange={setSavePickerOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              Add to...
+              <Button variant="outline" size="icon" className="rounded-full h-8 w-8" onClick={() => setSavePickerOpen(false)}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto">
+            {smartboards?.map((board) => (
+              <button
+                key={board.id}
+                onClick={() => performAction("save", board.id)}
+                className="rounded-xl border border-border bg-card p-4 text-left hover:shadow-md hover:border-primary/30 transition-all group"
+              >
+                <div
+                  className="h-16 rounded-lg mb-2"
+                  style={{ backgroundColor: board.cover_color || "hsl(var(--muted))" }}
+                />
+                <h4 className="font-display font-semibold text-foreground text-sm truncate group-hover:text-primary transition-colors">
+                  {board.title}
+                </h4>
+              </button>
+            ))}
+            {(!smartboards || smartboards.length === 0) && (
+              <p className="col-span-2 text-center text-sm text-muted-foreground py-6">
+                No boards yet. Create one first!
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Add content dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Share to Flow</DialogTitle>
           </DialogHeader>
@@ -507,7 +562,7 @@ const FlowModePage = () => {
             className="space-y-4"
           >
             <Input placeholder="Title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
-            <Textarea placeholder="Description" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={3} />
+            <Textarea placeholder="Description (optional)" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={3} />
             <Select value={newCategory} onValueChange={setNewCategory}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
