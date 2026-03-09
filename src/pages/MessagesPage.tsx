@@ -24,6 +24,8 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import QuoteBuilder from "@/components/messages/QuoteBuilder";
 import QuoteCard, { isQuoteMessage } from "@/components/messages/QuoteCard";
+import ChatAttachmentMenu from "@/components/messages/ChatAttachmentMenu";
+import RichMessageCard, { isRichMessage } from "@/components/messages/RichMessageCard";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pending", color: "bg-amber-500/15 text-amber-600", icon: Clock },
@@ -495,6 +497,8 @@ const MessagesPage = () => {
                           <div key={msg.id} className={cn("flex", isMine ? "justify-end" : "justify-start")}>
                             {isQuoteMessage(msg.content) ? (
                               <QuoteCard content={msg.content} isMine={isMine} messageId={msg.id} senderId={msg.sender_id} />
+                            ) : isRichMessage(msg.content) ? (
+                              <RichMessageCard content={msg.content} isMine={isMine} timestamp={msg.created_at} formatTime={formatTime} />
                             ) : (
                               <div className={cn(
                                 "max-w-[70%] rounded-2xl px-4 py-2.5",
@@ -515,8 +519,24 @@ const MessagesPage = () => {
 
                   <form
                     onSubmit={(e) => { e.preventDefault(); if (messageText.trim()) sendMessage.mutate(); }}
-                    className="flex items-center gap-3 border-t border-border px-6 py-4"
+                    className="flex items-center gap-2 border-t border-border px-4 md:px-6 py-3"
                   >
+                    <ChatAttachmentMenu
+                      onSendMessage={(content) => {
+                        const originalText = messageText;
+                        // Temporarily set the message to send rich content
+                        supabase.from("messages").insert({
+                          sender_id: user!.id,
+                          receiver_id: selectedUser!.user_id,
+                          content,
+                        }).then(({ error }) => {
+                          if (error) { toast.error("Failed to share"); return; }
+                          queryClient.invalidateQueries({ queryKey: ["messages", selectedUser?.user_id] });
+                          queryClient.invalidateQueries({ queryKey: ["conversations"] });
+                        });
+                      }}
+                      disabled={!selectedUser}
+                    />
                     <Input value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Type a message..." className="flex-1" />
                     <Button type="submit" size="icon" disabled={!messageText.trim() || sendMessage.isPending}>
                       <Send className="h-4 w-4" />
