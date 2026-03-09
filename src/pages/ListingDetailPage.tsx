@@ -32,6 +32,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Play,
+  ShoppingCart,
+  CheckCircle,
+  Loader2,
+  Download,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
