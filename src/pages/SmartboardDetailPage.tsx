@@ -58,7 +58,7 @@ const SmartboardDetailPage = () => {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDesc, setEditDesc] = useState("");
-  const [itemType, setItemType] = useState<"note" | "link" | "image">("note");
+  const [itemType, setItemType] = useState<"note" | "link" | "image" | "video" | "audio" | "pdf">("note");
   const [itemTitle, setItemTitle] = useState("");
   const [itemContent, setItemContent] = useState("");
   const [itemLink, setItemLink] = useState("");
@@ -135,11 +135,12 @@ const SmartboardDetailPage = () => {
   const addItem = useMutation({
     mutationFn: async () => {
       let fileUrl: string | null = null;
+      const uploadTypes = ["image", "video", "audio", "pdf"];
 
-      // Upload image if provided
-      if (itemType === "image" && imageFile) {
+      // Upload file if provided
+      if (uploadTypes.includes(itemType) && imageFile) {
         const ext = imageFile.name.split(".").pop();
-        const path = `${id}/${Date.now()}.${ext}`;
+        const path = `${user!.id}/${id}/${Date.now()}.${ext}`;
         const { error: uploadErr } = await supabase.storage.from("smartboard-files").upload(path, imageFile);
         if (uploadErr) throw uploadErr;
         const { data: urlData } = supabase.storage.from("smartboard-files").getPublicUrl(path);
@@ -152,7 +153,7 @@ const SmartboardDetailPage = () => {
         content_type: itemType,
         title: itemTitle || null,
         content: itemContent || null,
-        link_url: itemType === "link" ? itemLink : null,
+        link_url: itemType === "link" ? itemLink : (uploadTypes.includes(itemType) && itemLink ? itemLink : null),
         file_url: fileUrl,
       });
       if (error) throw error;
@@ -345,17 +346,20 @@ const SmartboardDetailPage = () => {
               <DialogHeader><DialogTitle>Add to Board</DialogTitle></DialogHeader>
               {/* Content type tabs */}
               <div className="flex gap-2 mb-4 flex-wrap">
-                {(["note", "link", "image"] as const).map((type) => (
+                {(["note", "link", "image", "video", "audio", "pdf"] as const).map((type) => (
                   <Button
                     key={type}
                     variant={itemType === type ? "default" : "outline"}
                     size="sm"
                     className="rounded-full capitalize"
-                    onClick={() => setItemType(type)}
+                    onClick={() => { setItemType(type); setImageFile(null); setItemLink(""); }}
                   >
                     {type === "note" && <StickyNote className="mr-1 h-4 w-4" />}
                     {type === "link" && <Link2 className="mr-1 h-4 w-4" />}
                     {type === "image" && <ImageIcon className="mr-1 h-4 w-4" />}
+                    {type === "video" && <Video className="mr-1 h-4 w-4" />}
+                    {type === "audio" && <AudioLines className="mr-1 h-4 w-4" />}
+                    {type === "pdf" && <FileText className="mr-1 h-4 w-4" />}
                     {type}
                   </Button>
                 ))}
@@ -372,12 +376,17 @@ const SmartboardDetailPage = () => {
                     <Textarea placeholder="Description (optional)" value={itemContent} onChange={(e) => setItemContent(e.target.value)} rows={2} />
                   </>
                 )}
-                {itemType === "image" && (
+                {(itemType === "image" || itemType === "video" || itemType === "audio" || itemType === "pdf") && (
                   <div>
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept="image/*,video/*,.pdf"
+                      accept={
+                        itemType === "image" ? "image/*" :
+                        itemType === "video" ? "video/*" :
+                        itemType === "audio" ? "audio/*" :
+                        ".pdf"
+                      }
                       className="hidden"
                       onChange={(e) => setImageFile(e.target.files?.[0] || null)}
                     />
@@ -388,18 +397,40 @@ const SmartboardDetailPage = () => {
                       {imageFile ? (
                         <div className="flex items-center justify-center gap-2">
                           <Check className="h-4 w-4 text-primary" />
-                          <span className="text-sm text-foreground">{imageFile.name}</span>
+                          <span className="text-sm text-foreground truncate max-w-[200px]">{imageFile.name}</span>
                         </div>
                       ) : (
                         <>
-                          <ImageIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                          <p className="text-sm text-muted-foreground">Upload from library</p>
-                          <p className="text-xs text-muted-foreground/60 mt-1">Images, video, PDF up to 20MB</p>
+                          {itemType === "image" && <ImageIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />}
+                          {itemType === "video" && <Video className="h-8 w-8 text-muted-foreground mx-auto mb-2" />}
+                          {itemType === "audio" && <AudioLines className="h-8 w-8 text-muted-foreground mx-auto mb-2" />}
+                          {itemType === "pdf" && <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />}
+                          <p className="text-sm text-muted-foreground">
+                            {itemType === "image" ? "Upload image" :
+                             itemType === "video" ? "Upload video" :
+                             itemType === "audio" ? "Upload audio" :
+                             "Upload PDF"}
+                          </p>
+                          <p className="text-xs text-muted-foreground/60 mt-1">
+                            {itemType === "image" ? "JPG, PNG, WEBP up to 20MB" :
+                             itemType === "video" ? "MP4, MOV, WEBM up to 20MB" :
+                             itemType === "audio" ? "MP3, WAV, FLAC up to 20MB" :
+                             "PDF files up to 20MB"}
+                          </p>
                         </>
                       )}
                     </div>
                     <div className="mt-3">
-                      <Input placeholder="Or add image from URL" value={itemLink} onChange={(e) => setItemLink(e.target.value)} />
+                      <Input
+                        placeholder={
+                          itemType === "image" ? "Or paste image URL" :
+                          itemType === "video" ? "Or paste YouTube / Vimeo link" :
+                          itemType === "audio" ? "Or paste Spotify / SoundCloud link" :
+                          "Or paste link to PDF"
+                        }
+                        value={itemLink}
+                        onChange={(e) => setItemLink(e.target.value)}
+                      />
                     </div>
                   </div>
                 )}
@@ -425,7 +456,11 @@ const SmartboardDetailPage = () => {
             <div className="columns-2 md:columns-3 gap-3 space-y-3">
               <AnimatePresence>
                 {items.map((item, i) => {
-                  const isMedia = (item.content_type === "image" || item.content_type === "video") && item.file_url;
+                  const isImage = item.content_type === "image" && item.file_url;
+                  const isVideo = item.content_type === "video" && item.file_url;
+                  const isAudio = item.content_type === "audio" && item.file_url;
+                  const isPdf = item.content_type === "pdf" && item.file_url;
+                  const isVisualMedia = isImage || isVideo;
                   return (
                     <motion.div
                       key={item.id}
@@ -435,28 +470,58 @@ const SmartboardDetailPage = () => {
                       transition={{ delay: i * 0.03 }}
                       className="break-inside-avoid group relative rounded-xl overflow-hidden bg-card border border-border shadow-sm hover:shadow-md transition-all"
                     >
-                      {isMedia ? (
+                      {isImage && (
                         <div className="relative">
-                          <img
-                            src={item.file_url!}
-                            alt={item.title || "Board item"}
-                            className="w-full object-cover"
-                            loading="lazy"
-                          />
-                          {item.content_type === "video" && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="h-12 w-12 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center">
-                                <Video className="h-5 w-5 text-foreground" />
-                              </div>
-                            </div>
-                          )}
+                          <img src={item.file_url!} alt={item.title || "Image"} className="w-full object-cover" loading="lazy" />
                           {item.title && (
                             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-foreground/60 to-transparent p-3">
                               <span className="text-card text-sm font-medium">{item.title}</span>
                             </div>
                           )}
                         </div>
-                      ) : (
+                      )}
+
+                      {isVideo && (
+                        <div className="relative">
+                          <video src={item.file_url!} className="w-full" controls preload="metadata" />
+                          {item.title && (
+                            <div className="p-3 pt-1">
+                              <span className="text-sm font-medium text-foreground">{item.title}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {isAudio && (
+                        <div className="p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <AudioLines className="h-5 w-5 text-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Audio</span>
+                              {item.title && <h3 className="font-display font-semibold text-foreground text-sm truncate">{item.title}</h3>}
+                            </div>
+                          </div>
+                          <audio src={item.file_url!} controls className="w-full h-10" preload="metadata" />
+                        </div>
+                      )}
+
+                      {isPdf && (
+                        <div className="p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <FileText className="h-4 w-4 text-destructive" />
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">PDF</span>
+                          </div>
+                          {item.title && <h3 className="font-display font-semibold text-foreground text-sm mb-2">{item.title}</h3>}
+                          <a href={item.file_url!} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-xs text-primary hover:underline">
+                            <ExternalLink className="h-3 w-3" /> Open PDF
+                          </a>
+                        </div>
+                      )}
+
+                      {!isImage && !isVideo && !isAudio && !isPdf && (
                         <div className="p-4">
                           <div className="flex items-center gap-2 mb-2">
                             {getContentIcon(item.content_type)}
@@ -473,14 +538,9 @@ const SmartboardDetailPage = () => {
                             <p className="text-sm text-muted-foreground leading-relaxed line-clamp-6">{item.content}</p>
                           )}
                           {item.link_url && (
-                            <a
-                              href={item.link_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="mt-2 flex items-center gap-1 text-xs text-primary hover:underline truncate"
-                            >
-                              <ExternalLink className="h-3 w-3 flex-shrink-0" />
-                              {item.link_url}
+                            <a href={item.link_url} target="_blank" rel="noopener noreferrer"
+                              className="mt-2 flex items-center gap-1 text-xs text-primary hover:underline truncate">
+                              <ExternalLink className="h-3 w-3 flex-shrink-0" /> {item.link_url}
                             </a>
                           )}
                         </div>
