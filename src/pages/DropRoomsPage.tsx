@@ -72,6 +72,9 @@ const DropRoomsPage = () => {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("general");
   const [durationHours, setDurationHours] = useState(24);
+  const [enableVideo, setEnableVideo] = useState(false);
+  const [allowSpectators, setAllowSpectators] = useState(false);
+  const [enableRecording, setEnableRecording] = useState(false);
   const [, setTick] = useState(0);
 
   // Countdown timer – re-render every 30s
