@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Briefcase, CalendarCheck, Coins } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Users, Briefcase, CalendarCheck, Coins, CheckCircle } from "lucide-react";
+import { toast } from "sonner";
 
 const AdminOverview = () => {
   const [stats, setStats] = useState({
@@ -12,38 +15,53 @@ const AdminOverview = () => {
   });
   const [recentBookings, setRecentBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirming, setConfirming] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      const [profiles, services, bookings, transactions] = await Promise.all([
-        supabase.from("profiles").select("id", { count: "exact", head: true }),
-        supabase.from("services").select("id", { count: "exact", head: true }),
-        supabase.from("bookings").select("id", { count: "exact", head: true }),
-        supabase.from("credit_transactions").select("amount"),
-      ]);
+  const fetchData = async () => {
+    const [profiles, services, bookings, transactions] = await Promise.all([
+      supabase.from("profiles").select("id", { count: "exact", head: true }),
+      supabase.from("services").select("id", { count: "exact", head: true }),
+      supabase.from("bookings").select("id", { count: "exact", head: true }),
+      supabase.from("credit_transactions").select("amount"),
+    ]);
 
-      const totalRevenue = (transactions.data || [])
-        .reduce((sum, t) => sum + Number(t.amount), 0);
+    const totalRevenue = (transactions.data || [])
+      .reduce((sum, t) => sum + Number(t.amount), 0);
 
-      setStats({
-        totalUsers: profiles.count || 0,
-        totalServices: services.count || 0,
-        totalBookings: bookings.count || 0,
-        totalRevenue,
-      });
+    setStats({
+      totalUsers: profiles.count || 0,
+      totalServices: services.count || 0,
+      totalBookings: bookings.count || 0,
+      totalRevenue,
+    });
 
-      const { data: recent } = await supabase
-        .from("bookings")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(5);
+    const { data: recent } = await supabase
+      .from("bookings")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(10);
 
-      setRecentBookings(recent || []);
-      setLoading(false);
-    };
+    setRecentBookings(recent || []);
+    setLoading(false);
+  };
 
-    fetchStats();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
+
+  const confirmBooking = async (bookingId: string) => {
+    setConfirming(bookingId);
+    const { error } = await supabase
+      .from("bookings")
+      .update({ status: "confirmed" })
+      .eq("id", bookingId);
+
+    if (error) {
+      toast.error("Failed to confirm: " + error.message);
+    } else {
+      toast.success("Booking confirmed — project generated!");
+      fetchData();
+    }
+    setConfirming(null);
+  };
 
   if (loading) {
     return <div className="flex justify-center py-10"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>;
@@ -89,13 +107,27 @@ const AdminOverview = () => {
                       {new Date(b.start_time).toLocaleDateString()} • {b.duration_hours}h
                     </p>
                   </div>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                    b.status === "upcoming" ? "bg-primary/10 text-primary" :
-                    b.status === "completed" ? "bg-green-500/10 text-green-600" :
-                    "bg-muted text-muted-foreground"
-                  }`}>
-                    {b.status}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={
+                      b.status === "confirmed" ? "default" :
+                      b.status === "upcoming" ? "secondary" :
+                      b.status === "cancelled" ? "destructive" : "outline"
+                    } className="capitalize">
+                      {b.status}
+                    </Badge>
+                    {b.status === "upcoming" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1 text-xs"
+                        disabled={confirming === b.id}
+                        onClick={() => confirmBooking(b.id)}
+                      >
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        {confirming === b.id ? "..." : "Confirm"}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

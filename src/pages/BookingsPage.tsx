@@ -165,9 +165,9 @@ const BookingsPage = () => {
 
   // Filter bookings by tab
   const now = new Date();
-  const filteredBookings = bookings?.filter((b) => {
-    if (activeTab === "upcoming") return b.status === "upcoming" && new Date(b.start_time) >= now;
-    if (activeTab === "history") return b.status === "upcoming" && new Date(b.end_time) < now;
+  const filteredBookings = bookings?.filter((b: any) => {
+    if (activeTab === "upcoming") return (b.status === "upcoming" || b.status === "confirmed") && new Date(b.start_time) >= now;
+    if (activeTab === "history") return (b.status === "upcoming" || b.status === "confirmed") && new Date(b.end_time) < now;
     if (activeTab === "cancelled") return b.status === "cancelled";
     return true;
   }) ?? [];
