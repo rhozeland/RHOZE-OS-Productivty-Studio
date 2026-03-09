@@ -184,13 +184,11 @@ const CalendarPage = () => {
 
       // Deduct credits atomically after successful booking
       if (paymentMethod === "credits" && service) {
-        const { error: creditError } = await supabase.rpc("lock_escrow_credits" as any, {}).catch(() => null) as any;
         // Use atomic decrement to avoid race conditions
         const { error: deductError } = await supabase
           .from("user_credits")
           .update({ balance: (userCredits?.balance ?? 0) - service.credits_cost, updated_at: new Date().toISOString() })
-          .eq("user_id", user.id)
-          .gte("balance", service.credits_cost);
+          .eq("user_id", user.id);
         if (deductError) {
           console.error("Credit deduction failed:", deductError);
           toast.error("Credit deduction failed — please contact support");
