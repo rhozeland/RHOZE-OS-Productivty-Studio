@@ -1,5 +1,6 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, Clock, X, CalendarDays, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, X, CalendarDays, RefreshCw, Coins } from "lucide-react";
 import {
   format,
   startOfWeek,
@@ -54,11 +55,12 @@ const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 8am - 8pm
 const CalendarPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<ViewMode>("month");
+  const [viewMode, setViewMode] = useState<ViewMode>(searchParams.get("service") ? "week" : "month");
   const [activeTab, setActiveTab] = useState<TabMode>("upcoming");
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState("");
+  const [selectedService, setSelectedService] = useState(searchParams.get("service") || "");
   const [bookingNotes, setBookingNotes] = useState("");
 
   // Google Calendar
@@ -288,8 +290,34 @@ const CalendarPage = () => {
     ? Math.abs(dragEndHour - dragStartHour) + 1
     : 0;
 
+  const selectedServiceObj = useMemo(
+    () => services?.find((s) => s.id === selectedService),
+    [services, selectedService]
+  );
+
+  const creditRatePerHour = selectedServiceObj
+    ? Number(selectedServiceObj.credits_cost) / Math.max(Number(selectedServiceObj.duration_hours), 1)
+    : 0;
+
+  const estimatedCredits = Math.round(selectedDuration * creditRatePerHour * 100) / 100;
+
   return (
     <div className="space-y-6">
+      {/* Service pre-selection banner */}
+      {searchParams.get("service") && selectedServiceObj && (
+        <div className="flex items-center gap-3 rounded-xl bg-primary/10 border border-primary/20 p-4">
+          <Coins className="h-5 w-5 text-primary shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-foreground">
+              Booking: {selectedServiceObj.title}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {creditRatePerHour.toFixed(creditRatePerHour % 1 === 0 ? 0 : 1)} credits/hr — drag across the week view to select your session time
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -574,7 +602,12 @@ const CalendarPage = () => {
 
       {/* Booking confirmation dialog */}
       <Dialog open={bookingDialogOpen} onOpenChange={(open) => {
-        if (!open) { resetDrag(); setSelectedService(""); setBookingNotes(""); }
+        if (!open) {
+          resetDrag();
+          if (!searchParams.get("service")) setSelectedService("");
+          setBookingNotes("");
+          setSearchParams({}, { replace: true });
+        }
         setBookingDialogOpen(open);
       }}>
         <DialogContent>
@@ -599,14 +632,32 @@ const CalendarPage = () => {
               <Select value={selectedService} onValueChange={setSelectedService}>
                 <SelectTrigger><SelectValue placeholder="Select a service" /></SelectTrigger>
                 <SelectContent>
-                  {services?.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.title} — {s.credits_cost} credit{Number(s.credits_cost) !== 1 ? "s" : ""}
-                    </SelectItem>
-                  ))}
+                  {services?.map((s) => {
+                    const rate = Number(s.credits_cost) / Math.max(Number(s.duration_hours), 1);
+                    return (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.title} — {rate.toFixed(rate % 1 === 0 ? 0 : 1)} cr/hr
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Dynamic credit calculation */}
+            {selectedServiceObj && selectedDuration > 0 && (
+              <div className="rounded-xl bg-primary/10 border border-primary/20 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    {selectedDuration}hr × {creditRatePerHour.toFixed(creditRatePerHour % 1 === 0 ? 0 : 1)} cr/hr
+                  </div>
+                  <div className="flex items-center gap-1 text-primary font-display text-xl font-bold">
+                    <Coins className="h-4 w-4" />
+                    {estimatedCredits.toFixed(estimatedCredits % 1 === 0 ? 0 : 1)} credits
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">Notes (optional)</label>
@@ -614,7 +665,10 @@ const CalendarPage = () => {
             </div>
 
             <Button className="w-full" onClick={() => createBooking.mutate()} disabled={!selectedService || createBooking.isPending}>
-              Book Session
+              {selectedServiceObj && estimatedCredits > 0
+                ? `Book Session · ${estimatedCredits.toFixed(estimatedCredits % 1 === 0 ? 0 : 1)} credits`
+                : "Book Session"
+              }
             </Button>
           </div>
         </DialogContent>
