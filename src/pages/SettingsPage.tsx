@@ -29,6 +29,19 @@ const BANNER_GRADIENTS = [
   { label: "Arctic", value: "linear-gradient(135deg, hsl(195,60%,85%), hsl(210,50%,90%), hsl(230,40%,95%))" },
 ];
 
+const PAGE_BACKGROUNDS = [
+  { label: "Default", value: "" },
+  { label: "Warm Paper", value: "linear-gradient(180deg, hsl(35,30%,95%) 0%, hsl(30,20%,92%) 100%)" },
+  { label: "Cool Slate", value: "linear-gradient(180deg, hsl(215,20%,93%) 0%, hsl(220,15%,88%) 100%)" },
+  { label: "Blush", value: "linear-gradient(180deg, hsl(340,25%,95%) 0%, hsl(350,20%,91%) 100%)" },
+  { label: "Mint", value: "linear-gradient(180deg, hsl(165,25%,93%) 0%, hsl(175,20%,89%) 100%)" },
+  { label: "Dusk", value: "linear-gradient(180deg, hsl(250,20%,20%) 0%, hsl(240,15%,15%) 100%)" },
+  { label: "Midnight", value: "linear-gradient(180deg, hsl(220,25%,12%) 0%, hsl(230,20%,8%) 100%)" },
+  { label: "Noir", value: "linear-gradient(180deg, hsl(0,0%,8%) 0%, hsl(0,0%,4%) 100%)" },
+  { label: "Sunset Glow", value: "linear-gradient(135deg, hsl(20,50%,90%) 0%, hsl(40,40%,88%) 50%, hsl(350,30%,92%) 100%)" },
+  { label: "Deep Ocean", value: "linear-gradient(180deg, hsl(200,40%,18%) 0%, hsl(210,35%,12%) 100%)" },
+];
+
 const SettingsPage = () => {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
