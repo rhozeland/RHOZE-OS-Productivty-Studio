@@ -43,6 +43,7 @@ serve(async (req) => {
       date: date || "N/A",
       time: time || "N/A",
       duration_hours: duration_hours || 0,
+      credits_refunded: credits_refunded || 0,
     });
 
     const res = await fetch("https://api.resend.com/emails", {
