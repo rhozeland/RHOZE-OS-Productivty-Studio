@@ -17,6 +17,7 @@ import {
   ShoppingBag,
   Inbox,
   Zap,
+  BarChart3,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -44,6 +45,7 @@ const navItems = [
   { icon: Compass, label: "Flow", path: "/flow" },
   { icon: LayoutGrid, label: "Smartboards", path: "/smartboards" },
   { icon: Store, label: "Marketplace", path: "/marketplace" },
+  { icon: BarChart3, label: "Seller Dashboard", path: "/seller" },
   { icon: Inbox, label: "Inquiries", path: "/inquiries" },
   { icon: Zap, label: "Drop Rooms", path: "/drop-rooms" },
   { icon: Users, label: "Profiles", path: "/profiles" },
