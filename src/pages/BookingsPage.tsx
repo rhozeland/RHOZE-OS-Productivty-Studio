@@ -126,6 +126,8 @@ const BookingsPage = () => {
       const { error } = await supabase.from("bookings").update({ status: "cancelled" }).eq("id", id);
       if (error) throw error;
 
+      let creditsRefunded = 0;
+
       // Refund credits if the booking had a linked service
       if (booking.service_id && user) {
         const { data: service } = await supabase.from("services").select("credits_cost").eq("id", booking.service_id).single();
@@ -139,13 +141,14 @@ const BookingsPage = () => {
               type: "refund",
               description: `Refund: ${booking.title} (cancelled)`,
             });
+            creditsRefunded = service.credits_cost;
           }
         }
       }
 
-      return booking;
+      return { booking, creditsRefunded };
     },
-    onSuccess: (booking) => {
+    onSuccess: ({ booking, creditsRefunded }) => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       queryClient.invalidateQueries({ queryKey: ["user-credits"] });
       toast.success("Booking cancelled — credits refunded");
@@ -160,6 +163,7 @@ const BookingsPage = () => {
             date: format(new Date(booking.start_time), "MMMM d, yyyy"),
             time: format(new Date(booking.start_time), "h:mm a"),
             duration_hours: booking.duration_hours,
+            credits_refunded: creditsRefunded,
           },
         }).catch((err) => console.error("Cancellation email failed:", err));
       }
