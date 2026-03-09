@@ -669,11 +669,12 @@ const CalendarPage = () => {
           resetDrag();
           if (!searchParams.get("service")) setSelectedService("");
           setBookingNotes("");
+          setPaymentMethod("credits");
           setSearchParams({}, { replace: true });
         }
         setBookingDialogOpen(open);
       }}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display">Confirm Booking</DialogTitle>
           </DialogHeader>
@@ -696,10 +697,10 @@ const CalendarPage = () => {
                 <SelectTrigger><SelectValue placeholder="Select a service" /></SelectTrigger>
                 <SelectContent>
                   {services?.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.title} — {s.credits_cost} cr · up to {s.duration_hours}h
-                      </SelectItem>
-                    ))}
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.title} — {s.credits_cost} cr · up to {s.duration_hours}h
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -722,17 +723,116 @@ const CalendarPage = () => {
               </div>
             )}
 
+            {/* Payment method selection */}
+            {selectedServiceObj && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground block">Payment Method</label>
+                <div className="grid gap-2">
+                  {/* Credits */}
+                  <button
+                    onClick={() => setPaymentMethod("credits")}
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl border p-3 transition-all text-left",
+                      paymentMethod === "credits" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+                    )}
+                  >
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                      <Coins className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">Pay with Credits</p>
+                      <p className="text-xs text-muted-foreground">
+                        {selectedServiceObj.credits_cost} credits • Balance: {userCredits?.balance ?? 0}
+                        {(userCredits?.balance ?? 0) < selectedServiceObj.credits_cost && " (insufficient)"}
+                      </p>
+                    </div>
+                    {paymentMethod === "credits" && <Check className="h-4 w-4 text-primary" />}
+                  </button>
+
+                  {/* Card */}
+                  {selectedServiceObj.non_member_rate && (
+                    <button
+                      onClick={() => setPaymentMethod("card")}
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl border p-3 transition-all text-left",
+                        paymentMethod === "card" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+                      )}
+                    >
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10">
+                        <CreditCard className="h-4 w-4 text-blue-500" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">Pay with Card</p>
+                        <p className="text-xs text-muted-foreground">
+                          ${selectedServiceObj.non_member_rate} • Visa, Mastercard, Amex
+                        </p>
+                      </div>
+                      {paymentMethod === "card" && <Check className="h-4 w-4 text-primary" />}
+                    </button>
+                  )}
+
+                  {/* SOL */}
+                  <button
+                    onClick={() => setPaymentMethod("crypto")}
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl border p-3 transition-all text-left",
+                      paymentMethod === "crypto" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+                    )}
+                  >
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-500/10">
+                      <Wallet className="h-4 w-4 text-orange-500" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">Pay with SOL</p>
+                      <p className="text-xs text-muted-foreground">
+                        ~{((selectedServiceObj.non_member_rate ?? selectedServiceObj.credits_cost * 75) / 150).toFixed(4)} SOL via Phantom/Solflare
+                      </p>
+                    </div>
+                    {paymentMethod === "crypto" && <Check className="h-4 w-4 text-primary" />}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">Notes (optional)</label>
-              <Textarea placeholder="What is the project about?" value={bookingNotes} onChange={(e) => setBookingNotes(e.target.value)} rows={3} />
+              <Textarea placeholder="What is the project about?" value={bookingNotes} onChange={(e) => setBookingNotes(e.target.value)} rows={2} />
             </div>
 
-            <Button className="w-full" onClick={() => createBooking.mutate()} disabled={!selectedService || createBooking.isPending || isOverMax}>
-              {selectedServiceObj
-                ? `Book Session · ${selectedServiceObj.credits_cost} credits`
-                : "Book Session"
-              }
-            </Button>
+            {/* Card form inline */}
+            {paymentMethod === "card" && selectedServiceObj?.non_member_rate && (
+              <SquareCardForm
+                amount={selectedServiceObj.non_member_rate}
+                disabled={bookingLoading}
+                onTokenize={async (token) => {
+                  await createBookingWithPayment(token);
+                }}
+              />
+            )}
+
+            {/* SOL payment */}
+            {paymentMethod === "crypto" && selectedServiceObj && (
+              <PaySolAndVerify
+                solAmount={Number(((selectedServiceObj.non_member_rate ?? selectedServiceObj.credits_cost * 75) / 150).toFixed(4))}
+                onSuccess={async () => {
+                  await createBookingWithPayment();
+                }}
+              />
+            )}
+
+            {/* Credits confirm button */}
+            {paymentMethod === "credits" && (
+              <Button
+                className="w-full"
+                onClick={() => createBookingWithPayment()}
+                disabled={!selectedService || bookingLoading || isOverMax || (selectedServiceObj && (userCredits?.balance ?? 0) < selectedServiceObj.credits_cost)}
+              >
+                {bookingLoading ? "Processing..." : selectedServiceObj
+                  ? `Book Session · ${selectedServiceObj.credits_cost} credits`
+                  : "Book Session"
+                }
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
