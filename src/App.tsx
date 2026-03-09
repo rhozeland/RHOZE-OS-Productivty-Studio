@@ -26,6 +26,7 @@ import SettingsPage from "@/pages/SettingsPage";
 import ServicesPage from "@/pages/ServicesPage";
 import CreditShopPage from "@/pages/CreditShopPage";
 import PurchasesPage from "@/pages/PurchasesPage";
+import InquiriesPage from "@/pages/InquiriesPage";
 import AdminPage from "@/pages/AdminPage";
 import NotFound from "./pages/NotFound";
 
@@ -71,6 +72,7 @@ const App = () => (
               <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
               <Route path="/marketplace" element={<MarketplacePage />} />
               <Route path="/marketplace/:id" element={<ListingDetailPage />} />
+              <Route path="/inquiries" element={<InquiriesPage />} />
               <Route path="/profiles" element={<ProfilesPage />} />
               <Route path="/profiles/:id" element={<ProfileDetailPage />} />
               <Route path="/messages" element={<MessagesPage />} />
