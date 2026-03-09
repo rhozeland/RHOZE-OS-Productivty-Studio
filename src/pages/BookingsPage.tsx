@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, Clock, X, CalendarDays } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, X, CalendarDays, FolderOpen } from "lucide-react";
 import {
   format,
   startOfWeek,
@@ -46,6 +47,7 @@ const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 8am - 8pm
 const BookingsPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [activeTab, setActiveTab] = useState<TabMode>("upcoming");
@@ -164,9 +166,9 @@ const BookingsPage = () => {
 
   // Filter bookings by tab
   const now = new Date();
-  const filteredBookings = bookings?.filter((b) => {
-    if (activeTab === "upcoming") return b.status === "upcoming" && new Date(b.start_time) >= now;
-    if (activeTab === "history") return b.status === "upcoming" && new Date(b.end_time) < now;
+  const filteredBookings = bookings?.filter((b: any) => {
+    if (activeTab === "upcoming") return (b.status === "upcoming" || b.status === "confirmed") && new Date(b.start_time) >= now;
+    if (activeTab === "history") return (b.status === "upcoming" || b.status === "confirmed") && new Date(b.end_time) < now;
     if (activeTab === "cancelled") return b.status === "cancelled";
     return true;
   }) ?? [];
@@ -484,7 +486,20 @@ const BookingsPage = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant={booking.status === "cancelled" ? "destructive" : "secondary"} className="capitalize">
+                    {(booking as any).project_id && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5 text-xs"
+                        onClick={() => navigate(`/projects/${(booking as any).project_id}`)}
+                      >
+                        <FolderOpen className="h-3.5 w-3.5" /> View Project
+                      </Button>
+                    )}
+                    <Badge variant={
+                      booking.status === "confirmed" ? "default" :
+                      booking.status === "cancelled" ? "destructive" : "secondary"
+                    } className="capitalize">
                       {booking.status}
                     </Badge>
                     {booking.status === "upcoming" && new Date(booking.start_time) > now && (
