@@ -73,6 +73,7 @@ const App = () => (
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/admin" element={<AdminPage />} />
             </Route>
+            <Route path="/boards/:id" element={<SmartboardPresentationPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
