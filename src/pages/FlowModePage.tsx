@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/select";
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import { toast } from "sonner";
+import { playSwipeSound } from "@/lib/swipe-sound";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
