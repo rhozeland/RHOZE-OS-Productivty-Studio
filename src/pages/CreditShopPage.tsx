@@ -215,6 +215,45 @@ const CreditShopPage = () => {
 
   const currentTier = userCredits?.tier ?? "none";
 
+  // Purchases data
+  const { data: purchases, isLoading: purchasesLoading } = useQuery({
+    queryKey: ["my-purchases", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("purchases" as any).select("*").eq("buyer_id", user!.id).order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!user,
+  });
+
+  const purchaseListingIds = purchases?.map((p: any) => p.listing_id) ?? [];
+  const { data: purchaseListings } = useQuery({
+    queryKey: ["purchased-listings", purchaseListingIds],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("marketplace_listings").select("*").in("id", purchaseListingIds);
+      if (error) throw error;
+      return data;
+    },
+    enabled: purchaseListingIds.length > 0,
+  });
+
+  const { data: purchaseMedia } = useQuery({
+    queryKey: ["purchased-media", purchaseListingIds],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("listing_media").select("*").in("listing_id", purchaseListingIds).order("sort_order");
+      if (error) throw error;
+      return data;
+    },
+    enabled: purchaseListingIds.length > 0,
+  });
+
+  const purchaseListingsMap = new Map(purchaseListings?.map((l) => [l.id, l]) ?? []);
+  const purchaseMediaMap = new Map<string, any[]>();
+  purchaseMedia?.forEach((m) => {
+    if (!purchaseMediaMap.has(m.listing_id)) purchaseMediaMap.set(m.listing_id, []);
+    purchaseMediaMap.get(m.listing_id)!.push(m);
+  });
+
   return (
     <div className="space-y-8">
       {/* Header with balance */}
