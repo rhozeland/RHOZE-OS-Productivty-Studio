@@ -311,7 +311,7 @@ const CalendarPage = () => {
               Booking: {selectedServiceObj.title}
             </p>
             <p className="text-xs text-muted-foreground">
-              {creditRatePerHour.toFixed(creditRatePerHour % 1 === 0 ? 0 : 1)} credits/hr — drag across the week view to select your session time
+              {selectedServiceObj.credits_cost} credits · up to {selectedServiceObj.duration_hours}h — drag across the week view to claim your slot
             </p>
           </div>
         </div>
