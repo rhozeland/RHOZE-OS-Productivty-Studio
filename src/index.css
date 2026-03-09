@@ -49,13 +49,13 @@
     --gradient-hero: linear-gradient(135deg, hsl(175 50% 85%), hsl(310 50% 90%), hsl(280 40% 92%));
     --gradient-hero-accent: linear-gradient(135deg, hsl(175 60% 55%), hsl(310 60% 75%));
 
-    --sidebar-background: 0 0% 100%;
+    --sidebar-background: 200 30% 97%;
     --sidebar-foreground: 0 0% 40%;
     --sidebar-primary: 175 60% 55%;
     --sidebar-primary-foreground: 0 0% 5%;
-    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent: 200 25% 94%;
     --sidebar-accent-foreground: 0 0% 8%;
-    --sidebar-border: 0 0% 92%;
+    --sidebar-border: 200 20% 92%;
     --sidebar-ring: 175 60% 55%;
   }
 }
