@@ -55,11 +55,12 @@ const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 8am - 8pm
 const CalendarPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<ViewMode>("month");
+  const [viewMode, setViewMode] = useState<ViewMode>(searchParams.get("service") ? "week" : "month");
   const [activeTab, setActiveTab] = useState<TabMode>("upcoming");
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState("");
+  const [selectedService, setSelectedService] = useState(searchParams.get("service") || "");
   const [bookingNotes, setBookingNotes] = useState("");
 
   // Google Calendar
