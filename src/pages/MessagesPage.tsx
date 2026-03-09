@@ -8,6 +8,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Send, User, MessageSquare, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "react-router-dom";
+import QuoteBuilder from "@/components/messages/QuoteBuilder";
+import QuoteCard, { isQuoteMessage } from "@/components/messages/QuoteCard";
 
 type Profile = {
   user_id: string;
