@@ -222,6 +222,28 @@ const DropRoomsPage = () => {
                   </Select>
                 </div>
               </div>
+              {/* Video options */}
+              <div className="space-y-3 rounded-lg border border-border p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Video className="h-4 w-4 text-primary" />
+                    <Label className="cursor-pointer">Enable Video</Label>
+                  </div>
+                  <Switch checked={enableVideo} onCheckedChange={setEnableVideo} />
+                </div>
+                {enableVideo && (
+                  <>
+                    <div className="flex items-center justify-between pl-6">
+                      <Label className="text-xs text-muted-foreground cursor-pointer">Allow spectators</Label>
+                      <Switch checked={allowSpectators} onCheckedChange={setAllowSpectators} />
+                    </div>
+                    <div className="flex items-center justify-between pl-6">
+                      <Label className="text-xs text-muted-foreground cursor-pointer">Enable recording</Label>
+                      <Switch checked={enableRecording} onCheckedChange={setEnableRecording} />
+                    </div>
+                  </>
+                )}
+              </div>
               <Button onClick={handleCreate} disabled={creating || !title.trim()} className="w-full">
                 {creating ? "Creating…" : "Launch Room"}
               </Button>
