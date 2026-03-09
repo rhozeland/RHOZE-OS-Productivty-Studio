@@ -17,6 +17,7 @@ import FlowModePage from "@/pages/FlowModePage";
 import SmartboardsPage from "@/pages/SmartboardsPage";
 import MarketplacePage from "@/pages/MarketplacePage";
 import SmartboardDetailPage from "@/pages/SmartboardDetailPage";
+import SmartboardPresentationPage from "@/pages/SmartboardPresentationPage";
 import ProfilesPage from "@/pages/ProfilesPage";
 import ProfileDetailPage from "@/pages/ProfileDetailPage";
 import MessagesPage from "@/pages/MessagesPage";
@@ -72,6 +73,7 @@ const App = () => (
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/admin" element={<AdminPage />} />
             </Route>
+            <Route path="/boards/:id" element={<SmartboardPresentationPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

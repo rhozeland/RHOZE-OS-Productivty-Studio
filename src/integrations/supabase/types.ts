@@ -768,6 +768,8 @@ export type Database = {
           created_at: string
           file_url: string | null
           id: string
+          item_height: number | null
+          item_width: number | null
           link_url: string | null
           position_x: number | null
           position_y: number | null
@@ -781,6 +783,8 @@ export type Database = {
           created_at?: string
           file_url?: string | null
           id?: string
+          item_height?: number | null
+          item_width?: number | null
           link_url?: string | null
           position_x?: number | null
           position_y?: number | null
@@ -794,6 +798,8 @@ export type Database = {
           created_at?: string
           file_url?: string | null
           id?: string
+          item_height?: number | null
+          item_width?: number | null
           link_url?: string | null
           position_x?: number | null
           position_y?: number | null
@@ -877,6 +883,10 @@ export type Database = {
       }
       smartboards: {
         Row: {
+          background_blur: number | null
+          background_color: string | null
+          background_opacity: number | null
+          background_url: string | null
           cover_color: string | null
           created_at: string
           description: string | null
@@ -887,6 +897,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          background_blur?: number | null
+          background_color?: string | null
+          background_opacity?: number | null
+          background_url?: string | null
           cover_color?: string | null
           created_at?: string
           description?: string | null
@@ -897,6 +911,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          background_blur?: number | null
+          background_color?: string | null
+          background_opacity?: number | null
+          background_url?: string | null
           cover_color?: string | null
           created_at?: string
           description?: string | null
