@@ -418,7 +418,8 @@ const FlowModePage = () => {
     );
   }
 
-  const [viewMode, setViewMode] = useState<"swipe" | "browse">("swipe");
+
+
 
   // ──── MAIN FLOW VIEW ────
   return (
