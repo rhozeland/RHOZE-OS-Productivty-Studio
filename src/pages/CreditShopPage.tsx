@@ -301,9 +301,7 @@ const CreditShopPage = () => {
             </p>
             <p className="text-xs text-muted-foreground">Total Balance</p>
           </div>
-          {currentTier !== "none" && (
-            <Badge className="ml-2 capitalize">{currentTier}</Badge>
-          )}
+          <Badge className="ml-2 capitalize">{currentTier}</Badge>
         </div>
       </div>
 
