@@ -55,6 +55,8 @@ export default {
           DEFAULT: "hsl(var(--warm))",
           foreground: "hsl(var(--warm-foreground))",
         },
+        teal: "hsl(var(--teal))",
+        pink: "hsl(var(--pink))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
