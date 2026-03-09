@@ -135,11 +135,12 @@ const SmartboardDetailPage = () => {
   const addItem = useMutation({
     mutationFn: async () => {
       let fileUrl: string | null = null;
+      const uploadTypes = ["image", "video", "audio", "pdf"];
 
-      // Upload image if provided
-      if (itemType === "image" && imageFile) {
+      // Upload file if provided
+      if (uploadTypes.includes(itemType) && imageFile) {
         const ext = imageFile.name.split(".").pop();
-        const path = `${id}/${Date.now()}.${ext}`;
+        const path = `${user!.id}/${id}/${Date.now()}.${ext}`;
         const { error: uploadErr } = await supabase.storage.from("smartboard-files").upload(path, imageFile);
         if (uploadErr) throw uploadErr;
         const { data: urlData } = supabase.storage.from("smartboard-files").getPublicUrl(path);
@@ -152,7 +153,7 @@ const SmartboardDetailPage = () => {
         content_type: itemType,
         title: itemTitle || null,
         content: itemContent || null,
-        link_url: itemType === "link" ? itemLink : null,
+        link_url: itemType === "link" ? itemLink : (uploadTypes.includes(itemType) && itemLink ? itemLink : null),
         file_url: fileUrl,
       });
       if (error) throw error;
