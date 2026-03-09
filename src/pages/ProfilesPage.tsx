@@ -100,7 +100,7 @@ const ProfilesPage = () => {
               onClick={() => navigate(`/profiles/${profile.user_id}`)}
               className="surface-card overflow-hidden cursor-pointer hover:shadow-md transition-all group"
             >
-              <div className="h-20 bg-gradient-to-r from-primary/30 to-accent/30 group-hover:from-primary/40 group-hover:to-accent/40 transition-colors" />
+              <div className="h-20 transition-colors" style={{ background: profile.banner_gradient || 'linear-gradient(135deg, hsl(175 50% 85%), hsl(310 50% 90%), hsl(280 40% 92%))' }} />
               <div className="p-5">
                 <div className="-mt-14 mb-3 flex h-18 w-18 items-center justify-center rounded-full border-4 border-card bg-muted shadow-sm overflow-hidden" style={{ width: 72, height: 72 }}>
                   {profile.avatar_url ? (
