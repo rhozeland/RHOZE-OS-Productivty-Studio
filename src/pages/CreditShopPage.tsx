@@ -312,7 +312,7 @@ const CreditShopPage = () => {
         setSearchParams(searchParams, { replace: true });
       }}>
         <TabsList>
-          <TabsTrigger value="shop" className="gap-1.5"><Coins className="h-3.5 w-3.5" /> Shop</TabsTrigger>
+          <TabsTrigger value="shop" className="gap-1.5"><Coins className="h-3.5 w-3.5" /> Plans</TabsTrigger>
           <TabsTrigger value="purchases" className="gap-1.5"><ShoppingBag className="h-3.5 w-3.5" /> My Purchases</TabsTrigger>
         </TabsList>
 
