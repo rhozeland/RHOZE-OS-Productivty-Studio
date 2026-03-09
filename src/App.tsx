@@ -67,6 +67,7 @@ const App = () => (
               <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
               <Route path="/marketplace" element={<MarketplacePage />} />
               <Route path="/profiles" element={<ProfilesPage />} />
+              <Route path="/profiles/:id" element={<ProfileDetailPage />} />
               <Route path="/messages" element={<MessagesPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/admin" element={<AdminPage />} />
