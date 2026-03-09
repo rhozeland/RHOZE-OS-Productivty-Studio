@@ -106,7 +106,7 @@ const TIERS = [
     credits: 25,
     gradient: "linear-gradient(135deg, hsl(50, 90%, 58%), hsl(43, 85%, 48%), hsl(38, 80%, 40%))",
     glowColor: "hsl(45, 85%, 52%)",
-    icon: Gamepad2,
+    icon: Gamepad,
     bestFor: "Full-time creators, funded artists",
     features: [
       "25 credits/month",
