@@ -16,6 +16,19 @@ const PRESET_AVATARS = [
   "🎸", "🎹", "📐", "🎭", "🌟", "🔥", "💎", "🦋",
 ];
 
+const BANNER_GRADIENTS = [
+  { label: "Mint Fade", value: "linear-gradient(135deg, hsl(175,60%,80%), hsl(200,40%,90%), hsl(330,30%,92%))" },
+  { label: "Sunset", value: "linear-gradient(135deg, hsl(15,80%,65%), hsl(40,90%,70%), hsl(50,95%,80%))" },
+  { label: "Ocean", value: "linear-gradient(135deg, hsl(200,70%,60%), hsl(220,60%,70%), hsl(190,50%,85%))" },
+  { label: "Lavender", value: "linear-gradient(135deg, hsl(270,50%,70%), hsl(290,40%,80%), hsl(320,30%,90%))" },
+  { label: "Forest", value: "linear-gradient(135deg, hsl(140,40%,55%), hsl(160,50%,65%), hsl(175,60%,80%))" },
+  { label: "Rose", value: "linear-gradient(135deg, hsl(340,60%,65%), hsl(350,50%,75%), hsl(20,40%,85%))" },
+  { label: "Charcoal", value: "linear-gradient(135deg, hsl(220,15%,30%), hsl(220,10%,45%), hsl(220,8%,60%))" },
+  { label: "Golden", value: "linear-gradient(135deg, hsl(40,80%,55%), hsl(45,90%,65%), hsl(50,70%,80%))" },
+  { label: "Berry", value: "linear-gradient(135deg, hsl(280,50%,45%), hsl(320,50%,60%), hsl(350,60%,75%))" },
+  { label: "Arctic", value: "linear-gradient(135deg, hsl(195,60%,85%), hsl(210,50%,90%), hsl(230,40%,95%))" },
+];
+
 const SettingsPage = () => {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
