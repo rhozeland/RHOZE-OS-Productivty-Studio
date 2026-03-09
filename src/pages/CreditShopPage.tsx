@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -372,26 +372,32 @@ const CreditShopPage = () => {
                   )}
                 </div>
 
-                {/* Features */}
-                <div className="p-5 bg-card space-y-4">
-                  <p className="text-xs text-muted-foreground font-medium">
+                {/* Features — collapsible */}
+                <div className="p-4 bg-card space-y-3">
+                  <p className="text-xs text-muted-foreground font-medium leading-snug">
                     {tier.bestFor}
                   </p>
-                  <ul className="space-y-2">
-                    {tier.features.map((f) => (
-                      <li
-                        key={f}
-                        className="flex items-center gap-2.5 text-sm text-foreground"
-                      >
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 shrink-0">
-                          <Check className="h-3 w-3 text-primary" />
-                        </span>
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
+                  <details className="group">
+                    <summary className="text-[11px] font-medium text-primary cursor-pointer select-none hover:underline list-none flex items-center gap-1">
+                      <span className="group-open:hidden">Show features ↓</span>
+                      <span className="hidden group-open:inline">Hide features ↑</span>
+                    </summary>
+                    <ul className="space-y-1.5 mt-2">
+                      {tier.features.map((f) => (
+                        <li
+                          key={f}
+                          className="flex items-start gap-2 text-xs text-foreground leading-snug"
+                        >
+                          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/15 shrink-0 mt-0.5">
+                            <Check className="h-2.5 w-2.5 text-primary" />
+                          </span>
+                          <span>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
                   <Button
-                    className="w-full mt-2 h-10 font-semibold text-sm"
+                    className="w-full h-9 font-semibold text-xs"
                     variant={isCurrentTier ? "outline" : isFree ? "secondary" : "default"}
                     disabled={isCurrentTier}
                     onClick={() => {
@@ -400,7 +406,7 @@ const CreditShopPage = () => {
                       setSubPaymentOpen(true);
                     }}
                   >
-                    {isCurrentTier ? "Current Plan" : isFree ? "Included" : `Subscribe — $${tier.price}/mo`}
+                    {isCurrentTier ? "Current Plan" : isFree ? "Included" : `$${tier.price}/mo`}
                   </Button>
                 </div>
               </motion.div>
