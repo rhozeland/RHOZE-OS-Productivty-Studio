@@ -587,7 +587,12 @@ const CalendarPage = () => {
 
       {/* Booking confirmation dialog */}
       <Dialog open={bookingDialogOpen} onOpenChange={(open) => {
-        if (!open) { resetDrag(); setSelectedService(""); setBookingNotes(""); }
+        if (!open) {
+          resetDrag();
+          if (!searchParams.get("service")) setSelectedService("");
+          setBookingNotes("");
+          setSearchParams({}, { replace: true });
+        }
         setBookingDialogOpen(open);
       }}>
         <DialogContent>
@@ -612,14 +617,32 @@ const CalendarPage = () => {
               <Select value={selectedService} onValueChange={setSelectedService}>
                 <SelectTrigger><SelectValue placeholder="Select a service" /></SelectTrigger>
                 <SelectContent>
-                  {services?.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.title} — {s.credits_cost} credit{Number(s.credits_cost) !== 1 ? "s" : ""}
-                    </SelectItem>
-                  ))}
+                  {services?.map((s) => {
+                    const rate = Number(s.credits_cost) / Math.max(Number(s.duration_hours), 1);
+                    return (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.title} — {rate.toFixed(rate % 1 === 0 ? 0 : 1)} cr/hr
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Dynamic credit calculation */}
+            {selectedServiceObj && selectedDuration > 0 && (
+              <div className="rounded-xl bg-primary/10 border border-primary/20 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    {selectedDuration}hr × {creditRatePerHour.toFixed(creditRatePerHour % 1 === 0 ? 0 : 1)} cr/hr
+                  </div>
+                  <div className="flex items-center gap-1 text-primary font-display text-xl font-bold">
+                    <Coins className="h-4 w-4" />
+                    {estimatedCredits.toFixed(estimatedCredits % 1 === 0 ? 0 : 1)} credits
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">Notes (optional)</label>
@@ -627,7 +650,10 @@ const CalendarPage = () => {
             </div>
 
             <Button className="w-full" onClick={() => createBooking.mutate()} disabled={!selectedService || createBooking.isPending}>
-              Book Session
+              {selectedServiceObj && estimatedCredits > 0
+                ? `Book Session · ${estimatedCredits.toFixed(estimatedCredits % 1 === 0 ? 0 : 1)} credits`
+                : "Book Session"
+              }
             </Button>
           </div>
         </DialogContent>
