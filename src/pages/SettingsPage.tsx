@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -8,23 +8,41 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Upload, Eye, EyeOff, X, Camera } from "lucide-react";
 import { toast } from "sonner";
+
+const PRESET_AVATARS = [
+  "🎨", "🎵", "📸", "🎬", "✍️", "🎤", "💡", "🖌️",
+  "🎸", "🎹", "📐", "🎭", "🌟", "🔥", "💎", "🦋",
+];
 
 const SettingsPage = () => {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [displayName, setDisplayName] = useState("");
+  const [headline, setHeadline] = useState("");
   const [bio, setBio] = useState("");
   const [portfolioUrl, setPortfolioUrl] = useState("");
   const [skills, setSkills] = useState("");
+  const [mediums, setMediums] = useState("");
+  const [location, setLocation] = useState("");
   const [available, setAvailable] = useState(true);
+  const [isPublic, setIsPublic] = useState(true);
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   const { data: profile } = useQuery({
     queryKey: ["my-profile"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("*").eq("user_id", user!.id).single();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user!.id)
+        .single();
       if (error) throw error;
       return data;
     },
@@ -34,30 +52,117 @@ const SettingsPage = () => {
   useEffect(() => {
     if (profile) {
       setDisplayName(profile.display_name ?? "");
+      setHeadline((profile as any).headline ?? "");
       setBio(profile.bio ?? "");
       setPortfolioUrl(profile.portfolio_url ?? "");
       setSkills(profile.skills?.join(", ") ?? "");
+      setMediums((profile as any).mediums?.join(", ") ?? "");
+      setLocation((profile as any).location ?? "");
       setAvailable(profile.available ?? true);
+      setIsPublic((profile as any).is_public !== false);
+      setAvatarUrl(profile.avatar_url ?? "");
     }
   }, [profile]);
 
+  const handleAvatarUpload = async (file: File) => {
+    if (!user) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${user.id}/avatar.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatar-uploads")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("avatar-uploads")
+        .getPublicUrl(path);
+
+      const url = `${urlData.publicUrl}?t=${Date.now()}`;
+      setAvatarUrl(url);
+
+      // Update profile immediately
+      await supabase
+        .from("profiles")
+        .update({ avatar_url: url })
+        .eq("user_id", user.id);
+
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      toast.success("Avatar updated!");
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleEmojiAvatar = async (emoji: string) => {
+    if (!user) return;
+    // Create an emoji-based avatar using a data URL with SVG
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+      <rect width="200" height="200" fill="hsl(175,60%,92%)" rx="100"/>
+      <text x="100" y="130" font-size="100" text-anchor="middle">${emoji}</text>
+    </svg>`;
+    const dataUrl = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+    setAvatarUrl(dataUrl);
+
+    await supabase
+      .from("profiles")
+      .update({ avatar_url: dataUrl })
+      .eq("user_id", user.id);
+
+    queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+    queryClient.invalidateQueries({ queryKey: ["profiles"] });
+    setShowAvatarPicker(false);
+    toast.success("Avatar updated!");
+  };
+
   const updateProfile = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("profiles").update({
-        display_name: displayName,
-        bio,
-        portfolio_url: portfolioUrl || null,
-        skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
-        available,
-      }).eq("user_id", user!.id);
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          display_name: displayName,
+          headline,
+          bio,
+          portfolio_url: portfolioUrl || null,
+          skills: skills
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+          mediums: mediums
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+          location: location || null,
+          available,
+          is_public: isPublic,
+        } as any)
+        .eq("user_id", user!.id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["profiles"] });
       toast.success("Profile updated!");
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const initials = (displayName || "?")
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <div className="space-y-6">
@@ -71,7 +176,11 @@ const SettingsPage = () => {
         <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Appearance</h2>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {theme === "light" ? <Sun className="h-5 w-5 text-warm" /> : <Moon className="h-5 w-5 text-primary" />}
+            {theme === "light" ? (
+              <Sun className="h-5 w-5 text-warm" />
+            ) : (
+              <Moon className="h-5 w-5 text-primary" />
+            )}
             <div>
               <Label className="text-sm font-medium">Dark Mode</Label>
               <p className="text-xs text-muted-foreground">Switch between light and dark themes</p>
@@ -81,30 +190,180 @@ const SettingsPage = () => {
         </div>
       </div>
 
+      {/* Avatar */}
+      <div className="surface-card max-w-2xl p-6">
+        <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Display Picture</h2>
+        <div className="flex items-center gap-6">
+          <div className="relative group">
+            <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-border bg-muted overflow-hidden">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <span className="font-display text-xl font-bold text-muted-foreground">{initials}</span>
+              )}
+            </div>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="absolute inset-0 flex items-center justify-center rounded-full bg-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Camera className="h-6 w-6 text-background" />
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                {uploading ? "Uploading..." : "Upload Photo"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAvatarPicker(!showAvatarPicker)}
+              >
+                Pick Avatar
+              </Button>
+              {avatarUrl && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={async () => {
+                    setAvatarUrl("");
+                    await supabase.from("profiles").update({ avatar_url: null }).eq("user_id", user!.id);
+                    queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+                    toast.success("Avatar removed");
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">JPG, PNG or GIF. Max 5MB.</p>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleAvatarUpload(file);
+              e.target.value = "";
+            }}
+          />
+        </div>
+
+        {showAvatarPicker && (
+          <div className="mt-4 p-4 rounded-lg border border-border bg-muted/30">
+            <p className="text-sm font-medium text-foreground mb-3">Choose an avatar</p>
+            <div className="grid grid-cols-8 gap-2">
+              {PRESET_AVATARS.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => handleEmojiAvatar(emoji)}
+                  className="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-card hover:bg-primary/10 hover:border-primary transition-colors text-2xl"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Profile */}
       <div className="surface-card max-w-2xl p-6">
         <h2 className="mb-6 font-display text-lg font-semibold text-foreground">Profile</h2>
-        <form onSubmit={(e) => { e.preventDefault(); updateProfile.mutate(); }} className="space-y-5">
-          <div className="space-y-2">
-            <Label>Display Name</Label>
-            <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            updateProfile.mutate();
+          }}
+          className="space-y-5"
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Display Name</Label>
+              <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Headline</Label>
+              <Input
+                value={headline}
+                onChange={(e) => setHeadline(e.target.value)}
+                placeholder="e.g. Music Producer & Visual Artist"
+              />
+            </div>
           </div>
+
           <div className="space-y-2">
             <Label>Bio</Label>
-            <Textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell the world about your creative journey..." />
+            <Textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Tell the world about your creative journey..."
+              rows={3}
+            />
           </div>
-          <div className="space-y-2">
-            <Label>Skills (comma-separated)</Label>
-            <Input value={skills} onChange={(e) => setSkills(e.target.value)} placeholder="Illustration, 3D, Motion Design" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Skills (comma-separated)</Label>
+              <Input
+                value={skills}
+                onChange={(e) => setSkills(e.target.value)}
+                placeholder="Illustration, 3D, Motion Design"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Mediums (comma-separated)</Label>
+              <Input
+                value={mediums}
+                onChange={(e) => setMediums(e.target.value)}
+                placeholder="Digital, Oil, Acrylic, Photography"
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label>Portfolio URL</Label>
-            <Input value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} placeholder="https://yourportfolio.com" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Location</Label>
+              <Input
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="City, State or Country"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Portfolio URL</Label>
+              <Input
+                value={portfolioUrl}
+                onChange={(e) => setPortfolioUrl(e.target.value)}
+                placeholder="https://yourportfolio.com"
+              />
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Switch checked={available} onCheckedChange={setAvailable} />
-            <Label>Available for collaboration</Label>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+            <div className="flex items-center gap-3">
+              <Switch checked={available} onCheckedChange={setAvailable} />
+              <Label>Available for collaboration</Label>
+            </div>
+            <div className="flex items-center gap-3">
+              <Switch checked={isPublic} onCheckedChange={setIsPublic} />
+              <div className="flex items-center gap-1.5">
+                {isPublic ? <Eye className="h-4 w-4 text-primary" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+                <Label>{isPublic ? "Public Profile" : "Private Profile"}</Label>
+              </div>
+            </div>
           </div>
+
           <Button type="submit" disabled={updateProfile.isPending}>
             {updateProfile.isPending ? "Saving..." : "Save Changes"}
           </Button>

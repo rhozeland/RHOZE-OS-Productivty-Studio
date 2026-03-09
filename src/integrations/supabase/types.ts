@@ -111,6 +111,36 @@ export type Database = {
           },
         ]
       }
+      connections: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           amount: number
@@ -342,7 +372,11 @@ export type Database = {
           bio: string | null
           created_at: string
           display_name: string | null
+          headline: string | null
           id: string
+          is_public: boolean | null
+          location: string | null
+          mediums: string[] | null
           portfolio_url: string | null
           skills: string[] | null
           updated_at: string
@@ -354,7 +388,11 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          headline?: string | null
           id?: string
+          is_public?: boolean | null
+          location?: string | null
+          mediums?: string[] | null
           portfolio_url?: string | null
           skills?: string[] | null
           updated_at?: string
@@ -366,7 +404,11 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          headline?: string | null
           id?: string
+          is_public?: boolean | null
+          location?: string | null
+          mediums?: string[] | null
           portfolio_url?: string | null
           skills?: string[] | null
           updated_at?: string
