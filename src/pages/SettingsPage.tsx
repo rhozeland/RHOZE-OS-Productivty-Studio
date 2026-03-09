@@ -102,6 +102,8 @@ const SettingsPage = () => {
   // Danger zone
   const [deleteConfirm, setDeleteConfirm] = useState("");
 
+  const [initialized, setInitialized] = useState(false);
+
   const { data: profile } = useQuery({
     queryKey: ["my-profile"],
     queryFn: async () => {
@@ -114,10 +116,11 @@ const SettingsPage = () => {
       return data;
     },
     enabled: !!user,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
-    if (profile) {
+    if (profile && !initialized) {
       const p = profile as any;
       setDisplayName(p.display_name ?? "");
       setHeadline(p.headline ?? "");
@@ -141,8 +144,9 @@ const SettingsPage = () => {
       setNotifInquiries(p.email_notif_inquiries ?? true);
       setNotifPurchases(p.email_notif_purchases ?? true);
       setNotifReviews(p.email_notif_reviews ?? true);
+      setInitialized(true);
     }
-  }, [profile]);
+  }, [profile, initialized]);
 
   const handleAvatarUpload = async (file: File) => {
     if (!user) return;
