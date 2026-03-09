@@ -18,57 +18,67 @@ import {
   Camera,
   Video,
   Sparkles,
-  Clock,
   Coins,
   DollarSign,
   Info,
   ShoppingCart,
   CalendarDays,
   CreditCard,
+  Clock,
+  Headphones,
+  Mic,
+  PenTool,
+  Clapperboard,
+  ImageIcon,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
 
-const CATEGORIES = [
-  { key: "all", label: "All Services", icon: Sparkles },
-  { key: "audio", label: "Audio", icon: Music },
-  { key: "design", label: "Design", icon: Palette },
-  { key: "video", label: "Video", icon: Video },
-  { key: "photo", label: "Photo", icon: Camera },
-];
-
-const categoryColors: Record<string, string> = {
-  audio: "hsl(280, 60%, 55%)",
-  design: "hsl(175, 60%, 50%)",
-  video: "hsl(340, 70%, 55%)",
-  photo: "hsl(35, 90%, 55%)",
+const CATEGORY_META: Record<string, { label: string; icon: any; color: string; gradient: string }> = {
+  audio: {
+    label: "Audio",
+    icon: Headphones,
+    color: "hsl(280, 60%, 55%)",
+    gradient: "linear-gradient(135deg, hsl(280, 60%, 55%), hsl(310, 50%, 65%))",
+  },
+  design: {
+    label: "Design",
+    icon: PenTool,
+    color: "hsl(175, 60%, 45%)",
+    gradient: "linear-gradient(135deg, hsl(175, 60%, 45%), hsl(190, 50%, 55%))",
+  },
+  video: {
+    label: "Video",
+    icon: Clapperboard,
+    color: "hsl(340, 70%, 55%)",
+    gradient: "linear-gradient(135deg, hsl(340, 70%, 55%), hsl(10, 70%, 60%))",
+  },
+  photo: {
+    label: "Photo",
+    icon: ImageIcon,
+    color: "hsl(35, 90%, 50%)",
+    gradient: "linear-gradient(135deg, hsl(35, 90%, 50%), hsl(45, 80%, 55%))",
+  },
 };
 
 const ServicesPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [activeCategory, setActiveCategory] = useState("all");
   const [selectedService, setSelectedService] = useState<any>(null);
   const [payMode, setPayMode] = useState<"credits" | "fiat">("credits");
   const [cardProcessing, setCardProcessing] = useState(false);
 
   const { data: services, isLoading } = useQuery({
-    queryKey: ["rhozeland-services", activeCategory],
+    queryKey: ["rhozeland-services"],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("services")
         .select("*")
         .eq("is_active", true)
         .order("category")
         .order("credits_cost", { ascending: true });
-
-      if (activeCategory !== "all") {
-        query = query.eq("category", activeCategory);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
       return data ?? [];
     },
@@ -87,33 +97,37 @@ const ServicesPage = () => {
     enabled: !!user,
   });
 
-  const creditRatePerHour = (service: any) => {
-    if (!service?.duration_hours || service.duration_hours <= 0) return service?.credits_cost ?? 0;
-    return Number(service.credits_cost) / Number(service.duration_hours);
-  };
+  // Group services by category
+  const grouped = (services ?? []).reduce<Record<string, any[]>>((acc, s) => {
+    (acc[s.category] = acc[s.category] || []).push(s);
+    return acc;
+  }, {});
+
+  const categoryOrder = ["audio", "design", "video", "photo"];
+  const sortedCategories = categoryOrder.filter((c) => grouped[c]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">
-            Rhozeland Services
+          <h1 className="font-display text-4xl font-bold text-foreground tracking-tight">
+            Studio Services
           </h1>
-          <p className="text-muted-foreground">
-            Studio time, production, design & strategy — powered by credits
+          <p className="text-muted-foreground mt-1">
+            Book sessions, get creative — powered by credits or card
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-xl bg-card border border-border px-4 py-2">
+          <div className="flex items-center gap-2 rounded-full bg-card border border-border px-5 py-2.5 shadow-sm">
             <Coins className="h-4 w-4 text-primary" />
-            <span className="font-display font-bold text-foreground">
+            <span className="font-display font-bold text-lg text-foreground">
               {userCredits?.balance ?? 0}
             </span>
             <span className="text-xs text-muted-foreground">credits</span>
           </div>
           <Link to="/credits">
-            <Button size="sm" variant="outline">
+            <Button size="sm" variant="outline" className="rounded-full">
               <ShoppingCart className="mr-1.5 h-3.5 w-3.5" />
               Get Credits
             </Button>
@@ -121,176 +135,224 @@ const ServicesPage = () => {
         </div>
       </div>
 
-      {/* Category filters */}
-      <div className="flex flex-wrap gap-2">
-        {CATEGORIES.map((cat) => {
-          const Icon = cat.icon;
-          const isActive = activeCategory === cat.key;
-          return (
-            <button
-              key={cat.key}
-              onClick={() => setActiveCategory(cat.key)}
-              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {cat.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Services grid */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="surface-card animate-pulse h-56 rounded-xl" />
+      {/* Loading skeleton */}
+      {isLoading && (
+        <div className="space-y-8">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="space-y-3">
+              <div className="h-8 w-32 bg-muted animate-pulse rounded-lg" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {[1, 2, 3].map((j) => (
+                  <div key={j} className="h-28 bg-muted animate-pulse rounded-xl" />
+                ))}
+              </div>
+            </div>
           ))}
-        </div>
-      ) : !services || services.length === 0 ? (
-        <div className="surface-card flex flex-col items-center justify-center py-20">
-          <Sparkles className="mb-3 h-10 w-10 text-muted-foreground" />
-          <p className="text-muted-foreground">No services available in this category.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {services.map((service: any, i: number) => {
-            const color = categoryColors[service.category] ?? "hsl(var(--primary))";
-            const rate = creditRatePerHour(service);
-            return (
-              <motion.div
-                key={service.id}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
-                className="surface-card group relative overflow-hidden cursor-pointer transition-all hover:shadow-md"
-                onClick={() => setSelectedService(service)}
-              >
-                {/* Color accent */}
-                <div className="h-1.5" style={{ backgroundColor: color }} />
-                <div className="p-5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Badge variant="secondary" className="text-xs capitalize">
-                      {service.category}
-                    </Badge>
-                    <div className="flex items-center gap-1 text-primary font-display font-bold">
-                      <Coins className="h-3.5 w-3.5" />
-                      {Number(rate).toFixed(rate % 1 === 0 ? 0 : 1)} cr/hr
-                    </div>
-                  </div>
-
-                  <h3 className="font-display font-semibold text-foreground leading-snug">
-                    {service.title}
-                  </h3>
-
-                  {service.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {service.description}
-                    </p>
-                  )}
-
-                  <div className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Coins className="h-3 w-3" />
-                      Drag to book any duration
-                    </span>
-                    {service.non_member_rate && (
-                      <span className="flex items-center gap-0.5">
-                        <DollarSign className="h-3 w-3" />
-                        {service.non_member_rate}/hr non-member
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
         </div>
       )}
 
-      {/* Service detail dialog */}
-      <Dialog open={!!selectedService} onOpenChange={(open) => { if (!open) { setSelectedService(null); setPayMode("credits"); } }}>
-        <DialogContent className="sm:max-w-lg">
-          {selectedService && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="font-display text-xl">
-                  {selectedService.title}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <Badge variant="secondary" className="capitalize">
-                    {selectedService.category}
-                  </Badge>
-                </div>
+      {/* Empty state */}
+      {!isLoading && sortedCategories.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <Sparkles className="mb-3 h-10 w-10 text-muted-foreground" />
+          <p className="text-muted-foreground">No services available yet.</p>
+        </div>
+      )}
 
-                {selectedService.description && (
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {selectedService.description}
-                  </p>
-                )}
+      {/* Category sections — studio menu board */}
+      {sortedCategories.map((catKey, catIndex) => {
+        const meta = CATEGORY_META[catKey] || {
+          label: catKey,
+          icon: Sparkles,
+          color: "hsl(var(--primary))",
+          gradient: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))",
+        };
+        const CatIcon = meta.icon;
+        const items = grouped[catKey];
 
-                {/* Pricing info — rate-based */}
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setPayMode("credits")}
-                    className={`rounded-xl p-4 text-center transition-all border ${
-                      payMode === "credits"
-                        ? "bg-primary/10 border-primary/40 ring-2 ring-primary/20"
-                        : "bg-muted border-border hover:border-primary/20"
-                    }`}
-                  >
-                    <div className="flex items-center justify-center gap-1 text-primary font-display text-2xl font-bold">
-                      <Coins className="h-5 w-5" />
-                      {Number(creditRatePerHour(selectedService)).toFixed(
-                        creditRatePerHour(selectedService) % 1 === 0 ? 0 : 1
+        return (
+          <motion.section
+            key={catKey}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: catIndex * 0.08 }}
+          >
+            {/* Category header */}
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-md"
+                style={{ background: meta.gradient }}
+              >
+                <CatIcon className="h-5 w-5" />
+              </div>
+              <h2 className="font-display text-2xl font-bold text-foreground tracking-tight">
+                {meta.label}
+              </h2>
+              <div
+                className="flex-1 h-[2px] rounded-full ml-2"
+                style={{ background: `linear-gradient(to right, ${meta.color}, transparent)` }}
+              />
+            </div>
+
+            {/* Service items */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {items.map((service: any, i: number) => (
+                <motion.button
+                  key={service.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: catIndex * 0.08 + i * 0.03 }}
+                  onClick={() => { setSelectedService(service); setPayMode("credits"); }}
+                  className="group relative text-left rounded-xl border border-border bg-card p-5 transition-all hover:shadow-lg hover:border-transparent hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  style={{
+                    borderTopColor: meta.color,
+                    borderTopWidth: "3px",
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-display font-semibold text-foreground leading-snug text-[15px]">
+                        {service.title}
+                      </h3>
+                      {service.description && (
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                          {service.description}
+                        </p>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">Credits / hour</p>
-                  </button>
-                  <button
-                    onClick={() => setPayMode("fiat")}
-                    className={`rounded-xl p-4 text-center transition-all border ${
-                      payMode === "fiat"
-                        ? "bg-primary/10 border-primary/40 ring-2 ring-primary/20"
-                        : "bg-muted border-border hover:border-primary/20"
-                    }`}
-                  >
-                    <div className="font-display text-2xl font-bold text-foreground">
-                      ${selectedService.non_member_rate ?? "N/A"}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">Pay with Card / hr</p>
-                  </button>
-                </div>
 
-                {selectedService.revisions_info && (
-                  <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3">
-                    <Info className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                    {/* Credit badge */}
+                    <div className="shrink-0 flex flex-col items-end gap-1">
+                      <div
+                        className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-white text-xs font-bold shadow-sm"
+                        style={{ background: meta.gradient }}
+                      >
+                        <Coins className="h-3 w-3" />
+                        {service.credits_cost} cr
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer meta */}
+                  <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border/50">
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      up to {service.duration_hours}h
+                    </span>
+                    {service.non_member_rate && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <DollarSign className="h-3 w-3" />
+                        ${service.non_member_rate} card
+                      </span>
+                    )}
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          </motion.section>
+        );
+      })}
+
+      {/* Service detail dialog */}
+      <Dialog
+        open={!!selectedService}
+        onOpenChange={(open) => {
+          if (!open) { setSelectedService(null); setPayMode("credits"); }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          {selectedService && (() => {
+            const meta = CATEGORY_META[selectedService.category] || CATEGORY_META.audio;
+            return (
+              <>
+                {/* Color bar */}
+                <div
+                  className="absolute top-0 left-0 right-0 h-1.5 rounded-t-lg"
+                  style={{ background: meta.gradient }}
+                />
+
+                <DialogHeader className="pt-2">
+                  <DialogTitle className="font-display text-xl tracking-tight">
+                    {selectedService.title}
+                  </DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-4">
+                  <Badge
+                    className="capitalize text-white border-0"
+                    style={{ background: meta.color }}
+                  >
+                    {selectedService.category}
+                  </Badge>
+
+                  {selectedService.description && (
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {selectedService.description}
+                    </p>
+                  )}
+
+                  {/* Pricing toggle cards */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => setPayMode("credits")}
+                      className={`rounded-xl p-4 text-center transition-all border-2 ${
+                        payMode === "credits"
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-border bg-card hover:border-muted-foreground/20"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-1.5 font-display text-2xl font-bold" style={{ color: meta.color }}>
+                        <Coins className="h-5 w-5" />
+                        {selectedService.credits_cost}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        credits · up to {selectedService.duration_hours}h
+                      </p>
+                    </button>
+
+                    <button
+                      onClick={() => setPayMode("fiat")}
+                      className={`rounded-xl p-4 text-center transition-all border-2 ${
+                        payMode === "fiat"
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-border bg-card hover:border-muted-foreground/20"
+                      }`}
+                    >
+                      <div className="font-display text-2xl font-bold text-foreground">
+                        ${selectedService.non_member_rate ?? "—"}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">pay with card</p>
+                    </button>
+                  </div>
+
+                  {/* Session info */}
+                  <div className="flex items-center gap-2 rounded-lg bg-muted/60 p-3">
+                    <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
                     <p className="text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground">Revisions: </span>
-                      {selectedService.revisions_info}
+                      This session unlocks up to <strong className="text-foreground">{selectedService.duration_hours} hours</strong> of studio time. Drag on the calendar to claim your slot.
                     </p>
                   </div>
-                )}
 
-                {/* Credits path → calendar drag */}
-                {payMode === "credits" && (
-                  <>
-                    <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3">
-                      <CalendarDays className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                  {selectedService.revisions_info && (
+                    <div className="flex items-start gap-2 rounded-lg bg-muted/60 p-3">
+                      <Info className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                       <p className="text-xs text-muted-foreground">
-                        Drag across the calendar to book exactly the time you need — credits are calculated based on your selected duration.
+                        <span className="font-medium text-foreground">Revisions: </span>
+                        {selectedService.revisions_info}
                       </p>
                     </div>
-                    <div className="flex gap-2 pt-2">
-                      <Button className="flex-1" onClick={() => {
-                        setSelectedService(null);
-                        navigate(`/bookings?service=${selectedService.id}`);
-                      }}>
+                  )}
+
+                  {/* Credits path */}
+                  {payMode === "credits" && (
+                    <div className="flex gap-2 pt-1">
+                      <Button
+                        className="flex-1"
+                        onClick={() => {
+                          setSelectedService(null);
+                          navigate(`/bookings?service=${selectedService.id}`);
+                        }}
+                      >
                         <CalendarDays className="mr-1.5 h-4 w-4" />
                         Book on Calendar
                       </Button>
@@ -301,51 +363,52 @@ const ServicesPage = () => {
                         </Button>
                       </Link>
                     </div>
-                  </>
-                )}
+                  )}
 
-                {/* Fiat path → Square card form */}
-                {payMode === "fiat" && selectedService.non_member_rate && (
-                  <>
-                    <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3">
-                      <CreditCard className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                      <p className="text-xs text-muted-foreground">
-                        Pay ${selectedService.non_member_rate}/hr with a card. After payment, you'll select your session time on the calendar.
-                      </p>
-                    </div>
-                    <SquareCardForm
-                      amount={selectedService.non_member_rate}
-                      disabled={cardProcessing}
-                      onTokenize={async (token) => {
-                        setCardProcessing(true);
-                        try {
-                          const { data, error } = await supabase.functions.invoke("square-payment", {
-                            body: {
-                              amount_cents: Math.round(selectedService.non_member_rate * 100),
-                              currency: "USD",
-                              description: `Rhozeland: ${selectedService.title} (1hr)`,
-                              source_id: token,
-                              location_id: SQUARE_LOCATION_ID,
-                            },
-                          });
-                          if (error) throw error;
-                          if (!data?.success) throw new Error(data?.error || "Payment failed");
-                          toast.success("Payment successful! Redirecting to calendar...");
-                          setSelectedService(null);
-                          setPayMode("credits");
-                          navigate(`/bookings?service=${selectedService.id}`);
-                        } catch (err: any) {
-                          toast.error(err.message || "Payment failed");
-                        } finally {
-                          setCardProcessing(false);
-                        }
-                      }}
-                    />
-                  </>
-                )}
-              </div>
-            </>
-          )}
+                  {/* Fiat path */}
+                  {payMode === "fiat" && selectedService.non_member_rate && (
+                    <>
+                      <div className="flex items-start gap-2 rounded-lg bg-muted/60 p-3">
+                        <CreditCard className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                        <p className="text-xs text-muted-foreground">
+                          Pay <strong className="text-foreground">${selectedService.non_member_rate}</strong> with card, then pick your time on the calendar.
+                        </p>
+                      </div>
+                      <SquareCardForm
+                        amount={selectedService.non_member_rate}
+                        disabled={cardProcessing}
+                        onTokenize={async (token) => {
+                          setCardProcessing(true);
+                          try {
+                            const { data, error } = await supabase.functions.invoke("square-payment", {
+                              body: {
+                                amount_cents: Math.round(selectedService.non_member_rate * 100),
+                                currency: "USD",
+                                description: `Rhozeland: ${selectedService.title}`,
+                                source_id: token,
+                                location_id: SQUARE_LOCATION_ID,
+                              },
+                            });
+                            if (error) throw error;
+                            if (!data?.success) throw new Error(data?.error || "Payment failed");
+                            toast.success("Payment successful! Redirecting to calendar...");
+                            const serviceId = selectedService.id;
+                            setSelectedService(null);
+                            setPayMode("credits");
+                            navigate(`/bookings?service=${serviceId}`);
+                          } catch (err: any) {
+                            toast.error(err.message || "Payment failed");
+                          } finally {
+                            setCardProcessing(false);
+                          }
+                        }}
+                      />
+                    </>
+                  )}
+                </div>
+              </>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>

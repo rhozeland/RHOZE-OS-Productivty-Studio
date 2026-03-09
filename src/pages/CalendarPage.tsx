@@ -295,11 +295,10 @@ const CalendarPage = () => {
     [services, selectedService]
   );
 
-  const creditRatePerHour = selectedServiceObj
-    ? Number(selectedServiceObj.credits_cost) / Math.max(Number(selectedServiceObj.duration_hours), 1)
-    : 0;
-
-  const estimatedCredits = Math.round(selectedDuration * creditRatePerHour * 100) / 100;
+  // Fixed credit model: credits_cost is the flat session price,
+  // duration_hours is the max time that credit unlocks
+  const maxDragHours = selectedServiceObj ? Number(selectedServiceObj.duration_hours) : 24;
+  const isOverMax = selectedDuration > maxDragHours;
 
   return (
     <div className="space-y-6">
@@ -312,7 +311,7 @@ const CalendarPage = () => {
               Booking: {selectedServiceObj.title}
             </p>
             <p className="text-xs text-muted-foreground">
-              {creditRatePerHour.toFixed(creditRatePerHour % 1 === 0 ? 0 : 1)} credits/hr — drag across the week view to select your session time
+              {selectedServiceObj.credits_cost} credits · up to {selectedServiceObj.duration_hours}h — drag across the week view to claim your slot
             </p>
           </div>
         </div>
@@ -632,28 +631,28 @@ const CalendarPage = () => {
               <Select value={selectedService} onValueChange={setSelectedService}>
                 <SelectTrigger><SelectValue placeholder="Select a service" /></SelectTrigger>
                 <SelectContent>
-                  {services?.map((s) => {
-                    const rate = Number(s.credits_cost) / Math.max(Number(s.duration_hours), 1);
-                    return (
+                  {services?.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
-                        {s.title} — {rate.toFixed(rate % 1 === 0 ? 0 : 1)} cr/hr
+                        {s.title} — {s.credits_cost} cr · up to {s.duration_hours}h
                       </SelectItem>
-                    );
-                  })}
+                    ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Dynamic credit calculation */}
+            {/* Fixed credit + duration info */}
             {selectedServiceObj && selectedDuration > 0 && (
-              <div className="rounded-xl bg-primary/10 border border-primary/20 p-4">
+              <div className={`rounded-xl border p-4 ${isOverMax ? "bg-destructive/10 border-destructive/30" : "bg-primary/10 border-primary/20"}`}>
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-muted-foreground">
-                    {selectedDuration}hr × {creditRatePerHour.toFixed(creditRatePerHour % 1 === 0 ? 0 : 1)} cr/hr
+                    {selectedDuration}h selected
+                    {isOverMax && (
+                      <span className="text-destructive font-medium"> (max {maxDragHours}h)</span>
+                    )}
                   </div>
                   <div className="flex items-center gap-1 text-primary font-display text-xl font-bold">
                     <Coins className="h-4 w-4" />
-                    {estimatedCredits.toFixed(estimatedCredits % 1 === 0 ? 0 : 1)} credits
+                    {selectedServiceObj.credits_cost} credits
                   </div>
                 </div>
               </div>
@@ -664,9 +663,9 @@ const CalendarPage = () => {
               <Textarea placeholder="What is the project about?" value={bookingNotes} onChange={(e) => setBookingNotes(e.target.value)} rows={3} />
             </div>
 
-            <Button className="w-full" onClick={() => createBooking.mutate()} disabled={!selectedService || createBooking.isPending}>
-              {selectedServiceObj && estimatedCredits > 0
-                ? `Book Session · ${estimatedCredits.toFixed(estimatedCredits % 1 === 0 ? 0 : 1)} credits`
+            <Button className="w-full" onClick={() => createBooking.mutate()} disabled={!selectedService || createBooking.isPending || isOverMax}>
+              {selectedServiceObj
+                ? `Book Session · ${selectedServiceObj.credits_cost} credits`
                 : "Book Session"
               }
             </Button>
