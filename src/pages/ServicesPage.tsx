@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
@@ -22,9 +23,9 @@ import {
   DollarSign,
   Info,
   ShoppingCart,
+  CalendarDays,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import BookingCheckoutModal from "@/components/booking/BookingCheckoutModal";
 
 const CATEGORIES = [
   { key: "all", label: "All Services", icon: Sparkles },
@@ -43,9 +44,9 @@ const categoryColors: Record<string, string> = {
 
 const ServicesPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedService, setSelectedService] = useState<any>(null);
-  const [checkoutService, setCheckoutService] = useState<any>(null);
 
   const { data: services, isLoading } = useQuery({
     queryKey: ["rhozeland-services", activeCategory],
@@ -79,6 +80,11 @@ const ServicesPage = () => {
     },
     enabled: !!user,
   });
+
+  const creditRatePerHour = (service: any) => {
+    if (!service?.duration_hours || service.duration_hours <= 0) return service?.credits_cost ?? 0;
+    return Number(service.credits_cost) / Number(service.duration_hours);
+  };
 
   return (
     <div className="space-y-6">
@@ -147,6 +153,7 @@ const ServicesPage = () => {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {services.map((service: any, i: number) => {
             const color = categoryColors[service.category] ?? "hsl(var(--primary))";
+            const rate = creditRatePerHour(service);
             return (
               <motion.div
                 key={service.id}
@@ -165,7 +172,7 @@ const ServicesPage = () => {
                     </Badge>
                     <div className="flex items-center gap-1 text-primary font-display font-bold">
                       <Coins className="h-3.5 w-3.5" />
-                      {service.credits_cost} cr
+                      {Number(rate).toFixed(rate % 1 === 0 ? 0 : 1)} cr/hr
                     </div>
                   </div>
 
@@ -181,13 +188,13 @@ const ServicesPage = () => {
 
                   <div className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {service.duration_hours} hr{service.duration_hours > 1 ? "s" : ""}
+                      <Coins className="h-3 w-3" />
+                      Drag to book any duration
                     </span>
                     {service.non_member_rate && (
                       <span className="flex items-center gap-0.5">
                         <DollarSign className="h-3 w-3" />
-                        {service.non_member_rate} non-member
+                        {service.non_member_rate}/hr non-member
                       </span>
                     )}
                   </div>
@@ -213,10 +220,6 @@ const ServicesPage = () => {
                   <Badge variant="secondary" className="capitalize">
                     {selectedService.category}
                   </Badge>
-                  <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Clock className="h-3.5 w-3.5" />
-                    {selectedService.duration_hours} hour{selectedService.duration_hours > 1 ? "s" : ""}
-                  </span>
                 </div>
 
                 {selectedService.description && (
@@ -225,21 +228,30 @@ const ServicesPage = () => {
                   </p>
                 )}
 
-                {/* Pricing info */}
+                {/* Pricing info — rate-based */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-xl bg-primary/10 border border-primary/20 p-4 text-center">
                     <div className="flex items-center justify-center gap-1 text-primary font-display text-2xl font-bold">
                       <Coins className="h-5 w-5" />
-                      {selectedService.credits_cost}
+                      {Number(creditRatePerHour(selectedService)).toFixed(
+                        creditRatePerHour(selectedService) % 1 === 0 ? 0 : 1
+                      )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">Credits</p>
+                    <p className="text-xs text-muted-foreground mt-1">Credits / hour</p>
                   </div>
                   <div className="rounded-xl bg-muted border border-border p-4 text-center">
                     <div className="font-display text-2xl font-bold text-foreground">
                       ${selectedService.non_member_rate ?? "N/A"}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">Non-member</p>
+                    <p className="text-xs text-muted-foreground mt-1">Non-member / hr</p>
                   </div>
+                </div>
+
+                <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3">
+                  <CalendarDays className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <p className="text-xs text-muted-foreground">
+                    Drag across the calendar to book exactly the time you need — credits are calculated based on your selected duration.
+                  </p>
                 </div>
 
                 {selectedService.revisions_info && (
@@ -254,10 +266,11 @@ const ServicesPage = () => {
 
                 <div className="flex gap-2 pt-2">
                   <Button className="flex-1" onClick={() => {
-                    setCheckoutService(selectedService);
                     setSelectedService(null);
+                    navigate(`/bookings?service=${selectedService.id}`);
                   }}>
-                    Book Service
+                    <CalendarDays className="mr-1.5 h-4 w-4" />
+                    Book on Calendar
                   </Button>
                   <Link to="/credits">
                     <Button variant="outline">
@@ -271,13 +284,6 @@ const ServicesPage = () => {
           )}
         </DialogContent>
       </Dialog>
-
-      <BookingCheckoutModal
-        open={!!checkoutService}
-        onOpenChange={(open) => { if (!open) setCheckoutService(null); }}
-        service={checkoutService}
-        userCredits={userCredits?.balance ?? 0}
-      />
     </div>
   );
 };
