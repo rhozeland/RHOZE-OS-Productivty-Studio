@@ -57,7 +57,7 @@ const AppSidebar = () => {
     ? [...navItems, { icon: ShieldCheck, label: "Admin", path: "/admin" }]
     : navItems;
 
-  const currentLogo = theme === "dark" ? logoWhite : logoColor;
+  const currentLogo = rhozelandLogo;
 
   const handleNavClick = () => {
     if (isMobile) setOpenMobile(false);
