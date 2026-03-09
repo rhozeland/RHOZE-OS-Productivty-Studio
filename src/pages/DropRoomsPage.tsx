@@ -284,10 +284,16 @@ const DropRoomsPage = () => {
                     <h3 className="font-semibold text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors">
                       {room.title}
                     </h3>
-                    <Badge variant="outline" className={`shrink-0 capitalize text-xs ${CATEGORY_COLORS[room.category] || ""}`}>
-                      {room.category}
-                    </Badge>
-                  </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {(room as any).enable_video && (
+                        <Badge variant="secondary" className="text-[10px] gap-1 py-0">
+                          <Video className="h-2.5 w-2.5" /> Live
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className={`capitalize text-xs ${CATEGORY_COLORS[room.category] || ""}`}>
+                        {room.category}
+                      </Badge>
+                    </div>
                   {room.description && (
                     <p className="text-sm text-muted-foreground line-clamp-2">{room.description}</p>
                   )}
