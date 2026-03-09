@@ -71,7 +71,7 @@ const AppSidebar = () => {
       )}>
         <img
           src={currentLogo}
-          alt="Toybox"
+          alt="Rhozeland"
           className="h-8 w-8 shrink-0 object-contain"
         />
         {!collapsed && (
