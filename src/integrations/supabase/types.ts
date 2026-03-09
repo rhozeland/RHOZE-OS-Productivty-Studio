@@ -908,6 +908,45 @@ export type Database = {
           },
         ]
       }
+      project_smartboards: {
+        Row: {
+          created_at: string
+          id: string
+          linked_by: string
+          project_id: string
+          smartboard_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          linked_by: string
+          project_id: string
+          smartboard_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          linked_by?: string
+          project_id?: string
+          smartboard_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_smartboards_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_smartboards_smartboard_id_fkey"
+            columns: ["smartboard_id"]
+            isOneToOne: false
+            referencedRelation: "smartboards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           cover_color: string | null
