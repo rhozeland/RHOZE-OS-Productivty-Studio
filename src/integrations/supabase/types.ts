@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          created_at: string
+          duration_hours: number
+          end_time: string
+          id: string
+          notes: string | null
+          service_id: string | null
+          start_time: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_hours?: number
+          end_time: string
+          id?: string
+          notes?: string | null
+          service_id?: string | null
+          start_time: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_hours?: number
+          end_time?: string
+          id?: string
+          notes?: string | null
+          service_id?: string | null
+          start_time?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_events: {
         Row: {
           color: string | null
@@ -409,6 +459,51 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      services: {
+        Row: {
+          category: string
+          created_at: string
+          credits_cost: number
+          description: string | null
+          duration_hours: number
+          id: string
+          image_url: string | null
+          is_active: boolean
+          non_member_rate: number | null
+          revisions_info: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          credits_cost?: number
+          description?: string | null
+          duration_hours?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          non_member_rate?: number | null
+          revisions_info?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          credits_cost?: number
+          description?: string | null
+          duration_hours?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          non_member_rate?: number | null
+          revisions_info?: string | null
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }

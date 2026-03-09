@@ -17,7 +17,7 @@ import { Link } from "react-router-dom";
 const quickLinks = [
   { icon: User, label: "MY PROFILE", path: "/profiles", delay: 0 },
   { icon: Star, label: "RHOZELAND\nSERVICES", path: "/marketplace", delay: 0.05 },
-  { icon: RefreshCw, label: "MY BOOKINGS", path: "/calendar", delay: 0.1 },
+  { icon: RefreshCw, label: "MY BOOKINGS", path: "/bookings", delay: 0.1 },
   { icon: Network, label: "NETWORK", path: "/messages", delay: 0.15 },
 ];
 
