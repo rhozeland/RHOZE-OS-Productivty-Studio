@@ -290,6 +290,17 @@ const CalendarPage = () => {
     ? Math.abs(dragEndHour - dragStartHour) + 1
     : 0;
 
+  const selectedServiceObj = useMemo(
+    () => services?.find((s) => s.id === selectedService),
+    [services, selectedService]
+  );
+
+  const creditRatePerHour = selectedServiceObj
+    ? Number(selectedServiceObj.credits_cost) / Math.max(Number(selectedServiceObj.duration_hours), 1)
+    : 0;
+
+  const estimatedCredits = Math.round(selectedDuration * creditRatePerHour * 100) / 100;
+
   return (
     <div className="space-y-6">
       {/* Header */}
