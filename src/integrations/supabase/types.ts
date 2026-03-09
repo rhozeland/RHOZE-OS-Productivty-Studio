@@ -174,6 +174,60 @@ export type Database = {
         }
         Relationships: []
       }
+      escrow_transactions: {
+        Row: {
+          amount: number
+          contract_id: string
+          created_at: string
+          description: string | null
+          from_user_id: string
+          id: string
+          milestone_id: string | null
+          status: string
+          to_user_id: string | null
+          type: string
+        }
+        Insert: {
+          amount: number
+          contract_id: string
+          created_at?: string
+          description?: string | null
+          from_user_id: string
+          id?: string
+          milestone_id?: string | null
+          status?: string
+          to_user_id?: string | null
+          type?: string
+        }
+        Update: {
+          amount?: number
+          contract_id?: string
+          created_at?: string
+          description?: string | null
+          from_user_id?: string
+          id?: string
+          milestone_id?: string | null
+          status?: string
+          to_user_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escrow_transactions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "project_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escrow_transactions_milestone_id_fkey"
+            columns: ["milestone_id"]
+            isOneToOne: false
+            referencedRelation: "project_milestones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flow_interactions: {
         Row: {
           action: string
@@ -454,6 +508,69 @@ export type Database = {
           },
         ]
       }
+      project_contracts: {
+        Row: {
+          auto_release_days: number
+          client_id: string
+          created_at: string
+          escrowed_credits: number
+          id: string
+          listing_id: string | null
+          notes: string | null
+          project_id: string
+          released_credits: number
+          specialist_id: string
+          status: string
+          total_credits: number
+          updated_at: string
+        }
+        Insert: {
+          auto_release_days?: number
+          client_id: string
+          created_at?: string
+          escrowed_credits?: number
+          id?: string
+          listing_id?: string | null
+          notes?: string | null
+          project_id: string
+          released_credits?: number
+          specialist_id: string
+          status?: string
+          total_credits?: number
+          updated_at?: string
+        }
+        Update: {
+          auto_release_days?: number
+          client_id?: string
+          created_at?: string
+          escrowed_credits?: number
+          id?: string
+          listing_id?: string | null
+          notes?: string | null
+          project_id?: string
+          released_credits?: number
+          specialist_id?: string
+          status?: string
+          total_credits?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_contracts_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_contracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_goals: {
         Row: {
           completed_at: string | null
@@ -503,6 +620,65 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_milestones: {
+        Row: {
+          approved_at: string | null
+          auto_release_at: string | null
+          contract_id: string
+          created_at: string
+          credit_amount: number
+          description: string | null
+          due_date: string | null
+          id: string
+          proposed_by: string
+          sort_order: number
+          status: string
+          submitted_at: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          auto_release_at?: string | null
+          contract_id: string
+          created_at?: string
+          credit_amount?: number
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          proposed_by: string
+          sort_order?: number
+          status?: string
+          submitted_at?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          auto_release_at?: string | null
+          contract_id?: string
+          created_at?: string
+          credit_amount?: number
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          proposed_by?: string
+          sort_order?: number
+          status?: string
+          submitted_at?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_milestones_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "project_contracts"
             referencedColumns: ["id"]
           },
         ]
@@ -867,6 +1043,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_contract_party: {
+        Args: { _contract_id: string; _user_id: string }
         Returns: boolean
       }
     }
