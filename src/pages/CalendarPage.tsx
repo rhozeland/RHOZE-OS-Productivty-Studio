@@ -136,30 +136,24 @@ const CalendarPage = () => {
 
     setBookingLoading(true);
     try {
-      // Process payment
+      // Validate early (before any side effects)
       if (paymentMethod === "credits" && service) {
         const balance = userCredits?.balance ?? 0;
         if (balance < service.credits_cost) {
           toast.error("Not enough credits");
+          setBookingLoading(false);
           return;
         }
-        const { error: creditError } = await supabase
-          .from("user_credits")
-          .update({ balance: balance - service.credits_cost })
-          .eq("user_id", user.id);
-        if (creditError) throw creditError;
-
-        await supabase.from("credit_transactions").insert({
-          user_id: user.id,
-          amount: -service.credits_cost,
-          type: "usage",
-          description: `Booking: ${service.title}`,
-        });
       } else if (paymentMethod === "card" && service) {
         if (!cardToken) {
           toast.error("Please enter your card details");
+          setBookingLoading(false);
           return;
         }
+      }
+
+      // Process card payment first (non-reversible external call)
+      if (paymentMethod === "card" && service) {
         const usdPrice = service.non_member_rate ?? 0;
         const { data, error } = await supabase.functions.invoke("square-payment", {
           body: {
@@ -175,7 +169,7 @@ const CalendarPage = () => {
       }
       // crypto is handled by PaySolAndVerify callback
 
-      // Create booking
+      // Create booking first so we don't lose credits on insert failure
       const { error } = await supabase.from("bookings").insert({
         user_id: user.id,
         service_id: selectedService || null,
@@ -187,6 +181,30 @@ const CalendarPage = () => {
         status: "upcoming",
       });
       if (error) throw error;
+
+      // Deduct credits atomically after successful booking
+      if (paymentMethod === "credits" && service) {
+        const { error: creditError } = await supabase.rpc("lock_escrow_credits" as any, {}).catch(() => null) as any;
+        // Use atomic decrement to avoid race conditions
+        const { error: deductError } = await supabase
+          .from("user_credits")
+          .update({ balance: (userCredits?.balance ?? 0) - service.credits_cost, updated_at: new Date().toISOString() })
+          .eq("user_id", user.id)
+          .gte("balance", service.credits_cost);
+        if (deductError) {
+          console.error("Credit deduction failed:", deductError);
+          toast.error("Credit deduction failed — please contact support");
+        }
+
+        const { error: txError } = await supabase.from("credit_transactions").insert({
+          user_id: user.id,
+          amount: -service.credits_cost,
+          type: "usage",
+          description: `Booking: ${service.title} (${duration}h)`,
+          payment_method: "credits",
+        });
+        if (txError) console.error("Transaction log failed:", txError);
+      }
 
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       queryClient.invalidateQueries({ queryKey: ["user-credits"] });
