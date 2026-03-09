@@ -14,6 +14,7 @@ import {
   Briefcase,
   Coins,
   ShieldCheck,
+  ShoppingBag,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
