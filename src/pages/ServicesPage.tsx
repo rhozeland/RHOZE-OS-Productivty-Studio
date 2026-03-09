@@ -69,6 +69,7 @@ const ServicesPage = () => {
   const [selectedService, setSelectedService] = useState<any>(null);
   const [payMode, setPayMode] = useState<"credits" | "fiat">("credits");
   const [cardProcessing, setCardProcessing] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string>("all");
 
   const { data: services, isLoading } = useQuery({
     queryKey: ["rhozeland-services"],
@@ -105,6 +106,7 @@ const ServicesPage = () => {
 
   const categoryOrder = ["audio", "design", "video", "photo"];
   const sortedCategories = categoryOrder.filter((c) => grouped[c]);
+  const visibleCategories = activeCategory === "all" ? sortedCategories : sortedCategories.filter((c) => c === activeCategory);
 
   return (
     <div className="space-y-8">
