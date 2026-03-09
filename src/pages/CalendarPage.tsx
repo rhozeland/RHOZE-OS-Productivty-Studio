@@ -698,7 +698,6 @@ const CalendarPage = () => {
                       onTouchMove={handleTouchMove}
                       onTouchEnd={handleTouchEnd}
                     >
-                    >
                       {/* Booked indicator stripe */}
                       {booked && !booking && (
                         <div className="absolute inset-0 flex items-center justify-center">
