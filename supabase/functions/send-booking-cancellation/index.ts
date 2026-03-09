@@ -175,7 +175,27 @@ function buildCancellationHtml(data: {
                       </tr>
                     </table>
                   </td>
+          </tr>
+
+          ${data.credits_refunded > 0 ? `
+          <!-- Refund Notice -->
+          <tr>
+            <td style="padding-top:20px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:hsl(175,60%,95%);border:1px solid hsl(175,60%,80%);border-radius:12px;">
+                <tr>
+                  <td style="padding:16px 24px;text-align:center;">
+                    <p style="margin:0;font-size:15px;font-weight:600;color:hsl(175,60%,30%);">
+                      💰 ${data.credits_refunded} credit${data.credits_refunded !== 1 ? 's' : ''} refunded to your balance
+                    </p>
+                    <p style="margin:6px 0 0;font-size:13px;color:${muted};">
+                      Your credits have been automatically returned and are available immediately.
+                    </p>
+                  </td>
                 </tr>
+              </table>
+            </td>
+          </tr>
+          ` : ''}
               </table>
             </td>
           </tr>
