@@ -174,6 +174,118 @@ export type Database = {
         }
         Relationships: []
       }
+      drop_room_members: {
+        Row: {
+          id: string
+          joined_at: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drop_room_members_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "drop_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drop_room_posts: {
+        Row: {
+          content: string
+          created_at: string
+          file_url: string | null
+          id: string
+          post_type: string
+          room_id: string
+          upvotes: number
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          post_type?: string
+          room_id: string
+          upvotes?: number
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          post_type?: string
+          room_id?: string
+          upvotes?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drop_room_posts_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "drop_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drop_rooms: {
+        Row: {
+          category: string
+          cover_color: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          expires_at: string
+          id: string
+          is_active: boolean
+          max_members: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          cover_color?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          expires_at: string
+          id?: string
+          is_active?: boolean
+          max_members?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          cover_color?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          max_members?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       escrow_transactions: {
         Row: {
           amount: number
