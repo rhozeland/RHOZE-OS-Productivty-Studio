@@ -1053,6 +1053,10 @@ export type Database = {
         Args: { _amount: number; _client_id: string; _contract_id: string }
         Returns: undefined
       }
+      release_milestone_credits: {
+        Args: { _approver_id: string; _milestone_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

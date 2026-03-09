@@ -14,6 +14,7 @@ import GoalsList from "@/components/project/GoalsList";
 import ProgressChart from "@/components/project/ProgressChart";
 import Timeline from "@/components/project/Timeline";
 import Collaborators from "@/components/project/Collaborators";
+import MilestoneTracker from "@/components/project/MilestoneTracker";
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -54,6 +55,19 @@ const ProjectDetailPage = () => {
     queryKey: ["moodboard", id],
     queryFn: async () => {
       const { data, error } = await supabase.from("moodboard_items").select("*").eq("project_id", id!).order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: contract } = useQuery({
+    queryKey: ["project-contract", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_contracts")
+        .select("*")
+        .eq("project_id", id!)
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -138,6 +152,7 @@ const ProjectDetailPage = () => {
         <TabsList className="mb-4">
           <TabsTrigger value="roadmap">Roadmap</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
+          {contract && <TabsTrigger value="milestones">Milestones</TabsTrigger>}
           <TabsTrigger value="moodboard">Moodboard</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
         </TabsList>
@@ -148,6 +163,12 @@ const ProjectDetailPage = () => {
             <Timeline goals={goals} />
           </div>
         </TabsContent>
+
+        {contract && (
+          <TabsContent value="milestones">
+            <MilestoneTracker contractId={contract.id} />
+          </TabsContent>
+        )}
 
         <TabsContent value="tasks">
           <div className="surface-card p-6">
