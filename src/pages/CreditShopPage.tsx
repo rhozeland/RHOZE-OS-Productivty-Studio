@@ -15,9 +15,10 @@ import {
 } from "@/components/ui/dialog";
 import {
   Coins,
-  Zap,
-  Crown,
-  Diamond,
+  Sparkles,
+  Flower2,
+  Sun,
+  Triangle,
   Check,
   CreditCard,
   Wallet,
@@ -28,7 +29,7 @@ import {
   Camera,
   Video,
   PenTool,
-  Sparkles,
+  Infinity,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -42,55 +43,81 @@ const CAT_ICONS: Record<string, any> = {
 
 const TIERS = [
   {
-    key: "bronze",
-    name: "Bronze",
+    key: "spark",
+    name: "Spark",
+    price: 0,
+    credits: 0,
+    gradient: "linear-gradient(135deg, hsl(205, 75%, 65%), hsl(210, 65%, 52%), hsl(220, 55%, 42%))",
+    glowColor: "hsl(210, 70%, 55%)",
+    icon: Sparkles,
+    isFree: true,
+    bestFor: "Exploring the platform, getting started",
+    features: [
+      "Access all creative tools",
+      "3 Smartboards",
+      "Drop Rooms — 1 hr max",
+      "Community access",
+      "Basic profile",
+    ],
+    limits: { smartboards: 3, dropRoomHours: 1 },
+  },
+  {
+    key: "bloom",
+    name: "Bloom",
     price: 240,
     credits: 4,
-    gradient: "linear-gradient(135deg, hsl(30, 60%, 60%), hsl(25, 50%, 42%), hsl(20, 45%, 35%))",
-    glowColor: "hsl(30, 55%, 55%)",
-    icon: Zap,
+    gradient: "linear-gradient(135deg, hsl(330, 65%, 72%), hsl(340, 60%, 58%), hsl(345, 55%, 48%))",
+    glowColor: "hsl(335, 60%, 65%)",
+    icon: Flower2,
     bestFor: "New creators, freelancers, side-hustlers",
     features: [
       "4 credits/month",
+      "15 Smartboards",
+      "Drop Rooms — 4 hr max",
       "Studio access",
       "Livestream workshops",
       "Community Telegram",
     ],
+    limits: { smartboards: 15, dropRoomHours: 4 },
   },
   {
-    key: "gold",
-    name: "Gold",
+    key: "glow",
+    name: "Glow",
     price: 560,
     credits: 10,
-    gradient: "linear-gradient(135deg, hsl(50, 95%, 58%), hsl(43, 90%, 48%), hsl(35, 85%, 40%))",
-    glowColor: "hsl(45, 90%, 50%)",
-    icon: Crown,
+    gradient: "linear-gradient(135deg, hsl(30, 90%, 60%), hsl(25, 85%, 50%), hsl(20, 80%, 42%))",
+    glowColor: "hsl(28, 85%, 55%)",
+    icon: Sun,
     bestFor: "Semi-pros, scaling micro-influencers",
     features: [
       "10 credits/month",
-      "All Bronze features",
+      "50 Smartboards",
+      "Drop Rooms — 12 hr max",
       "Standard workshops",
       "Strategy consultation",
       "Priority booking",
     ],
+    limits: { smartboards: 50, dropRoomHours: 12 },
   },
   {
-    key: "diamond",
-    name: "Diamond",
+    key: "prism",
+    name: "Prism",
     price: 1500,
     credits: 25,
-    gradient: "linear-gradient(135deg, hsl(200, 65%, 78%), hsl(210, 55%, 62%), hsl(220, 50%, 50%))",
-    glowColor: "hsl(200, 60%, 70%)",
-    icon: Diamond,
+    gradient: "linear-gradient(135deg, hsl(50, 90%, 58%), hsl(43, 85%, 48%), hsl(38, 80%, 40%))",
+    glowColor: "hsl(45, 85%, 52%)",
+    icon: Triangle,
     bestFor: "Full-time creators, funded artists",
     features: [
       "25 credits/month",
-      "All Gold features",
+      "Unlimited Smartboards",
+      "Unlimited Drop Rooms",
       "Premium workshops",
       "360 Audit",
       "Grant support",
       "First content review",
     ],
+    limits: { smartboards: -1, dropRoomHours: -1 },
   },
 ];
 
@@ -213,7 +240,7 @@ const CreditShopPage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const currentTier = userCredits?.tier ?? "none";
+  const currentTier = userCredits?.tier && userCredits.tier !== "none" ? userCredits.tier : "spark";
 
   // Purchases data
   const { data: purchases, isLoading: purchasesLoading } = useQuery({
@@ -260,10 +287,10 @@ const CreditShopPage = () => {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-3xl font-bold text-foreground">
-            Credit Shop
+            Studio Pass
           </h1>
           <p className="text-muted-foreground">
-            Power your creative workflow with credits
+            Your creative membership & credits
           </p>
         </div>
         <div className="surface-card flex items-center gap-3 px-5 py-3">
@@ -274,9 +301,7 @@ const CreditShopPage = () => {
             </p>
             <p className="text-xs text-muted-foreground">Total Balance</p>
           </div>
-          {currentTier !== "none" && (
-            <Badge className="ml-2 capitalize">{currentTier}</Badge>
-          )}
+          <Badge className="ml-2 capitalize">{currentTier}</Badge>
         </div>
       </div>
 
@@ -285,24 +310,25 @@ const CreditShopPage = () => {
         setSearchParams(searchParams, { replace: true });
       }}>
         <TabsList>
-          <TabsTrigger value="shop" className="gap-1.5"><Coins className="h-3.5 w-3.5" /> Shop</TabsTrigger>
+          <TabsTrigger value="shop" className="gap-1.5"><Coins className="h-3.5 w-3.5" /> Plans</TabsTrigger>
           <TabsTrigger value="purchases" className="gap-1.5"><ShoppingBag className="h-3.5 w-3.5" /> My Purchases</TabsTrigger>
         </TabsList>
 
         <TabsContent value="shop" className="space-y-8 mt-4">
 
-      {/* Subscription tiers */}
+      {/* Membership tiers */}
       <div>
         <h2 className="font-display text-lg font-semibold text-foreground mb-1">
-          Recharge{" "}
+          Membership{" "}
           <span className="text-sm font-normal text-muted-foreground">
-            (monthly — select one of the plans to continue)
+            — choose your creative tier
           </span>
         </h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 mt-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-4">
           {TIERS.map((tier, i) => {
             const TierIcon = tier.icon;
             const isCurrentTier = currentTier === tier.key;
+            const isFree = (tier as any).isFree;
             return (
               <motion.div
                 key={tier.key}
@@ -332,12 +358,18 @@ const CreditShopPage = () => {
                   <p className="text-xs font-semibold tracking-widest uppercase opacity-90 relative z-10">{tier.name}</p>
                   <div className="flex items-center justify-center gap-2 mt-2 relative z-10">
                     <TierIcon className="h-6 w-6 drop-shadow-sm" />
-                    <span className="font-display text-4xl font-bold drop-shadow-sm">{tier.credits}</span>
+                    <span className="font-display text-4xl font-bold drop-shadow-sm">
+                      {isFree ? "Free" : tier.credits}
+                    </span>
                   </div>
-                  <p className="text-sm opacity-80 mt-1 relative z-10">credits / month</p>
-                  <p className="text-xs opacity-60 mt-0.5 relative z-10">
-                    ${tier.price.toFixed(0)}/mo
+                  <p className="text-sm opacity-80 mt-1 relative z-10">
+                    {isFree ? "forever" : "credits / month"}
                   </p>
+                  {!isFree && (
+                    <p className="text-xs opacity-60 mt-0.5 relative z-10">
+                      ${tier.price.toFixed(0)}/mo
+                    </p>
+                  )}
                 </div>
 
                 {/* Features */}
@@ -360,14 +392,15 @@ const CreditShopPage = () => {
                   </ul>
                   <Button
                     className="w-full mt-2 h-10 font-semibold text-sm"
-                    variant={isCurrentTier ? "outline" : "default"}
+                    variant={isCurrentTier ? "outline" : isFree ? "secondary" : "default"}
                     disabled={isCurrentTier}
                     onClick={() => {
+                      if (isFree) return;
                       setPendingTier(tier);
                       setSubPaymentOpen(true);
                     }}
                   >
-                    {isCurrentTier ? "Current Plan" : `Subscribe — $${tier.price}/mo`}
+                    {isCurrentTier ? "Current Plan" : isFree ? "Included" : `Subscribe — $${tier.price}/mo`}
                   </Button>
                 </div>
               </motion.div>
@@ -379,9 +412,9 @@ const CreditShopPage = () => {
       {/* À la carte */}
       <div className="surface-card p-6 space-y-5">
         <h2 className="font-display text-lg font-semibold text-foreground">
-          Recharge{" "}
+          Top Up{" "}
           <span className="text-sm font-normal text-muted-foreground">
-            (fixed amount — slide to select more credits)
+            — add individual credits anytime
           </span>
         </h2>
 
