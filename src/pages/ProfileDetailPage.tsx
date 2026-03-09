@@ -262,6 +262,28 @@ const ProfileDetailPage = () => {
 
   const hasSellerContent = (sellerListings?.length ?? 0) > 0;
 
+  // Section visibility preferences
+  const showSellerStats = (profile as any).show_seller_stats !== false;
+  const showOfferings = (profile as any).show_offerings !== false;
+  const showPublicBoards = (profile as any).show_public_boards !== false;
+
+  // Toggle section visibility mutation
+  const toggleSectionMutation = useMutation({
+    mutationFn: async ({ field, value }: { field: string; value: boolean }) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ [field]: value } as any)
+        .eq("user_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile", id] });
+    },
+    onError: () => {
+      toast.error("Failed to update section visibility");
+    },
+  });
+
   return (
     <div
       className="min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8 p-4 md:p-8 transition-colors duration-500"
