@@ -317,7 +317,7 @@ const ProfileDetailPage = () => {
             )}
           </div>
 
-          <div className="px-5 sm:px-8 pb-6">
+          <div className="px-5 sm:px-8 pb-6 pt-3">
             <div className="-mt-14 sm:-mt-16 flex flex-col sm:flex-row sm:items-end gap-4 relative z-10">
               {/* Avatar */}
               <div className="flex h-24 w-24 sm:h-28 sm:w-28 items-center justify-center rounded-full border-4 border-card bg-muted shadow-xl overflow-hidden shrink-0 ring-2 ring-background/50">
@@ -328,7 +328,7 @@ const ProfileDetailPage = () => {
                 )}
               </div>
 
-              <div className="flex-1 min-w-0 pb-1">
+              <div className="flex-1 min-w-0 pt-14 sm:pt-0 sm:pb-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
                     {profile.display_name || "Creator"}
