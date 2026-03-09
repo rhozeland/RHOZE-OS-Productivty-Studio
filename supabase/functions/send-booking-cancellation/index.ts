@@ -13,6 +13,7 @@ interface CancellationEmailPayload {
   date: string;
   time: string;
   duration_hours: number;
+  credits_refunded?: number;
 }
 
 serve(async (req) => {
@@ -27,7 +28,7 @@ serve(async (req) => {
     }
 
     const payload: CancellationEmailPayload = await req.json();
-    const { to_email, user_name, service_title, date, time, duration_hours } = payload;
+    const { to_email, user_name, service_title, date, time, duration_hours, credits_refunded } = payload;
 
     if (!to_email || !service_title) {
       return new Response(
@@ -42,6 +43,7 @@ serve(async (req) => {
       date: date || "N/A",
       time: time || "N/A",
       duration_hours: duration_hours || 0,
+      credits_refunded: credits_refunded || 0,
     });
 
     const res = await fetch("https://api.resend.com/emails", {
@@ -85,6 +87,7 @@ function buildCancellationHtml(data: {
   date: string;
   time: string;
   duration_hours: number;
+  credits_refunded: number;
 }) {
   const destructive = "hsl(0, 72%, 55%)";
   const destructiveLight = "hsl(0, 72%, 95%)";
@@ -172,7 +175,27 @@ function buildCancellationHtml(data: {
                       </tr>
                     </table>
                   </td>
+          </tr>
+
+          ${data.credits_refunded > 0 ? `
+          <!-- Refund Notice -->
+          <tr>
+            <td style="padding-top:20px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:hsl(175,60%,95%);border:1px solid hsl(175,60%,80%);border-radius:12px;">
+                <tr>
+                  <td style="padding:16px 24px;text-align:center;">
+                    <p style="margin:0;font-size:15px;font-weight:600;color:hsl(175,60%,30%);">
+                      💰 ${data.credits_refunded} credit${data.credits_refunded !== 1 ? 's' : ''} refunded to your balance
+                    </p>
+                    <p style="margin:6px 0 0;font-size:13px;color:${muted};">
+                      Your credits have been automatically returned and are available immediately.
+                    </p>
+                  </td>
                 </tr>
+              </table>
+            </td>
+          </tr>
+          ` : ''}
               </table>
             </td>
           </tr>
