@@ -87,6 +87,8 @@ const CreditShopPage = () => {
   const [alaCarteCredits, setAlaCarteCredits] = useState(1);
   const [cardPaymentOpen, setCardPaymentOpen] = useState(false);
   const [pendingCardCredits, setPendingCardCredits] = useState(0);
+  const [subPaymentOpen, setSubPaymentOpen] = useState(false);
+  const [pendingTier, setPendingTier] = useState<(typeof TIERS)[number] | null>(null);
 
   const { data: userCredits } = useQuery({
     queryKey: ["user-credits", user?.id],
