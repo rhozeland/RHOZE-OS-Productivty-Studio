@@ -23,6 +23,7 @@ import {
   Share2,
   Check,
   Upload,
+  Search,
 } from "lucide-react";
 import {
   Dialog,
@@ -79,6 +80,8 @@ const FlowModePage = () => {
   const [expandedCard, setExpandedCard] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [savePickerOpen, setSavePickerOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [newCategory, setNewCategory] = useState("design");
@@ -100,11 +103,14 @@ const FlowModePage = () => {
   }, [user]);
 
   const { data: flowItems } = useQuery({
-    queryKey: ["flow-items", selectedCategories],
+    queryKey: ["flow-items", selectedCategories, searchQuery],
     queryFn: async () => {
       let query = supabase.from("flow_items").select("*").order("created_at", { ascending: false }).limit(50);
       if (selectedCategories.length > 0) {
         query = query.in("category", selectedCategories);
+      }
+      if (searchQuery.trim()) {
+        query = query.or(`title.ilike.%${searchQuery.trim()}%,description.ilike.%${searchQuery.trim()}%`);
       }
       const { data, error } = await query;
       if (error) throw error;
@@ -420,9 +426,19 @@ const FlowModePage = () => {
       <div className={`absolute bottom-10 right-1/4 w-96 h-96 ${gradient.blur2} rounded-full blur-3xl`} />
 
       {/* Top bar */}
-      <div className="relative z-10 flex items-center justify-center gap-3 px-4 py-4 md:px-6">
+      <div className="relative z-10 flex items-center justify-between gap-3 px-4 py-4 md:px-6">
+        {/* Search toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9 shrink-0"
+          onClick={() => setSearchOpen(!searchOpen)}
+        >
+          <Search className="h-4 w-4" />
+        </Button>
+
         {/* Category pills */}
-        <div className="flex items-center gap-2 flex-wrap justify-center">
+        <div className="flex items-center gap-2 flex-wrap justify-center flex-1">
           {CATEGORIES.map((cat) => (
             <Badge
               key={cat}
@@ -440,7 +456,53 @@ const FlowModePage = () => {
             </Badge>
           ))}
         </div>
+
+        {/* Share button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9 shrink-0"
+          onClick={() => setAddOpen(true)}
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
       </div>
+
+      {/* Search bar (expandable) */}
+      <AnimatePresence>
+        {searchOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="relative z-10 px-4 md:px-6 overflow-hidden"
+          >
+            <div className="max-w-md mx-auto pb-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search Flow content..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentIndex(0);
+                  }}
+                  className="pl-9 pr-9 rounded-full bg-card/80 backdrop-blur-sm border-border/50"
+                  autoFocus
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => { setSearchQuery(""); setCurrentIndex(0); }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Card area — centered */}
       <div className="relative z-10 flex-1 flex items-center justify-center px-4">
@@ -548,26 +610,17 @@ const FlowModePage = () => {
         </AnimatePresence>
       </div>
 
-      {/* Bottom bar */}
-      <div className="relative z-10 flex justify-center items-center pb-4 gap-6">
-        {currentItem && (
+      {/* Bottom bar — only show swipe hints when there's a card */}
+      {currentItem && (
+        <div className="relative z-10 flex justify-center items-center pb-4">
           <div className="hidden md:flex items-center gap-8 text-foreground/40">
             <span className="flex items-center gap-1 text-xs"><ChevronUp className="h-3.5 w-3.5" /> Save</span>
             <span className="flex items-center gap-1 text-xs"><ChevronLeft className="h-3.5 w-3.5" /> Share</span>
             <span className="flex items-center gap-1 text-xs"><ChevronRight className="h-3.5 w-3.5" /> Next</span>
             <span className="flex items-center gap-1 text-xs"><ChevronDown className="h-3.5 w-3.5" /> Dislike</span>
           </div>
-        )}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 text-xs gap-1.5"
-          onClick={() => setAddOpen(true)}
-        >
-          <Plus className="h-4 w-4" />
-          Share Your Work
-        </Button>
-      </div>
+        </div>
+      )}
 
       {/* Save to Board picker */}
       <Dialog open={savePickerOpen} onOpenChange={setSavePickerOpen}>
