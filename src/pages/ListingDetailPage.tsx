@@ -105,6 +105,51 @@ const ListingDetailPage = () => {
     enabled: !!listing,
   });
 
+  const { data: userCredits } = useQuery({
+    queryKey: ["user-credits", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_credits")
+        .select("*")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const { data: existingPurchase } = useQuery({
+    queryKey: ["purchase-check", id, user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("purchases" as any)
+        .select("id")
+        .eq("buyer_id", user!.id)
+        .eq("listing_id", id!)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user && !!id,
+  });
+
+  const purchaseMutation = useMutation({
+    mutationFn: async () => {
+      if (!user || !listing) throw new Error("Missing data");
+      const { data, error } = await supabase.rpc("purchase_listing" as any, {
+        _listing_id: listing.id,
+        _buyer_id: user.id,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-credits"] });
+      queryClient.invalidateQueries({ queryKey: ["purchase-check", id] });
+      toast.success("Purchase complete! 🎉");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const sendInquiry = useMutation({
     mutationFn: async () => {
       if (!user || !listing) throw new Error("Missing data");
