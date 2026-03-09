@@ -50,7 +50,8 @@ const heroVariants = [
 /* ── All available quick-link options ──────────────────────── */
 const allQuickLinks = [
   { id: "profile", icon: User, label: "MY PROFILE", path: "/profiles" },
-  { id: "services", icon: Star, label: "RHOZELAND\nSERVICES", path: "/marketplace" },
+  { id: "services", icon: Briefcase, label: "RHOZELAND\nSERVICES", path: "/services" },
+  { id: "credits", icon: Coins, label: "CREDIT\nSHOP", path: "/credits" },
   { id: "bookings", icon: RefreshCw, label: "MY BOOKINGS", path: "/bookings" },
   { id: "network", icon: Network, label: "NETWORK", path: "/messages" },
   { id: "projects", icon: FolderKanban, label: "PROJECTS", path: "/projects" },
