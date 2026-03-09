@@ -5,9 +5,23 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Send, User, MessageSquare, ArrowLeft } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Search, Send, User, MessageSquare, ArrowLeft,
+  Inbox, FolderKanban, CheckCircle, XCircle, Clock, ArrowRight, Loader2,
+  DollarSign,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link, useNavigate } from "react-router-dom";
+import { format } from "date-fns";
+import { toast } from "sonner";
 import QuoteBuilder from "@/components/messages/QuoteBuilder";
 import QuoteCard, { isQuoteMessage } from "@/components/messages/QuoteCard";
 
