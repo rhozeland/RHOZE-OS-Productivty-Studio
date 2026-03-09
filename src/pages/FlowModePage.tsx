@@ -61,6 +61,14 @@ const CATEGORY_GRADIENTS: Record<string, { bg: string; blur1: string; blur2: str
   writing: { bg: "from-muted via-teal/10 to-accent/15", blur1: "bg-teal/15", blur2: "bg-accent/10" },
 };
 
+const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; linkHint: string }> = {
+  design: { accept: "image/*,.pdf,.ai,.psd,.fig", hint: "JPG, PNG, PDF, or design files", linkHint: "Behance, Dribbble, Figma link" },
+  music: { accept: "audio/*,.mp3,.wav,.flac,.aac", hint: "MP3, WAV, FLAC, or audio files", linkHint: "Spotify, YouTube Music, SoundCloud link" },
+  photo: { accept: "image/*,.raw,.cr2,.nef", hint: "JPG, PNG, TIFF, or RAW files", linkHint: "Flickr, 500px, or direct image link" },
+  video: { accept: "video/*,.mp4,.mov,.webm", hint: "MP4, MOV, WebM, or video files", linkHint: "YouTube, Vimeo link" },
+  writing: { accept: ".txt,.md,.pdf,.doc,.docx", hint: "TXT, PDF, DOC, or text files", linkHint: "Medium, Substack, or blog link" },
+};
+
 const FlowModePage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -75,6 +83,8 @@ const FlowModePage = () => {
   const [newDesc, setNewDesc] = useState("");
   const [newCategory, setNewCategory] = useState("design");
   const [newLink, setNewLink] = useState("");
+  const [newFile, setNewFile] = useState<File | null>(null);
+  const fileInputRef = { current: null as HTMLInputElement | null };
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
