@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   FolderKanban,
   Calendar,
+  CalendarCheck,
   Compass,
   LayoutGrid,
   Store,
@@ -30,7 +31,7 @@ const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: Calendar, label: "Calendar", path: "/calendar" },
-  { icon: Calendar, label: "Bookings", path: "/bookings" },
+  { icon: CalendarCheck, label: "Bookings", path: "/bookings" },
   { icon: Compass, label: "Flow", path: "/flow" },
   { icon: LayoutGrid, label: "Smartboards", path: "/smartboards" },
   { icon: Store, label: "Marketplace", path: "/marketplace" },
@@ -50,9 +51,12 @@ const AppSidebar = () => {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border">
-      <div className={cn("flex h-16 items-center gap-3 px-4", collapsed && "justify-center px-2")}>
-        <img src={logo} alt="Rhozeland" className="h-8 w-8 shrink-0" />
+    <Sidebar collapsible="icon" className="border-r-0">
+      <div className={cn(
+        "flex h-16 items-center gap-3 px-4 border-b border-sidebar-border",
+        collapsed && "justify-center px-2"
+      )}>
+        <img src={logo} alt="Rhozeland" className="h-9 w-9 shrink-0 drop-shadow-sm" />
         {!collapsed && (
           <span className="font-display text-lg font-bold tracking-tight text-foreground">
             Rhozeland
@@ -60,10 +64,10 @@ const AppSidebar = () => {
         )}
       </div>
 
-      <SidebarContent>
+      <SidebarContent className="px-2 pt-3">
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-0.5">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + "/");
                 return (
@@ -77,13 +81,16 @@ const AppSidebar = () => {
                         to={item.path}
                         onClick={handleNavClick}
                         className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                          "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-250",
                           isActive
-                            ? "bg-primary/10 text-primary"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            ? "sidebar-active-gradient text-foreground shadow-sm"
+                            : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                         )}
                       >
-                        <item.icon className="h-[18px] w-[18px] shrink-0" />
+                        <item.icon className={cn(
+                          "h-[18px] w-[18px] shrink-0 transition-colors duration-250",
+                          isActive ? "text-primary" : ""
+                        )} />
                         {!collapsed && <span>{item.label}</span>}
                       </Link>
                     </SidebarMenuButton>
@@ -95,19 +102,21 @@ const AppSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip={collapsed ? "Sign Out" : undefined}
-              onClick={signOut}
-              className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-destructive"
-            >
-              <LogOut className="h-[18px] w-[18px] shrink-0" />
-              {!collapsed && <span>Sign Out</span>}
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarFooter className="px-2 pb-3">
+        <div className="border-t border-sidebar-border pt-3">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                tooltip={collapsed ? "Sign Out" : undefined}
+                onClick={signOut}
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-250"
+              >
+                <LogOut className="h-[18px] w-[18px] shrink-0" />
+                {!collapsed && <span>Sign Out</span>}
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

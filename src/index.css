@@ -97,6 +97,10 @@
     @apply bg-card/80 backdrop-blur-xl border border-border/50;
   }
 
+  .sidebar-active-gradient {
+    background: linear-gradient(135deg, hsl(175 50% 92%), hsl(200 40% 94%), hsl(310 30% 95%));
+  }
+
   .glow-primary {
     box-shadow: 0 0 20px -5px hsl(175 60% 55% / 0.2);
   }
