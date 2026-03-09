@@ -128,6 +128,19 @@ const DashboardPage = () => {
   const visibleLinks = allQuickLinks.filter((l) => selectedIds.includes(l.id));
 
   // Data queries
+  const { data: profile } = useQuery({
+    queryKey: ["my-profile", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   const { data: projects } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
