@@ -12,7 +12,7 @@ import DashboardPage from "@/pages/DashboardPage";
 import ProjectsPage from "@/pages/ProjectsPage";
 import ProjectDetailPage from "@/pages/ProjectDetailPage";
 import CalendarPage from "@/pages/CalendarPage";
-import BookingsPage from "@/pages/BookingsPage";
+// BookingsPage removed — merged into CalendarPage
 import FlowModePage from "@/pages/FlowModePage";
 import SmartboardsPage from "@/pages/SmartboardsPage";
 import MarketplacePage from "@/pages/MarketplacePage";
@@ -60,7 +60,7 @@ const App = () => (
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/projects/:id" element={<ProjectDetailPage />} />
               <Route path="/calendar" element={<CalendarPage />} />
-              <Route path="/bookings" element={<BookingsPage />} />
+              <Route path="/bookings" element={<CalendarPage />} /> {/* redirect old route */}
               <Route path="/credits" element={<CreditShopPage />} />
               <Route path="/flow" element={<FlowModePage />} />
               <Route path="/smartboards" element={<SmartboardsPage />} />
