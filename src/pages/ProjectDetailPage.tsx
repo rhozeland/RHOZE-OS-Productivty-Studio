@@ -164,6 +164,12 @@ const ProjectDetailPage = () => {
           </div>
         </TabsContent>
 
+        {contract && (
+          <TabsContent value="milestones">
+            <MilestoneTracker contractId={contract.id} />
+          </TabsContent>
+        )}
+
         <TabsContent value="tasks">
           <div className="surface-card p-6">
             <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Tasks</h2>
