@@ -309,17 +309,116 @@ export type Database = {
         }
         Relationships: []
       }
+      listing_inquiries: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          message: string
+          project_id: string | null
+          receiver_id: string
+          sender_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          message: string
+          project_id?: string | null
+          receiver_id: string
+          sender_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          message?: string
+          project_id?: string | null
+          receiver_id?: string
+          sender_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_inquiries_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_inquiries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_media: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_type: string | null
+          file_url: string
+          id: string
+          listing_id: string
+          sort_order: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_type?: string | null
+          file_url: string
+          id?: string
+          listing_id: string
+          sort_order?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          listing_id?: string
+          sort_order?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_media_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_listings: {
         Row: {
           category: string
           contact_info: string | null
+          cover_url: string | null
           created_at: string
+          credits_price: number | null
           currency: string
+          delivery_days: number | null
           description: string | null
           id: string
           image_url: string | null
           is_active: boolean
+          listing_type: string
           price: number | null
+          revisions: number | null
+          shipping_info: string | null
+          tags: string[] | null
           title: string
           updated_at: string
           user_id: string
@@ -327,13 +426,20 @@ export type Database = {
         Insert: {
           category?: string
           contact_info?: string | null
+          cover_url?: string | null
           created_at?: string
+          credits_price?: number | null
           currency?: string
+          delivery_days?: number | null
           description?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
+          listing_type?: string
           price?: number | null
+          revisions?: number | null
+          shipping_info?: string | null
+          tags?: string[] | null
           title: string
           updated_at?: string
           user_id: string
@@ -341,13 +447,20 @@ export type Database = {
         Update: {
           category?: string
           contact_info?: string | null
+          cover_url?: string | null
           created_at?: string
+          credits_price?: number | null
           currency?: string
+          delivery_days?: number | null
           description?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
+          listing_type?: string
           price?: number | null
+          revisions?: number | null
+          shipping_info?: string | null
+          tags?: string[] | null
           title?: string
           updated_at?: string
           user_id?: string

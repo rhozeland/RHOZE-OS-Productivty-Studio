@@ -4,22 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Plus,
   Music,
@@ -29,23 +14,32 @@ import {
   PenTool,
   Search,
   Sparkles,
-  X,
-  DollarSign,
-  MessageCircle,
+  Briefcase,
+  FileText,
+  Package,
+  ShoppingBag,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import PayWithSolButton from "@/components/PayWithSolButton";
-import { isValidSolanaAddress } from "@/lib/solana";
+import ListingCard from "@/components/marketplace/ListingCard";
+import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 
 const CATEGORIES = [
-  { key: "all", label: "All", icon: Sparkles, color: "hsl(var(--primary))" },
-  { key: "music", label: "Music", icon: Music, color: "hsl(280, 60%, 55%)" },
-  { key: "design", label: "Design", icon: Palette, color: "hsl(160, 60%, 50%)" },
-  { key: "photo", label: "Photo", icon: Camera, color: "hsl(35, 90%, 55%)" },
-  { key: "video", label: "Video", icon: Video, color: "hsl(340, 70%, 55%)" },
-  { key: "writing", label: "Writing", icon: PenTool, color: "hsl(210, 60%, 55%)" },
+  { key: "all", label: "All", icon: Sparkles },
+  { key: "music", label: "Music", icon: Music },
+  { key: "design", label: "Design", icon: Palette },
+  { key: "photo", label: "Photo", icon: Camera },
+  { key: "video", label: "Video", icon: Video },
+  { key: "writing", label: "Writing", icon: PenTool },
+];
+
+const TYPES = [
+  { key: "all", label: "All Types" },
+  { key: "service", label: "Services", icon: Briefcase },
+  { key: "digital_product", label: "Digital", icon: FileText },
+  { key: "physical_product", label: "Physical", icon: Package },
+  { key: "project_request", label: "Requests", icon: ShoppingBag },
 ];
 
 const MarketplacePage = () => {
@@ -53,18 +47,12 @@ const MarketplacePage = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState("all");
+  const [activeType, setActiveType] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
 
-  // Form state
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("design");
-  const [price, setPrice] = useState("");
-  const [contactInfo, setContactInfo] = useState("");
-
   const { data: listings, isLoading } = useQuery({
-    queryKey: ["marketplace-listings", activeCategory, searchQuery],
+    queryKey: ["marketplace-listings", activeCategory, activeType, searchQuery],
     queryFn: async () => {
       let query = supabase
         .from("marketplace_listings")
@@ -72,12 +60,9 @@ const MarketplacePage = () => {
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
-      if (activeCategory !== "all") {
-        query = query.eq("category", activeCategory);
-      }
-      if (searchQuery.trim()) {
-        query = query.ilike("title", `%${searchQuery}%`);
-      }
+      if (activeCategory !== "all") query = query.eq("category", activeCategory);
+      if (activeType !== "all") query = query.eq("listing_type", activeType);
+      if (searchQuery.trim()) query = query.ilike("title", `%${searchQuery}%`);
 
       const { data, error } = await query;
       if (error) throw error;
@@ -85,37 +70,26 @@ const MarketplacePage = () => {
     },
   });
 
-  const createListing = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("marketplace_listings").insert({
-        user_id: user!.id,
-        title,
-        description: description || null,
-        category,
-        price: price ? parseFloat(price) : null,
-        contact_info: contactInfo || null,
-      });
+  // Fetch media for all listings
+  const listingIds = listings?.map((l: any) => l.id) ?? [];
+  const { data: allMedia } = useQuery({
+    queryKey: ["listing-media-bulk", listingIds],
+    queryFn: async () => {
+      if (listingIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("listing_media")
+        .select("*")
+        .in("listing_id", listingIds)
+        .order("sort_order");
       if (error) throw error;
+      return data ?? [];
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["marketplace-listings"] });
-      setCreateOpen(false);
-      setTitle("");
-      setDescription("");
-      setCategory("design");
-      setPrice("");
-      setContactInfo("");
-      toast.success("Listing published!");
-    },
-    onError: (e: any) => toast.error(e.message),
+    enabled: listingIds.length > 0,
   });
 
   const deleteListing = useMutation({
     mutationFn: async (listingId: string) => {
-      const { error } = await supabase
-        .from("marketplace_listings")
-        .delete()
-        .eq("id", listingId);
+      const { error } = await supabase.from("marketplace_listings").delete().eq("id", listingId);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -124,237 +98,120 @@ const MarketplacePage = () => {
     },
   });
 
-  const getCategoryMeta = (key: string) =>
-    CATEGORIES.find((c) => c.key === key) ?? CATEGORIES[0];
+  const getMediaForListing = (listingId: string) =>
+    allMedia?.filter((m: any) => m.listing_id === listingId) ?? [];
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">
-            Community Marketplace
-          </h1>
-          <p className="text-muted-foreground">
-            Find your next project — explore services from creators worldwide
+          <h1 className="font-display text-3xl font-bold text-foreground">Marketplace</h1>
+          <p className="text-muted-foreground text-sm">
+            Services, beats, products & project requests from the creative community
           </p>
         </div>
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Post Listing
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Post a Listing</DialogTitle>
-            </DialogHeader>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (title.trim()) createListing.mutate();
-              }}
-              className="space-y-4"
+        <Button onClick={() => setCreateOpen(true)} className="rounded-full">
+          <Plus className="mr-2 h-4 w-4" />
+          Post Listing
+        </Button>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Search beats, services, products..."
+          className="pl-10 rounded-full"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
+      {/* Type pills */}
+      <div className="flex flex-wrap gap-2">
+        {TYPES.map((t) => {
+          const Icon = t.icon;
+          const isActive = activeType === t.key;
+          return (
+            <button
+              key={t.key}
+              onClick={() => setActiveType(t.key)}
+              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all ${
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "bg-muted text-muted-foreground hover:text-foreground"
+              }`}
             >
-              <Input
-                placeholder="Listing title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-              <Textarea
-                placeholder="Describe your service or project..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="music">🎵 Music</SelectItem>
-                    <SelectItem value="design">🎨 Design</SelectItem>
-                    <SelectItem value="photo">📷 Photo</SelectItem>
-                    <SelectItem value="video">🎬 Video</SelectItem>
-                    <SelectItem value="writing">✍️ Writing</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input
-                  placeholder="Price (optional)"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                />
-              </div>
-              <Input
-                placeholder="Contact info (email, link, etc.)"
-                value={contactInfo}
-                onChange={(e) => setContactInfo(e.target.value)}
-              />
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={!title.trim() || createListing.isPending}
-              >
-                Publish Listing
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+              {Icon && <Icon className="h-3.5 w-3.5" />}
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Search + Category Tabs */}
-      <div className="space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search listings..."
-            className="pl-10"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map((cat) => {
-            const Icon = cat.icon;
-            const isActive = activeCategory === cat.key;
-            return (
-              <button
-                key={cat.key}
-                onClick={() => setActiveCategory(cat.key)}
-                className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-md"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {cat.label}
-              </button>
-            );
-          })}
-        </div>
+      {/* Category pills */}
+      <div className="flex flex-wrap gap-2">
+        {CATEGORIES.map((cat) => {
+          const Icon = cat.icon;
+          const isActive = activeCategory === cat.key;
+          return (
+            <button
+              key={cat.key}
+              onClick={() => setActiveCategory(cat.key)}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all border ${
+                isActive
+                  ? "border-primary/30 bg-primary/10 text-primary"
+                  : "border-border bg-card text-muted-foreground hover:text-foreground hover:border-border/80"
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {cat.label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Listings Grid */}
+      {/* Grid */}
       {isLoading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="surface-card animate-pulse h-48 rounded-xl" />
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="bg-card border border-border animate-pulse rounded-xl h-72" />
           ))}
         </div>
       ) : !listings || listings.length === 0 ? (
-        <div className="surface-card flex flex-col items-center justify-center py-20">
+        <div className="surface-card flex flex-col items-center justify-center py-20 rounded-2xl">
           <Sparkles className="mb-3 h-10 w-10 text-muted-foreground" />
-          <p className="text-muted-foreground text-center">
-            {searchQuery
-              ? "No listings match your search"
-              : "No listings yet. Be the first to post!"}
+          <p className="text-foreground font-medium">
+            {searchQuery ? "No listings match your search" : "No listings yet"}
           </p>
+          <p className="text-sm text-muted-foreground mt-1">Be the first to post!</p>
+          <Button className="mt-4 rounded-full" onClick={() => setCreateOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Post Listing
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <AnimatePresence>
-            {listings.map((listing: any, i: number) => {
-              const catMeta = getCategoryMeta(listing.category);
-              const CatIcon = catMeta.icon;
-              return (
-                <motion.div
-                  key={listing.id}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ delay: i * 0.04 }}
-                  className="surface-card group relative overflow-hidden transition-all hover:shadow-md"
-                >
-                  {/* Color accent bar */}
-                  <div
-                    className="h-1.5"
-                    style={{ backgroundColor: catMeta.color }}
-                  />
-                  <div className="p-5 space-y-3">
-                    {/* Category + Price row */}
-                    <div className="flex items-center justify-between">
-                      <Badge
-                        variant="secondary"
-                        className="flex items-center gap-1 text-xs"
-                      >
-                        <CatIcon className="h-3 w-3" />
-                        {catMeta.label}
-                      </Badge>
-                      {listing.price != null && (
-                        <span className="flex items-center gap-0.5 font-display font-semibold text-foreground">
-                          <DollarSign className="h-3.5 w-3.5" />
-                          {Number(listing.price).toFixed(0)}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Title */}
-                    <h3 className="font-display font-semibold text-foreground leading-snug line-clamp-2">
-                      {listing.title}
-                    </h3>
-
-                    {/* Description */}
-                    {listing.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-3">
-                        {listing.description}
-                      </p>
-                    )}
-
-                    {/* Footer */}
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(listing.created_at).toLocaleDateString()}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {listing.price != null &&
-                          listing.contact_info &&
-                          isValidSolanaAddress(listing.contact_info) && (
-                            <PayWithSolButton
-                              recipientAddress={listing.contact_info}
-                              solAmount={listing.price}
-                              label={`${listing.price} SOL`}
-                            />
-                          )}
-                        {listing.user_id !== user?.id && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-xs gap-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`);
-                            }}
-                          >
-                            <MessageCircle className="h-3 w-3" />
-                            Inquire
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Delete button for owner */}
-                  {listing.user_id === user?.id && (
-                    <button
-                      onClick={() => deleteListing.mutate(listing.id)}
-                      className="absolute right-2 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  )}
-                </motion.div>
-              );
-            })}
+            {listings.map((listing: any, i: number) => (
+              <ListingCard
+                key={listing.id}
+                listing={listing}
+                media={getMediaForListing(listing.id)}
+                index={i}
+                isOwner={listing.user_id === user?.id}
+                onInquire={() =>
+                  navigate(`/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`)
+                }
+                onClick={() => navigate(`/marketplace/${listing.id}`)}
+                onDelete={() => deleteListing.mutate(listing.id)}
+              />
+            ))}
           </AnimatePresence>
         </div>
       )}
+
+      <CreateListingDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );
 };

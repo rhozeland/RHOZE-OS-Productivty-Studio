@@ -16,6 +16,7 @@ import CalendarPage from "@/pages/CalendarPage";
 import FlowModePage from "@/pages/FlowModePage";
 import SmartboardsPage from "@/pages/SmartboardsPage";
 import MarketplacePage from "@/pages/MarketplacePage";
+import ListingDetailPage from "@/pages/ListingDetailPage";
 import SmartboardDetailPage from "@/pages/SmartboardDetailPage";
 import SmartboardPresentationPage from "@/pages/SmartboardPresentationPage";
 import ProfilesPage from "@/pages/ProfilesPage";
@@ -67,6 +68,7 @@ const App = () => (
               <Route path="/smartboards" element={<SmartboardsPage />} />
               <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
               <Route path="/marketplace" element={<MarketplacePage />} />
+              <Route path="/marketplace/:id" element={<ListingDetailPage />} />
               <Route path="/profiles" element={<ProfilesPage />} />
               <Route path="/profiles/:id" element={<ProfileDetailPage />} />
               <Route path="/messages" element={<MessagesPage />} />
