@@ -52,8 +52,13 @@ const AppSidebar = () => {
   const location = useLocation();
   const { signOut } = useAuth();
   const { theme } = useTheme();
+  const { isAdmin } = useAdminCheck();
   const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
+
+  const allNavItems = isAdmin
+    ? [...navItems, { icon: ShieldCheck, label: "Admin", path: "/admin" }]
+    : navItems;
 
   const currentLogo = theme === "dark" ? logoWhite : logoColor;
 
