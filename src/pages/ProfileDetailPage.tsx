@@ -564,12 +564,25 @@ const ProfileDetailPage = () => {
         )}
 
         {/* Public Smartboards */}
+        {(showPublicBoards || isOwnProfile) && (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.4 }}
-          className="space-y-3"
+          className={`space-y-3 relative ${!showPublicBoards && isOwnProfile ? "opacity-50" : ""}`}
         >
+          {isOwnProfile && (
+            <button
+              onClick={() => toggleSectionMutation.mutate({ field: "show_public_boards", value: !showPublicBoards })}
+              className="absolute -top-1 right-0 z-10 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              title={showPublicBoards ? "Hide from public" : "Show to public"}
+            >
+              {showPublicBoards ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+            </button>
+          )}
+          {!showPublicBoards && isOwnProfile && (
+            <div className="absolute inset-0 rounded-xl border-2 border-dashed border-muted-foreground/20 pointer-events-none z-0" />
+          )}
           <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
             <Eye className="h-4 w-4 text-primary" /> Public Boards
           </h2>
@@ -603,6 +616,7 @@ const ProfileDetailPage = () => {
             </div>
           )}
         </motion.div>
+        )}
 
         {/* Projects — own profile only */}
         {isOwnProfile && publicProjects && publicProjects.length > 0 && (
