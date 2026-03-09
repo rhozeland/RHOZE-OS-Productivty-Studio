@@ -220,6 +220,23 @@ const ProfileDetailPage = () => {
     },
   });
 
+  // Toggle section visibility mutation — must be before early returns
+  const toggleSectionMutation = useMutation({
+    mutationFn: async ({ field, value }: { field: string; value: boolean }) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ [field]: value } as any)
+        .eq("user_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile", id] });
+    },
+    onError: () => {
+      toast.error("Failed to update section visibility");
+    },
+  });
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -266,23 +283,6 @@ const ProfileDetailPage = () => {
   const showSellerStats = (profile as any).show_seller_stats !== false;
   const showOfferings = (profile as any).show_offerings !== false;
   const showPublicBoards = (profile as any).show_public_boards !== false;
-
-  // Toggle section visibility mutation
-  const toggleSectionMutation = useMutation({
-    mutationFn: async ({ field, value }: { field: string; value: boolean }) => {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ [field]: value } as any)
-        .eq("user_id", user!.id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profile", id] });
-    },
-    onError: () => {
-      toast.error("Failed to update section visibility");
-    },
-  });
 
   return (
     <div
