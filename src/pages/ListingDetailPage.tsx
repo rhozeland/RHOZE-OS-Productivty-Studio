@@ -39,7 +39,9 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { format } from "date-fns";
 import AudioPreview from "@/components/marketplace/AudioPreview";
+import StarRating from "@/components/marketplace/StarRating";
 
 const CATEGORIES: Record<string, { label: string; icon: any; color: string }> = {
   music: { label: "Music", icon: Music, color: "hsl(280, 60%, 55%)" },
@@ -64,6 +66,8 @@ const ListingDetailPage = () => {
   const [galleryIdx, setGalleryIdx] = useState(0);
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const [inquiryMsg, setInquiryMsg] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
 
   const { data: listing } = useQuery({
     queryKey: ["listing", id],
@@ -146,6 +150,63 @@ const ListingDetailPage = () => {
       queryClient.invalidateQueries({ queryKey: ["user-credits"] });
       queryClient.invalidateQueries({ queryKey: ["purchase-check", id] });
       toast.success("Purchase complete! 🎉");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  // Reviews
+  const { data: reviews } = useQuery({
+    queryKey: ["listing-reviews", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reviews" as any)
+        .select("*")
+        .eq("listing_id", id!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!id,
+  });
+
+  // Reviewer profiles
+  const reviewerIds = reviews?.map((r: any) => r.reviewer_id) ?? [];
+  const { data: reviewerProfiles } = useQuery({
+    queryKey: ["reviewer-profiles", reviewerIds],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, avatar_url")
+        .in("user_id", reviewerIds);
+      if (error) throw error;
+      return data;
+    },
+    enabled: reviewerIds.length > 0,
+  });
+
+  const reviewersMap = new Map(reviewerProfiles?.map((p) => [p.user_id, p]) ?? []);
+  const avgRating = reviews?.length
+    ? Math.round((reviews.reduce((s: number, r: any) => s + r.rating, 0) / reviews.length) * 10) / 10
+    : null;
+  const myReview = reviews?.find((r: any) => r.reviewer_id === user?.id);
+
+  const submitReview = useMutation({
+    mutationFn: async () => {
+      if (!user || !listing) throw new Error("Missing data");
+      const { error } = await supabase.from("reviews" as any).insert({
+        listing_id: listing.id,
+        reviewer_id: user.id,
+        seller_id: listing.user_id,
+        rating: reviewRating,
+        comment: reviewComment || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["listing-reviews", id] });
+      setReviewComment("");
+      setReviewRating(5);
+      toast.success("Review submitted!");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -327,6 +388,76 @@ const ListingDetailPage = () => {
               </p>
             </div>
           )}
+
+          {/* Reviews Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-foreground">
+                Reviews {reviews?.length ? `(${reviews.length})` : ""}
+              </h3>
+              {avgRating && (
+                <div className="flex items-center gap-2">
+                  <StarRating rating={avgRating} />
+                  <span className="text-sm font-bold text-foreground">{avgRating}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Write review (only if purchased and not already reviewed and not owner) */}
+            {!isOwner && !!(existingPurchase as any)?.id && !myReview && (
+              <form
+                onSubmit={(e) => { e.preventDefault(); submitReview.mutate(); }}
+                className="bg-muted/50 rounded-xl p-4 space-y-3"
+              >
+                <p className="text-xs font-medium text-foreground">Leave a review</p>
+                <StarRating rating={reviewRating} interactive onRate={setReviewRating} size="md" />
+                <Textarea
+                  placeholder="How was your experience? (optional)"
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  rows={2}
+                  className="text-sm"
+                />
+                <Button type="submit" size="sm" className="rounded-full" disabled={submitReview.isPending}>
+                  {submitReview.isPending ? "Submitting..." : "Submit Review"}
+                </Button>
+              </form>
+            )}
+
+            {/* Review list */}
+            {reviews && reviews.length > 0 ? (
+              <div className="space-y-3">
+                {reviews.map((review: any) => {
+                  const reviewer = reviewersMap.get(review.reviewer_id);
+                  return (
+                    <div key={review.id} className="bg-muted/30 rounded-lg p-3 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">
+                            {(reviewer?.display_name || "?")[0].toUpperCase()}
+                          </div>
+                          <span className="text-xs font-medium text-foreground">
+                            {reviewer?.display_name || "Anonymous"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <StarRating rating={review.rating} />
+                          <span className="text-[10px] text-muted-foreground">
+                            {format(new Date(review.created_at), "MMM d, yyyy")}
+                          </span>
+                        </div>
+                      </div>
+                      {review.comment && (
+                        <p className="text-xs text-muted-foreground leading-relaxed">{review.comment}</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">No reviews yet</p>
+            )}
+          </div>
         </div>
 
         {/* Right: Info sidebar */}
@@ -348,6 +479,15 @@ const ListingDetailPage = () => {
             <h1 className="font-display text-xl font-bold text-foreground leading-tight">
               {listing.title}
             </h1>
+
+            {/* Rating summary */}
+            {avgRating && (
+              <div className="flex items-center gap-2">
+                <StarRating rating={avgRating} />
+                <span className="text-sm font-bold text-foreground">{avgRating}</span>
+                <span className="text-xs text-muted-foreground">({reviews?.length} review{reviews?.length !== 1 ? "s" : ""})</span>
+              </div>
+            )}
 
             {/* Price */}
             {listing.credits_price != null && (
