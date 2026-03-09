@@ -303,6 +303,21 @@ const CalendarPage = () => {
 
   return (
     <div className="space-y-6">
+      {/* Service pre-selection banner */}
+      {searchParams.get("service") && selectedServiceObj && (
+        <div className="flex items-center gap-3 rounded-xl bg-primary/10 border border-primary/20 p-4">
+          <Coins className="h-5 w-5 text-primary shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-foreground">
+              Booking: {selectedServiceObj.title}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {creditRatePerHour.toFixed(creditRatePerHour % 1 === 0 ? 0 : 1)} credits/hr — drag across the week view to select your session time
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
