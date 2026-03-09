@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,8 +24,11 @@ import {
   Info,
   ShoppingCart,
   CalendarDays,
+  CreditCard,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
+import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
 
 const CATEGORIES = [
   { key: "all", label: "All Services", icon: Sparkles },
