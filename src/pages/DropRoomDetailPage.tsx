@@ -257,6 +257,11 @@ const DropRoomDetailPage = () => {
             <span className="flex items-center gap-1 capitalize">
               <Badge variant="outline" className="text-[10px] py-0">{room.category}</Badge>
             </span>
+            {room.enable_video && (
+              <Badge variant="secondary" className="text-[10px] py-0 gap-1">
+                <Video className="h-2.5 w-2.5" /> Video
+              </Badge>
+            )}
             <span className="flex items-center gap-1">
               <Users className="h-3 w-3" /> {members.length}
             </span>
