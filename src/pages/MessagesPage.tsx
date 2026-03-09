@@ -317,6 +317,12 @@ const MessagesPage = () => {
                 <span className="font-display font-semibold text-foreground">
                   {selectedUser.display_name || "Creator"}
                 </span>
+                <div className="ml-auto">
+                  <QuoteBuilder
+                    recipientId={selectedUser.user_id}
+                    recipientName={selectedUser.display_name || "Creator"}
+                  />
+                </div>
               </div>
 
               {/* Messages */}
