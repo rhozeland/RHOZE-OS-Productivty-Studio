@@ -43,6 +43,7 @@ const navItems = [
   { icon: Compass, label: "Flow", path: "/flow" },
   { icon: LayoutGrid, label: "Smartboards", path: "/smartboards" },
   { icon: Store, label: "Marketplace", path: "/marketplace" },
+  { icon: Inbox, label: "Inquiries", path: "/inquiries" },
   { icon: Users, label: "Profiles", path: "/profiles" },
   { icon: MessageSquare, label: "Messages", path: "/messages" },
   { icon: Settings, label: "Settings", path: "/settings" },
