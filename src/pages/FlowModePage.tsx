@@ -99,6 +99,13 @@ const FlowModePage = () => {
   const [newCategory, setNewCategory] = useState("design");
   const [newLink, setNewLink] = useState("");
   const [newFile, setNewFile] = useState<File | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [swipeMap, setSwipeMap] = useState({
+    up: "save",
+    down: "dislike",
+    left: "share",
+    right: "skip",
+  });
   const fileInputRef = { current: null as HTMLInputElement | null };
 
   const x = useMotionValue(0);
