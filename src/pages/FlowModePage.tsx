@@ -414,64 +414,12 @@ const FlowModePage = () => {
             </motion.div>
           )}
 
-          {/* Step 1: Video Tutorial */}
+          {/* Step 1: Animated Tutorial Demo */}
           {onboardingStep === 1 && (
-            <motion.div
-              key="video"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full max-w-md text-center px-6"
-            >
-              <motion.h2
-                className="font-display text-2xl font-bold text-foreground mb-1.5"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-              >
-                How Flow Mode works
-              </motion.h2>
-              <motion.p
-                className="text-sm text-muted-foreground mb-6 max-w-[280px] mx-auto leading-relaxed"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.25 }}
-              >
-                Watch how swiping works, then try it yourself.
-              </motion.p>
-
-              <motion.div
-                className="relative mx-auto mb-8 rounded-2xl overflow-hidden shadow-2xl shadow-primary/10 border border-border/30 bg-card"
-                style={{ maxWidth: 320 }}
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.3, type: "spring", stiffness: 160, damping: 20 }}
-              >
-                <video
-                  src="/videos/flow-tutorial.mov"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="w-full aspect-[9/16] object-cover"
-                />
-              </motion.div>
-
-              <motion.div
-                className="flex gap-3 justify-center"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-              >
-                <Button variant="outline" onClick={() => setOnboardingStep(0)} className="rounded-full px-7 h-10 text-sm">
-                  Back
-                </Button>
-                <Button onClick={() => { setTutorialCompleted([]); setOnboardingStep(2); }} className="rounded-full px-8 h-10 text-sm shadow-md">
-                  Try it yourself
-                </Button>
-              </motion.div>
-            </motion.div>
+            <AnimatedTutorialDemo
+              onBack={() => setOnboardingStep(0)}
+              onContinue={() => { setTutorialCompleted([]); setOnboardingStep(2); }}
+            />
           )}
 
           {/* Step 2: Interactive Swipe Practice */}
