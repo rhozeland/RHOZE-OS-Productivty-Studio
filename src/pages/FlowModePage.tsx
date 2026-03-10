@@ -805,6 +805,17 @@ const FlowModePage = () => {
                 {/* Replay tutorial */}
                 <div>
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Other</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <Label htmlFor="sound-toggle" className="text-sm cursor-pointer">Swipe sounds</Label>
+                    <Switch
+                      id="sound-toggle"
+                      checked={soundEnabled}
+                      onCheckedChange={(checked) => {
+                        setSoundEnabled(checked);
+                        localStorage.setItem("flow-sound-enabled", String(checked));
+                      }}
+                    />
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"
