@@ -100,6 +100,10 @@ const FlowModePage = () => {
   const [newLink, setNewLink] = useState("");
   const [newFile, setNewFile] = useState<File | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    const saved = localStorage.getItem("flow-sound-enabled");
+    return saved !== null ? saved === "true" : true;
+  });
   const [swipeMap, setSwipeMap] = useState({
     up: "save",
     down: "dislike",
@@ -237,7 +241,7 @@ const FlowModePage = () => {
   const performAction = useCallback((action: string, smartboardId?: string) => {
     if (!currentItem) return;
     if (navigator.vibrate) navigator.vibrate(20);
-    playSwipeSound(action === "save" ? "up" : action === "dislike" ? "down" : action === "share" ? "left" : "right");
+    if (soundEnabled) playSwipeSound(action === "save" ? "up" : action === "dislike" ? "down" : action === "share" ? "left" : "right");
 
     if (action === "save") {
       if (smartboardId) {
@@ -307,7 +311,7 @@ const FlowModePage = () => {
     }
     // Haptic feedback on mobile
     if (navigator.vibrate) navigator.vibrate(30);
-    playSwipeSound(dir as "up" | "down" | "left" | "right");
+    if (soundEnabled) playSwipeSound(dir as "up" | "down" | "left" | "right");
     setTutorialDirection(dir);
     setTimeout(() => {
       setTutorialCompleted((prev) => [...prev, dir]);
@@ -801,6 +805,17 @@ const FlowModePage = () => {
                 {/* Replay tutorial */}
                 <div>
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Other</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <Label htmlFor="sound-toggle" className="text-sm cursor-pointer">Swipe sounds</Label>
+                    <Switch
+                      id="sound-toggle"
+                      checked={soundEnabled}
+                      onCheckedChange={(checked) => {
+                        setSoundEnabled(checked);
+                        localStorage.setItem("flow-sound-enabled", String(checked));
+                      }}
+                    />
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"
