@@ -978,14 +978,20 @@ const FlowModePage = () => {
             </AnimatePresence>
           </div>
 
-          {/* Bottom swipe hints */}
+          {/* Bottom swipe hints — dynamic from swipeMap */}
           {currentItem && (
             <div className="relative z-10 flex justify-center items-center pb-4">
-              <div className="flex items-center gap-8 text-foreground/40">
-                <span className="flex items-center gap-1 text-xs"><ChevronUp className="h-3.5 w-3.5" /> Save</span>
-                <span className="flex items-center gap-1 text-xs"><ChevronLeft className="h-3.5 w-3.5" /> Share</span>
-                <span className="flex items-center gap-1 text-xs"><ChevronRight className="h-3.5 w-3.5" /> Next</span>
-                <span className="flex items-center gap-1 text-xs"><ChevronDown className="h-3.5 w-3.5" /> Dislike</span>
+              <div className="flex items-center gap-6 md:gap-8 text-foreground/40">
+                {(["up", "down", "left", "right"] as const).map((dir) => {
+                  const icons = { up: ChevronUp, down: ChevronDown, left: ChevronLeft, right: ChevronRight };
+                  const actionLabels: Record<string, string> = { save: "Save", dislike: "Pass", share: "Share", skip: "Next" };
+                  const Icon = icons[dir];
+                  return (
+                    <span key={dir} className="flex items-center gap-1 text-xs">
+                      <Icon className="h-3.5 w-3.5" /> {actionLabels[swipeMap[dir]]}
+                    </span>
+                  );
+                })}
               </div>
             </div>
           )}
