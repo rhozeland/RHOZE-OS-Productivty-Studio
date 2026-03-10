@@ -100,6 +100,10 @@ const FlowModePage = () => {
   const [newLink, setNewLink] = useState("");
   const [newFile, setNewFile] = useState<File | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    const saved = localStorage.getItem("flow-sound-enabled");
+    return saved !== null ? saved === "true" : true;
+  });
   const [swipeMap, setSwipeMap] = useState({
     up: "save",
     down: "dislike",
