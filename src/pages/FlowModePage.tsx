@@ -687,8 +687,8 @@ const FlowModePage = () => {
         <div className="absolute inset-0 bg-background" />
       )}
 
-      {/* Top bar */}
-      <div className="relative z-10 flex items-center justify-between gap-3 px-4 py-4 md:px-6">
+      {/* Top bar — clean & minimal */}
+      <div className="relative z-10 flex items-center justify-between gap-3 px-4 py-3 md:px-6">
         {/* View mode toggle */}
         <div className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm p-1 border border-border/30">
           <button
@@ -709,41 +709,117 @@ const FlowModePage = () => {
           </button>
         </div>
 
-        {/* Category pills */}
-        <div className="flex items-center gap-2 flex-wrap justify-center flex-1">
-          {CATEGORIES.map((cat) => (
-            <Badge
-              key={cat}
-              variant={selectedCategories.includes(cat) ? "default" : "outline"}
-              className="cursor-pointer capitalize text-xs rounded-full backdrop-blur-sm"
-              onClick={() => {
-                const updated = selectedCategories.includes(cat)
-                  ? selectedCategories.filter((c) => c !== cat)
-                  : [...selectedCategories, cat];
-                setSelectedCategories(updated);
-                localStorage.setItem(`flow-calibrated-${user?.id}`, JSON.stringify(updated));
-              }}
-            >
-              {cat}
-            </Badge>
-          ))}
-        </div>
+        {/* Active category summary (compact) */}
+        <p className="text-[11px] text-muted-foreground truncate max-w-[140px] md:max-w-[220px]">
+          {selectedCategories.length === CATEGORIES.length || selectedCategories.length === 0
+            ? "All categories"
+            : selectedCategories.map((c) => c.charAt(0).toUpperCase() + c.slice(1)).join(", ")}
+        </p>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Tutorial replay */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9"
-            onClick={() => {
-              setCalibrated(false);
-              setOnboardingStep(0);
-            }}
-            title="Replay tutorial"
-          >
-            <Sparkles className="h-4 w-4" />
-          </Button>
-          {/* Share button */}
+          {/* Settings */}
+          <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9"
+                title="Flow settings"
+              >
+                <Settings2 className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px] sm:w-[340px] flex flex-col">
+              <SheetHeader>
+                <SheetTitle className="font-display">Flow Settings</SheetTitle>
+              </SheetHeader>
+
+              <div className="flex-1 overflow-y-auto space-y-6 pt-4">
+                {/* Categories */}
+                <div>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Content Types</h3>
+                  <div className="space-y-2.5">
+                    {CATEGORIES.map((cat) => (
+                      <div key={cat} className="flex items-center justify-between">
+                        <Label htmlFor={`cat-${cat}`} className="capitalize text-sm cursor-pointer">{cat}</Label>
+                        <Switch
+                          id={`cat-${cat}`}
+                          checked={selectedCategories.includes(cat)}
+                          onCheckedChange={(checked) => {
+                            const updated = checked
+                              ? [...selectedCategories, cat]
+                              : selectedCategories.filter((c) => c !== cat);
+                            const final = updated.length === 0 ? CATEGORIES : updated;
+                            setSelectedCategories(final);
+                            localStorage.setItem(`flow-calibrated-${user?.id}`, JSON.stringify(final));
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Swipe Directions */}
+                <div>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Swipe Actions</h3>
+                  <div className="space-y-3">
+                    {(["up", "down", "left", "right"] as const).map((dir) => {
+                      const icons = { up: ChevronUp, down: ChevronDown, left: ChevronLeft, right: ChevronRight };
+                      const Icon = icons[dir];
+                      return (
+                        <div key={dir} className="flex items-center gap-3">
+                          <div className="flex items-center gap-1.5 w-16 shrink-0">
+                            <Icon className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground capitalize">{dir}</span>
+                          </div>
+                          <Select
+                            value={swipeMap[dir]}
+                            onValueChange={(val) => setSwipeMap((prev) => ({ ...prev, [dir]: val }))}
+                          >
+                            <SelectTrigger className="h-8 text-xs rounded-lg">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="save">Save</SelectItem>
+                              <SelectItem value="dislike">Pass</SelectItem>
+                              <SelectItem value="share">Share</SelectItem>
+                              <SelectItem value="skip">Next</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={() => setSwipeMap({ up: "save", down: "dislike", left: "share", right: "skip" })}
+                    className="mt-3 text-[11px] text-primary hover:underline"
+                  >
+                    Reset to defaults
+                  </button>
+                </div>
+
+                {/* Replay tutorial */}
+                <div>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Other</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full rounded-lg text-xs"
+                    onClick={() => {
+                      setSettingsOpen(false);
+                      setCalibrated(false);
+                      setOnboardingStep(0);
+                    }}
+                  >
+                    <Sparkles className="h-3.5 w-3.5 mr-2" />
+                    Replay Tutorial
+                  </Button>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          {/* Add content */}
           <Button
             variant="ghost"
             size="icon"
