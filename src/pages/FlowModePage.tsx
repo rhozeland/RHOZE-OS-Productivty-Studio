@@ -275,14 +275,14 @@ const FlowModePage = () => {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!calibrated || !currentItem) return;
-      if (e.key === "ArrowUp") performAction("save");
-      if (e.key === "ArrowDown") performAction("dislike");
-      if (e.key === "ArrowLeft") performAction("share");
-      if (e.key === "ArrowRight") performAction("skip");
+      if (e.key === "ArrowUp") performAction(swipeMap.up);
+      if (e.key === "ArrowDown") performAction(swipeMap.down);
+      if (e.key === "ArrowLeft") performAction(swipeMap.left);
+      if (e.key === "ArrowRight") performAction(swipeMap.right);
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [calibrated, currentItem, performAction]);
+  }, [calibrated, currentItem, performAction, swipeMap]);
 
   // ──── ONBOARDING / TUTORIAL ────
   const [tutorialDirection, setTutorialDirection] = useState<string | null>(null);
