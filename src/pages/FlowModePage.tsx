@@ -264,13 +264,13 @@ const FlowModePage = () => {
     const threshold = 80;
 
     if (Math.abs(offset.x) > Math.abs(offset.y)) {
-      if (offset.x > threshold) performAction("skip");
-      else if (offset.x < -threshold) performAction("share");
+      if (offset.x > threshold) performAction(swipeMap.right);
+      else if (offset.x < -threshold) performAction(swipeMap.left);
     } else {
-      if (offset.y < -threshold) performAction("save");
-      else if (offset.y > threshold) performAction("dislike");
+      if (offset.y < -threshold) performAction(swipeMap.up);
+      else if (offset.y > threshold) performAction(swipeMap.down);
     }
-  }, [performAction]);
+  }, [performAction, swipeMap]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
