@@ -285,7 +285,14 @@ const ProjectDetailPage = () => {
         </TabsContent>
 
         <TabsContent value="vision">
-          <ProjectVision project={project} projectId={id!} />
+          <ProjectVision
+            project={project}
+            projectId={id!}
+            smartboardDetails={smartboardDetails}
+            linkedIds={linkedIds}
+            onLinkSmartboard={() => setLinkDialogOpen(true)}
+            onUnlinkSmartboard={(sbId: string) => unlinkSmartboard.mutate(sbId)}
+          />
         </TabsContent>
 
         <TabsContent value="budget">
