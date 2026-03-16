@@ -27,6 +27,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import ProfileSellerStats from "@/components/profile/ProfileSellerStats";
+import ProfileBadges from "@/components/profile/ProfileBadges";
 
 const ProfileDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -338,6 +339,7 @@ const ProfileDetailPage = () => {
                       <CheckCircle className="h-3 w-3 text-emerald-500" /> Available
                     </Badge>
                   )}
+                  <ProfileBadges userId={id!} compact />
                   {reviewStats && reviewStats.count > 0 && (
                     <Badge variant="outline" className="text-[10px] gap-1 font-medium">
                       <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {reviewStats.avg} ({reviewStats.count})

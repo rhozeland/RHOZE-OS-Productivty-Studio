@@ -35,9 +35,20 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import PaySolAndVerify from "@/components/PaySolAndVerify";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useQuery } from "@tanstack/react-query";
 
 type Step = "datetime" | "payment" | "confirm";
 type PaymentMethod = "credits" | "card" | "crypto";
+
+type StaffMember = {
+  id: string;
+  user_id: string;
+  display_name: string;
+  avatar_url: string | null;
+  specialties: string[];
+  is_available: boolean;
+};
 
 interface BookingCheckoutModalProps {
   open: boolean;
@@ -74,6 +85,20 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [cardToken, setCardToken] = useState<string | null>(null);
+  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
+
+  // Fetch available staff members
+  const { data: staffMembers } = useQuery({
+    queryKey: ["staff-members"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("staff_members")
+        .select("*")
+        .eq("is_available", true)
+        .order("display_name");
+      return (data as StaffMember[]) || [];
+    },
+  });
 
   const resetForm = () => {
     setStep("datetime");
@@ -83,6 +108,7 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
     setNotes("");
     setLoading(false);
     setCardToken(null);
+    setSelectedStaffId(null);
   };
 
   if (!service) return null;
@@ -147,7 +173,7 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
 
       // Create booking
       const endTime = addHours(startTime, service.duration_hours);
-      const { error: bookingError } = await supabase.from("bookings").insert({
+      const bookingPayload: any = {
         user_id: user.id,
         service_id: service.id,
         title: service.title,
@@ -156,7 +182,9 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
         duration_hours: service.duration_hours,
         notes: notes || null,
         status: "upcoming",
-      });
+      };
+      if (selectedStaffId) bookingPayload.staff_member_id = selectedStaffId;
+      const { error: bookingError } = await supabase.from("bookings").insert(bookingPayload);
       if (bookingError) throw bookingError;
 
       // Auto-create calendar event
@@ -282,6 +310,48 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
               </div>
             )}
 
+            {/* Staff selection */}
+            {staffMembers && staffMembers.length > 0 && (
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  Work With (optional)
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setSelectedStaffId(null)}
+                    className={cn(
+                      "rounded-lg px-3 py-2.5 text-xs font-medium transition-all border flex items-center gap-2",
+                      !selectedStaffId
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-card border-border text-foreground hover:bg-muted"
+                    )}
+                  >
+                    Anyone Available
+                  </button>
+                  {staffMembers.map((staff) => (
+                    <button
+                      key={staff.id}
+                      onClick={() => setSelectedStaffId(staff.id)}
+                      className={cn(
+                        "rounded-lg px-3 py-2.5 text-xs font-medium transition-all border flex items-center gap-2",
+                        selectedStaffId === staff.id
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-card border-border text-foreground hover:bg-muted"
+                      )}
+                    >
+                      <Avatar className="h-5 w-5">
+                        <AvatarImage src={staff.avatar_url || ""} />
+                        <AvatarFallback className="text-[8px] bg-muted">
+                          {staff.display_name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="truncate">{staff.display_name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <Button
               className="w-full"
               disabled={!canProceedFromDatetime}
@@ -402,6 +472,14 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
                   <Clock className="h-3.5 w-3.5" /> {service.duration_hours}h
                 </span>
               </div>
+              {selectedStaffId && (
+                <div className="flex items-center justify-between p-3">
+                  <span className="text-sm text-muted-foreground">Working With</span>
+                  <span className="text-sm font-medium text-foreground flex items-center gap-1">
+                    {staffMembers?.find(s => s.id === selectedStaffId)?.display_name || "Staff"}
+                  </span>
+                </div>
+              )}
               <div className="flex items-center justify-between p-3">
                 <span className="text-sm text-muted-foreground">Payment</span>
                 <span className="text-sm font-medium text-foreground capitalize flex items-center gap-1">

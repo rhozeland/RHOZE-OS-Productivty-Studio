@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      badges: {
+        Row: {
+          auto_criteria: Json | null
+          badge_type: string
+          color: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          label: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          auto_criteria?: Json | null
+          badge_type?: string
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          label: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          auto_criteria?: Json | null
+          badge_type?: string
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          label?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           created_at: string
@@ -23,6 +62,7 @@ export type Database = {
           notes: string | null
           project_id: string | null
           service_id: string | null
+          staff_member_id: string | null
           start_time: string
           status: string
           title: string
@@ -37,6 +77,7 @@ export type Database = {
           notes?: string | null
           project_id?: string | null
           service_id?: string | null
+          staff_member_id?: string | null
           start_time: string
           status?: string
           title: string
@@ -51,6 +92,7 @@ export type Database = {
           notes?: string | null
           project_id?: string | null
           service_id?: string | null
+          staff_member_id?: string | null
           start_time?: string
           status?: string
           title?: string
@@ -70,6 +112,13 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_staff_member_id_fkey"
+            columns: ["staff_member_id"]
+            isOneToOne: false
+            referencedRelation: "staff_members"
             referencedColumns: ["id"]
           },
         ]
@@ -1360,6 +1409,39 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_members: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string
+          id: string
+          is_available: boolean
+          specialties: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name: string
+          id?: string
+          is_available?: boolean
+          specialties?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_available?: boolean
+          specialties?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       studio_settings: {
         Row: {
           id: string
@@ -1427,6 +1509,38 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_badges: {
+        Row: {
+          awarded_at: string
+          awarded_by: string | null
+          badge_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          awarded_at?: string
+          awarded_by?: string | null
+          badge_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          awarded_at?: string
+          awarded_by?: string | null
+          badge_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
             referencedColumns: ["id"]
           },
         ]
