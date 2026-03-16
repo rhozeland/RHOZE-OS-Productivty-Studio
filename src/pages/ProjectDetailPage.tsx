@@ -16,7 +16,8 @@ import { Plus, Trash2, LayoutGrid, Link2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import GoalsList from "@/components/project/GoalsList";
+import StageRoadmap from "@/components/project/StageRoadmap";
+import ProjectBudget from "@/components/project/ProjectBudget";
 import ProgressChart from "@/components/project/ProgressChart";
 import Timeline from "@/components/project/Timeline";
 import Collaborators from "@/components/project/Collaborators";
@@ -183,9 +184,14 @@ const ProjectDetailPage = () => {
         </TabsList>
 
         <TabsContent value="roadmap" className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <GoalsList goals={goals} projectId={id!} />
-            <Timeline goals={goals} />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <StageRoadmap goals={goals} projectId={id!} />
+            </div>
+            <div className="space-y-6">
+              <ProjectBudget project={project} goals={goals} />
+              <Timeline goals={goals} />
+            </div>
           </div>
         </TabsContent>
 
