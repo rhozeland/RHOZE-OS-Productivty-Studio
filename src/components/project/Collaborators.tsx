@@ -12,9 +12,10 @@ import { motion } from "framer-motion";
 
 interface CollaboratorsProps {
   projectId: string;
+  isCollaborative?: boolean;
 }
 
-const Collaborators = ({ projectId }: CollaboratorsProps) => {
+const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -64,7 +65,7 @@ const Collaborators = ({ projectId }: CollaboratorsProps) => {
         user_id: profile.user_id,
         invited_by: user!.id,
         role,
-        project_role: projectRole,
+        project_role: isCollaborative ? "collaborator" : projectRole,
       } as any);
       if (error) throw error;
     },
@@ -116,13 +117,15 @@ const Collaborators = ({ projectId }: CollaboratorsProps) => {
             <DialogHeader><DialogTitle>Invite Collaborator</DialogTitle></DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); invite.mutate(); }} className="space-y-4">
               <Input placeholder="Display name" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              <Select value={projectRole} onValueChange={setProjectRole}>
-                <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="client">Client</SelectItem>
-                  <SelectItem value="specialist">Specialist</SelectItem>
-                </SelectContent>
-              </Select>
+              {!isCollaborative && (
+                <Select value={projectRole} onValueChange={setProjectRole}>
+                  <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="client">Client</SelectItem>
+                    <SelectItem value="specialist">Specialist</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
               <Select value={role} onValueChange={setRole}>
                 <SelectTrigger><SelectValue placeholder="Permission" /></SelectTrigger>
                 <SelectContent>
@@ -166,9 +169,11 @@ const Collaborators = ({ projectId }: CollaboratorsProps) => {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">{profile?.display_name ?? "User"}</p>
               <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${projectRoleColors[(collab as any).project_role] ?? projectRoleColors.client}`}>
-                  {(collab as any).project_role || "client"}
-                </span>
+                {!isCollaborative && (
+                  <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${projectRoleColors[(collab as any).project_role] ?? projectRoleColors.client}`}>
+                    {(collab as any).project_role || "client"}
+                  </span>
+                )}
                 <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${roleColors[collab.role] ?? roleColors.viewer}`}>
                   {collab.role}
                 </span>

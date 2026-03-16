@@ -21,6 +21,7 @@ const ProjectsPage = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [coverColor, setCoverColor] = useState(COLORS[0]);
+  const [projectType, setProjectType] = useState<"paid" | "collaborative">("paid");
 
   const { data: projects, isLoading } = useQuery({
     queryKey: ["projects"],
@@ -38,6 +39,7 @@ const ProjectsPage = () => {
         description,
         cover_color: coverColor,
         user_id: user!.id,
+        project_type: projectType,
       });
       if (error) throw error;
     },
@@ -80,6 +82,27 @@ const ProjectsPage = () => {
             <form onSubmit={(e) => { e.preventDefault(); createProject.mutate(); }} className="space-y-4">
               <Input placeholder="Project title" value={title} onChange={(e) => setTitle(e.target.value)} required />
               <Textarea placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-2">Project Type</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setProjectType("paid")}
+                    className={`rounded-lg border-2 p-3 text-left transition-all ${projectType === "paid" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}
+                  >
+                    <p className="text-sm font-semibold text-foreground">Paid</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Budget, milestones & client roles</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setProjectType("collaborative")}
+                    className={`rounded-lg border-2 p-3 text-left transition-all ${projectType === "collaborative" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}
+                  >
+                    <p className="text-sm font-semibold text-foreground">Collaborative</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Free project, equal collaborators</p>
+                  </button>
+                </div>
+              </div>
               <div className="flex gap-2">
                 {COLORS.map((c) => (
                   <button
@@ -147,6 +170,11 @@ const ProjectsPage = () => {
                       <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary capitalize">
                         {project.status}
                       </span>
+                      {project.project_type === "collaborative" && (
+                        <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
+                          Collab
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -248,8 +248,12 @@ const ProjectDetailPage = () => {
         <TabsList className="mb-4 flex-wrap">
           <TabsTrigger value="roadmap">Roadmap</TabsTrigger>
           <TabsTrigger value="vision">Scope</TabsTrigger>
-          <TabsTrigger value="budget">Budget</TabsTrigger>
-          {contract && <TabsTrigger value="milestones">Milestones</TabsTrigger>}
+          {project.project_type !== "collaborative" && (
+            <TabsTrigger value="budget">Budget</TabsTrigger>
+          )}
+          {project.project_type !== "collaborative" && contract && (
+            <TabsTrigger value="milestones">Milestones</TabsTrigger>
+          )}
           <TabsTrigger value="approval">Approval</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
         </TabsList>
@@ -295,11 +299,13 @@ const ProjectDetailPage = () => {
           />
         </TabsContent>
 
-        <TabsContent value="budget">
-          <ProjectBudget project={project} goals={goals} />
-        </TabsContent>
+        {project.project_type !== "collaborative" && (
+          <TabsContent value="budget">
+            <ProjectBudget project={project} goals={goals} />
+          </TabsContent>
+        )}
 
-        {contract && (
+        {project.project_type !== "collaborative" && contract && (
           <TabsContent value="milestones">
             <MilestoneTracker contractId={contract.id} />
           </TabsContent>
@@ -316,7 +322,7 @@ const ProjectDetailPage = () => {
 
 
         <TabsContent value="team">
-          <Collaborators projectId={id!} />
+          <Collaborators projectId={id!} isCollaborative={project.project_type === "collaborative"} />
         </TabsContent>
       </Tabs>
 
