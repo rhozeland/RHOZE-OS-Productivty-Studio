@@ -319,7 +319,7 @@ const ProfileDetailPage = () => {
           </div>
 
           <div className="px-5 sm:px-8 pb-6 pt-3">
-            <div className="-mt-14 sm:-mt-16 flex items-end gap-4 relative z-10">
+            <div className="-mt-14 sm:-mt-16 flex gap-4 relative z-10">
               {/* Avatar */}
               <div className="flex h-24 w-24 sm:h-28 sm:w-28 items-center justify-center rounded-full border-4 border-card bg-muted shadow-xl overflow-hidden shrink-0 ring-2 ring-background/50">
                 {profile.avatar_url ? (
@@ -328,37 +328,38 @@ const ProfileDetailPage = () => {
                   <span className="font-display text-2xl font-bold text-muted-foreground">{initials}</span>
                 )}
               </div>
+            </div>
 
-              <div className="flex-1 min-w-0 pb-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground tracking-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                    {profile.display_name || "Creator"}
-                  </h1>
-                  {profile.available && (
-                    <Badge variant="secondary" className="text-[10px] gap-1 font-medium">
-                      <CheckCircle className="h-3 w-3 text-emerald-500" /> Available
-                    </Badge>
-                  )}
-                  <ProfileBadges userId={id!} compact />
-                  {reviewStats && reviewStats.count > 0 && (
-                    <Badge variant="outline" className="text-[10px] gap-1 font-medium">
-                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {reviewStats.avg} ({reviewStats.count})
-                    </Badge>
-                  )}
-                </div>
-                {(profile as any).headline && (
-                  <p className="text-sm text-muted-foreground mt-0.5">{(profile as any).headline}</p>
+            {/* Name & info below avatar to prevent overlap */}
+            <div className="mt-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground tracking-tight break-words">
+                  {profile.display_name || "Creator"}
+                </h1>
+                {profile.available && (
+                  <Badge variant="secondary" className="text-[10px] gap-1 font-medium">
+                    <CheckCircle className="h-3 w-3 text-emerald-500" /> Available
+                  </Badge>
                 )}
-                {(profile as any).location && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                    <MapPin className="h-3 w-3" /> {(profile as any).location}
-                  </p>
+                <ProfileBadges userId={id!} compact />
+                {reviewStats && reviewStats.count > 0 && (
+                  <Badge variant="outline" className="text-[10px] gap-1 font-medium">
+                    <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {reviewStats.avg} ({reviewStats.count})
+                  </Badge>
                 )}
               </div>
+              {(profile as any).headline && (
+                <p className="text-sm text-muted-foreground mt-0.5">{(profile as any).headline}</p>
+              )}
+              {(profile as any).location && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                  <MapPin className="h-3 w-3" /> {(profile as any).location}
+                </p>
+              )}
 
               {/* Action buttons */}
               {!isOwnProfile && user && (
-                <div className="flex gap-2 shrink-0 flex-wrap">
+                <div className="flex gap-2 mt-3 flex-wrap">
                   <Button
                     variant={isFollowing ? "outline" : "default"}
                     size="sm"
