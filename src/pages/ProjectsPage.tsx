@@ -39,6 +39,7 @@ const ProjectsPage = () => {
         description,
         cover_color: coverColor,
         user_id: user!.id,
+        project_type: projectType,
       });
       if (error) throw error;
     },
