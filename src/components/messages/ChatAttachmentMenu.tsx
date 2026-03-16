@@ -19,6 +19,7 @@ import {
   Search,
   Upload,
   Loader2,
+  Link2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
