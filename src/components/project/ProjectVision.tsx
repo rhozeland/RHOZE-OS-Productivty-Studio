@@ -224,7 +224,7 @@ const ProjectVision = ({ project, projectId, smartboardDetails, linkedIds, onLin
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Eye className="h-5 w-5 text-primary" />
-          <h2 className="font-display text-lg font-semibold text-foreground">Vision & Scope</h2>
+          <h2 className="font-display text-lg font-semibold text-foreground">Scope</h2>
         </div>
         {!editing ? (
           <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
