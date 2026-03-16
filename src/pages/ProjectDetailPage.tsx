@@ -3,7 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import ProjectVision from "@/components/project/ProjectVision";
+import ProjectScopeDeliverables from "@/components/project/ProjectScopeDeliverables";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -11,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, LayoutGrid, Link2, X, FileDown } from "lucide-react";
+import { Plus, Trash2, LayoutGrid, Link2, X, FileDown, Pencil, Check } from "lucide-react";
 import { exportProjectPDF } from "@/lib/export-project-pdf";
 import { useState } from "react";
 import { toast } from "sonner";
