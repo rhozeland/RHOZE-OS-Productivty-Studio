@@ -226,6 +226,10 @@ const SettingsPage = () => {
           is_public: isPublic,
           banner_gradient: bannerGradient || null,
           profile_background: profileBackground || null,
+          instagram_url: instagramUrl || null,
+          tiktok_url: tiktokUrl || null,
+          twitter_url: twitterUrl || null,
+          youtube_url: youtubeUrl || null,
         } as any)
         .eq("user_id", user!.id);
       if (error) throw error;
