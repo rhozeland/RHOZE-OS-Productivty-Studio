@@ -111,8 +111,8 @@ const CreatorsHubPage = () => {
 
   const getMediaForListing = (listingId: string) => allMedia?.filter((m: any) => m.listing_id === listingId) ?? [];
 
-  // Trending: first 6 listings for carousel
-  const trendingListings = listings?.slice(0, 6) ?? [];
+  // Trending: top 5 listings for carousel
+  const trendingListings = listings?.slice(0, 5) ?? [];
   const trendingRef = useRef<HTMLDivElement>(null);
 
   const scrollTrending = (direction: "left" | "right") => {
