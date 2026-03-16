@@ -21,6 +21,7 @@ const ProjectsPage = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [coverColor, setCoverColor] = useState(COLORS[0]);
+  const [projectType, setProjectType] = useState<"paid" | "collaborative">("paid");
 
   const { data: projects, isLoading } = useQuery({
     queryKey: ["projects"],
