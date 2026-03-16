@@ -146,8 +146,8 @@ const ProjectDetailPage = () => {
       <Tabs defaultValue="roadmap" className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="roadmap">Roadmap</TabsTrigger>
+          <TabsTrigger value="vision">Vision & Scope</TabsTrigger>
           <TabsTrigger value="budget">Budget</TabsTrigger>
-          <TabsTrigger value="tasks">Tasks</TabsTrigger>
           {contract && <TabsTrigger value="milestones">Milestones</TabsTrigger>}
           <TabsTrigger value="smartboards">Smartboards</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
@@ -164,6 +164,10 @@ const ProjectDetailPage = () => {
           </div>
         </TabsContent>
 
+        <TabsContent value="vision">
+          <ProjectVision project={project} />
+        </TabsContent>
+
         <TabsContent value="budget">
           <ProjectBudget project={project} goals={goals} />
         </TabsContent>
@@ -174,27 +178,6 @@ const ProjectDetailPage = () => {
           </TabsContent>
         )}
 
-        <TabsContent value="tasks">
-          <div className="surface-card p-6">
-            <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Tasks</h2>
-            <form onSubmit={(e) => { e.preventDefault(); if (newTask.trim()) addTask.mutate(); }} className="mb-4 flex gap-2">
-              <Input value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder="Add a task..." className="flex-1" />
-              <Button type="submit" size="icon" disabled={!newTask.trim()}><Plus className="h-4 w-4" /></Button>
-            </form>
-            <div className="space-y-2">
-              {tasks?.map((task) => (
-                <div key={task.id} className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
-                  <Checkbox checked={task.completed ?? false} onCheckedChange={(checked) => toggleTask.mutate({ taskId: task.id, completed: !!checked })} />
-                  <span className={`flex-1 text-sm ${task.completed ? "text-muted-foreground line-through" : "text-foreground"}`}>{task.title}</span>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteTask.mutate(task.id)}>
-                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
-                  </Button>
-                </div>
-              ))}
-              {tasks?.length === 0 && <p className="text-sm text-muted-foreground">No tasks yet</p>}
-            </div>
-          </div>
-        </TabsContent>
 
         <TabsContent value="smartboards">
           <div className="surface-card p-6">
