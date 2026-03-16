@@ -27,7 +27,10 @@ import {
   Layers,
   Trash2,
   CheckCircle2,
+  LayoutGrid,
+  Link2,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
