@@ -95,30 +95,6 @@ const ProjectDetailPage = () => {
     enabled: !!user && linkDialogOpen,
   });
 
-  const addTask = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("tasks").insert({ title: newTask, project_id: id!, user_id: user!.id });
-      if (error) throw error;
-    },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["project-tasks", id] }); setNewTask(""); },
-    onError: (e: any) => toast.error(e.message),
-  });
-
-  const toggleTask = useMutation({
-    mutationFn: async ({ taskId, completed }: { taskId: string; completed: boolean }) => {
-      const { error } = await supabase.from("tasks").update({ completed }).eq("id", taskId);
-      if (error) throw error;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["project-tasks", id] }),
-  });
-
-  const deleteTask = useMutation({
-    mutationFn: async (taskId: string) => {
-      const { error } = await supabase.from("tasks").delete().eq("id", taskId);
-      if (error) throw error;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["project-tasks", id] }),
-  });
 
   const linkSmartboard = useMutation({
     mutationFn: async (smartboardId: string) => {
