@@ -55,7 +55,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Rhozeland Studio <onboarding@resend.dev>",
+        from: "Rhozeland Studio <noreply@support.rhozeland.app>",
         to: [to_email],
         subject: `🎉 Subscription Confirmed: ${tier_name} Plan`,
         html,
