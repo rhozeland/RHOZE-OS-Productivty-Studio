@@ -89,6 +89,10 @@ const SettingsPage = () => {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [bannerGradient, setBannerGradient] = useState("");
   const [profileBackground, setProfileBackground] = useState("");
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [tiktokUrl, setTiktokUrl] = useState("");
+  const [twitterUrl, setTwitterUrl] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState("");
 
   // Shipping fields
   const [addressLine1, setAddressLine1] = useState("");
