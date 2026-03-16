@@ -85,6 +85,20 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [cardToken, setCardToken] = useState<string | null>(null);
+  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
+
+  // Fetch available staff members
+  const { data: staffMembers } = useQuery({
+    queryKey: ["staff-members"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("staff_members")
+        .select("*")
+        .eq("is_available", true)
+        .order("display_name");
+      return (data as StaffMember[]) || [];
+    },
+  });
 
   const resetForm = () => {
     setStep("datetime");
@@ -94,6 +108,7 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
     setNotes("");
     setLoading(false);
     setCardToken(null);
+    setSelectedStaffId(null);
   };
 
   if (!service) return null;
