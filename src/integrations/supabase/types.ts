@@ -847,6 +847,7 @@ export type Database = {
           id: string
           invited_by: string
           project_id: string
+          project_role: string
           role: string
           user_id: string
         }
@@ -855,6 +856,7 @@ export type Database = {
           id?: string
           invited_by: string
           project_id: string
+          project_role?: string
           role?: string
           user_id: string
         }
@@ -863,6 +865,7 @@ export type Database = {
           id?: string
           invited_by?: string
           project_id?: string
+          project_role?: string
           role?: string
           user_id?: string
         }
