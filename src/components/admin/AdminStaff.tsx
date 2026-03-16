@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -19,8 +18,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, UserCheck, UserX, Loader2 } from "lucide-react";
+import { Plus, Trash2, UserCheck, UserX, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 type StaffMember = {
   id: string;
@@ -41,19 +41,24 @@ const AdminStaff = () => {
   const { user } = useAuth();
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [serviceCategories, setServiceCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState("");
-  const [specialtyInput, setSpecialtyInput] = useState("");
+  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   const fetchData = async () => {
-    const [{ data: staffData }, { data: profileData }] = await Promise.all([
+    const [{ data: staffData }, { data: profileData }, { data: servicesData }] = await Promise.all([
       supabase.from("staff_members").select("*").order("created_at"),
       supabase.from("profiles").select("user_id, display_name, avatar_url"),
+      supabase.from("services").select("category"),
     ]);
     setStaff((staffData as any[]) || []);
     setProfiles(profileData || []);
+    // Extract unique categories from services
+    const cats = [...new Set((servicesData || []).map((s: any) => s.category as string))].sort();
+    setServiceCategories(cats);
     setLoading(false);
   };
 
@@ -62,17 +67,22 @@ const AdminStaff = () => {
   const existingUserIds = new Set(staff.map((s) => s.user_id));
   const availableProfiles = profiles.filter((p) => !existingUserIds.has(p.user_id));
 
+  const toggleSpecialty = (cat: string) => {
+    setSelectedSpecialties((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+    );
+  };
+
   const handleAdd = async () => {
     if (!selectedUserId) return;
     setSaving(true);
     const profile = profiles.find((p) => p.user_id === selectedUserId);
-    const specialties = specialtyInput.split(",").map((s) => s.trim()).filter(Boolean);
 
     const { error } = await supabase.from("staff_members").insert({
       user_id: selectedUserId,
       display_name: profile?.display_name || "Staff Member",
       avatar_url: profile?.avatar_url || null,
-      specialties,
+      specialties: selectedSpecialties,
       is_available: true,
     } as any);
 
@@ -82,7 +92,7 @@ const AdminStaff = () => {
       toast.success("Staff member added");
       setAddOpen(false);
       setSelectedUserId("");
-      setSpecialtyInput("");
+      setSelectedSpecialties([]);
       fetchData();
     }
     setSaving(false);
@@ -159,7 +169,7 @@ const AdminStaff = () => {
       </div>
 
       {/* Add staff dialog */}
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+      <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) { setSelectedUserId(""); setSelectedSpecialties([]); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add Staff Member</DialogTitle>
@@ -181,12 +191,46 @@ const AdminStaff = () => {
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium text-foreground block mb-1.5">Specialties (comma-separated)</label>
-              <Input
-                placeholder="e.g. Audio, Mixing, Design"
-                value={specialtyInput}
-                onChange={(e) => setSpecialtyInput(e.target.value)}
-              />
+              <label className="text-sm font-medium text-foreground block mb-1.5">Specialties</label>
+              {selectedSpecialties.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {selectedSpecialties.map((s) => (
+                    <Badge
+                      key={s}
+                      variant="secondary"
+                      className="gap-1 cursor-pointer hover:bg-destructive/10"
+                      onClick={() => toggleSpecialty(s)}
+                    >
+                      {s}
+                      <X className="h-3 w-3" />
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <div className="flex flex-wrap gap-2">
+                {serviceCategories.length > 0 ? (
+                  serviceCategories.map((cat) => {
+                    const active = selectedSpecialties.includes(cat);
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => toggleSpecialty(cat)}
+                        className={cn(
+                          "rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
+                          active
+                            ? "border-primary/40 bg-primary/10 text-primary"
+                            : "border-border bg-muted/30 text-muted-foreground hover:bg-muted hover:text-foreground"
+                        )}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })
+                ) : (
+                  <p className="text-xs text-muted-foreground">No service categories found. Add services first.</p>
+                )}
+              </div>
             </div>
             <Button className="w-full" onClick={handleAdd} disabled={!selectedUserId || saving}>
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
