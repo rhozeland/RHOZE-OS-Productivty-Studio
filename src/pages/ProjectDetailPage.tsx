@@ -159,18 +159,6 @@ const ProjectDetailPage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const updateCategories = useMutation({
-    mutationFn: async (categories: string[]) => {
-      const { error } = await supabase
-        .from("projects")
-        .update({ categories } as any)
-        .eq("id", id!);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project", id] });
-    },
-  });
 
   if (!project) return <div className="text-muted-foreground">Loading...</div>;
 
