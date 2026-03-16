@@ -117,56 +117,43 @@ const CreatorsHubPage = () => {
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
       {/* Hero - compact & social */}
-      <div className="relative overflow-hidden rounded-3xl px-6 py-8 md:px-10 md:py-12">
+      <div className="relative overflow-hidden rounded-3xl px-6 py-8 md:px-10 md:py-10">
         <div className="absolute inset-0 gradient-hero" />
         <div className="absolute inset-0 opacity-30" style={{
           background: "radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.4) 0%, transparent 60%)"
         }} />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
-              Creators Hub
-            </h1>
-            <p className="text-muted-foreground text-sm mt-1 max-w-md">
-              Discover, connect, and collaborate with talented creators across every medium.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <div className="relative flex-1 md:w-72">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search creators & listings..."
-                className="pl-10 rounded-full bg-card/80 backdrop-blur-sm border-border/50"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+        <div className="relative z-10 space-y-5">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
+                Creators Hub
+              </h1>
+              <p className="text-muted-foreground text-sm mt-1 max-w-md">
+                Discover, connect, and collaborate with talented creators across every medium.
+              </p>
             </div>
-            <Button onClick={() => setCreateOpen(true)} className="rounded-full shrink-0">
-              <Plus className="mr-1.5 h-4 w-4" /> Post
-            </Button>
+            <div className="flex gap-2">
+              <div className="relative flex-1 md:w-72">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search creators & listings..."
+                  className="pl-10 rounded-full bg-card/80 backdrop-blur-sm border-border/50"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Button onClick={() => setCreateOpen(true)} className="rounded-full shrink-0">
+                <Plus className="mr-1.5 h-4 w-4" /> Post
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Category Tiles */}
-      <CategoryTiles
-        activeCategory={activeCategory}
-        onSelect={setActiveCategory}
-        listingCounts={listingCounts}
-      />
-
-      {/* Main content: Grid + Sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-        {/* Left: Feed */}
-        <div className="space-y-6">
-          {/* Trending strip */}
+          {/* Trending inside hero */}
           {trendingListings.length > 0 && !searchQuery && activeCategory === "all" && (
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="font-display font-bold text-foreground text-base flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-primary" /> Trending Now
-                </h2>
-              </div>
+              <h2 className="font-display font-semibold text-foreground text-sm flex items-center gap-1.5 mb-3">
+                <TrendingUp className="h-3.5 w-3.5 text-primary" /> Trending Now
+              </h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {trendingListings.map((listing: any, i: number) => (
                   <ListingCard
@@ -184,8 +171,8 @@ const CreatorsHubPage = () => {
               </div>
             </div>
           )}
-
-          {/* Type filters */}
+        </div>
+      </div>
           <div className="flex flex-wrap gap-2">
             {TYPES.map((t) => {
               const Icon = t.icon;
