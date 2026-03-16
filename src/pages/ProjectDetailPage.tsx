@@ -40,14 +40,6 @@ const ProjectDetailPage = () => {
     },
   });
 
-  const { data: tasks } = useQuery({
-    queryKey: ["project-tasks", id],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("tasks").select("*").eq("project_id", id!).order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-  });
 
   const { data: goals } = useQuery({
     queryKey: ["project-goals", id],
