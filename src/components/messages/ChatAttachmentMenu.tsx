@@ -37,6 +37,8 @@ const ChatAttachmentMenu = ({ onSendMessage, disabled }: ChatAttachmentMenuProps
   const [view, setView] = useState<ShareType>("menu");
   const [search, setSearch] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkTitle, setLinkTitle] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Smartboards
