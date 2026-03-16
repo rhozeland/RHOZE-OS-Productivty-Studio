@@ -292,7 +292,7 @@ const ProjectDetailPage = () => {
         </TabsContent>
 
         <TabsContent value="vision">
-          <ProjectVision project={project} />
+          <ProjectVision project={project} projectId={id!} />
         </TabsContent>
 
         <TabsContent value="budget">
