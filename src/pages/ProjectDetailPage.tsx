@@ -140,7 +140,7 @@ const ProjectDetailPage = () => {
       </div>
 
       {/* Progress Overview */}
-      <ProgressChart goals={goals} tasks={tasks} />
+      <ProgressChart goals={goals} />
 
       <Tabs defaultValue="roadmap" className="w-full">
         <TabsList className="mb-4">
