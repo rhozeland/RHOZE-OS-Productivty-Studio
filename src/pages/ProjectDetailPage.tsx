@@ -39,6 +39,17 @@ const ProjectDetailPage = () => {
     },
   });
 
+  const { data: approvals } = useQuery({
+    queryKey: ["project-approvals", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_approvals" as any)
+        .select("*")
+        .eq("project_id", id!);
+      if (error) throw error;
+      return data as any[];
+    },
+  });
 
   const { data: goals } = useQuery({
     queryKey: ["project-goals", id],
