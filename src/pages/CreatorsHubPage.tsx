@@ -161,22 +161,43 @@ const CreatorsHubPage = () => {
           {/* Trending inside hero */}
           {trendingListings.length > 0 && !searchQuery && activeCategory === "all" && (
             <div>
-              <h2 className="font-display font-semibold text-foreground text-sm flex items-center gap-1.5 mb-3">
-                <TrendingUp className="h-3.5 w-3.5 text-primary" /> Trending Now
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-display font-semibold text-foreground text-sm flex items-center gap-1.5">
+                  <TrendingUp className="h-3.5 w-3.5 text-primary" /> Trending Now
+                </h2>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => scrollTrending("left")}
+                    className="p-1.5 rounded-full hover:bg-card/60 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => scrollTrending("right")}
+                    className="p-1.5 rounded-full hover:bg-card/60 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              <div
+                ref={trendingRef}
+                className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-1"
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              >
                 {trendingListings.map((listing: any, i: number) => (
-                  <ListingCard
-                    key={listing.id}
-                    listing={listing}
-                    media={getMediaForListing(listing.id)}
-                    reviewStats={getReviewStatsForListing(listing.id)}
-                    index={i}
-                    isOwner={listing.user_id === user?.id}
-                    onInquire={() => navigate(`/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`)}
-                    onClick={() => navigate(`/creators/${listing.id}`)}
-                    onDelete={() => deleteListing.mutate(listing.id)}
-                  />
+                  <div key={listing.id} className="snap-start shrink-0 w-[200px] sm:w-[220px]">
+                    <ListingCard
+                      listing={listing}
+                      media={getMediaForListing(listing.id)}
+                      reviewStats={getReviewStatsForListing(listing.id)}
+                      index={i}
+                      isOwner={listing.user_id === user?.id}
+                      onInquire={() => navigate(`/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`)}
+                      onClick={() => navigate(`/creators/${listing.id}`)}
+                      onDelete={() => deleteListing.mutate(listing.id)}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
