@@ -111,8 +111,8 @@ const CreatorsHubPage = () => {
 
   const getMediaForListing = (listingId: string) => allMedia?.filter((m: any) => m.listing_id === listingId) ?? [];
 
-  // Trending: first 6 listings for carousel
-  const trendingListings = listings?.slice(0, 6) ?? [];
+  // Trending: top 5 listings for carousel
+  const trendingListings = listings?.slice(0, 5) ?? [];
   const trendingRef = useRef<HTMLDivElement>(null);
 
   const scrollTrending = (direction: "left" | "right") => {
@@ -182,11 +182,11 @@ const CreatorsHubPage = () => {
               </div>
               <div
                 ref={trendingRef}
-                className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-1"
+                className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-1"
                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
               >
                 {trendingListings.map((listing: any, i: number) => (
-                  <div key={listing.id} className="snap-start shrink-0 w-[200px] sm:w-[220px]">
+                  <div key={listing.id} className="snap-start shrink-0 w-[280px] sm:w-[320px] md:w-[340px]">
                     <ListingCard
                       listing={listing}
                       media={getMediaForListing(listing.id)}
