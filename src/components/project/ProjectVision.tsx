@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -23,9 +25,11 @@ import {
   X,
   Plus,
   Layers,
+  Trash2,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface Project {
@@ -41,8 +45,18 @@ interface Project {
   project_type?: string | null;
 }
 
+interface Deliverable {
+  id: string;
+  project_id: string;
+  user_id: string;
+  title: string;
+  completed: boolean;
+  sort_order: number;
+}
+
 interface ProjectVisionProps {
   project: Project;
+  projectId: string;
 }
 
 const PROJECT_TYPES = [
@@ -64,9 +78,11 @@ const CATEGORY_SUGGESTIONS = [
   "Animation", "Consulting", "Strategy",
 ];
 
-const ProjectVision = ({ project }: ProjectVisionProps) => {
+const ProjectVision = ({ project, projectId }: ProjectVisionProps) => {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
+  const [newDeliverable, setNewDeliverable] = useState("");
 
   const [vision, setVision] = useState(project.vision || "");
   const [scope, setScope] = useState(project.scope_of_work || "");
@@ -76,7 +92,6 @@ const ProjectVision = ({ project }: ProjectVisionProps) => {
   const [projectType, setProjectType] = useState(project.project_type || "standard");
   const [newCategory, setNewCategory] = useState("");
 
-  // Sync when project changes
   useEffect(() => {
     setVision(project.vision || "");
     setScope(project.scope_of_work || "");
@@ -85,6 +100,67 @@ const ProjectVision = ({ project }: ProjectVisionProps) => {
     setClientName(project.client_name || "");
     setProjectType(project.project_type || "standard");
   }, [project]);
+
+  // Deliverables
+  const { data: deliverables = [] } = useQuery({
+    queryKey: ["project-deliverables", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_deliverables" as any)
+        .select("*")
+        .eq("project_id", projectId)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data as unknown as Deliverable[];
+    },
+  });
+
+  const addDeliverable = useMutation({
+    mutationFn: async (title: string) => {
+      const { error } = await supabase.from("project_deliverables" as any).insert({
+        project_id: projectId,
+        user_id: user!.id,
+        title,
+        sort_order: deliverables.length,
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-deliverables", projectId] });
+      setNewDeliverable("");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const toggleDeliverable = useMutation({
+    mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
+      const { error } = await supabase
+        .from("project_deliverables" as any)
+        .update({ completed, updated_at: new Date().toISOString() } as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-deliverables", projectId] });
+    },
+  });
+
+  const deleteDeliverable = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("project_deliverables" as any)
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-deliverables", projectId] });
+    },
+  });
+
+  const completedCount = deliverables.filter((d) => d.completed).length;
+  const totalCount = deliverables.length;
+  const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   const addCategory = (cat: string) => {
     const trimmed = cat.trim();
@@ -161,7 +237,6 @@ const ProjectVision = ({ project }: ProjectVisionProps) => {
       </div>
 
       {editing ? (
-        /* ---- EDIT MODE ---- */
         <div className="space-y-5">
           {/* Project Type & Client */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -289,7 +364,6 @@ const ProjectVision = ({ project }: ProjectVisionProps) => {
           </div>
         </div>
       ) : (
-        /* ---- VIEW MODE ---- */
         <>
           {!hasContent ? (
             <div
@@ -325,7 +399,6 @@ const ProjectVision = ({ project }: ProjectVisionProps) => {
                 ))}
               </div>
 
-              {/* Vision */}
               {vision && (
                 <motion.div
                   initial={{ opacity: 0, y: 6 }}
@@ -342,7 +415,6 @@ const ProjectVision = ({ project }: ProjectVisionProps) => {
                 </motion.div>
               )}
 
-              {/* Scope */}
               {scope && (
                 <motion.div
                   initial={{ opacity: 0, y: 6 }}
@@ -360,7 +432,6 @@ const ProjectVision = ({ project }: ProjectVisionProps) => {
                 </motion.div>
               )}
 
-              {/* Runtime */}
               {runtime && (
                 <motion.div
                   initial={{ opacity: 0, y: 6 }}
@@ -381,6 +452,94 @@ const ProjectVision = ({ project }: ProjectVisionProps) => {
           )}
         </>
       )}
+
+      {/* Deliverables Checklist */}
+      <div className="space-y-3 pt-2 border-t border-border">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Deliverables
+            </h3>
+          </div>
+          {totalCount > 0 && (
+            <span className="text-xs text-muted-foreground">
+              {completedCount}/{totalCount} complete ({progressPct}%)
+            </span>
+          )}
+        </div>
+
+        {totalCount > 0 && (
+          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+            <motion.div
+              className="h-full rounded-full bg-primary"
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPct}%` }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            />
+          </div>
+        )}
+
+        <div className="space-y-1">
+          <AnimatePresence initial={false}>
+            {deliverables.map((d) => (
+              <motion.div
+                key={d.id}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="group flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-muted/40 transition-colors"
+              >
+                <Checkbox
+                  checked={d.completed}
+                  onCheckedChange={(checked) =>
+                    toggleDeliverable.mutate({ id: d.id, completed: !!checked })
+                  }
+                />
+                <span
+                  className={cn(
+                    "flex-1 text-sm transition-all",
+                    d.completed
+                      ? "text-muted-foreground line-through"
+                      : "text-foreground"
+                  )}
+                >
+                  {d.title}
+                </span>
+                <button
+                  onClick={() => deleteDeliverable.mutate(d.id)}
+                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (newDeliverable.trim()) addDeliverable.mutate(newDeliverable.trim());
+          }}
+          className="flex gap-2"
+        >
+          <Input
+            value={newDeliverable}
+            onChange={(e) => setNewDeliverable(e.target.value)}
+            placeholder="Add deliverable (e.g. Final master audio files)"
+            className="flex-1"
+          />
+          <Button
+            type="submit"
+            variant="outline"
+            size="icon"
+            disabled={!newDeliverable.trim() || addDeliverable.isPending}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </form>
+      </div>
     </div>
   );
 };
