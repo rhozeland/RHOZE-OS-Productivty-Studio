@@ -841,6 +841,44 @@ export type Database = {
         }
         Relationships: []
       }
+      project_approvals: {
+        Row: {
+          created_at: string
+          id: string
+          printed_name: string
+          project_id: string
+          role: string
+          signed_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          printed_name: string
+          project_id: string
+          role?: string
+          signed_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          printed_name?: string
+          project_id?: string
+          role?: string
+          signed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_approvals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_collaborators: {
         Row: {
           created_at: string

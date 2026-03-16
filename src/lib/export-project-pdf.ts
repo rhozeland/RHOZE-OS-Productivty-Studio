@@ -64,7 +64,17 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-export async function exportProjectPDF(project: Project, goals: Goal[] | undefined) {
+interface Approval {
+  printed_name: string;
+  role: string;
+  signed_at: string;
+}
+
+export async function exportProjectPDF(
+  project: Project,
+  goals: Goal[] | undefined,
+  approvals?: Approval[]
+) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -390,6 +400,9 @@ export async function exportProjectPDF(project: Project, goals: Goal[] | undefin
 
   sectionHeader("APPROVAL AND FINAL SIGN-OFF");
 
+  const clientApproval = approvals?.find((a) => a.role === "client");
+  const specialistApproval = approvals?.find((a) => a.role === "specialist");
+
   autoTable(doc, {
     startY: y,
     margin: { left: marginLeft, right: marginRight },
@@ -408,8 +421,18 @@ export async function exportProjectPDF(project: Project, goals: Goal[] | undefin
       fontStyle: "bold",
     },
     body: [
-      [`Print Name: ${project.client_name || "________________"}`, "Print Name: ________________"],
-      ["Signature: ________________", "Signature: ________________"],
+      [
+        `Print Name: ${clientApproval?.printed_name || project.client_name || "________________"}`,
+        `Print Name: ${specialistApproval?.printed_name || "________________"}`,
+      ],
+      [
+        clientApproval
+          ? `Signed: ${format(new Date(clientApproval.signed_at), "MMM d, yyyy")}`
+          : "Signature: ________________",
+        specialistApproval
+          ? `Signed: ${format(new Date(specialistApproval.signed_at), "MMM d, yyyy")}`
+          : "Signature: ________________",
+      ],
     ],
     columnStyles: {
       0: { cellWidth: contentWidth / 2 },

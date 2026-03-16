@@ -22,6 +22,7 @@ import ProgressChart from "@/components/project/ProgressChart";
 import Timeline from "@/components/project/Timeline";
 import Collaborators from "@/components/project/Collaborators";
 import MilestoneTracker from "@/components/project/MilestoneTracker";
+import ProjectApproval from "@/components/project/ProjectApproval";
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,6 +39,17 @@ const ProjectDetailPage = () => {
     },
   });
 
+  const { data: approvals } = useQuery({
+    queryKey: ["project-approvals", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_approvals" as any)
+        .select("*")
+        .eq("project_id", id!);
+      if (error) throw error;
+      return data as any[];
+    },
+  });
 
   const { data: goals } = useQuery({
     queryKey: ["project-goals", id],
@@ -143,7 +155,7 @@ const ProjectDetailPage = () => {
           size="sm"
           className="shrink-0 gap-1.5"
           onClick={() => {
-            toast.promise(exportProjectPDF(project as any, goals), {
+            toast.promise(exportProjectPDF(project as any, goals, approvals as any), {
               loading: "Generating PDF...",
               success: "PDF downloaded!",
               error: "Failed to generate PDF",
@@ -159,11 +171,12 @@ const ProjectDetailPage = () => {
       <ProgressChart goals={goals} />
 
       <Tabs defaultValue="roadmap" className="w-full">
-        <TabsList className="mb-4">
+        <TabsList className="mb-4 flex-wrap">
           <TabsTrigger value="roadmap">Roadmap</TabsTrigger>
           <TabsTrigger value="vision">Vision & Scope</TabsTrigger>
           <TabsTrigger value="budget">Budget</TabsTrigger>
           {contract && <TabsTrigger value="milestones">Milestones</TabsTrigger>}
+          <TabsTrigger value="approval">Approval</TabsTrigger>
           <TabsTrigger value="smartboards">Smartboards</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
         </TabsList>
@@ -193,6 +206,14 @@ const ProjectDetailPage = () => {
           </TabsContent>
         )}
 
+
+        <TabsContent value="approval">
+          <ProjectApproval
+            projectId={id!}
+            projectTitle={project.title}
+            clientName={(project as any).client_name}
+          />
+        </TabsContent>
 
         <TabsContent value="smartboards">
           <div className="surface-card p-6">
