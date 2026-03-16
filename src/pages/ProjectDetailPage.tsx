@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import ProjectVision from "@/components/project/ProjectVision";
 import ProjectScopeDeliverables from "@/components/project/ProjectScopeDeliverables";
+import RoadmapListView from "@/components/project/RoadmapListView";
+import RoadmapCalendarView from "@/components/project/RoadmapCalendarView";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
