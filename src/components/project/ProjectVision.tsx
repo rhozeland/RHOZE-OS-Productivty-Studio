@@ -547,6 +547,63 @@ const ProjectVision = ({ project, projectId, smartboardDetails, linkedIds, onLin
           </Button>
         </form>
       </div>
+      {/* Linked Smartboards */}
+      <div className="space-y-3 pt-2 border-t border-border">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <LayoutGrid className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Smartboards
+            </h3>
+          </div>
+          {onLinkSmartboard && (
+            <Button variant="outline" size="sm" onClick={onLinkSmartboard} className="gap-1.5">
+              <Link2 className="h-3.5 w-3.5" /> Link
+            </Button>
+          )}
+        </div>
+
+        {(!smartboardDetails || smartboardDetails.length === 0) ? (
+          <div
+            className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border py-8 cursor-pointer hover:border-primary/40 transition-colors"
+            onClick={onLinkSmartboard}
+          >
+            <LayoutGrid className="mb-2 h-8 w-8 text-muted-foreground/40" />
+            <p className="text-xs text-muted-foreground">No smartboards linked yet</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+            {smartboardDetails.map((board, i) => (
+              <motion.div
+                key={board.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.04 }}
+                className="group relative overflow-hidden rounded-xl border border-border bg-card hover:shadow-md transition-all"
+              >
+                <Link to={`/smartboards/${board.id}`} className="block p-4">
+                  <div
+                    className="mb-3 h-16 rounded-lg"
+                    style={{ background: board.cover_color || "hsl(var(--muted))" }}
+                  />
+                  <h4 className="font-display font-semibold text-foreground text-sm truncate">{board.title}</h4>
+                  {board.description && (
+                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{board.description}</p>
+                  )}
+                </Link>
+                {onUnlinkSmartboard && (
+                  <button
+                    onClick={() => onUnlinkSmartboard(board.id)}
+                    className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-background/80 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
