@@ -196,6 +196,14 @@ const ProjectDetailPage = () => {
         )}
 
 
+        <TabsContent value="approval">
+          <ProjectApproval
+            projectId={id!}
+            projectTitle={project.title}
+            clientName={(project as any).client_name}
+          />
+        </TabsContent>
+
         <TabsContent value="smartboards">
           <div className="surface-card p-6">
             <div className="mb-4 flex items-center justify-between">
