@@ -173,7 +173,7 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
 
       // Create booking
       const endTime = addHours(startTime, service.duration_hours);
-      const { error: bookingError } = await supabase.from("bookings").insert({
+      const bookingPayload: any = {
         user_id: user.id,
         service_id: service.id,
         title: service.title,
@@ -182,7 +182,9 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
         duration_hours: service.duration_hours,
         notes: notes || null,
         status: "upcoming",
-      });
+      };
+      if (selectedStaffId) bookingPayload.staff_member_id = selectedStaffId;
+      const { error: bookingError } = await supabase.from("bookings").insert(bookingPayload);
       if (bookingError) throw bookingError;
 
       // Auto-create calendar event
