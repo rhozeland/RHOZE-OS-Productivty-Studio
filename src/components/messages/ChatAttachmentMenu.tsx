@@ -24,7 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-type ShareType = "menu" | "smartboards" | "profiles" | "listings";
+type ShareType = "menu" | "smartboards" | "profiles" | "listings" | "link";
 
 interface ChatAttachmentMenuProps {
   onSendMessage: (content: string) => void;
