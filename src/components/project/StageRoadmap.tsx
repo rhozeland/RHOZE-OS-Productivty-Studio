@@ -31,12 +31,14 @@ import {
   Plus,
   Trash2,
   CheckCircle2,
-  Circle,
   MapPin,
   CalendarIcon,
   ChevronDown,
   ChevronRight,
   Milestone,
+  Pencil,
+  Check,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -72,6 +74,7 @@ const StageRoadmap = ({ goals, projectId }: StageRoadmapProps) => {
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
   const [itemDialogOpen, setItemDialogOpen] = useState<string | null>(null);
   const [expandedStages, setExpandedStages] = useState<Set<string>>(new Set());
+  const [editingStageId, setEditingStageId] = useState<string | null>(null);
 
   // Stage form
   const [stageTitle, setStageTitle] = useState("");
@@ -81,6 +84,15 @@ const StageRoadmap = ({ goals, projectId }: StageRoadmapProps) => {
   const [stageEndDate, setStageEndDate] = useState<Date>();
   const [stageLocation, setStageLocation] = useState("");
   const [stageBudget, setStageBudget] = useState("");
+
+  // Edit stage form
+  const [editTitle, setEditTitle] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editPriority, setEditPriority] = useState("medium");
+  const [editStartDate, setEditStartDate] = useState<Date>();
+  const [editEndDate, setEditEndDate] = useState<Date>();
+  const [editLocation, setEditLocation] = useState("");
+  const [editBudget, setEditBudget] = useState("");
 
   // Sub-item form
   const [itemTitle, setItemTitle] = useState("");
@@ -118,6 +130,44 @@ const StageRoadmap = ({ goals, projectId }: StageRoadmapProps) => {
     if (stages.length > 0) {
       setExpandedStages(new Set(stages.map((s) => s.id)));
     }
+  });
+
+  const startEditing = (stage: Goal) => {
+    setEditingStageId(stage.id);
+    setEditTitle(stage.title);
+    setEditDesc(stage.description || "");
+    setEditPriority(stage.priority);
+    setEditStartDate(stage.stage_date_start ? new Date(stage.stage_date_start) : undefined);
+    setEditEndDate(stage.stage_date_end ? new Date(stage.stage_date_end) : undefined);
+    setEditLocation(stage.location || "");
+    setEditBudget(String(stage.budget_amount || ""));
+  };
+
+  const cancelEditing = () => setEditingStageId(null);
+
+  const updateStage = useMutation({
+    mutationFn: async (stageId: string) => {
+      const { error } = await supabase
+        .from("project_goals")
+        .update({
+          title: editTitle,
+          description: editDesc || null,
+          priority: editPriority,
+          stage_date_start: editStartDate?.toISOString() ?? null,
+          stage_date_end: editEndDate?.toISOString() ?? null,
+          due_date: editEndDate?.toISOString() ?? null,
+          location: editLocation || null,
+          budget_amount: parseFloat(editBudget) || 0,
+        } as any)
+        .eq("id", stageId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-goals", projectId] });
+      setEditingStageId(null);
+      toast.success("Stage updated!");
+    },
+    onError: (e: any) => toast.error(e.message),
   });
 
   const addStage = useMutation({
@@ -341,6 +391,7 @@ const StageRoadmap = ({ goals, projectId }: StageRoadmapProps) => {
           const progress = getStageProgress(stage.id);
           const isExpanded = expandedStages.has(stage.id);
           const isComplete = progress === 100;
+          const isEditing = editingStageId === stage.id;
 
           return (
             <motion.div
@@ -357,82 +408,204 @@ const StageRoadmap = ({ goals, projectId }: StageRoadmapProps) => {
             >
               {/* Stage Header */}
               <div className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div
-                    className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
-                    onClick={() => toggleExpand(stage.id)}
+                {isEditing ? (
+                  /* ---- EDIT MODE ---- */
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (editTitle.trim()) updateStage.mutate(stage.id);
+                    }}
+                    className="space-y-3"
                   >
-                    <div className="mt-0.5">
-                      {isExpanded ? (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      )}
+                    <Input
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      placeholder="Stage title"
+                      required
+                      autoFocus
+                    />
+                    <Textarea
+                      value={editDesc}
+                      onChange={(e) => setEditDesc(e.target.value)}
+                      placeholder="Description / details"
+                      rows={2}
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className={cn(
+                              "justify-start text-left text-sm",
+                              !editStartDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                            {editStartDate ? format(editStartDate, "MMM d, yyyy") : "Start date"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={editStartDate}
+                            onSelect={setEditStartDate}
+                            initialFocus
+                            className="p-3 pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className={cn(
+                              "justify-start text-left text-sm",
+                              !editEndDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                            {editEndDate ? format(editEndDate, "MMM d, yyyy") : "End date"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={editEndDate}
+                            onSelect={setEditEndDate}
+                            initialFocus
+                            className="p-3 pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          Stage {i + 1}
-                        </span>
-                        {isComplete && (
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        )}
+                    <div className="grid grid-cols-3 gap-3">
+                      <Input
+                        placeholder="Location"
+                        value={editLocation}
+                        onChange={(e) => setEditLocation(e.target.value)}
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Budget"
+                        value={editBudget}
+                        onChange={(e) => setEditBudget(e.target.value)}
+                        min="0"
+                        step="0.01"
+                      />
+                      <Select value={editPriority} onValueChange={setEditPriority}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button type="button" variant="ghost" size="sm" onClick={cancelEditing}>
+                        <X className="mr-1 h-3.5 w-3.5" /> Cancel
+                      </Button>
+                      <Button type="submit" size="sm" disabled={updateStage.isPending}>
+                        <Check className="mr-1 h-3.5 w-3.5" />
+                        {updateStage.isPending ? "Saving..." : "Save"}
+                      </Button>
+                    </div>
+                  </form>
+                ) : (
+                  /* ---- VIEW MODE ---- */
+                  <>
+                    <div className="flex items-start justify-between gap-3">
+                      <div
+                        className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
+                        onClick={() => toggleExpand(stage.id)}
+                      >
+                        <div className="mt-0.5">
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                              Stage {i + 1}
+                            </span>
+                            {isComplete && (
+                              <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            )}
+                          </div>
+                          <h3 className="font-display text-base font-semibold text-foreground mt-0.5">
+                            {stage.title}
+                          </h3>
+                          {stage.description && (
+                            <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
+                              {stage.description}
+                            </p>
+                          )}
+                          <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                            {(stage.stage_date_start || stage.stage_date_end) && (
+                              <span className="flex items-center gap-1">
+                                <CalendarIcon className="h-3 w-3" />
+                                {stage.stage_date_start &&
+                                  format(new Date(stage.stage_date_start), "MMM d, yyyy")}
+                                {stage.stage_date_start && stage.stage_date_end && " — "}
+                                {stage.stage_date_end &&
+                                  format(new Date(stage.stage_date_end), "MMM d, yyyy")}
+                              </span>
+                            )}
+                            {stage.location && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {stage.location}
+                              </span>
+                            )}
+                            {stage.budget_amount > 0 && (
+                              <span className="font-medium text-foreground">
+                                ${stage.budget_amount.toLocaleString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <h3 className="font-display text-base font-semibold text-foreground mt-0.5">
-                        {stage.title}
-                      </h3>
-                      {stage.description && (
-                        <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
-                          {stage.description}
-                        </p>
-                      )}
-                      <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                        {(stage.stage_date_start || stage.stage_date_end) && (
-                          <span className="flex items-center gap-1">
-                            <CalendarIcon className="h-3 w-3" />
-                            {stage.stage_date_start &&
-                              format(new Date(stage.stage_date_start), "MMM d, yyyy")}
-                            {stage.stage_date_start && stage.stage_date_end && " — "}
-                            {stage.stage_date_end &&
-                              format(new Date(stage.stage_date_end), "MMM d, yyyy")}
-                          </span>
-                        )}
-                        {stage.location && (
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {stage.location}
-                          </span>
-                        )}
-                        {stage.budget_amount > 0 && (
-                          <span className="font-medium text-foreground">
-                            ${stage.budget_amount.toLocaleString()}
-                          </span>
-                        )}
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => startEditing(stage)}
+                        >
+                          <Pencil className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => deleteGoal.mutate(stage.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                        </Button>
                       </div>
                     </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 shrink-0"
-                    onClick={() => deleteGoal.mutate(stage.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
-                  </Button>
-                </div>
 
-                {/* Progress bar */}
-                <div className="mt-3 flex items-center gap-3">
-                  <Progress value={progress} className="flex-1 h-2" />
-                  <span className="text-xs font-medium text-muted-foreground w-10 text-right">
-                    {progress}%
-                  </span>
-                </div>
+                    {/* Progress bar */}
+                    <div className="mt-3 flex items-center gap-3">
+                      <Progress value={progress} className="flex-1 h-2" />
+                      <span className="text-xs font-medium text-muted-foreground w-10 text-right">
+                        {progress}%
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Sub Items */}
               <AnimatePresence>
-                {isExpanded && (
+                {isExpanded && !isEditing && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
