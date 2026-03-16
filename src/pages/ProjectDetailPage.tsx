@@ -32,6 +32,9 @@ const ProjectDetailPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [editingHeader, setEditingHeader] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
   const { data: project } = useQuery({
     queryKey: ["project", id],
