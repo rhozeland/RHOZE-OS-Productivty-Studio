@@ -1074,7 +1074,7 @@ const FlowModePage = () => {
                   {item.file_url ? (
                     <img src={item.file_url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   ) : (
-                    <div className={`w-full h-full bg-gradient-to-br ${(CATEGORY_GRADIENTS[item.category] || CATEGORY_GRADIENTS.design).bg} flex items-center justify-center p-3`}>
+                    <div className="w-full h-full bg-gradient-to-br from-primary/10 via-accent/5 to-muted flex items-center justify-center p-3">
                       <h4 className="font-display text-xs font-bold text-foreground text-center leading-tight line-clamp-3">
                         {item.title}
                       </h4>
@@ -1085,6 +1085,20 @@ const FlowModePage = () => {
                       {item.category}
                     </span>
                   </div>
+                  {item.content_type === "video" && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="h-8 w-8 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center shadow">
+                        <Video className="h-3.5 w-3.5 text-foreground ml-0.5" />
+                      </div>
+                    </div>
+                  )}
+                  {item.content_type === "audio" && (
+                    <div className="absolute bottom-2 right-2">
+                      <div className="h-6 w-6 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center">
+                        <AudioLines className="h-3 w-3 text-foreground" />
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="p-2.5">
                   <h4 className="font-display font-semibold text-foreground text-xs leading-snug truncate">
