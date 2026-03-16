@@ -28,7 +28,7 @@ const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [newTask, setNewTask] = useState("");
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
 
   const { data: project } = useQuery({
