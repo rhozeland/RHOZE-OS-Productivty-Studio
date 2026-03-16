@@ -305,7 +305,7 @@ const ProjectDetailPage = () => {
           </TabsContent>
         )}
 
-        {contract && (
+        {project.project_type !== "collaborative" && contract && (
           <TabsContent value="milestones">
             <MilestoneTracker contractId={contract.id} />
           </TabsContent>
