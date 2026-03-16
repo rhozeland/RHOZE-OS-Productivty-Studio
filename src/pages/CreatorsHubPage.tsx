@@ -1,15 +1,21 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Plus, Search, Sparkles, Briefcase, FileText, Package, ShoppingBag,
-  TrendingUp, ArrowRight, ChevronLeft, ChevronRight,
+  SlidersHorizontal,
 } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import ListingCard from "@/components/marketplace/ListingCard";
@@ -19,11 +25,11 @@ import Leaderboard from "@/components/creators/Leaderboard";
 import CreatorSpotlight from "@/components/creators/CreatorSpotlight";
 
 const TYPES = [
-  { key: "all", label: "All" },
+  { key: "all", label: "All Types" },
   { key: "service", label: "Services", icon: Briefcase },
-  { key: "digital_product", label: "Digital", icon: FileText },
-  { key: "physical_product", label: "Physical", icon: Package },
-  { key: "project_request", label: "Requests", icon: ShoppingBag },
+  { key: "digital_product", label: "Digital Products", icon: FileText },
+  { key: "physical_product", label: "Physical Products", icon: Package },
+  { key: "project_request", label: "Project Requests", icon: ShoppingBag },
 ];
 
 const CreatorsHubPage = () => {
@@ -35,7 +41,6 @@ const CreatorsHubPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
 
-  // Listings
   const { data: listings, isLoading } = useQuery({
     queryKey: ["marketplace-listings", activeCategory, activeType, searchQuery],
     queryFn: async () => {
@@ -53,7 +58,6 @@ const CreatorsHubPage = () => {
     },
   });
 
-  // All listings for counts
   const { data: allListings } = useQuery({
     queryKey: ["marketplace-listings-counts"],
     queryFn: async () => {
@@ -111,99 +115,28 @@ const CreatorsHubPage = () => {
 
   const getMediaForListing = (listingId: string) => allMedia?.filter((m: any) => m.listing_id === listingId) ?? [];
 
-  // Trending: top 5 listings for carousel
-  const trendingListings = listings?.slice(0, 5) ?? [];
-  const trendingRef = useRef<HTMLDivElement>(null);
-
-  const scrollTrending = (direction: "left" | "right") => {
-    if (!trendingRef.current) return;
-    const scrollAmount = trendingRef.current.offsetWidth * 0.7;
-    trendingRef.current.scrollBy({
-      left: direction === "left" ? -scrollAmount : scrollAmount,
-      behavior: "smooth",
-    });
-  };
-
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
-      {/* Hero - compact & social */}
-      <div className="relative overflow-hidden rounded-3xl px-6 py-8 md:px-10 md:py-10">
-        <div className="absolute inset-0 gradient-hero" />
-        <div className="absolute inset-0 opacity-30" style={{
-          background: "radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.4) 0%, transparent 60%)"
-        }} />
-        <div className="relative z-10 space-y-5">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
-                Creators Hub
-              </h1>
-              <p className="text-muted-foreground text-sm mt-1 max-w-md">
-                Discover, connect, and collaborate with talented creators across every medium.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <div className="relative flex-1 md:w-72">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search creators & listings..."
-                  className="pl-10 rounded-full bg-card/80 backdrop-blur-sm border-border/50"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <Button onClick={() => setCreateOpen(true)} className="rounded-full shrink-0">
-                <Plus className="mr-1.5 h-4 w-4" /> Post
-              </Button>
-            </div>
-          </div>
-
-          {/* Trending inside hero */}
-          {trendingListings.length > 0 && !searchQuery && activeCategory === "all" && (
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="font-display font-semibold text-foreground text-sm flex items-center gap-1.5">
-                  <TrendingUp className="h-3.5 w-3.5 text-primary" /> Trending Now
-                </h2>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => scrollTrending("left")}
-                    className="p-1.5 rounded-full hover:bg-card/60 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => scrollTrending("right")}
-                    className="p-1.5 rounded-full hover:bg-card/60 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-              <div
-                ref={trendingRef}
-                className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-1"
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-              >
-                {trendingListings.map((listing: any, i: number) => (
-                  <div key={listing.id} className="snap-start shrink-0 w-[280px] sm:w-[320px] md:w-[340px]">
-                    <ListingCard
-                      listing={listing}
-                      media={getMediaForListing(listing.id)}
-                      reviewStats={getReviewStatsForListing(listing.id)}
-                      index={i}
-                      isOwner={listing.user_id === user?.id}
-                      onInquire={() => navigate(`/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`)}
-                      onClick={() => navigate(`/creators/${listing.id}`)}
-                      onDelete={() => deleteListing.mutate(listing.id)}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+    <div className="space-y-6 max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">
+            Creators Hub
+          </h1>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            Discover and collaborate with talented creators.
+          </p>
         </div>
+        <Button onClick={() => setCreateOpen(true)} className="rounded-full shrink-0 self-start">
+          <Plus className="mr-1.5 h-4 w-4" /> Post Listing
+        </Button>
       </div>
+
+      {/* Leaderboard - full width at top */}
+      <Leaderboard />
+
+      {/* Creator Spotlight - full width */}
+      <CreatorSpotlight />
 
       {/* Category Tiles */}
       <CategoryTiles
@@ -212,79 +145,67 @@ const CreatorsHubPage = () => {
         listingCounts={listingCounts}
       />
 
-      {/* Main content: Grid + Sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-        {/* Left: Feed */}
-        <div className="space-y-6">
-          {/* Type filters */}
-          <div className="flex flex-wrap gap-2">
-            {TYPES.map((t) => {
-              const Icon = t.icon;
-              const isActive = activeType === t.key;
-              return (
-                <button
-                  key={t.key}
-                  onClick={() => setActiveType(t.key)}
-                  className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all ${
-                    isActive ? "bg-primary text-primary-foreground shadow-md" : "bg-muted text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {Icon && <Icon className="h-3.5 w-3.5" />}
-                  {t.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Listings grid */}
-          {isLoading ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="bg-card border border-border animate-pulse rounded-xl h-72" />
-              ))}
-            </div>
-          ) : !listings || listings.length === 0 ? (
-            <div className="surface-card flex flex-col items-center justify-center py-16 rounded-2xl">
-              <Sparkles className="mb-3 h-10 w-10 text-muted-foreground" />
-              <p className="text-foreground font-medium">{searchQuery ? "No results" : "No listings yet"}</p>
-              <p className="text-xs text-muted-foreground mt-1">Be the first to post something</p>
-              <Button className="mt-4 rounded-full" onClick={() => setCreateOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" /> Post Listing
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <AnimatePresence>
-                {listings.map((listing: any, i: number) => (
-                  <ListingCard
-                    key={listing.id}
-                    listing={listing}
-                    media={getMediaForListing(listing.id)}
-                    reviewStats={getReviewStatsForListing(listing.id)}
-                    index={i}
-                    isOwner={listing.user_id === user?.id}
-                    onInquire={() => navigate(`/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`)}
-                    onClick={() => navigate(`/creators/${listing.id}`)}
-                    onDelete={() => deleteListing.mutate(listing.id)}
-                  />
-                ))}
-              </AnimatePresence>
-            </div>
-          )}
+      {/* Search + Type filter bar */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search listings..."
+            className="pl-10 rounded-full bg-card border-border/50"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
-
-        {/* Right sidebar */}
-        <aside className="space-y-6 hidden lg:block">
-          <Leaderboard />
-          <CreatorSpotlight />
-        </aside>
+        <Select value={activeType} onValueChange={setActiveType}>
+          <SelectTrigger className="w-full sm:w-48 rounded-full">
+            <SlidersHorizontal className="h-4 w-4 mr-2 text-muted-foreground" />
+            <SelectValue placeholder="All Types" />
+          </SelectTrigger>
+          <SelectContent>
+            {TYPES.map((t) => (
+              <SelectItem key={t.key} value={t.key}>
+                {t.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Mobile: Leaderboard + Creators below feed */}
-      <div className="lg:hidden space-y-6">
-        <Leaderboard />
-        <CreatorSpotlight />
-      </div>
+      {/* Listings grid */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="bg-card border border-border animate-pulse rounded-xl h-72" />
+          ))}
+        </div>
+      ) : !listings || listings.length === 0 ? (
+        <div className="surface-card flex flex-col items-center justify-center py-16 rounded-2xl">
+          <Sparkles className="mb-3 h-10 w-10 text-muted-foreground" />
+          <p className="text-foreground font-medium">{searchQuery ? "No results" : "No listings yet"}</p>
+          <p className="text-xs text-muted-foreground mt-1">Be the first to post something</p>
+          <Button className="mt-4 rounded-full" onClick={() => setCreateOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Post Listing
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <AnimatePresence>
+            {listings.map((listing: any, i: number) => (
+              <ListingCard
+                key={listing.id}
+                listing={listing}
+                media={getMediaForListing(listing.id)}
+                reviewStats={getReviewStatsForListing(listing.id)}
+                index={i}
+                isOwner={listing.user_id === user?.id}
+                onInquire={() => navigate(`/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`)}
+                onClick={() => navigate(`/creators/${listing.id}`)}
+                onDelete={() => deleteListing.mutate(listing.id)}
+              />
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
 
       <CreateListingDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
