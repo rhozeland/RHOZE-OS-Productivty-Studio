@@ -111,8 +111,15 @@ const Collaborators = ({ projectId }: CollaboratorsProps) => {
             <DialogHeader><DialogTitle>Invite Collaborator</DialogTitle></DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); invite.mutate(); }} className="space-y-4">
               <Input placeholder="Display name" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Select value={projectRole} onValueChange={setProjectRole}>
+                <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="client">Client</SelectItem>
+                  <SelectItem value="specialist">Specialist</SelectItem>
+                </SelectContent>
+              </Select>
               <Select value={role} onValueChange={setRole}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Permission" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="viewer">Viewer</SelectItem>
                   <SelectItem value="editor">Editor</SelectItem>
