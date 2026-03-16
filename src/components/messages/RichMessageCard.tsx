@@ -174,6 +174,40 @@ const RichMessageCard = ({ content, isMine, timestamp, formatTime }: RichMessage
     );
   }
 
+  // LINK
+  if (content.startsWith("[LINK:")) {
+    const data = parseRich(content, "[LINK:");
+    if (!data) return null;
+
+    const isGDrive = data.url?.includes("drive.google.com") || data.url?.includes("docs.google.com");
+    const isDropbox = data.url?.includes("dropbox.com");
+
+    return (
+      <a href={data.url} target="_blank" rel="noopener noreferrer" className="block">
+        <div className={cn(
+          "max-w-[70%] rounded-2xl overflow-hidden border hover:shadow-md transition-shadow",
+          isMine ? "bg-primary/5 border-primary/20 rounded-br-md" : "bg-muted border-border rounded-bl-md"
+        )}>
+          <div className="flex items-center gap-3 px-3 py-3">
+            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <ExternalLink className="h-4 w-4 text-primary" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="text-[10px] font-medium text-primary uppercase tracking-wider">
+                  {isGDrive ? "Google Drive" : isDropbox ? "Dropbox" : "Link"}
+                </span>
+              </div>
+              <p className="text-sm font-medium text-foreground truncate">{data.title || data.url}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{data.url}</p>
+            </div>
+          </div>
+          <p className={cn("px-3 pb-2 text-[10px] text-muted-foreground")}>{formatTime(timestamp)}</p>
+        </div>
+      </a>
+    );
+  }
+
   return null;
 };
 
