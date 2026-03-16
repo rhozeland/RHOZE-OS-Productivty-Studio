@@ -141,20 +141,99 @@ const ProjectDetailPage = () => {
     },
   });
 
+  const updateHeader = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("projects")
+        .update({ title: editTitle, description: editDescription || null })
+        .eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", id] });
+      setEditingHeader(false);
+      toast.success("Project updated");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const updateCategories = useMutation({
+    mutationFn: async (categories: string[]) => {
+      const { error } = await supabase
+        .from("projects")
+        .update({ categories } as any)
+        .eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", id] });
+    },
+  });
+
   if (!project) return <div className="text-muted-foreground">Loading...</div>;
 
   const availableToLink = mySmartboards?.filter((s) => !linkedIds.includes(s.id)) ?? [];
+
+  const startEditing = () => {
+    setEditTitle(project.title);
+    setEditDescription(project.description || "");
+    setEditingHeader(true);
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="h-4 w-4 rounded-full" style={{ backgroundColor: project.cover_color ?? "#7c3aed" }} />
-            <h1 className="font-display text-3xl font-bold text-foreground">{project.title}</h1>
-          </div>
-          <p className="mt-1 text-muted-foreground">{project.description || "No description"}</p>
+        <div className="flex-1 min-w-0">
+          {editingHeader ? (
+            <div className="space-y-2">
+              <Input
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="font-display text-2xl font-bold"
+                autoFocus
+              />
+              <Textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Add a project description..."
+                rows={2}
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => updateHeader.mutate()}
+                  disabled={!editTitle.trim() || updateHeader.isPending}
+                >
+                  <Check className="mr-1 h-3.5 w-3.5" />
+                  Save
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingHeader(false)}>
+                  <X className="mr-1 h-3.5 w-3.5" />
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div
+              className="group cursor-pointer rounded-lg p-1 -m-1 hover:bg-muted/40 transition-colors"
+              onClick={startEditing}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="h-4 w-4 rounded-full shrink-0"
+                  style={{ backgroundColor: project.cover_color ?? "hsl(var(--primary))" }}
+                />
+                <h1 className="font-display text-3xl font-bold text-foreground">{project.title}</h1>
+                <Pencil className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <p className="mt-1 text-muted-foreground pl-7">
+                {project.description || (
+                  <span className="italic text-muted-foreground/60">Click to add a description...</span>
+                )}
+              </p>
+            </div>
+          )}
         </div>
         <Button
           variant="outline"
@@ -171,6 +250,15 @@ const ProjectDetailPage = () => {
           <FileDown className="h-4 w-4" />
           Export PDF
         </Button>
+      </div>
+
+      {/* Scope & Deliverables — always visible */}
+      <div className="surface-card rounded-xl border border-border p-5">
+        <ProjectScopeDeliverables
+          projectId={id!}
+          categories={(project as any).categories || []}
+          onCategoriesChange={(cats) => updateCategories.mutate(cats)}
+        />
       </div>
 
       {/* Progress Overview */}
