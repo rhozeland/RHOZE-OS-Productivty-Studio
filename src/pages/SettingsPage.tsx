@@ -148,6 +148,10 @@ const SettingsPage = () => {
       setAvatarUrl(p.avatar_url ?? "");
       setBannerGradient(p.banner_gradient ?? "");
       setProfileBackground(p.profile_background ?? "");
+      setInstagramUrl(p.instagram_url ?? "");
+      setTiktokUrl(p.tiktok_url ?? "");
+      setTwitterUrl(p.twitter_url ?? "");
+      setYoutubeUrl(p.youtube_url ?? "");
       setAddressLine1(p.shipping_address_line1 ?? "");
       setAddressLine2(p.shipping_address_line2 ?? "");
       setCity(p.shipping_city ?? "");
