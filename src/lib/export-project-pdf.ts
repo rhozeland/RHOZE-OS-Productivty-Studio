@@ -64,7 +64,17 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-export async function exportProjectPDF(project: Project, goals: Goal[] | undefined) {
+interface Approval {
+  printed_name: string;
+  role: string;
+  signed_at: string;
+}
+
+export async function exportProjectPDF(
+  project: Project,
+  goals: Goal[] | undefined,
+  approvals?: Approval[]
+) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
