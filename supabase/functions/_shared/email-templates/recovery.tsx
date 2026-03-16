@@ -25,7 +25,7 @@ export const RecoveryEmail = ({
 }: RecoveryEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Reset your Rhozeland password</Preview>
+    <Preview>Reset your password for Rhozeland</Preview>
     <Body style={main}>
       <Container style={container}>
         <Img
@@ -37,14 +37,14 @@ export const RecoveryEmail = ({
         />
         <Heading style={h1}>Reset your password</Heading>
         <Text style={text}>
-          We received a request to reset your Rhozeland password. Click below to
-          choose a new one.
+          We received a request to reset your Rhozeland password. Click
+          the button below to choose a new one.
         </Text>
         <Button style={button} href={confirmationUrl}>
           Reset Password
         </Button>
         <Text style={footer}>
-          If you didn't request this, no worries — your password stays the same.
+          If you didn't request this, you can safely ignore this email.
         </Text>
       </Container>
     </Body>
@@ -55,25 +55,7 @@ export default RecoveryEmail
 
 const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', Arial, sans-serif" }
 const container = { padding: '32px 28px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: 'hsl(0, 0%, 8%)',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: 'hsl(0, 0%, 45%)',
-  lineHeight: '1.6',
-  margin: '0 0 28px',
-}
-const button = {
-  backgroundColor: 'hsl(175, 60%, 55%)',
-  color: 'hsl(0, 0%, 5%)',
-  fontSize: '14px',
-  fontWeight: '600' as const,
-  borderRadius: '0.75rem',
-  padding: '12px 24px',
-  textDecoration: 'none',
-}
+const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: 'hsl(0, 0%, 8%)', margin: '0 0 20px' }
+const text = { fontSize: '14px', color: 'hsl(0, 0%, 45%)', lineHeight: '1.6', margin: '0 0 28px' }
+const button = { backgroundColor: 'hsl(175, 60%, 55%)', color: 'hsl(0, 0%, 5%)', fontSize: '14px', fontWeight: '600' as const, borderRadius: '0.75rem', padding: '12px 24px', textDecoration: 'none' }
 const footer = { fontSize: '12px', color: 'hsl(0, 0%, 60%)', margin: '32px 0 0' }

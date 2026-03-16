@@ -20,7 +20,7 @@ interface ReauthenticationEmailProps {
 export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Your Rhozeland verification code</Preview>
+    <Preview>Your verification code</Preview>
     <Body style={main}>
       <Container style={container}>
         <Img
@@ -34,8 +34,7 @@ export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => 
         <Text style={text}>Use the code below to confirm your identity:</Text>
         <Text style={codeStyle}>{token}</Text>
         <Text style={footer}>
-          This code expires shortly. If you didn't request it, you can safely
-          ignore this email.
+          This code will expire shortly. If you didn't request this, ignore this email.
         </Text>
       </Container>
     </Body>
@@ -46,24 +45,7 @@ export default ReauthenticationEmail
 
 const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', Arial, sans-serif" }
 const container = { padding: '32px 28px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: 'hsl(0, 0%, 8%)',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: 'hsl(0, 0%, 45%)',
-  lineHeight: '1.6',
-  margin: '0 0 28px',
-}
-const codeStyle = {
-  fontFamily: 'Courier, monospace',
-  fontSize: '24px',
-  fontWeight: 'bold' as const,
-  color: 'hsl(175, 60%, 45%)',
-  margin: '0 0 30px',
-  letterSpacing: '2px',
-}
+const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: 'hsl(0, 0%, 8%)', margin: '0 0 20px' }
+const text = { fontSize: '14px', color: 'hsl(0, 0%, 45%)', lineHeight: '1.6', margin: '0 0 28px' }
+const codeStyle = { fontFamily: 'Courier, monospace', fontSize: '22px', fontWeight: 'bold' as const, color: 'hsl(0, 0%, 8%)', margin: '0 0 30px' }
 const footer = { fontSize: '12px', color: 'hsl(0, 0%, 60%)', margin: '32px 0 0' }
