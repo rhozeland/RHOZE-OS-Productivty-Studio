@@ -27,6 +27,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import ProfileSellerStats from "@/components/profile/ProfileSellerStats";
+import ProfileBadges from "@/components/profile/ProfileBadges";
 
 const ProfileDetailPage = () => {
   const { id } = useParams<{ id: string }>();

@@ -310,6 +310,48 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
               </div>
             )}
 
+            {/* Staff selection */}
+            {staffMembers && staffMembers.length > 0 && (
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  Work With (optional)
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setSelectedStaffId(null)}
+                    className={cn(
+                      "rounded-lg px-3 py-2.5 text-xs font-medium transition-all border flex items-center gap-2",
+                      !selectedStaffId
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-card border-border text-foreground hover:bg-muted"
+                    )}
+                  >
+                    Anyone Available
+                  </button>
+                  {staffMembers.map((staff) => (
+                    <button
+                      key={staff.id}
+                      onClick={() => setSelectedStaffId(staff.id)}
+                      className={cn(
+                        "rounded-lg px-3 py-2.5 text-xs font-medium transition-all border flex items-center gap-2",
+                        selectedStaffId === staff.id
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-card border-border text-foreground hover:bg-muted"
+                      )}
+                    >
+                      <Avatar className="h-5 w-5">
+                        <AvatarImage src={staff.avatar_url || ""} />
+                        <AvatarFallback className="text-[8px] bg-muted">
+                          {staff.display_name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="truncate">{staff.display_name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <Button
               className="w-full"
               disabled={!canProceedFromDatetime}
