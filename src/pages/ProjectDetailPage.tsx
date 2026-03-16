@@ -22,6 +22,7 @@ import ProgressChart from "@/components/project/ProgressChart";
 import Timeline from "@/components/project/Timeline";
 import Collaborators from "@/components/project/Collaborators";
 import MilestoneTracker from "@/components/project/MilestoneTracker";
+import ProjectApproval from "@/components/project/ProjectApproval";
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
