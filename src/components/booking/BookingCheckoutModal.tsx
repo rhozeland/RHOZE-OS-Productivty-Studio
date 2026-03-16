@@ -35,9 +35,20 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import PaySolAndVerify from "@/components/PaySolAndVerify";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useQuery } from "@tanstack/react-query";
 
 type Step = "datetime" | "payment" | "confirm";
 type PaymentMethod = "credits" | "card" | "crypto";
+
+type StaffMember = {
+  id: string;
+  user_id: string;
+  display_name: string;
+  avatar_url: string | null;
+  specialties: string[];
+  is_available: boolean;
+};
 
 interface BookingCheckoutModalProps {
   open: boolean;
