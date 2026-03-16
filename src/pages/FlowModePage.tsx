@@ -53,6 +53,8 @@ import { Label } from "@/components/ui/label";
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import { toast } from "sonner";
 import { playSwipeSound } from "@/lib/swipe-sound";
+import FlowCard from "@/components/flow/FlowCard";
+import FlowCardBackground from "@/components/flow/FlowCardBackground";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
@@ -359,7 +361,7 @@ const FlowModePage = () => {
 
   const unseenItems = flowItems?.filter((item) => !interactions?.has(item.id)) ?? [];
   const currentItem = unseenItems[currentIndex];
-  const gradient = currentItem ? (CATEGORY_GRADIENTS[currentItem.category] || CATEGORY_GRADIENTS.design) : CATEGORY_GRADIENTS.design;
+  
 
   const handleCalibrationSelect = (option: string) => {
     const updated = selectedCategories.includes(option)
@@ -769,13 +771,12 @@ const FlowModePage = () => {
   // ──── MAIN FLOW VIEW ────
   return (
     <div className="relative flex flex-col min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8">
-      {/* Dynamic gradient background */}
+      {/* Dynamic background — blurred image or category gradient */}
       {viewMode === "swipe" && (
-        <>
-          <div className={`absolute inset-0 bg-gradient-to-br ${gradient.bg} transition-all duration-700 animated-gradient`} />
-          <div className={`absolute top-10 left-1/4 w-80 h-80 ${gradient.blur1} rounded-full blur-3xl animate-pulse`} />
-          <div className={`absolute bottom-10 right-1/4 w-96 h-96 ${gradient.blur2} rounded-full blur-3xl`} />
-        </>
+        <FlowCardBackground
+          fileUrl={currentItem?.file_url}
+          category={currentItem?.category || "design"}
+        />
       )}
       {viewMode === "browse" && (
         <div className="absolute inset-0 bg-background" />
@@ -993,73 +994,13 @@ const FlowModePage = () => {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
                 >
-                  {/* Polaroid card */}
-                  <div className="rounded-2xl bg-card shadow-2xl overflow-hidden border border-border/50">
-                    {/* Image / Visual area */}
-                    <div className="aspect-[4/5] bg-muted/30 relative overflow-hidden">
-                      {currentItem.file_url ? (
-                        <img
-                          src={currentItem.file_url}
-                          alt={currentItem.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className={`w-full h-full bg-gradient-to-br ${gradient.bg} flex items-center justify-center p-8`}>
-                          <div className="text-center">
-                            <Badge variant="outline" className="mb-4 capitalize rounded-full bg-card/60 backdrop-blur-sm text-xs">
-                              {currentItem.category}
-                            </Badge>
-                            <h2 className="font-display text-xl md:text-2xl font-bold text-foreground leading-tight">
-                              {currentItem.title}
-                            </h2>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Category label on images */}
-                      {currentItem.file_url && (
-                        <div className="absolute top-3 left-3">
-                          <span className="text-[10px] font-medium uppercase tracking-widest text-card bg-foreground/60 backdrop-blur-sm px-2 py-1 rounded-full">
-                            {currentItem.category}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Info section */}
-                    <div className="p-4">
-                      {/* Action icons */}
-                      <div className="flex items-center gap-4 mb-3">
-                        <button
-                          onClick={() => performAction("save")}
-                          className="text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          <FileText className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={() => performAction("share")}
-                          className="text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          <Share2 className="h-5 w-5" />
-                        </button>
-                      </div>
-
-                      <h3 className="font-display font-bold text-foreground text-sm md:text-base leading-snug">
-                        {currentItem.title}
-                      </h3>
-
-                      {currentItem.description && (
-                        <p
-                          className={`text-sm text-muted-foreground leading-relaxed mt-1 ${
-                            expandedCard ? "" : "line-clamp-2"
-                          }`}
-                          onClick={() => setExpandedCard(!expandedCard)}
-                        >
-                          {currentItem.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                  <FlowCard
+                    item={currentItem}
+                    expanded={expandedCard}
+                    onToggleExpand={() => setExpandedCard(!expandedCard)}
+                    onSave={() => performAction("save")}
+                    onShare={() => performAction("share")}
+                  />
                 </motion.div>
               ) : (
                 <motion.div
@@ -1133,7 +1074,7 @@ const FlowModePage = () => {
                   {item.file_url ? (
                     <img src={item.file_url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   ) : (
-                    <div className={`w-full h-full bg-gradient-to-br ${(CATEGORY_GRADIENTS[item.category] || CATEGORY_GRADIENTS.design).bg} flex items-center justify-center p-3`}>
+                    <div className="w-full h-full bg-gradient-to-br from-primary/10 via-accent/5 to-muted flex items-center justify-center p-3">
                       <h4 className="font-display text-xs font-bold text-foreground text-center leading-tight line-clamp-3">
                         {item.title}
                       </h4>
@@ -1144,6 +1085,20 @@ const FlowModePage = () => {
                       {item.category}
                     </span>
                   </div>
+                  {item.content_type === "video" && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="h-8 w-8 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center shadow">
+                        <Video className="h-3.5 w-3.5 text-foreground ml-0.5" />
+                      </div>
+                    </div>
+                  )}
+                  {item.content_type === "audio" && (
+                    <div className="absolute bottom-2 right-2">
+                      <div className="h-6 w-6 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center">
+                        <AudioLines className="h-3 w-3 text-foreground" />
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="p-2.5">
                   <h4 className="font-display font-semibold text-foreground text-xs leading-snug truncate">
