@@ -404,7 +404,6 @@ const ProfileDetailPage = () => {
                 </div>
               )}
             </div>
-
             {/* Stats row */}
             <div className="flex items-center gap-6 mt-5 pt-4 border-t border-border/50">
               {[
