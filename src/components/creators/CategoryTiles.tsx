@@ -2,11 +2,11 @@ import { Music, Palette, Camera, Video, PenTool } from "lucide-react";
 import { motion } from "framer-motion";
 
 const CATEGORIES = [
-  { key: "music", label: "Music & Audio", icon: Music, gradient: "from-purple-500/20 to-pink-500/20", accent: "hsl(280 60% 55%)", emoji: "🎵" },
-  { key: "design", label: "Graphics & Design", icon: Palette, gradient: "from-teal-500/20 to-emerald-500/20", accent: "hsl(160 60% 50%)", emoji: "🎨" },
-  { key: "photo", label: "Photography", icon: Camera, gradient: "from-amber-500/20 to-orange-500/20", accent: "hsl(35 90% 55%)", emoji: "📸" },
-  { key: "video", label: "Video & Animation", icon: Video, gradient: "from-rose-500/20 to-red-500/20", accent: "hsl(340 70% 55%)", emoji: "🎬" },
-  { key: "writing", label: "Writing & Copy", icon: PenTool, gradient: "from-blue-500/20 to-indigo-500/20", accent: "hsl(210 60% 55%)", emoji: "✍️" },
+  { key: "music", label: "Audio", icon: Music, gradient: "from-purple-500/20 to-pink-500/20", accent: "hsl(280 60% 55%)" },
+  { key: "design", label: "Design", icon: Palette, gradient: "from-teal-500/20 to-emerald-500/20", accent: "hsl(160 60% 50%)" },
+  { key: "photo", label: "Photo", icon: Camera, gradient: "from-amber-500/20 to-orange-500/20", accent: "hsl(35 90% 55%)" },
+  { key: "video", label: "Video", icon: Video, gradient: "from-rose-500/20 to-red-500/20", accent: "hsl(340 70% 55%)" },
+  { key: "writing", label: "Writing", icon: PenTool, gradient: "from-blue-500/20 to-indigo-500/20", accent: "hsl(210 60% 55%)" },
 ];
 
 interface CategoryTilesProps {
