@@ -254,15 +254,6 @@ const ProjectDetailPage = () => {
         </Button>
       </div>
 
-      {/* Scope & Deliverables — always visible */}
-      <div className="surface-card rounded-xl border border-border p-5">
-        <ProjectScopeDeliverables
-          projectId={id!}
-          categories={(project as any).categories || []}
-          onCategoriesChange={(cats) => updateCategories.mutate(cats)}
-        />
-      </div>
-
       {/* Progress Overview */}
       <ProgressChart goals={goals} />
 
