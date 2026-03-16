@@ -155,7 +155,7 @@ const ProjectDetailPage = () => {
           size="sm"
           className="shrink-0 gap-1.5"
           onClick={() => {
-            toast.promise(exportProjectPDF(project as any, goals), {
+            toast.promise(exportProjectPDF(project as any, goals, approvals as any), {
               loading: "Generating PDF...",
               success: "PDF downloaded!",
               error: "Failed to generate PDF",
