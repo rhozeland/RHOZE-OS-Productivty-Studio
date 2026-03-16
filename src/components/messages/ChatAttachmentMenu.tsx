@@ -209,7 +209,7 @@ const ChatAttachmentMenu = ({ onSendMessage, disabled }: ChatAttachmentMenuProps
         onChange={handleFileUpload}
         className="hidden"
       />
-      <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setView("menu"); setSearch(""); } }}>
+      <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setView("menu"); setSearch(""); setLinkUrl(""); setLinkTitle(""); } }}>
         <PopoverTrigger asChild>
           <Button
             type="button"
