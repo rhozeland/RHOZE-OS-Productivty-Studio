@@ -400,6 +400,9 @@ export async function exportProjectPDF(
 
   sectionHeader("APPROVAL AND FINAL SIGN-OFF");
 
+  const clientApproval = approvals?.find((a) => a.role === "client");
+  const specialistApproval = approvals?.find((a) => a.role === "specialist");
+
   autoTable(doc, {
     startY: y,
     margin: { left: marginLeft, right: marginRight },
@@ -418,8 +421,18 @@ export async function exportProjectPDF(
       fontStyle: "bold",
     },
     body: [
-      [`Print Name: ${project.client_name || "________________"}`, "Print Name: ________________"],
-      ["Signature: ________________", "Signature: ________________"],
+      [
+        `Print Name: ${clientApproval?.printed_name || project.client_name || "________________"}`,
+        `Print Name: ${specialistApproval?.printed_name || "________________"}`,
+      ],
+      [
+        clientApproval
+          ? `Signed: ${format(new Date(clientApproval.signed_at), "MMM d, yyyy")}`
+          : "Signature: ________________",
+        specialistApproval
+          ? `Signed: ${format(new Date(specialistApproval.signed_at), "MMM d, yyyy")}`
+          : "Signature: ________________",
+      ],
     ],
     columnStyles: {
       0: { cellWidth: contentWidth / 2 },
