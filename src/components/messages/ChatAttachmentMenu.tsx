@@ -19,11 +19,12 @@ import {
   Search,
   Upload,
   Loader2,
+  Link2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-type ShareType = "menu" | "smartboards" | "profiles" | "listings";
+type ShareType = "menu" | "smartboards" | "profiles" | "listings" | "link";
 
 interface ChatAttachmentMenuProps {
   onSendMessage: (content: string) => void;
@@ -36,6 +37,8 @@ const ChatAttachmentMenu = ({ onSendMessage, disabled }: ChatAttachmentMenuProps
   const [view, setView] = useState<ShareType>("menu");
   const [search, setSearch] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkTitle, setLinkTitle] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Smartboards
@@ -173,8 +176,24 @@ const ChatAttachmentMenu = ({ onSendMessage, disabled }: ChatAttachmentMenuProps
     );
   };
 
+  const shareLink = () => {
+    if (!linkUrl.trim()) return;
+    let url = linkUrl.trim();
+    if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+    const msg = `[LINK:${JSON.stringify({
+      url,
+      title: linkTitle.trim() || url,
+    })}]`;
+    onSendMessage(msg);
+    setLinkUrl("");
+    setLinkTitle("");
+    setOpen(false);
+    setView("menu");
+  };
+
   const menuItems = [
     { icon: Paperclip, label: "Upload File", description: "Share images, docs, audio", action: () => fileInputRef.current?.click() },
+    { icon: Link2, label: "Share Link", description: "Google Drive, Dropbox, any URL", action: () => setView("link") },
     { icon: LayoutGrid, label: "Smartboard", description: "Share a smartboard", action: () => setView("smartboards") },
     { icon: User, label: "Creator Profile", description: "Share a creator's profile", action: () => setView("profiles") },
     { icon: ShoppingBag, label: "Listing", description: "Share a marketplace listing", action: () => setView("listings") },
@@ -190,7 +209,7 @@ const ChatAttachmentMenu = ({ onSendMessage, disabled }: ChatAttachmentMenuProps
         onChange={handleFileUpload}
         className="hidden"
       />
-      <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setView("menu"); setSearch(""); } }}>
+      <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setView("menu"); setSearch(""); setLinkUrl(""); setLinkTitle(""); } }}>
         <PopoverTrigger asChild>
           <Button
             type="button"
@@ -312,6 +331,41 @@ const ChatAttachmentMenu = ({ onSendMessage, disabled }: ChatAttachmentMenuProps
                   ))
                 )}
               </ScrollArea>
+            </div>
+          )}
+
+          {view === "link" && (
+            <div>
+              <div className="flex items-center gap-2 p-2 border-b border-border">
+                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setView("menu")}>
+                  <span className="text-lg">←</span>
+                </Button>
+                <p className="text-sm font-medium text-foreground">Share a Link</p>
+              </div>
+              <div className="p-3 space-y-2">
+                <Input
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  placeholder="Paste URL (Google Drive, Dropbox, etc.)"
+                  className="h-8 text-sm"
+                  autoFocus
+                />
+                <Input
+                  value={linkTitle}
+                  onChange={(e) => setLinkTitle(e.target.value)}
+                  placeholder="Title (optional)"
+                  className="h-8 text-sm"
+                />
+                <Button
+                  size="sm"
+                  className="w-full"
+                  disabled={!linkUrl.trim()}
+                  onClick={shareLink}
+                >
+                  <Link2 className="h-3.5 w-3.5 mr-1.5" />
+                  Share Link
+                </Button>
+              </div>
             </div>
           )}
 
