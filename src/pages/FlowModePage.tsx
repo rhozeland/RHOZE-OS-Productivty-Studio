@@ -53,6 +53,8 @@ import { Label } from "@/components/ui/label";
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import { toast } from "sonner";
 import { playSwipeSound } from "@/lib/swipe-sound";
+import FlowCard from "@/components/flow/FlowCard";
+import FlowCardBackground from "@/components/flow/FlowCardBackground";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
