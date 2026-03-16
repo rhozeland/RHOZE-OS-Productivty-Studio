@@ -65,7 +65,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
         user_id: profile.user_id,
         invited_by: user!.id,
         role,
-        project_role: projectRole,
+        project_role: isCollaborative ? "collaborator" : projectRole,
       } as any);
       if (error) throw error;
     },
