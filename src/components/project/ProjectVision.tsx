@@ -85,7 +85,7 @@ const CATEGORY_SUGGESTIONS = [
   "Animation", "Consulting", "Strategy",
 ];
 
-const ProjectVision = ({ project, projectId }: ProjectVisionProps) => {
+const ProjectVision = ({ project, projectId, smartboardDetails, linkedIds, onLinkSmartboard, onUnlinkSmartboard }: ProjectVisionProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
