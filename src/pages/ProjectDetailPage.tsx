@@ -277,15 +277,39 @@ const ProjectDetailPage = () => {
           <TabsTrigger value="team">Team</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="roadmap" className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <StageRoadmap goals={goals} projectId={id!} />
-            </div>
-            <div>
-              <Timeline goals={goals} />
-            </div>
-          </div>
+        <TabsContent value="roadmap" className="space-y-4">
+          <Tabs defaultValue="stages" className="w-full">
+            <TabsList className="h-9">
+              <TabsTrigger value="stages" className="gap-1.5 text-xs">
+                <Milestone className="h-3.5 w-3.5" /> Stages
+              </TabsTrigger>
+              <TabsTrigger value="list" className="gap-1.5 text-xs">
+                <ListTodo className="h-3.5 w-3.5" /> List
+              </TabsTrigger>
+              <TabsTrigger value="calendar" className="gap-1.5 text-xs">
+                <CalendarDays className="h-3.5 w-3.5" /> Calendar
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="stages" className="space-y-6 mt-4">
+              <div className="grid gap-6 lg:grid-cols-3">
+                <div className="lg:col-span-2">
+                  <StageRoadmap goals={goals} projectId={id!} />
+                </div>
+                <div>
+                  <Timeline goals={goals} />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="list" className="mt-4">
+              <RoadmapListView goals={goals} projectId={id!} />
+            </TabsContent>
+
+            <TabsContent value="calendar" className="mt-4">
+              <RoadmapCalendarView goals={goals} projectId={id!} />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         <TabsContent value="vision">
