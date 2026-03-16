@@ -1120,43 +1120,61 @@ export type Database = {
       }
       projects: {
         Row: {
+          categories: string[] | null
+          client_name: string | null
           cover_color: string | null
           created_at: string
           currency: string
           description: string | null
           id: string
           is_estimate: boolean
+          project_type: string | null
+          runtime_notes: string | null
+          scope_of_work: string | null
           status: string
           title: string
           total_budget: number
           updated_at: string
           user_id: string
+          vision: string | null
         }
         Insert: {
+          categories?: string[] | null
+          client_name?: string | null
           cover_color?: string | null
           created_at?: string
           currency?: string
           description?: string | null
           id?: string
           is_estimate?: boolean
+          project_type?: string | null
+          runtime_notes?: string | null
+          scope_of_work?: string | null
           status?: string
           title: string
           total_budget?: number
           updated_at?: string
           user_id: string
+          vision?: string | null
         }
         Update: {
+          categories?: string[] | null
+          client_name?: string | null
           cover_color?: string | null
           created_at?: string
           currency?: string
           description?: string | null
           id?: string
           is_estimate?: boolean
+          project_type?: string | null
+          runtime_notes?: string | null
+          scope_of_work?: string | null
           status?: string
           title?: string
           total_budget?: number
           updated_at?: string
           user_id?: string
+          vision?: string | null
         }
         Relationships: []
       }

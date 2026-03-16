@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 interface ProgressChartProps {
   goals: Array<{ status: string; progress: number }> | undefined;
-  tasks: Array<{ completed: boolean | null }> | undefined;
+  tasks?: Array<{ completed: boolean | null }> | undefined;
 }
 
 const ProgressChart = ({ goals, tasks }: ProgressChartProps) => {
