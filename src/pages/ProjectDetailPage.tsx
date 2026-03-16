@@ -160,11 +160,12 @@ const ProjectDetailPage = () => {
       <ProgressChart goals={goals} />
 
       <Tabs defaultValue="roadmap" className="w-full">
-        <TabsList className="mb-4">
+        <TabsList className="mb-4 flex-wrap">
           <TabsTrigger value="roadmap">Roadmap</TabsTrigger>
           <TabsTrigger value="vision">Vision & Scope</TabsTrigger>
           <TabsTrigger value="budget">Budget</TabsTrigger>
           {contract && <TabsTrigger value="milestones">Milestones</TabsTrigger>}
+          <TabsTrigger value="approval">Approval</TabsTrigger>
           <TabsTrigger value="smartboards">Smartboards</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
         </TabsList>
