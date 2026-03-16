@@ -944,48 +944,73 @@ export type Database = {
       }
       project_goals: {
         Row: {
+          budget_amount: number
           completed_at: string | null
           created_at: string
           description: string | null
           due_date: string | null
           id: string
+          location: string | null
+          parent_id: string | null
           priority: string
           progress: number
           project_id: string
+          sort_order: number
+          stage_date_end: string | null
+          stage_date_start: string | null
           status: string
           title: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          budget_amount?: number
           completed_at?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
           id?: string
+          location?: string | null
+          parent_id?: string | null
           priority?: string
           progress?: number
           project_id: string
+          sort_order?: number
+          stage_date_end?: string | null
+          stage_date_start?: string | null
           status?: string
           title: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          budget_amount?: number
           completed_at?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
           id?: string
+          location?: string | null
+          parent_id?: string | null
           priority?: string
           progress?: number
           project_id?: string
+          sort_order?: number
+          stage_date_end?: string | null
+          stage_date_start?: string | null
           status?: string
           title?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "project_goals_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "project_goals"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "project_goals_project_id_fkey"
             columns: ["project_id"]
@@ -1097,30 +1122,39 @@ export type Database = {
         Row: {
           cover_color: string | null
           created_at: string
+          currency: string
           description: string | null
           id: string
+          is_estimate: boolean
           status: string
           title: string
+          total_budget: number
           updated_at: string
           user_id: string
         }
         Insert: {
           cover_color?: string | null
           created_at?: string
+          currency?: string
           description?: string | null
           id?: string
+          is_estimate?: boolean
           status?: string
           title: string
+          total_budget?: number
           updated_at?: string
           user_id: string
         }
         Update: {
           cover_color?: string | null
           created_at?: string
+          currency?: string
           description?: string | null
           id?: string
+          is_estimate?: boolean
           status?: string
           title?: string
+          total_budget?: number
           updated_at?: string
           user_id?: string
         }
