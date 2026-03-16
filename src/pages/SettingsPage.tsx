@@ -89,6 +89,10 @@ const SettingsPage = () => {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [bannerGradient, setBannerGradient] = useState("");
   const [profileBackground, setProfileBackground] = useState("");
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [tiktokUrl, setTiktokUrl] = useState("");
+  const [twitterUrl, setTwitterUrl] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState("");
 
   // Shipping fields
   const [addressLine1, setAddressLine1] = useState("");
@@ -144,6 +148,10 @@ const SettingsPage = () => {
       setAvatarUrl(p.avatar_url ?? "");
       setBannerGradient(p.banner_gradient ?? "");
       setProfileBackground(p.profile_background ?? "");
+      setInstagramUrl(p.instagram_url ?? "");
+      setTiktokUrl(p.tiktok_url ?? "");
+      setTwitterUrl(p.twitter_url ?? "");
+      setYoutubeUrl(p.youtube_url ?? "");
       setAddressLine1(p.shipping_address_line1 ?? "");
       setAddressLine2(p.shipping_address_line2 ?? "");
       setCity(p.shipping_city ?? "");
@@ -218,6 +226,10 @@ const SettingsPage = () => {
           is_public: isPublic,
           banner_gradient: bannerGradient || null,
           profile_background: profileBackground || null,
+          instagram_url: instagramUrl || null,
+          tiktok_url: tiktokUrl || null,
+          twitter_url: twitterUrl || null,
+          youtube_url: youtubeUrl || null,
         } as any)
         .eq("user_id", user!.id);
       if (error) throw error;
@@ -536,6 +548,28 @@ const SettingsPage = () => {
             <div className="space-y-2">
               <Label>Portfolio URL</Label>
               <Input value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} placeholder="https://yourportfolio.com" />
+            </div>
+          </div>
+          <Separator className="my-1" />
+          <div>
+            <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">Social Links</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Instagram</Label>
+                <Input value={instagramUrl} onChange={(e) => setInstagramUrl(e.target.value)} placeholder="https://instagram.com/username" />
+              </div>
+              <div className="space-y-2">
+                <Label>TikTok</Label>
+                <Input value={tiktokUrl} onChange={(e) => setTiktokUrl(e.target.value)} placeholder="https://tiktok.com/@username" />
+              </div>
+              <div className="space-y-2">
+                <Label>X (Twitter)</Label>
+                <Input value={twitterUrl} onChange={(e) => setTwitterUrl(e.target.value)} placeholder="https://x.com/username" />
+              </div>
+              <div className="space-y-2">
+                <Label>YouTube</Label>
+                <Input value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} placeholder="https://youtube.com/@channel" />
+              </div>
             </div>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">

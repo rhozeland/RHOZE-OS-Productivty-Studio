@@ -759,6 +759,7 @@ export type Database = {
           email_notif_reviews: boolean | null
           headline: string | null
           id: string
+          instagram_url: string | null
           is_public: boolean | null
           location: string | null
           mediums: string[] | null
@@ -774,8 +775,11 @@ export type Database = {
           show_public_boards: boolean | null
           show_seller_stats: boolean | null
           skills: string[] | null
+          tiktok_url: string | null
+          twitter_url: string | null
           updated_at: string
           user_id: string
+          youtube_url: string | null
         }
         Insert: {
           available?: boolean | null
@@ -790,6 +794,7 @@ export type Database = {
           email_notif_reviews?: boolean | null
           headline?: string | null
           id?: string
+          instagram_url?: string | null
           is_public?: boolean | null
           location?: string | null
           mediums?: string[] | null
@@ -805,8 +810,11 @@ export type Database = {
           show_public_boards?: boolean | null
           show_seller_stats?: boolean | null
           skills?: string[] | null
+          tiktok_url?: string | null
+          twitter_url?: string | null
           updated_at?: string
           user_id: string
+          youtube_url?: string | null
         }
         Update: {
           available?: boolean | null
@@ -821,6 +829,7 @@ export type Database = {
           email_notif_reviews?: boolean | null
           headline?: string | null
           id?: string
+          instagram_url?: string | null
           is_public?: boolean | null
           location?: string | null
           mediums?: string[] | null
@@ -836,8 +845,11 @@ export type Database = {
           show_public_boards?: boolean | null
           show_seller_stats?: boolean | null
           skills?: string[] | null
+          tiktok_url?: string | null
+          twitter_url?: string | null
           updated_at?: string
           user_id?: string
+          youtube_url?: string | null
         }
         Relationships: []
       }

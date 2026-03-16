@@ -319,7 +319,7 @@ const ProfileDetailPage = () => {
           </div>
 
           <div className="px-5 sm:px-8 pb-6 pt-3">
-            <div className="-mt-14 sm:-mt-16 flex items-end gap-4 relative z-10">
+            <div className="-mt-14 sm:-mt-16 flex gap-4 relative z-10">
               {/* Avatar */}
               <div className="flex h-24 w-24 sm:h-28 sm:w-28 items-center justify-center rounded-full border-4 border-card bg-muted shadow-xl overflow-hidden shrink-0 ring-2 ring-background/50">
                 {profile.avatar_url ? (
@@ -328,37 +328,38 @@ const ProfileDetailPage = () => {
                   <span className="font-display text-2xl font-bold text-muted-foreground">{initials}</span>
                 )}
               </div>
+            </div>
 
-              <div className="flex-1 min-w-0 pb-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground tracking-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                    {profile.display_name || "Creator"}
-                  </h1>
-                  {profile.available && (
-                    <Badge variant="secondary" className="text-[10px] gap-1 font-medium">
-                      <CheckCircle className="h-3 w-3 text-emerald-500" /> Available
-                    </Badge>
-                  )}
-                  <ProfileBadges userId={id!} compact />
-                  {reviewStats && reviewStats.count > 0 && (
-                    <Badge variant="outline" className="text-[10px] gap-1 font-medium">
-                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {reviewStats.avg} ({reviewStats.count})
-                    </Badge>
-                  )}
-                </div>
-                {(profile as any).headline && (
-                  <p className="text-sm text-muted-foreground mt-0.5">{(profile as any).headline}</p>
+            {/* Name & info below avatar to prevent overlap */}
+            <div className="mt-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground tracking-tight break-words">
+                  {profile.display_name || "Creator"}
+                </h1>
+                {profile.available && (
+                  <Badge variant="secondary" className="text-[10px] gap-1 font-medium">
+                    <CheckCircle className="h-3 w-3 text-emerald-500" /> Available
+                  </Badge>
                 )}
-                {(profile as any).location && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                    <MapPin className="h-3 w-3" /> {(profile as any).location}
-                  </p>
+                <ProfileBadges userId={id!} compact />
+                {reviewStats && reviewStats.count > 0 && (
+                  <Badge variant="outline" className="text-[10px] gap-1 font-medium">
+                    <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {reviewStats.avg} ({reviewStats.count})
+                  </Badge>
                 )}
               </div>
+              {(profile as any).headline && (
+                <p className="text-sm text-muted-foreground mt-0.5">{(profile as any).headline}</p>
+              )}
+              {(profile as any).location && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                  <MapPin className="h-3 w-3" /> {(profile as any).location}
+                </p>
+              )}
 
               {/* Action buttons */}
               {!isOwnProfile && user && (
-                <div className="flex gap-2 shrink-0 flex-wrap">
+                <div className="flex gap-2 mt-3 flex-wrap">
                   <Button
                     variant={isFollowing ? "outline" : "default"}
                     size="sm"
@@ -403,7 +404,6 @@ const ProfileDetailPage = () => {
                 </div>
               )}
             </div>
-
             {/* Stats row */}
             <div className="flex items-center gap-6 mt-5 pt-4 border-t border-border/50">
               {[
@@ -479,6 +479,35 @@ const ProfileDetailPage = () => {
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Store className="h-4 w-4" />
                 Active seller
+              </div>
+            )}
+
+            {/* Social links */}
+            {((profile as any).instagram_url || (profile as any).tiktok_url || (profile as any).twitter_url || (profile as any).youtube_url) && (
+              <div className="pt-2 border-t border-border/50">
+                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">Socials</h3>
+                <div className="flex items-center gap-2">
+                  {(profile as any).instagram_url && (
+                    <a href={(profile as any).instagram_url} target="_blank" rel="noopener" className="p-2 rounded-lg hover:bg-muted/60 transition-colors text-muted-foreground hover:text-foreground" title="Instagram">
+                      <svg className="h-4.5 w-4.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                    </a>
+                  )}
+                  {(profile as any).tiktok_url && (
+                    <a href={(profile as any).tiktok_url} target="_blank" rel="noopener" className="p-2 rounded-lg hover:bg-muted/60 transition-colors text-muted-foreground hover:text-foreground" title="TikTok">
+                      <svg className="h-4.5 w-4.5" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.8a8.23 8.23 0 004.77 1.52V6.85a4.86 4.86 0 01-1-.16z"/></svg>
+                    </a>
+                  )}
+                  {(profile as any).twitter_url && (
+                    <a href={(profile as any).twitter_url} target="_blank" rel="noopener" className="p-2 rounded-lg hover:bg-muted/60 transition-colors text-muted-foreground hover:text-foreground" title="X">
+                      <svg className="h-4.5 w-4.5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                    </a>
+                  )}
+                  {(profile as any).youtube_url && (
+                    <a href={(profile as any).youtube_url} target="_blank" rel="noopener" className="p-2 rounded-lg hover:bg-muted/60 transition-colors text-muted-foreground hover:text-foreground" title="YouTube">
+                      <svg className="h-4.5 w-4.5" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                    </a>
+                  )}
+                </div>
               </div>
             )}
           </div>
