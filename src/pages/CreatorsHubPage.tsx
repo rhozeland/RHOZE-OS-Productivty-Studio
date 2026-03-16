@@ -173,6 +173,19 @@ const CreatorsHubPage = () => {
           )}
         </div>
       </div>
+
+      {/* Category Tiles */}
+      <CategoryTiles
+        activeCategory={activeCategory}
+        onSelect={setActiveCategory}
+        listingCounts={listingCounts}
+      />
+
+      {/* Main content: Grid + Sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+        {/* Left: Feed */}
+        <div className="space-y-6">
+          {/* Type filters */}
           <div className="flex flex-wrap gap-2">
             {TYPES.map((t) => {
               const Icon = t.icon;
