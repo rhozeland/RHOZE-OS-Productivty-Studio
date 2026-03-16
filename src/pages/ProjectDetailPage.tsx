@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, LayoutGrid, Link2, X, FileDown, Pencil, Check, Milestone, ListTodo, CalendarDays } from "lucide-react";
+import { Plus, Trash2, LayoutGrid, Link2, X, FileDown, Pencil, Check, Milestone, ListTodo } from "lucide-react";
 import { exportProjectPDF } from "@/lib/export-project-pdf";
 import { useState } from "react";
 import { toast } from "sonner";
