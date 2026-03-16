@@ -111,8 +111,18 @@ const CreatorsHubPage = () => {
 
   const getMediaForListing = (listingId: string) => allMedia?.filter((m: any) => m.listing_id === listingId) ?? [];
 
-  // Trending: first 4 listings
-  const trendingListings = listings?.slice(0, 4) ?? [];
+  // Trending: first 6 listings for carousel
+  const trendingListings = listings?.slice(0, 6) ?? [];
+  const trendingRef = useRef<HTMLDivElement>(null);
+
+  const scrollTrending = (direction: "left" | "right") => {
+    if (!trendingRef.current) return;
+    const scrollAmount = trendingRef.current.offsetWidth * 0.7;
+    trendingRef.current.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
+  };
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
