@@ -20,6 +20,7 @@ const Collaborators = ({ projectId }: CollaboratorsProps) => {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("viewer");
+  const [projectRole, setProjectRole] = useState("client");
 
   const { data: collaborators } = useQuery({
     queryKey: ["project-collaborators", projectId],
