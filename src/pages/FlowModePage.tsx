@@ -994,73 +994,13 @@ const FlowModePage = () => {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
                 >
-                  {/* Polaroid card */}
-                  <div className="rounded-2xl bg-card shadow-2xl overflow-hidden border border-border/50">
-                    {/* Image / Visual area */}
-                    <div className="aspect-[4/5] bg-muted/30 relative overflow-hidden">
-                      {currentItem.file_url ? (
-                        <img
-                          src={currentItem.file_url}
-                          alt={currentItem.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className={`w-full h-full bg-gradient-to-br ${gradient.bg} flex items-center justify-center p-8`}>
-                          <div className="text-center">
-                            <Badge variant="outline" className="mb-4 capitalize rounded-full bg-card/60 backdrop-blur-sm text-xs">
-                              {currentItem.category}
-                            </Badge>
-                            <h2 className="font-display text-xl md:text-2xl font-bold text-foreground leading-tight">
-                              {currentItem.title}
-                            </h2>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Category label on images */}
-                      {currentItem.file_url && (
-                        <div className="absolute top-3 left-3">
-                          <span className="text-[10px] font-medium uppercase tracking-widest text-card bg-foreground/60 backdrop-blur-sm px-2 py-1 rounded-full">
-                            {currentItem.category}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Info section */}
-                    <div className="p-4">
-                      {/* Action icons */}
-                      <div className="flex items-center gap-4 mb-3">
-                        <button
-                          onClick={() => performAction("save")}
-                          className="text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          <FileText className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={() => performAction("share")}
-                          className="text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          <Share2 className="h-5 w-5" />
-                        </button>
-                      </div>
-
-                      <h3 className="font-display font-bold text-foreground text-sm md:text-base leading-snug">
-                        {currentItem.title}
-                      </h3>
-
-                      {currentItem.description && (
-                        <p
-                          className={`text-sm text-muted-foreground leading-relaxed mt-1 ${
-                            expandedCard ? "" : "line-clamp-2"
-                          }`}
-                          onClick={() => setExpandedCard(!expandedCard)}
-                        >
-                          {currentItem.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                  <FlowCard
+                    item={currentItem}
+                    expanded={expandedCard}
+                    onToggleExpand={() => setExpandedCard(!expandedCard)}
+                    onSave={() => performAction("save")}
+                    onShare={() => performAction("share")}
+                  />
                 </motion.div>
               ) : (
                 <motion.div
