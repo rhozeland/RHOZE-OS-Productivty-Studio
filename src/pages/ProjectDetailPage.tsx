@@ -11,7 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, LayoutGrid, Link2, X } from "lucide-react";
+import { Plus, Trash2, LayoutGrid, Link2, X, FileDown } from "lucide-react";
+import { exportProjectPDF } from "@/lib/export-project-pdf";
 import { useState } from "react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -129,12 +130,29 @@ const ProjectDetailPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <div className="flex items-center gap-3">
-          <div className="h-4 w-4 rounded-full" style={{ backgroundColor: project.cover_color ?? "#7c3aed" }} />
-          <h1 className="font-display text-3xl font-bold text-foreground">{project.title}</h1>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <div className="h-4 w-4 rounded-full" style={{ backgroundColor: project.cover_color ?? "#7c3aed" }} />
+            <h1 className="font-display text-3xl font-bold text-foreground">{project.title}</h1>
+          </div>
+          <p className="mt-1 text-muted-foreground">{project.description || "No description"}</p>
         </div>
-        <p className="mt-1 text-muted-foreground">{project.description || "No description"}</p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0 gap-1.5"
+          onClick={() => {
+            toast.promise(exportProjectPDF(project as any, goals), {
+              loading: "Generating PDF...",
+              success: "PDF downloaded!",
+              error: "Failed to generate PDF",
+            });
+          }}
+        >
+          <FileDown className="h-4 w-4" />
+          Export PDF
+        </Button>
       </div>
 
       {/* Progress Overview */}
