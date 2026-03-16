@@ -771,13 +771,12 @@ const FlowModePage = () => {
   // ──── MAIN FLOW VIEW ────
   return (
     <div className="relative flex flex-col min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8">
-      {/* Dynamic gradient background */}
+      {/* Dynamic background — blurred image or category gradient */}
       {viewMode === "swipe" && (
-        <>
-          <div className={`absolute inset-0 bg-gradient-to-br ${gradient.bg} transition-all duration-700 animated-gradient`} />
-          <div className={`absolute top-10 left-1/4 w-80 h-80 ${gradient.blur1} rounded-full blur-3xl animate-pulse`} />
-          <div className={`absolute bottom-10 right-1/4 w-96 h-96 ${gradient.blur2} rounded-full blur-3xl`} />
-        </>
+        <FlowCardBackground
+          fileUrl={currentItem?.file_url}
+          category={currentItem?.category || "design"}
+        />
       )}
       {viewMode === "browse" && (
         <div className="absolute inset-0 bg-background" />
