@@ -96,6 +96,11 @@ const Collaborators = ({ projectId }: CollaboratorsProps) => {
     admin: "bg-amber-500/10 text-amber-600",
   };
 
+  const projectRoleColors: Record<string, string> = {
+    client: "bg-blue-500/10 text-blue-600",
+    specialist: "bg-emerald-500/10 text-emerald-600",
+  };
+
   return (
     <div className="surface-card p-6">
       <div className="mb-4 flex items-center justify-between">
