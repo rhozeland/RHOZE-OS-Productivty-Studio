@@ -1,0 +1,2 @@
+ALTER TABLE public.project_collaborators ADD COLUMN project_role text NOT NULL DEFAULT 'client';
+COMMENT ON COLUMN public.project_collaborators.project_role IS 'Whether the collaborator is a client or specialist (hands-on worker)';

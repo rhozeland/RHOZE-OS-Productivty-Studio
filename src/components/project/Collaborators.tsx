@@ -20,6 +20,7 @@ const Collaborators = ({ projectId }: CollaboratorsProps) => {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("viewer");
+  const [projectRole, setProjectRole] = useState("client");
 
   const { data: collaborators } = useQuery({
     queryKey: ["project-collaborators", projectId],
@@ -63,7 +64,8 @@ const Collaborators = ({ projectId }: CollaboratorsProps) => {
         user_id: profile.user_id,
         invited_by: user!.id,
         role,
-      });
+        project_role: projectRole,
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -94,6 +96,11 @@ const Collaborators = ({ projectId }: CollaboratorsProps) => {
     admin: "bg-amber-500/10 text-amber-600",
   };
 
+  const projectRoleColors: Record<string, string> = {
+    client: "bg-blue-500/10 text-blue-600",
+    specialist: "bg-emerald-500/10 text-emerald-600",
+  };
+
   return (
     <div className="surface-card p-6">
       <div className="mb-4 flex items-center justify-between">
@@ -109,8 +116,15 @@ const Collaborators = ({ projectId }: CollaboratorsProps) => {
             <DialogHeader><DialogTitle>Invite Collaborator</DialogTitle></DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); invite.mutate(); }} className="space-y-4">
               <Input placeholder="Display name" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Select value={projectRole} onValueChange={setProjectRole}>
+                <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="client">Client</SelectItem>
+                  <SelectItem value="specialist">Specialist</SelectItem>
+                </SelectContent>
+              </Select>
               <Select value={role} onValueChange={setRole}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Permission" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="viewer">Viewer</SelectItem>
                   <SelectItem value="editor">Editor</SelectItem>
@@ -151,9 +165,14 @@ const Collaborators = ({ projectId }: CollaboratorsProps) => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">{profile?.display_name ?? "User"}</p>
-              <span className={`inline-block mt-0.5 rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${roleColors[collab.role] ?? roleColors.viewer}`}>
-                {collab.role}
-              </span>
+              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${projectRoleColors[(collab as any).project_role] ?? projectRoleColors.client}`}>
+                  {(collab as any).project_role || "client"}
+                </span>
+                <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${roleColors[collab.role] ?? roleColors.viewer}`}>
+                  {collab.role}
+                </span>
+              </div>
             </div>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => remove.mutate(collab.id)}>
               <X className="h-3.5 w-3.5 text-muted-foreground" />
