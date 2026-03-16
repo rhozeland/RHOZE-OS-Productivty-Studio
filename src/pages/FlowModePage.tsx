@@ -361,7 +361,7 @@ const FlowModePage = () => {
 
   const unseenItems = flowItems?.filter((item) => !interactions?.has(item.id)) ?? [];
   const currentItem = unseenItems[currentIndex];
-  const gradient = currentItem ? (CATEGORY_GRADIENTS[currentItem.category] || CATEGORY_GRADIENTS.design) : CATEGORY_GRADIENTS.design;
+  
 
   const handleCalibrationSelect = (option: string) => {
     const updated = selectedCategories.includes(option)
