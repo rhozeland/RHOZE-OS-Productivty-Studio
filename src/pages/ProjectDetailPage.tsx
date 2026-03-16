@@ -248,8 +248,12 @@ const ProjectDetailPage = () => {
         <TabsList className="mb-4 flex-wrap">
           <TabsTrigger value="roadmap">Roadmap</TabsTrigger>
           <TabsTrigger value="vision">Scope</TabsTrigger>
-          <TabsTrigger value="budget">Budget</TabsTrigger>
-          {contract && <TabsTrigger value="milestones">Milestones</TabsTrigger>}
+          {project.project_type !== "collaborative" && (
+            <TabsTrigger value="budget">Budget</TabsTrigger>
+          )}
+          {project.project_type !== "collaborative" && contract && (
+            <TabsTrigger value="milestones">Milestones</TabsTrigger>
+          )}
           <TabsTrigger value="approval">Approval</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
         </TabsList>
