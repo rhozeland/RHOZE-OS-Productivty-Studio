@@ -264,9 +264,6 @@ const ProjectDetailPage = () => {
               <TabsTrigger value="list" className="gap-1.5 text-xs">
                 <ListTodo className="h-3.5 w-3.5" /> List
               </TabsTrigger>
-              <TabsTrigger value="calendar" className="gap-1.5 text-xs">
-                <CalendarDays className="h-3.5 w-3.5" /> Calendar
-              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="stages" className="space-y-6 mt-4">
@@ -278,13 +275,11 @@ const ProjectDetailPage = () => {
                   <Timeline goals={goals} />
                 </div>
               </div>
+              <RoadmapCalendarView goals={goals} projectId={id!} />
             </TabsContent>
 
-            <TabsContent value="list" className="mt-4">
+            <TabsContent value="list" className="mt-4 space-y-6">
               <RoadmapListView goals={goals} projectId={id!} />
-            </TabsContent>
-
-            <TabsContent value="calendar" className="mt-4">
               <RoadmapCalendarView goals={goals} projectId={id!} />
             </TabsContent>
           </Tabs>
