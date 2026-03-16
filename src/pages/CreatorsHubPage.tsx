@@ -182,11 +182,11 @@ const CreatorsHubPage = () => {
               </div>
               <div
                 ref={trendingRef}
-                className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-1"
+                className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-1"
                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
               >
                 {trendingListings.map((listing: any, i: number) => (
-                  <div key={listing.id} className="snap-start shrink-0 w-[200px] sm:w-[220px]">
+                  <div key={listing.id} className="snap-start shrink-0 w-[280px] sm:w-[320px] md:w-[340px]">
                     <ListingCard
                       listing={listing}
                       media={getMediaForListing(listing.id)}
