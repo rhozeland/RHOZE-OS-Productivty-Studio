@@ -165,9 +165,14 @@ const Collaborators = ({ projectId }: CollaboratorsProps) => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">{profile?.display_name ?? "User"}</p>
-              <span className={`inline-block mt-0.5 rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${roleColors[collab.role] ?? roleColors.viewer}`}>
-                {collab.role}
-              </span>
+              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${projectRoleColors[(collab as any).project_role] ?? projectRoleColors.client}`}>
+                  {(collab as any).project_role || "client"}
+                </span>
+                <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${roleColors[collab.role] ?? roleColors.viewer}`}>
+                  {collab.role}
+                </span>
+              </div>
             </div>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => remove.mutate(collab.id)}>
               <X className="h-3.5 w-3.5 text-muted-foreground" />
