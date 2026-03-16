@@ -60,6 +60,10 @@ interface Deliverable {
 interface ProjectVisionProps {
   project: Project;
   projectId: string;
+  smartboardDetails?: any[] | null;
+  linkedIds?: string[];
+  onLinkSmartboard?: () => void;
+  onUnlinkSmartboard?: (id: string) => void;
 }
 
 const PROJECT_TYPES = [
