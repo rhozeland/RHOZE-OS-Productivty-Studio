@@ -170,6 +170,11 @@ const ProjectsPage = () => {
                       <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary capitalize">
                         {project.status}
                       </span>
+                      {project.project_type === "collaborative" && (
+                        <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
+                          Collab
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

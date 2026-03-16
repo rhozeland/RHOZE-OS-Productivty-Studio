@@ -322,7 +322,7 @@ const ProjectDetailPage = () => {
 
 
         <TabsContent value="team">
-          <Collaborators projectId={id!} />
+          <Collaborators projectId={id!} isCollaborative={project.project_type === "collaborative"} />
         </TabsContent>
       </Tabs>
 
