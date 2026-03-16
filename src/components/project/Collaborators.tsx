@@ -12,9 +12,10 @@ import { motion } from "framer-motion";
 
 interface CollaboratorsProps {
   projectId: string;
+  isCollaborative?: boolean;
 }
 
-const Collaborators = ({ projectId }: CollaboratorsProps) => {
+const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
