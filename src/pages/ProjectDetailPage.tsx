@@ -177,6 +177,7 @@ const ProjectDetailPage = () => {
       <Tabs defaultValue="roadmap" className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="roadmap">Roadmap</TabsTrigger>
+          <TabsTrigger value="budget">Budget</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
           {contract && <TabsTrigger value="milestones">Milestones</TabsTrigger>}
           <TabsTrigger value="smartboards">Smartboards</TabsTrigger>
@@ -188,11 +189,14 @@ const ProjectDetailPage = () => {
             <div className="lg:col-span-2">
               <StageRoadmap goals={goals} projectId={id!} />
             </div>
-            <div className="space-y-6">
-              <ProjectBudget project={project} goals={goals} />
+            <div>
               <Timeline goals={goals} />
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="budget">
+          <ProjectBudget project={project} goals={goals} />
         </TabsContent>
 
         {contract && (
