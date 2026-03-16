@@ -1023,6 +1023,7 @@ export type Database = {
       }
       project_goals: {
         Row: {
+          assignee_id: string | null
           budget_amount: number
           completed_at: string | null
           created_at: string
@@ -1043,6 +1044,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          assignee_id?: string | null
           budget_amount?: number
           completed_at?: string | null
           created_at?: string
@@ -1063,6 +1065,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          assignee_id?: string | null
           budget_amount?: number
           completed_at?: string | null
           created_at?: string
