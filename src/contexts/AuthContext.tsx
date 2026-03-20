@@ -24,17 +24,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    const syncSession = (nextSession: Session | null) => {
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
       setLoading(false);
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      syncSession(session);
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(async ({ data: { session }, error }) => {
+        if (error) {
+          const isMissingRefreshToken =
+            error.name === "AuthApiError" &&
+            typeof error.message === "string" &&
+            error.message.toLowerCase().includes("refresh token not found");
+
+          if (isMissingRefreshToken) {
+            await supabase.auth.signOut({ scope: "local" });
+            syncSession(null);
+            return;
+          }
+
+          throw error;
+        }
+
+        syncSession(session);
+      })
+      .catch(async () => {
+        await supabase.auth.signOut({ scope: "local" });
+        syncSession(null);
+      });
 
     return () => subscription.unsubscribe();
   }, []);
