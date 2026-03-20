@@ -24,7 +24,7 @@ const AuthPage = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -33,11 +33,19 @@ const AuthPage = () => {
           },
         });
         if (error) throw error;
-        toast.success("Check your email to confirm your account!");
+
+        if (data.session) {
+          toast.success("Account created — you're signed in.");
+          navigate("/dashboard", { replace: true });
+          return;
+        }
+
+        toast.success("Account created. Check your email to confirm your account.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate("/dashboard");
+        toast.success("Signed in.");
+        navigate("/dashboard", { replace: true });
       }
     } catch (error: any) {
       toast.error(error.message);
@@ -49,12 +57,22 @@ const AuthPage = () => {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      const { error } = await lovable.auth.signInWithOAuth("google", {
+      const { error, redirected } = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
+        extraParams: {
+          prompt: "select_account",
+        },
       });
+
+      if (redirected) return;
+
       if (error) {
         toast.error(error.message || "Google sign-in failed");
+        return;
       }
+
+      toast.success("Signed in with Google.");
+      navigate("/dashboard", { replace: true });
     } catch (error: any) {
       toast.error(error.message || "Google sign-in failed");
     } finally {
