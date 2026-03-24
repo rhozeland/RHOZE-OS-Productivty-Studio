@@ -4,8 +4,6 @@ import {
   LayoutDashboard,
   FolderKanban,
   Calendar,
-  Compass,
-  LayoutGrid,
   Store,
   MessageSquare,
   Settings,
@@ -13,8 +11,10 @@ import {
   Briefcase,
   Coins,
   ShieldCheck,
-  Zap,
+  Workflow,
   User,
+  LayoutGrid,
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -35,21 +35,23 @@ import {
 } from "@/components/ui/sidebar";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-const getEssentialItems = (userId?: string) => [
+const getWorkspaceItems = (userId?: string) => [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-  { icon: MessageSquare, label: "Messages", path: "/messages", hasBadge: true },
-  { icon: User, label: "My Profile", path: userId ? `/profiles/${userId}` : "/settings" },
-  { icon: Briefcase, label: "Services", path: "/services" },
   { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: Calendar, label: "Calendar", path: "/calendar" },
+  { icon: MessageSquare, label: "Messages", path: "/messages", hasBadge: true },
+];
+
+const marketplaceItems = [
+  { icon: Store, label: "Creators Hub", path: "/creators" },
+  { icon: Briefcase, label: "Services", path: "/services" },
   { icon: Coins, label: "Studio Pass", path: "/credits" },
 ];
 
-const creativeItems = [
-  { icon: Store, label: "Creators Hub", path: "/creators" },
-  { icon: Compass, label: "Flow", path: "/flow" },
-  { icon: LayoutGrid, label: "Smartboards", path: "/smartboards" },
-  { icon: Zap, label: "Drop Rooms", path: "/drop-rooms" },
+const toolsItems = [
+  { icon: LayoutGrid, label: "Boards", path: "/smartboards" },
+  { icon: Workflow, label: "Automations", path: "/flow" },
+  { icon: Users, label: "Collab Rooms", path: "/drop-rooms" },
 ];
 
 const AppSidebar = () => {
@@ -61,7 +63,6 @@ const AppSidebar = () => {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
 
-  // Unread messages count
   const { data: unreadCount } = useQuery({
     queryKey: ["unread-messages-count", user?.id],
     queryFn: async () => {
@@ -77,7 +78,6 @@ const AppSidebar = () => {
     refetchInterval: 30000,
   });
 
-  // Pending inquiries count
   const { data: pendingInquiries } = useQuery({
     queryKey: ["pending-inquiries-count", user?.id],
     queryFn: async () => {
@@ -95,12 +95,11 @@ const AppSidebar = () => {
 
   const totalUnread = (unreadCount ?? 0) + (pendingInquiries ?? 0);
 
-  const bottomItems = [
+  const accountItems = [
+    { icon: User, label: "Profile", path: user?.id ? `/profiles/${user.id}` : "/settings" },
     { icon: Settings, label: "Settings", path: "/settings" },
     ...(isAdmin ? [{ icon: ShieldCheck, label: "Admin", path: "/admin" }] : []),
   ];
-
-  const currentLogo = rhozelandLogo;
 
   const handleNavClick = () => {
     if (isMobile) setOpenMobile(false);
@@ -151,6 +150,21 @@ const AppSidebar = () => {
     );
   };
 
+  const renderGroup = (label: string, items: any[]) => (
+    <SidebarGroup>
+      {!collapsed && (
+        <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-muted-foreground/60 px-3 mb-1">
+          {label}
+        </SidebarGroupLabel>
+      )}
+      <SidebarGroupContent>
+        <SidebarMenu className="space-y-0.5">
+          {items.map(renderNavItem)}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
+
   return (
     <Sidebar collapsible="icon" className="border-r-0">
       <div className={cn(
@@ -158,7 +172,7 @@ const AppSidebar = () => {
         collapsed && "justify-center px-2"
       )}>
         <img
-          src={currentLogo}
+          src={rhozelandLogo}
           alt="Rhozeland"
           className="h-8 w-8 shrink-0 object-contain"
         />
@@ -170,39 +184,15 @@ const AppSidebar = () => {
       </div>
 
       <SidebarContent className="px-2 pt-3">
-        {/* Essentials */}
-        <SidebarGroup>
-          {!collapsed && (
-            <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-muted-foreground/60 px-3 mb-1">
-              Essentials
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
-              {getEssentialItems(user?.id).map(renderNavItem)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Creative */}
-        <SidebarGroup>
-          {!collapsed && (
-            <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-muted-foreground/60 px-3 mb-1 mt-2">
-              Creative
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
-              {creativeItems.map(renderNavItem)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {renderGroup("Workspace", getWorkspaceItems(user?.id))}
+        {renderGroup("Marketplace", marketplaceItems)}
+        {renderGroup("Tools", toolsItems)}
       </SidebarContent>
 
       <SidebarFooter className="px-2 pb-3">
         <div className="border-t border-sidebar-border pt-3">
           <SidebarMenu className="space-y-0.5">
-            {bottomItems.map(renderNavItem)}
+            {accountItems.map(renderNavItem)}
             <SidebarMenuItem>
               <SidebarMenuButton
                 tooltip={collapsed ? "Sign Out" : undefined}

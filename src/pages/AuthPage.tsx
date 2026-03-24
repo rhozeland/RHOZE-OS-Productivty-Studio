@@ -96,12 +96,12 @@ const AuthPage = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
         >
-          <p className="text-sm font-medium text-muted-foreground mb-4">✦ Crafting Visions, Building Futures</p>
+          <p className="text-sm font-medium text-muted-foreground mb-4">✦ Collaboration & Payments, Built In</p>
           <h1 className="font-display text-6xl font-bold leading-[1.05] tracking-tight text-foreground">
-            Your<br />Creative<br />Engine
+            Project<br />Management<br />for Creatives
           </h1>
           <p className="mt-6 max-w-md text-muted-foreground leading-relaxed">
-            Rhozeland is a subscription-based creative studio built for modern creators, offering flexible access to studio time, design, audio, and brand strategy.
+            Manage projects, collaborate with your team, and handle payments — all in one platform built for creative professionals.
           </p>
         </motion.div>
 
@@ -125,7 +125,7 @@ const AuthPage = () => {
             {isSignUp ? "Create your account" : "Welcome back"}
           </h2>
           <p className="mt-1 mb-8 text-sm text-muted-foreground">
-            {isSignUp ? "Start your creative journey" : "Sign in to your creative studio"}
+            {isSignUp ? "Start managing your creative projects" : "Sign in to your workspace"}
           </p>
 
           {/* Google sign-in */}
@@ -158,7 +158,7 @@ const AuthPage = () => {
             {isSignUp && (
               <div className="space-y-1.5">
                 <Label htmlFor="name" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Full Name</Label>
-                <Input id="name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your creative name" required className="h-11" />
+                <Input id="name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your name" required className="h-11" />
               </div>
             )}
             <div className="space-y-1.5">

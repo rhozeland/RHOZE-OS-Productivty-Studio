@@ -285,25 +285,43 @@ const CreditShopPage = () => {
 
   return (
     <div className="space-y-8">
-      {/* Header with balance */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">
-            Studio Pass
-          </h1>
-          <p className="text-muted-foreground">
-            Your creative membership & credits
-          </p>
-        </div>
-        <div className="surface-card flex items-center gap-3 px-5 py-3">
-          <Coins className="h-5 w-5 text-primary" />
+      {/* Header with explainer */}
+      <div className="space-y-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="font-display text-2xl font-bold text-foreground">
-              {userCredits?.balance ?? 0}
+            <h1 className="font-display text-3xl font-bold text-foreground">
+              Studio Pass
+            </h1>
+            <p className="text-muted-foreground">
+              Your creative membership & credits
             </p>
-            <p className="text-xs text-muted-foreground">Total Balance</p>
           </div>
-          <Badge className="ml-2 capitalize">{currentTier}</Badge>
+          <div className="surface-card flex items-center gap-3 px-5 py-3">
+            <Coins className="h-5 w-5 text-primary" />
+            <div>
+              <p className="font-display text-2xl font-bold text-foreground">
+                {userCredits?.balance ?? 0}
+              </p>
+              <p className="text-xs text-muted-foreground">Total Balance</p>
+            </div>
+            <Badge className="ml-2 capitalize">{currentTier}</Badge>
+          </div>
+        </div>
+
+        {/* What are credits explainer */}
+        <div className="rounded-2xl bg-gradient-to-r from-primary/5 to-accent/5 border border-border p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">What are credits?</p>
+            <p className="text-sm text-foreground">Credits unlock studio sessions, services, and creative tools. <strong>1 credit = ${CREDIT_PRICE}</strong> worth of studio time.</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">How to earn</p>
+            <p className="text-sm text-foreground">Subscribe to a plan for monthly credits, or top up anytime with card or SOL.</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">How to spend</p>
+            <p className="text-sm text-foreground">Book studio sessions, hire creators, or purchase digital assets on the marketplace.</p>
+          </div>
         </div>
       </div>
 
@@ -331,6 +349,12 @@ const CreditShopPage = () => {
             const TierIcon = tier.icon;
             const isCurrentTier = currentTier === tier.key;
             const isFree = (tier as any).isFree;
+            const isBestValue = tier.key === "glow";
+            const perCreditCost = !isFree && tier.credits > 0 ? tier.price / tier.credits : 0;
+            const sparkPerCredit = TIERS[1].price / TIERS[1].credits; // baseline bloom
+            const discount = !isFree && tier.credits > 0 && perCreditCost < sparkPerCredit
+              ? Math.round((1 - perCreditCost / sparkPerCredit) * 100)
+              : 0;
             return (
               <motion.div
                 key={tier.key}
@@ -341,14 +365,25 @@ const CreditShopPage = () => {
                 className={`relative rounded-2xl overflow-hidden transition-all ${
                   isCurrentTier
                     ? "border-2 border-primary shadow-xl"
+                    : isBestValue
+                    ? "border-2 border-primary/50 shadow-lg"
                     : "border border-border hover:shadow-xl"
                 }`}
                 style={{
                   boxShadow: isCurrentTier
                     ? `0 12px 40px -8px ${tier.glowColor}50`
+                    : isBestValue
+                    ? `0 8px 30px -6px ${tier.glowColor}30`
                     : undefined,
                 }}
               >
+                {/* Best value badge */}
+                {isBestValue && !isCurrentTier && (
+                  <div className="absolute top-3 right-3 z-20 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-primary-foreground shadow-sm">
+                    Best Value
+                  </div>
+                )}
+
                 {/* Gradient header */}
                 <div
                   className="px-5 py-6 text-center text-white relative overflow-hidden animated-gradient"
@@ -370,6 +405,11 @@ const CreditShopPage = () => {
                   {!isFree && (
                     <p className="text-xs opacity-60 mt-0.5 relative z-10">
                       ${tier.price.toFixed(0)}/mo
+                      {discount > 0 && (
+                        <span className="ml-1.5 text-white/90 font-semibold">
+                          · Save {discount}%
+                        </span>
+                      )}
                     </p>
                   )}
                 </div>

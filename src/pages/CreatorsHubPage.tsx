@@ -22,14 +22,13 @@ import ListingCard from "@/components/marketplace/ListingCard";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import CategoryTiles from "@/components/creators/CategoryTiles";
 import Leaderboard from "@/components/creators/Leaderboard";
-import CreatorSpotlight from "@/components/creators/CreatorSpotlight";
 
 const TYPES = [
   { key: "all", label: "All Types" },
   { key: "service", label: "Services", icon: Briefcase },
-  { key: "digital_product", label: "Digital Products", icon: FileText },
-  { key: "physical_product", label: "Physical Products", icon: Package },
-  { key: "project_request", label: "Project Requests", icon: ShoppingBag },
+  { key: "digital_product", label: "Digital", icon: FileText },
+  { key: "physical_product", label: "Physical", icon: Package },
+  { key: "project_request", label: "Requests", icon: ShoppingBag },
 ];
 
 const CreatorsHubPage = () => {
@@ -117,47 +116,36 @@ const CreatorsHubPage = () => {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">
-            Creators Hub
-          </h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
-            Discover and collaborate with talented creators.
-          </p>
+      {/* Hero header */}
+      <div className="space-y-1">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h1 className="font-display text-2xl font-bold text-foreground">
+              Discover Creative Work
+            </h1>
+            <p className="text-muted-foreground text-sm mt-0.5">
+              Browse digital assets, hire creators, and find collaborators.
+            </p>
+          </div>
+          <Button onClick={() => setCreateOpen(true)} className="rounded-full shrink-0 self-start">
+            <Plus className="mr-1.5 h-4 w-4" /> Post Listing
+          </Button>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="rounded-full shrink-0 self-start">
-          <Plus className="mr-1.5 h-4 w-4" /> Post Listing
-        </Button>
       </div>
-
-      {/* Leaderboard - full width at top */}
-      <Leaderboard />
-
-      {/* Creator Spotlight - full width */}
-      <CreatorSpotlight />
-
-      {/* Category Tiles */}
-      <CategoryTiles
-        activeCategory={activeCategory}
-        onSelect={setActiveCategory}
-        listingCounts={listingCounts}
-      />
 
       {/* Search + Type filter bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search listings..."
+            placeholder="Search creators and listings..."
             className="pl-10 rounded-full bg-card border-border/50"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         <Select value={activeType} onValueChange={setActiveType}>
-          <SelectTrigger className="w-full sm:w-48 rounded-full">
+          <SelectTrigger className="w-full sm:w-44 rounded-full">
             <SlidersHorizontal className="h-4 w-4 mr-2 text-muted-foreground" />
             <SelectValue placeholder="All Types" />
           </SelectTrigger>
@@ -170,6 +158,16 @@ const CreatorsHubPage = () => {
           </SelectContent>
         </Select>
       </div>
+
+      {/* Category filter pills — compact */}
+      <CategoryTiles
+        activeCategory={activeCategory}
+        onSelect={setActiveCategory}
+        listingCounts={listingCounts}
+      />
+
+      {/* Leaderboard */}
+      <Leaderboard />
 
       {/* Listings grid */}
       {isLoading ? (
