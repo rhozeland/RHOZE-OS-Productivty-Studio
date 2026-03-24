@@ -113,11 +113,11 @@ const ServicesPage = () => {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-4xl font-bold text-foreground tracking-tight">
+          <h1 className="font-display text-3xl font-bold text-foreground tracking-tight">
             Studio Services
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Book sessions, get creative — powered by credits or card
+          <p className="text-muted-foreground mt-1 max-w-lg">
+            We help creators, artists, and brands turn ideas into real growth with custom content, production, and strategic deliverables.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -135,6 +135,19 @@ const ServicesPage = () => {
             </Button>
           </Link>
         </div>
+      </div>
+
+      {/* CTA Banner */}
+      <div className="rounded-2xl bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="font-display text-lg font-bold text-foreground">Not sure where to start?</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Book a free strategy call and we'll help you plan your next creative project.</p>
+        </div>
+        <Link to="/calendar">
+          <Button className="rounded-full shrink-0">
+            <CalendarDays className="mr-1.5 h-4 w-4" /> Book a Strategy Call
+          </Button>
+        </Link>
       </div>
 
       {/* Category filter tabs */}
