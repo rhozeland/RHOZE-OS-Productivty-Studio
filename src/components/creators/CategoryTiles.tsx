@@ -1,12 +1,11 @@
 import { Music, Palette, Camera, Video, PenTool } from "lucide-react";
-import { motion } from "framer-motion";
 
 const CATEGORIES = [
-  { key: "music", label: "Audio", icon: Music, gradient: "from-purple-500/20 to-pink-500/20", accent: "hsl(280 60% 55%)" },
-  { key: "design", label: "Design", icon: Palette, gradient: "from-teal-500/20 to-emerald-500/20", accent: "hsl(160 60% 50%)" },
-  { key: "photo", label: "Photo", icon: Camera, gradient: "from-amber-500/20 to-orange-500/20", accent: "hsl(35 90% 55%)" },
-  { key: "video", label: "Video", icon: Video, gradient: "from-rose-500/20 to-red-500/20", accent: "hsl(340 70% 55%)" },
-  { key: "writing", label: "Writing", icon: PenTool, gradient: "from-blue-500/20 to-indigo-500/20", accent: "hsl(210 60% 55%)" },
+  { key: "music", label: "Audio", icon: Music, accent: "hsl(280 60% 55%)" },
+  { key: "design", label: "Design", icon: Palette, accent: "hsl(160 60% 50%)" },
+  { key: "photo", label: "Photo", icon: Camera, accent: "hsl(35 90% 55%)" },
+  { key: "video", label: "Video", icon: Video, accent: "hsl(340 70% 55%)" },
+  { key: "writing", label: "Writing", icon: PenTool, accent: "hsl(210 60% 55%)" },
 ];
 
 interface CategoryTilesProps {
@@ -16,38 +15,40 @@ interface CategoryTilesProps {
 }
 
 const CategoryTiles = ({ activeCategory, onSelect, listingCounts }: CategoryTilesProps) => (
-  <div className="flex items-center justify-center gap-3 flex-wrap">
-    {CATEGORIES.map((cat, i) => {
+  <div className="flex items-center gap-2 flex-wrap">
+    <button
+      onClick={() => onSelect("all")}
+      className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all ${
+        activeCategory === "all"
+          ? "bg-foreground text-background shadow-sm"
+          : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/20"
+      }`}
+    >
+      All
+    </button>
+    {CATEGORIES.map((cat) => {
       const Icon = cat.icon;
       const isActive = activeCategory === cat.key;
       const count = listingCounts?.[cat.key] ?? 0;
       return (
-        <motion.button
+        <button
           key={cat.key}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.04 }}
           onClick={() => onSelect(isActive ? "all" : cat.key)}
-          className={`relative overflow-hidden rounded-2xl px-5 py-4 text-center transition-all group min-w-[100px] ${
+          className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-medium transition-all ${
             isActive
-              ? "ring-2 ring-primary shadow-lg scale-[1.03]"
-              : "hover:shadow-md hover:scale-[1.02]"
+              ? "text-white shadow-sm"
+              : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/20"
           }`}
-          style={{
-            background: isActive
-              ? `linear-gradient(135deg, ${cat.accent}22, ${cat.accent}11)`
-              : undefined,
-          }}
+          style={isActive ? { background: cat.accent } : undefined}
         >
-          <div className={`absolute inset-0 bg-gradient-to-br ${cat.gradient} opacity-60`} />
-          <div className="relative z-10 flex flex-col items-center gap-1.5">
-            <Icon className="h-6 w-6" style={{ color: cat.accent }} />
-            <p className="font-display font-semibold text-foreground text-xs">{cat.label}</p>
-            {count > 0 && (
-              <p className="text-[10px] text-muted-foreground">{count}</p>
-            )}
-          </div>
-        </motion.button>
+          <Icon className="h-3.5 w-3.5" style={!isActive ? { color: cat.accent } : undefined} />
+          {cat.label}
+          {count > 0 && (
+            <span className={`text-[10px] ${isActive ? "text-white/70" : "text-muted-foreground"}`}>
+              {count}
+            </span>
+          )}
+        </button>
       );
     })}
   </div>
