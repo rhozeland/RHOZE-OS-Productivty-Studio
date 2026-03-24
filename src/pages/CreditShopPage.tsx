@@ -349,6 +349,12 @@ const CreditShopPage = () => {
             const TierIcon = tier.icon;
             const isCurrentTier = currentTier === tier.key;
             const isFree = (tier as any).isFree;
+            const isBestValue = tier.key === "glow";
+            const perCreditCost = !isFree && tier.credits > 0 ? tier.price / tier.credits : 0;
+            const sparkPerCredit = TIERS[1].price / TIERS[1].credits; // baseline bloom
+            const discount = !isFree && tier.credits > 0 && perCreditCost < sparkPerCredit
+              ? Math.round((1 - perCreditCost / sparkPerCredit) * 100)
+              : 0;
             return (
               <motion.div
                 key={tier.key}
@@ -359,14 +365,25 @@ const CreditShopPage = () => {
                 className={`relative rounded-2xl overflow-hidden transition-all ${
                   isCurrentTier
                     ? "border-2 border-primary shadow-xl"
+                    : isBestValue
+                    ? "border-2 border-primary/50 shadow-lg"
                     : "border border-border hover:shadow-xl"
                 }`}
                 style={{
                   boxShadow: isCurrentTier
                     ? `0 12px 40px -8px ${tier.glowColor}50`
+                    : isBestValue
+                    ? `0 8px 30px -6px ${tier.glowColor}30`
                     : undefined,
                 }}
               >
+                {/* Best value badge */}
+                {isBestValue && !isCurrentTier && (
+                  <div className="absolute top-3 right-3 z-20 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-primary-foreground shadow-sm">
+                    Best Value
+                  </div>
+                )}
+
                 {/* Gradient header */}
                 <div
                   className="px-5 py-6 text-center text-white relative overflow-hidden animated-gradient"
@@ -388,6 +405,11 @@ const CreditShopPage = () => {
                   {!isFree && (
                     <p className="text-xs opacity-60 mt-0.5 relative z-10">
                       ${tier.price.toFixed(0)}/mo
+                      {discount > 0 && (
+                        <span className="ml-1.5 text-white/90 font-semibold">
+                          · Save {discount}%
+                        </span>
+                      )}
                     </p>
                   )}
                 </div>
