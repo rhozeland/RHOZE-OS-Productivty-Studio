@@ -43,8 +43,8 @@ const getWorkspaceItems = (userId?: string) => [
 ];
 
 const marketplaceItems = [
+  { icon: Building2, label: "Studios", path: "/studios" },
   { icon: Store, label: "Creators Hub", path: "/creators" },
-  { icon: Briefcase, label: "Services", path: "/services" },
   { icon: Coins, label: "Studio Pass", path: "/credits" },
 ];
 
