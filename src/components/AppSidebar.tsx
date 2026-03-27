@@ -12,7 +12,7 @@ import {
   Coins,
   ShieldCheck,
   Workflow,
-  User,
+  
   LayoutGrid,
   Users,
 } from "lucide-react";
