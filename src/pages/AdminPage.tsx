@@ -1,13 +1,14 @@
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Navigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Briefcase, Users, Settings, UserCog, Award } from "lucide-react";
+import { BarChart3, Briefcase, Users, Settings, UserCog, Award, Building2 } from "lucide-react";
 import AdminOverview from "@/components/admin/AdminOverview";
 import AdminServices from "@/components/admin/AdminServices";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminSettings from "@/components/admin/AdminSettings";
 import AdminStaff from "@/components/admin/AdminStaff";
 import AdminBadges from "@/components/admin/AdminBadges";
+import AdminStudioApplications from "@/components/admin/AdminStudioApplications";
 
 const AdminPage = () => {
   const { isAdmin, loading } = useAdminCheck();
