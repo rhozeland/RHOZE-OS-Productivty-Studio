@@ -11,6 +11,9 @@ import {
   ArrowRight,
   Store,
   Clock,
+  Building2,
+  Palette,
+  Zap,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -66,6 +69,21 @@ const DashboardPage = () => {
     enabled: !!user,
   });
 
+  const { data: studioBookings } = useQuery({
+    queryKey: ["my-studio-bookings", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("studio_bookings")
+        .select("*, studios(name, cover_image_url, category)")
+        .eq("user_id", user!.id)
+        .gte("end_time", new Date().toISOString())
+        .order("start_time")
+        .limit(3);
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
   const { data: collaborators } = useQuery({
     queryKey: ["project-collaborator-counts"],
     queryFn: async () => {
@@ -84,7 +102,6 @@ const DashboardPage = () => {
   const activeProjects = projects?.filter((p) => p.status === "active").length ?? 0;
   const firstName = profile?.display_name?.split(" ")[0] || user?.email?.split("@")[0] || "";
 
-  // Goal completion per project
   const getProjectProgress = (projectId: string) => {
     const projectTasks = tasks?.filter((t) => t.project_id === projectId) ?? [];
     if (projectTasks.length === 0) return 0;
@@ -94,7 +111,7 @@ const DashboardPage = () => {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Welcome header — compact, action-based */}
+      {/* Welcome header */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -111,21 +128,26 @@ const DashboardPage = () => {
             {(unreadCount ?? 0) > 0 && ` · ${unreadCount} unread message${(unreadCount ?? 0) > 1 ? "s" : ""}`}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Link to="/projects">
             <Button size="sm" className="rounded-full gap-1.5">
               <Plus className="h-4 w-4" /> New Project
             </Button>
           </Link>
+          <Link to="/studios">
+            <Button size="sm" variant="outline" className="rounded-full gap-1.5">
+              <Building2 className="h-4 w-4" /> Find a Studio
+            </Button>
+          </Link>
           <Link to="/creators">
             <Button size="sm" variant="outline" className="rounded-full gap-1.5">
-              <Store className="h-4 w-4" /> Browse Marketplace
+              <Palette className="h-4 w-4" /> Hire Talent
             </Button>
           </Link>
         </div>
       </motion.div>
 
-      {/* Stats row */}
+      {/* Quick stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { icon: FolderKanban, label: "Active Projects", value: activeProjects, path: "/projects" },
@@ -149,6 +171,47 @@ const DashboardPage = () => {
           </Link>
         ))}
       </div>
+
+      {/* Studio bookings banner */}
+      {studioBookings && studioBookings.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="rounded-2xl bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 p-5"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-primary" /> Upcoming Studio Sessions
+            </h2>
+            <Link to="/studios" className="text-xs text-primary hover:underline flex items-center gap-1">
+              View all <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {studioBookings.map((booking: any) => (
+              <Link
+                key={booking.id}
+                to={`/studios/${booking.studio_id}`}
+                className="flex items-center gap-3 rounded-xl bg-card/80 backdrop-blur-sm p-3 hover:bg-card transition-colors"
+              >
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Building2 className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {(booking as any).studios?.name || "Studio"}
+                  </p>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {format(new Date(booking.start_time), "MMM d · h:mm a")}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Recent projects & events */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -179,7 +242,7 @@ const DashboardPage = () => {
             <div className="space-y-2.5">
               {projects?.slice(0, 5).map((project) => {
                 const progress = getProjectProgress(project.id);
-                const teamCount = (collabCounts.get(project.id) || 0) + 1; // +1 for owner
+                const teamCount = (collabCounts.get(project.id) || 0) + 1;
                 return (
                   <Link
                     key={project.id}
@@ -263,6 +326,46 @@ const DashboardPage = () => {
             </div>
           )}
         </motion.div>
+      </div>
+
+      {/* Quick access cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Link to="/studios" className="group">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="rounded-xl bg-card border border-border p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all"
+          >
+            <Building2 className="h-8 w-8 text-primary mb-3" />
+            <h3 className="font-display font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">Find a Studio</h3>
+            <p className="text-xs text-muted-foreground">Browse and book creative spaces by the hour.</p>
+          </motion.div>
+        </Link>
+        <Link to="/creators" className="group">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="rounded-xl bg-card border border-border p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all"
+          >
+            <Palette className="h-8 w-8 text-accent-foreground mb-3" />
+            <h3 className="font-display font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">Hire Talent</h3>
+            <p className="text-xs text-muted-foreground">Discover freelance creatives for your projects.</p>
+          </motion.div>
+        </Link>
+        <Link to="/flow" className="group">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="rounded-xl bg-card border border-border p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all"
+          >
+            <Zap className="h-8 w-8 text-warm mb-3" />
+            <h3 className="font-display font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">Flow Mode</h3>
+            <p className="text-xs text-muted-foreground">Discover and save creative inspiration.</p>
+          </motion.div>
+        </Link>
       </div>
     </div>
   );
