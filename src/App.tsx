@@ -8,6 +8,7 @@ import { SolanaWalletProvider } from "@/contexts/SolanaWalletContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import AppLayout from "@/components/AppLayout";
 import AuthPage from "@/pages/AuthPage";
+import LandingPage from "@/pages/LandingPage";
 import DashboardPage from "@/pages/DashboardPage";
 import ProjectsPage from "@/pages/ProjectsPage";
 import ProjectDetailPage from "@/pages/ProjectDetailPage";
@@ -26,6 +27,11 @@ import CreditShopPage from "@/pages/CreditShopPage";
 import DropRoomsPage from "@/pages/DropRoomsPage";
 import DropRoomDetailPage from "@/pages/DropRoomDetailPage";
 import AdminPage from "@/pages/AdminPage";
+import StudiosPage from "@/pages/StudiosPage";
+import StudioDetailPage from "@/pages/StudioDetailPage";
+import StudioApplicationPage from "@/pages/StudioApplicationPage";
+import ExploreStudiosPage from "@/pages/ExploreStudiosPage";
+import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +50,13 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const LandingRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (user) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
@@ -54,10 +67,20 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            {/* Public routes — no auth required */}
+            <Route path="/" element={<LandingRoute><LandingPage /></LandingRoute>} />
             <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
+            <Route path="/explore/studios" element={<ExploreStudiosPage />} />
+            <Route path="/explore/studios/:id" element={<ExploreStudiosPage />} />
+            <Route path="/explore/creators" element={<ExploreCreatorsPage />} />
+            <Route path="/explore/creators/:id" element={<ExploreCreatorsPage />} />
+
+            {/* Protected routes */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/studios" element={<StudiosPage />} />
+              <Route path="/studios/:id" element={<StudioDetailPage />} />
+              <Route path="/studios/apply" element={<StudioApplicationPage />} />
               <Route path="/services" element={<ServicesPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/projects/:id" element={<ProjectDetailPage />} />
