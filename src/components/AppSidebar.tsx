@@ -8,7 +8,7 @@ import {
   MessageSquare,
   Settings,
   LogOut,
-  Briefcase,
+  Building2,
   Coins,
   ShieldCheck,
   Workflow,
@@ -43,14 +43,14 @@ const getWorkspaceItems = (userId?: string) => [
 ];
 
 const marketplaceItems = [
+  { icon: Building2, label: "Studios", path: "/studios" },
   { icon: Store, label: "Creators Hub", path: "/creators" },
-  { icon: Briefcase, label: "Services", path: "/services" },
   { icon: Coins, label: "Studio Pass", path: "/credits" },
 ];
 
 const toolsItems = [
   { icon: LayoutGrid, label: "Boards", path: "/smartboards" },
-  { icon: Workflow, label: "Automations", path: "/flow" },
+  { icon: Workflow, label: "Flow", path: "/flow" },
   { icon: Users, label: "Collab Rooms", path: "/drop-rooms" },
 ];
 
