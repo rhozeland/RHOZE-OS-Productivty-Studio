@@ -49,6 +49,9 @@ const AdminPage = () => {
           <TabsTrigger value="badges" className="gap-2">
             <Award className="h-4 w-4" /> Badges
           </TabsTrigger>
+          <TabsTrigger value="studios" className="gap-2">
+            <Building2 className="h-4 w-4" /> Studios
+          </TabsTrigger>
           <TabsTrigger value="settings" className="gap-2">
             <Settings className="h-4 w-4" /> Settings
           </TabsTrigger>
