@@ -12,7 +12,7 @@ import {
   Coins,
   ShieldCheck,
   Workflow,
-  User,
+  
   LayoutGrid,
   Users,
 } from "lucide-react";
@@ -96,7 +96,6 @@ const AppSidebar = () => {
   const totalUnread = (unreadCount ?? 0) + (pendingInquiries ?? 0);
 
   const accountItems = [
-    { icon: User, label: "Profile", path: user?.id ? `/profiles/${user.id}` : "/settings" },
     { icon: Settings, label: "Settings", path: "/settings" },
     ...(isAdmin ? [{ icon: ShieldCheck, label: "Admin", path: "/admin" }] : []),
   ];
