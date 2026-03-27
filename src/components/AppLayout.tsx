@@ -64,9 +64,10 @@ const AppLayout = () => {
               </Link>
             </div>
           </header>
-          <main className="flex-1 p-4 md:p-8">
+          <main className="flex-1 p-4 md:p-8 pb-24">
             <Outlet />
           </main>
+          <DockBar />
         </div>
       </div>
     </SidebarProvider>
