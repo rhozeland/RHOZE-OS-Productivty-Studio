@@ -50,12 +50,7 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const LandingRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-  if (loading) return null;
-  if (user) return <Navigate to="/dashboard" replace />;
-  return <>{children}</>;
-};
+/* Landing page is always accessible — logged-in users see dashboard CTA instead of sign-in */
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
