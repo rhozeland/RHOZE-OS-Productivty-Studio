@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import AppSidebar from "@/components/AppSidebar";
+import DockBar from "@/components/DockBar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import WalletButton from "@/components/WalletButton";
 import NotificationBell from "@/components/NotificationBell";
