@@ -8,7 +8,7 @@ import {
   MessageSquare,
   Settings,
   LogOut,
-  Briefcase,
+  Building2,
   Coins,
   ShieldCheck,
   Workflow,
