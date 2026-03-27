@@ -5,19 +5,19 @@ import { motion } from "framer-motion";
 import {
   FolderKanban,
   Calendar,
-  CheckSquare,
   MessageSquare,
   Plus,
   ArrowRight,
-  Store,
-  Clock,
   Building2,
   Palette,
+  Clock,
   Zap,
+  Sparkles,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
 const DashboardPage = () => {
@@ -109,195 +109,224 @@ const DashboardPage = () => {
     return Math.round((done / projectTasks.length) * 100);
   };
 
+  const greeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return "Good morning";
+    if (h < 18) return "Good afternoon";
+    return "Good evening";
+  };
+
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Welcome header */}
+    <div className="space-y-8 max-w-6xl mx-auto pb-24">
+      {/* Hero greeting with gradient card */}
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        className="relative overflow-hidden rounded-3xl p-8 md:p-10"
+        style={{ background: "var(--gradient-hero)" }}
       >
-        <div>
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
-            Welcome back{firstName ? `, ${firstName}` : ""}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10" />
+        <div className="relative z-10">
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="flex items-center gap-2 mb-3"
+          >
+            <Sparkles className="h-4 w-4 text-primary" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Your Workspace</span>
+          </motion.div>
+          <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-2">
+            {greeting()}{firstName ? `, ${firstName}` : ""}
           </h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
+          <p className="text-muted-foreground text-sm max-w-lg">
             {activeProjects > 0
               ? `You have ${activeProjects} active project${activeProjects > 1 ? "s" : ""}`
-              : "No active projects yet"}
+              : "Start by creating a project or booking a studio"}
             {(unreadCount ?? 0) > 0 && ` · ${unreadCount} unread message${(unreadCount ?? 0) > 1 ? "s" : ""}`}
           </p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Link to="/projects">
-            <Button size="sm" className="rounded-full gap-1.5">
-              <Plus className="h-4 w-4" /> New Project
-            </Button>
-          </Link>
-          <Link to="/studios">
-            <Button size="sm" variant="outline" className="rounded-full gap-1.5">
-              <Building2 className="h-4 w-4" /> Find a Studio
-            </Button>
-          </Link>
-          <Link to="/creators">
-            <Button size="sm" variant="outline" className="rounded-full gap-1.5">
-              <Palette className="h-4 w-4" /> Hire Talent
-            </Button>
-          </Link>
+          <div className="flex items-center gap-3 mt-6 flex-wrap">
+            <Link to="/projects">
+              <Button className="rounded-full gap-2 shadow-lg shadow-primary/20">
+                <Plus className="h-4 w-4" /> New Project
+              </Button>
+            </Link>
+            <Link to="/studios">
+              <Button variant="secondary" className="rounded-full gap-2 glass">
+                <Building2 className="h-4 w-4" /> Book a Studio
+              </Button>
+            </Link>
+            <Link to="/creators">
+              <Button variant="secondary" className="rounded-full gap-2 glass">
+                <Palette className="h-4 w-4" /> Hire Talent
+              </Button>
+            </Link>
+          </div>
         </div>
       </motion.div>
 
-      {/* Quick stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* Visual action cards — large, image-forward */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { icon: FolderKanban, label: "Active Projects", value: activeProjects, path: "/projects" },
-          { icon: CheckSquare, label: "Tasks Done", value: `${completedTasks}/${totalTasks}`, path: "/projects" },
-          { icon: Calendar, label: "Upcoming Events", value: events?.length ?? 0, path: "/calendar" },
-          { icon: MessageSquare, label: "Messages", value: unreadCount ?? 0, path: "/messages" },
+          { icon: FolderKanban, label: "Projects", value: activeProjects, sub: "Active", path: "/projects", color: "from-primary/20 to-primary/5" },
+          { icon: MessageSquare, label: "Messages", value: unreadCount ?? 0, sub: "Unread", path: "/messages", color: "from-blue/20 to-blue/5" },
+          { icon: Calendar, label: "Events", value: events?.length ?? 0, sub: "Upcoming", path: "/calendar", color: "from-warm/20 to-warm/5" },
+          { icon: Zap, label: "Tasks", value: `${completedTasks}/${totalTasks}`, sub: "Done", path: "/projects", color: "from-pink/20 to-pink/5" },
         ].map((stat, i) => (
           <Link key={stat.label} to={stat.path}>
             <motion.div
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className="flex items-center gap-3 rounded-xl bg-card border border-border px-4 py-3.5 hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer"
+              transition={{ delay: 0.1 + i * 0.05 }}
+              whileHover={{ y: -2, scale: 1.02 }}
+              className={cn(
+                "relative overflow-hidden rounded-2xl p-5 border border-border/50 cursor-pointer transition-shadow hover:shadow-lg",
+                `bg-gradient-to-br ${stat.color}`
+              )}
             >
-              <stat.icon className="h-5 w-5 text-primary shrink-0" />
-              <div>
-                <p className="font-display text-lg font-bold text-foreground">{stat.value}</p>
-                <p className="text-[11px] text-muted-foreground">{stat.label}</p>
-              </div>
+              <stat.icon className="h-7 w-7 text-foreground/70 mb-4" />
+              <p className="font-display text-2xl font-bold text-foreground">{stat.value}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{stat.sub} {stat.label}</p>
             </motion.div>
           </Link>
         ))}
       </div>
 
-      {/* Studio bookings banner */}
+      {/* Studio sessions spotlight */}
       {studioBookings && studioBookings.length > 0 && (
-        <motion.div
+        <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="rounded-2xl bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 p-5"
+          transition={{ delay: 0.2 }}
         >
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-primary" /> Upcoming Studio Sessions
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-primary" /> Upcoming Sessions
             </h2>
             <Link to="/studios" className="text-xs text-primary hover:underline flex items-center gap-1">
               View all <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {studioBookings.map((booking: any) => (
-              <Link
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {studioBookings.map((booking: any, i: number) => (
+              <motion.div
                 key={booking.id}
-                to={`/studios/${booking.studio_id}`}
-                className="flex items-center gap-3 rounded-xl bg-card/80 backdrop-blur-sm p-3 hover:bg-card transition-colors"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.25 + i * 0.05 }}
               >
-                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Building2 className="h-5 w-5 text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {(booking as any).studios?.name || "Studio"}
-                  </p>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {format(new Date(booking.start_time), "MMM d · h:mm a")}
-                  </p>
-                </div>
-              </Link>
+                <Link
+                  to={`/studios/${booking.studio_id}`}
+                  className="block rounded-2xl overflow-hidden border border-border/50 hover:shadow-lg transition-all group"
+                >
+                  <div className="h-24 bg-gradient-to-br from-primary/20 via-accent/10 to-muted flex items-center justify-center">
+                    <Building2 className="h-10 w-10 text-primary/40" />
+                  </div>
+                  <div className="p-4">
+                    <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                      {booking.studios?.name || "Studio"}
+                    </p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                      <Clock className="h-3 w-3" />
+                      {format(new Date(booking.start_time), "MMM d · h:mm a")}
+                    </p>
+                  </div>
+                </Link>
+              </motion.div>
             ))}
           </div>
-        </motion.div>
+        </motion.section>
       )}
 
-      {/* Recent projects & events */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Projects */}
-        <motion.div
+      {/* Projects & Events — side by side, visual cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Projects */}
+        <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="surface-card p-5"
+          transition={{ delay: 0.3 }}
         >
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-display text-base font-semibold text-foreground">Recent Projects</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display text-lg font-semibold text-foreground">Recent Projects</h2>
             <Link to="/projects" className="text-xs text-primary hover:underline flex items-center gap-1">
               View all <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
           {projects?.length === 0 ? (
-            <div className="text-center py-8 space-y-3">
-              <FolderKanban className="h-8 w-8 mx-auto text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">No projects yet</p>
+            <div className="rounded-2xl border border-dashed border-border p-10 text-center">
+              <FolderKanban className="h-10 w-10 mx-auto text-muted-foreground/30 mb-3" />
+              <p className="text-sm text-muted-foreground mb-4">No projects yet</p>
               <Link to="/projects">
                 <Button size="sm" className="rounded-full">
-                  <Plus className="mr-1.5 h-3.5 w-3.5" /> Create Your First Project
+                  <Plus className="mr-1.5 h-3.5 w-3.5" /> Start a Project
                 </Button>
               </Link>
             </div>
           ) : (
-            <div className="space-y-2.5">
-              {projects?.slice(0, 5).map((project) => {
+            <div className="space-y-3">
+              {projects?.slice(0, 4).map((project, i) => {
                 const progress = getProjectProgress(project.id);
                 const teamCount = (collabCounts.get(project.id) || 0) + 1;
                 return (
-                  <Link
+                  <motion.div
                     key={project.id}
-                    to={`/projects/${project.id}`}
-                    className="flex items-center gap-3 rounded-xl bg-muted/40 p-3.5 hover:bg-muted/70 transition-colors group"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.35 + i * 0.05 }}
                   >
-                    <div
-                      className="h-10 w-1 rounded-full shrink-0"
-                      style={{ backgroundColor: project.cover_color ?? "hsl(var(--primary))" }}
-                    />
-                    <div className="flex-1 min-w-0 space-y-1.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
-                          {project.title}
-                        </p>
-                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary capitalize shrink-0">
-                          {project.status}
-                        </span>
+                    <Link
+                      to={`/projects/${project.id}`}
+                      className="flex items-center gap-4 rounded-2xl bg-card border border-border/50 p-4 hover:shadow-md hover:border-primary/20 transition-all group"
+                    >
+                      <div
+                        className="h-12 w-12 rounded-xl shrink-0 flex items-center justify-center"
+                        style={{
+                          background: `linear-gradient(135deg, ${project.cover_color ?? "hsl(var(--primary))"}, ${project.cover_color ?? "hsl(var(--primary))"}88)`,
+                        }}
+                      >
+                        <FolderKanban className="h-5 w-5 text-white/80" />
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Progress value={progress} className="h-1.5 flex-1" />
-                        <span className="text-[10px] text-muted-foreground shrink-0">{progress}%</span>
-                        <span className="text-[10px] text-muted-foreground shrink-0">
-                          {teamCount} {teamCount === 1 ? "person" : "people"}
-                        </span>
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                            {project.title}
+                          </p>
+                          <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-medium text-primary capitalize shrink-0">
+                            {project.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Progress value={progress} className="h-1.5 flex-1" />
+                          <span className="text-[10px] text-muted-foreground shrink-0">{progress}%</span>
+                          <span className="text-[10px] text-muted-foreground shrink-0">
+                            {teamCount} {teamCount === 1 ? "member" : "members"}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                  </Link>
+                    </Link>
+                  </motion.div>
                 );
               })}
             </div>
           )}
-        </motion.div>
+        </motion.section>
 
-        {/* Events */}
-        <motion.div
+        {/* Upcoming Events */}
+        <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="surface-card p-5"
+          transition={{ delay: 0.35 }}
         >
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-display text-base font-semibold text-foreground">Upcoming Events</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display text-lg font-semibold text-foreground">Upcoming Events</h2>
             <Link to="/calendar" className="text-xs text-primary hover:underline flex items-center gap-1">
               View all <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
           {events?.length === 0 ? (
-            <div className="text-center py-8 space-y-3">
-              <Calendar className="h-8 w-8 mx-auto text-muted-foreground/40" />
-              <div>
-                <p className="text-sm font-medium text-foreground">No events yet</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Plan your week and stay on track</p>
-              </div>
+            <div className="rounded-2xl border border-dashed border-border p-10 text-center">
+              <Calendar className="h-10 w-10 mx-auto text-muted-foreground/30 mb-3" />
+              <p className="text-sm text-muted-foreground mb-4">No events scheduled</p>
               <Link to="/calendar">
                 <Button size="sm" variant="outline" className="rounded-full">
                   <Plus className="mr-1.5 h-3.5 w-3.5" /> Create Event
@@ -305,68 +334,83 @@ const DashboardPage = () => {
               </Link>
             </div>
           ) : (
-            <div className="space-y-2.5">
-              {events?.slice(0, 5).map((event) => (
-                <div key={event.id} className="flex items-center gap-3 rounded-xl bg-muted/40 p-3.5">
+            <div className="space-y-3">
+              {events?.slice(0, 4).map((event, i) => (
+                <motion.div
+                  key={event.id}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 + i * 0.05 }}
+                  className="flex items-center gap-4 rounded-2xl bg-card border border-border/50 p-4"
+                >
                   <div
-                    className="h-10 w-10 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0"
+                    className="h-12 w-12 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0"
                     style={{ backgroundColor: event.color ?? "hsl(var(--primary))" }}
                   >
                     {format(new Date(event.start_time), "dd")}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{event.title}</p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <p className="text-sm font-semibold text-foreground truncate">{event.title}</p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                       <Clock className="h-3 w-3" />
-                      {format(new Date(event.start_time), "MMM d · h:mm a")}
+                      {format(new Date(event.start_time), "EEEE, MMM d · h:mm a")}
                     </p>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           )}
-        </motion.div>
+        </motion.section>
       </div>
 
-      {/* Quick access cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Link to="/studios" className="group">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="rounded-xl bg-card border border-border p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all"
-          >
-            <Building2 className="h-8 w-8 text-primary mb-3" />
-            <h3 className="font-display font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">Find a Studio</h3>
-            <p className="text-xs text-muted-foreground">Browse and book creative spaces by the hour.</p>
-          </motion.div>
-        </Link>
-        <Link to="/creators" className="group">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="rounded-xl bg-card border border-border p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all"
-          >
-            <Palette className="h-8 w-8 text-accent-foreground mb-3" />
-            <h3 className="font-display font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">Hire Talent</h3>
-            <p className="text-xs text-muted-foreground">Discover freelance creatives for your projects.</p>
-          </motion.div>
-        </Link>
-        <Link to="/flow" className="group">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-            className="rounded-xl bg-card border border-border p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all"
-          >
-            <Zap className="h-8 w-8 text-warm mb-3" />
-            <h3 className="font-display font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">Flow Mode</h3>
-            <p className="text-xs text-muted-foreground">Discover and save creative inspiration.</p>
-          </motion.div>
-        </Link>
-      </div>
+      {/* Discover section — visual cards */}
+      <motion.section
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <h2 className="font-display text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" /> Discover
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Link to="/studios" className="group">
+            <motion.div
+              whileHover={{ y: -3 }}
+              className="relative overflow-hidden rounded-2xl border border-border/50 h-40 flex flex-col justify-end p-5 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent hover:shadow-xl transition-all"
+            >
+              <Building2 className="absolute top-4 right-4 h-8 w-8 text-primary/20" />
+              <h3 className="font-display font-bold text-foreground group-hover:text-primary transition-colors">
+                Book a Studio
+              </h3>
+              <p className="text-xs text-muted-foreground mt-1">Creative spaces by the hour</p>
+            </motion.div>
+          </Link>
+          <Link to="/creators" className="group">
+            <motion.div
+              whileHover={{ y: -3 }}
+              className="relative overflow-hidden rounded-2xl border border-border/50 h-40 flex flex-col justify-end p-5 bg-gradient-to-br from-accent/15 via-accent/5 to-transparent hover:shadow-xl transition-all"
+            >
+              <Palette className="absolute top-4 right-4 h-8 w-8 text-accent/30" />
+              <h3 className="font-display font-bold text-foreground group-hover:text-primary transition-colors">
+                Hire Creatives
+              </h3>
+              <p className="text-xs text-muted-foreground mt-1">Freelance talent for your projects</p>
+            </motion.div>
+          </Link>
+          <Link to="/flow" className="group">
+            <motion.div
+              whileHover={{ y: -3 }}
+              className="relative overflow-hidden rounded-2xl border border-border/50 h-40 flex flex-col justify-end p-5 bg-gradient-to-br from-warm/15 via-warm/5 to-transparent hover:shadow-xl transition-all"
+            >
+              <Zap className="absolute top-4 right-4 h-8 w-8 text-warm/30" />
+              <h3 className="font-display font-bold text-foreground group-hover:text-primary transition-colors">
+                Flow Mode
+              </h3>
+              <p className="text-xs text-muted-foreground mt-1">Discover and save inspiration</p>
+            </motion.div>
+          </Link>
+        </div>
+      </motion.section>
     </div>
   );
 };
