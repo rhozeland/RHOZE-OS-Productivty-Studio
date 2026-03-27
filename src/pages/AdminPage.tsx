@@ -72,6 +72,9 @@ const AdminPage = () => {
         <TabsContent value="badges">
           <AdminBadges />
         </TabsContent>
+        <TabsContent value="studios">
+          <AdminStudioApplications />
+        </TabsContent>
         <TabsContent value="settings">
           <AdminSettings />
         </TabsContent>
