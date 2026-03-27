@@ -1678,6 +1678,187 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_applications: {
+        Row: {
+          admin_notes: string | null
+          contact_email: string | null
+          created_at: string
+          description: string | null
+          id: string
+          location: string | null
+          portfolio_url: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          studio_name: string
+          user_id: string
+          website_url: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          contact_email?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          portfolio_url?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          studio_name: string
+          user_id: string
+          website_url?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          contact_email?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          portfolio_url?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          studio_name?: string
+          user_id?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      studio_availability: {
+        Row: {
+          day_of_week: number
+          end_time: string
+          id: string
+          is_available: boolean
+          start_time: string
+          studio_id: string
+        }
+        Insert: {
+          day_of_week: number
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          start_time?: string
+          studio_id: string
+        }
+        Update: {
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          start_time?: string
+          studio_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_availability_studio_id_fkey"
+            columns: ["studio_id"]
+            isOneToOne: false
+            referencedRelation: "studios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      studio_bookings: {
+        Row: {
+          created_at: string
+          end_time: string
+          guest_count: number | null
+          id: string
+          notes: string | null
+          payment_method: string | null
+          start_time: string
+          status: string
+          studio_id: string
+          total_price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_time: string
+          guest_count?: number | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          start_time: string
+          status?: string
+          studio_id: string
+          total_price: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string
+          guest_count?: number | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          start_time?: string
+          status?: string
+          studio_id?: string
+          total_price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_bookings_studio_id_fkey"
+            columns: ["studio_id"]
+            isOneToOne: false
+            referencedRelation: "studios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      studio_reviews: {
+        Row: {
+          booking_id: string | null
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number
+          studio_id: string
+          user_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: number
+          studio_id: string
+          user_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number
+          studio_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "studio_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_reviews_studio_id_fkey"
+            columns: ["studio_id"]
+            isOneToOne: false
+            referencedRelation: "studios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       studio_settings: {
         Row: {
           id: string
@@ -1699,6 +1880,93 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           value?: string | null
+        }
+        Relationships: []
+      }
+      studios: {
+        Row: {
+          address: string | null
+          amenities: string[] | null
+          category: string
+          city: string | null
+          country: string | null
+          cover_image_url: string | null
+          created_at: string
+          currency: string
+          daily_rate: number | null
+          description: string | null
+          equipment: string[] | null
+          gallery_urls: string[] | null
+          hourly_rate: number
+          id: string
+          is_active: boolean
+          location: string | null
+          max_guests: number | null
+          name: string
+          owner_id: string
+          rating_avg: number | null
+          review_count: number | null
+          rules: string | null
+          short_description: string | null
+          state: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          amenities?: string[] | null
+          category?: string
+          city?: string | null
+          country?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          currency?: string
+          daily_rate?: number | null
+          description?: string | null
+          equipment?: string[] | null
+          gallery_urls?: string[] | null
+          hourly_rate?: number
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          max_guests?: number | null
+          name: string
+          owner_id: string
+          rating_avg?: number | null
+          review_count?: number | null
+          rules?: string | null
+          short_description?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          amenities?: string[] | null
+          category?: string
+          city?: string | null
+          country?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          currency?: string
+          daily_rate?: number | null
+          description?: string | null
+          equipment?: string[] | null
+          gallery_urls?: string[] | null
+          hourly_rate?: number
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          max_guests?: number | null
+          name?: string
+          owner_id?: string
+          rating_avg?: number | null
+          review_count?: number | null
+          rules?: string | null
+          short_description?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
