@@ -166,8 +166,8 @@ const AppSidebar = () => {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
-      <div className={cn(
-        "flex h-16 items-center gap-3 px-4 border-b border-sidebar-border",
+      <Link to="/dashboard" className={cn(
+        "flex h-16 items-center gap-3 px-4 border-b border-sidebar-border hover:opacity-80 transition-opacity",
         collapsed && "justify-center px-2"
       )}>
         <img
@@ -180,7 +180,7 @@ const AppSidebar = () => {
             Rhozeland
           </span>
         )}
-      </div>
+      </Link>
 
       <SidebarContent className="px-2 pt-3">
         {renderGroup("Workspace", getWorkspaceItems(user?.id))}
