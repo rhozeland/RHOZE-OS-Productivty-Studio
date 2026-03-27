@@ -50,7 +50,7 @@ const marketplaceItems = [
 
 const toolsItems = [
   { icon: LayoutGrid, label: "Boards", path: "/smartboards" },
-  { icon: Workflow, label: "Automations", path: "/flow" },
+  { icon: Workflow, label: "Flow", path: "/flow" },
   { icon: Users, label: "Collab Rooms", path: "/drop-rooms" },
 ];
 
