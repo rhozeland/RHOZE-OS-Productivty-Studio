@@ -82,16 +82,33 @@ const AuthPage = () => {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-background overflow-hidden">
-      {/* Soft aurora background — toned down to match landing */}
+      {/* Animated mesh gradient background */}
       <div
-        className="pointer-events-none fixed inset-0 animate-aurora-drift"
+        className="pointer-events-none fixed inset-0 animated-gradient"
         style={{
           background: `
-            radial-gradient(ellipse 60% 50% at 15% 50%, hsl(280 60% 75% / 0.12) 0%, transparent 70%),
-            radial-gradient(ellipse 50% 60% at 85% 30%, hsl(320 60% 65% / 0.10) 0%, transparent 70%),
-            radial-gradient(ellipse 55% 40% at 50% 90%, hsl(30 70% 65% / 0.08) 0%, transparent 70%),
-            radial-gradient(ellipse 40% 50% at 40% 15%, hsl(175 50% 55% / 0.08) 0%, transparent 70%)
+            linear-gradient(
+              135deg,
+              hsl(280 65% 72% / 0.35) 0%,
+              hsl(320 65% 62% / 0.30) 25%,
+              hsl(30 75% 62% / 0.28) 50%,
+              hsl(175 55% 52% / 0.25) 75%,
+              hsl(280 65% 72% / 0.35) 100%
+            )
           `,
+          backgroundSize: '300% 300%',
+        }}
+      />
+      {/* Secondary aurora layer for depth */}
+      <div
+        className="pointer-events-none fixed inset-0"
+        style={{
+          background: `
+            radial-gradient(ellipse 70% 60% at 20% 50%, hsl(280 60% 75% / 0.15) 0%, transparent 60%),
+            radial-gradient(ellipse 60% 70% at 80% 30%, hsl(320 60% 65% / 0.12) 0%, transparent 60%),
+            radial-gradient(ellipse 65% 45% at 50% 85%, hsl(30 70% 65% / 0.10) 0%, transparent 60%)
+          `,
+          animation: 'aurora-drift 20s ease-in-out infinite',
         }}
       />
 
