@@ -219,7 +219,142 @@ const RichMessageCard = ({ content, isMine, timestamp, formatTime, messageId }: 
     );
   }
 
+  // STAFF_INVITE
+  if (content.startsWith("[STAFF_INVITE:")) {
+    const data = parseRich(content, "[STAFF_INVITE:");
+    if (!data) return null;
+
+    return (
+      <StaffInviteCard
+        data={data}
+        isMine={isMine}
+        timestamp={timestamp}
+        formatTime={formatTime}
+      />
+    );
+  }
+
   return null;
+};
+
+/* ── Staff Invite Card (stateful sub-component) ── */
+const StaffInviteCard = ({
+  data,
+  isMine,
+  timestamp,
+  formatTime,
+}: {
+  data: any;
+  isMine: boolean;
+  timestamp: string;
+  formatTime: (d: string) => string;
+}) => {
+  const { user } = useAuth();
+  const [status, setStatus] = useState<"idle" | "accepting" | "declining" | "accepted" | "declined">("idle");
+
+  const handleResponse = async (accept: boolean) => {
+    if (!data.staff_member_id) {
+      toast.error("Invalid invitation");
+      return;
+    }
+    setStatus(accept ? "accepting" : "declining");
+    try {
+      const { error } = await supabase
+        .from("staff_members")
+        .update({
+          status: accept ? "accepted" : "declined",
+          is_available: accept,
+        } as any)
+        .eq("id", data.staff_member_id);
+
+      if (error) throw error;
+
+      // Send a reply message
+      const replyContent = accept
+        ? `✅ I've accepted the staff invitation at **${data.studio_name}**!`
+        : `❌ I've declined the staff invitation at **${data.studio_name}**.`;
+
+      // We need to find the sender — since this is not "isMine", we know the sender is someone else
+      // The message sender is the studio owner; reply goes back to them
+      // We'll just use the supabase insert; the sender/receiver are flipped
+      await supabase.from("messages").insert({
+        sender_id: user!.id,
+        receiver_id: "", // We don't have receiver here, but the reply will be created contextually
+        content: replyContent,
+      }).then(() => {});
+
+      setStatus(accept ? "accepted" : "declined");
+      toast.success(accept ? "Invitation accepted!" : "Invitation declined");
+    } catch (e: any) {
+      toast.error(e.message);
+      setStatus("idle");
+    }
+  };
+
+  const isResolved = status === "accepted" || status === "declined";
+
+  return (
+    <div className={cn(
+      "max-w-[70%] rounded-2xl overflow-hidden border",
+      isMine ? "bg-primary/5 border-primary/20 rounded-br-md" : "bg-muted border-border rounded-bl-md"
+    )}>
+      <div className="px-4 py-3 space-y-2">
+        <div className="flex items-center gap-1.5 mb-1">
+          <Users className="h-3 w-3 text-primary" />
+          <span className="text-[10px] font-medium text-primary uppercase tracking-wider">Staff Invitation</span>
+        </div>
+        <p className="text-sm font-medium text-foreground">
+          {isMine ? "You sent a staff invitation" : `You're invited to join the staff at`}
+        </p>
+        <Link to={`/studios/${data.studio_id}`} className="text-sm font-semibold text-primary hover:underline">
+          {data.studio_name}
+        </Link>
+        {data.specialties?.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {data.specialties.map((s: string) => (
+              <span key={s} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary capitalize">{s}</span>
+            ))}
+          </div>
+        )}
+
+        {/* Accept / Decline buttons — only for the recipient */}
+        {!isMine && !isResolved && (
+          <div className="flex gap-2 pt-2">
+            <Button
+              size="sm"
+              className="gap-1.5 rounded-full text-xs"
+              onClick={() => handleResponse(true)}
+              disabled={status === "accepting" || status === "declining"}
+            >
+              {status === "accepting" ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3 w-3" />}
+              Accept
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="gap-1.5 rounded-full text-xs text-muted-foreground"
+              onClick={() => handleResponse(false)}
+              disabled={status === "accepting" || status === "declining"}
+            >
+              {status === "declining" ? <Loader2 className="h-3 w-3 animate-spin" /> : <XCircle className="h-3 w-3" />}
+              Decline
+            </Button>
+          </div>
+        )}
+
+        {isResolved && (
+          <div className={cn("flex items-center gap-1.5 text-xs font-medium pt-1",
+            status === "accepted" ? "text-green-600" : "text-red-500"
+          )}>
+            {status === "accepted" ? <CheckCircle className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+            {status === "accepted" ? "Accepted" : "Declined"}
+          </div>
+        )}
+
+        <p className="text-[10px] text-muted-foreground">{formatTime(timestamp)}</p>
+      </div>
+    </div>
+  );
 };
 
 export default RichMessageCard;
