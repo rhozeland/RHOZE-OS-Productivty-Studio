@@ -162,9 +162,7 @@ const AppSidebar = () => {
       </Link>
 
       <SidebarContent className="px-2 pt-3">
-        {renderGroup("Workspace", getWorkspaceItems(user?.id))}
-        {renderGroup("Marketplace", marketplaceItems)}
-        {renderGroup("Tools", toolsItems)}
+        {renderGroup("Navigation", mainItems)}
       </SidebarContent>
 
       <SidebarFooter className="px-2 pb-3">
