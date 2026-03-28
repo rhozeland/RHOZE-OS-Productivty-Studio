@@ -65,6 +65,7 @@ const FlowModePage = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expandedCard, setExpandedCard] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"swipe" | "browse">("swipe");
   const [savePickerOpen, setSavePickerOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareItem, setShareItem] = useState<any>(null);
