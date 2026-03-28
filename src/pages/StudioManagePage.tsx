@@ -224,26 +224,38 @@ const StudioManagePage = () => {
     if (!selectedUserId) return;
     setSavingStaff(true);
 
-    // Send an invitation message to the user
-    const { error: msgError } = await supabase.from("messages").insert({
-      sender_id: user!.id,
-      receiver_id: selectedUserId,
-      content: `🤝 You've been invited to join the staff at **${studio?.name}**! Specialties: ${selectedSpecialties.join(", ") || "General"}. Please accept by replying to this message.`,
-    });
+    // Add them as staff with pending status
+    const { data: staffData, error } = await supabase.from("staff_members").insert({
+      user_id: selectedUserId,
+      display_name: selectedUserName || "Staff Member",
+      specialties: selectedSpecialties,
+      is_available: false,
+      status: "pending",
+      studio_id: id,
+    } as any).select().single();
 
-    if (msgError) {
-      toast.error(msgError.message);
+    if (error) {
+      toast.error(error.message);
       setSavingStaff(false);
       return;
     }
 
-    // Add them as staff
-    const { error } = await supabase.from("staff_members").insert({
-      user_id: selectedUserId,
-      display_name: selectedUserName || "Staff Member",
+    // Send a structured invitation message
+    const invitePayload = JSON.stringify({
+      studio_id: id,
+      studio_name: studio?.name,
       specialties: selectedSpecialties,
-      is_available: true,
-    } as any);
+      staff_member_id: (staffData as any)?.id,
+    });
+    const { error: msgError } = await supabase.from("messages").insert({
+      sender_id: user!.id,
+      receiver_id: selectedUserId,
+      content: `[STAFF_INVITE:${invitePayload}]`,
+    });
+
+    if (msgError) {
+      toast.error("Staff added but invitation message failed to send");
+    }
 
     if (error) {
       toast.error(error.message);
