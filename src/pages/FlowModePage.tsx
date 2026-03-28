@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   ChevronUp,
   ChevronDown,
@@ -13,11 +12,8 @@ import {
   Plus,
   Check,
   Upload,
-  Search,
   Settings2,
   Sparkles,
-  Layers,
-  LayoutGrid,
 } from "lucide-react";
 import {
   Dialog,
@@ -72,8 +68,6 @@ const FlowModePage = () => {
   const [savePickerOpen, setSavePickerOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareItem, setShareItem] = useState<any>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"feed" | "swipe">("feed");
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [newCategory, setNewCategory] = useState("design");
@@ -91,7 +85,6 @@ const FlowModePage = () => {
     right: "skip",
   });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const feedEndRef = useRef<HTMLDivElement | null>(null);
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -107,27 +100,15 @@ const FlowModePage = () => {
   }, [user]);
 
   const { data: flowItems } = useQuery({
-    queryKey: ["flow-items", selectedCategories, searchQuery],
+    queryKey: ["flow-items", selectedCategories],
     queryFn: async () => {
-      let query = supabase.from("flow_items").select("*").order("created_at", { ascending: false }).limit(50);
+      let query = supabase.from("flow_items").select("*").order("created_at", { ascending: false }).limit(100);
       if (selectedCategories.length > 0) {
         query = query.in("category", selectedCategories);
-      }
-      if (searchQuery.trim()) {
-        query = query.or(`title.ilike.%${searchQuery.trim()}%,description.ilike.%${searchQuery.trim()}%`);
       }
       const { data, error } = await query;
       if (error) throw error;
       return data ?? [];
-    },
-    enabled: calibrated,
-  });
-
-  const { data: interactions } = useQuery({
-    queryKey: ["flow-interactions"],
-    queryFn: async () => {
-      const { data } = await supabase.from("flow_interactions").select("flow_item_id, action").eq("user_id", user!.id);
-      return new Map((data ?? []).map((d) => [d.flow_item_id, d.action]));
     },
     enabled: calibrated,
   });
@@ -151,7 +132,19 @@ const FlowModePage = () => {
       }, { onConflict: "user_id,flow_item_id" });
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flow-interactions"] }),
+  });
+
+  const deleteFlowItem = useMutation({
+    mutationFn: async (itemId: string) => {
+      const { error } = await supabase.from("flow_items").delete().eq("id", itemId).eq("user_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["flow-items"] });
+      toast.success("Deleted");
+      // Don't advance — the list will re-render and currentIndex stays, pointing to the next item
+    },
+    onError: (e: any) => toast.error(e.message),
   });
 
   const createFlowItem = useMutation({
@@ -194,8 +187,9 @@ const FlowModePage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const unseenItems = flowItems?.filter((item) => !interactions?.has(item.id)) ?? [];
-  const currentItem = unseenItems[currentIndex];
+  // All items — loop through them endlessly
+  const allItems = flowItems ?? [];
+  const currentItem = allItems.length > 0 ? allItems[currentIndex % allItems.length] : null;
 
   const handleCalibrationSelect = (option: string) => {
     const updated = selectedCategories.includes(option)
@@ -213,10 +207,10 @@ const FlowModePage = () => {
 
   const advanceCard = useCallback(() => {
     setTimeout(() => {
-      setCurrentIndex((i) => Math.min(i + 1, unseenItems.length - 1));
+      setCurrentIndex((i) => i + 1); // No cap — modulo handles looping
       setExpandedCard(false);
     }, 200);
-  }, [unseenItems.length]);
+  }, []);
 
   const performAction = useCallback((action: string, smartboardId?: string, item?: any) => {
     const targetItem = item || currentItem;
@@ -229,7 +223,7 @@ const FlowModePage = () => {
         interact.mutate({ itemId: targetItem.id, action, smartboardId });
         toast.success("Saved to board!");
         setSavePickerOpen(false);
-        if (viewMode === "swipe") advanceCard();
+        advanceCard();
       } else {
         setShareItem(targetItem);
         setSavePickerOpen(true);
@@ -241,9 +235,9 @@ const FlowModePage = () => {
       return;
     } else {
       interact.mutate({ itemId: targetItem.id, action });
-      if (viewMode === "swipe") advanceCard();
+      advanceCard();
     }
-  }, [currentItem, interact, advanceCard, soundEnabled, viewMode]);
+  }, [currentItem, interact, advanceCard, soundEnabled]);
 
   const handleDragEnd = useCallback((_: any, info: PanInfo) => {
     const { offset } = info;
@@ -260,7 +254,7 @@ const FlowModePage = () => {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (!calibrated || viewMode !== "swipe" || !currentItem) return;
+      if (!calibrated || !currentItem) return;
       if (e.key === "ArrowUp") performAction(swipeMap.up);
       if (e.key === "ArrowDown") performAction(swipeMap.down);
       if (e.key === "ArrowLeft") performAction(swipeMap.left);
@@ -268,7 +262,7 @@ const FlowModePage = () => {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [calibrated, currentItem, performAction, swipeMap, viewMode]);
+  }, [calibrated, currentItem, performAction, swipeMap]);
 
   // ──── ONBOARDING ────
   if (!calibrated) {
@@ -318,44 +312,19 @@ const FlowModePage = () => {
     );
   }
 
-  // ──── MAIN VIEW ────
+  // ──── MAIN SWIPE VIEW ────
   return (
     <div className="relative flex flex-col min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8">
-      {/* Background */}
-      {viewMode === "swipe" && (
-        <FlowCardBackground
-          fileUrl={currentItem?.file_url}
-          category={currentItem?.category || "design"}
-        />
-      )}
-      {viewMode === "feed" && <div className="absolute inset-0 bg-background" />}
+      {/* Dynamic background */}
+      <FlowCardBackground
+        fileUrl={currentItem?.file_url}
+        category={currentItem?.category || "design"}
+      />
 
       {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between gap-3 px-4 py-3 md:px-6">
-        {/* View mode toggle */}
-        <div className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm p-1 border border-border/30">
-          <button
-            onClick={() => setViewMode("feed")}
-            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all flex items-center gap-1.5 ${
-              viewMode === "feed" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Layers className="h-3 w-3" />
-            Feed
-          </button>
-          <button
-            onClick={() => setViewMode("swipe")}
-            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all flex items-center gap-1.5 ${
-              viewMode === "swipe" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <LayoutGrid className="h-3 w-3" />
-            Swipe
-          </button>
-        </div>
-
-        {/* Active categories */}
-        <p className="text-[11px] text-muted-foreground truncate max-w-[140px] md:max-w-[220px]">
+        {/* Category summary */}
+        <p className="text-[11px] text-muted-foreground truncate max-w-[200px] md:max-w-[300px]">
           {selectedCategories.length === CATEGORIES.length || selectedCategories.length === 0
             ? "All categories"
             : selectedCategories.map((c) => c.charAt(0).toUpperCase() + c.slice(1)).join(", ")}
@@ -436,130 +405,64 @@ const FlowModePage = () => {
         </div>
       </div>
 
-      {/* Search bar — feed mode */}
-      {viewMode === "feed" && (
-        <div className="relative z-10 px-4 md:px-6">
-          <div className="max-w-lg mx-auto pb-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search tracks, visuals, design, and inspiration..."
-                value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); setCurrentIndex(0); }}
-                className="pl-9 pr-9 rounded-full border-border/50 bg-muted/50"
+      {/* Card area — centered */}
+      <div className="relative z-10 flex-1 flex items-center justify-center px-4 pb-24">
+        <AnimatePresence mode="wait">
+          {currentItem ? (
+            <motion.div
+              key={`${currentItem.id}-${currentIndex}`}
+              className="w-full max-w-xs md:max-w-sm cursor-grab active:cursor-grabbing"
+              drag
+              dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+              dragElastic={0.7}
+              onDragEnd={handleDragEnd}
+              style={{ x, y, rotateZ, opacity: cardOpacity }}
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
+            >
+              <FlowCard
+                item={currentItem}
+                expanded={expandedCard}
+                onToggleExpand={() => setExpandedCard(!expandedCard)}
+                onSave={() => performAction("save")}
+                onShare={() => performAction("share")}
+                onDelete={() => deleteFlowItem.mutate(currentItem.id)}
+                isOwner={currentItem.user_id === user?.id}
               />
-              {searchQuery && (
-                <button
-                  onClick={() => { setSearchQuery(""); setCurrentIndex(0); }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══════ FEED MODE — Tumblr-style endless scroll ═══════ */}
-      {viewMode === "feed" && (
-        <div className="relative z-10 flex-1 overflow-y-auto pb-24">
-          <div className="max-w-md mx-auto px-4 space-y-6">
-            {flowItems && flowItems.length > 0 ? (
-              flowItems.map((item, i) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <FlowCard
-                    item={item}
-                    expanded={expandedCard}
-                    onToggleExpand={() => setExpandedCard(!expandedCard)}
-                    onSave={() => performAction("save", undefined, item)}
-                    onShare={() => performAction("share", undefined, item)}
-                  />
-                </motion.div>
-              ))
-            ) : (
-              <div className="text-center py-20">
-                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-muted/50 flex items-center justify-center">
-                  <Search className="h-7 w-7 text-muted-foreground" />
-                </div>
-                <h3 className="font-display text-lg font-bold text-foreground mb-1">No content yet</h3>
-                <p className="text-sm text-muted-foreground mb-6">Be the first to share something.</p>
-                <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Share Your Work
-                </Button>
+            </motion.div>
+          ) : (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center px-4">
+              <div className="mx-auto mb-6 h-20 w-20 rounded-full bg-card/60 backdrop-blur-sm flex items-center justify-center">
+                <Sparkles className="h-8 w-8 text-primary" />
               </div>
-            )}
-            <div ref={feedEndRef} />
-          </div>
-        </div>
-      )}
-
-      {/* ═══════ SWIPE MODE ═══════ */}
-      {viewMode === "swipe" && (
-        <>
-          <div className="relative z-10 flex-1 flex items-center justify-center px-4 pb-24">
-            <AnimatePresence mode="wait">
-              {currentItem ? (
-                <motion.div
-                  key={currentItem.id}
-                  className="w-full max-w-xs md:max-w-sm cursor-grab active:cursor-grabbing"
-                  drag
-                  dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                  dragElastic={0.7}
-                  onDragEnd={handleDragEnd}
-                  style={{ x, y, rotateZ, opacity: cardOpacity }}
-                  initial={{ opacity: 0, scale: 0.9, y: 30 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
-                >
-                  <FlowCard
-                    item={currentItem}
-                    expanded={expandedCard}
-                    onToggleExpand={() => setExpandedCard(!expandedCard)}
-                    onSave={() => performAction("save")}
-                    onShare={() => performAction("share")}
-                  />
-                </motion.div>
-              ) : (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center px-4">
-                  <div className="mx-auto mb-6 h-20 w-20 rounded-full bg-card/60 backdrop-blur-sm flex items-center justify-center">
-                    <Sparkles className="h-8 w-8 text-primary" />
-                  </div>
-                  <h2 className="font-display text-xl font-bold text-foreground mb-2">You're all caught up!</h2>
-                  <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">Share your own content or check back later.</p>
-                  <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Share Your Work
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Swipe hints */}
-          {currentItem && (
-            <div className="relative z-10 flex justify-center items-center pb-4">
-              <div className="flex items-center gap-6 md:gap-8 text-foreground/40">
-                {(["up", "down", "left", "right"] as const).map((dir) => {
-                  const icons = { up: ChevronUp, down: ChevronDown, left: ChevronLeft, right: ChevronRight };
-                  const actionLabels: Record<string, string> = { save: "Save", dislike: "Pass", share: "Share", skip: "Next" };
-                  const Icon = icons[dir];
-                  return (
-                    <span key={dir} className="flex items-center gap-1 text-xs">
-                      <Icon className="h-3.5 w-3.5" /> {actionLabels[swipeMap[dir]]}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
+              <h2 className="font-display text-xl font-bold text-foreground mb-2">Nothing here yet</h2>
+              <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">Be the first to share your work.</p>
+              <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
+                <Plus className="mr-2 h-4 w-4" />
+                Share Your Work
+              </Button>
+            </motion.div>
           )}
-        </>
+        </AnimatePresence>
+      </div>
+
+      {/* Bottom swipe hints */}
+      {currentItem && (
+        <div className="relative z-10 flex justify-center items-center pb-4">
+          <div className="flex items-center gap-6 md:gap-8 text-foreground/40">
+            {(["up", "down", "left", "right"] as const).map((dir) => {
+              const icons = { up: ChevronUp, down: ChevronDown, left: ChevronLeft, right: ChevronRight };
+              const actionLabels: Record<string, string> = { save: "Save", dislike: "Pass", share: "Share", skip: "Next" };
+              const Icon = icons[dir];
+              return (
+                <span key={dir} className="flex items-center gap-1 text-xs">
+                  <Icon className="h-3.5 w-3.5" /> {actionLabels[swipeMap[dir]]}
+                </span>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {/* Save to Board picker */}

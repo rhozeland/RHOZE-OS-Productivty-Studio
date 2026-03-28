@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Play, FileText, ExternalLink, ChevronDown, Music, Palette, Camera, Video, PenTool, Bookmark, Send, Maximize2, X } from "lucide-react";
+import { Play, FileText, ExternalLink, ChevronDown, Music, Palette, Camera, Video, PenTool, Bookmark, Send, Maximize2, X, Trash2 } from "lucide-react";
 import AudioPreview from "@/components/marketplace/AudioPreview";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
@@ -64,14 +64,17 @@ interface FlowCardProps {
     file_url?: string | null;
     link_url?: string | null;
     tags?: string[] | null;
+    user_id?: string;
   };
   expanded: boolean;
   onToggleExpand: () => void;
   onSave: () => void;
   onShare: () => void;
+  onDelete?: () => void;
+  isOwner?: boolean;
 }
 
-const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare }: FlowCardProps) => {
+const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner }: FlowCardProps) => {
   const [imageEnlarged, setImageEnlarged] = useState(false);
   const platform = detectPlatform(item.link_url);
   const CatIcon = CATEGORY_ICONS[item.category] || Palette;
@@ -302,6 +305,17 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare }: FlowCardP
             <Send className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
             <span className="text-[11px] font-medium">Send</span>
           </button>
+
+          {isOwner && onDelete && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              className="flex items-center gap-1.5 text-muted-foreground hover:text-destructive transition-colors group"
+              title="Delete"
+            >
+              <Trash2 className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
+              <span className="text-[11px] font-medium">Delete</span>
+            </button>
+          )}
 
           {item.link_url && (
             <a
