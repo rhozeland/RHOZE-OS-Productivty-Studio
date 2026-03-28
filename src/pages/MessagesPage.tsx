@@ -55,6 +55,7 @@ const MessagesPage = () => {
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [messageText, setMessageText] = useState("");
   const [search, setSearch] = useState("");
+  const [quoteOpen, setQuoteOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inquiryHandled = useRef(false);
 
