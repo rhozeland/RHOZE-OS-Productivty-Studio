@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   LayoutGrid,
@@ -9,8 +10,16 @@ import {
   Film,
   Download,
   ExternalLink,
+  Users,
+  CheckCircle,
+  XCircle,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 // Parse helpers
 export const isRichMessage = (content: string) =>
