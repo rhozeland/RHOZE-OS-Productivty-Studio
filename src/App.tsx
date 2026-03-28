@@ -30,6 +30,7 @@ import AdminPage from "@/pages/AdminPage";
 import StudiosPage from "@/pages/StudiosPage";
 import StudioDetailPage from "@/pages/StudioDetailPage";
 import StudioApplicationPage from "@/pages/StudioApplicationPage";
+import StudioManagePage from "@/pages/StudioManagePage";
 import ExploreStudiosPage from "@/pages/ExploreStudiosPage";
 import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import NotFound from "./pages/NotFound";
