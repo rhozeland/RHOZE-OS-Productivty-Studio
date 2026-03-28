@@ -24,7 +24,6 @@ const StudioDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [bookingOpen, setBookingOpen] = useState(false);
-  const { user } = useAuth();
 
   const { data: studio, isLoading } = useQuery({
     queryKey: ["studio", id],
