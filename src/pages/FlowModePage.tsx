@@ -114,11 +114,17 @@ const FlowModePage = () => {
   const { data: flowItems } = useQuery({
     queryKey: ["flow-items", selectedCategories],
     queryFn: async () => {
-      let query = supabase.from("flow_items").select("*").order("created_at", { ascending: false }).limit(100);
-      if (selectedCategories.length > 0) {
-        query = query.in("category", selectedCategories);
+      // First try with selected categories
+      if (selectedCategories.length > 0 && selectedCategories.length < CATEGORIES.length) {
+        const { data, error } = await supabase.from("flow_items").select("*")
+          .in("category", selectedCategories)
+          .order("created_at", { ascending: false }).limit(100);
+        if (error) throw error;
+        if (data && data.length > 0) return data;
       }
-      const { data, error } = await query;
+      // Fallback: fetch all items regardless of category
+      const { data, error } = await supabase.from("flow_items").select("*")
+        .order("created_at", { ascending: false }).limit(100);
       if (error) throw error;
       return data ?? [];
     },
