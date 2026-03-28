@@ -31,7 +31,7 @@ import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
 const mainItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-  { icon: FolderKanban, label: "Projects", path: "/projects" },
+  { icon: MessageSquare, label: "Inbox", path: "/messages" },
   { icon: Calendar, label: "Calendar", path: "/calendar" },
   { icon: CreditCard, label: "Studio Pass", path: "/credits" },
 ];

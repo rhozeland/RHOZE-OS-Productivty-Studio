@@ -51,9 +51,6 @@ const DockBar = () => {
                 <span className="text-[10px] font-body font-medium leading-none">
                   {item.label}
                 </span>
-                {showBadge && (
-                  <span className="absolute top-0.5 right-1 h-2 w-2 rounded-full bg-accent" />
-                )}
               </motion.div>
             </Link>
           );
