@@ -72,6 +72,7 @@ interface FlowCardProps {
 }
 
 const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare }: FlowCardProps) => {
+  const [imageEnlarged, setImageEnlarged] = useState(false);
   const platform = detectPlatform(item.link_url);
   const CatIcon = CATEGORY_ICONS[item.category] || Palette;
   const catColor = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.writing;
@@ -85,216 +86,270 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare }: FlowCardP
   const isSoundCloud = item.link_url?.includes("soundcloud.com");
 
   return (
-    <div className="rounded-[20px] bg-card shadow-2xl shadow-foreground/5 overflow-hidden border border-border/40 select-none">
-      {/* ═══ Category badge — always visible at top ═══ */}
-      <div className="absolute top-3 left-3 z-10">
-        <Badge className={`${catColor} border-0 rounded-full text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 flex items-center gap-1`}>
-          <CatIcon className="h-3 w-3" />
-          {item.category}
-        </Badge>
-      </div>
-
-      {/* ═══ PHOTO / DESIGN — Full bleed image ═══ */}
-      {isImage && item.file_url && (
-        <div className="relative">
-          <div className="aspect-[4/5] overflow-hidden">
-            <img src={item.file_url} alt={item.title} className="w-full h-full object-cover" draggable={false} />
-          </div>
+    <>
+      <div className="rounded-[20px] bg-card shadow-2xl shadow-foreground/5 overflow-hidden border border-border/40 select-none">
+        {/* ═══ Category badge — always visible at top ═══ */}
+        <div className="absolute top-3 left-3 z-10">
+          <Badge className={`${catColor} border-0 rounded-full text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 flex items-center gap-1`}>
+            <CatIcon className="h-3 w-3" />
+            {item.category}
+          </Badge>
         </div>
-      )}
 
-      {/* ═══ MUSIC — Artwork + embedded player ═══ */}
-      {isAudio && (
-        <div className="relative">
-          {spotifyEmbed && (
-            <div className="w-full" onClick={(e) => e.stopPropagation()}>
-              <iframe
-                src={spotifyEmbed}
-                width="100%"
-                height="352"
-                frameBorder="0"
-                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                loading="lazy"
-                className="rounded-t-[20px]"
-                style={{ borderRadius: "12px 12px 0 0" }}
-              />
+        {/* ═══ PHOTO / DESIGN — Full image with click to enlarge ═══ */}
+        {isImage && item.file_url && (
+          <div className="relative group">
+            <div className="aspect-[4/5] overflow-hidden bg-muted/20 flex items-center justify-center">
+              <img src={item.file_url} alt={item.title} className="w-full h-full object-contain" draggable={false} />
             </div>
-          )}
+            <button
+              onClick={(e) => { e.stopPropagation(); setImageEnlarged(true); }}
+              className="absolute top-3 right-3 z-10 h-8 w-8 rounded-full bg-card/70 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border border-border/30"
+              title="Enlarge"
+            >
+              <Maximize2 className="h-3.5 w-3.5 text-foreground" />
+            </button>
+          </div>
+        )}
 
-          {isSoundCloud && item.link_url && !spotifyEmbed && (
-            <div className="w-full" onClick={(e) => e.stopPropagation()}>
-              <iframe
-                width="100%"
-                height="300"
-                scrolling="no"
-                frameBorder="no"
-                allow="autoplay"
-                src={getSoundCloudEmbed(item.link_url)}
-                className="rounded-t-[20px]"
-              />
-            </div>
-          )}
+        {/* ═══ MUSIC — Artwork + embedded player ═══ */}
+        {isAudio && (
+          <div className="relative">
+            {spotifyEmbed && (
+              <div className="w-full" onClick={(e) => e.stopPropagation()}>
+                <iframe
+                  src={spotifyEmbed}
+                  width="100%"
+                  height="352"
+                  frameBorder="0"
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                  loading="lazy"
+                  className="rounded-t-[20px]"
+                  style={{ borderRadius: "12px 12px 0 0" }}
+                />
+              </div>
+            )}
 
-          {item.file_url && !spotifyEmbed && !isSoundCloud && (
-            <div className="relative">
-              <div className="aspect-square overflow-hidden bg-gradient-to-br from-pink/20 via-accent/10 to-muted flex items-center justify-center">
-                <div className="text-center">
-                  <div className="h-24 w-24 mx-auto rounded-3xl bg-card/40 backdrop-blur-md flex items-center justify-center mb-4 shadow-2xl border border-border/20">
-                    <Music className="h-12 w-12 text-foreground/50" />
+            {isSoundCloud && item.link_url && !spotifyEmbed && (
+              <div className="w-full" onClick={(e) => e.stopPropagation()}>
+                <iframe
+                  width="100%"
+                  height="300"
+                  scrolling="no"
+                  frameBorder="no"
+                  allow="autoplay"
+                  src={getSoundCloudEmbed(item.link_url)}
+                  className="rounded-t-[20px]"
+                />
+              </div>
+            )}
+
+            {item.file_url && !spotifyEmbed && !isSoundCloud && (
+              <div className="relative">
+                <div className="aspect-square overflow-hidden bg-gradient-to-br from-pink/20 via-accent/10 to-muted flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="h-24 w-24 mx-auto rounded-3xl bg-card/40 backdrop-blur-md flex items-center justify-center mb-4 shadow-2xl border border-border/20">
+                      <Music className="h-12 w-12 text-foreground/50" />
+                    </div>
+                    <h3 className="font-display text-lg font-bold text-foreground px-6">{item.title}</h3>
                   </div>
-                  <h3 className="font-display text-lg font-bold text-foreground px-6">{item.title}</h3>
+                </div>
+                <div className="border-t border-border" onClick={(e) => e.stopPropagation()}>
+                  <AudioPreview src={item.file_url} title={item.title} />
                 </div>
               </div>
-              <div className="border-t border-border" onClick={(e) => e.stopPropagation()}>
-                <AudioPreview src={item.file_url} title={item.title} />
-              </div>
-            </div>
-          )}
+            )}
 
-          {!item.file_url && !spotifyEmbed && !isSoundCloud && (
-            <div className="aspect-[4/5] bg-gradient-to-br from-pink/15 via-accent/10 to-muted flex items-center justify-center">
-              <div className="text-center p-6">
-                <div className="h-20 w-20 mx-auto rounded-2xl bg-card/40 backdrop-blur-md flex items-center justify-center mb-4 shadow-xl border border-border/20">
-                  <Music className="h-10 w-10 text-foreground/40" />
+            {!item.file_url && !spotifyEmbed && !isSoundCloud && (
+              <div className="aspect-[4/5] bg-gradient-to-br from-pink/15 via-accent/10 to-muted flex items-center justify-center">
+                <div className="text-center p-6">
+                  <div className="h-20 w-20 mx-auto rounded-2xl bg-card/40 backdrop-blur-md flex items-center justify-center mb-4 shadow-xl border border-border/20">
+                    <Music className="h-10 w-10 text-foreground/40" />
+                  </div>
+                  <h2 className="font-display text-xl font-bold text-foreground leading-tight mb-2">{item.title}</h2>
+                  {item.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
+                  )}
                 </div>
-                <h2 className="font-display text-xl font-bold text-foreground leading-tight mb-2">{item.title}</h2>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ═══ VIDEO — YouTube/Vimeo embed or uploaded ═══ */}
+        {isVideo && (
+          <div className="relative">
+            {youtubeId ? (
+              <div className="aspect-video" onClick={(e) => e.stopPropagation()}>
+                <iframe
+                  src={`https://www.youtube.com/embed/${youtubeId}?rel=0`}
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="rounded-t-[20px]"
+                />
+              </div>
+            ) : item.file_url ? (
+              <div className="aspect-video overflow-hidden bg-foreground/5" onClick={(e) => e.stopPropagation()}>
+                <video src={item.file_url} controls playsInline preload="metadata" className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <div className="aspect-video bg-gradient-to-br from-accent/15 via-muted to-primary/10 flex items-center justify-center">
+                <div className="text-center p-6">
+                  <div className="h-16 w-16 mx-auto rounded-full bg-card/60 backdrop-blur-sm flex items-center justify-center mb-3 shadow-lg">
+                    <Play className="h-7 w-7 text-foreground ml-1" />
+                  </div>
+                  <h2 className="font-display text-lg font-bold text-foreground">{item.title}</h2>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ═══ WRITING — Embedded link preview or rich text card ═══ */}
+        {isWriting && !isAudio && !isVideo && !isImage && (
+          <div className="relative">
+            {item.link_url ? (
+              <div className="aspect-[4/5] flex flex-col overflow-hidden">
+                {/* Embedded article preview */}
+                <div className="flex-1 overflow-hidden rounded-t-[20px]" onClick={(e) => e.stopPropagation()}>
+                  <iframe
+                    src={item.link_url}
+                    title={item.title}
+                    className="w-full h-full border-0"
+                    sandbox="allow-scripts allow-same-origin allow-popups"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+              </div>
+            ) : item.file_url ? (
+              <div className="relative group">
+                <div className="aspect-[4/3] overflow-hidden bg-muted/20 flex items-center justify-center">
+                  <img src={item.file_url} alt={item.title} className="w-full h-full object-contain" draggable={false} />
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setImageEnlarged(true); }}
+                  className="absolute top-3 right-3 z-10 h-8 w-8 rounded-full bg-card/70 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border border-border/30"
+                >
+                  <Maximize2 className="h-3.5 w-3.5 text-foreground" />
+                </button>
+              </div>
+            ) : (
+              <div className="px-6 pt-12 pb-4 min-h-[280px] flex flex-col justify-center">
+                <div className="mb-3">
+                  <FileText className="h-6 w-6 text-muted-foreground/40 mb-3" />
+                </div>
+                <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground leading-tight mb-3">{item.title}</h2>
                 {item.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{item.description}</p>
+                )}
+                {item.tags && item.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-4">
+                    {item.tags.slice(0, 4).map((tag) => (
+                      <span key={tag} className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">#{tag}</span>
+                    ))}
+                  </div>
                 )}
               </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ═══ VIDEO — YouTube/Vimeo embed or uploaded ═══ */}
-      {isVideo && (
-        <div className="relative">
-          {youtubeId ? (
-            <div className="aspect-video" onClick={(e) => e.stopPropagation()}>
-              <iframe
-                src={`https://www.youtube.com/embed/${youtubeId}?rel=0`}
-                width="100%"
-                height="100%"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="rounded-t-[20px]"
-              />
-            </div>
-          ) : item.file_url ? (
-            <div className="aspect-video overflow-hidden bg-foreground/5" onClick={(e) => e.stopPropagation()}>
-              <video src={item.file_url} controls playsInline preload="metadata" className="w-full h-full object-cover" />
-            </div>
-          ) : (
-            <div className="aspect-video bg-gradient-to-br from-accent/15 via-muted to-primary/10 flex items-center justify-center">
-              <div className="text-center p-6">
-                <div className="h-16 w-16 mx-auto rounded-full bg-card/60 backdrop-blur-sm flex items-center justify-center mb-3 shadow-lg">
-                  <Play className="h-7 w-7 text-foreground ml-1" />
-                </div>
-                <h2 className="font-display text-lg font-bold text-foreground">{item.title}</h2>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ═══ WRITING — Article-style card ═══ */}
-      {isWriting && !isAudio && !isVideo && !isImage && (
-        <div className="relative">
-          {item.file_url ? (
-            <div className="aspect-[4/3] overflow-hidden">
-              <img src={item.file_url} alt={item.title} className="w-full h-full object-cover" draggable={false} />
-            </div>
-          ) : (
-            <div className="px-6 pt-12 pb-4 min-h-[280px] flex flex-col justify-center">
-              <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground leading-tight mb-3">{item.title}</h2>
-              {item.description && (
-                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">{item.description}</p>
-              )}
-              {item.tags && item.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-4">
-                  {item.tags.slice(0, 4).map((tag) => (
-                    <span key={tag} className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">#{tag}</span>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ═══ Fallback for design with no file ═══ */}
-      {isImage && !item.file_url && (
-        <div className="aspect-[4/5] bg-gradient-to-br from-teal/10 via-accent/5 to-muted flex items-center justify-center p-6">
-          <div className="text-center">
-            <div className="h-20 w-20 mx-auto rounded-2xl bg-card/40 backdrop-blur-md flex items-center justify-center mb-4 shadow-xl border border-border/20">
-              <CatIcon className="h-10 w-10 text-foreground/40" />
-            </div>
-            <h2 className="font-display text-xl font-bold text-foreground leading-tight">{item.title}</h2>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ ACTION BAR — Save + Send ═══ */}
-      <div className="px-4 pt-3 pb-2 flex items-center gap-4">
-        <button
-          onClick={(e) => { e.stopPropagation(); onSave(); }}
-          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group"
-          title="Save to board"
-        >
-          <Bookmark className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
-          <span className="text-[11px] font-medium">Save</span>
-        </button>
-        <button
-          onClick={(e) => { e.stopPropagation(); onShare(); }}
-          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group"
-          title="Send to someone"
-        >
-          <Send className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
-          <span className="text-[11px] font-medium">Send</span>
-        </button>
-
-        {item.link_url && (
-          <a
-            href={item.link_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="ml-auto flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-            title={`Open on ${platform?.name || "web"}`}
-          >
-            <ExternalLink className="h-4 w-4" />
-            {platform && platform.name !== "Link" && (
-              <span className="text-[11px] font-medium">{platform.name}</span>
             )}
-          </a>
+          </div>
+        )}
+
+        {/* ═══ Fallback for design with no file ═══ */}
+        {isImage && !item.file_url && (
+          <div className="aspect-[4/5] bg-gradient-to-br from-teal/10 via-accent/5 to-muted flex items-center justify-center p-6">
+            <div className="text-center">
+              <div className="h-20 w-20 mx-auto rounded-2xl bg-card/40 backdrop-blur-md flex items-center justify-center mb-4 shadow-xl border border-border/20">
+                <CatIcon className="h-10 w-10 text-foreground/40" />
+              </div>
+              <h2 className="font-display text-xl font-bold text-foreground leading-tight">{item.title}</h2>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ ACTION BAR — Save + Send ═══ */}
+        <div className="px-4 pt-3 pb-2 flex items-center gap-4">
+          <button
+            onClick={(e) => { e.stopPropagation(); onSave(); }}
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group"
+            title="Save to board"
+          >
+            <Bookmark className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
+            <span className="text-[11px] font-medium">Save</span>
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onShare(); }}
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group"
+            title="Send to someone"
+          >
+            <Send className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
+            <span className="text-[11px] font-medium">Send</span>
+          </button>
+
+          {item.link_url && (
+            <a
+              href={item.link_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="ml-auto flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+              title={`Open on ${platform?.name || "web"}`}
+            >
+              <ExternalLink className="h-4 w-4" />
+              {platform && platform.name !== "Link" && (
+                <span className="text-[11px] font-medium">{platform.name}</span>
+              )}
+            </a>
+          )}
+        </div>
+
+        {/* ═══ TITLE + DESCRIPTION ═══ */}
+        {!(isWriting && !isAudio && !isVideo && !isImage && !item.file_url && !item.link_url) && (
+          <div className="px-4 pb-3">
+            <h3 className="font-display font-bold text-foreground text-sm md:text-base leading-snug">{item.title}</h3>
+            {item.description && (
+              <p
+                className={`text-sm text-muted-foreground leading-relaxed mt-1 cursor-pointer ${expanded ? "" : "line-clamp-2"}`}
+                onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
+              >
+                {item.description}
+              </p>
+            )}
+            {item.description && !expanded && item.description.length > 80 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
+                className="flex items-center gap-0.5 mt-1 text-[11px] text-primary hover:underline"
+              >
+                <ChevronDown className="h-3 w-3" /> more
+              </button>
+            )}
+          </div>
         )}
       </div>
 
-      {/* ═══ TITLE + DESCRIPTION ═══ */}
-      {!(isWriting && !isAudio && !isVideo && !isImage && !item.file_url) && (
-        <div className="px-4 pb-3">
-          <h3 className="font-display font-bold text-foreground text-sm md:text-base leading-snug">{item.title}</h3>
-          {item.description && (
-            <p
-              className={`text-sm text-muted-foreground leading-relaxed mt-1 cursor-pointer ${expanded ? "" : "line-clamp-2"}`}
-              onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
-            >
-              {item.description}
-            </p>
-          )}
-          {item.description && !expanded && item.description.length > 80 && (
+      {/* ═══ ENLARGED IMAGE DIALOG ═══ */}
+      <Dialog open={imageEnlarged} onOpenChange={setImageEnlarged}>
+        <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 bg-transparent border-0 shadow-none [&>button]:hidden">
+          <div className="relative flex items-center justify-center" onClick={() => setImageEnlarged(false)}>
             <button
-              onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
-              className="flex items-center gap-0.5 mt-1 text-[11px] text-primary hover:underline"
+              onClick={() => setImageEnlarged(false)}
+              className="absolute top-2 right-2 z-20 h-9 w-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center border border-border/30 hover:bg-card transition-colors"
             >
-              <ChevronDown className="h-3 w-3" /> more
+              <X className="h-4 w-4 text-foreground" />
             </button>
-          )}
-        </div>
-      )}
-    </div>
+            <img
+              src={item.file_url || ""}
+              alt={item.title}
+              className="max-w-full max-h-[85vh] object-contain rounded-xl"
+              draggable={false}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
