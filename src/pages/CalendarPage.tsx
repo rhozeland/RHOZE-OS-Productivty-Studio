@@ -838,11 +838,14 @@ const CalendarPage = () => {
         )}
       </div>
 
-      {/* Booking confirmation dialog */}
+      {/* Booking / Event dialog */}
       <Dialog open={bookingDialogOpen} onOpenChange={(open) => {
         if (!open) {
           resetDrag();
           if (!searchParams.get("service")) setSelectedService("");
+          setEventType(null);
+          setEventTitle("");
+          setSelectedProject("");
           setBookingNotes("");
           setPaymentMethod("credits");
           setSearchParams({}, { replace: true });
@@ -851,167 +854,201 @@ const CalendarPage = () => {
       }}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-display">Confirm Booking</DialogTitle>
+            <DialogTitle className="font-display">
+              {!eventType ? "What would you like to do?" : eventType === "studio" ? "Book a Studio Session" : eventType === "project" ? "Schedule Project Session" : "Set a Reminder"}
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            {dragDate && dragStartHour !== null && dragEndHour !== null && (
-              <div className="rounded-lg bg-muted/50 p-4">
-                <p className="text-sm font-medium text-foreground">
-                  {format(dragDate, "EEEE, MMMM d, yyyy")}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {format(setHours(new Date(), Math.min(dragStartHour, dragEndHour)), "h:mma")} – {format(setHours(new Date(), Math.max(dragStartHour, dragEndHour) + 1), "h:mma")}
-                  {" "}({selectedDuration} hour{selectedDuration !== 1 ? "s" : ""})
-                </p>
-              </div>
-            )}
 
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Service</label>
-              <Select value={selectedService} onValueChange={setSelectedService}>
-                <SelectTrigger><SelectValue placeholder="Select a service" /></SelectTrigger>
-                <SelectContent>
-                  {services?.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.title} — {s.credits_cost} cr · up to {s.duration_hours}h
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {/* Time display */}
+          {dragDate && dragStartHour !== null && dragEndHour !== null && (
+            <div className="rounded-lg bg-muted/50 p-4">
+              <p className="text-sm font-medium text-foreground">
+                {format(dragDate, "EEEE, MMMM d, yyyy")}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {format(setHours(new Date(), Math.min(dragStartHour, dragEndHour)), "h:mma")} – {format(setHours(new Date(), Math.max(dragStartHour, dragEndHour) + 1), "h:mma")}
+                {" "}({selectedDuration} hour{selectedDuration !== 1 ? "s" : ""})
+              </p>
             </div>
+          )}
 
-            {/* Fixed credit + duration info */}
-            {selectedServiceObj && selectedDuration > 0 && (
-              <div className={`rounded-xl border p-4 ${isOverMax ? "bg-destructive/10 border-destructive/30" : "bg-primary/10 border-primary/20"}`}>
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-muted-foreground">
-                    {selectedDuration}h selected
-                    {isOverMax && (
-                      <span className="text-destructive font-medium"> (max {maxDragHours}h)</span>
-                    )}
+          {/* Step 1: Event type selection */}
+          {!eventType && (
+            <div className="grid gap-3">
+              {[
+                { type: "studio" as EventType, icon: Building2, title: "Book a Studio", desc: "Reserve a studio session with payment", color: "bg-primary/10 text-primary" },
+                { type: "project" as EventType, icon: FolderKanban, title: "Project Session", desc: "Schedule time for a project", color: "bg-accent/10 text-accent-foreground" },
+                { type: "reminder" as EventType, icon: Bell, title: "Set a Reminder", desc: "Add a personal reminder to your calendar", color: "bg-muted text-muted-foreground" },
+              ].map((opt) => (
+                <button
+                  key={opt.type}
+                  onClick={() => setEventType(opt.type)}
+                  className="flex items-center gap-4 rounded-xl border border-border p-4 text-left hover:bg-muted/50 hover:border-primary/30 transition-all"
+                >
+                  <div className={cn("flex h-11 w-11 items-center justify-center rounded-xl", opt.color)}>
+                    <opt.icon className="h-5 w-5" />
                   </div>
-                  <div className="flex items-center gap-1 text-primary font-display text-xl font-bold">
-                    <Coins className="h-4 w-4" />
-                    {selectedServiceObj.credits_cost} credits
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{opt.title}</p>
+                    <p className="text-xs text-muted-foreground">{opt.desc}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Studio booking flow */}
+          {eventType === "studio" && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">Service</label>
+                <Select value={selectedService} onValueChange={setSelectedService}>
+                  <SelectTrigger><SelectValue placeholder="Select a service" /></SelectTrigger>
+                  <SelectContent>
+                    {services?.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.title} — {s.credits_cost} cr · up to {s.duration_hours}h
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {selectedServiceObj && selectedDuration > 0 && (
+                <div className={`rounded-xl border p-4 ${isOverMax ? "bg-destructive/10 border-destructive/30" : "bg-primary/10 border-primary/20"}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      {selectedDuration}h selected
+                      {isOverMax && <span className="text-destructive font-medium"> (max {maxDragHours}h)</span>}
+                    </div>
+                    <div className="flex items-center gap-1 text-primary font-display text-xl font-bold">
+                      <Coins className="h-4 w-4" />
+                      {selectedServiceObj.credits_cost} credits
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Payment method selection */}
-            {selectedServiceObj && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground block">Payment Method</label>
-                <div className="grid gap-2">
-                  {/* Credits */}
-                  <button
-                    onClick={() => setPaymentMethod("credits")}
-                    className={cn(
-                      "flex items-center gap-3 rounded-xl border p-3 transition-all text-left",
-                      paymentMethod === "credits" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
-                    )}
-                  >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                      <Coins className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">Pay with Credits</p>
-                      <p className="text-xs text-muted-foreground">
-                        {selectedServiceObj.credits_cost} credits • Balance: {userCredits?.balance ?? 0}
-                        {(userCredits?.balance ?? 0) < selectedServiceObj.credits_cost && " (insufficient)"}
-                      </p>
-                    </div>
-                    {paymentMethod === "credits" && <Check className="h-4 w-4 text-primary" />}
-                  </button>
-
-                  {/* Card */}
-                  {selectedServiceObj.non_member_rate && (
+              {selectedServiceObj && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground block">Payment Method</label>
+                  <div className="grid gap-2">
                     <button
-                      onClick={() => setPaymentMethod("card")}
-                      className={cn(
-                        "flex items-center gap-3 rounded-xl border p-3 transition-all text-left",
-                        paymentMethod === "card" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
-                      )}
+                      onClick={() => setPaymentMethod("credits")}
+                      className={cn("flex items-center gap-3 rounded-xl border p-3 transition-all text-left", paymentMethod === "credits" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50")}
                     >
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10">
-                        <CreditCard className="h-4 w-4 text-blue-500" />
-                      </div>
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10"><Coins className="h-4 w-4 text-primary" /></div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">Pay with Card</p>
-                        <p className="text-xs text-muted-foreground">
-                          ${selectedServiceObj.non_member_rate} • Visa, Mastercard, Amex
-                        </p>
+                        <p className="text-sm font-medium text-foreground">Pay with Credits</p>
+                        <p className="text-xs text-muted-foreground">{selectedServiceObj.credits_cost} credits • Balance: {userCredits?.balance ?? 0}</p>
                       </div>
-                      {paymentMethod === "card" && <Check className="h-4 w-4 text-primary" />}
+                      {paymentMethod === "credits" && <Check className="h-4 w-4 text-primary" />}
                     </button>
-                  )}
 
-                  {/* SOL */}
-                  <button
-                    onClick={() => setPaymentMethod("crypto")}
-                    className={cn(
-                      "flex items-center gap-3 rounded-xl border p-3 transition-all text-left",
-                      paymentMethod === "crypto" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+                    {selectedServiceObj.non_member_rate && (
+                      <button
+                        onClick={() => setPaymentMethod("card")}
+                        className={cn("flex items-center gap-3 rounded-xl border p-3 transition-all text-left", paymentMethod === "card" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50")}
+                      >
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10"><CreditCard className="h-4 w-4 text-primary" /></div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-foreground">Pay with Card</p>
+                          <p className="text-xs text-muted-foreground">${selectedServiceObj.non_member_rate}</p>
+                        </div>
+                        {paymentMethod === "card" && <Check className="h-4 w-4 text-primary" />}
+                      </button>
                     )}
-                  >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-500/10">
-                      <Wallet className="h-4 w-4 text-orange-500" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">Pay with SOL</p>
-                      <p className="text-xs text-muted-foreground">
-                        ~{((selectedServiceObj.non_member_rate ?? selectedServiceObj.credits_cost * 75) / 150).toFixed(4)} SOL via Phantom/Solflare
-                      </p>
-                    </div>
-                    {paymentMethod === "crypto" && <Check className="h-4 w-4 text-primary" />}
-                  </button>
+
+                    <button
+                      onClick={() => setPaymentMethod("crypto")}
+                      className={cn("flex items-center gap-3 rounded-xl border p-3 transition-all text-left", paymentMethod === "crypto" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50")}
+                    >
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10"><Wallet className="h-4 w-4 text-primary" /></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">Pay with SOL</p>
+                        <p className="text-xs text-muted-foreground">~{((selectedServiceObj.non_member_rate ?? selectedServiceObj.credits_cost * 75) / 150).toFixed(4)} SOL</p>
+                      </div>
+                      {paymentMethod === "crypto" && <Check className="h-4 w-4 text-primary" />}
+                    </button>
+                  </div>
                 </div>
+              )}
+
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">Notes (optional)</label>
+                <Textarea placeholder="What's the session about?" value={bookingNotes} onChange={(e) => setBookingNotes(e.target.value)} rows={2} />
               </div>
-            )}
 
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Notes (optional)</label>
-              <Textarea placeholder="What is the project about?" value={bookingNotes} onChange={(e) => setBookingNotes(e.target.value)} rows={2} />
+              {paymentMethod === "card" && selectedServiceObj?.non_member_rate && (
+                <SquareCardForm amount={selectedServiceObj.non_member_rate} disabled={bookingLoading} onTokenize={async (token) => { await createBookingWithPayment(token); }} />
+              )}
+
+              {paymentMethod === "crypto" && selectedServiceObj && (
+                <PaySolAndVerify
+                  solAmount={Number(((selectedServiceObj.non_member_rate ?? selectedServiceObj.credits_cost * 75) / 150).toFixed(4))}
+                  creditsToAdd={0}
+                  description={`Booking: ${selectedServiceObj.title}`}
+                  label="Pay with SOL & Book"
+                  onSuccess={async () => { await createBookingWithPayment(); }}
+                />
+              )}
+
+              {paymentMethod === "credits" && (
+                <Button className="w-full" onClick={() => createBookingWithPayment()} disabled={!selectedService || bookingLoading || isOverMax || (selectedServiceObj && (userCredits?.balance ?? 0) < selectedServiceObj.credits_cost)}>
+                  {bookingLoading ? "Processing..." : selectedServiceObj ? `Book Session · ${selectedServiceObj.credits_cost} credits` : "Book Session"}
+                </Button>
+              )}
+
+              <Button variant="ghost" size="sm" className="w-full" onClick={() => setEventType(null)}>← Back</Button>
             </div>
+          )}
 
-            {/* Card form inline */}
-            {paymentMethod === "card" && selectedServiceObj?.non_member_rate && (
-              <SquareCardForm
-                amount={selectedServiceObj.non_member_rate}
-                disabled={bookingLoading}
-                onTokenize={async (token) => {
-                  await createBookingWithPayment(token);
-                }}
-              />
-            )}
-
-            {/* SOL payment */}
-            {paymentMethod === "crypto" && selectedServiceObj && (
-              <PaySolAndVerify
-                solAmount={Number(((selectedServiceObj.non_member_rate ?? selectedServiceObj.credits_cost * 75) / 150).toFixed(4))}
-                creditsToAdd={0}
-                description={`Booking: ${selectedServiceObj.title}`}
-                label="Pay with SOL & Book"
-                onSuccess={async () => {
-                  await createBookingWithPayment();
-                }}
-              />
-            )}
-
-            {/* Credits confirm button */}
-            {paymentMethod === "credits" && (
-              <Button
-                className="w-full"
-                onClick={() => createBookingWithPayment()}
-                disabled={!selectedService || bookingLoading || isOverMax || (selectedServiceObj && (userCredits?.balance ?? 0) < selectedServiceObj.credits_cost)}
-              >
-                {bookingLoading ? "Processing..." : selectedServiceObj
-                  ? `Book Session · ${selectedServiceObj.credits_cost} credits`
-                  : "Book Session"
-                }
+          {/* Project session flow */}
+          {eventType === "project" && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">Session Title</label>
+                <Input placeholder="e.g. Mix review, Recording vocals..." value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">Link to Project</label>
+                <Select value={selectedProject} onValueChange={setSelectedProject}>
+                  <SelectTrigger><SelectValue placeholder="Select a project (optional)" /></SelectTrigger>
+                  <SelectContent>
+                    {projects?.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">Notes (optional)</label>
+                <Textarea placeholder="Details about this session..." value={bookingNotes} onChange={(e) => setBookingNotes(e.target.value)} rows={2} />
+              </div>
+              <Button className="w-full" onClick={createCalendarEvent} disabled={bookingLoading}>
+                {bookingLoading ? "Saving..." : "Add to Calendar"}
               </Button>
-            )}
-          </div>
+              <Button variant="ghost" size="sm" className="w-full" onClick={() => setEventType(null)}>← Back</Button>
+            </div>
+          )}
+
+          {/* Reminder flow */}
+          {eventType === "reminder" && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">Reminder Title</label>
+                <Input placeholder="e.g. Submit final deliverables..." value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">Notes (optional)</label>
+                <Textarea placeholder="Any extra details..." value={bookingNotes} onChange={(e) => setBookingNotes(e.target.value)} rows={2} />
+              </div>
+              <Button className="w-full" onClick={createCalendarEvent} disabled={bookingLoading}>
+                {bookingLoading ? "Saving..." : "Set Reminder"}
+              </Button>
+              <Button variant="ghost" size="sm" className="w-full" onClick={() => setEventType(null)}>← Back</Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
