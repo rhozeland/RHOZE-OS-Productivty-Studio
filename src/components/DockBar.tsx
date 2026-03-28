@@ -5,7 +5,7 @@ import {
   Home,
   Building2,
   FolderKanban,
-  Palette,
+  Flame,
   MessageSquare,
 } from "lucide-react";
 
@@ -13,7 +13,7 @@ const dockItems = [
   { icon: Home, label: "Home", path: "/dashboard" },
   { icon: Building2, label: "Studios", path: "/studios" },
   { icon: FolderKanban, label: "Projects", path: "/projects" },
-  { icon: Palette, label: "Hub", path: "/creators" },
+  { icon: Flame, label: "Hub", path: "/creators" },
   { icon: MessageSquare, label: "Inbox", path: "/messages" },
 ];
 
