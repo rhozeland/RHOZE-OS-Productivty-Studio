@@ -416,8 +416,8 @@ const ProfileDetailPage = () => {
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {flowPosts.map((post: any) => (
-                <div key={post.id}
-                  className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all duration-200">
+                <div key={post.id} onClick={() => setExpandedPost(post)}
+                  className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer">
                   {post.file_url && (post.category === "photo" || post.category === "design" || post.content_type === "image") ? (
                     <div className="aspect-square overflow-hidden bg-muted">
                       <img src={post.file_url} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
@@ -427,17 +427,20 @@ const ProfileDetailPage = () => {
                       <video src={post.file_url} className="h-full w-full object-cover" muted preload="metadata" />
                     </div>
                   ) : post.link_url && post.link_url.includes("youtu") ? (
-                    <div className="aspect-square overflow-hidden bg-muted">
+                    <div className="aspect-square overflow-hidden bg-muted relative">
                       <img src={`https://img.youtube.com/vi/${post.link_url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?\s]+)/)?.[1]}/mqdefault.jpg`} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center">
+                          <Play className="h-4 w-4 text-foreground ml-0.5" />
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <div className="aspect-square flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5 p-3">
                       {post.category === "music" ? (
-                        <span className="text-2xl">🎵</span>
+                        <Music className="h-6 w-6 text-muted-foreground/40" />
                       ) : post.category === "writing" ? (
-                        <span className="text-2xl">✍️</span>
-                      ) : post.category === "photo" || post.category === "design" ? (
-                        <ImageIcon className="h-6 w-6 text-muted-foreground/40" />
+                        <FileText className="h-6 w-6 text-muted-foreground/40" />
                       ) : (
                         <ImageIcon className="h-6 w-6 text-muted-foreground/40" />
                       )}
