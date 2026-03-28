@@ -122,6 +122,36 @@ const StudioManagePage = () => {
     enabled: !!id,
   });
 
+  // Studio availability
+  const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const { data: availability } = useQuery({
+    queryKey: ["studio-availability-manage", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("studio_availability")
+        .select("*")
+        .eq("studio_id", id!)
+        .order("day_of_week");
+      return data ?? [];
+    },
+    enabled: !!id,
+  });
+
+  const updateAvailability = useMutation({
+    mutationFn: async (slot: { id: string; is_available?: boolean; start_time?: string; end_time?: string }) => {
+      const { error } = await supabase
+        .from("studio_availability")
+        .update({ is_available: slot.is_available, start_time: slot.start_time, end_time: slot.end_time })
+        .eq("id", slot.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["studio-availability-manage", id] });
+      queryClient.invalidateQueries({ queryKey: ["studio-availability", id] });
+      toast.success("Hours updated");
+    },
+  });
+
   const updateField = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 
   if (isLoading) {
