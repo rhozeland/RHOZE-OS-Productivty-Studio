@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import SpecialistHoverCard from "@/components/booking/SpecialistHoverCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
