@@ -147,7 +147,7 @@ const LandingPage = () => {
             <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold leading-[1.15] text-foreground mb-4">
               Where creatives
               <br />
-              <span className="gradient-text">build together.</span>
+              build together.
             </h1>
 
             <p className="text-sm sm:text-base text-muted-foreground max-w-sm mx-auto mb-8 leading-relaxed">
