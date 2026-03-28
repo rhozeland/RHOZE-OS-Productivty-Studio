@@ -22,7 +22,6 @@ const dockItems = [
   { icon: Search, label: "Discover", path: "/creators" },
   { icon: MessageSquare, label: "Inbox", path: "/messages", hasBadge: true },
   { icon: Calendar, label: "Schedule", path: "/calendar" },
-  { icon: Workflow, label: "Flow", path: "/flow" },
 ];
 
 const DockBar = () => {
