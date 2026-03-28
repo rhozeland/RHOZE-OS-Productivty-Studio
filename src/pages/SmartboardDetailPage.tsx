@@ -71,6 +71,7 @@ const SmartboardDetailPage = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [alsoPostToFlow, setAlsoPostToFlow] = useState(false);
 
   const { data: board } = useQuery({
     queryKey: ["smartboard", id],
