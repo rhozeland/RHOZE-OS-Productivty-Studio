@@ -7,6 +7,7 @@ import {
   Settings,
   LogOut,
   ShieldCheck,
+  CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
