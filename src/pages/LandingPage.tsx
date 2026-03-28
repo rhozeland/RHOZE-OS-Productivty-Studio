@@ -315,7 +315,20 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* $RHOZE Token */}
+      <section className="px-4 sm:px-6 py-8">
+        <div className="max-w-md mx-auto text-center">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 border border-border px-3 py-1 mb-3">
+            <Coins className="h-3 w-3 text-muted-foreground" />
+            <span className="text-[11px] font-medium text-muted-foreground">$RHOZE</span>
+          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Rhozeland is powered by <span className="font-semibold text-foreground">$RHOZE</span> — the token behind every booking, hire, and collaboration on the platform. Earn it by completing work, contributing to the community, and growing your creative reputation.
+          </p>
+        </div>
+      </section>
+
+
       <footer className="border-t border-border py-5">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
