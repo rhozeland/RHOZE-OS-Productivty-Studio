@@ -115,7 +115,21 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare }: FlowCardP
         {/* ═══ MUSIC — Artwork + embedded player ═══ */}
         {isAudio && (
           <div className="relative">
-            {spotifyEmbed && (
+            {youtubeId && (
+              <div className="aspect-video" onClick={(e) => e.stopPropagation()}>
+                <iframe
+                  src={`https://www.youtube.com/embed/${youtubeId}?rel=0`}
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="rounded-t-[20px]"
+                />
+              </div>
+            )}
+
+            {spotifyEmbed && !youtubeId && (
               <div className="w-full" onClick={(e) => e.stopPropagation()}>
                 <iframe
                   src={spotifyEmbed}
@@ -130,7 +144,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare }: FlowCardP
               </div>
             )}
 
-            {isSoundCloud && item.link_url && !spotifyEmbed && (
+            {isSoundCloud && item.link_url && !spotifyEmbed && !youtubeId && (
               <div className="w-full" onClick={(e) => e.stopPropagation()}>
                 <iframe
                   width="100%"
@@ -144,7 +158,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare }: FlowCardP
               </div>
             )}
 
-            {item.file_url && !spotifyEmbed && !isSoundCloud && (
+            {item.file_url && !spotifyEmbed && !isSoundCloud && !youtubeId && (
               <div className="relative">
                 <div className="aspect-square overflow-hidden bg-gradient-to-br from-pink/20 via-accent/10 to-muted flex items-center justify-center">
                   <div className="text-center">
@@ -160,7 +174,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare }: FlowCardP
               </div>
             )}
 
-            {!item.file_url && !spotifyEmbed && !isSoundCloud && (
+            {!item.file_url && !spotifyEmbed && !isSoundCloud && !youtubeId && (
               <div className="aspect-[4/5] bg-gradient-to-br from-pink/15 via-accent/10 to-muted flex items-center justify-center">
                 <div className="text-center p-6">
                   <div className="h-20 w-20 mx-auto rounded-2xl bg-card/40 backdrop-blur-md flex items-center justify-center mb-4 shadow-xl border border-border/20">
