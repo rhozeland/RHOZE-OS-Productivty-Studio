@@ -24,12 +24,17 @@ type Milestone = {
 type QuoteBuilderProps = {
   recipientId: string;
   recipientName: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
-const QuoteBuilder = ({ recipientId, recipientName }: QuoteBuilderProps) => {
+const QuoteBuilder = ({ recipientId, recipientName, open: controlledOpen, onOpenChange }: QuoteBuilderProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
 
   const [projectTitle, setProjectTitle] = useState("");
   const [notes, setNotes] = useState("");
@@ -146,12 +151,6 @@ const QuoteBuilder = ({ recipientId, recipientName }: QuoteBuilderProps) => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
-          <FileText className="h-3.5 w-3.5" />
-          Send Quote
-        </Button>
-      </DialogTrigger>
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display">

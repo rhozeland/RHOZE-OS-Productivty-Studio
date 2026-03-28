@@ -16,7 +16,7 @@ import {
 import {
   Search, Send, User, MessageSquare, ArrowLeft,
   Inbox, FolderKanban, CheckCircle, XCircle, Clock, ArrowRight, Loader2,
-  DollarSign,
+  DollarSign, Video, Phone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
@@ -55,6 +55,7 @@ const MessagesPage = () => {
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [messageText, setMessageText] = useState("");
   const [search, setSearch] = useState("");
+  const [quoteOpen, setQuoteOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inquiryHandled = useRef(false);
 
@@ -484,8 +485,23 @@ const MessagesPage = () => {
                       )}
                     </div>
                     <span className="font-display font-semibold text-foreground">{selectedUser.display_name || "Creator"}</span>
-                    <div className="ml-auto">
-                      <QuoteBuilder recipientId={selectedUser.user_id} recipientName={selectedUser.display_name || "Creator"} />
+                    <div className="ml-auto flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                        onClick={() => toast.info("Voice calls coming soon — tied to your Creator Pass tier")}
+                      >
+                        <Phone className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                        onClick={() => toast.info("Video calls coming soon — tied to your Creator Pass tier")}
+                      >
+                        <Video className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
 
@@ -523,8 +539,6 @@ const MessagesPage = () => {
                   >
                     <ChatAttachmentMenu
                       onSendMessage={(content) => {
-                        const originalText = messageText;
-                        // Temporarily set the message to send rich content
                         supabase.from("messages").insert({
                           sender_id: user!.id,
                           receiver_id: selectedUser!.user_id,
@@ -535,6 +549,7 @@ const MessagesPage = () => {
                           queryClient.invalidateQueries({ queryKey: ["conversations"] });
                         });
                       }}
+                      onSendQuote={() => setQuoteOpen(true)}
                       disabled={!selectedUser}
                     />
                     <Input value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Type a message..." className="flex-1" />
@@ -546,6 +561,16 @@ const MessagesPage = () => {
               )}
             </div>
           </div>
+
+          {/* Quote Builder Dialog (controlled from attachment menu) */}
+          {selectedUser && (
+            <QuoteBuilder
+              recipientId={selectedUser.user_id}
+              recipientName={selectedUser.display_name || "Creator"}
+              open={quoteOpen}
+              onOpenChange={setQuoteOpen}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="inquiries" className="mt-4">
