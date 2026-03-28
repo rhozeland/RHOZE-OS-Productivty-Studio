@@ -176,7 +176,7 @@ const LandingPage = () => {
             </form>
 
             <p className="text-[11px] text-muted-foreground/60">
-              Early members earn founding badges & bonus Rose Coins.
+              Early members earn founding badges & bonus $RHOZE.
             </p>
           </motion.div>
         </div>
