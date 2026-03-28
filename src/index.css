@@ -211,6 +211,14 @@
   animation: iridescent-flow 8s ease-in-out infinite;
 }
 
+@keyframes aurora-drift {
+  0% { transform: translate(0%, 0%) scale(1); }
+  25% { transform: translate(5%, -3%) scale(1.05); }
+  50% { transform: translate(-3%, 5%) scale(0.97); }
+  75% { transform: translate(4%, 2%) scale(1.03); }
+  100% { transform: translate(-2%, -4%) scale(1); }
+}
+
 /* Custom scrollbar — minimal */
 ::-webkit-scrollbar {
   width: 4px;
