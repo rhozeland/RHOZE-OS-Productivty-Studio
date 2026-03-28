@@ -2132,6 +2132,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_old_notifications: { Args: never; Returns: undefined }
       convert_inquiry_to_project: {
         Args: {
           _inquiry_id: string

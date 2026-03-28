@@ -13,15 +13,18 @@ import {
 } from "@/components/ui/select";
 import {
   Plus, Search, Sparkles, Briefcase, FileText, Package, ShoppingBag,
-  SlidersHorizontal,
+  SlidersHorizontal, Flame, Users, Clock, Zap,
 } from "lucide-react";
-import { AnimatePresence } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import ListingCard from "@/components/marketplace/ListingCard";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import CategoryTiles from "@/components/creators/CategoryTiles";
 import Leaderboard from "@/components/creators/Leaderboard";
+import { formatDistanceToNow, isPast } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const TYPES = [
   { key: "all", label: "All Types" },
@@ -30,6 +33,16 @@ const TYPES = [
   { key: "physical_product", label: "Physical", icon: Package },
   { key: "project_request", label: "Requests", icon: ShoppingBag },
 ];
+
+const ROOM_COLORS: Record<string, string> = {
+  general: "from-violet-500/20 to-purple-600/20",
+  music: "from-rose-500/20 to-pink-600/20",
+  design: "from-cyan-500/20 to-blue-600/20",
+  video: "from-amber-500/20 to-orange-600/20",
+  writing: "from-emerald-500/20 to-green-600/20",
+  code: "from-slate-500/20 to-gray-600/20",
+  business: "from-yellow-500/20 to-amber-600/20",
+};
 
 const CreatorsHubPage = () => {
   const { user } = useAuth();
@@ -67,6 +80,21 @@ const CreatorsHubPage = () => {
     queryFn: async () => {
       const { data } = await supabase.from("marketplace_listings").select("category").eq("is_active", true);
       return data ?? [];
+    },
+  });
+
+  // Fetch active drop rooms
+  const { data: dropRooms } = useQuery({
+    queryKey: ["drop-rooms-hub"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("drop_rooms")
+        .select("*, drop_room_members(count)")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(6);
+      if (error) throw error;
+      return (data ?? []).filter((r: any) => !isPast(new Date(r.expires_at)));
     },
   });
 
@@ -164,12 +192,62 @@ const CreatorsHubPage = () => {
         </Select>
       </div>
 
-      {/* Category filter pills — compact */}
+      {/* Category filter pills */}
       <CategoryTiles
         activeCategory={activeCategory}
         onSelect={setActiveCategory}
         listingCounts={listingCounts}
       />
+
+      {/* Live Collab Rooms */}
+      {(dropRooms?.length ?? 0) > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-primary" />
+              <h2 className="font-display text-base font-semibold text-foreground">Live Collab Rooms</h2>
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+              </span>
+            </div>
+            <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate("/drop-rooms")}>
+              View all
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {dropRooms!.slice(0, 6).map((room: any) => {
+              const memberCount = room.drop_room_members?.[0]?.count ?? 0;
+              const colorClass = ROOM_COLORS[room.category] || ROOM_COLORS.general;
+              return (
+                <motion.button
+                  key={room.id}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate(`/drop-rooms/${room.id}`)}
+                  className={cn(
+                    "relative rounded-xl p-3 text-left border border-border/50 bg-gradient-to-br transition-all hover:shadow-md",
+                    colorClass
+                  )}
+                >
+                  <p className="text-sm font-medium text-foreground truncate">{room.title}</p>
+                  <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Users className="h-3 w-3" /> {memberCount}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" /> {formatDistanceToNow(new Date(room.expires_at))}
+                    </span>
+                  </div>
+                  <Badge variant="outline" className="absolute top-2 right-2 text-[9px] h-5 capitalize">
+                    {room.category}
+                  </Badge>
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Leaderboard */}
       <Leaderboard />

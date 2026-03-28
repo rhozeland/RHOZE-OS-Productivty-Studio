@@ -18,6 +18,8 @@ import {
   Star,
   Check,
   Sparkles,
+  Trash2,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -61,7 +63,7 @@ const NotificationBell = () => {
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "notifications",
           filter: `user_id=eq.${user.id}`,
@@ -98,6 +100,26 @@ const NotificationBell = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] }),
   });
 
+  const deleteOne = useMutation({
+    mutationFn: async (notifId: string) => {
+      await supabase
+        .from("notifications" as any)
+        .delete()
+        .eq("id", notifId);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] }),
+  });
+
+  const clearAll = useMutation({
+    mutationFn: async () => {
+      await supabase
+        .from("notifications" as any)
+        .delete()
+        .eq("user_id", user!.id);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] }),
+  });
+
   const handleClick = (notif: any) => {
     if (!notif.read) markRead.mutate(notif.id);
     if (notif.link) navigate(notif.link);
@@ -119,16 +141,28 @@ const NotificationBell = () => {
       <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <h3 className="font-display text-sm font-semibold text-foreground">Notifications</h3>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs text-muted-foreground h-7 gap-1"
-              onClick={() => markAllRead.mutate()}
-            >
-              <Check className="h-3 w-3" /> Mark all read
-            </Button>
-          )}
+          <div className="flex items-center gap-1">
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground h-7 gap-1"
+                onClick={() => markAllRead.mutate()}
+              >
+                <Check className="h-3 w-3" /> Read all
+              </Button>
+            )}
+            {(notifications?.length ?? 0) > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-destructive/70 hover:text-destructive h-7 gap-1"
+                onClick={() => clearAll.mutate()}
+              >
+                <Trash2 className="h-3 w-3" /> Clear
+              </Button>
+            )}
+          </div>
         </div>
 
         <ScrollArea className="max-h-80">
@@ -143,37 +177,47 @@ const NotificationBell = () => {
                 const meta = TYPE_META[notif.type] || TYPE_META.general;
                 const Icon = meta.icon;
                 return (
-                  <button
-                    key={notif.id}
-                    onClick={() => handleClick(notif)}
-                    className={cn(
-                      "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50",
-                      !notif.read && "bg-primary/5"
-                    )}
-                  >
-                    <div className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted", meta.color)}>
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className={cn("text-sm leading-snug", !notif.read ? "font-medium text-foreground" : "text-muted-foreground")}>
-                        {notif.title}
-                      </p>
-                      {notif.body && (
-                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{notif.body}</p>
+                  <div key={notif.id} className="relative group">
+                    <button
+                      onClick={() => handleClick(notif)}
+                      className={cn(
+                        "flex w-full items-start gap-3 px-4 py-3 pr-9 text-left transition-colors hover:bg-muted/50",
+                        !notif.read && "bg-primary/5"
                       )}
-                      <p className="text-[10px] text-muted-foreground/60 mt-1">
-                        {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
-                      </p>
-                    </div>
-                    {!notif.read && (
-                      <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary" />
-                    )}
-                  </button>
+                    >
+                      <div className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted", meta.color)}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={cn("text-sm leading-snug", !notif.read ? "font-medium text-foreground" : "text-muted-foreground")}>
+                          {notif.title}
+                        </p>
+                        {notif.body && (
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{notif.body}</p>
+                        )}
+                        <p className="text-[10px] text-muted-foreground/60 mt-1">
+                          {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
+                        </p>
+                      </div>
+                      {!notif.read && (
+                        <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary" />
+                      )}
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteOne.mutate(notif.id); }}
+                      className="absolute right-2 top-3 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 );
               })}
             </div>
           )}
         </ScrollArea>
+        <div className="px-4 py-2 border-t border-border">
+          <p className="text-[10px] text-muted-foreground/50 text-center">Notifications auto-clear after 7 days</p>
+        </div>
       </PopoverContent>
     </Popover>
   );
