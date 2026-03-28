@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,7 @@ const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 8am - 8pm
 
 const CalendarPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -880,13 +881,21 @@ const CalendarPage = () => {
           {!eventType && (
             <div className="grid gap-3">
               {[
-                { type: "studio" as EventType, icon: Building2, title: "Book a Studio", desc: "Reserve a studio session with payment", color: "bg-primary/10 text-primary" },
+                { type: "studio" as EventType, icon: Building2, title: "Book a Studio", desc: "Browse studios and reserve a session", color: "bg-primary/10 text-primary" },
                 { type: "project" as EventType, icon: FolderKanban, title: "Project Session", desc: "Schedule time for a project", color: "bg-accent/10 text-accent-foreground" },
                 { type: "reminder" as EventType, icon: Bell, title: "Set a Reminder", desc: "Add a personal reminder to your calendar", color: "bg-muted text-muted-foreground" },
               ].map((opt) => (
                 <button
                   key={opt.type}
-                  onClick={() => setEventType(opt.type)}
+                  onClick={() => {
+                    if (opt.type === "studio") {
+                      setBookingDialogOpen(false);
+                      resetDrag();
+                      navigate("/studios");
+                      return;
+                    }
+                    setEventType(opt.type);
+                  }}
                   className="flex items-center gap-4 rounded-xl border border-border p-4 text-left hover:bg-muted/50 hover:border-primary/30 transition-all"
                 >
                   <div className={cn("flex h-11 w-11 items-center justify-center rounded-xl", opt.color)}>
