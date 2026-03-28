@@ -721,7 +721,7 @@ const TransactionHistory = ({ userId }: { userId?: string }) => {
               }`}
             >
               {tx.amount > 0 ? "+" : ""}
-              {tx.amount} cr
+              {tx.amount} ◊
             </span>
           </div>
         ))}
