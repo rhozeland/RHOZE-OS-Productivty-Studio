@@ -20,7 +20,6 @@ import {
   Sparkles,
   Plus,
   FileText,
-  Share2,
   Check,
   Upload,
   Search,
