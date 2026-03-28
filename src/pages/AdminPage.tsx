@@ -28,7 +28,7 @@ const AdminPage = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Admin Panel</h1>
-        <p className="text-muted-foreground">Manage services, users, staff, badges, and studio settings</p>
+        <p className="text-muted-foreground">Manage users, staff, badges, and studio settings</p>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
