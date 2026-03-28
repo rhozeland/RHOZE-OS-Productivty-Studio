@@ -173,7 +173,7 @@ const CalendarPage = () => {
     }
   };
 
-
+  const createBookingWithPayment = async (cardToken?: string) => {
     if (!dragDate || dragStartHour === null || dragEndHour === null || !user) return;
     const startH = Math.min(dragStartHour, dragEndHour);
     const endH = Math.max(dragStartHour, dragEndHour) + 1;
