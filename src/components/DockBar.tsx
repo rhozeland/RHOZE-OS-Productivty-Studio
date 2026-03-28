@@ -19,9 +19,9 @@ const dockItems = [
   { icon: LayoutDashboard, label: "Home", path: "/dashboard" },
   { icon: Building2, label: "Studios", path: "/studios" },
   { icon: FolderKanban, label: "Projects", path: "/projects" },
-  { icon: Search, label: "Explore", path: "/creators" },
-  { icon: MessageSquare, label: "Messages", path: "/messages", hasBadge: true },
-  { icon: Calendar, label: "Calendar", path: "/calendar" },
+  { icon: Search, label: "Discover", path: "/creators" },
+  { icon: MessageSquare, label: "Inbox", path: "/messages", hasBadge: true },
+  { icon: Calendar, label: "Schedule", path: "/calendar" },
   { icon: LayoutGrid, label: "Boards", path: "/smartboards" },
   { icon: Workflow, label: "Flow", path: "/flow" },
 ];
@@ -54,7 +54,7 @@ const DockBar = () => {
       transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
       className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50"
     >
-      <div className="flex items-center gap-1 px-3 py-2 rounded-2xl glass shadow-2xl shadow-black/20 dark:shadow-black/50 border border-border/60">
+      <div className="flex items-center gap-0.5 sm:gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-2xl glass shadow-2xl shadow-black/20 dark:shadow-black/50 border border-border/60">
         {dockItems.map((item) => {
           const active = isActive(item.path);
           const showBadge = item.hasBadge && (unreadCount ?? 0) > 0;
@@ -66,17 +66,23 @@ const DockBar = () => {
               className="relative group"
             >
               <motion.div
-                whileHover={{ scale: 1.2, y: -4 }}
+                whileHover={{ scale: 1.12, y: -3 }}
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 className={cn(
-                  "flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-colors duration-200",
+                  "flex flex-col items-center justify-center w-11 h-12 sm:w-14 sm:h-14 rounded-xl transition-colors duration-200 gap-0.5",
                   active
                     ? "bg-primary/15 text-primary"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                 )}
               >
-                <item.icon className={cn("h-5 w-5", active && "text-primary")} />
+                <item.icon className={cn("h-4 w-4 sm:h-5 sm:w-5", active && "text-primary")} />
+                <span className={cn(
+                  "text-[9px] sm:text-[10px] font-medium leading-none",
+                  active ? "text-primary" : "text-muted-foreground"
+                )}>
+                  {item.label}
+                </span>
                 {active && (
                   <motion.div
                     layoutId="dock-indicator"
@@ -85,14 +91,9 @@ const DockBar = () => {
                   />
                 )}
                 {showBadge && (
-                  <span className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-card" />
+                  <span className="absolute top-0.5 right-1 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-card" />
                 )}
               </motion.div>
-
-              {/* Tooltip */}
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md bg-foreground text-background text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-                {item.label}
-              </div>
             </Link>
           );
         })}
