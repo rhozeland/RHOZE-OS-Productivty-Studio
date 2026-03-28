@@ -17,7 +17,7 @@ const dockItems = [
   { icon: LayoutDashboard, label: "Home", path: "/dashboard" },
   { icon: Building2, label: "Studios", path: "/studios" },
   { icon: FolderKanban, label: "Projects", path: "/projects" },
-  { icon: Search, label: "Discover", path: "/creators" },
+  { icon: Palette, label: "Creators", path: "/creators" },
   { icon: MessageSquare, label: "Inbox", path: "/messages", hasBadge: true },
   { icon: Calendar, label: "Schedule", path: "/calendar" },
 ];
