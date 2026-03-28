@@ -184,7 +184,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
             )}
 
             {!item.file_url && !spotifyEmbed && !isSoundCloud && !youtubeId && (
-              <div className="aspect-[4/5] bg-gradient-to-br from-pink/15 via-accent/10 to-muted flex items-center justify-center">
+              <div className="min-h-[280px] bg-gradient-to-br from-pink/15 via-accent/10 to-muted flex items-center justify-center">
                 <div className="text-center p-6">
                   <div className="h-20 w-20 mx-auto rounded-2xl bg-card/40 backdrop-blur-md flex items-center justify-center mb-4 shadow-xl border border-border/20">
                     <Music className="h-10 w-10 text-foreground/40" />
