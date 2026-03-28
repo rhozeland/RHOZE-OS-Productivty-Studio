@@ -33,7 +33,7 @@ interface ChatAttachmentMenuProps {
   disabled?: boolean;
 }
 
-const ChatAttachmentMenu = ({ onSendMessage, disabled }: ChatAttachmentMenuProps) => {
+const ChatAttachmentMenu = ({ onSendMessage, onSendQuote, disabled }: ChatAttachmentMenuProps) => {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<ShareType>("menu");
