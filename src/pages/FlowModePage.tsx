@@ -403,7 +403,7 @@ const FlowModePage = () => {
       </div>
 
       {/* Card area — centered */}
-      <div className="relative z-10 flex-1 flex items-center justify-center px-4 pb-24">
+      <div className="relative z-10 flex flex-1 items-center justify-center px-4 pb-40 pt-2 md:pb-44">
         <AnimatePresence mode="wait">
           {currentItem ? (
             <motion.div
@@ -430,11 +430,11 @@ const FlowModePage = () => {
             </motion.div>
           ) : (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center px-4">
-              <div className="mx-auto mb-6 h-20 w-20 rounded-full bg-card/60 backdrop-blur-sm flex items-center justify-center">
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-card/60 backdrop-blur-sm">
                 <Sparkles className="h-8 w-8 text-primary" />
               </div>
-              <h2 className="font-display text-xl font-bold text-foreground mb-2">Nothing here yet</h2>
-              <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">Be the first to share your work.</p>
+              <h2 className="mb-2 font-display text-xl font-bold text-foreground">Nothing here yet</h2>
+              <p className="mx-auto mb-6 max-w-xs text-sm text-muted-foreground">Be the first to share your work.</p>
               <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
                 <Plus className="mr-2 h-4 w-4" />
                 Share Your Work
@@ -444,20 +444,19 @@ const FlowModePage = () => {
         </AnimatePresence>
       </div>
 
-      {/* Bottom swipe hints — fixed to bottom, centered */}
       {currentItem && (
-        <div className="relative z-10 flex justify-center items-center pb-6 pt-2">
-          <div className="inline-flex items-center gap-8 px-5 py-2.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/30">
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <div className="pointer-events-none fixed bottom-24 left-1/2 z-40 w-full -translate-x-1/2 px-4 md:bottom-28">
+          <div className="mx-auto inline-flex max-w-fit items-center gap-4 rounded-full border border-border/30 bg-card/70 px-4 py-2 backdrop-blur-sm md:gap-6 md:px-5 md:py-2.5">
+            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground md:text-xs">
               <ChevronUp className="h-3.5 w-3.5" /> Save
             </span>
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground md:text-xs">
               <ChevronDown className="h-3.5 w-3.5" /> Pass
             </span>
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground md:text-xs">
               <ChevronLeft className="h-3.5 w-3.5" /> Share
             </span>
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground md:text-xs">
               <ChevronRight className="h-3.5 w-3.5" /> Next
             </span>
           </div>
