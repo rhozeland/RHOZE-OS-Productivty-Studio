@@ -2,12 +2,14 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import {
+  Home,
   Building2,
   FolderKanban,
   Palette,
 } from "lucide-react";
 
 const dockItems = [
+  { icon: Home, label: "Home", path: "/dashboard" },
   { icon: Building2, label: "Studios", path: "/studios" },
   { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: Palette, label: "Hub", path: "/creators" },
