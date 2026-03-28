@@ -11,8 +11,6 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
   SidebarContent,
