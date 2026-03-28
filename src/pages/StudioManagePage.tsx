@@ -131,10 +131,10 @@ const StudioManagePage = () => {
       const { data } = await supabase
         .from("staff_members")
         .select("*")
-        .eq("user_id", user!.id);
+        .eq("studio_id", id!);
       return (data as any[]) ?? [];
     },
-    enabled: !!user,
+    enabled: !!id,
   });
 
   // Hard-coded specialty options
