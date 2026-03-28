@@ -54,8 +54,8 @@ const TIERS = [
     bestFor: "Exploring the platform, getting started",
     features: [
       "Access all creative tools",
-      "3 Smartboards",
-      "Drop Rooms — 1 hr max",
+      "3 Boards",
+      "Collab Rooms — 1 hr max",
       "Community access",
       "Basic profile",
     ],
@@ -71,9 +71,9 @@ const TIERS = [
     icon: Flower2,
     bestFor: "New creators, freelancers, side-hustlers",
     features: [
-      "4 credits/month",
-      "15 Smartboards",
-      "Drop Rooms — 4 hr max",
+      "4 $RHOZE/month",
+      "15 Boards",
+      "Collab Rooms — 4 hr max",
       "Studio access",
       "Livestream workshops",
       "Community Telegram",
@@ -90,9 +90,9 @@ const TIERS = [
     icon: Sun,
     bestFor: "Semi-pros, scaling micro-influencers",
     features: [
-      "10 credits/month",
-      "50 Smartboards",
-      "Drop Rooms — 12 hr max",
+      "10 $RHOZE/month",
+      "50 Boards",
+      "Collab Rooms — 12 hr max",
       "Standard workshops",
       "Strategy consultation",
       "Priority booking",
@@ -109,9 +109,9 @@ const TIERS = [
     icon: Gamepad,
     bestFor: "Full-time creators, funded artists",
     features: [
-      "25 credits/month",
-      "Unlimited Smartboards",
-      "Unlimited Drop Rooms",
+      "25 $RHOZE/month",
+      "Unlimited Boards",
+      "Unlimited Collab Rooms",
       "Premium workshops",
       "360 Audit",
       "Grant support",
@@ -121,7 +121,7 @@ const TIERS = [
   },
 ];
 
-const CREDIT_PRICE = 75;
+const TOKEN_PRICE = 75; // 1 $RHOZE ≈ $75
 
 const CreditShopPage = () => {
   const { user } = useAuth();
@@ -186,7 +186,7 @@ const CreditShopPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-credits"] });
-      toast.success("Credits added to your balance!");
+      toast.success("$RHOZE added to your balance!");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -228,7 +228,7 @@ const CreditShopPage = () => {
           user_id: user!.id,
           amount: tier.credits,
           type: "subscription",
-          description: `${tier.name} subscription — ${tier.credits} credits`,
+          description: `${tier.name} subscription — ${tier.credits} $RHOZE`,
           payment_method: "card",
         });
       if (txError) throw txError;
@@ -293,7 +293,7 @@ const CreditShopPage = () => {
               Studio Pass
             </h1>
             <p className="text-muted-foreground">
-              Your creative membership & credits
+              Your creative membership & $RHOZE wallet
             </p>
           </div>
           <div className="surface-card flex items-center gap-3 px-5 py-3">
@@ -311,12 +311,12 @@ const CreditShopPage = () => {
         {/* What are credits explainer */}
         <div className="rounded-2xl bg-gradient-to-r from-primary/5 to-accent/5 border border-border p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-1">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">What are credits?</p>
-            <p className="text-sm text-foreground">Credits unlock studio sessions, services, and creative tools. <strong>1 credit = ${CREDIT_PRICE}</strong> worth of studio time.</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">What is $RHOZE?</p>
+            <p className="text-sm text-foreground">$RHOZE is the native token powering Rhozeland. Use it to book studios, hire creators, and trade on the marketplace. <strong>1 $RHOZE ≈ ${TOKEN_PRICE}</strong>.</p>
           </div>
           <div className="space-y-1">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">How to earn</p>
-            <p className="text-sm text-foreground">Subscribe to a plan for monthly credits, or top up anytime with card or SOL.</p>
+            <p className="text-sm text-foreground">Subscribe for monthly $RHOZE, post listings, collaborate in rooms, or top up with card/SOL.</p>
           </div>
           <div className="space-y-1">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">How to spend</p>
@@ -331,7 +331,7 @@ const CreditShopPage = () => {
       }}>
         <TabsList>
           <TabsTrigger value="shop" className="gap-1.5"><Coins className="h-3.5 w-3.5" /> Plans</TabsTrigger>
-          <TabsTrigger value="purchases" className="gap-1.5"><ShoppingBag className="h-3.5 w-3.5" /> My Purchases</TabsTrigger>
+          <TabsTrigger value="purchases" className="gap-1.5"><ShoppingBag className="h-3.5 w-3.5" /> Purchases</TabsTrigger>
         </TabsList>
 
         <TabsContent value="shop" className="space-y-8 mt-4">
@@ -400,7 +400,7 @@ const CreditShopPage = () => {
                     </span>
                   </div>
                   <p className="text-sm opacity-80 mt-1 relative z-10">
-                    {isFree ? "forever" : "credits / month"}
+                    {isFree ? "forever" : "$RHOZE / month"}
                   </p>
                   {!isFree && (
                     <p className="text-xs opacity-60 mt-0.5 relative z-10">
@@ -462,13 +462,13 @@ const CreditShopPage = () => {
         <h2 className="font-display text-lg font-semibold text-foreground">
           Top Up{" "}
           <span className="text-sm font-normal text-muted-foreground">
-            — add individual credits anytime
+            — add $RHOZE anytime
           </span>
         </h2>
 
         <div className="space-y-2">
           <p className="text-sm text-muted-foreground">
-            1 credit ≈ ${CREDIT_PRICE.toFixed(2)}
+            1 $RHOZE ≈ ${TOKEN_PRICE.toFixed(2)}
           </p>
           <p className="font-display text-3xl font-bold text-foreground">
             {alaCarteCredits}
@@ -492,14 +492,14 @@ const CreditShopPage = () => {
             }}
           >
             <CreditCard className="mr-2 h-4 w-4" />
-            Buy {alaCarteCredits} Credit{alaCarteCredits > 1 ? "s" : ""} @ $
-            {(alaCarteCredits * CREDIT_PRICE).toFixed(2)}
+            Buy {alaCarteCredits} $RHOZE @ $
+            {(alaCarteCredits * TOKEN_PRICE).toFixed(2)}
           </Button>
           <PaySolAndVerify
-            solAmount={+(alaCarteCredits * CREDIT_PRICE / 150).toFixed(4)}
+            solAmount={+(alaCarteCredits * TOKEN_PRICE / 150).toFixed(4)}
             creditsToAdd={alaCarteCredits}
-            description={`${alaCarteCredits} credit(s) à la carte (SOL)`}
-            label={`Pay ~${(alaCarteCredits * CREDIT_PRICE / 150).toFixed(4)} SOL`}
+            description={`${alaCarteCredits} $RHOZE à la carte (SOL)`}
+            label={`Pay ~${(alaCarteCredits * TOKEN_PRICE / 150).toFixed(4)} SOL`}
             className="flex-1"
             onSuccess={() => queryClient.invalidateQueries({ queryKey: ["user-credits"] })}
           />
@@ -568,29 +568,28 @@ const CreditShopPage = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-display text-xl">
-              Buy {pendingCardCredits} Credit{pendingCardCredits > 1 ? "s" : ""}
+              Buy {pendingCardCredits} $RHOZE
             </DialogTitle>
           </DialogHeader>
           <div className="rounded-lg bg-muted/50 border border-border p-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Coins className="h-5 w-5 text-primary" />
               <span className="text-sm font-medium text-foreground">
-                {pendingCardCredits} credit{pendingCardCredits > 1 ? "s" : ""}
+                {pendingCardCredits} $RHOZE
               </span>
             </div>
             <span className="text-lg font-bold text-primary">
-              ${(pendingCardCredits * CREDIT_PRICE).toFixed(2)}
+              ${(pendingCardCredits * TOKEN_PRICE).toFixed(2)}
             </span>
           </div>
           <SquareCardForm
-            amount={pendingCardCredits * CREDIT_PRICE}
+            amount={pendingCardCredits * TOKEN_PRICE}
             onTokenize={async (token) => {
-              // Process real payment via Square
               const { data, error } = await supabase.functions.invoke("square-payment", {
                 body: {
-                  amount_cents: pendingCardCredits * CREDIT_PRICE * 100,
+                  amount_cents: pendingCardCredits * TOKEN_PRICE * 100,
                   currency: "USD",
-                  description: `Rhozeland: ${pendingCardCredits} credit(s)`,
+                  description: `Rhozeland: ${pendingCardCredits} $RHOZE`,
                   source_id: token,
                   location_id: SQUARE_LOCATION_ID,
                 },
@@ -601,7 +600,7 @@ const CreditShopPage = () => {
               // Payment succeeded — now add credits
               await purchaseCredits.mutateAsync({
                 amount: pendingCardCredits,
-                description: `${pendingCardCredits} credit(s) à la carte`,
+                description: `${pendingCardCredits} $RHOZE à la carte`,
                 method: "card",
               });
 
@@ -627,7 +626,7 @@ const CreditShopPage = () => {
                   <span className="text-lg font-bold text-primary">${pendingTier.price.toFixed(2)}/mo</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {pendingTier.credits} credits/month • Billed monthly
+                  {pendingTier.credits} $RHOZE/month • Billed monthly
                 </p>
               </div>
               <SquareCardForm
@@ -722,7 +721,7 @@ const TransactionHistory = ({ userId }: { userId?: string }) => {
               }`}
             >
               {tx.amount > 0 ? "+" : ""}
-              {tx.amount} cr
+              {tx.amount} ◊
             </span>
           </div>
         ))}

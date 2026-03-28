@@ -126,12 +126,12 @@ const ServicesPage = () => {
             <span className="font-display font-bold text-lg text-foreground">
               {userCredits?.balance ?? 0}
             </span>
-            <span className="text-xs text-muted-foreground">credits</span>
+            <span className="text-xs text-muted-foreground">$RHOZE</span>
           </div>
           <Link to="/credits">
             <Button size="sm" variant="outline" className="rounded-full">
               <ShoppingCart className="mr-1.5 h-3.5 w-3.5" />
-              Get Credits
+              Get $RHOZE
             </Button>
           </Link>
         </div>
@@ -283,7 +283,7 @@ const ServicesPage = () => {
                         style={{ background: meta.gradient }}
                       >
                         <Coins className="h-3 w-3" />
-                        {service.credits_cost} cr
+                        {service.credits_cost} ◊
                       </div>
                     </div>
                   </div>
@@ -361,7 +361,7 @@ const ServicesPage = () => {
                         {selectedService.credits_cost}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        credits · up to {selectedService.duration_hours}h
+                        $RHOZE · up to {selectedService.duration_hours}h
                       </p>
                     </button>
 
