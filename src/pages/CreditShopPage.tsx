@@ -47,7 +47,7 @@ const CRYPTO_DISCOUNT = 0.30; // 30% off for crypto payments
 const TOKEN_PRICE = 75;
 
 // Placeholder — user will provide the actual Pump Fun CA
-const RHOZE_CA = "YOUR_PUMP_FUN_CA_HERE";
+const RHOZE_CA = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
 const PUMP_FUN_URL = `https://pump.fun/coin/${RHOZE_CA}`;
 
 const TIERS = [
