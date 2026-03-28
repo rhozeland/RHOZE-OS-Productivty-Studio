@@ -71,9 +71,9 @@ const TIERS = [
     icon: Flower2,
     bestFor: "New creators, freelancers, side-hustlers",
     features: [
-      "4 credits/month",
-      "15 Smartboards",
-      "Drop Rooms — 4 hr max",
+      "4 $RHOZE/month",
+      "15 Boards",
+      "Collab Rooms — 4 hr max",
       "Studio access",
       "Livestream workshops",
       "Community Telegram",
