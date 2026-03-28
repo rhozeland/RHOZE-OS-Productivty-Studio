@@ -42,37 +42,6 @@ const AppSidebar = () => {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
 
-  const { data: unreadCount } = useQuery({
-    queryKey: ["unread-messages-count", user?.id],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("messages")
-        .select("id", { count: "exact", head: true })
-        .eq("receiver_id", user!.id)
-        .eq("read", false);
-      if (error) return 0;
-      return count ?? 0;
-    },
-    enabled: !!user,
-    refetchInterval: 30000,
-  });
-
-  const { data: pendingInquiries } = useQuery({
-    queryKey: ["pending-inquiries-count", user?.id],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("listing_inquiries")
-        .select("id", { count: "exact", head: true })
-        .eq("receiver_id", user!.id)
-        .eq("status", "pending");
-      if (error) return 0;
-      return count ?? 0;
-    },
-    enabled: !!user,
-    refetchInterval: 30000,
-  });
-
-  const totalUnread = (unreadCount ?? 0) + (pendingInquiries ?? 0);
 
   const accountItems = [
     { icon: Settings, label: "Settings", path: "/settings" },
