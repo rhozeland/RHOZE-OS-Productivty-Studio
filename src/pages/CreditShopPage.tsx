@@ -331,7 +331,7 @@ const CreditShopPage = () => {
       }}>
         <TabsList>
           <TabsTrigger value="shop" className="gap-1.5"><Coins className="h-3.5 w-3.5" /> Plans</TabsTrigger>
-          <TabsTrigger value="purchases" className="gap-1.5"><ShoppingBag className="h-3.5 w-3.5" /> My Purchases</TabsTrigger>
+          <TabsTrigger value="purchases" className="gap-1.5"><ShoppingBag className="h-3.5 w-3.5" /> Purchases</TabsTrigger>
         </TabsList>
 
         <TabsContent value="shop" className="space-y-8 mt-4">
