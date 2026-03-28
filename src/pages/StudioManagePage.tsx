@@ -199,6 +199,7 @@ const StudioManagePage = () => {
       <Tabs defaultValue="details">
         <TabsList>
           <TabsTrigger value="details" className="gap-1.5"><Settings className="h-3.5 w-3.5" /> Details</TabsTrigger>
+          <TabsTrigger value="hours" className="gap-1.5"><Clock className="h-3.5 w-3.5" /> Hours</TabsTrigger>
           <TabsTrigger value="staff" className="gap-1.5"><Users className="h-3.5 w-3.5" /> Staff</TabsTrigger>
           <TabsTrigger value="bookings" className="gap-1.5"><Calendar className="h-3.5 w-3.5" /> Bookings</TabsTrigger>
         </TabsList>
