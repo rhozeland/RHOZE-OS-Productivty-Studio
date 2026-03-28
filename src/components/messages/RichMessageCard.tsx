@@ -58,9 +58,10 @@ interface RichMessageCardProps {
   timestamp: string;
   formatTime: (d: string) => string;
   messageId?: string;
+  senderId?: string;
 }
 
-const RichMessageCard = ({ content, isMine, timestamp, formatTime, messageId }: RichMessageCardProps) => {
+const RichMessageCard = ({ content, isMine, timestamp, formatTime, messageId, senderId }: RichMessageCardProps) => {
   // FILE
   if (content.startsWith("[FILE:")) {
     const data = parseRich(content, "[FILE:");
