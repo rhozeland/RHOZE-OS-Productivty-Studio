@@ -9,9 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const AppLayout = () => {
   const { user } = useAuth();
@@ -42,28 +40,15 @@ const AppLayout = () => {
           <header className="sticky top-0 z-30 flex h-12 items-center justify-between border-b border-border bg-background/90 backdrop-blur-sm px-4 md:px-6 gap-4">
             <SidebarTrigger className="mr-1 shrink-0" />
 
-            {/* Search bar with Flow mode trigger */}
-            <div className="hidden md:flex flex-1 max-w-md items-center gap-2">
-              <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  placeholder="Search artists, music, design, services, and more..."
-                  className="pl-9 h-8 rounded-sm bg-muted/50 border-border text-xs font-body"
-                />
-              </div>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => navigate("/flow")}
-                    className="shrink-0 h-8 w-8 rounded-sm bg-primary text-primary-foreground flex items-center justify-center transition-opacity hover:opacity-80 active:opacity-70"
-                  >
-                    <Search className="h-3.5 w-3.5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs font-body">
-                  Discover in Flow Mode
-                </TooltipContent>
-              </Tooltip>
+            {/* Search bar — clicking opens Flow mode */}
+            <div className="hidden md:flex flex-1 max-w-lg justify-center">
+              <button
+                onClick={() => navigate("/flow")}
+                className="relative w-full max-w-md flex items-center gap-2.5 h-9 px-4 rounded-full border border-border bg-card hover:border-foreground/30 transition-colors cursor-pointer"
+              >
+                <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <span className="text-sm text-muted-foreground font-body">Search Rhozeland...</span>
+              </button>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
