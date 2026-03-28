@@ -54,8 +54,8 @@ const TIERS = [
     bestFor: "Exploring the platform, getting started",
     features: [
       "Access all creative tools",
-      "3 Smartboards",
-      "Drop Rooms — 1 hr max",
+      "3 Boards",
+      "Collab Rooms — 1 hr max",
       "Community access",
       "Basic profile",
     ],
