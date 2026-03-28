@@ -361,7 +361,7 @@ const ServicesPage = () => {
                         {selectedService.credits_cost}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        credits · up to {selectedService.duration_hours}h
+                        $RHOZE · up to {selectedService.duration_hours}h
                       </p>
                     </button>
 
