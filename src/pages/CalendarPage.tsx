@@ -65,7 +65,10 @@ const CalendarPage = () => {
   const [viewMode, setViewMode] = useState<ViewMode>(searchParams.get("service") ? "week" : "month");
   const [activeTab, setActiveTab] = useState<TabMode>("upcoming");
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
+  const [eventType, setEventType] = useState<EventType | null>(null);
   const [selectedService, setSelectedService] = useState(searchParams.get("service") || "");
+  const [selectedProject, setSelectedProject] = useState("");
+  const [eventTitle, setEventTitle] = useState("");
   const [bookingNotes, setBookingNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("credits");
   const [bookingLoading, setBookingLoading] = useState(false);
