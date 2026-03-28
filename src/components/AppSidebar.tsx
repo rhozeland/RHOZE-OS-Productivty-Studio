@@ -76,11 +76,12 @@ const AppSidebar = () => {
     const active = isActive(item.path);
 
     return (
-      <SidebarMenuItem key={item.path + item.label}>
+      <SidebarMenuItem key={item.path + item.label} className={cn(collapsed && "flex justify-center")}>
         <SidebarMenuButton
           asChild
           tooltip={collapsed ? item.label : undefined}
           isActive={active}
+          className={cn(collapsed && "mx-auto")}
         >
           <Link
             to={item.path}
