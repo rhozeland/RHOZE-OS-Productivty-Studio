@@ -196,6 +196,7 @@ const ChatAttachmentMenu = ({ onSendMessage, onSendQuote, disabled }: ChatAttach
   const menuItems = [
     { icon: Paperclip, label: "Upload File", description: "Share images, docs, audio", action: () => fileInputRef.current?.click() },
     { icon: Link2, label: "Share Link", description: "Google Drive, Dropbox, any URL", action: () => setView("link") },
+    { icon: FileText, label: "Send Quote", description: "Create a project quote", action: () => { setOpen(false); setView("menu"); onSendQuote?.(); } },
     { icon: LayoutGrid, label: "Smartboard", description: "Share a smartboard", action: () => setView("smartboards") },
     { icon: User, label: "Creator Profile", description: "Share a creator's profile", action: () => setView("profiles") },
     { icon: ShoppingBag, label: "Listing", description: "Share a marketplace listing", action: () => setView("listings") },
