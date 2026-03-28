@@ -360,7 +360,7 @@ const StaffInviteCard = ({
 
         {isResolved && (
           <div className={cn("flex items-center gap-1.5 text-xs font-medium pt-1",
-            status === "accepted" ? "text-green-600" : "text-red-500"
+            status === "accepted" ? "text-primary" : "text-destructive"
           )}>
             {status === "accepted" ? <CheckCircle className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
             {status === "accepted" ? "Accepted" : "Declined"}
