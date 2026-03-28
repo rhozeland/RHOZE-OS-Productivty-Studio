@@ -126,12 +126,12 @@ const ServicesPage = () => {
             <span className="font-display font-bold text-lg text-foreground">
               {userCredits?.balance ?? 0}
             </span>
-            <span className="text-xs text-muted-foreground">credits</span>
+            <span className="text-xs text-muted-foreground">$RHOZE</span>
           </div>
           <Link to="/credits">
             <Button size="sm" variant="outline" className="rounded-full">
               <ShoppingCart className="mr-1.5 h-3.5 w-3.5" />
-              Get Credits
+              Get $RHOZE
             </Button>
           </Link>
         </div>
