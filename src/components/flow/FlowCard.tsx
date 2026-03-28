@@ -235,7 +235,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
         {isWriting && !isAudio && !isVideo && !isImage && (
           <div className="relative">
             {item.link_url ? (
-              <div className="aspect-[4/5] flex flex-col overflow-hidden">
+              <div className="min-h-[200px] flex flex-col overflow-hidden">
                 {/* Embedded article preview */}
                 <div className="flex-1 overflow-hidden rounded-t-[20px]" onClick={(e) => e.stopPropagation()}>
                   <iframe
