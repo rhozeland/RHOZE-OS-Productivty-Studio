@@ -697,8 +697,8 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
                     : "border-border hover:bg-muted/50"
                 )}
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10">
-                  <Wallet className="h-5 w-5 text-orange-500" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
+                  <Wallet className="h-5 w-5 text-accent-foreground" />
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-foreground">Pay with SOL</p>
