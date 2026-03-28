@@ -350,7 +350,7 @@ const StudioManagePage = () => {
 
             <div className="space-y-2">
               <Label>Studio Rules</Label>
-              <Textarea value={studioForm.rules} onChange={(e) => updateField("rules", e.target.value)} rows={3} placeholder="Any house rules guests should know about..." />
+              <Textarea value={studioForm.rules} onChange={(e) => updateField("rules", e.target.value)} rows={3} placeholder="Any rules or guidelines guests should know about..." />
             </div>
 
             <div className="space-y-2">
