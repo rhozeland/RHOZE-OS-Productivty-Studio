@@ -30,6 +30,7 @@ import AdminPage from "@/pages/AdminPage";
 import StudiosPage from "@/pages/StudiosPage";
 import StudioDetailPage from "@/pages/StudioDetailPage";
 import StudioApplicationPage from "@/pages/StudioApplicationPage";
+import StudioManagePage from "@/pages/StudioManagePage";
 import ExploreStudiosPage from "@/pages/ExploreStudiosPage";
 import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import NotFound from "./pages/NotFound";
@@ -76,6 +77,7 @@ const App = () => (
               <Route path="/studios" element={<StudiosPage />} />
               <Route path="/studios/:id" element={<StudioDetailPage />} />
               <Route path="/studios/apply" element={<StudioApplicationPage />} />
+              <Route path="/studios/:id/manage" element={<StudioManagePage />} />
               <Route path="/services" element={<ServicesPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/projects/:id" element={<ProjectDetailPage />} />
