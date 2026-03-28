@@ -186,7 +186,7 @@ const CreditShopPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-credits"] });
-      toast.success("Credits added to your balance!");
+      toast.success("$RHOZE added to your balance!");
     },
     onError: (e: any) => toast.error(e.message),
   });
