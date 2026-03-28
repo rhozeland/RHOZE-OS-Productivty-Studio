@@ -33,6 +33,7 @@ const mainItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: Calendar, label: "Calendar", path: "/calendar" },
+  { icon: CreditCard, label: "Studio Pass", path: "/credits" },
 ];
 
 const AppSidebar = () => {
