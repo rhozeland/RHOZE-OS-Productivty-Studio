@@ -47,7 +47,7 @@ const CRYPTO_DISCOUNT = 0.30; // 30% off for crypto payments
 const TOKEN_PRICE = 75;
 
 // Placeholder — user will provide the actual Pump Fun CA
-const RHOZE_CA = "YOUR_PUMP_FUN_CA_HERE";
+const RHOZE_CA = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
 const PUMP_FUN_URL = `https://pump.fun/coin/${RHOZE_CA}`;
 
 const TIERS = [
@@ -511,24 +511,12 @@ const CreditShopPage = () => {
                 <h3 className="font-display font-semibold text-foreground">Swap Widget</h3>
                 <p className="text-xs text-muted-foreground">Buy $RHOZE directly — powered by Pump Fun</p>
               </div>
-              {RHOZE_CA !== "YOUR_PUMP_FUN_CA_HERE" ? (
-                <iframe
+              <iframe
                   src={`https://pump.fun/coin/${RHOZE_CA}?embed=true`}
                   className="w-full h-[500px] border-0"
                   title="Buy $RHOZE"
                   allow="clipboard-write"
                 />
-              ) : (
-                <div className="flex flex-col items-center justify-center h-[400px] text-center p-8 space-y-4">
-                  <Wallet className="h-12 w-12 text-muted-foreground/30" />
-                  <div>
-                    <p className="font-medium text-foreground">Widget coming soon</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      The $RHOZE token contract address hasn't been configured yet. Use the external link above to buy on Pump Fun directly.
-                    </p>
-                  </div>
-                </div>
-              )}
             </motion.div>
           </div>
 
