@@ -10,26 +10,21 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  Type,
-  Video,
-  ImageIcon,
-  AudioLines,
-  Quote,
-  Link as LinkIcon,
-  Fingerprint,
-  Sparkles,
   Plus,
-  FileText,
   Check,
   Upload,
   Search,
   Settings2,
+  Sparkles,
+  Layers,
+  LayoutGrid,
 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -58,23 +53,6 @@ import FlowShareDialog from "@/components/flow/FlowShareDialog";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
-const CONTENT_TYPES = [
-  { icon: Type, label: "TEXT", angle: -90 },
-  { icon: Video, label: "VIDEO", angle: -150 },
-  { icon: ImageIcon, label: "IMAGE", angle: -30 },
-  { icon: AudioLines, label: "AUDIO", angle: 150 },
-  { icon: Quote, label: "QUOTE", angle: 30 },
-  { icon: LinkIcon, label: "LINK", angle: 90 },
-];
-
-const CATEGORY_GRADIENTS: Record<string, { bg: string; blur1: string; blur2: string }> = {
-  design: { bg: "from-teal/30 via-accent/20 to-pink/20", blur1: "bg-teal/20", blur2: "bg-accent/20" },
-  music: { bg: "from-pink/30 via-accent/20 to-warm/20", blur1: "bg-pink/25", blur2: "bg-warm/15" },
-  photo: { bg: "from-warm/25 via-muted to-teal/20", blur1: "bg-warm/20", blur2: "bg-teal/15" },
-  video: { bg: "from-accent/25 via-pink/15 to-teal/15", blur1: "bg-accent/20", blur2: "bg-pink/15" },
-  writing: { bg: "from-muted via-teal/10 to-accent/15", blur1: "bg-teal/15", blur2: "bg-accent/10" },
-};
-
 const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; linkHint: string }> = {
   design: { accept: "image/*,.pdf,.ai,.psd,.fig", hint: "JPG, PNG, PDF, or design files", linkHint: "Behance, Dribbble, Figma link" },
   music: { accept: "audio/*,.mp3,.wav,.flac,.aac", hint: "MP3, WAV, FLAC, or audio files", linkHint: "Spotify, YouTube Music, SoundCloud link" },
@@ -83,164 +61,19 @@ const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; link
   writing: { accept: ".txt,.md,.pdf,.doc,.docx", hint: "TXT, PDF, DOC, or text files", linkHint: "Medium, Substack, or blog link" },
 };
 
-/* ─── Animated Tutorial Demo (replaces video) ─── */
-const DEMO_SEQUENCE: { direction: "up" | "down" | "left" | "right"; label: string; color: string; x: number; y: number }[] = [
-  { direction: "up", label: "SAVE", color: "text-primary", x: 0, y: -160 },
-  { direction: "down", label: "PASS", color: "text-destructive", x: 0, y: 160 },
-  { direction: "left", label: "SHARE", color: "text-muted-foreground", x: -160, y: 0 },
-  { direction: "right", label: "NEXT", color: "text-muted-foreground", x: 160, y: 0 },
-];
-
-const AnimatedTutorialDemo = ({ onBack, onContinue }: { onBack: () => void; onContinue: () => void }) => {
-  const [demoIndex, setDemoIndex] = useState(0);
-  const [animating, setAnimating] = useState(false);
-  const current = DEMO_SEQUENCE[demoIndex % DEMO_SEQUENCE.length];
-
-  useEffect(() => {
-    const runCycle = () => {
-      setAnimating(true);
-      const resetTimer = setTimeout(() => {
-        setAnimating(false);
-        setTimeout(() => setDemoIndex((i) => i + 1), 600);
-      }, 1000);
-      return () => clearTimeout(resetTimer);
-    };
-    const startDelay = setTimeout(runCycle, 800);
-    return () => clearTimeout(startDelay);
-  }, [demoIndex]);
-
-  const rotation = current.direction === "left" ? -12 : current.direction === "right" ? 12 : 0;
-
-  return (
-    <motion.div
-      key="animated-demo"
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -30 }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className="w-full max-w-md text-center px-6 flex flex-col items-center"
-    >
-      <motion.h2
-        className="font-display text-2xl font-bold text-foreground mb-1.5"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-      >
-        How Flow Mode works
-      </motion.h2>
-      <motion.p
-        className="text-sm text-muted-foreground mb-6 max-w-[280px] mx-auto leading-relaxed"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.25 }}
-      >
-        Swipe cards in any direction to take action.
-      </motion.p>
-
-      <motion.div
-        className="relative mb-8"
-        style={{ width: 260, height: 340 }}
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.3, type: "spring", stiffness: 160, damping: 20 }}
-      >
-        {/* Direction labels */}
-        <motion.div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 z-10" style={{ top: -36 }}
-          animate={{ opacity: current.direction === "up" && animating ? 1 : 0.3 }}>
-          <ChevronUp className={`h-4 w-4 ${current.direction === "up" && animating ? "text-primary" : "text-muted-foreground/40"}`} />
-          <span className={`text-[10px] font-bold tracking-[0.15em] ${current.direction === "up" && animating ? "text-primary" : "text-muted-foreground/40"}`}>SAVE</span>
-        </motion.div>
-        <motion.div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 z-10" style={{ bottom: -36 }}
-          animate={{ opacity: current.direction === "down" && animating ? 1 : 0.3 }}>
-          <span className={`text-[10px] font-bold tracking-[0.15em] ${current.direction === "down" && animating ? "text-destructive" : "text-muted-foreground/40"}`}>PASS</span>
-          <ChevronDown className={`h-4 w-4 ${current.direction === "down" && animating ? "text-destructive" : "text-muted-foreground/40"}`} />
-        </motion.div>
-        <motion.div className="absolute top-1/2 -translate-y-1/2 flex items-center gap-0.5 z-10" style={{ left: -52 }}
-          animate={{ opacity: current.direction === "left" && animating ? 1 : 0.3 }}>
-          <ChevronLeft className={`h-4 w-4 ${current.direction === "left" && animating ? "text-foreground/70" : "text-muted-foreground/40"}`} />
-          <span className={`text-[10px] font-bold tracking-[0.15em] ${current.direction === "left" && animating ? "text-foreground/70" : "text-muted-foreground/40"}`}>SHARE</span>
-        </motion.div>
-        <motion.div className="absolute top-1/2 -translate-y-1/2 flex items-center gap-0.5 z-10" style={{ right: -46 }}
-          animate={{ opacity: current.direction === "right" && animating ? 1 : 0.3 }}>
-          <span className={`text-[10px] font-bold tracking-[0.15em] ${current.direction === "right" && animating ? "text-foreground/70" : "text-muted-foreground/40"}`}>NEXT</span>
-          <ChevronRight className={`h-4 w-4 ${current.direction === "right" && animating ? "text-foreground/70" : "text-muted-foreground/40"}`} />
-        </motion.div>
-
-        {/* Shadow card */}
-        <div className="absolute inset-2 rounded-[24px] bg-muted/50 border border-border/30" />
-
-        {/* Animated card */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={demoIndex}
-            className="absolute inset-0 rounded-[28px] bg-card shadow-xl shadow-primary/5 border border-border/40 flex flex-col items-center justify-center gap-3 cursor-default"
-            initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
-            animate={animating
-              ? { x: current.x, y: current.y, rotate: rotation, opacity: 0, scale: 0.9 }
-              : { x: 0, y: 0, rotate: 0, opacity: 1, scale: 1 }}
-            transition={animating
-              ? { duration: 0.5, ease: [0.22, 1, 0.36, 1] }
-              : { duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-1">
-              <Sparkles className="h-6 w-6 text-primary" />
-            </div>
-            <span className="font-display text-sm font-semibold text-foreground">Sample Content</span>
-            <span className="text-xs text-muted-foreground">Swipe to interact</span>
-            <AnimatePresence>
-              {animating && (
-                <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-                  className="absolute inset-0 rounded-[28px] flex items-center justify-center bg-card/80 backdrop-blur-sm">
-                  <span className={`font-display text-lg font-bold tracking-wider ${current.color}`}>{current.label}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Swipe trail */}
-        <AnimatePresence>
-          {animating && (
-            <motion.div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-0"
-              initial={{ opacity: 0 }} animate={{ opacity: 0.5 }} exit={{ opacity: 0 }}>
-              <motion.div className="h-8 w-8 rounded-full bg-primary/15"
-                animate={{ x: current.x * 0.3, y: current.y * 0.3, scale: [1, 1.5, 0] }}
-                transition={{ duration: 0.6 }} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-
-      {/* Step dots */}
-      <div className="flex gap-1.5 mb-6">
-        {DEMO_SEQUENCE.map((_, i) => (
-          <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${
-            (demoIndex % DEMO_SEQUENCE.length) === i ? "w-5 bg-primary" : "w-1.5 bg-muted-foreground/20"}`} />
-        ))}
-      </div>
-
-      <motion.div className="flex gap-3 justify-center" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-        <Button variant="outline" onClick={onBack} className="rounded-full px-7 h-10 text-sm">Back</Button>
-        <Button onClick={onContinue} className="rounded-full px-8 h-10 text-sm shadow-md">Try it yourself</Button>
-      </motion.div>
-    </motion.div>
-  );
-};
-
 const FlowModePage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [calibrated, setCalibrated] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState(0);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expandedCard, setExpandedCard] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [savePickerOpen, setSavePickerOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareItem, setShareItem] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"swipe" | "browse">("swipe");
+  const [viewMode, setViewMode] = useState<"feed" | "swipe">("feed");
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [newCategory, setNewCategory] = useState("design");
@@ -251,13 +84,14 @@ const FlowModePage = () => {
     const saved = localStorage.getItem("flow-sound-enabled");
     return saved !== null ? saved === "true" : true;
   });
-  const [swipeMap, setSwipeMap] = useState({
+  const [swipeMap] = useState({
     up: "save",
     down: "dislike",
     left: "share",
     right: "skip",
   });
-  const fileInputRef = { current: null as HTMLInputElement | null };
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const feedEndRef = useRef<HTMLDivElement | null>(null);
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -362,7 +196,6 @@ const FlowModePage = () => {
 
   const unseenItems = flowItems?.filter((item) => !interactions?.has(item.id)) ?? [];
   const currentItem = unseenItems[currentIndex];
-  
 
   const handleCalibrationSelect = (option: string) => {
     const updated = selectedCategories.includes(option)
@@ -385,29 +218,32 @@ const FlowModePage = () => {
     }, 200);
   }, [unseenItems.length]);
 
-  const performAction = useCallback((action: string, smartboardId?: string) => {
-    if (!currentItem) return;
+  const performAction = useCallback((action: string, smartboardId?: string, item?: any) => {
+    const targetItem = item || currentItem;
+    if (!targetItem) return;
     if (navigator.vibrate) navigator.vibrate(20);
     if (soundEnabled) playSwipeSound(action === "save" ? "up" : action === "dislike" ? "down" : action === "share" ? "left" : "right");
 
     if (action === "save") {
       if (smartboardId) {
-        interact.mutate({ itemId: currentItem.id, action, smartboardId });
+        interact.mutate({ itemId: targetItem.id, action, smartboardId });
         toast.success("Saved to board!");
         setSavePickerOpen(false);
-        advanceCard();
+        if (viewMode === "swipe") advanceCard();
       } else {
+        setShareItem(targetItem);
         setSavePickerOpen(true);
         return;
       }
     } else if (action === "share") {
+      setShareItem(targetItem);
       setShareDialogOpen(true);
       return;
     } else {
-      interact.mutate({ itemId: currentItem.id, action });
-      advanceCard();
+      interact.mutate({ itemId: targetItem.id, action });
+      if (viewMode === "swipe") advanceCard();
     }
-  }, [currentItem, interact, advanceCard]);
+  }, [currentItem, interact, advanceCard, soundEnabled, viewMode]);
 
   const handleDragEnd = useCallback((_: any, info: PanInfo) => {
     const { offset } = info;
@@ -424,7 +260,7 @@ const FlowModePage = () => {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (!calibrated || !currentItem) return;
+      if (!calibrated || viewMode !== "swipe" || !currentItem) return;
       if (e.key === "ArrowUp") performAction(swipeMap.up);
       if (e.key === "ArrowDown") performAction(swipeMap.down);
       if (e.key === "ArrowLeft") performAction(swipeMap.left);
@@ -432,379 +268,93 @@ const FlowModePage = () => {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [calibrated, currentItem, performAction, swipeMap]);
+  }, [calibrated, currentItem, performAction, swipeMap, viewMode]);
 
-  // ──── ONBOARDING / TUTORIAL ────
-  const [tutorialDirection, setTutorialDirection] = useState<string | null>(null);
-  const [tutorialCompleted, setTutorialCompleted] = useState<string[]>([]);
-  const tutorialX = useMotionValue(0);
-  const tutorialY = useMotionValue(0);
-  const tutorialRotate = useTransform(tutorialX, [-200, 200], [-15, 15]);
-
-  const TUTORIAL_STEPS = [
-    { direction: "up", action: "SAVE", label: "Swipe up to save to a Smartboard", icon: ChevronUp, color: "text-primary" },
-    { direction: "down", action: "PASS", label: "Swipe down to pass on content", icon: ChevronDown, color: "text-destructive" },
-    { direction: "left", action: "SHARE", label: "Swipe left to share with others", icon: ChevronLeft, color: "text-muted-foreground" },
-    { direction: "right", action: "NEXT", label: "Swipe right to skip to next", icon: ChevronRight, color: "text-muted-foreground" },
-  ];
-
-  const currentTutorialStep = TUTORIAL_STEPS.find((s) => !tutorialCompleted.includes(s.direction));
-
-  const handleTutorialSwipe = useCallback((dir: string) => {
-    if (!currentTutorialStep || dir !== currentTutorialStep.direction) {
-      setTutorialDirection(null);
-      return;
-    }
-    // Haptic feedback on mobile
-    if (navigator.vibrate) navigator.vibrate(30);
-    if (soundEnabled) playSwipeSound(dir as "up" | "down" | "left" | "right");
-    setTutorialDirection(dir);
-    setTimeout(() => {
-      setTutorialCompleted((prev) => [...prev, dir]);
-      setTutorialDirection(null);
-    }, 400);
-  }, [currentTutorialStep]);
-
-  const handleTutorialDragEnd = useCallback((_: any, info: PanInfo) => {
-    const { offset } = info;
-    const threshold = 60;
-
-    if (Math.abs(offset.x) > Math.abs(offset.y)) {
-      if (offset.x > threshold) handleTutorialSwipe("right");
-      else if (offset.x < -threshold) handleTutorialSwipe("left");
-    } else {
-      if (offset.y < -threshold) handleTutorialSwipe("up");
-      else if (offset.y > threshold) handleTutorialSwipe("down");
-    }
-  }, [handleTutorialSwipe]);
-
-  // Keyboard support for tutorial
-  useEffect(() => {
-    if (calibrated || onboardingStep !== 2) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "ArrowUp") handleTutorialSwipe("up");
-      if (e.key === "ArrowDown") handleTutorialSwipe("down");
-      if (e.key === "ArrowLeft") handleTutorialSwipe("left");
-      if (e.key === "ArrowRight") handleTutorialSwipe("right");
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [calibrated, onboardingStep, handleTutorialSwipe]);
-
+  // ──── ONBOARDING ────
   if (!calibrated) {
     return (
-      <div className="relative flex items-center justify-center min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8 overflow-hidden gradient-hero">
-        {/* Decorative blurs */}
-        <div className="absolute top-20 left-1/4 w-64 h-64 bg-teal/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-20 right-1/4 w-72 h-72 bg-pink/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="relative flex items-center justify-center min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8 overflow-hidden bg-gradient-to-br from-muted via-background to-muted/50">
+        <div className="absolute top-20 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-20 right-1/4 w-72 h-72 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
 
-        <AnimatePresence mode="wait">
-          {/* Step 0: Category Calibration */}
-          {onboardingStep === 0 && (
-            <motion.div
-              key="types"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="w-full max-w-sm text-center px-6"
-            >
-              <div className="relative mx-auto mb-8 h-48 w-48">
-                {CONTENT_TYPES.map((ct, i) => {
-                  const rad = (ct.angle * Math.PI) / 180;
-                  const radius = 80;
-                  const cx = Math.cos(rad) * radius;
-                  const cy = Math.sin(rad) * radius;
-                  return (
-                    <motion.div
-                      key={ct.label}
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: i * 0.1 + 0.2 }}
-                      className="absolute flex flex-col items-center gap-1"
-                      style={{
-                        left: `calc(50% + ${cx}px - 24px)`,
-                        top: `calc(50% + ${cy}px - 20px)`,
-                      }}
-                    >
-                      <ct.icon className="h-7 w-7 text-foreground/40" strokeWidth={1.5} />
-                      <span className="text-[10px] font-medium text-foreground/40 tracking-wider">
-                        {ct.label}
-                      </span>
-                    </motion.div>
-                  );
-                })}
-              </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-sm text-center px-6"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+            className="h-16 w-16 mx-auto mb-6 rounded-2xl bg-primary/10 flex items-center justify-center"
+          >
+            <Sparkles className="h-8 w-8 text-primary" />
+          </motion.div>
 
-              <h2 className="font-display text-xl font-bold text-foreground mb-2">What are you into?</h2>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-8 max-w-xs mx-auto">
-                We're redefining how you discover meaningful content. Let's calibrate your Flow.
-              </p>
+          <h2 className="font-display text-xl font-bold text-foreground mb-2">What are you into?</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed mb-8 max-w-xs mx-auto">
+            Calibrate your feed. Pick what inspires you.
+          </p>
 
-              <div className="flex flex-wrap justify-center gap-2 mb-6">
-                {CATEGORIES.map((cat) => (
-                  <Button
-                    key={cat}
-                    variant={selectedCategories.includes(cat) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleCalibrationSelect(cat)}
-                    className="capitalize rounded-full"
-                  >
-                    {cat}
-                  </Button>
-                ))}
-              </div>
-
-              <Button onClick={() => setOnboardingStep(1)} className="rounded-full px-8">
-                Next
+          <div className="flex flex-wrap justify-center gap-2 mb-8">
+            {CATEGORIES.map((cat) => (
+              <Button
+                key={cat}
+                variant={selectedCategories.includes(cat) ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleCalibrationSelect(cat)}
+                className="capitalize rounded-full"
+              >
+                {cat}
               </Button>
-            </motion.div>
-          )}
+            ))}
+          </div>
 
-          {/* Step 1: Animated Tutorial Demo */}
-          {onboardingStep === 1 && (
-            <AnimatedTutorialDemo
-              onBack={() => setOnboardingStep(0)}
-              onContinue={() => { setTutorialCompleted([]); setOnboardingStep(2); }}
-            />
-          )}
-
-          {/* Step 2: Interactive Swipe Practice */}
-          {onboardingStep === 2 && (
-            <motion.div
-              key="practice"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full max-w-md text-center px-6 flex flex-col items-center"
-            >
-              <motion.h2
-                className="font-display text-2xl font-bold text-foreground mb-1"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-              >
-                Your turn
-              </motion.h2>
-              <motion.p
-                className="text-sm text-muted-foreground mb-2 max-w-[260px] mx-auto leading-relaxed"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.25 }}
-              >
-                Practice each gesture to continue.
-              </motion.p>
-
-              {/* Progress dots */}
-              <div className="flex gap-2 mb-6">
-                {TUTORIAL_STEPS.map((step) => (
-                  <div
-                    key={step.direction}
-                    className={`h-2 w-2 rounded-full transition-all duration-300 ${
-                      tutorialCompleted.includes(step.direction) ? "bg-primary scale-125" : "bg-muted-foreground/20"
-                    }`}
-                  />
-                ))}
-              </div>
-
-              {/* Swipe area */}
-              <div className="relative" style={{ width: 280, height: 380 }}>
-                {/* Directional hints */}
-                {currentTutorialStep && (
-                  <>
-                    {/* Active direction indicator */}
-                    {currentTutorialStep.direction === "up" && (
-                      <motion.div
-                        className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 z-20"
-                        style={{ top: -44 }}
-                        animate={{ y: [0, -6, 0] }}
-                        transition={{ duration: 1.2, repeat: Infinity }}
-                      >
-                        <ChevronUp className="h-5 w-5 text-primary" />
-                        <span className="text-[11px] font-bold text-primary tracking-[0.15em]">SAVE</span>
-                      </motion.div>
-                    )}
-                    {currentTutorialStep.direction === "down" && (
-                      <motion.div
-                        className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 z-20"
-                        style={{ bottom: -44 }}
-                        animate={{ y: [0, 6, 0] }}
-                        transition={{ duration: 1.2, repeat: Infinity }}
-                      >
-                        <span className="text-[11px] font-bold text-destructive tracking-[0.15em]">PASS</span>
-                        <ChevronDown className="h-5 w-5 text-destructive" />
-                      </motion.div>
-                    )}
-                    {currentTutorialStep.direction === "left" && (
-                      <motion.div
-                        className="absolute top-1/2 -translate-y-1/2 flex items-center gap-1 z-20"
-                        style={{ left: -70 }}
-                        animate={{ x: [0, -6, 0] }}
-                        transition={{ duration: 1.2, repeat: Infinity }}
-                      >
-                        <ChevronLeft className="h-5 w-5 text-foreground/60" />
-                        <span className="text-[11px] font-bold text-foreground/60 tracking-[0.15em]">SHARE</span>
-                      </motion.div>
-                    )}
-                    {currentTutorialStep.direction === "right" && (
-                      <motion.div
-                        className="absolute top-1/2 -translate-y-1/2 flex items-center gap-1 z-20"
-                        style={{ right: -60 }}
-                        animate={{ x: [0, 6, 0] }}
-                        transition={{ duration: 1.2, repeat: Infinity }}
-                      >
-                        <span className="text-[11px] font-bold text-foreground/60 tracking-[0.15em]">NEXT</span>
-                        <ChevronRight className="h-5 w-5 text-foreground/60" />
-                      </motion.div>
-                    )}
-                  </>
-                )}
-
-                {/* All 4 completed */}
-                {tutorialCompleted.length === 4 ? (
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="w-full h-full rounded-[28px] bg-card/90 backdrop-blur-sm shadow-2xl shadow-primary/10 border border-primary/20 flex flex-col items-center justify-center gap-4"
-                  >
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.2 }}
-                      className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center"
-                    >
-                      <Check className="h-8 w-8 text-primary" />
-                    </motion.div>
-                    <p className="font-display text-lg font-bold text-foreground">You're ready!</p>
-                    <p className="text-sm text-muted-foreground max-w-[200px]">You've mastered all four gestures.</p>
-                  </motion.div>
-                ) : (
-                  /* Draggable practice card */
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={currentTutorialStep?.direction}
-                      drag
-                      dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
-                      dragElastic={0.9}
-                      onDragEnd={handleTutorialDragEnd}
-                      style={{
-                        x: tutorialX,
-                        y: tutorialY,
-                        rotateZ: tutorialRotate,
-                        touchAction: "none",
-                      }}
-                      initial={{ scale: 0.9, opacity: 0 }}
-                      animate={
-                        tutorialDirection
-                          ? {
-                              scale: 1,
-                              opacity: 0,
-                              x: tutorialDirection === "left" ? -300 : tutorialDirection === "right" ? 300 : 0,
-                              y: tutorialDirection === "up" ? -400 : tutorialDirection === "down" ? 400 : 0,
-                            }
-                          : { scale: 1, opacity: 1, x: 0, y: 0 }
-                      }
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={
-                        tutorialDirection
-                          ? { duration: 0.35, ease: "easeOut" }
-                          : { type: "spring", stiffness: 200, damping: 20 }
-                      }
-                      whileDrag={{ scale: 1.04 }}
-                      className="w-full h-full rounded-[28px] bg-card/90 backdrop-blur-sm shadow-2xl shadow-primary/5 border border-border/30 flex flex-col items-center justify-center gap-5 cursor-grab active:cursor-grabbing select-none"
-                    >
-                      {currentTutorialStep && (
-                        <>
-                          <motion.div
-                            animate={{ y: currentTutorialStep.direction === "up" ? [0, -8, 0] : currentTutorialStep.direction === "down" ? [0, 8, 0] : 0, x: currentTutorialStep.direction === "left" ? [0, -8, 0] : currentTutorialStep.direction === "right" ? [0, 8, 0] : 0 }}
-                            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                          >
-                            <currentTutorialStep.icon className={`h-12 w-12 ${currentTutorialStep.color}/40`} strokeWidth={1.5} />
-                          </motion.div>
-                          <div className="text-center px-6">
-                            <p className="font-display text-base font-bold text-foreground mb-1">{currentTutorialStep.action}</p>
-                            <p className="text-sm text-muted-foreground leading-relaxed">{currentTutorialStep.label}</p>
-                          </div>
-                          <p className="text-[10px] text-muted-foreground/50 tracking-wider mt-2">
-                            SWIPE · DRAG · OR PRESS ARROW KEY
-                          </p>
-                        </>
-                      )}
-                    </motion.div>
-                  </AnimatePresence>
-                )}
-              </div>
-
-              {/* Buttons */}
-              <motion.div
-                className="flex gap-3 justify-center mt-8"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <Button variant="outline" onClick={() => setOnboardingStep(1)} className="rounded-full px-7 h-10 text-sm">
-                  Watch again
-                </Button>
-                {tutorialCompleted.length === 4 ? (
-                  <Button onClick={finishCalibration} className="rounded-full px-8 h-10 text-sm shadow-md">
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Enter Flow Mode
-                  </Button>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    onClick={finishCalibration}
-                    className="rounded-full px-6 h-10 text-sm text-muted-foreground"
-                  >
-                    Skip tutorial
-                  </Button>
-                )}
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+          <Button onClick={finishCalibration} className="rounded-full px-8">
+            Enter Flow
+          </Button>
+        </motion.div>
       </div>
     );
   }
 
-
-  // ──── MAIN FLOW VIEW ────
+  // ──── MAIN VIEW ────
   return (
     <div className="relative flex flex-col min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8">
-      {/* Dynamic background — blurred image or category gradient */}
+      {/* Background */}
       {viewMode === "swipe" && (
         <FlowCardBackground
           fileUrl={currentItem?.file_url}
           category={currentItem?.category || "design"}
         />
       )}
-      {viewMode === "browse" && (
-        <div className="absolute inset-0 bg-background" />
-      )}
+      {viewMode === "feed" && <div className="absolute inset-0 bg-background" />}
 
-      {/* Top bar — clean & minimal */}
+      {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between gap-3 px-4 py-3 md:px-6">
         {/* View mode toggle */}
         <div className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm p-1 border border-border/30">
           <button
+            onClick={() => setViewMode("feed")}
+            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all flex items-center gap-1.5 ${
+              viewMode === "feed" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Layers className="h-3 w-3" />
+            Feed
+          </button>
+          <button
             onClick={() => setViewMode("swipe")}
-            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all flex items-center gap-1.5 ${
               viewMode === "swipe" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
             }`}
           >
+            <LayoutGrid className="h-3 w-3" />
             Swipe
-          </button>
-          <button
-            onClick={() => { setViewMode("browse"); setSearchOpen(true); }}
-            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
-              viewMode === "browse" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Browse
           </button>
         </div>
 
-        {/* Active category summary (compact) */}
+        {/* Active categories */}
         <p className="text-[11px] text-muted-foreground truncate max-w-[140px] md:max-w-[220px]">
           {selectedCategories.length === CATEGORIES.length || selectedCategories.length === 0
             ? "All categories"
@@ -812,15 +362,9 @@ const FlowModePage = () => {
         </p>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Settings */}
           <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
             <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9"
-                title="Flow settings"
-              >
+              <Button variant="ghost" size="icon" className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9">
                 <Settings2 className="h-4 w-4" />
               </Button>
             </SheetTrigger>
@@ -828,9 +372,7 @@ const FlowModePage = () => {
               <SheetHeader>
                 <SheetTitle className="font-display">Flow Settings</SheetTitle>
               </SheetHeader>
-
               <div className="flex-1 overflow-y-auto space-y-6 pt-4">
-                {/* Categories */}
                 <div>
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Content Types</h3>
                   <div className="space-y-2.5">
@@ -853,47 +395,6 @@ const FlowModePage = () => {
                     ))}
                   </div>
                 </div>
-
-                {/* Swipe Directions */}
-                <div>
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Swipe Actions</h3>
-                  <div className="space-y-3">
-                    {(["up", "down", "left", "right"] as const).map((dir) => {
-                      const icons = { up: ChevronUp, down: ChevronDown, left: ChevronLeft, right: ChevronRight };
-                      const Icon = icons[dir];
-                      return (
-                        <div key={dir} className="flex items-center gap-3">
-                          <div className="flex items-center gap-1.5 w-16 shrink-0">
-                            <Icon className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground capitalize">{dir}</span>
-                          </div>
-                          <Select
-                            value={swipeMap[dir]}
-                            onValueChange={(val) => setSwipeMap((prev) => ({ ...prev, [dir]: val }))}
-                          >
-                            <SelectTrigger className="h-8 text-xs rounded-lg">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="save">Save</SelectItem>
-                              <SelectItem value="dislike">Pass</SelectItem>
-                              <SelectItem value="share">Share</SelectItem>
-                              <SelectItem value="skip">Next</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <button
-                    onClick={() => setSwipeMap({ up: "save", down: "dislike", left: "share", right: "skip" })}
-                    className="mt-3 text-[11px] text-primary hover:underline"
-                  >
-                    Reset to defaults
-                  </button>
-                </div>
-
-                {/* Replay tutorial */}
                 <div>
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Other</h3>
                   <div className="flex items-center justify-between mb-3">
@@ -914,18 +415,16 @@ const FlowModePage = () => {
                     onClick={() => {
                       setSettingsOpen(false);
                       setCalibrated(false);
-                      setOnboardingStep(0);
                     }}
                   >
                     <Sparkles className="h-3.5 w-3.5 mr-2" />
-                    Replay Tutorial
+                    Recalibrate
                   </Button>
                 </div>
               </div>
             </SheetContent>
           </Sheet>
 
-          {/* Add content */}
           <Button
             variant="ghost"
             size="icon"
@@ -937,49 +436,74 @@ const FlowModePage = () => {
         </div>
       </div>
 
-      {/* Search bar — always visible in browse, toggleable in swipe */}
-      <AnimatePresence>
-        {(viewMode === "browse" || searchOpen) && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="relative z-10 px-4 md:px-6 overflow-hidden"
-          >
-            <div className="max-w-md mx-auto pb-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search tracks, visuals, design, and inspiration..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setCurrentIndex(0);
-                  }}
-                  className={`pl-9 pr-9 rounded-full border-border/50 ${
-                    viewMode === "browse" ? "bg-muted/50" : "bg-card/80 backdrop-blur-sm"
-                  }`}
-                  autoFocus={viewMode === "browse"}
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => { setSearchQuery(""); setCurrentIndex(0); }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
+      {/* Search bar — feed mode */}
+      {viewMode === "feed" && (
+        <div className="relative z-10 px-4 md:px-6">
+          <div className="max-w-lg mx-auto pb-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search tracks, visuals, design, and inspiration..."
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setCurrentIndex(0); }}
+                className="pl-9 pr-9 rounded-full border-border/50 bg-muted/50"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => { setSearchQuery(""); setCurrentIndex(0); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════ FEED MODE — Tumblr-style endless scroll ═══════ */}
+      {viewMode === "feed" && (
+        <div className="relative z-10 flex-1 overflow-y-auto pb-24">
+          <div className="max-w-md mx-auto px-4 space-y-6">
+            {flowItems && flowItems.length > 0 ? (
+              flowItems.map((item, i) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <FlowCard
+                    item={item}
+                    expanded={expandedCard}
+                    onToggleExpand={() => setExpandedCard(!expandedCard)}
+                    onSave={() => performAction("save", undefined, item)}
+                    onShare={() => performAction("share", undefined, item)}
+                  />
+                </motion.div>
+              ))
+            ) : (
+              <div className="text-center py-20">
+                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-muted/50 flex items-center justify-center">
+                  <Search className="h-7 w-7 text-muted-foreground" />
+                </div>
+                <h3 className="font-display text-lg font-bold text-foreground mb-1">No content yet</h3>
+                <p className="text-sm text-muted-foreground mb-6">Be the first to share something.</p>
+                <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Share Your Work
+                </Button>
+              </div>
+            )}
+            <div ref={feedEndRef} />
+          </div>
+        </div>
+      )}
 
       {/* ═══════ SWIPE MODE ═══════ */}
       {viewMode === "swipe" && (
         <>
-      {/* Card area — centered */}
-          <div className="relative z-10 flex-1 flex items-center justify-center px-4 pb-20">
+          <div className="relative z-10 flex-1 flex items-center justify-center px-4 pb-24">
             <AnimatePresence mode="wait">
               {currentItem ? (
                 <motion.div
@@ -1003,18 +527,12 @@ const FlowModePage = () => {
                   />
                 </motion.div>
               ) : (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-center px-4"
-                >
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center px-4">
                   <div className="mx-auto mb-6 h-20 w-20 rounded-full bg-card/60 backdrop-blur-sm flex items-center justify-center">
                     <Sparkles className="h-8 w-8 text-primary" />
                   </div>
                   <h2 className="font-display text-xl font-bold text-foreground mb-2">You're all caught up!</h2>
-                  <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
-                    Share your own content or check back later.
-                  </p>
+                  <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">Share your own content or check back later.</p>
                   <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
                     <Plus className="mr-2 h-4 w-4" />
                     Share Your Work
@@ -1024,7 +542,7 @@ const FlowModePage = () => {
             </AnimatePresence>
           </div>
 
-          {/* Bottom swipe hints — dynamic from swipeMap */}
+          {/* Swipe hints */}
           {currentItem && (
             <div className="relative z-10 flex justify-center items-center pb-4">
               <div className="flex items-center gap-6 md:gap-8 text-foreground/40">
@@ -1044,110 +562,28 @@ const FlowModePage = () => {
         </>
       )}
 
-      {/* ═══════ BROWSE MODE ═══════ */}
-      {viewMode === "browse" && (
-        <div className="relative z-10 flex-1 px-4 md:px-6 pb-8 overflow-y-auto">
-          {/* Results count */}
-          <div className="max-w-4xl mx-auto mb-4">
-            <p className="text-sm text-muted-foreground">
-              {flowItems?.length ?? 0} item{flowItems?.length !== 1 ? "s" : ""} found
-            </p>
-          </div>
-
-          {/* Grid of cards */}
-          <div className="max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {flowItems?.map((item, i) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03 }}
-                className="group rounded-xl bg-card border border-border overflow-hidden hover:shadow-lg hover:border-primary/20 transition-all cursor-pointer"
-                onClick={() => {
-                  // Switch to swipe mode at this item
-                  const idx = unseenItems.findIndex((u) => u.id === item.id);
-                  if (idx >= 0) setCurrentIndex(idx);
-                  setViewMode("swipe");
-                }}
-              >
-                <div className="aspect-square bg-muted/30 relative overflow-hidden">
-                  {item.file_url ? (
-                    <img src={item.file_url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary/10 via-accent/5 to-muted flex items-center justify-center p-3">
-                      <h4 className="font-display text-xs font-bold text-foreground text-center leading-tight line-clamp-3">
-                        {item.title}
-                      </h4>
-                    </div>
-                  )}
-                  <div className="absolute top-2 left-2">
-                    <span className="text-[9px] font-medium uppercase tracking-wider text-card bg-foreground/50 backdrop-blur-sm px-1.5 py-0.5 rounded-full">
-                      {item.category}
-                    </span>
-                  </div>
-                  {item.content_type === "video" && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="h-8 w-8 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center shadow">
-                        <Video className="h-3.5 w-3.5 text-foreground ml-0.5" />
-                      </div>
-                    </div>
-                  )}
-                  {item.content_type === "audio" && (
-                    <div className="absolute bottom-2 right-2">
-                      <div className="h-6 w-6 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center">
-                        <AudioLines className="h-3 w-3 text-foreground" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="p-2.5">
-                  <h4 className="font-display font-semibold text-foreground text-xs leading-snug truncate">
-                    {item.title}
-                  </h4>
-                  {item.description && (
-                    <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{item.description}</p>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {(!flowItems || flowItems.length === 0) && (
-            <div className="text-center py-20">
-              <Search className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-              <h3 className="font-display text-lg font-bold text-foreground mb-1">No content found</h3>
-              <p className="text-sm text-muted-foreground">Try adjusting your filters or search query</p>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Save to Board picker */}
       <Dialog open={savePickerOpen} onOpenChange={setSavePickerOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="font-display text-lg">Add to...</DialogTitle>
+            <DialogTitle className="font-display text-lg">Save to board</DialogTitle>
+            <DialogDescription>Choose a Smartboard to save this content to.</DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto">
             {smartboards?.map((board) => (
               <button
                 key={board.id}
-                onClick={() => performAction("save", board.id)}
+                onClick={() => performAction("save", board.id, shareItem)}
                 className="rounded-xl border border-border bg-card p-4 text-left hover:shadow-md hover:border-primary/30 transition-all group"
               >
-                <div
-                  className="h-16 rounded-lg mb-2"
-                  style={{ backgroundColor: board.cover_color || "hsl(var(--muted))" }}
-                />
+                <div className="h-16 rounded-lg mb-2" style={{ backgroundColor: board.cover_color || "hsl(var(--muted))" }} />
                 <h4 className="font-display font-semibold text-foreground text-sm truncate group-hover:text-primary transition-colors">
                   {board.title}
                 </h4>
               </button>
             ))}
             {(!smartboards || smartboards.length === 0) && (
-              <p className="col-span-2 text-center text-sm text-muted-foreground py-6">
-                No boards yet. Create one first!
-              </p>
+              <p className="col-span-2 text-center text-sm text-muted-foreground py-6">No boards yet. Create one first!</p>
             )}
           </div>
         </DialogContent>
@@ -1158,6 +594,7 @@ const FlowModePage = () => {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Share to Flow</DialogTitle>
+            <DialogDescription>Upload your work for others to discover.</DialogDescription>
           </DialogHeader>
           <form
             onSubmit={(e) => {
@@ -1177,10 +614,9 @@ const FlowModePage = () => {
               </SelectContent>
             </Select>
 
-            {/* File upload area */}
             <div>
               <input
-                ref={(el) => { fileInputRef.current = el; }}
+                ref={fileInputRef}
                 type="file"
                 accept={CATEGORY_UPLOAD_HINTS[newCategory]?.accept || "*/*"}
                 className="hidden"
@@ -1195,9 +631,13 @@ const FlowModePage = () => {
                   <div className="flex items-center justify-center gap-2">
                     <Check className="h-4 w-4 text-primary" />
                     <span className="text-sm text-foreground truncate max-w-[200px]">{newFile.name}</span>
-                    <button type="button" onClick={(e) => { e.stopPropagation(); setNewFile(null); }} className="text-muted-foreground hover:text-destructive">
+                    <span
+                      role="button"
+                      onClick={(e) => { e.stopPropagation(); setNewFile(null); }}
+                      className="text-muted-foreground hover:text-destructive cursor-pointer"
+                    >
                       <X className="h-3.5 w-3.5" />
-                    </button>
+                    </span>
                   </div>
                 ) : (
                   <>
@@ -1224,7 +664,7 @@ const FlowModePage = () => {
       <FlowShareDialog
         open={shareDialogOpen}
         onOpenChange={setShareDialogOpen}
-        item={currentItem || null}
+        item={shareItem}
       />
     </div>
   );
