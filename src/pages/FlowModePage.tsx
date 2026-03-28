@@ -431,7 +431,6 @@ const FlowModePage = () => {
               transition={{ type: "spring", stiffness: 260, damping: 22 }}
               whileTap={{ scale: 0.98 }}
             >
-            >
               <FlowCard
                 item={currentItem}
                 expanded={expandedCard}
