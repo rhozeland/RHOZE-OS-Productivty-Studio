@@ -458,7 +458,7 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
                         onTouchStart={(e) =>
                           !booked && !isPast && handleTouchStart(dayIndex, hour, e)
                         }
-                        onTouchMove={handleTouchMove}
+                        onTouchMove={handleTouchMoveHandler}
                         onTouchEnd={handleMouseUp}
                       >
                         {booked && (
