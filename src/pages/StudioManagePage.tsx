@@ -496,7 +496,7 @@ const StudioManagePage = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       {member.status === "pending" ? (
-                        <Badge variant="outline" className="text-xs text-amber-600 border-amber-300 bg-amber-500/10">
+                        <Badge variant="outline" className="text-xs text-warning border-warning/30 bg-warning/10">
                           <Clock className="h-3 w-3 mr-1" /> Pending
                         </Badge>
                       ) : member.status === "declined" ? (
