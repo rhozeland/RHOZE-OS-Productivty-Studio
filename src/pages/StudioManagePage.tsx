@@ -495,17 +495,29 @@ const StudioManagePage = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleStaffAvailability(member)}
-                        className={member.is_available ? "text-emerald-500" : "text-muted-foreground"}
-                      >
-                        {member.is_available ? <UserCheck className="h-4 w-4" /> : <UserX className="h-4 w-4" />}
-                      </Button>
-                      <Badge variant={member.is_available ? "default" : "secondary"} className="text-xs">
-                        {member.is_available ? "Available" : "Unavailable"}
-                      </Badge>
+                      {member.status === "pending" ? (
+                        <Badge variant="outline" className="text-xs text-amber-600 border-amber-300 bg-amber-500/10">
+                          <Clock className="h-3 w-3 mr-1" /> Pending
+                        </Badge>
+                      ) : member.status === "declined" ? (
+                        <Badge variant="outline" className="text-xs text-destructive border-destructive/30 bg-destructive/10">
+                          <UserX className="h-3 w-3 mr-1" /> Declined
+                        </Badge>
+                      ) : (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleStaffAvailability(member)}
+                            className={member.is_available ? "text-primary" : "text-muted-foreground"}
+                          >
+                            {member.is_available ? <UserCheck className="h-4 w-4" /> : <UserX className="h-4 w-4" />}
+                          </Button>
+                          <Badge variant={member.is_available ? "default" : "secondary"} className="text-xs">
+                            {member.is_available ? "Available" : "Unavailable"}
+                          </Badge>
+                        </>
+                      )}
                       <Button variant="ghost" size="sm" onClick={() => removeStaffMember(member.id)} className="text-destructive hover:text-destructive">
                         <Trash2 className="h-4 w-4" />
                       </Button>
