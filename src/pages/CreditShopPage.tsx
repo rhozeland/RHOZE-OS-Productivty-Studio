@@ -601,18 +601,40 @@ const TransactionHistory = ({ userId }: { userId?: string }) => {
 
   if (!transactions || transactions.length === 0) return null;
 
+  const methodLabel = (method: string | null, type: string) => {
+    if (method === "crypto") return "Crypto (SOL)";
+    if (method === "card") return "Card (Square)";
+    if (method === "credits") return "Credits";
+    if (type === "subscription") return "Subscription";
+    if (type === "refund") return "Refund";
+    return type;
+  };
+
+  const methodColor = (method: string | null) => {
+    if (method === "crypto") return "bg-amber-500/15 text-amber-600 dark:text-amber-400";
+    if (method === "card") return "bg-blue-500/15 text-blue-600 dark:text-blue-400";
+    return "bg-muted text-muted-foreground";
+  };
+
   return (
     <div className="surface-card p-6">
-      <h2 className="font-display text-lg font-semibold text-foreground mb-4">Transaction History</h2>
+      <h2 className="font-display text-lg font-semibold text-foreground mb-4">Payment History</h2>
       <div className="space-y-2">
         {transactions.map((tx: any) => (
-          <div key={tx.id} className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
-            <div>
-              <p className="text-sm font-medium text-foreground">{tx.description}</p>
-              <p className="text-xs text-muted-foreground">{new Date(tx.created_at).toLocaleDateString()} • {tx.payment_method ?? tx.type}</p>
+          <div key={tx.id} className="flex items-center justify-between rounded-lg bg-muted/50 p-3 gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-foreground truncate">{tx.description}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${methodColor(tx.payment_method)}`}>
+                  {methodLabel(tx.payment_method, tx.type)}
+                </span>
+                <span className="text-[11px] text-muted-foreground">
+                  {new Date(tx.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                </span>
+              </div>
             </div>
-            <span className={`font-display font-bold ${tx.amount > 0 ? "text-primary" : "text-destructive"}`}>
-              {tx.amount > 0 ? "+" : ""}{tx.amount} ◊
+            <span className={`font-display font-bold text-sm whitespace-nowrap ${tx.amount > 0 ? "text-primary" : "text-destructive"}`}>
+              {tx.amount > 0 ? "+" : ""}${Math.abs(tx.amount * 75).toFixed(0) !== "0" ? (Math.abs(tx.amount) * 1).toFixed(0) : tx.amount} cr
             </span>
           </div>
         ))}

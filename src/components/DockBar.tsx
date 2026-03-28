@@ -72,8 +72,8 @@ const DockBar = () => {
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                 )}
               >
-                <item.icon className="h-4 w-4" />
-                <span className="text-[9px] font-body font-medium leading-none">
+                <item.icon className="h-5 w-5" />
+                <span className="text-[10px] font-body font-medium leading-none">
                   {item.label}
                 </span>
                 {showBadge && (
