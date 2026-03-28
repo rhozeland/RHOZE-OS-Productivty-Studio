@@ -46,6 +46,7 @@ import { playSwipeSound } from "@/lib/swipe-sound";
 import FlowCard from "@/components/flow/FlowCard";
 import FlowCardBackground from "@/components/flow/FlowCardBackground";
 import FlowShareDialog from "@/components/flow/FlowShareDialog";
+import { cn } from "@/lib/utils";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
@@ -65,6 +66,7 @@ const FlowModePage = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expandedCard, setExpandedCard] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"swipe" | "browse">("swipe");
   const [savePickerOpen, setSavePickerOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareItem, setShareItem] = useState<any>(null);
@@ -333,9 +335,26 @@ const FlowModePage = () => {
 
       {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between gap-3 px-4 py-3 md:px-6">
-        <p className="text-sm text-muted-foreground">
-          Swipe or browse
-        </p>
+        <div className="flex items-center gap-0.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/30 p-0.5">
+          <button
+            onClick={() => setViewMode("swipe")}
+            className={cn(
+              "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+              viewMode === "swipe" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Swipe
+          </button>
+          <button
+            onClick={() => setViewMode("browse")}
+            className={cn(
+              "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+              viewMode === "browse" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Browse
+          </button>
+        </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
           <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
@@ -412,65 +431,100 @@ const FlowModePage = () => {
         </div>
       </div>
 
-      {/* Card area — centered */}
-      <div className="relative z-10 flex flex-1 items-center justify-center px-4 pb-40 pt-2 md:pb-44">
-        <AnimatePresence mode="wait">
-          {currentItem ? (
-            <motion.div
-              key={`${currentItem.id}-${currentIndex}`}
-              className="w-full max-w-xs md:max-w-sm cursor-grab active:cursor-grabbing"
-              drag
-              dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-              dragElastic={0.6}
-              dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
-              onDragEnd={handleDragEnd}
-              style={{ x, y, rotateZ, opacity: cardOpacity, scale: cardScale, boxShadow: shadowIntensity }}
-              initial={{ opacity: 0, scale: 0.92, y: 24 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.85, y: -20, transition: { duration: 0.18, ease: "easeIn" } }}
-              transition={{ type: "spring", stiffness: 260, damping: 22 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <FlowCard
-                item={currentItem}
-                expanded={expandedCard}
-                onToggleExpand={() => setExpandedCard(!expandedCard)}
-                onSave={() => performAction("save")}
-                onShare={() => performAction("share")}
-                onDelete={() => deleteFlowItem.mutate(currentItem.id)}
-                isOwner={currentItem.user_id === user?.id}
-              />
-            </motion.div>
+      {/* ═══ SWIPE VIEW ═══ */}
+      {viewMode === "swipe" && (
+        <div className="relative z-10 flex flex-1 items-center justify-center px-4 pb-36 pt-2 md:pb-40">
+          <AnimatePresence mode="wait">
+            {currentItem ? (
+              <motion.div
+                key={`${currentItem.id}-${currentIndex}`}
+                className="w-full max-w-xs md:max-w-sm cursor-grab active:cursor-grabbing"
+                drag
+                dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                dragElastic={0.6}
+                dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
+                onDragEnd={handleDragEnd}
+                style={{ x, y, rotateZ, opacity: cardOpacity, scale: cardScale, boxShadow: shadowIntensity }}
+                initial={{ opacity: 0, scale: 0.92, y: 24 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.85, y: -20, transition: { duration: 0.18, ease: "easeIn" } }}
+                transition={{ type: "spring", stiffness: 260, damping: 22 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <FlowCard
+                  item={currentItem}
+                  expanded={expandedCard}
+                  onToggleExpand={() => setExpandedCard(!expandedCard)}
+                  onSave={() => performAction("save")}
+                  onShare={() => performAction("share")}
+                  onDelete={() => deleteFlowItem.mutate(currentItem.id)}
+                  isOwner={currentItem.user_id === user?.id}
+                />
+              </motion.div>
+            ) : (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center px-4">
+                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-card/60 backdrop-blur-sm">
+                  <Sparkles className="h-8 w-8 text-primary" />
+                </div>
+                <h2 className="mb-2 font-display text-xl font-bold text-foreground">Nothing here yet</h2>
+                <p className="mx-auto mb-6 max-w-xs text-sm text-muted-foreground">Be the first to share your work.</p>
+                <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Share Your Work
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
+      {/* ═══ BROWSE VIEW ═══ */}
+      {viewMode === "browse" && (
+        <div className="relative z-10 flex-1 overflow-y-auto px-4 pb-28 pt-2 md:px-8">
+          {allItems.length > 0 ? (
+            <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
+              {allItems.map((item) => (
+                <div key={item.id} className="break-inside-avoid">
+                  <FlowCard
+                    item={item}
+                    expanded={false}
+                    onToggleExpand={() => {}}
+                    onSave={() => performAction("save", undefined, item)}
+                    onShare={() => performAction("share", undefined, item)}
+                    onDelete={() => deleteFlowItem.mutate(item.id)}
+                    isOwner={item.user_id === user?.id}
+                  />
+                </div>
+              ))}
+            </div>
           ) : (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center px-4">
-              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-card/60 backdrop-blur-sm">
-                <Sparkles className="h-8 w-8 text-primary" />
-              </div>
+            <div className="flex flex-col items-center justify-center pt-20 text-center">
+              <Sparkles className="h-8 w-8 text-primary mb-4" />
               <h2 className="mb-2 font-display text-xl font-bold text-foreground">Nothing here yet</h2>
               <p className="mx-auto mb-6 max-w-xs text-sm text-muted-foreground">Be the first to share your work.</p>
               <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
                 <Plus className="mr-2 h-4 w-4" />
                 Share Your Work
               </Button>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
-      </div>
+        </div>
+      )}
 
-      {currentItem && (
-        <div className="pointer-events-none fixed bottom-24 left-1/2 z-40 w-full -translate-x-1/2 px-4 md:bottom-28">
-          <div className="mx-auto inline-flex max-w-fit items-center gap-4 rounded-full border border-border/30 bg-card/70 px-4 py-2 backdrop-blur-sm md:gap-6 md:px-5 md:py-2.5">
-            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground md:text-xs">
-              <ChevronUp className="h-3.5 w-3.5" /> Save
+      {currentItem && viewMode === "swipe" && (
+        <div className="pointer-events-none fixed bottom-20 left-0 right-0 z-40 flex justify-center px-4 md:bottom-24">
+          <div className="inline-flex items-center gap-3 rounded-full border border-border/30 bg-card/70 px-4 py-2 backdrop-blur-sm md:gap-5 md:px-5">
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              <ChevronUp className="h-3 w-3" /> Save
             </span>
-            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground md:text-xs">
-              <ChevronDown className="h-3.5 w-3.5" /> Pass
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              <ChevronDown className="h-3 w-3" /> Pass
             </span>
-            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground md:text-xs">
-              <ChevronLeft className="h-3.5 w-3.5" /> Share
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              <ChevronLeft className="h-3 w-3" /> Share
             </span>
-            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground md:text-xs">
-              <ChevronRight className="h-3.5 w-3.5" /> Next
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              <ChevronRight className="h-3 w-3" /> Next
             </span>
           </div>
         </div>
