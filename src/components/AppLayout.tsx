@@ -42,15 +42,28 @@ const AppLayout = () => {
           <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/80 backdrop-blur-sm px-4 md:px-6 gap-4">
             <SidebarTrigger className="mr-1 shrink-0" />
 
-            {/* Center search */}
-            <div className="hidden md:flex flex-1 max-w-md">
+            {/* Search bar with Flow mode trigger */}
+            <div className="hidden md:flex flex-1 max-w-md items-center gap-2">
               <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search..."
+                  placeholder="Search artists, music, design, services, and more..."
                   className="pl-9 h-9 rounded-full bg-muted/50 border-border text-sm"
                 />
               </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => navigate("/flow")}
+                    className="shrink-0 h-9 w-9 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/20 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+                  >
+                    <Search className="h-4 w-4 text-primary" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">
+                  Discover in Flow Mode
+                </TooltipContent>
+              </Tooltip>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
