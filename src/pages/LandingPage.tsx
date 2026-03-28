@@ -107,25 +107,28 @@ const LandingPage = () => {
             backgroundSize: "128px 128px",
           }}
         />
-        <div className="absolute inset-0 pointer-events-none">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.5, ease: "easeOut" }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
-            style={{
-              background: "radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%)",
-            }}
-          />
+
+        {/* Animated aurora gradient */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.4 }}
-            transition={{ duration: 2, delay: 0.5 }}
-            className="absolute top-[30%] left-[20%] w-[300px] h-[300px] rounded-full"
-            style={{
-              background: "radial-gradient(circle, hsl(var(--accent) / 0.04) 0%, transparent 70%)",
-            }}
-          />
+            animate={{ opacity: 1 }}
+            transition={{ duration: 2 }}
+            className="absolute inset-0"
+          >
+            <div
+              className="absolute top-[-40%] left-[-20%] w-[140%] h-[180%]"
+              style={{
+                background: `
+                  radial-gradient(ellipse 50% 40% at 20% 50%, hsl(280 80% 70% / 0.08) 0%, transparent 70%),
+                  radial-gradient(ellipse 40% 50% at 80% 30%, hsl(320 80% 60% / 0.06) 0%, transparent 70%),
+                  radial-gradient(ellipse 45% 35% at 60% 80%, hsl(30 90% 60% / 0.05) 0%, transparent 70%),
+                  radial-gradient(ellipse 35% 45% at 30% 20%, hsl(175 70% 50% / 0.05) 0%, transparent 70%)
+                `,
+                animation: "aurora-drift 20s ease-in-out infinite alternate",
+              }}
+            />
+          </motion.div>
         </div>
 
         <div className="relative z-10 max-w-lg mx-auto text-center py-16">
