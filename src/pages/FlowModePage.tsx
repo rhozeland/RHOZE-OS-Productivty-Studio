@@ -88,8 +88,18 @@ const FlowModePage = () => {
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const rotateZ = useTransform(x, [-200, 200], [-12, 12]);
-  const cardOpacity = useTransform(x, [-200, -100, 0, 100, 200], [0.7, 0.9, 1, 0.9, 0.7]);
+  const rotateZ = useTransform(x, [-200, 200], [-8, 8]);
+  const cardOpacity = useTransform(x, [-200, -100, 0, 100, 200], [0.8, 0.95, 1, 0.95, 0.8]);
+  const cardScale = useTransform(
+    x,
+    [-200, -100, 0, 100, 200],
+    [0.97, 0.99, 1, 0.99, 0.97]
+  );
+  const shadowIntensity = useTransform(
+    x,
+    [-150, 0, 150],
+    ["0 8px 30px -8px hsl(var(--foreground) / 0.15)", "0 20px 40px -12px hsl(var(--foreground) / 0.08)", "0 8px 30px -8px hsl(var(--foreground) / 0.15)"]
+  );
 
   useEffect(() => {
     const saved = localStorage.getItem(`flow-calibrated-${user?.id}`);
