@@ -1,7 +1,5 @@
-import { useState, useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Play, Pause, FileText, Share2, ExternalLink, ChevronDown, Music, Palette, Camera, Video, PenTool, Volume2, VolumeX } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Play, FileText, ExternalLink, ChevronDown, Music, Palette, Camera, Video, PenTool, Bookmark, Send } from "lucide-react";
 import AudioPreview from "@/components/marketplace/AudioPreview";
 
 /* ─── Platform detection ─── */
@@ -29,7 +27,6 @@ const getYouTubeId = (url: string) => {
 };
 
 const getSpotifyEmbed = (url: string) => {
-  // Convert open.spotify.com/track/xxx to embed
   const match = url.match(/spotify\.com\/(track|album|playlist|episode)\/([a-zA-Z0-9]+)/);
   if (match) return `https://open.spotify.com/embed/${match[1]}/${match[2]}?utm_source=generator&theme=0`;
   return null;
@@ -45,6 +42,14 @@ const CATEGORY_ICONS: Record<string, any> = {
   photo: Camera,
   video: Video,
   writing: PenTool,
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+  music: "bg-pink/15 text-pink",
+  design: "bg-teal/15 text-teal",
+  photo: "bg-warm/15 text-warm",
+  video: "bg-accent/15 text-accent",
+  writing: "bg-muted text-muted-foreground",
 };
 
 interface FlowCardProps {
@@ -67,30 +72,31 @@ interface FlowCardProps {
 const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare }: FlowCardProps) => {
   const platform = detectPlatform(item.link_url);
   const CatIcon = CATEGORY_ICONS[item.category] || Palette;
+  const catColor = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.writing;
   const isImage = item.content_type === "image" || item.category === "photo" || item.category === "design";
   const isAudio = item.content_type === "audio" || item.category === "music";
   const isVideo = item.content_type === "video" || item.category === "video";
   const isWriting = item.content_type === "text" || item.content_type === "link" || item.category === "writing";
 
-  // YouTube embed
   const youtubeId = item.link_url ? getYouTubeId(item.link_url) : null;
-  // Spotify embed
   const spotifyEmbed = item.link_url ? getSpotifyEmbed(item.link_url) : null;
-  // SoundCloud embed
   const isSoundCloud = item.link_url?.includes("soundcloud.com");
 
   return (
     <div className="rounded-[20px] bg-card shadow-2xl shadow-foreground/5 overflow-hidden border border-border/40 select-none">
+      {/* ═══ Category badge — always visible at top ═══ */}
+      <div className="absolute top-3 left-3 z-10">
+        <Badge className={`${catColor} border-0 rounded-full text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 flex items-center gap-1`}>
+          <CatIcon className="h-3 w-3" />
+          {item.category}
+        </Badge>
+      </div>
+
       {/* ═══ PHOTO / DESIGN — Full bleed image ═══ */}
       {isImage && item.file_url && (
         <div className="relative">
           <div className="aspect-[4/5] overflow-hidden">
-            <img
-              src={item.file_url}
-              alt={item.title}
-              className="w-full h-full object-cover"
-              draggable={false}
-            />
+            <img src={item.file_url} alt={item.title} className="w-full h-full object-cover" draggable={false} />
           </div>
         </div>
       )}
@@ -98,7 +104,6 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare }: FlowCardP
       {/* ═══ MUSIC — Artwork + embedded player ═══ */}
       {isAudio && (
         <div className="relative">
-          {/* Spotify embed */}
           {spotifyEmbed && (
             <div className="w-full" onClick={(e) => e.stopPropagation()}>
               <iframe
@@ -114,7 +119,6 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare }: FlowCardP
             </div>
           )}
 
-          {/* SoundCloud embed */}
           {isSoundCloud && item.link_url && !spotifyEmbed && (
             <div className="w-full" onClick={(e) => e.stopPropagation()}>
               <iframe
@@ -129,32 +133,32 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare }: FlowCardP
             </div>
           )}
 
-          {/* Uploaded audio with artwork */}
           {item.file_url && !spotifyEmbed && !isSoundCloud && (
             <div className="relative">
-              {/* Album art or gradient */}
-              <div className="aspect-square overflow-hidden bg-gradient-to-br from-primary/20 via-accent/10 to-muted flex items-center justify-center">
+              <div className="aspect-square overflow-hidden bg-gradient-to-br from-pink/20 via-accent/10 to-muted flex items-center justify-center">
                 <div className="text-center">
-                  <div className="h-20 w-20 mx-auto rounded-2xl bg-card/30 backdrop-blur-sm flex items-center justify-center mb-4 shadow-lg">
-                    <Music className="h-10 w-10 text-foreground/60" />
+                  <div className="h-24 w-24 mx-auto rounded-3xl bg-card/40 backdrop-blur-md flex items-center justify-center mb-4 shadow-2xl border border-border/20">
+                    <Music className="h-12 w-12 text-foreground/50" />
                   </div>
+                  <h3 className="font-display text-lg font-bold text-foreground px-6">{item.title}</h3>
                 </div>
               </div>
-              {/* Inline audio player */}
               <div className="border-t border-border" onClick={(e) => e.stopPropagation()}>
                 <AudioPreview src={item.file_url} title={item.title} />
               </div>
             </div>
           )}
 
-          {/* No file, no embed — just artwork placeholder */}
           {!item.file_url && !spotifyEmbed && !isSoundCloud && (
-            <div className="aspect-[4/5] bg-gradient-to-br from-primary/15 via-accent/10 to-muted flex items-center justify-center">
+            <div className="aspect-[4/5] bg-gradient-to-br from-pink/15 via-accent/10 to-muted flex items-center justify-center">
               <div className="text-center p-6">
-                <Music className="h-14 w-14 text-foreground/30 mx-auto mb-3" />
-                <h2 className="font-display text-xl font-bold text-foreground leading-tight">
-                  {item.title}
-                </h2>
+                <div className="h-20 w-20 mx-auto rounded-2xl bg-card/40 backdrop-blur-md flex items-center justify-center mb-4 shadow-xl border border-border/20">
+                  <Music className="h-10 w-10 text-foreground/40" />
+                </div>
+                <h2 className="font-display text-xl font-bold text-foreground leading-tight mb-2">{item.title}</h2>
+                {item.description && (
+                  <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
+                )}
               </div>
             </div>
           )}
@@ -178,13 +182,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare }: FlowCardP
             </div>
           ) : item.file_url ? (
             <div className="aspect-video overflow-hidden bg-foreground/5" onClick={(e) => e.stopPropagation()}>
-              <video
-                src={item.file_url}
-                controls
-                playsInline
-                preload="metadata"
-                className="w-full h-full object-cover"
-              />
+              <video src={item.file_url} controls playsInline preload="metadata" className="w-full h-full object-cover" />
             </div>
           ) : (
             <div className="aspect-video bg-gradient-to-br from-accent/15 via-muted to-primary/10 flex items-center justify-center">
@@ -207,24 +205,15 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare }: FlowCardP
               <img src={item.file_url} alt={item.title} className="w-full h-full object-cover" draggable={false} />
             </div>
           ) : (
-            <div className="px-6 pt-8 pb-4 min-h-[280px] flex flex-col justify-center">
-              <Badge variant="outline" className="w-fit mb-4 capitalize rounded-full text-[10px] tracking-wider">
-                {item.category}
-              </Badge>
-              <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground leading-tight mb-3">
-                {item.title}
-              </h2>
+            <div className="px-6 pt-12 pb-4 min-h-[280px] flex flex-col justify-center">
+              <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground leading-tight mb-3">{item.title}</h2>
               {item.description && (
-                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">
-                  {item.description}
-                </p>
+                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">{item.description}</p>
               )}
               {item.tags && item.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-4">
                   {item.tags.slice(0, 4).map((tag) => (
-                    <span key={tag} className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                      #{tag}
-                    </span>
+                    <span key={tag} className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">#{tag}</span>
                   ))}
                 </div>
               )}
@@ -235,63 +224,59 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare }: FlowCardP
 
       {/* ═══ Fallback for design with no file ═══ */}
       {isImage && !item.file_url && (
-        <div className="aspect-[4/5] bg-gradient-to-br from-primary/10 via-accent/5 to-muted flex items-center justify-center p-6">
+        <div className="aspect-[4/5] bg-gradient-to-br from-teal/10 via-accent/5 to-muted flex items-center justify-center p-6">
           <div className="text-center">
-            <CatIcon className="h-12 w-12 text-foreground/20 mx-auto mb-4" />
-            <Badge variant="outline" className="mb-3 capitalize rounded-full text-[10px]">
-              {item.category}
-            </Badge>
-            <h2 className="font-display text-xl font-bold text-foreground leading-tight">
-              {item.title}
-            </h2>
+            <div className="h-20 w-20 mx-auto rounded-2xl bg-card/40 backdrop-blur-md flex items-center justify-center mb-4 shadow-xl border border-border/20">
+              <CatIcon className="h-10 w-10 text-foreground/40" />
+            </div>
+            <h2 className="font-display text-xl font-bold text-foreground leading-tight">{item.title}</h2>
           </div>
         </div>
       )}
 
-      {/* ═══ ACTION BAR — Save + Share (always visible) ═══ */}
-      <div className="px-4 pt-3 pb-2 flex items-center gap-5">
+      {/* ═══ ACTION BAR — Save + Send ═══ */}
+      <div className="px-4 pt-3 pb-2 flex items-center gap-4">
         <button
           onClick={(e) => { e.stopPropagation(); onSave(); }}
-          className="text-muted-foreground hover:text-foreground transition-colors"
+          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group"
           title="Save to board"
         >
-          <FileText className="h-5 w-5" />
+          <Bookmark className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
+          <span className="text-[11px] font-medium">Save</span>
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onShare(); }}
-          className="text-muted-foreground hover:text-foreground transition-colors"
-          title="Share"
+          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group"
+          title="Send to someone"
         >
-          <Share2 className="h-5 w-5" />
+          <Send className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
+          <span className="text-[11px] font-medium">Send</span>
         </button>
 
-        {/* External link */}
         {item.link_url && (
           <a
             href={item.link_url}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="ml-auto text-muted-foreground hover:text-foreground transition-colors"
+            className="ml-auto flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
             title={`Open on ${platform?.name || "web"}`}
           >
             <ExternalLink className="h-4 w-4" />
+            {platform && platform.name !== "Link" && (
+              <span className="text-[11px] font-medium">{platform.name}</span>
+            )}
           </a>
         )}
       </div>
 
       {/* ═══ TITLE + DESCRIPTION ═══ */}
-      {/* For writing cards, title is already shown above; for others, show here */}
       {!(isWriting && !isAudio && !isVideo && !isImage && !item.file_url) && (
         <div className="px-4 pb-3">
-          <h3 className="font-display font-bold text-foreground text-sm md:text-base leading-snug">
-            {item.title}
-          </h3>
+          <h3 className="font-display font-bold text-foreground text-sm md:text-base leading-snug">{item.title}</h3>
           {item.description && (
             <p
-              className={`text-sm text-muted-foreground leading-relaxed mt-1 cursor-pointer ${
-                expanded ? "" : "line-clamp-2"
-              }`}
+              className={`text-sm text-muted-foreground leading-relaxed mt-1 cursor-pointer ${expanded ? "" : "line-clamp-2"}`}
               onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
             >
               {item.description}
@@ -305,27 +290,6 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare }: FlowCardP
               <ChevronDown className="h-3 w-3" /> more
             </button>
           )}
-        </div>
-      )}
-
-      {/* ═══ PLATFORM BADGE ═══ */}
-      {platform && platform.name !== "Link" && (
-        <div className="px-4 pb-4 flex justify-center">
-          <a
-            href={item.link_url!}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <span
-              className="h-6 w-6 rounded-full flex items-center justify-center text-[11px] font-bold"
-              style={{ backgroundColor: platform.color + "20", color: platform.color }}
-            >
-              {platform.icon}
-            </span>
-            <span className="text-[11px] font-medium">{platform.name}</span>
-          </a>
         </div>
       )}
     </div>

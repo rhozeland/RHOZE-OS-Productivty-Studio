@@ -20,7 +20,6 @@ import {
   Sparkles,
   Plus,
   FileText,
-  Share2,
   Check,
   Upload,
   Search,
@@ -55,6 +54,7 @@ import { toast } from "sonner";
 import { playSwipeSound } from "@/lib/swipe-sound";
 import FlowCard from "@/components/flow/FlowCard";
 import FlowCardBackground from "@/components/flow/FlowCardBackground";
+import FlowShareDialog from "@/components/flow/FlowShareDialog";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
@@ -237,6 +237,7 @@ const FlowModePage = () => {
   const [expandedCard, setExpandedCard] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [savePickerOpen, setSavePickerOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"swipe" | "browse">("swipe");
@@ -400,9 +401,8 @@ const FlowModePage = () => {
         return;
       }
     } else if (action === "share") {
-      interact.mutate({ itemId: currentItem.id, action });
-      toast("Shared!");
-      advanceCard();
+      setShareDialogOpen(true);
+      return;
     } else {
       interact.mutate({ itemId: currentItem.id, action });
       advanceCard();
@@ -1224,6 +1224,13 @@ const FlowModePage = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Share to user dialog */}
+      <FlowShareDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        item={currentItem || null}
+      />
     </div>
   );
 };
