@@ -136,9 +136,9 @@ const AuthPage = () => {
 
       {/* Centered card */}
       <motion.div
-        initial={{ opacity: 0, y: 24, scale: 0.98 }}
+        initial={{ opacity: 0, y: 40, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.6, delay: 0.15 }}
+        transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className="relative z-10 w-full max-w-md mx-4"
       >
         {/* Glass card */}
@@ -146,19 +146,34 @@ const AuthPage = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 200, delay: 0.3 }}
+              initial={{ scale: 0, rotate: -90 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", stiffness: 180, damping: 14, delay: 0.8 }}
               className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/5 border border-border/50 mb-5"
             >
-              <Sparkles className="h-5 w-5 text-muted-foreground" />
+              <motion.div
+                animate={{ rotate: [0, 8, -8, 0], scale: [1, 1.15, 0.95, 1] }}
+                transition={{ duration: 3, repeat: Infinity, repeatDelay: 2, ease: "easeInOut" }}
+              >
+                <Sparkles className="h-5 w-5 text-muted-foreground" />
+              </motion.div>
             </motion.div>
-            <h1 className="font-display text-2xl font-bold text-foreground">
+            <motion.h1
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 1.0 }}
+              className="font-display text-2xl font-bold text-foreground"
+            >
               {isSignUp ? "Create your account" : "Welcome back"}
-            </h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 1.15 }}
+              className="mt-1.5 text-sm text-muted-foreground"
+            >
               {isSignUp ? "Join the creative workspace" : "Sign in to continue"}
-            </p>
+            </motion.p>
           </div>
 
           {/* Google sign-in */}
