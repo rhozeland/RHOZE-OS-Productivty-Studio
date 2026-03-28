@@ -11,6 +11,9 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sidebar,
   SidebarContent,
@@ -40,6 +43,22 @@ const AppSidebar = () => {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
 
+  const { data: profile } = useQuery({
+    queryKey: ["my-profile-sidebar", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const initials = profile?.display_name
+    ? profile.display_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+    : user?.email?.charAt(0).toUpperCase() ?? "?";
 
   const accountItems = [
     { icon: Settings, label: "Settings", path: "/settings" },
@@ -101,6 +120,9 @@ const AppSidebar = () => {
     </SidebarGroup>
   );
 
+  const profilePath = user?.id ? `/profiles/${user.id}` : "/settings";
+  const profileActive = isActive(profilePath);
+
   return (
     <Sidebar collapsible="icon" className="border-r-0">
       <Link to="/dashboard" className={cn(
@@ -113,7 +135,7 @@ const AppSidebar = () => {
           className="h-8 w-8 shrink-0 object-contain"
         />
         {!collapsed && (
-          <span className="font-display text-lg font-bold tracking-tight text-foreground">
+          <span className="font-body text-lg font-bold tracking-tight text-foreground">
             Rhozeland
           </span>
         )}
@@ -124,6 +146,30 @@ const AppSidebar = () => {
       </SidebarContent>
 
       <SidebarFooter className="px-2 pb-3">
+        {/* Profile link */}
+        <Link
+          to={profilePath}
+          onClick={handleNavClick}
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2.5 mb-2 transition-all duration-250",
+            profileActive
+              ? "bg-muted text-foreground"
+              : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+          )}
+        >
+          <Avatar className="h-6 w-6 border border-border shrink-0">
+            <AvatarImage src={profile?.avatar_url ?? undefined} />
+            <AvatarFallback className="text-[8px] font-semibold bg-muted text-muted-foreground font-body">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          {!collapsed && (
+            <span className="text-sm font-medium truncate">
+              {profile?.display_name || user?.email?.split("@")[0] || "Profile"}
+            </span>
+          )}
+        </Link>
+
         <div className="border-t border-sidebar-border pt-3">
           <SidebarMenu className="space-y-0.5">
             {accountItems.map(renderNavItem)}
