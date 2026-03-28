@@ -68,9 +68,15 @@ const StudioManagePage = () => {
 
   // Staff management state
   const [addStaffOpen, setAddStaffOpen] = useState(false);
+  const [staffUsername, setStaffUsername] = useState("");
+  const [staffSearchResults, setStaffSearchResults] = useState<any[]>([]);
   const [selectedUserId, setSelectedUserId] = useState("");
+  const [selectedUserName, setSelectedUserName] = useState("");
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
+  const [customSpecialty, setCustomSpecialty] = useState("");
+  const [showCustomInput, setShowCustomInput] = useState(false);
   const [savingStaff, setSavingStaff] = useState(false);
+  const [searching, setSearching] = useState(false);
 
   // Initialize form when studio loads
   const studioForm = {
@@ -131,25 +137,22 @@ const StudioManagePage = () => {
     enabled: !!user,
   });
 
-  // All profiles for adding staff
-  const { data: allProfiles } = useQuery({
-    queryKey: ["all-profiles-for-staff"],
-    queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("user_id, display_name, avatar_url");
-      return data ?? [];
-    },
-    enabled: addStaffOpen,
-  });
+  // Hard-coded specialty options
+  const SPECIALTIES = ["audio", "design", "photo", "video", "writing", "other"];
 
-  // Service categories for specialties
-  const { data: serviceCategories } = useQuery({
-    queryKey: ["service-categories"],
-    queryFn: async () => {
-      const { data } = await supabase.from("services").select("category");
-      return [...new Set((data || []).map((s: any) => s.category as string))].sort();
-    },
-    enabled: addStaffOpen,
-  });
+  // Search profiles by display_name
+  const searchUsers = async (query: string) => {
+    if (query.length < 2) { setStaffSearchResults([]); return; }
+    setSearching(true);
+    const { data } = await supabase
+      .from("profiles")
+      .select("user_id, display_name, avatar_url")
+      .ilike("display_name", `%${query}%`)
+      .limit(8);
+    const existing = new Set((staffMembers || []).map((s: any) => s.user_id));
+    setStaffSearchResults((data || []).filter((p) => !existing.has(p.user_id) && p.user_id !== user?.id));
+    setSearching(false);
+  };
 
   // Studio bookings
   const { data: bookings } = useQuery({
@@ -198,25 +201,46 @@ const StudioManagePage = () => {
 
   const updateField = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 
-  // Staff management functions
-  const existingStaffUserIds = new Set((staffMembers || []).map((s: any) => s.user_id));
-  const availableProfiles = (allProfiles || []).filter((p) => !existingStaffUserIds.has(p.user_id));
-
   const toggleSpecialty = (cat: string) => {
+    if (cat === "other") {
+      setShowCustomInput((prev) => !prev);
+      return;
+    }
     setSelectedSpecialties((prev) =>
       prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
     );
   };
 
+  const addCustomSpecialty = () => {
+    const trimmed = customSpecialty.trim().toLowerCase();
+    if (trimmed && !selectedSpecialties.includes(trimmed)) {
+      setSelectedSpecialties((prev) => [...prev, trimmed]);
+    }
+    setCustomSpecialty("");
+    setShowCustomInput(false);
+  };
+
   const handleAddStaff = async () => {
     if (!selectedUserId) return;
     setSavingStaff(true);
-    const profile = (allProfiles || []).find((p) => p.user_id === selectedUserId);
 
+    // Send an invitation message to the user
+    const { error: msgError } = await supabase.from("messages").insert({
+      sender_id: user!.id,
+      receiver_id: selectedUserId,
+      content: `🤝 You've been invited to join the staff at **${studio?.name}**! Specialties: ${selectedSpecialties.join(", ") || "General"}. Please accept by replying to this message.`,
+    });
+
+    if (msgError) {
+      toast.error(msgError.message);
+      setSavingStaff(false);
+      return;
+    }
+
+    // Add them as staff
     const { error } = await supabase.from("staff_members").insert({
       user_id: selectedUserId,
-      display_name: profile?.display_name || "Staff Member",
-      avatar_url: profile?.avatar_url || null,
+      display_name: selectedUserName || "Staff Member",
       specialties: selectedSpecialties,
       is_available: true,
     } as any);
@@ -224,10 +248,14 @@ const StudioManagePage = () => {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Staff member added");
+      toast.success("Staff invitation sent & member added!");
       setAddStaffOpen(false);
       setSelectedUserId("");
+      setSelectedUserName("");
+      setStaffUsername("");
+      setStaffSearchResults([]);
       setSelectedSpecialties([]);
+      setShowCustomInput(false);
       refetchStaff();
     }
     setSavingStaff(false);
@@ -350,7 +378,7 @@ const StudioManagePage = () => {
 
             <div className="space-y-2">
               <Label>Studio Rules</Label>
-              <Textarea value={studioForm.rules} onChange={(e) => updateField("rules", e.target.value)} rows={3} placeholder="Any house rules guests should know about..." />
+              <Textarea value={studioForm.rules} onChange={(e) => updateField("rules", e.target.value)} rows={3} placeholder="Any rules or guidelines guests should know about..." />
             </div>
 
             <div className="space-y-2">
@@ -481,68 +509,96 @@ const StudioManagePage = () => {
             )}
           </div>
 
-          {/* Add Staff Dialog */}
-          <Dialog open={addStaffOpen} onOpenChange={(o) => { setAddStaffOpen(o); if (!o) { setSelectedUserId(""); setSelectedSpecialties([]); } }}>
+          <Dialog open={addStaffOpen} onOpenChange={(o) => { setAddStaffOpen(o); if (!o) { setSelectedUserId(""); setSelectedUserName(""); setStaffUsername(""); setStaffSearchResults([]); setSelectedSpecialties([]); setShowCustomInput(false); setCustomSpecialty(""); } }}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>Add Staff Member</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-foreground block mb-1.5">Select User</label>
-                  <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose a user..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableProfiles.map((p) => (
-                        <SelectItem key={p.user_id} value={p.user_id}>
-                          {p.display_name || "Unnamed"}
-                        </SelectItem>
+                  <label className="text-sm font-medium text-foreground block mb-1.5">Search by Name</label>
+                  <Input
+                    value={staffUsername}
+                    onChange={(e) => { setStaffUsername(e.target.value); searchUsers(e.target.value); }}
+                    placeholder="Type a username to search..."
+                  />
+                  {searching && <p className="text-xs text-muted-foreground mt-1">Searching...</p>}
+                  {staffSearchResults.length > 0 && !selectedUserId && (
+                    <div className="mt-2 border border-border rounded-xl overflow-hidden divide-y divide-border">
+                      {staffSearchResults.map((p) => (
+                        <button
+                          key={p.user_id}
+                          type="button"
+                          onClick={() => { setSelectedUserId(p.user_id); setSelectedUserName(p.display_name || ""); setStaffUsername(p.display_name || ""); setStaffSearchResults([]); }}
+                          className="flex items-center gap-2.5 w-full px-3 py-2.5 text-left hover:bg-muted/50 transition-colors"
+                        >
+                          <Avatar className="h-7 w-7">
+                            <AvatarImage src={p.avatar_url || ""} />
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs">{(p.display_name || "?")[0]?.toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm text-foreground">{p.display_name || "Unnamed"}</span>
+                        </button>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </div>
+                  )}
+                  {selectedUserId && (
+                    <div className="flex items-center gap-2 mt-2 p-2 rounded-lg bg-primary/5 border border-primary/20">
+                      <span className="text-sm text-foreground font-medium">{selectedUserName}</span>
+                      <button type="button" onClick={() => { setSelectedUserId(""); setSelectedUserName(""); setStaffUsername(""); }} className="ml-auto text-muted-foreground hover:text-destructive">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="text-sm font-medium text-foreground block mb-1.5">Specialties</label>
                   {selectedSpecialties.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-2">
                       {selectedSpecialties.map((s) => (
-                        <Badge key={s} variant="secondary" className="gap-1 cursor-pointer hover:bg-destructive/10" onClick={() => toggleSpecialty(s)}>
+                        <Badge key={s} variant="secondary" className="gap-1 cursor-pointer hover:bg-destructive/10" onClick={() => setSelectedSpecialties((prev) => prev.filter((c) => c !== s))}>
                           {s} <X className="h-3 w-3" />
                         </Badge>
                       ))}
                     </div>
                   )}
                   <div className="flex flex-wrap gap-2">
-                    {(serviceCategories || []).length > 0 ? (
-                      (serviceCategories || []).map((cat) => {
-                        const active = selectedSpecialties.includes(cat);
-                        return (
-                          <button
-                            key={cat}
-                            type="button"
-                            onClick={() => toggleSpecialty(cat)}
-                            className={cn(
-                              "rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
-                              active
-                                ? "border-primary/40 bg-primary/10 text-primary"
-                                : "border-border bg-muted/30 text-muted-foreground hover:bg-muted hover:text-foreground"
-                            )}
-                          >
-                            {cat}
-                          </button>
-                        );
-                      })
-                    ) : (
-                      <p className="text-xs text-muted-foreground">No service categories found.</p>
-                    )}
+                    {SPECIALTIES.map((cat) => {
+                      const active = cat === "other" ? showCustomInput : selectedSpecialties.includes(cat);
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => toggleSpecialty(cat)}
+                          className={cn(
+                            "rounded-full border px-3 py-1.5 text-xs font-medium transition-all capitalize",
+                            active
+                              ? "border-primary/40 bg-primary/10 text-primary"
+                              : "border-border bg-muted/30 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          )}
+                        >
+                          {cat}
+                        </button>
+                      );
+                    })}
                   </div>
+                  {showCustomInput && (
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        value={customSpecialty}
+                        onChange={(e) => setCustomSpecialty(e.target.value)}
+                        placeholder="Enter custom specialty..."
+                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomSpecialty(); } }}
+                        className="flex-1"
+                      />
+                      <Button size="sm" onClick={addCustomSpecialty} disabled={!customSpecialty.trim()}>Add</Button>
+                    </div>
+                  )}
                 </div>
                 <Button className="w-full" onClick={handleAddStaff} disabled={!selectedUserId || savingStaff}>
                   {savingStaff ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-                  Add to Staff
+                  Send Invitation & Add
                 </Button>
+                <p className="text-xs text-muted-foreground text-center">They'll receive a message invitation to join your studio staff.</p>
               </div>
             </DialogContent>
           </Dialog>
