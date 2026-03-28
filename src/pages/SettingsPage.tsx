@@ -200,6 +200,36 @@ const SettingsPage = () => {
     }
   };
 
+  const handleBannerUpload = async (file: File) => {
+    if (!user) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Banner image must be under 10MB");
+      return;
+    }
+    setUploadingBanner(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${user.id}/banner.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("avatar-uploads")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage
+        .from("avatar-uploads")
+        .getPublicUrl(path);
+      const url = `${urlData.publicUrl}?t=${Date.now()}`;
+      setBannerImageUrl(url);
+      await supabase.from("profiles").update({ banner_url: url } as any).eq("user_id", user.id);
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      toast.success("Banner image updated!");
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
   const handleEmojiAvatar = async (emoji: string) => {
     if (!user) return;
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
