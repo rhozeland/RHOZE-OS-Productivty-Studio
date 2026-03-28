@@ -20,6 +20,7 @@ import {
   Upload,
   Loader2,
   Link2,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
