@@ -584,7 +584,7 @@ const ProfileDetailPage = () => {
                     <div className="flex items-center justify-between mt-1">
                       <Badge variant="outline" className="text-[9px] capitalize">{listing.category}</Badge>
                       {listing.credits_price && (
-                        <span className="text-[10px] font-semibold text-primary">{listing.credits_price} cr</span>
+                        <span className="text-[10px] font-semibold text-primary">{listing.credits_price} ◊</span>
                       )}
                     </div>
                   </div>

@@ -263,7 +263,7 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
             <p className="text-sm font-medium text-foreground">{service.title}</p>
           </div>
           <div className="text-right">
-            <p className="text-lg font-bold text-primary">{service.credits_cost} cr</p>
+            <p className="text-lg font-bold text-primary">{service.credits_cost} ◊</p>
             <p className="text-xs text-muted-foreground">${usdPrice}</p>
           </div>
         </div>

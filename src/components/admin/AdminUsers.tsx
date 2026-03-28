@@ -69,7 +69,7 @@ const AdminUsers = () => {
                   {credit && (
                     <>
                       <Badge variant="outline" className="text-xs">{credit.tier}</Badge>
-                      <span className="text-sm font-medium text-foreground">{credit.balance} cr</span>
+                      <span className="text-sm font-medium text-foreground">{credit.balance} ◊</span>
                     </>
                   )}
                   <Badge variant={p.available ? "default" : "secondary"} className="text-xs">

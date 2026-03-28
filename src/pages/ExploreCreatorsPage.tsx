@@ -137,9 +137,9 @@ const ExploreCreatorsPage = () => {
                     </div>
                   )}
                   {listing.credits_price && (
-                    <div className="absolute top-3 right-3 rounded-full bg-background/90 backdrop-blur-sm px-3 py-1.5 text-sm font-bold text-foreground shadow-sm">
-                      {listing.credits_price} cr
-                    </div>
+                     <div className="absolute top-3 right-3 rounded-full bg-background/90 backdrop-blur-sm px-3 py-1.5 text-sm font-bold text-foreground shadow-sm">
+                       {listing.credits_price} ◊
+                     </div>
                   )}
                 </div>
                 <div className="p-4 space-y-1.5">
