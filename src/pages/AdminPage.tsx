@@ -56,9 +56,6 @@ const AdminPage = () => {
         <TabsContent value="overview">
           <AdminOverview />
         </TabsContent>
-        <TabsContent value="services">
-          <AdminServices />
-        </TabsContent>
         <TabsContent value="staff">
           <AdminStaff />
         </TabsContent>
