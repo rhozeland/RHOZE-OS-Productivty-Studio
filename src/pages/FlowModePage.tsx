@@ -1224,6 +1224,13 @@ const FlowModePage = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Share to user dialog */}
+      <FlowShareDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        item={currentItem || null}
+      />
     </div>
   );
 };
