@@ -138,7 +138,42 @@ const CalendarPage = () => {
     },
   });
 
-  const createBookingWithPayment = async (cardToken?: string) => {
+  const createCalendarEvent = async () => {
+    if (!dragDate || dragStartHour === null || dragEndHour === null || !user) return;
+    const startH = Math.min(dragStartHour, dragEndHour);
+    const endH = Math.max(dragStartHour, dragEndHour) + 1;
+    const start = setMinutes(setHours(dragDate, startH), 0);
+    const end = setMinutes(setHours(dragDate, endH), 0);
+
+    setBookingLoading(true);
+    try {
+      const { error } = await supabase.from("calendar_events").insert({
+        user_id: user.id,
+        title: eventTitle || (eventType === "project" ? "Project Session" : "Reminder"),
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
+        description: bookingNotes || null,
+        project_id: selectedProject || null,
+        color: eventType === "project" ? "hsl(175, 60%, 55%)" : "hsl(280, 60%, 55%)",
+      });
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
+      resetDrag();
+      setBookingDialogOpen(false);
+      setEventType(null);
+      setEventTitle("");
+      setSelectedProject("");
+      setBookingNotes("");
+      toast.success(eventType === "project" ? "Project session added!" : "Reminder set!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create event");
+    } finally {
+      setBookingLoading(false);
+    }
+  };
+
+
     if (!dragDate || dragStartHour === null || dragEndHour === null || !user) return;
     const startH = Math.min(dragStartHour, dragEndHour);
     const endH = Math.max(dragStartHour, dragEndHour) + 1;
