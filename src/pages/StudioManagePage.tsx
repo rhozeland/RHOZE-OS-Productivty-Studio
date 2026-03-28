@@ -9,6 +9,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Building2,
   ArrowLeft,
@@ -16,13 +30,18 @@ import {
   Users,
   Settings,
   Calendar,
-  UserPlus,
+  Plus,
   Trash2,
-  ImagePlus,
   Clock,
+  UserCheck,
+  UserX,
+  X,
+  Loader2,
+  Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 
 const StudioManagePage = () => {
   const { id } = useParams<{ id: string }>();
@@ -46,7 +65,12 @@ const StudioManagePage = () => {
   });
 
   const [form, setForm] = useState<Record<string, any>>({});
-  const [staffEmail, setStaffEmail] = useState("");
+
+  // Staff management state
+  const [addStaffOpen, setAddStaffOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
+  const [savingStaff, setSavingStaff] = useState(false);
 
   // Initialize form when studio loads
   const studioForm = {
@@ -95,16 +119,36 @@ const StudioManagePage = () => {
   });
 
   // Staff members query
-  const { data: staffMembers } = useQuery({
+  const { data: staffMembers, refetch: refetchStaff } = useQuery({
     queryKey: ["studio-staff", id],
     queryFn: async () => {
       const { data } = await supabase
         .from("staff_members")
         .select("*")
         .eq("user_id", user!.id);
-      return data ?? [];
+      return (data as any[]) ?? [];
     },
     enabled: !!user,
+  });
+
+  // All profiles for adding staff
+  const { data: allProfiles } = useQuery({
+    queryKey: ["all-profiles-for-staff"],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("user_id, display_name, avatar_url");
+      return data ?? [];
+    },
+    enabled: addStaffOpen,
+  });
+
+  // Service categories for specialties
+  const { data: serviceCategories } = useQuery({
+    queryKey: ["service-categories"],
+    queryFn: async () => {
+      const { data } = await supabase.from("services").select("category");
+      return [...new Set((data || []).map((s: any) => s.category as string))].sort();
+    },
+    enabled: addStaffOpen,
   });
 
   // Studio bookings
@@ -154,6 +198,56 @@ const StudioManagePage = () => {
 
   const updateField = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 
+  // Staff management functions
+  const existingStaffUserIds = new Set((staffMembers || []).map((s: any) => s.user_id));
+  const availableProfiles = (allProfiles || []).filter((p) => !existingStaffUserIds.has(p.user_id));
+
+  const toggleSpecialty = (cat: string) => {
+    setSelectedSpecialties((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+    );
+  };
+
+  const handleAddStaff = async () => {
+    if (!selectedUserId) return;
+    setSavingStaff(true);
+    const profile = (allProfiles || []).find((p) => p.user_id === selectedUserId);
+
+    const { error } = await supabase.from("staff_members").insert({
+      user_id: selectedUserId,
+      display_name: profile?.display_name || "Staff Member",
+      avatar_url: profile?.avatar_url || null,
+      specialties: selectedSpecialties,
+      is_available: true,
+    } as any);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Staff member added");
+      setAddStaffOpen(false);
+      setSelectedUserId("");
+      setSelectedSpecialties([]);
+      refetchStaff();
+    }
+    setSavingStaff(false);
+  };
+
+  const toggleStaffAvailability = async (member: any) => {
+    const { error } = await supabase
+      .from("staff_members")
+      .update({ is_available: !member.is_available } as any)
+      .eq("id", member.id);
+    if (error) toast.error(error.message);
+    else refetchStaff();
+  };
+
+  const removeStaffMember = async (memberId: string) => {
+    const { error } = await supabase.from("staff_members").delete().eq("id", memberId);
+    if (error) toast.error(error.message);
+    else { toast.success("Staff member removed"); refetchStaff(); }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6 max-w-4xl mx-auto">
@@ -197,10 +291,11 @@ const StudioManagePage = () => {
       </div>
 
       <Tabs defaultValue="details">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="details" className="gap-1.5"><Settings className="h-3.5 w-3.5" /> Details</TabsTrigger>
           <TabsTrigger value="hours" className="gap-1.5"><Clock className="h-3.5 w-3.5" /> Hours</TabsTrigger>
           <TabsTrigger value="staff" className="gap-1.5"><Users className="h-3.5 w-3.5" /> Staff</TabsTrigger>
+          <TabsTrigger value="services" className="gap-1.5"><Wrench className="h-3.5 w-3.5" /> Services</TabsTrigger>
           <TabsTrigger value="bookings" className="gap-1.5"><Calendar className="h-3.5 w-3.5" /> Bookings</TabsTrigger>
         </TabsList>
 
@@ -329,21 +424,27 @@ const StudioManagePage = () => {
         {/* Staff */}
         <TabsContent value="staff" className="space-y-4 mt-4">
           <div className="surface-card p-6 space-y-4">
-            <h3 className="font-display font-semibold text-foreground">Your Staff Members</h3>
-            <p className="text-sm text-muted-foreground">Staff members who can be assigned to bookings at your studio.</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-display font-semibold text-foreground">Staff Members</h3>
+                <p className="text-sm text-muted-foreground">Manage your team who can be assigned to bookings.</p>
+              </div>
+              <Button size="sm" onClick={() => setAddStaffOpen(true)} className="gap-1.5">
+                <Plus className="h-4 w-4" /> Add Staff
+              </Button>
+            </div>
 
             {staffMembers && staffMembers.length > 0 ? (
               <div className="space-y-2">
-                {staffMembers.map((member) => (
+                {staffMembers.map((member: any) => (
                   <div key={member.id} className="flex items-center justify-between rounded-xl border border-border p-3">
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-                        {member.avatar_url ? (
-                          <img src={member.avatar_url} className="h-9 w-9 rounded-full object-cover" />
-                        ) : (
-                          member.display_name[0]?.toUpperCase()
-                        )}
-                      </div>
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={member.avatar_url || ""} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                          {member.display_name?.[0]?.toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
                       <div>
                         <p className="text-sm font-medium text-foreground">{member.display_name}</p>
                         <div className="flex gap-1 mt-0.5">
@@ -353,19 +454,103 @@ const StudioManagePage = () => {
                         </div>
                       </div>
                     </div>
-                    <Badge variant={member.is_available ? "default" : "secondary"}>
-                      {member.is_available ? "Available" : "Unavailable"}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleStaffAvailability(member)}
+                        className={member.is_available ? "text-emerald-500" : "text-muted-foreground"}
+                      >
+                        {member.is_available ? <UserCheck className="h-4 w-4" /> : <UserX className="h-4 w-4" />}
+                      </Button>
+                      <Badge variant={member.is_available ? "default" : "secondary"} className="text-xs">
+                        {member.is_available ? "Available" : "Unavailable"}
+                      </Badge>
+                      <Button variant="ghost" size="sm" onClick={() => removeStaffMember(member.id)} className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                <p className="text-sm">No staff members yet. Add your team from the admin panel.</p>
+                <p className="text-sm">No staff members yet. Add your team above.</p>
               </div>
             )}
           </div>
+
+          {/* Add Staff Dialog */}
+          <Dialog open={addStaffOpen} onOpenChange={(o) => { setAddStaffOpen(o); if (!o) { setSelectedUserId(""); setSelectedSpecialties([]); } }}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Add Staff Member</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-foreground block mb-1.5">Select User</label>
+                  <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a user..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableProfiles.map((p) => (
+                        <SelectItem key={p.user_id} value={p.user_id}>
+                          {p.display_name || "Unnamed"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground block mb-1.5">Specialties</label>
+                  {selectedSpecialties.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {selectedSpecialties.map((s) => (
+                        <Badge key={s} variant="secondary" className="gap-1 cursor-pointer hover:bg-destructive/10" onClick={() => toggleSpecialty(s)}>
+                          {s} <X className="h-3 w-3" />
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {(serviceCategories || []).length > 0 ? (
+                      (serviceCategories || []).map((cat) => {
+                        const active = selectedSpecialties.includes(cat);
+                        return (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() => toggleSpecialty(cat)}
+                            className={cn(
+                              "rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
+                              active
+                                ? "border-primary/40 bg-primary/10 text-primary"
+                                : "border-border bg-muted/30 text-muted-foreground hover:bg-muted hover:text-foreground"
+                            )}
+                          >
+                            {cat}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <p className="text-xs text-muted-foreground">No service categories found.</p>
+                    )}
+                  </div>
+                </div>
+                <Button className="w-full" onClick={handleAddStaff} disabled={!selectedUserId || savingStaff}>
+                  {savingStaff ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+                  Add to Staff
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </TabsContent>
+
+        {/* Services */}
+        <TabsContent value="services" className="space-y-4 mt-4">
+          <StudioServices />
         </TabsContent>
 
         {/* Bookings */}
@@ -405,6 +590,172 @@ const StudioManagePage = () => {
           </div>
         </TabsContent>
       </Tabs>
+    </div>
+  );
+};
+
+// Inline Services management component for studio owners
+const StudioServices = () => {
+  const { data: services, refetch } = useQuery({
+    queryKey: ["studio-services"],
+    queryFn: async () => {
+      const { data } = await supabase.from("services").select("*").order("category").order("title");
+      return data ?? [];
+    },
+  });
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
+  const [form, setForm] = useState({
+    title: "", description: "", category: "audio", credits_cost: 1, duration_hours: 2,
+    non_member_rate: null as number | null, is_active: true, revisions_info: "",
+  });
+  const [saving, setSaving] = useState(false);
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm({ title: "", description: "", category: "audio", credits_cost: 1, duration_hours: 2, non_member_rate: null, is_active: true, revisions_info: "" });
+    setDialogOpen(true);
+  };
+
+  const openEdit = (s: any) => {
+    setEditing(s);
+    setForm({
+      title: s.title, description: s.description || "", category: s.category, credits_cost: s.credits_cost,
+      duration_hours: s.duration_hours, non_member_rate: s.non_member_rate, is_active: s.is_active, revisions_info: s.revisions_info || "",
+    });
+    setDialogOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!form.title.trim()) return;
+    setSaving(true);
+    const payload = {
+      title: form.title, description: form.description || null, category: form.category,
+      credits_cost: form.credits_cost, duration_hours: form.duration_hours,
+      non_member_rate: form.non_member_rate, is_active: form.is_active, revisions_info: form.revisions_info || null,
+    };
+    let error;
+    if (editing) {
+      ({ error } = await supabase.from("services").update(payload).eq("id", editing.id));
+    } else {
+      ({ error } = await supabase.from("services").insert(payload));
+    }
+    setSaving(false);
+    if (error) { toast.error(error.message); } else {
+      toast.success(editing ? "Service updated" : "Service created");
+      setDialogOpen(false);
+      refetch();
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from("services").delete().eq("id", id);
+    if (error) toast.error(error.message);
+    else { toast.success("Service deleted"); refetch(); }
+  };
+
+  return (
+    <div className="surface-card p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-display font-semibold text-foreground">Services</h3>
+          <p className="text-sm text-muted-foreground">Manage the services offered at your studio.</p>
+        </div>
+        <Button size="sm" onClick={openCreate} className="gap-1.5">
+          <Plus className="h-4 w-4" /> Add Service
+        </Button>
+      </div>
+
+      <div className="space-y-2">
+        {(services || []).map((s: any) => (
+          <div key={s.id} className={cn("flex items-center justify-between rounded-xl border border-border p-3", !s.is_active && "opacity-50")}>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-0.5">
+                <p className="text-sm font-medium text-foreground truncate">{s.title}</p>
+                <Badge variant="outline" className="text-[10px]">{s.category}</Badge>
+                {!s.is_active && <Badge variant="destructive" className="text-[10px]">Inactive</Badge>}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {s.credits_cost} credits • {s.duration_hours}h
+                {s.non_member_rate ? ` • Non-member: $${s.non_member_rate}` : ""}
+              </p>
+            </div>
+            <div className="flex items-center gap-1 ml-2">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(s)}>
+                <Settings className="h-3.5 w-3.5" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(s.id)}>
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        ))}
+        {(services || []).length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            <Wrench className="h-8 w-8 mx-auto mb-2 opacity-40" />
+            <p className="text-sm">No services yet. Add your first service above.</p>
+          </div>
+        )}
+      </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editing ? "Edit Service" : "New Service"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Title</Label>
+              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Description</Label>
+              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Category</Label>
+                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="audio">Audio</SelectItem>
+                    <SelectItem value="design">Design</SelectItem>
+                    <SelectItem value="video">Video</SelectItem>
+                    <SelectItem value="studio">Studio</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Credits Cost</Label>
+                <Input type="number" min={1} value={form.credits_cost} onChange={(e) => setForm({ ...form, credits_cost: Number(e.target.value) })} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Duration (hours)</Label>
+                <Input type="number" min={0.5} step={0.5} value={form.duration_hours} onChange={(e) => setForm({ ...form, duration_hours: Number(e.target.value) })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Non-member Rate ($)</Label>
+                <Input type="number" min={0} value={form.non_member_rate || ""} onChange={(e) => setForm({ ...form, non_member_rate: e.target.value ? Number(e.target.value) : null })} />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Revisions Info</Label>
+              <Input value={form.revisions_info} onChange={(e) => setForm({ ...form, revisions_info: e.target.value })} placeholder="e.g. 2 included" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />
+              <Label>Active</Label>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

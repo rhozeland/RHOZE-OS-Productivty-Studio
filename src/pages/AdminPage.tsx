@@ -1,11 +1,9 @@
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Navigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Users, Settings, UserCog, Award, Building2 } from "lucide-react";
+import { BarChart3, Users, Award, Building2 } from "lucide-react";
 import AdminOverview from "@/components/admin/AdminOverview";
 import AdminUsers from "@/components/admin/AdminUsers";
-import AdminSettings from "@/components/admin/AdminSettings";
-import AdminStaff from "@/components/admin/AdminStaff";
 import AdminBadges from "@/components/admin/AdminBadges";
 import AdminStudioApplications from "@/components/admin/AdminStudioApplications";
 
@@ -28,16 +26,13 @@ const AdminPage = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Admin Panel</h1>
-        <p className="text-muted-foreground">Manage users, staff, badges, and studio settings</p>
+        <p className="text-muted-foreground">Platform administration — review applications, manage users & badges</p>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="bg-muted/50 flex-wrap">
           <TabsTrigger value="overview" className="gap-2">
             <BarChart3 className="h-4 w-4" /> Overview
-          </TabsTrigger>
-          <TabsTrigger value="staff" className="gap-2">
-            <UserCog className="h-4 w-4" /> Staff
           </TabsTrigger>
           <TabsTrigger value="users" className="gap-2">
             <Users className="h-4 w-4" /> Users
@@ -46,18 +41,12 @@ const AdminPage = () => {
             <Award className="h-4 w-4" /> Badges
           </TabsTrigger>
           <TabsTrigger value="studios" className="gap-2">
-            <Building2 className="h-4 w-4" /> Studios
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="gap-2">
-            <Settings className="h-4 w-4" /> Settings
+            <Building2 className="h-4 w-4" /> Studio Applications
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
           <AdminOverview />
-        </TabsContent>
-        <TabsContent value="staff">
-          <AdminStaff />
         </TabsContent>
         <TabsContent value="users">
           <AdminUsers />
@@ -67,9 +56,6 @@ const AdminPage = () => {
         </TabsContent>
         <TabsContent value="studios">
           <AdminStudioApplications />
-        </TabsContent>
-        <TabsContent value="settings">
-          <AdminSettings />
         </TabsContent>
       </Tabs>
     </div>
