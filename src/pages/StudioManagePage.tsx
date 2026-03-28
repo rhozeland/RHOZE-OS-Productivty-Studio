@@ -201,25 +201,46 @@ const StudioManagePage = () => {
 
   const updateField = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 
-  // Staff management functions
-  const existingStaffUserIds = new Set((staffMembers || []).map((s: any) => s.user_id));
-  const availableProfiles = (allProfiles || []).filter((p) => !existingStaffUserIds.has(p.user_id));
-
   const toggleSpecialty = (cat: string) => {
+    if (cat === "other") {
+      setShowCustomInput((prev) => !prev);
+      return;
+    }
     setSelectedSpecialties((prev) =>
       prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
     );
   };
 
+  const addCustomSpecialty = () => {
+    const trimmed = customSpecialty.trim().toLowerCase();
+    if (trimmed && !selectedSpecialties.includes(trimmed)) {
+      setSelectedSpecialties((prev) => [...prev, trimmed]);
+    }
+    setCustomSpecialty("");
+    setShowCustomInput(false);
+  };
+
   const handleAddStaff = async () => {
     if (!selectedUserId) return;
     setSavingStaff(true);
-    const profile = (allProfiles || []).find((p) => p.user_id === selectedUserId);
 
+    // Send an invitation message to the user
+    const { error: msgError } = await supabase.from("messages").insert({
+      sender_id: user!.id,
+      receiver_id: selectedUserId,
+      content: `🤝 You've been invited to join the staff at **${studio?.name}**! Specialties: ${selectedSpecialties.join(", ") || "General"}. Please accept by replying to this message.`,
+    });
+
+    if (msgError) {
+      toast.error(msgError.message);
+      setSavingStaff(false);
+      return;
+    }
+
+    // Add them as staff
     const { error } = await supabase.from("staff_members").insert({
       user_id: selectedUserId,
-      display_name: profile?.display_name || "Staff Member",
-      avatar_url: profile?.avatar_url || null,
+      display_name: selectedUserName || "Staff Member",
       specialties: selectedSpecialties,
       is_available: true,
     } as any);
@@ -227,10 +248,14 @@ const StudioManagePage = () => {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Staff member added");
+      toast.success("Staff invitation sent & member added!");
       setAddStaffOpen(false);
       setSelectedUserId("");
+      setSelectedUserName("");
+      setStaffUsername("");
+      setStaffSearchResults([]);
       setSelectedSpecialties([]);
+      setShowCustomInput(false);
       refetchStaff();
     }
     setSavingStaff(false);
