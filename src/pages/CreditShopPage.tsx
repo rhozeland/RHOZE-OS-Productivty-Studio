@@ -400,7 +400,7 @@ const CreditShopPage = () => {
                     </span>
                   </div>
                   <p className="text-sm opacity-80 mt-1 relative z-10">
-                    {isFree ? "forever" : "credits / month"}
+                    {isFree ? "forever" : "$RHOZE / month"}
                   </p>
                   {!isFree && (
                     <p className="text-xs opacity-60 mt-0.5 relative z-10">
