@@ -421,12 +421,16 @@ const FlowModePage = () => {
               className="w-full max-w-xs md:max-w-sm cursor-grab active:cursor-grabbing"
               drag
               dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-              dragElastic={0.7}
+              dragElastic={0.6}
+              dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
               onDragEnd={handleDragEnd}
-              style={{ x, y, rotateZ, opacity: cardOpacity }}
-              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              style={{ x, y, rotateZ, opacity: cardOpacity, scale: cardScale, boxShadow: shadowIntensity }}
+              initial={{ opacity: 0, scale: 0.92, y: 24 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
+              exit={{ opacity: 0, scale: 0.85, y: -20, transition: { duration: 0.18, ease: "easeIn" } }}
+              transition={{ type: "spring", stiffness: 260, damping: 22 }}
+              whileTap={{ scale: 0.98 }}
+            >
             >
               <FlowCard
                 item={currentItem}
