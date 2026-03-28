@@ -37,7 +37,7 @@ const AppLayout = () => {
                   </TooltipContent>
                 </Tooltip>
                 <Input
-                  placeholder="Search Roseland..."
+                  placeholder="Search Rhozeland..."
                   className="pl-11 h-9 rounded-full bg-card border-border text-sm font-body"
                 />
               </div>
