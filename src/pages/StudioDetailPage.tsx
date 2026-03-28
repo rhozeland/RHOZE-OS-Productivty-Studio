@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,10 +18,12 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import StudioBookingModal from "@/components/booking/StudioBookingModal";
 
 const StudioDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const [bookingOpen, setBookingOpen] = useState(false);
 
   const { data: studio, isLoading } = useQuery({
     queryKey: ["studio", id],
@@ -239,7 +242,7 @@ const StudioDetailPage = () => {
 
             {user ? (
               <div className="space-y-3">
-                <Button className="w-full h-12 text-base rounded-full gap-2">
+                <Button className="w-full h-12 text-base rounded-full gap-2" onClick={() => setBookingOpen(true)}>
                   <Calendar className="h-4 w-4" /> Book This Studio
                 </Button>
                 <Link to={`/messages`}>
@@ -275,6 +278,20 @@ const StudioDetailPage = () => {
           </div>
         </div>
       </div>
+      {studio && (
+        <StudioBookingModal
+          open={bookingOpen}
+          onOpenChange={setBookingOpen}
+          studio={{
+            id: studio.id,
+            name: studio.name,
+            hourly_rate: studio.hourly_rate,
+            daily_rate: studio.daily_rate,
+            max_guests: studio.max_guests,
+            currency: studio.currency,
+          }}
+        />
+      )}
     </div>
   );
 };
