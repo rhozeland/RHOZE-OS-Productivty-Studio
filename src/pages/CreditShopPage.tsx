@@ -462,7 +462,7 @@ const CreditShopPage = () => {
         <h2 className="font-display text-lg font-semibold text-foreground">
           Top Up{" "}
           <span className="text-sm font-normal text-muted-foreground">
-            — add individual credits anytime
+            — add $RHOZE anytime
           </span>
         </h2>
 
