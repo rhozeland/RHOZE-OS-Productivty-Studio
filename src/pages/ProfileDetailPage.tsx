@@ -9,7 +9,9 @@ import {
   Globe, CheckCircle, UserPlus, UserCheck, MessageSquare, MapPin, Clock,
   Eye, EyeOff, Loader2, Palette, FolderOpen, Settings, Store, Star,
   ExternalLink, ShoppingBag, GripVertical, Sparkles, Image as ImageIcon,
+  X, Play, Music, FileText, Bookmark, Send,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
 import { motion, Reorder } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
