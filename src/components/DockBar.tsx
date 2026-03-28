@@ -66,7 +66,7 @@ const DockBar = () => {
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 400, damping: 20 }}
                 className={cn(
-                  "flex flex-col items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-md transition-colors duration-150 gap-0.5",
+                  "flex flex-col items-center justify-center w-13 h-13 sm:w-14 sm:h-14 rounded-lg transition-colors duration-150 gap-0.5",
                   active
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
