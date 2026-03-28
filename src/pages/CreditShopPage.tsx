@@ -311,12 +311,12 @@ const CreditShopPage = () => {
         {/* What are credits explainer */}
         <div className="rounded-2xl bg-gradient-to-r from-primary/5 to-accent/5 border border-border p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-1">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">What are credits?</p>
-            <p className="text-sm text-foreground">Credits unlock studio sessions, services, and creative tools. <strong>1 credit = ${CREDIT_PRICE}</strong> worth of studio time.</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">What is $RHOZE?</p>
+            <p className="text-sm text-foreground">$RHOZE is the native token powering Rhozeland. Use it to book studios, hire creators, and trade on the marketplace. <strong>1 $RHOZE ≈ ${TOKEN_PRICE}</strong>.</p>
           </div>
           <div className="space-y-1">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">How to earn</p>
-            <p className="text-sm text-foreground">Subscribe to a plan for monthly credits, or top up anytime with card or SOL.</p>
+            <p className="text-sm text-foreground">Subscribe for monthly $RHOZE, post listings, collaborate in rooms, or top up with card/SOL.</p>
           </div>
           <div className="space-y-1">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">How to spend</p>
