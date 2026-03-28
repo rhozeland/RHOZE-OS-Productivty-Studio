@@ -45,16 +45,11 @@ const AppLayout = () => {
             {/* Search input with Flow mode button inside */}
             <div className="hidden md:flex flex-1 max-w-lg justify-center">
               <div className="relative w-full max-w-md">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  placeholder="Search Rhozeland..."
-                  className="pl-9 pr-11 h-9 rounded-full bg-card border-border text-sm font-body"
-                />
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => navigate("/flow")}
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center transition-opacity hover:opacity-80 active:opacity-70"
+                      className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center transition-opacity hover:opacity-80 active:opacity-70"
                     >
                       <Workflow className="h-3.5 w-3.5" />
                     </button>
@@ -63,6 +58,10 @@ const AppLayout = () => {
                     Discover in Flow Mode
                   </TooltipContent>
                 </Tooltip>
+                <Input
+                  placeholder="Search Rhozeland..."
+                  className="pl-11 h-9 rounded-full bg-card border-border text-sm font-body"
+                />
               </div>
             </div>
 
