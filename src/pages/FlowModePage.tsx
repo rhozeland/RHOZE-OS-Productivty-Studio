@@ -54,6 +54,7 @@ import { toast } from "sonner";
 import { playSwipeSound } from "@/lib/swipe-sound";
 import FlowCard from "@/components/flow/FlowCard";
 import FlowCardBackground from "@/components/flow/FlowCardBackground";
+import FlowShareDialog from "@/components/flow/FlowShareDialog";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
