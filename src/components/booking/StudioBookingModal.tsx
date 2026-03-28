@@ -221,17 +221,6 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
     return hour >= minH && hour <= maxH;
   };
 
-  const isSlotBooked = (dayIndex: number, hour: number) => {
-    const day = weekDays[dayIndex];
-    return (
-      existingBookings?.some((b) => {
-        const bStart = new Date(b.start_time);
-        const bEnd = new Date(b.end_time);
-        if (!isSameDay(bStart, day)) return false;
-        return hour >= bStart.getHours() && hour < bEnd.getHours();
-      }) ?? false
-    );
-  };
 
   const getStartTime = () => {
     if (!dragDate || dragStartHour === null || dragEndHour === null) return null;
