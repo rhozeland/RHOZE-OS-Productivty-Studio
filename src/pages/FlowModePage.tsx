@@ -323,11 +323,8 @@ const FlowModePage = () => {
 
       {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between gap-3 px-4 py-3 md:px-6">
-        {/* Category summary */}
-        <p className="text-[11px] text-muted-foreground truncate max-w-[200px] md:max-w-[300px]">
-          {selectedCategories.length === CATEGORIES.length || selectedCategories.length === 0
-            ? "All categories"
-            : selectedCategories.map((c) => c.charAt(0).toUpperCase() + c.slice(1)).join(", ")}
+        <p className="text-sm text-muted-foreground">
+          Swipe or browse
         </p>
 
         <div className="flex items-center gap-1.5 shrink-0">
