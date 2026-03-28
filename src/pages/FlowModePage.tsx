@@ -431,50 +431,85 @@ const FlowModePage = () => {
         </div>
       </div>
 
-      {/* Card area — centered */}
-      <div className="relative z-10 flex flex-1 items-center justify-center px-4 pb-40 pt-2 md:pb-44">
-        <AnimatePresence mode="wait">
-          {currentItem ? (
-            <motion.div
-              key={`${currentItem.id}-${currentIndex}`}
-              className="w-full max-w-xs md:max-w-sm cursor-grab active:cursor-grabbing"
-              drag
-              dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-              dragElastic={0.6}
-              dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
-              onDragEnd={handleDragEnd}
-              style={{ x, y, rotateZ, opacity: cardOpacity, scale: cardScale, boxShadow: shadowIntensity }}
-              initial={{ opacity: 0, scale: 0.92, y: 24 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.85, y: -20, transition: { duration: 0.18, ease: "easeIn" } }}
-              transition={{ type: "spring", stiffness: 260, damping: 22 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <FlowCard
-                item={currentItem}
-                expanded={expandedCard}
-                onToggleExpand={() => setExpandedCard(!expandedCard)}
-                onSave={() => performAction("save")}
-                onShare={() => performAction("share")}
-                onDelete={() => deleteFlowItem.mutate(currentItem.id)}
-                isOwner={currentItem.user_id === user?.id}
-              />
-            </motion.div>
+      {/* ═══ SWIPE VIEW ═══ */}
+      {viewMode === "swipe" && (
+        <div className="relative z-10 flex flex-1 items-center justify-center px-4 pb-36 pt-2 md:pb-40">
+          <AnimatePresence mode="wait">
+            {currentItem ? (
+              <motion.div
+                key={`${currentItem.id}-${currentIndex}`}
+                className="w-full max-w-xs md:max-w-sm cursor-grab active:cursor-grabbing"
+                drag
+                dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                dragElastic={0.6}
+                dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
+                onDragEnd={handleDragEnd}
+                style={{ x, y, rotateZ, opacity: cardOpacity, scale: cardScale, boxShadow: shadowIntensity }}
+                initial={{ opacity: 0, scale: 0.92, y: 24 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.85, y: -20, transition: { duration: 0.18, ease: "easeIn" } }}
+                transition={{ type: "spring", stiffness: 260, damping: 22 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <FlowCard
+                  item={currentItem}
+                  expanded={expandedCard}
+                  onToggleExpand={() => setExpandedCard(!expandedCard)}
+                  onSave={() => performAction("save")}
+                  onShare={() => performAction("share")}
+                  onDelete={() => deleteFlowItem.mutate(currentItem.id)}
+                  isOwner={currentItem.user_id === user?.id}
+                />
+              </motion.div>
+            ) : (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center px-4">
+                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-card/60 backdrop-blur-sm">
+                  <Sparkles className="h-8 w-8 text-primary" />
+                </div>
+                <h2 className="mb-2 font-display text-xl font-bold text-foreground">Nothing here yet</h2>
+                <p className="mx-auto mb-6 max-w-xs text-sm text-muted-foreground">Be the first to share your work.</p>
+                <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Share Your Work
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
+      {/* ═══ BROWSE VIEW ═══ */}
+      {viewMode === "browse" && (
+        <div className="relative z-10 flex-1 overflow-y-auto px-4 pb-28 pt-2 md:px-8">
+          {allItems.length > 0 ? (
+            <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
+              {allItems.map((item) => (
+                <div key={item.id} className="break-inside-avoid">
+                  <FlowCard
+                    item={item}
+                    expanded={false}
+                    onToggleExpand={() => {}}
+                    onSave={() => performAction("save", undefined, item)}
+                    onShare={() => performAction("share", undefined, item)}
+                    onDelete={() => deleteFlowItem.mutate(item.id)}
+                    isOwner={item.user_id === user?.id}
+                  />
+                </div>
+              ))}
+            </div>
           ) : (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center px-4">
-              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-card/60 backdrop-blur-sm">
-                <Sparkles className="h-8 w-8 text-primary" />
-              </div>
+            <div className="flex flex-col items-center justify-center pt-20 text-center">
+              <Sparkles className="h-8 w-8 text-primary mb-4" />
               <h2 className="mb-2 font-display text-xl font-bold text-foreground">Nothing here yet</h2>
               <p className="mx-auto mb-6 max-w-xs text-sm text-muted-foreground">Be the first to share your work.</p>
               <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
                 <Plus className="mr-2 h-4 w-4" />
                 Share Your Work
               </Button>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
-      </div>
+        </div>
+      )}
 
       {currentItem && viewMode === "swipe" && (
         <div className="pointer-events-none fixed bottom-20 left-0 right-0 z-40 flex justify-center px-4 md:bottom-24">
