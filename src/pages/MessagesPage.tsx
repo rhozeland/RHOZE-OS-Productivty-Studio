@@ -539,8 +539,6 @@ const MessagesPage = () => {
                   >
                     <ChatAttachmentMenu
                       onSendMessage={(content) => {
-                        const originalText = messageText;
-                        // Temporarily set the message to send rich content
                         supabase.from("messages").insert({
                           sender_id: user!.id,
                           receiver_id: selectedUser!.user_id,
@@ -551,6 +549,7 @@ const MessagesPage = () => {
                           queryClient.invalidateQueries({ queryKey: ["conversations"] });
                         });
                       }}
+                      onSendQuote={() => setQuoteOpen(true)}
                       disabled={!selectedUser}
                     />
                     <Input value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Type a message..." className="flex-1" />
