@@ -19,8 +19,10 @@ import {
   UserPlus,
   Trash2,
   ImagePlus,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 
 const StudioManagePage = () => {
   const { id } = useParams<{ id: string }>();
@@ -120,6 +122,36 @@ const StudioManagePage = () => {
     enabled: !!id,
   });
 
+  // Studio availability
+  const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const { data: availability } = useQuery({
+    queryKey: ["studio-availability-manage", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("studio_availability")
+        .select("*")
+        .eq("studio_id", id!)
+        .order("day_of_week");
+      return data ?? [];
+    },
+    enabled: !!id,
+  });
+
+  const updateAvailability = useMutation({
+    mutationFn: async (slot: { id: string; is_available?: boolean; start_time?: string; end_time?: string }) => {
+      const { error } = await supabase
+        .from("studio_availability")
+        .update({ is_available: slot.is_available, start_time: slot.start_time, end_time: slot.end_time })
+        .eq("id", slot.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["studio-availability-manage", id] });
+      queryClient.invalidateQueries({ queryKey: ["studio-availability", id] });
+      toast.success("Hours updated");
+    },
+  });
+
   const updateField = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 
   if (isLoading) {
@@ -167,6 +199,7 @@ const StudioManagePage = () => {
       <Tabs defaultValue="details">
         <TabsList>
           <TabsTrigger value="details" className="gap-1.5"><Settings className="h-3.5 w-3.5" /> Details</TabsTrigger>
+          <TabsTrigger value="hours" className="gap-1.5"><Clock className="h-3.5 w-3.5" /> Hours</TabsTrigger>
           <TabsTrigger value="staff" className="gap-1.5"><Users className="h-3.5 w-3.5" /> Staff</TabsTrigger>
           <TabsTrigger value="bookings" className="gap-1.5"><Calendar className="h-3.5 w-3.5" /> Bookings</TabsTrigger>
         </TabsList>
@@ -242,6 +275,54 @@ const StudioManagePage = () => {
                 placeholder="Monitors, Microphone, Camera..."
               />
             </div>
+          </div>
+        </TabsContent>
+
+        {/* Hours */}
+        <TabsContent value="hours" className="space-y-4 mt-4">
+          <div className="surface-card p-6 space-y-4">
+            <h3 className="font-display font-semibold text-foreground">Operating Hours</h3>
+            <p className="text-sm text-muted-foreground">Set when your studio is open for bookings.</p>
+
+            {availability && availability.length > 0 ? (
+              <div className="space-y-3">
+                {availability.map((slot) => (
+                  <div key={slot.id} className="flex items-center gap-4 rounded-xl border border-border p-3">
+                    <div className="w-28">
+                      <p className="text-sm font-medium text-foreground">{DAY_NAMES[slot.day_of_week]}</p>
+                    </div>
+                    <Switch
+                      checked={slot.is_available}
+                      onCheckedChange={(checked) => updateAvailability.mutate({ id: slot.id, is_available: checked, start_time: slot.start_time, end_time: slot.end_time })}
+                    />
+                    {slot.is_available ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="time"
+                          value={slot.start_time}
+                          className="w-32"
+                          onChange={(e) => updateAvailability.mutate({ id: slot.id, is_available: slot.is_available, start_time: e.target.value, end_time: slot.end_time })}
+                        />
+                        <span className="text-muted-foreground text-sm">to</span>
+                        <Input
+                          type="time"
+                          value={slot.end_time}
+                          className="w-32"
+                          onChange={(e) => updateAvailability.mutate({ id: slot.id, is_available: slot.is_available, start_time: slot.start_time, end_time: e.target.value })}
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground/50 italic">Closed</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Clock className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">No availability configured yet.</p>
+              </div>
+            )}
           </div>
         </TabsContent>
 

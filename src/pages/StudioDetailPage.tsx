@@ -66,6 +66,21 @@ const StudioDetailPage = () => {
     enabled: !!id,
   });
 
+  const { data: availability } = useQuery({
+    queryKey: ["studio-availability", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("studio_availability")
+        .select("*")
+        .eq("studio_id", id!)
+        .order("day_of_week");
+      return data ?? [];
+    },
+    enabled: !!id,
+  });
+
+  const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
   if (isLoading) {
     return (
       <div className="space-y-6 max-w-4xl mx-auto">
@@ -200,6 +215,29 @@ const StudioDetailPage = () => {
               <div className="flex flex-wrap gap-2">
                 {studio.equipment.map((item: string) => (
                   <Badge key={item} variant="secondary" className="rounded-full">{item}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Studio Hours */}
+          {availability && availability.length > 0 && (
+            <div>
+              <h2 className="font-display text-lg font-semibold text-foreground mb-3">Studio Hours</h2>
+              <div className="grid grid-cols-1 gap-1.5">
+                {availability.map((slot) => (
+                  <div key={slot.id} className="flex items-center justify-between text-sm py-1.5 px-3 rounded-lg bg-muted/30">
+                    <span className={`font-medium ${slot.is_available ? "text-foreground" : "text-muted-foreground"}`}>
+                      {DAY_NAMES[slot.day_of_week]}
+                    </span>
+                    {slot.is_available ? (
+                      <span className="text-muted-foreground">
+                        {slot.start_time.slice(0, 5)} – {slot.end_time.slice(0, 5)}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground/50 italic">Closed</span>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
