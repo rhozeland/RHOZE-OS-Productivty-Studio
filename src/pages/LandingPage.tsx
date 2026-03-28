@@ -296,6 +296,7 @@ const LandingPage = () => {
                     ))}
                   </div>
                 )}
+              </motion.div>
             </AnimatePresence>
           </div>
 
