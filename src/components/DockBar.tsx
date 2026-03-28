@@ -2,24 +2,15 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import {
-  LayoutDashboard,
-  FolderKanban,
   Building2,
-  MessageSquare,
+  FolderKanban,
   Palette,
-  Calendar,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 
 const dockItems = [
-  { icon: LayoutDashboard, label: "Home", path: "/dashboard" },
   { icon: Building2, label: "Studios", path: "/studios" },
   { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: Palette, label: "Hub", path: "/creators" },
-  { icon: MessageSquare, label: "Inbox", path: "/messages", hasBadge: true },
-  { icon: Calendar, label: "Schedule", path: "/calendar" },
 ];
 
 const DockBar = () => {
