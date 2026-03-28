@@ -15,21 +15,6 @@ const dockItems = [
 
 const DockBar = () => {
   const location = useLocation();
-  const { user } = useAuth();
-
-  const { data: unreadCount } = useQuery({
-    queryKey: ["unread-dock-count", user?.id],
-    queryFn: async () => {
-      const { count } = await supabase
-        .from("messages")
-        .select("id", { count: "exact", head: true })
-        .eq("receiver_id", user!.id)
-        .eq("read", false);
-      return count ?? 0;
-    },
-    enabled: !!user,
-    refetchInterval: 30000,
-  });
 
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + "/");
