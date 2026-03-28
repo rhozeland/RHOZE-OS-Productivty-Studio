@@ -978,8 +978,8 @@ const FlowModePage = () => {
       {/* ═══════ SWIPE MODE ═══════ */}
       {viewMode === "swipe" && (
         <>
-          {/* Card area — centered */}
-          <div className="relative z-10 flex-1 flex items-center justify-center px-4">
+      {/* Card area — centered */}
+          <div className="relative z-10 flex-1 flex items-center justify-center px-4 pb-20">
             <AnimatePresence mode="wait">
               {currentItem ? (
                 <motion.div
