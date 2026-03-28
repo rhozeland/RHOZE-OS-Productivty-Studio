@@ -228,7 +228,7 @@ const CreditShopPage = () => {
           user_id: user!.id,
           amount: tier.credits,
           type: "subscription",
-          description: `${tier.name} subscription — ${tier.credits} credits`,
+          description: `${tier.name} subscription — ${tier.credits} $RHOZE`,
           payment_method: "card",
         });
       if (txError) throw txError;
