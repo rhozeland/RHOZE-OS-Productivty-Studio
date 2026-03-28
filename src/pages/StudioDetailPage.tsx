@@ -66,6 +66,21 @@ const StudioDetailPage = () => {
     enabled: !!id,
   });
 
+  const { data: availability } = useQuery({
+    queryKey: ["studio-availability", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("studio_availability")
+        .select("*")
+        .eq("studio_id", id!)
+        .order("day_of_week");
+      return data ?? [];
+    },
+    enabled: !!id,
+  });
+
+  const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
   if (isLoading) {
     return (
       <div className="space-y-6 max-w-4xl mx-auto">
