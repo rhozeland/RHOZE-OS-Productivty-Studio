@@ -146,7 +146,7 @@ const AdminServices = () => {
                   {!s.is_active && <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs text-destructive">Inactive</span>}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {s.credits_cost} cr • ${s.credits_cost * 75} USD • {s.duration_hours}h
+                  {s.credits_cost} ◊ • ${s.credits_cost * 75} USD • {s.duration_hours}h
                   {s.non_member_rate ? ` • Non-member: $${s.non_member_rate}` : ""}
                 </p>
               </div>
