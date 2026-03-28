@@ -978,8 +978,8 @@ const FlowModePage = () => {
       {/* ═══════ SWIPE MODE ═══════ */}
       {viewMode === "swipe" && (
         <>
-          {/* Card area — centered */}
-          <div className="relative z-10 flex-1 flex items-center justify-center px-4">
+      {/* Card area — centered */}
+          <div className="relative z-10 flex-1 flex items-center justify-center px-4 pb-20">
             <AnimatePresence mode="wait">
               {currentItem ? (
                 <motion.div
@@ -1126,12 +1126,7 @@ const FlowModePage = () => {
       <Dialog open={savePickerOpen} onOpenChange={setSavePickerOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              Add to...
-              <Button variant="outline" size="icon" className="rounded-full h-8 w-8" onClick={() => setSavePickerOpen(false)}>
-                <Plus className="h-4 w-4" />
-              </Button>
-            </DialogTitle>
+            <DialogTitle className="font-display text-lg">Add to...</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto">
             {smartboards?.map((board) => (
