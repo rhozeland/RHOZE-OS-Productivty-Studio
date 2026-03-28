@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Workflow } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const AppLayout = () => {
@@ -42,29 +42,28 @@ const AppLayout = () => {
           <header className="sticky top-0 z-30 flex h-12 items-center justify-between border-b border-border bg-background/90 backdrop-blur-sm px-4 md:px-6 gap-4">
             <SidebarTrigger className="mr-1 shrink-0" />
 
-            {/* Search bar — clicking opens Flow mode */}
-            {/* Search input + Flow mode icon */}
-            <div className="hidden md:flex flex-1 max-w-lg items-center gap-2 justify-center">
+            {/* Search input with Flow mode button inside */}
+            <div className="hidden md:flex flex-1 max-w-lg justify-center">
               <div className="relative w-full max-w-md">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
                   placeholder="Search Rhozeland..."
-                  className="pl-9 h-9 rounded-full bg-card border-border text-sm font-body"
+                  className="pl-9 pr-11 h-9 rounded-full bg-card border-border text-sm font-body"
                 />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => navigate("/flow")}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center transition-opacity hover:opacity-80 active:opacity-70"
+                    >
+                      <Workflow className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs font-body">
+                    Discover in Flow Mode
+                  </TooltipContent>
+                </Tooltip>
               </div>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => navigate("/flow")}
-                    className="shrink-0 h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center transition-opacity hover:opacity-80 active:opacity-70"
-                  >
-                    <Search className="h-3.5 w-3.5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs font-body">
-                  Discover in Flow Mode
-                </TooltipContent>
-              </Tooltip>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
