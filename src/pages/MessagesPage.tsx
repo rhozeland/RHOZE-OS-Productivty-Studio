@@ -561,6 +561,16 @@ const MessagesPage = () => {
               )}
             </div>
           </div>
+
+          {/* Quote Builder Dialog (controlled from attachment menu) */}
+          {selectedUser && (
+            <QuoteBuilder
+              recipientId={selectedUser.user_id}
+              recipientName={selectedUser.display_name || "Creator"}
+              open={quoteOpen}
+              onOpenChange={setQuoteOpen}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="inquiries" className="mt-4">
