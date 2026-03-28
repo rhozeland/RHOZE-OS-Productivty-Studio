@@ -118,7 +118,7 @@ const AuthPage = () => {
         >
           <div className="mb-8 lg:hidden flex items-center gap-3">
             <img src={rhozelandLogo} alt="Rhozeland" className="h-10 w-10" />
-            <span className="font-display text-xl font-bold text-foreground">Rhozeland</span>
+            <span className="font-body text-xl font-bold text-foreground">Rhozeland</span>
           </div>
 
           <h2 className="font-display text-2xl font-bold text-foreground">

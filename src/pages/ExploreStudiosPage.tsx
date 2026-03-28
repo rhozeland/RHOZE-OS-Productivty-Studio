@@ -72,7 +72,7 @@ const ExploreStudiosPage = () => {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link to="/" className="flex items-center gap-2.5">
             <img src={rhozelandLogo} alt="Rhozeland" className="h-8 w-8" />
-            <span className="font-display text-lg font-bold tracking-tight text-foreground">Rhozeland</span>
+            <span className="font-body text-lg font-bold tracking-tight text-foreground">Rhozeland</span>
           </Link>
           <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
             <Link to="/explore/studios" className="text-foreground font-medium">Studios</Link>
