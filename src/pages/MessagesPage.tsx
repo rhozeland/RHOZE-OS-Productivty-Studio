@@ -514,7 +514,7 @@ const MessagesPage = () => {
                             {isQuoteMessage(msg.content) ? (
                               <QuoteCard content={msg.content} isMine={isMine} messageId={msg.id} senderId={msg.sender_id} />
                             ) : isRichMessage(msg.content) ? (
-                              <RichMessageCard content={msg.content} isMine={isMine} timestamp={msg.created_at} formatTime={formatTime} />
+                              <RichMessageCard content={msg.content} isMine={isMine} timestamp={msg.created_at} formatTime={formatTime} messageId={msg.id} senderId={msg.sender_id} />
                             ) : (
                               <div className={cn(
                                 "max-w-[70%] rounded-2xl px-4 py-2.5",

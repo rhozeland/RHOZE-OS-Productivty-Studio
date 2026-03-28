@@ -273,19 +273,17 @@ const StaffInviteCard = ({
 
       if (error) throw error;
 
-      // Send a reply message
-      const replyContent = accept
-        ? `✅ I've accepted the staff invitation at **${data.studio_name}**!`
-        : `❌ I've declined the staff invitation at **${data.studio_name}**.`;
-
-      // We need to find the sender — since this is not "isMine", we know the sender is someone else
-      // The message sender is the studio owner; reply goes back to them
-      // We'll just use the supabase insert; the sender/receiver are flipped
-      await supabase.from("messages").insert({
-        sender_id: user!.id,
-        receiver_id: "", // We don't have receiver here, but the reply will be created contextually
-        content: replyContent,
-      }).then(() => {});
+      // Send a reply message to the studio owner
+      if (senderId) {
+        const replyContent = accept
+          ? `✅ I've accepted the staff invitation at **${data.studio_name}**!`
+          : `❌ I've declined the staff invitation at **${data.studio_name}**.`;
+        await supabase.from("messages").insert({
+          sender_id: user!.id,
+          receiver_id: senderId,
+          content: replyContent,
+        });
+      }
 
       setStatus(accept ? "accepted" : "declined");
       toast.success(accept ? "Invitation accepted!" : "Invitation declined");
