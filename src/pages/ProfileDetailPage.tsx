@@ -277,6 +277,7 @@ const ProfileDetailPage = () => {
 
   const profileBg = (profile as any).profile_background;
   const bannerGradient = (profile as any).banner_gradient || "linear-gradient(135deg, hsl(220,15%,40%), hsl(220,10%,55%), hsl(175,30%,65%))";
+  const bannerImageUrl = (profile as any).banner_url;
 
   const hasSellerContent = (sellerListings?.length ?? 0) > 0;
 
@@ -305,6 +306,9 @@ const ProfileDetailPage = () => {
             className="h-36 sm:h-44 relative rounded-t-2xl overflow-hidden"
             style={{ background: bannerGradient }}
           >
+            {bannerImageUrl && (
+              <img src={bannerImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            )}
             {/* Edit button for own profile */}
             {isOwnProfile && (
               <Button

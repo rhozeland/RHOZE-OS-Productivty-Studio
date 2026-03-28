@@ -837,8 +837,10 @@ export type Database = {
           available: boolean | null
           avatar_url: string | null
           banner_gradient: string | null
+          banner_url: string | null
           bio: string | null
           created_at: string
+          dashboard_layout: Json | null
           display_name: string | null
           email_notif_inquiries: boolean | null
           email_notif_messages: boolean | null
@@ -872,8 +874,10 @@ export type Database = {
           available?: boolean | null
           avatar_url?: string | null
           banner_gradient?: string | null
+          banner_url?: string | null
           bio?: string | null
           created_at?: string
+          dashboard_layout?: Json | null
           display_name?: string | null
           email_notif_inquiries?: boolean | null
           email_notif_messages?: boolean | null
@@ -907,8 +911,10 @@ export type Database = {
           available?: boolean | null
           avatar_url?: string | null
           banner_gradient?: string | null
+          banner_url?: string | null
           bio?: string | null
           created_at?: string
+          dashboard_layout?: Json | null
           display_name?: string | null
           email_notif_inquiries?: boolean | null
           email_notif_messages?: boolean | null
