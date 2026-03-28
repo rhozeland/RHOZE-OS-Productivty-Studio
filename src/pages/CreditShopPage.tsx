@@ -90,9 +90,9 @@ const TIERS = [
     icon: Sun,
     bestFor: "Semi-pros, scaling micro-influencers",
     features: [
-      "10 credits/month",
-      "50 Smartboards",
-      "Drop Rooms — 12 hr max",
+      "10 $RHOZE/month",
+      "50 Boards",
+      "Collab Rooms — 12 hr max",
       "Standard workshops",
       "Strategy consultation",
       "Priority booking",
