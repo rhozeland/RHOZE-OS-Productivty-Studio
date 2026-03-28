@@ -145,21 +145,21 @@ const AppSidebar = () => {
         {renderGroup("Navigation", mainItems)}
       </SidebarContent>
 
-      <SidebarFooter className="px-2 pb-3">
-        {/* Profile link */}
+      <SidebarFooter className="px-2 pb-4 mt-auto">
         <Link
           to={profilePath}
           onClick={handleNavClick}
           className={cn(
-            "flex items-center gap-3 rounded-xl px-3 py-2.5 mb-2 transition-all duration-250",
+            "flex items-center gap-3 rounded-xl px-3 py-2.5 mb-3 transition-all duration-250",
             profileActive
               ? "bg-muted text-foreground"
-              : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+              : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+            collapsed && "justify-center px-2"
           )}
         >
-          <Avatar className="h-6 w-6 border border-border shrink-0">
+          <Avatar className="h-7 w-7 border border-border shrink-0">
             <AvatarImage src={profile?.avatar_url ?? undefined} />
-            <AvatarFallback className="text-[8px] font-semibold bg-muted text-muted-foreground font-body">
+            <AvatarFallback className="text-[9px] font-semibold bg-muted text-muted-foreground font-body">
               {initials}
             </AvatarFallback>
           </Avatar>
