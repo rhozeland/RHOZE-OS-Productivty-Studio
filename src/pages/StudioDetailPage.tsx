@@ -279,6 +279,20 @@ const StudioDetailPage = () => {
           </div>
         </div>
       </div>
+      {studio && (
+        <StudioBookingModal
+          open={bookingOpen}
+          onOpenChange={setBookingOpen}
+          studio={{
+            id: studio.id,
+            name: studio.name,
+            hourly_rate: studio.hourly_rate,
+            daily_rate: studio.daily_rate,
+            max_guests: studio.max_guests,
+            currency: studio.currency,
+          }}
+        />
+      )}
     </div>
   );
 };
