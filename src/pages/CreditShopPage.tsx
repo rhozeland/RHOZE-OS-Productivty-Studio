@@ -583,14 +583,13 @@ const CreditShopPage = () => {
             </span>
           </div>
           <SquareCardForm
-            amount={pendingCardCredits * CREDIT_PRICE}
+            amount={pendingCardCredits * TOKEN_PRICE}
             onTokenize={async (token) => {
-              // Process real payment via Square
               const { data, error } = await supabase.functions.invoke("square-payment", {
                 body: {
-                  amount_cents: pendingCardCredits * CREDIT_PRICE * 100,
+                  amount_cents: pendingCardCredits * TOKEN_PRICE * 100,
                   currency: "USD",
-                  description: `Rhozeland: ${pendingCardCredits} credit(s)`,
+                  description: `Rhozeland: ${pendingCardCredits} $RHOZE`,
                   source_id: token,
                   location_id: SQUARE_LOCATION_ID,
                 },
