@@ -245,11 +245,13 @@ const StaffInviteCard = ({
   isMine,
   timestamp,
   formatTime,
+  senderId,
 }: {
   data: any;
   isMine: boolean;
   timestamp: string;
   formatTime: (d: string) => string;
+  senderId?: string;
 }) => {
   const { user } = useAuth();
   const [status, setStatus] = useState<"idle" | "accepting" | "declining" | "accepted" | "declined">("idle");
