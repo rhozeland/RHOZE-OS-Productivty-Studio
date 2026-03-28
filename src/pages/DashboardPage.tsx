@@ -394,7 +394,6 @@ const DashboardPage = () => {
               <h3 className="font-display font-bold text-foreground group-hover:text-primary transition-colors">
                 Creators Hub
               </h3>
-              </h3>
               <p className="text-xs text-muted-foreground mt-1">Freelance talent for your projects</p>
             </motion.div>
           </Link>
