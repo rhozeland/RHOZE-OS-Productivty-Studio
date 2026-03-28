@@ -19,8 +19,10 @@ import {
   UserPlus,
   Trash2,
   ImagePlus,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 
 const StudioManagePage = () => {
   const { id } = useParams<{ id: string }>();
