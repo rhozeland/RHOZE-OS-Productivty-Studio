@@ -73,6 +73,7 @@ const SettingsPage = () => {
   const { theme, toggleTheme } = useTheme();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bannerFileRef = useRef<HTMLInputElement>(null);
 
   // Profile fields
   const [displayName, setDisplayName] = useState("");
