@@ -121,7 +121,7 @@ const TIERS = [
   },
 ];
 
-const CREDIT_PRICE = 75;
+const TOKEN_PRICE = 75; // 1 $RHOZE ≈ $75
 
 const CreditShopPage = () => {
   const { user } = useAuth();
