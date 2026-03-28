@@ -628,6 +628,67 @@ const ProfileDetailPage = () => {
           </motion.div>
         )}
       </div>
+
+      {/* Expanded Flow Post Dialog */}
+      <Dialog open={!!expandedPost} onOpenChange={(open) => !open && setExpandedPost(null)}>
+        <DialogContent className="max-w-lg p-0 overflow-hidden rounded-2xl">
+          <DialogDescription className="sr-only">Flow post details</DialogDescription>
+          {expandedPost && (
+            <div>
+              {expandedPost.file_url && (expandedPost.category === "photo" || expandedPost.category === "design" || expandedPost.content_type === "image") ? (
+                <div className="bg-muted">
+                  <img src={expandedPost.file_url} alt={expandedPost.title} className="w-full max-h-[60vh] object-contain" />
+                </div>
+              ) : expandedPost.file_url && (expandedPost.category === "video" || expandedPost.content_type === "video") ? (
+                <div className="bg-foreground/5 aspect-video">
+                  <video src={expandedPost.file_url} controls playsInline className="w-full h-full object-contain" />
+                </div>
+              ) : expandedPost.link_url && expandedPost.link_url.includes("youtu") ? (
+                <div className="aspect-video">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${expandedPost.link_url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?\s]+)/)?.[1]}?rel=0`}
+                    width="100%" height="100%" frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen className="rounded-t-2xl"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5 p-10">
+                  {expandedPost.category === "music" ? (
+                    <Music className="h-16 w-16 text-muted-foreground/30" />
+                  ) : expandedPost.category === "writing" ? (
+                    <FileText className="h-16 w-16 text-muted-foreground/30" />
+                  ) : (
+                    <ImageIcon className="h-16 w-16 text-muted-foreground/30" />
+                  )}
+                </div>
+              )}
+              <div className="p-5 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-display text-lg font-bold text-foreground">{expandedPost.title}</h3>
+                    <Badge variant="outline" className="text-[10px] mt-1 capitalize">{expandedPost.category}</Badge>
+                  </div>
+                  {expandedPost.link_url && (
+                    <a href={expandedPost.link_url} target="_blank" rel="noopener noreferrer"
+                      className="shrink-0 flex items-center gap-1 text-xs text-primary hover:underline">
+                      <ExternalLink className="h-3.5 w-3.5" /> Open
+                    </a>
+                  )}
+                </div>
+                {expandedPost.description && (
+                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{expandedPost.description}</p>
+                )}
+                {expandedPost.created_at && (
+                  <p className="text-[11px] text-muted-foreground/60">
+                    Posted {format(new Date(expandedPost.created_at), "MMM d, yyyy")}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
