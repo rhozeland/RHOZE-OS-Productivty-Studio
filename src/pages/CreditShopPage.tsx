@@ -394,13 +394,13 @@ const CreditShopPage = () => {
             >
               <div className="p-4 border-b border-border">
                 <h3 className="font-display font-semibold text-foreground">Swap Widget</h3>
-                <p className="text-xs text-muted-foreground">Buy $RHOZE directly — powered by Pump Fun</p>
+                <p className="text-xs text-muted-foreground">Swap SOL → $RHOZE directly — powered by Jupiter</p>
               </div>
               <iframe
-                src={`https://pump.fun/coin/${RHOZE_CA}?embed=true`}
+                src={`https://jup.ag/swap/SOL-${RHOZE_CA}?embedded=true`}
                 className="w-full h-[500px] border-0"
                 title="Buy $RHOZE"
-                allow="clipboard-write"
+                allow="clipboard-write; clipboard-read"
               />
             </motion.div>
           </div>
