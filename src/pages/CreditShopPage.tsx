@@ -626,7 +626,7 @@ const CreditShopPage = () => {
                   <span className="text-lg font-bold text-primary">${pendingTier.price.toFixed(2)}/mo</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {pendingTier.credits} credits/month • Billed monthly
+                  {pendingTier.credits} $RHOZE/month • Billed monthly
                 </p>
               </div>
               <SquareCardForm
