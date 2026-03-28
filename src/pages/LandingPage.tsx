@@ -296,57 +296,6 @@ const LandingPage = () => {
                     ))}
                   </div>
                 )}
-                {activeFeature === 3 && (
-                  <div className="flex flex-col gap-2 flex-1">
-                    {[true, false, true, false].map((sent, i) => (
-                      <div key={i} className={`flex items-end gap-2 ${sent ? "flex-row-reverse" : ""}`}>
-                        {!sent && <div className="h-6 w-6 rounded-full bg-muted/60 shrink-0" />}
-                        <div className={`rounded-2xl px-3 py-2 max-w-[65%] ${
-                          sent ? "bg-primary/15 rounded-br-sm" : "bg-muted/40 border border-border/50 rounded-bl-sm"
-                        }`}>
-                          <div className="h-2 w-16 rounded bg-foreground/8 mb-1" />
-                          <div className="h-2 w-10 rounded bg-foreground/5" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {activeFeature === 4 && (
-                  <div className="flex flex-col items-center justify-center flex-1 gap-3">
-                    <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/10 flex items-center justify-center">
-                      <Coins className="h-7 w-7 text-primary/50" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-foreground/50">1,250</p>
-                      <p className="text-[10px] text-muted-foreground">Rose Coins earned</p>
-                    </div>
-                    <div className="flex gap-4 mt-1">
-                      {["Complete work", "Leave reviews", "Refer friends"].map((action) => (
-                        <div key={action} className="text-center">
-                          <div className="h-6 w-6 rounded-full bg-muted/40 border border-border/50 mx-auto mb-1" />
-                          <p className="text-[8px] text-muted-foreground">{action}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {activeFeature === 5 && (
-                  <div className="grid grid-cols-7 gap-1 flex-1">
-                    {Array.from({ length: 28 }, (_, i) => (
-                      <div
-                        key={i}
-                        className={`rounded-md aspect-square flex items-center justify-center text-[9px] ${
-                          [3, 7, 14, 21].includes(i)
-                            ? "bg-primary/15 text-primary font-medium"
-                            : "bg-muted/30 text-muted-foreground/40"
-                        }`}
-                      >
-                        {i + 1}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </motion.div>
             </AnimatePresence>
           </div>
 
