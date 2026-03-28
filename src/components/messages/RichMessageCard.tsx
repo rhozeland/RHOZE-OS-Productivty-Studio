@@ -231,6 +231,7 @@ const RichMessageCard = ({ content, isMine, timestamp, formatTime, messageId, se
         isMine={isMine}
         timestamp={timestamp}
         formatTime={formatTime}
+        senderId={senderId}
       />
     );
   }
