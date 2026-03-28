@@ -475,20 +475,20 @@ const FlowModePage = () => {
         </AnimatePresence>
       </div>
 
-      {currentItem && (
-        <div className="pointer-events-none fixed bottom-24 left-1/2 z-40 w-full -translate-x-1/2 px-4 md:bottom-28">
-          <div className="mx-auto inline-flex max-w-fit items-center gap-4 rounded-full border border-border/30 bg-card/70 px-4 py-2 backdrop-blur-sm md:gap-6 md:px-5 md:py-2.5">
-            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground md:text-xs">
-              <ChevronUp className="h-3.5 w-3.5" /> Save
+      {currentItem && viewMode === "swipe" && (
+        <div className="pointer-events-none fixed bottom-20 left-0 right-0 z-40 flex justify-center px-4 md:bottom-24">
+          <div className="inline-flex items-center gap-3 rounded-full border border-border/30 bg-card/70 px-4 py-2 backdrop-blur-sm md:gap-5 md:px-5">
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              <ChevronUp className="h-3 w-3" /> Save
             </span>
-            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground md:text-xs">
-              <ChevronDown className="h-3.5 w-3.5" /> Pass
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              <ChevronDown className="h-3 w-3" /> Pass
             </span>
-            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground md:text-xs">
-              <ChevronLeft className="h-3.5 w-3.5" /> Share
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              <ChevronLeft className="h-3 w-3" /> Share
             </span>
-            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground md:text-xs">
-              <ChevronRight className="h-3.5 w-3.5" /> Next
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              <ChevronRight className="h-3 w-3" /> Next
             </span>
           </div>
         </div>
