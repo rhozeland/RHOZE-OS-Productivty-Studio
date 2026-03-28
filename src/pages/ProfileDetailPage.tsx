@@ -37,6 +37,7 @@ const ProfileDetailPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [customizing, setCustomizing] = useState(false);
+  const [expandedPost, setExpandedPost] = useState<any>(null);
 
   const isOwnProfile = user?.id === id;
 
