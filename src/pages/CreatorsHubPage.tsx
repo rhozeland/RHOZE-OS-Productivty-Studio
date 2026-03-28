@@ -2,8 +2,6 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -12,8 +10,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Plus, Search, Sparkles, Briefcase, FileText, Package, ShoppingBag,
+  Plus, Sparkles, Briefcase, FileText, Package, ShoppingBag,
   SlidersHorizontal, Users, Clock, Zap, LayoutGrid, ArrowRight, Coins,
+  Trophy, Flame,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
@@ -33,17 +32,25 @@ const TYPES = [
   { key: "project_request", label: "Requests", icon: ShoppingBag },
 ];
 
+const TABS = [
+  { key: "collab", label: "Collab Rooms", icon: Zap },
+  { key: "boards", label: "Boards", icon: LayoutGrid },
+  { key: "listings", label: "Listings", icon: Sparkles },
+] as const;
+
+type TabKey = typeof TABS[number]["key"];
+
 const CreatorsHubPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<TabKey>("collab");
   const [activeCategory, setActiveCategory] = useState("all");
   const [activeType, setActiveType] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
 
   const { data: listings, isLoading } = useQuery({
-    queryKey: ["marketplace-listings", activeCategory, activeType, searchQuery],
+    queryKey: ["marketplace-listings", activeCategory, activeType],
     queryFn: async () => {
       let query = supabase
         .from("marketplace_listings")
@@ -52,12 +59,6 @@ const CreatorsHubPage = () => {
         .order("created_at", { ascending: false });
       if (activeCategory !== "all") query = query.eq("category", activeCategory);
       if (activeType !== "all") query = query.eq("listing_type", activeType);
-      if (searchQuery.trim()) {
-        const q = searchQuery.trim();
-        query = query.or(
-          `title.ilike.%${q}%,description.ilike.%${q}%,category.ilike.%${q}%,tags.cs.{"${q}"}`
-        );
-      }
       const { data, error } = await query;
       if (error) throw error;
       return data ?? [];
@@ -80,7 +81,7 @@ const CreatorsHubPage = () => {
         .select("*, drop_room_members(count)")
         .eq("is_active", true)
         .order("created_at", { ascending: false })
-        .limit(6);
+        .limit(8);
       if (error) throw error;
       return (data ?? []).filter((r: any) => !isPast(new Date(r.expires_at)));
     },
@@ -94,7 +95,7 @@ const CreatorsHubPage = () => {
         .select("*")
         .eq("is_public", true)
         .order("updated_at", { ascending: false })
-        .limit(6);
+        .limit(8);
       if (error) throw error;
       return data ?? [];
     },
@@ -153,8 +154,8 @@ const CreatorsHubPage = () => {
   const hasPublicBoards = (publicBoards?.length ?? 0) > 0;
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
-      {/* Hero header — editorial */}
+    <div className="space-y-6 max-w-6xl mx-auto">
+      {/* Hero — compact with reward highlight */}
       <div className="relative overflow-hidden rounded-lg">
         <div className="absolute inset-0 grid-overlay pointer-events-none" />
         <div className="absolute inset-0 overflow-hidden">
@@ -166,199 +167,270 @@ const CreatorsHubPage = () => {
             }}
           />
         </div>
-        <div className="relative z-10 px-8 py-12 md:px-10 md:py-16">
-          <p className="text-xs font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-3">
-            Community
-          </p>
-          <h1 className="font-display text-3xl md:text-5xl text-foreground leading-[1.1] mb-3">
-            Creators Hub
-          </h1>
-          <p className="text-sm text-muted-foreground max-w-md font-body leading-relaxed mb-6">
-            Discover work, collaborate in real-time, and earn $RHOZE.
-          </p>
-          <button onClick={() => setCreateOpen(true)} className="btn-editorial">
-            Post Listing <ArrowRight className="h-4 w-4" />
-          </button>
+        <div className="relative z-10 px-8 py-10 md:px-10 md:py-14">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+            <div>
+              <p className="text-xs font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-3">
+                Community
+              </p>
+              <h1 className="font-display text-3xl md:text-5xl text-foreground leading-[1.1] mb-3">
+                Creators Hub
+              </h1>
+              <p className="text-sm text-muted-foreground max-w-md font-body leading-relaxed">
+                Collaborate, create, and earn $RHOZE together.
+              </p>
+            </div>
+
+            {/* $RHOZE reward badge — prominent */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="flex items-center gap-3 px-5 py-3 rounded-lg border border-dashed border-foreground/20 bg-card/60 backdrop-blur-sm"
+            >
+              <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center shrink-0">
+                <Coins className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground font-body">Earn $RHOZE</p>
+                <p className="text-[11px] text-muted-foreground font-body">Post, collab, curate → earn tokens</p>
+              </div>
+              <button
+                onClick={() => navigate("/credits")}
+                className="text-xs font-body text-foreground underline underline-offset-2 shrink-0 ml-2"
+              >
+                Learn&nbsp;more
+              </button>
+            </motion.div>
+          </div>
         </div>
       </div>
 
-      {/* Live Collab + Public Boards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-[1px] bg-border rounded-lg overflow-hidden">
-        {/* Collab Rooms */}
-        <div className="bg-card p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-foreground" />
-              <h2 className="font-display text-base text-foreground">Live Collab Rooms</h2>
-              {hasCollabRooms && (
+      {/* Leaderboard — right at top for engagement */}
+      <Leaderboard />
+
+      {/* Three-tab navigation */}
+      <div className="flex items-center gap-1 border-b border-border">
+        {TABS.map((tab) => {
+          const active = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={cn(
+                "flex items-center gap-2 px-5 py-3 text-sm font-body font-medium transition-colors relative",
+                active
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <tab.icon className="h-4 w-4" />
+              {tab.label}
+              {tab.key === "collab" && hasCollabRooms && (
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
                 </span>
               )}
-            </div>
-            <button onClick={() => navigate("/drop-rooms")} className="text-xs text-muted-foreground hover:text-foreground font-body transition-colors">
-              View all →
+              {active && (
+                <motion.div
+                  layoutId="hub-tab-underline"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground"
+                />
+              )}
             </button>
-          </div>
-          {hasCollabRooms ? (
-            <div className="grid grid-cols-2 gap-2">
-              {dropRooms!.slice(0, 4).map((room: any) => {
-                const memberCount = room.drop_room_members?.[0]?.count ?? 0;
-                return (
-                  <button
-                    key={room.id}
-                    onClick={() => navigate(`/drop-rooms/${room.id}`)}
-                    className="card-dashed p-3 text-left hover:border-foreground/30 transition-colors"
+          );
+        })}
+      </div>
+
+      {/* Tab content */}
+      <AnimatePresence mode="wait">
+        {activeTab === "collab" && (
+          <motion.div
+            key="collab"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground font-body">
+                {hasCollabRooms ? `${dropRooms!.length} active rooms` : "No live rooms right now"}
+              </p>
+              <button
+                onClick={() => navigate("/drop-rooms")}
+                className="btn-editorial text-xs"
+              >
+                {hasCollabRooms ? "View All Rooms" : "Start a Room"} <ArrowRight className="h-3 w-3" />
+              </button>
+            </div>
+            {hasCollabRooms ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {dropRooms!.map((room: any, i: number) => {
+                  const memberCount = room.drop_room_members?.[0]?.count ?? 0;
+                  return (
+                    <motion.button
+                      key={room.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.04 }}
+                      onClick={() => navigate(`/drop-rooms/${room.id}`)}
+                      className="card-dashed p-4 text-left hover:border-foreground/30 transition-colors group"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="relative flex h-2 w-2 shrink-0">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
+                        </span>
+                        <span className="text-[9px] text-muted-foreground uppercase tracking-wider font-body">{room.category} · Live</span>
+                      </div>
+                      <p className="text-sm font-medium text-foreground truncate font-body group-hover:text-accent transition-colors">{room.title}</p>
+                      {room.description && (
+                        <p className="text-[11px] text-muted-foreground line-clamp-2 mt-1 font-body">{room.description}</p>
+                      )}
+                      <div className="flex items-center gap-3 mt-3 text-[10px] text-muted-foreground font-body">
+                        <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {memberCount} joined</span>
+                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {formatDistanceToNow(new Date(room.expires_at))} left</span>
+                      </div>
+                    </motion.button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="card-dashed flex flex-col items-center justify-center py-16">
+                <Zap className="h-8 w-8 text-muted-foreground/30 mb-3" />
+                <p className="text-sm font-medium text-foreground font-body">No live rooms right now</p>
+                <p className="text-xs text-muted-foreground mt-1 font-body">Start one and earn $RHOZE for hosting</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {activeTab === "boards" && (
+          <motion.div
+            key="boards"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground font-body">
+                {hasPublicBoards ? `${publicBoards!.length} community boards` : "No public boards yet"}
+              </p>
+              <button
+                onClick={() => navigate("/smartboards")}
+                className="btn-editorial text-xs"
+              >
+                {hasPublicBoards ? "View All Boards" : "Create a Board"} <ArrowRight className="h-3 w-3" />
+              </button>
+            </div>
+            {hasPublicBoards ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {publicBoards!.map((board: any, i: number) => (
+                  <motion.button
+                    key={board.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.04 }}
+                    onClick={() => navigate(`/smartboards/${board.id}`)}
+                    className="card-dashed p-4 text-left hover:border-foreground/30 transition-colors group"
                   >
-                    <p className="text-sm font-medium text-foreground truncate font-body">{room.title}</p>
-                    <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground font-body">
-                      <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {memberCount}</span>
-                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {formatDistanceToNow(new Date(room.expires_at))}</span>
-                    </div>
-                    <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1 font-body">{room.category}</span>
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Zap className="h-6 w-6 text-muted-foreground/30 mb-2" />
-              <p className="text-xs text-muted-foreground font-body">No live rooms right now</p>
-              <button onClick={() => navigate("/drop-rooms")} className="mt-3 text-xs font-body font-medium text-foreground underline underline-offset-2">
-                Start a Room
-              </button>
-            </div>
-          )}
-        </div>
+                    <div
+                      className="w-full h-16 rounded-md mb-3"
+                      style={{ background: board.cover_color || board.background_color || "hsl(var(--muted))" }}
+                    />
+                    <p className="text-sm font-medium text-foreground truncate font-body group-hover:text-accent transition-colors">{board.title}</p>
+                    {board.description && (
+                      <p className="text-[11px] text-muted-foreground line-clamp-2 mt-1 font-body">{board.description}</p>
+                    )}
+                  </motion.button>
+                ))}
+              </div>
+            ) : (
+              <div className="card-dashed flex flex-col items-center justify-center py-16">
+                <LayoutGrid className="h-8 w-8 text-muted-foreground/30 mb-3" />
+                <p className="text-sm font-medium text-foreground font-body">No community boards yet</p>
+                <p className="text-xs text-muted-foreground mt-1 font-body">Curate a board and earn $RHOZE</p>
+              </div>
+            )}
+          </motion.div>
+        )}
 
-        {/* Public Boards */}
-        <div className="bg-card p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <LayoutGrid className="h-4 w-4 text-foreground" />
-              <h2 className="font-display text-base text-foreground">Community Boards</h2>
-            </div>
-            <button onClick={() => navigate("/smartboards")} className="text-xs text-muted-foreground hover:text-foreground font-body transition-colors">
-              View all →
-            </button>
-          </div>
-          {hasPublicBoards ? (
-            <div className="grid grid-cols-2 gap-2">
-              {publicBoards!.slice(0, 4).map((board: any) => (
-                <button
-                  key={board.id}
-                  onClick={() => navigate(`/smartboards/${board.id}`)}
-                  className="card-dashed p-3 text-left hover:border-foreground/30 transition-colors"
-                >
-                  <div
-                    className="w-full h-6 rounded-sm mb-2"
-                    style={{ background: board.cover_color || board.background_color || "hsl(var(--muted))" }}
-                  />
-                  <p className="text-sm font-medium text-foreground truncate font-body">{board.title}</p>
-                  {board.description && (
-                    <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5 font-body">{board.description}</p>
-                  )}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <LayoutGrid className="h-6 w-6 text-muted-foreground/30 mb-2" />
-              <p className="text-xs text-muted-foreground font-body">No public boards yet</p>
-              <button onClick={() => navigate("/smartboards")} className="mt-3 text-xs font-body font-medium text-foreground underline underline-offset-2">
-                Create a Board
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Earn $RHOZE — minimal banner */}
-      <div className="border border-dashed border-border rounded-lg p-5 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Coins className="h-5 w-5 text-foreground shrink-0" />
-          <div>
-            <p className="text-sm font-medium text-foreground font-body">Earn $RHOZE by creating</p>
-            <p className="text-xs text-muted-foreground font-body">Post listings, collab in rooms, and curate boards to earn tokens.</p>
-          </div>
-        </div>
-        <button onClick={() => navigate("/credits")} className="text-xs font-body font-medium text-foreground underline underline-offset-2 shrink-0">
-          Learn more →
-        </button>
-      </div>
-
-      {/* Search + Type filter bar */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search artists, music, design, services, and more..."
-            className="pl-9 rounded-sm bg-card border-border text-sm font-body h-10"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <Select value={activeType} onValueChange={setActiveType}>
-          <SelectTrigger className="w-full sm:w-44 rounded-sm h-10">
-            <SlidersHorizontal className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-            <SelectValue placeholder="All Types" />
-          </SelectTrigger>
-          <SelectContent>
-            {TYPES.map((t) => (
-              <SelectItem key={t.key} value={t.key}>
-                {t.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Category filter */}
-      <CategoryTiles
-        activeCategory={activeCategory}
-        onSelect={setActiveCategory}
-        listingCounts={listingCounts}
-      />
-
-      {/* Leaderboard */}
-      <Leaderboard />
-
-      {/* Listings grid */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="bg-card border border-border animate-pulse rounded-lg h-72" />
-          ))}
-        </div>
-      ) : !listings || listings.length === 0 ? (
-        <div className="card-dashed flex flex-col items-center justify-center py-16">
-          <Sparkles className="mb-3 h-8 w-8 text-muted-foreground/30" />
-          <p className="text-foreground font-medium font-body">{searchQuery ? "No results" : "No listings yet"}</p>
-          <p className="text-xs text-muted-foreground mt-1 font-body">Be the first to post something</p>
-          <button className="btn-editorial mt-4 text-xs" onClick={() => setCreateOpen(true)}>
-            Post Listing <ArrowRight className="h-3 w-3" />
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <AnimatePresence>
-            {listings.map((listing: any, i: number) => (
-              <ListingCard
-                key={listing.id}
-                listing={listing}
-                media={getMediaForListing(listing.id)}
-                reviewStats={getReviewStatsForListing(listing.id)}
-                index={i}
-                isOwner={listing.user_id === user?.id}
-                onInquire={() => navigate(`/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`)}
-                onClick={() => navigate(`/creators/${listing.id}`)}
-                onDelete={() => deleteListing.mutate(listing.id)}
+        {activeTab === "listings" && (
+          <motion.div
+            key="listings"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-5"
+          >
+            {/* Filters row */}
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+              <CategoryTiles
+                activeCategory={activeCategory}
+                onSelect={setActiveCategory}
+                listingCounts={listingCounts}
               />
-            ))}
-          </AnimatePresence>
-        </div>
-      )}
+              <div className="flex items-center gap-2">
+                <Select value={activeType} onValueChange={setActiveType}>
+                  <SelectTrigger className="w-36 rounded-sm h-9 text-xs">
+                    <SlidersHorizontal className="h-3 w-3 mr-1.5 text-muted-foreground" />
+                    <SelectValue placeholder="All Types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TYPES.map((t) => (
+                      <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <button onClick={() => setCreateOpen(true)} className="btn-editorial text-xs">
+                  <Plus className="h-3.5 w-3.5" /> Post
+                </button>
+              </div>
+            </div>
+
+            {/* Listings grid */}
+            {isLoading ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="bg-card border border-border animate-pulse rounded-lg h-72" />
+                ))}
+              </div>
+            ) : !listings || listings.length === 0 ? (
+              <div className="card-dashed flex flex-col items-center justify-center py-16">
+                <Sparkles className="mb-3 h-8 w-8 text-muted-foreground/30" />
+                <p className="text-foreground font-medium font-body">No listings yet</p>
+                <p className="text-xs text-muted-foreground mt-1 font-body">Be the first to post something and earn $RHOZE</p>
+                <button className="btn-editorial mt-4 text-xs" onClick={() => setCreateOpen(true)}>
+                  Post Listing <ArrowRight className="h-3 w-3" />
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <AnimatePresence>
+                  {listings.map((listing: any, i: number) => (
+                    <ListingCard
+                      key={listing.id}
+                      listing={listing}
+                      media={getMediaForListing(listing.id)}
+                      reviewStats={getReviewStatsForListing(listing.id)}
+                      index={i}
+                      isOwner={listing.user_id === user?.id}
+                      onInquire={() => navigate(`/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`)}
+                      onClick={() => navigate(`/creators/${listing.id}`)}
+                      onDelete={() => deleteListing.mutate(listing.id)}
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <CreateListingDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
