@@ -7,8 +7,6 @@ import {
   Building2,
   MessageSquare,
   Search,
-  Workflow,
-  LayoutGrid,
   Calendar,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -52,7 +50,7 @@ const DockBar = () => {
       transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
       className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50"
     >
-      <div className="flex items-center gap-0.5 sm:gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-2xl glass shadow-2xl shadow-black/20 dark:shadow-black/50 border border-border/60">
+      <div className="flex items-center gap-0.5 px-3 py-2 bg-card/90 backdrop-blur-xl border border-border rounded-lg shadow-lg shadow-foreground/5">
         {dockItems.map((item) => {
           const active = isActive(item.path);
           const showBadge = item.hasBadge && (unreadCount ?? 0) > 0;
@@ -64,32 +62,22 @@ const DockBar = () => {
               className="relative group"
             >
               <motion.div
-                whileHover={{ scale: 1.12, y: -3 }}
+                whileHover={{ scale: 1.08, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
                 className={cn(
-                  "flex flex-col items-center justify-center w-11 h-12 sm:w-14 sm:h-14 rounded-xl transition-colors duration-200 gap-0.5",
+                  "flex flex-col items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-md transition-colors duration-150 gap-0.5",
                   active
-                    ? "bg-primary/15 text-primary"
+                    ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                 )}
               >
-                <item.icon className={cn("h-4 w-4 sm:h-5 sm:w-5", active && "text-primary")} />
-                <span className={cn(
-                  "text-[9px] sm:text-[10px] font-medium leading-none",
-                  active ? "text-primary" : "text-muted-foreground"
-                )}>
+                <item.icon className="h-4 w-4" />
+                <span className="text-[9px] font-body font-medium leading-none">
                   {item.label}
                 </span>
-                {active && (
-                  <motion.div
-                    layoutId="dock-indicator"
-                    className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-primary"
-                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                  />
-                )}
                 {showBadge && (
-                  <span className="absolute top-0.5 right-1 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-card" />
+                  <span className="absolute top-0.5 right-1 h-2 w-2 rounded-full bg-accent" />
                 )}
               </motion.div>
             </Link>
