@@ -57,7 +57,6 @@ const AppSidebar = () => {
 
   const renderNavItem = (item: any) => {
     const active = isActive(item.path);
-    const showBadge = item.hasBadge && totalUnread > 0;
 
     return (
       <SidebarMenuItem key={item.path + item.label}>
@@ -82,14 +81,6 @@ const AppSidebar = () => {
             )} />
             {!collapsed && (
               <span className="flex-1">{item.label}</span>
-            )}
-            {!collapsed && showBadge && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1">
-                {totalUnread > 99 ? "99+" : totalUnread}
-              </span>
-            )}
-            {collapsed && showBadge && (
-              <span className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-primary" />
             )}
           </Link>
         </SidebarMenuButton>
