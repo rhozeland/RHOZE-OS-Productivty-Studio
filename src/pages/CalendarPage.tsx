@@ -45,6 +45,7 @@ import { motion, AnimatePresence } from "framer-motion";
 type ViewMode = "month" | "week";
 type TabMode = "upcoming" | "history" | "cancelled";
 type PaymentMethod = "credits" | "card" | "crypto";
+type EventType = "studio" | "project" | "reminder";
 
 interface CalendarEvent {
   id: string;
