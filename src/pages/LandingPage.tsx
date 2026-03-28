@@ -68,8 +68,8 @@ const LandingPage = () => {
       <nav className="border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 items-center justify-between px-4 sm:px-6 max-w-5xl">
           <Link to="/" className="flex items-center gap-2 shrink-0">
-            <img src={rhozelandLogo} alt="Rhozeland" className="h-7 w-7" />
-            <span className="font-display text-base font-bold tracking-tight text-foreground">
+            <img src={rhozelandLogo} alt="Rhozeland" className="h-8 w-8" />
+            <span className="font-body text-lg font-bold tracking-tight text-foreground">
               Rhozeland
             </span>
           </Link>
