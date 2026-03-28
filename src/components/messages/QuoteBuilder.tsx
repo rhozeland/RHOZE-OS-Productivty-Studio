@@ -24,12 +24,17 @@ type Milestone = {
 type QuoteBuilderProps = {
   recipientId: string;
   recipientName: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
-const QuoteBuilder = ({ recipientId, recipientName }: QuoteBuilderProps) => {
+const QuoteBuilder = ({ recipientId, recipientName, open: controlledOpen, onOpenChange }: QuoteBuilderProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
 
   const [projectTitle, setProjectTitle] = useState("");
   const [notes, setNotes] = useState("");
