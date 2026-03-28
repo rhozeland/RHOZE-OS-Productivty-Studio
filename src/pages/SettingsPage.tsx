@@ -425,16 +425,53 @@ const SettingsPage = () => {
         )}
       </SectionCard>
 
-      {/* ─── Banner Gradient ─── */}
+      {/* ─── Banner ─── */}
       <SectionCard>
-        <h2 className="mb-2 font-display text-lg font-semibold text-foreground">Banner Gradient</h2>
-        <p className="text-xs text-muted-foreground mb-4">Choose a gradient for your profile banner</p>
+        <h2 className="mb-2 font-display text-lg font-semibold text-foreground">Banner</h2>
+        <p className="text-xs text-muted-foreground mb-4">Upload a custom banner image or choose a gradient. Recommended size: 1200×400px.</p>
         <div
-          className="h-20 rounded-xl mb-4 border border-border"
+          className="h-20 rounded-xl mb-4 border border-border overflow-hidden"
           style={{
             background: bannerGradient || "linear-gradient(135deg, hsl(var(--primary) / 0.3), hsl(var(--accent) / 0.2), hsl(var(--primary) / 0.1))",
           }}
-        />
+        >
+          {bannerImageUrl && (
+            <img src={bannerImageUrl} alt="Banner" className="w-full h-full object-cover" />
+          )}
+        </div>
+
+        {/* Upload banner image */}
+        <div className="flex items-center gap-3 mb-4">
+          <Button variant="outline" size="sm" onClick={() => bannerFileRef.current?.click()} disabled={uploadingBanner}>
+            <Upload className="mr-2 h-4 w-4" />
+            {uploadingBanner ? "Uploading..." : "Upload Image"}
+          </Button>
+          {bannerImageUrl && (
+            <Button variant="ghost" size="sm" onClick={async () => {
+              setBannerImageUrl("");
+              await supabase.from("profiles").update({ banner_url: null } as any).eq("user_id", user!.id);
+              queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+              queryClient.invalidateQueries({ queryKey: ["profile"] });
+              toast.success("Banner image removed");
+            }}>
+              <X className="mr-1 h-3 w-3" /> Remove Image
+            </Button>
+          )}
+          <input
+            ref={bannerFileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleBannerUpload(file);
+              e.target.value = "";
+            }}
+          />
+        </div>
+
+        <Separator className="my-3" />
+        <p className="text-xs text-muted-foreground mb-3">Or pick a gradient (used when no image is set)</p>
         <div className="grid grid-cols-5 gap-2">
           {BANNER_GRADIENTS.map((g) => (
             <button
