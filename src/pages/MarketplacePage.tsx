@@ -62,7 +62,12 @@ const MarketplacePage = () => {
 
       if (activeCategory !== "all") query = query.eq("category", activeCategory);
       if (activeType !== "all") query = query.eq("listing_type", activeType);
-      if (searchQuery.trim()) query = query.ilike("title", `%${searchQuery}%`);
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim();
+        query = query.or(
+          `title.ilike.%${q}%,description.ilike.%${q}%,category.ilike.%${q}%,tags.cs.{"${q}"}`
+        );
+      }
 
       const { data, error } = await query;
       if (error) throw error;
