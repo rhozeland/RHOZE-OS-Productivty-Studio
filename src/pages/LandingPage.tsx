@@ -1,18 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Flame } from "lucide-react";
+import {
+  ArrowRight,
+  Flame,
+  Building2,
+  Users,
+  FolderKanban,
+  Coins,
+  MessageSquare,
+  Calendar,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
+
+const FEATURES = [
+  { icon: Building2, label: "Studios", desc: "Book creative spaces by the hour" },
+  { icon: Users, label: "Creators", desc: "Hire freelance talent on the marketplace" },
+  { icon: FolderKanban, label: "Projects", desc: "Manage work with milestones & budgets" },
+  { icon: MessageSquare, label: "Messaging", desc: "Collaborate with built-in chat & video" },
+  { icon: Coins, label: "Rose Coin", desc: "Earn tokens for contributions" },
+  { icon: Calendar, label: "Bookings", desc: "Schedule sessions & manage calendar" },
+];
 
 const LandingPage = () => {
   const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [activeFeature, setActiveFeature] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveFeature((prev) => (prev + 1) % FEATURES.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleWaitlist = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,9 +96,9 @@ const LandingPage = () => {
         </div>
       </nav>
 
-      {/* Hero — vertically centered */}
+      {/* Hero */}
       <section className="flex-1 flex items-center justify-center px-4 sm:px-6 relative overflow-hidden">
-        {/* Grain texture overlay */}
+        {/* Grain texture */}
         <div
           className="absolute inset-0 pointer-events-none opacity-[0.03]"
           style={{
@@ -81,7 +107,6 @@ const LandingPage = () => {
             backgroundSize: "128px 128px",
           }}
         />
-        {/* Soft radial glow */}
         <div className="absolute inset-0 pointer-events-none">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -89,24 +114,21 @@ const LandingPage = () => {
             transition={{ duration: 1.5, ease: "easeOut" }}
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
             style={{
-              background:
-                "radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%)",
+              background: "radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%)",
             }}
           />
-          {/* Secondary ambient glow */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.4 }}
             transition={{ duration: 2, delay: 0.5 }}
             className="absolute top-[30%] left-[20%] w-[300px] h-[300px] rounded-full"
             style={{
-              background:
-                "radial-gradient(circle, hsl(var(--accent) / 0.04) 0%, transparent 70%)",
+              background: "radial-gradient(circle, hsl(var(--accent) / 0.04) 0%, transparent 70%)",
             }}
           />
         </div>
 
-        <div className="relative z-10 max-w-lg mx-auto text-center py-20">
+        <div className="relative z-10 max-w-lg mx-auto text-center py-16">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -125,7 +147,7 @@ const LandingPage = () => {
               <span className="gradient-text">build together.</span>
             </h1>
 
-            <p className="text-sm sm:text-base text-muted-foreground max-w-sm mx-auto mb-10 leading-relaxed">
+            <p className="text-sm sm:text-base text-muted-foreground max-w-sm mx-auto mb-8 leading-relaxed">
               Book studios. Hire talent. Ship projects.
               <br />
               One workspace for your creative team.
@@ -134,7 +156,7 @@ const LandingPage = () => {
             {/* Waitlist form */}
             <form
               onSubmit={handleWaitlist}
-              className="flex flex-col sm:flex-row items-center gap-2.5 max-w-sm mx-auto"
+              className="flex flex-col sm:flex-row items-center gap-2.5 max-w-sm mx-auto mb-4"
             >
               <Input
                 type="email"
@@ -155,10 +177,191 @@ const LandingPage = () => {
               </Button>
             </form>
 
-            <p className="text-[11px] text-muted-foreground/60 mt-4">
+            <p className="text-[11px] text-muted-foreground/60">
               Early members earn founding badges & bonus Rose Coins.
             </p>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Feature preview strip */}
+      <section className="border-t border-border bg-card/50 px-4 sm:px-6 py-10">
+        <div className="max-w-3xl mx-auto">
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-[11px] uppercase tracking-widest text-muted-foreground/50 text-center mb-6"
+          >
+            What's inside
+          </motion.p>
+
+          {/* Feature pills */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
+            {FEATURES.map((f, i) => (
+              <button
+                key={f.label}
+                onClick={() => setActiveFeature(i)}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-medium transition-all ${
+                  activeFeature === i
+                    ? "bg-foreground text-background shadow-sm"
+                    : "bg-muted/60 text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                <f.icon className="h-3.5 w-3.5" />
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Preview card */}
+          <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-lg shadow-black/5">
+            {/* Title bar */}
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-muted/20">
+              <div className="flex gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/15" />
+                <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/15" />
+                <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/15" />
+              </div>
+              <div className="flex-1 flex justify-center">
+                <span className="text-[10px] text-muted-foreground/40">rhozeland.app</span>
+              </div>
+            </div>
+
+            {/* Screen content */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeFeature}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.3 }}
+                className="p-6 sm:p-8 min-h-[220px] flex flex-col"
+              >
+                <div className="flex items-center gap-2.5 mb-5">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                    {(() => {
+                      const Icon = FEATURES[activeFeature].icon;
+                      return <Icon className="h-4 w-4" />;
+                    })()}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{FEATURES[activeFeature].label}</p>
+                    <p className="text-[11px] text-muted-foreground">{FEATURES[activeFeature].desc}</p>
+                  </div>
+                </div>
+
+                {/* Skeleton UI per feature */}
+                {activeFeature === 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 flex-1">
+                    {["Recording Studio", "Photo Lab", "Video Suite"].map((name) => (
+                      <div key={name} className="rounded-xl bg-muted/40 border border-border/50 p-3 flex flex-col justify-between">
+                        <div className="h-12 rounded-lg bg-muted/60 mb-2" />
+                        <p className="text-[10px] font-medium text-foreground/60">{name}</p>
+                        <p className="text-[9px] text-muted-foreground mt-0.5">$45/hr</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {activeFeature === 1 && (
+                  <div className="flex flex-col gap-2.5 flex-1">
+                    {["Graphic Designer", "Mix Engineer", "Photographer"].map((name) => (
+                      <div key={name} className="flex items-center gap-3 rounded-xl bg-muted/40 border border-border/50 p-3">
+                        <div className="h-9 w-9 rounded-full bg-muted/60 shrink-0" />
+                        <div className="flex-1">
+                          <p className="text-[11px] font-medium text-foreground/60">{name}</p>
+                          <p className="text-[9px] text-muted-foreground">Available now</p>
+                        </div>
+                        <div className="text-[9px] text-primary font-medium">View →</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {activeFeature === 2 && (
+                  <div className="flex flex-col gap-2 flex-1">
+                    {[
+                      { title: "Album Cover Design", status: "In Progress", pct: 65 },
+                      { title: "Music Video Edit", status: "Review", pct: 90 },
+                      { title: "Brand Identity", status: "Planning", pct: 15 },
+                    ].map((p) => (
+                      <div key={p.title} className="rounded-xl bg-muted/40 border border-border/50 p-3">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <p className="text-[11px] font-medium text-foreground/60">{p.title}</p>
+                          <span className="text-[9px] text-muted-foreground">{p.status}</span>
+                        </div>
+                        <div className="h-1 rounded-full bg-muted/60 overflow-hidden">
+                          <div className="h-full rounded-full bg-primary/40" style={{ width: `${p.pct}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {activeFeature === 3 && (
+                  <div className="flex flex-col gap-2 flex-1">
+                    {[true, false, true, false].map((sent, i) => (
+                      <div key={i} className={`flex items-end gap-2 ${sent ? "flex-row-reverse" : ""}`}>
+                        {!sent && <div className="h-6 w-6 rounded-full bg-muted/60 shrink-0" />}
+                        <div className={`rounded-2xl px-3 py-2 max-w-[65%] ${
+                          sent ? "bg-primary/15 rounded-br-sm" : "bg-muted/40 border border-border/50 rounded-bl-sm"
+                        }`}>
+                          <div className="h-2 w-16 rounded bg-foreground/8 mb-1" />
+                          <div className="h-2 w-10 rounded bg-foreground/5" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {activeFeature === 4 && (
+                  <div className="flex flex-col items-center justify-center flex-1 gap-3">
+                    <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/10 flex items-center justify-center">
+                      <Coins className="h-7 w-7 text-primary/50" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-foreground/50">1,250</p>
+                      <p className="text-[10px] text-muted-foreground">Rose Coins earned</p>
+                    </div>
+                    <div className="flex gap-4 mt-1">
+                      {["Complete work", "Leave reviews", "Refer friends"].map((action) => (
+                        <div key={action} className="text-center">
+                          <div className="h-6 w-6 rounded-full bg-muted/40 border border-border/50 mx-auto mb-1" />
+                          <p className="text-[8px] text-muted-foreground">{action}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {activeFeature === 5 && (
+                  <div className="grid grid-cols-7 gap-1 flex-1">
+                    {Array.from({ length: 28 }, (_, i) => (
+                      <div
+                        key={i}
+                        className={`rounded-md aspect-square flex items-center justify-center text-[9px] ${
+                          [3, 7, 14, 21].includes(i)
+                            ? "bg-primary/15 text-primary font-medium"
+                            : "bg-muted/30 text-muted-foreground/40"
+                        }`}
+                      >
+                        {i + 1}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Progress dots */}
+          <div className="flex items-center justify-center gap-1.5 mt-4">
+            {FEATURES.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveFeature(i)}
+                className={`h-1.5 rounded-full transition-all ${
+                  activeFeature === i ? "w-4 bg-foreground" : "w-1.5 bg-muted-foreground/20"
+                }`}
+              />
+            ))}
+          </div>
         </div>
       </section>
 
@@ -167,9 +370,7 @@ const LandingPage = () => {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <img src={rhozelandLogo} alt="" className="h-4 w-4 opacity-50" />
-            <span className="text-xs text-muted-foreground">
-              © 2026 Rhozeland
-            </span>
+            <span className="text-xs text-muted-foreground">© 2026 Rhozeland</span>
           </div>
           <Link
             to="/auth"
