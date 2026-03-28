@@ -489,6 +489,16 @@ const SmartboardDetailPage = () => {
                   </div>
                 )}
 
+                <div className="flex items-center gap-2 pt-1">
+                  <Checkbox
+                    id="also-flow"
+                    checked={alsoPostToFlow}
+                    onCheckedChange={(v) => setAlsoPostToFlow(!!v)}
+                  />
+                  <Label htmlFor="also-flow" className="text-sm text-muted-foreground cursor-pointer">
+                    Also share to Flow Mode
+                  </Label>
+                </div>
                 <Button type="submit" className="w-full rounded-full">Add to Board</Button>
               </form>
             </DialogContent>
