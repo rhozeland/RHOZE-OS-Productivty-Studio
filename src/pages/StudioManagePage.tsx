@@ -278,6 +278,54 @@ const StudioManagePage = () => {
           </div>
         </TabsContent>
 
+        {/* Hours */}
+        <TabsContent value="hours" className="space-y-4 mt-4">
+          <div className="surface-card p-6 space-y-4">
+            <h3 className="font-display font-semibold text-foreground">Operating Hours</h3>
+            <p className="text-sm text-muted-foreground">Set when your studio is open for bookings.</p>
+
+            {availability && availability.length > 0 ? (
+              <div className="space-y-3">
+                {availability.map((slot) => (
+                  <div key={slot.id} className="flex items-center gap-4 rounded-xl border border-border p-3">
+                    <div className="w-28">
+                      <p className="text-sm font-medium text-foreground">{DAY_NAMES[slot.day_of_week]}</p>
+                    </div>
+                    <Switch
+                      checked={slot.is_available}
+                      onCheckedChange={(checked) => updateAvailability.mutate({ id: slot.id, is_available: checked, start_time: slot.start_time, end_time: slot.end_time })}
+                    />
+                    {slot.is_available ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="time"
+                          value={slot.start_time}
+                          className="w-32"
+                          onChange={(e) => updateAvailability.mutate({ id: slot.id, is_available: slot.is_available, start_time: e.target.value, end_time: slot.end_time })}
+                        />
+                        <span className="text-muted-foreground text-sm">to</span>
+                        <Input
+                          type="time"
+                          value={slot.end_time}
+                          className="w-32"
+                          onChange={(e) => updateAvailability.mutate({ id: slot.id, is_available: slot.is_available, start_time: slot.start_time, end_time: e.target.value })}
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground/50 italic">Closed</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Clock className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">No availability configured yet.</p>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
         {/* Staff */}
         <TabsContent value="staff" className="space-y-4 mt-4">
           <div className="surface-card p-6 space-y-4">
