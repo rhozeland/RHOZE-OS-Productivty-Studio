@@ -854,12 +854,14 @@ export type Database = {
           mediums: string[] | null
           portfolio_url: string | null
           profile_background: string | null
+          profile_layout: Json | null
           shipping_address_line1: string | null
           shipping_address_line2: string | null
           shipping_city: string | null
           shipping_country: string | null
           shipping_state: string | null
           shipping_zip: string | null
+          show_flow_posts: boolean | null
           show_offerings: boolean | null
           show_public_boards: boolean | null
           show_seller_stats: boolean | null
@@ -891,12 +893,14 @@ export type Database = {
           mediums?: string[] | null
           portfolio_url?: string | null
           profile_background?: string | null
+          profile_layout?: Json | null
           shipping_address_line1?: string | null
           shipping_address_line2?: string | null
           shipping_city?: string | null
           shipping_country?: string | null
           shipping_state?: string | null
           shipping_zip?: string | null
+          show_flow_posts?: boolean | null
           show_offerings?: boolean | null
           show_public_boards?: boolean | null
           show_seller_stats?: boolean | null
@@ -928,12 +932,14 @@ export type Database = {
           mediums?: string[] | null
           portfolio_url?: string | null
           profile_background?: string | null
+          profile_layout?: Json | null
           shipping_address_line1?: string | null
           shipping_address_line2?: string | null
           shipping_city?: string | null
           shipping_country?: string | null
           shipping_state?: string | null
           shipping_zip?: string | null
+          show_flow_posts?: boolean | null
           show_offerings?: boolean | null
           show_public_boards?: boolean | null
           show_seller_stats?: boolean | null
