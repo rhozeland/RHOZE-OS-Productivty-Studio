@@ -129,6 +129,14 @@ const CalendarPage = () => {
     enabled: !!user,
   });
 
+  const { data: projects } = useQuery({
+    queryKey: ["projects-list"],
+    queryFn: async () => {
+      const { data } = await supabase.from("projects").select("id, title, status").order("updated_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
   const createBookingWithPayment = async (cardToken?: string) => {
     if (!dragDate || dragStartHour === null || dragEndHour === null || !user) return;
     const startH = Math.min(dragStartHour, dragEndHour);
