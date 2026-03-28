@@ -169,15 +169,35 @@ const SmartboardDetailPage = () => {
         file_url: fileUrl,
       });
       if (error) throw error;
+
+      // Cross-post to Flow Mode if opted in
+      if (alsoPostToFlow) {
+        const categoryMap: Record<string, string> = {
+          image: "Photo", video: "Video", audio: "Music", note: "Writing", link: "Writing", pdf: "Writing",
+        };
+        await supabase.from("flow_items").insert({
+          user_id: user!.id,
+          title: itemTitle || `From board`,
+          description: itemContent || null,
+          category: categoryMap[itemType] || "Photo",
+          content_type: itemType === "note" || itemType === "link" ? "text" : "file",
+          file_url: fileUrl || (itemType === "link" ? itemLink : null),
+          link_url: itemType === "link" ? itemLink : null,
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["smartboard-items", id] });
+      if (alsoPostToFlow) {
+        queryClient.invalidateQueries({ queryKey: ["flow-items"] });
+      }
       setAddOpen(false);
       setItemTitle("");
       setItemContent("");
       setItemLink("");
       setImageFile(null);
-      toast.success("Item added!");
+      setAlsoPostToFlow(false);
+      toast.success(alsoPostToFlow ? "Added to board & Flow Mode!" : "Item added!");
     },
     onError: (e: any) => toast.error(e.message),
   });
