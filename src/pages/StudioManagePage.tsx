@@ -68,9 +68,15 @@ const StudioManagePage = () => {
 
   // Staff management state
   const [addStaffOpen, setAddStaffOpen] = useState(false);
+  const [staffUsername, setStaffUsername] = useState("");
+  const [staffSearchResults, setStaffSearchResults] = useState<any[]>([]);
   const [selectedUserId, setSelectedUserId] = useState("");
+  const [selectedUserName, setSelectedUserName] = useState("");
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
+  const [customSpecialty, setCustomSpecialty] = useState("");
+  const [showCustomInput, setShowCustomInput] = useState(false);
   const [savingStaff, setSavingStaff] = useState(false);
+  const [searching, setSearching] = useState(false);
 
   // Initialize form when studio loads
   const studioForm = {
