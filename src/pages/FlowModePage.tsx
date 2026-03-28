@@ -447,20 +447,22 @@ const FlowModePage = () => {
         </AnimatePresence>
       </div>
 
-      {/* Bottom swipe hints */}
+      {/* Bottom swipe hints — fixed to bottom, centered */}
       {currentItem && (
-        <div className="relative z-10 flex justify-center items-center pb-4">
-          <div className="flex items-center gap-6 md:gap-8 text-foreground/40">
-            {(["up", "down", "left", "right"] as const).map((dir) => {
-              const icons = { up: ChevronUp, down: ChevronDown, left: ChevronLeft, right: ChevronRight };
-              const actionLabels: Record<string, string> = { save: "Save", dislike: "Pass", share: "Share", skip: "Next" };
-              const Icon = icons[dir];
-              return (
-                <span key={dir} className="flex items-center gap-1 text-xs">
-                  <Icon className="h-3.5 w-3.5" /> {actionLabels[swipeMap[dir]]}
-                </span>
-              );
-            })}
+        <div className="relative z-10 flex justify-center items-center pb-6 pt-2">
+          <div className="inline-flex items-center gap-8 px-5 py-2.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/30">
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <ChevronUp className="h-3.5 w-3.5" /> Save
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <ChevronDown className="h-3.5 w-3.5" /> Pass
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <ChevronLeft className="h-3.5 w-3.5" /> Share
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <ChevronRight className="h-3.5 w-3.5" /> Next
+            </span>
           </div>
         </div>
       )}

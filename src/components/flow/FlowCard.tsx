@@ -90,7 +90,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
 
   return (
     <>
-      <div className="rounded-[20px] bg-card shadow-2xl shadow-foreground/5 overflow-hidden border border-border/40 select-none">
+      <div className="relative rounded-[20px] bg-card shadow-2xl shadow-foreground/5 overflow-hidden border border-border/40 select-none">
         {/* ═══ Category badge — always visible at top ═══ */}
         <div className="absolute top-3 left-3 z-10">
           <Badge className={`${catColor} border-0 rounded-full text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 flex items-center gap-1`}>
@@ -102,8 +102,14 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
         {/* ═══ PHOTO / DESIGN — Full image with click to enlarge ═══ */}
         {isImage && item.file_url && (
           <div className="relative group">
-            <div className="aspect-[4/5] overflow-hidden bg-muted/20 flex items-center justify-center">
-              <img src={item.file_url} alt={item.title} className="w-full h-full object-contain" draggable={false} />
+            <div className="overflow-hidden bg-muted/20 flex items-center justify-center">
+              <img
+                src={item.file_url}
+                alt={item.title}
+                className="w-full max-h-[70vh] object-contain"
+                draggable={false}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+              />
             </div>
             <button
               onClick={(e) => { e.stopPropagation(); setImageEnlarged(true); }}
@@ -163,7 +169,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
 
             {item.file_url && !spotifyEmbed && !isSoundCloud && !youtubeId && (
               <div className="relative">
-                <div className="aspect-square overflow-hidden bg-gradient-to-br from-pink/20 via-accent/10 to-muted flex items-center justify-center">
+                <div className="overflow-hidden bg-gradient-to-br from-pink/20 via-accent/10 to-muted flex items-center justify-center min-h-[200px]">
                   <div className="text-center">
                     <div className="h-24 w-24 mx-auto rounded-3xl bg-card/40 backdrop-blur-md flex items-center justify-center mb-4 shadow-2xl border border-border/20">
                       <Music className="h-12 w-12 text-foreground/50" />
@@ -178,7 +184,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
             )}
 
             {!item.file_url && !spotifyEmbed && !isSoundCloud && !youtubeId && (
-              <div className="aspect-[4/5] bg-gradient-to-br from-pink/15 via-accent/10 to-muted flex items-center justify-center">
+              <div className="min-h-[280px] bg-gradient-to-br from-pink/15 via-accent/10 to-muted flex items-center justify-center">
                 <div className="text-center p-6">
                   <div className="h-20 w-20 mx-auto rounded-2xl bg-card/40 backdrop-blur-md flex items-center justify-center mb-4 shadow-xl border border-border/20">
                     <Music className="h-10 w-10 text-foreground/40" />
@@ -229,7 +235,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
         {isWriting && !isAudio && !isVideo && !isImage && (
           <div className="relative">
             {item.link_url ? (
-              <div className="aspect-[4/5] flex flex-col overflow-hidden">
+              <div className="min-h-[200px] flex flex-col overflow-hidden">
                 {/* Embedded article preview */}
                 <div className="flex-1 overflow-hidden rounded-t-[20px]" onClick={(e) => e.stopPropagation()}>
                   <iframe
@@ -244,8 +250,9 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
               </div>
             ) : item.file_url ? (
               <div className="relative group">
-                <div className="aspect-[4/3] overflow-hidden bg-muted/20 flex items-center justify-center">
-                  <img src={item.file_url} alt={item.title} className="w-full h-full object-contain" draggable={false} />
+              <div className="overflow-hidden bg-muted/20 flex items-center justify-center">
+                      <img src={item.file_url} alt={item.title} className="w-full max-h-[60vh] object-contain" draggable={false}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); setImageEnlarged(true); }}
@@ -277,7 +284,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
 
         {/* ═══ Fallback for design with no file ═══ */}
         {isImage && !item.file_url && (
-          <div className="aspect-[4/5] bg-gradient-to-br from-teal/10 via-accent/5 to-muted flex items-center justify-center p-6">
+          <div className="min-h-[280px] bg-gradient-to-br from-teal/10 via-accent/5 to-muted flex items-center justify-center p-6">
             <div className="text-center">
               <div className="h-20 w-20 mx-auto rounded-2xl bg-card/40 backdrop-blur-md flex items-center justify-center mb-4 shadow-xl border border-border/20">
                 <CatIcon className="h-10 w-10 text-foreground/40" />

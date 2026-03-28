@@ -415,15 +415,19 @@ const ProfileDetailPage = () => {
               {flowPosts.map((post: any) => (
                 <div key={post.id}
                   className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all duration-200">
-                  {post.file_url && (post.category === "Photo" || post.category === "Video") ? (
+                  {post.file_url && (post.content_type === "image" || post.category === "photo" || post.category === "design") ? (
                     <div className="aspect-square overflow-hidden bg-muted">
                       <img src={post.file_url} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     </div>
+                  ) : post.file_url && (post.content_type === "video" || post.category === "video") ? (
+                    <div className="aspect-square overflow-hidden bg-muted">
+                      <video src={post.file_url} className="h-full w-full object-cover" muted preload="metadata" />
+                    </div>
                   ) : (
                     <div className="aspect-square flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5 p-3">
-                      {post.category === "Music" ? (
+                      {post.category === "music" ? (
                         <span className="text-2xl">🎵</span>
-                      ) : post.category === "Writing" ? (
+                      ) : post.category === "writing" ? (
                         <span className="text-2xl">✍️</span>
                       ) : (
                         <ImageIcon className="h-6 w-6 text-muted-foreground/40" />
