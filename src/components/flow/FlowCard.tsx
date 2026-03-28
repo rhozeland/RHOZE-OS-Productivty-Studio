@@ -306,6 +306,17 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
             <span className="text-[11px] font-medium">Send</span>
           </button>
 
+          {isOwner && onDelete && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              className="flex items-center gap-1.5 text-muted-foreground hover:text-destructive transition-colors group"
+              title="Delete"
+            >
+              <Trash2 className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
+              <span className="text-[11px] font-medium">Delete</span>
+            </button>
+          )}
+
           {item.link_url && (
             <a
               href={item.link_url}
