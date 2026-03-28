@@ -600,7 +600,7 @@ const CreditShopPage = () => {
               // Payment succeeded — now add credits
               await purchaseCredits.mutateAsync({
                 amount: pendingCardCredits,
-                description: `${pendingCardCredits} credit(s) à la carte`,
+                description: `${pendingCardCredits} $RHOZE à la carte`,
                 method: "card",
               });
 
