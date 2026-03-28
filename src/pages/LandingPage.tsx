@@ -115,10 +115,10 @@ const LandingPage = () => {
               className="absolute top-[-40%] left-[-20%] w-[140%] h-[180%]"
               style={{
                 background: `
-                  radial-gradient(ellipse 50% 40% at 20% 50%, hsl(280 80% 70% / 0.08) 0%, transparent 70%),
-                  radial-gradient(ellipse 40% 50% at 80% 30%, hsl(320 80% 60% / 0.06) 0%, transparent 70%),
-                  radial-gradient(ellipse 45% 35% at 60% 80%, hsl(30 90% 60% / 0.05) 0%, transparent 70%),
-                  radial-gradient(ellipse 35% 45% at 30% 20%, hsl(175 70% 50% / 0.05) 0%, transparent 70%)
+                  radial-gradient(ellipse 50% 40% at 20% 50%, hsl(280 80% 70% / 0.25) 0%, transparent 70%),
+                  radial-gradient(ellipse 40% 50% at 80% 30%, hsl(320 80% 60% / 0.2) 0%, transparent 70%),
+                  radial-gradient(ellipse 45% 35% at 60% 80%, hsl(30 90% 60% / 0.18) 0%, transparent 70%),
+                  radial-gradient(ellipse 35% 45% at 30% 20%, hsl(175 70% 50% / 0.15) 0%, transparent 70%)
                 `,
                 animation: "aurora-drift 20s ease-in-out infinite alternate",
               }}
