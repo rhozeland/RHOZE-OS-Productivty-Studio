@@ -87,8 +87,10 @@ const SettingsPage = () => {
   const [isPublic, setIsPublic] = useState(true);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [bannerGradient, setBannerGradient] = useState("");
+  const [bannerImageUrl, setBannerImageUrl] = useState("");
   const [profileBackground, setProfileBackground] = useState("");
   const [instagramUrl, setInstagramUrl] = useState("");
   const [tiktokUrl, setTiktokUrl] = useState("");
