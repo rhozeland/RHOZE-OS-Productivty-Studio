@@ -74,7 +74,7 @@ interface FlowCardProps {
   isOwner?: boolean;
 }
 
-const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare }: FlowCardProps) => {
+const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner }: FlowCardProps) => {
   const [imageEnlarged, setImageEnlarged] = useState(false);
   const platform = detectPlatform(item.link_url);
   const CatIcon = CATEGORY_ICONS[item.category] || Palette;
