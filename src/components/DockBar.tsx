@@ -50,7 +50,7 @@ const DockBar = () => {
       transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
       className="fixed bottom-4 inset-x-0 mx-auto w-fit z-50"
     >
-      <div className="flex items-center gap-0.5 px-3 py-2 bg-card/90 backdrop-blur-xl border border-border rounded-lg shadow-lg shadow-foreground/5">
+      <div className="flex items-center gap-1 px-4 py-2.5 bg-card/90 backdrop-blur-xl border border-border rounded-xl shadow-lg shadow-foreground/5">
         {dockItems.map((item) => {
           const active = isActive(item.path);
           const showBadge = item.hasBadge && (unreadCount ?? 0) > 0;
