@@ -283,7 +283,7 @@ const ServicesPage = () => {
                         style={{ background: meta.gradient }}
                       >
                         <Coins className="h-3 w-3" />
-                        {service.credits_cost} cr
+                        {service.credits_cost} ◊
                       </div>
                     </div>
                   </div>
