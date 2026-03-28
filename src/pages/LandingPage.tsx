@@ -22,9 +22,6 @@ const FEATURES = [
   { icon: Building2, label: "Studios", desc: "Book creative spaces by the hour" },
   { icon: Users, label: "Creators", desc: "Hire freelance talent on the marketplace" },
   { icon: FolderKanban, label: "Projects", desc: "Manage work with milestones & budgets" },
-  { icon: MessageSquare, label: "Messaging", desc: "Collaborate with built-in chat & video" },
-  { icon: Coins, label: "Rose Coin", desc: "Earn tokens for contributions" },
-  { icon: Calendar, label: "Bookings", desc: "Schedule sessions & manage calendar" },
 ];
 
 const LandingPage = () => {
