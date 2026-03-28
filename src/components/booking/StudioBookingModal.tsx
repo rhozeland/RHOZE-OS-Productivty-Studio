@@ -676,8 +676,8 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
                     : "border-border hover:bg-muted/50"
                 )}
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
-                  <CreditCard className="h-5 w-5 text-blue-500" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <CreditCard className="h-5 w-5 text-primary" />
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-foreground">Pay with Card</p>
