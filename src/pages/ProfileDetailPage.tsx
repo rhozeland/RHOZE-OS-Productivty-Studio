@@ -306,6 +306,9 @@ const ProfileDetailPage = () => {
             className="h-36 sm:h-44 relative rounded-t-2xl overflow-hidden"
             style={{ background: bannerGradient }}
           >
+            {bannerImageUrl && (
+              <img src={bannerImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            )}
             {/* Edit button for own profile */}
             {isOwnProfile && (
               <Button
