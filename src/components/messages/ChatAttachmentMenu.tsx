@@ -29,6 +29,7 @@ type ShareType = "menu" | "smartboards" | "profiles" | "listings" | "link";
 
 interface ChatAttachmentMenuProps {
   onSendMessage: (content: string) => void;
+  onSendQuote?: () => void;
   disabled?: boolean;
 }
 
