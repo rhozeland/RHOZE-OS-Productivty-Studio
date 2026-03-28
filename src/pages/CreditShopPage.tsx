@@ -109,9 +109,9 @@ const TIERS = [
     icon: Gamepad,
     bestFor: "Full-time creators, funded artists",
     features: [
-      "25 credits/month",
-      "Unlimited Smartboards",
-      "Unlimited Drop Rooms",
+      "25 $RHOZE/month",
+      "Unlimited Boards",
+      "Unlimited Collab Rooms",
       "Premium workshops",
       "360 Audit",
       "Grant support",
