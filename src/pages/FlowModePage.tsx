@@ -334,9 +334,26 @@ const FlowModePage = () => {
 
       {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between gap-3 px-4 py-3 md:px-6">
-        <p className="text-sm text-muted-foreground">
-          Swipe or browse
-        </p>
+        <div className="flex items-center gap-0.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/30 p-0.5">
+          <button
+            onClick={() => setViewMode("swipe")}
+            className={cn(
+              "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+              viewMode === "swipe" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Swipe
+          </button>
+          <button
+            onClick={() => setViewMode("browse")}
+            className={cn(
+              "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+              viewMode === "browse" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Browse
+          </button>
+        </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
           <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
