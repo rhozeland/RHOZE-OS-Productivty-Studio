@@ -1,0 +1,2 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS banner_url text;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS dashboard_layout jsonb DEFAULT '{"sections":["projects","events"],"showCalendar":false}'::jsonb;
