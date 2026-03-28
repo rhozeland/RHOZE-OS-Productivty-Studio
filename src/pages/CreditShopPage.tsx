@@ -568,18 +568,18 @@ const CreditShopPage = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-display text-xl">
-              Buy {pendingCardCredits} Credit{pendingCardCredits > 1 ? "s" : ""}
+              Buy {pendingCardCredits} $RHOZE
             </DialogTitle>
           </DialogHeader>
           <div className="rounded-lg bg-muted/50 border border-border p-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Coins className="h-5 w-5 text-primary" />
               <span className="text-sm font-medium text-foreground">
-                {pendingCardCredits} credit{pendingCardCredits > 1 ? "s" : ""}
+                {pendingCardCredits} $RHOZE
               </span>
             </div>
             <span className="text-lg font-bold text-primary">
-              ${(pendingCardCredits * CREDIT_PRICE).toFixed(2)}
+              ${(pendingCardCredits * TOKEN_PRICE).toFixed(2)}
             </span>
           </div>
           <SquareCardForm
