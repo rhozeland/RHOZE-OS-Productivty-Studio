@@ -137,25 +137,22 @@ const StudioManagePage = () => {
     enabled: !!user,
   });
 
-  // All profiles for adding staff
-  const { data: allProfiles } = useQuery({
-    queryKey: ["all-profiles-for-staff"],
-    queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("user_id, display_name, avatar_url");
-      return data ?? [];
-    },
-    enabled: addStaffOpen,
-  });
+  // Hard-coded specialty options
+  const SPECIALTIES = ["audio", "design", "photo", "video", "writing", "other"];
 
-  // Service categories for specialties
-  const { data: serviceCategories } = useQuery({
-    queryKey: ["service-categories"],
-    queryFn: async () => {
-      const { data } = await supabase.from("services").select("category");
-      return [...new Set((data || []).map((s: any) => s.category as string))].sort();
-    },
-    enabled: addStaffOpen,
-  });
+  // Search profiles by display_name
+  const searchUsers = async (query: string) => {
+    if (query.length < 2) { setStaffSearchResults([]); return; }
+    setSearching(true);
+    const { data } = await supabase
+      .from("profiles")
+      .select("user_id, display_name, avatar_url")
+      .ilike("display_name", `%${query}%`)
+      .limit(8);
+    const existing = new Set((staffMembers || []).map((s: any) => s.user_id));
+    setStaffSearchResults((data || []).filter((p) => !existing.has(p.user_id) && p.user_id !== user?.id));
+    setSearching(false);
+  };
 
   // Studio bookings
   const { data: bookings } = useQuery({
