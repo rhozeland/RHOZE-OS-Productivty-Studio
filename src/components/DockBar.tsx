@@ -48,7 +48,7 @@ const DockBar = () => {
       initial={{ y: 80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50"
+      className="fixed bottom-4 inset-x-0 mx-auto w-fit z-50"
     >
       <div className="flex items-center gap-0.5 px-3 py-2 bg-card/90 backdrop-blur-xl border border-border rounded-lg shadow-lg shadow-foreground/5">
         {dockItems.map((item) => {

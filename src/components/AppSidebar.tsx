@@ -7,6 +7,7 @@ import {
   Settings,
   LogOut,
   ShieldCheck,
+  CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -32,6 +33,7 @@ const mainItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: Calendar, label: "Calendar", path: "/calendar" },
+  { icon: CreditCard, label: "Studio Pass", path: "/credits" },
 ];
 
 const AppSidebar = () => {
