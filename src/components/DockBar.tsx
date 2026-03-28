@@ -50,7 +50,7 @@ const DockBar = () => {
       transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
       className="fixed bottom-4 inset-x-0 mx-auto w-fit z-50"
     >
-      <div className="flex items-center gap-0.5 px-3 py-2 bg-card/90 backdrop-blur-xl border border-border rounded-lg shadow-lg shadow-foreground/5">
+      <div className="flex items-center gap-1 px-4 py-2.5 bg-card/90 backdrop-blur-xl border border-border rounded-xl shadow-lg shadow-foreground/5">
         {dockItems.map((item) => {
           const active = isActive(item.path);
           const showBadge = item.hasBadge && (unreadCount ?? 0) > 0;
@@ -66,14 +66,14 @@ const DockBar = () => {
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 400, damping: 20 }}
                 className={cn(
-                  "flex flex-col items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-md transition-colors duration-150 gap-0.5",
+                  "flex flex-col items-center justify-center w-13 h-13 sm:w-14 sm:h-14 rounded-lg transition-colors duration-150 gap-0.5",
                   active
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                 )}
               >
-                <item.icon className="h-4 w-4" />
-                <span className="text-[9px] font-body font-medium leading-none">
+                <item.icon className="h-5 w-5" />
+                <span className="text-[10px] font-body font-medium leading-none">
                   {item.label}
                 </span>
                 {showBadge && (
