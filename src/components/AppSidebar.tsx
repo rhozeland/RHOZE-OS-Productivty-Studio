@@ -35,23 +35,10 @@ import {
 } from "@/components/ui/sidebar";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-const getWorkspaceItems = (userId?: string) => [
+const mainItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: Calendar, label: "Calendar", path: "/calendar" },
-  { icon: MessageSquare, label: "Messages", path: "/messages", hasBadge: true },
-];
-
-const marketplaceItems = [
-  { icon: Building2, label: "Studios", path: "/studios" },
-  { icon: Store, label: "Creators Hub", path: "/creators" },
-  { icon: Coins, label: "Studio Pass", path: "/credits" },
-];
-
-const toolsItems = [
-  { icon: LayoutGrid, label: "Boards", path: "/smartboards" },
-  { icon: Workflow, label: "Flow", path: "/flow" },
-  { icon: Users, label: "Collab Rooms", path: "/drop-rooms" },
 ];
 
 const AppSidebar = () => {

@@ -158,7 +158,7 @@ const DashboardPage = () => {
             </Link>
             <Link to="/creators">
               <Button variant="secondary" className="rounded-full gap-2 glass">
-                <Palette className="h-4 w-4" /> Hire Talent
+                <Palette className="h-4 w-4" /> Creators Hub
               </Button>
             </Link>
           </div>
