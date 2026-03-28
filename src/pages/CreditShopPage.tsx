@@ -492,14 +492,14 @@ const CreditShopPage = () => {
             }}
           >
             <CreditCard className="mr-2 h-4 w-4" />
-            Buy {alaCarteCredits} Credit{alaCarteCredits > 1 ? "s" : ""} @ $
-            {(alaCarteCredits * CREDIT_PRICE).toFixed(2)}
+            Buy {alaCarteCredits} $RHOZE @ $
+            {(alaCarteCredits * TOKEN_PRICE).toFixed(2)}
           </Button>
           <PaySolAndVerify
-            solAmount={+(alaCarteCredits * CREDIT_PRICE / 150).toFixed(4)}
+            solAmount={+(alaCarteCredits * TOKEN_PRICE / 150).toFixed(4)}
             creditsToAdd={alaCarteCredits}
-            description={`${alaCarteCredits} credit(s) à la carte (SOL)`}
-            label={`Pay ~${(alaCarteCredits * CREDIT_PRICE / 150).toFixed(4)} SOL`}
+            description={`${alaCarteCredits} $RHOZE à la carte (SOL)`}
+            label={`Pay ~${(alaCarteCredits * TOKEN_PRICE / 150).toFixed(4)} SOL`}
             className="flex-1"
             onSuccess={() => queryClient.invalidateQueries({ queryKey: ["user-credits"] })}
           />
