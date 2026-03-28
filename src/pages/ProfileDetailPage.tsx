@@ -416,7 +416,7 @@ const ProfileDetailPage = () => {
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {flowPosts.map((post: any) => (
-                <div key={post.id} onClick={() => setExpandedPost(post)}
+                <div key={post.id} onClick={() => navigate("/flow")}
                   className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer">
                   {post.file_url && (post.category === "photo" || post.category === "design" || post.content_type === "image") ? (
                     <div className="aspect-square overflow-hidden bg-muted">
