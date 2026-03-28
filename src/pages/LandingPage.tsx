@@ -11,8 +11,6 @@ import {
   Users,
   FolderKanban,
   Coins,
-  MessageSquare,
-  Calendar,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -22,9 +20,6 @@ const FEATURES = [
   { icon: Building2, label: "Studios", desc: "Book creative spaces by the hour" },
   { icon: Users, label: "Creators", desc: "Hire freelance talent on the marketplace" },
   { icon: FolderKanban, label: "Projects", desc: "Manage work with milestones & budgets" },
-  { icon: MessageSquare, label: "Messaging", desc: "Collaborate with built-in chat & video" },
-  { icon: Coins, label: "Rose Coin", desc: "Earn tokens for contributions" },
-  { icon: Calendar, label: "Bookings", desc: "Schedule sessions & manage calendar" },
 ];
 
 const LandingPage = () => {
@@ -299,56 +294,6 @@ const LandingPage = () => {
                     ))}
                   </div>
                 )}
-                {activeFeature === 3 && (
-                  <div className="flex flex-col gap-2 flex-1">
-                    {[true, false, true, false].map((sent, i) => (
-                      <div key={i} className={`flex items-end gap-2 ${sent ? "flex-row-reverse" : ""}`}>
-                        {!sent && <div className="h-6 w-6 rounded-full bg-muted/60 shrink-0" />}
-                        <div className={`rounded-2xl px-3 py-2 max-w-[65%] ${
-                          sent ? "bg-primary/15 rounded-br-sm" : "bg-muted/40 border border-border/50 rounded-bl-sm"
-                        }`}>
-                          <div className="h-2 w-16 rounded bg-foreground/8 mb-1" />
-                          <div className="h-2 w-10 rounded bg-foreground/5" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {activeFeature === 4 && (
-                  <div className="flex flex-col items-center justify-center flex-1 gap-3">
-                    <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/10 flex items-center justify-center">
-                      <Coins className="h-7 w-7 text-primary/50" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-foreground/50">1,250</p>
-                      <p className="text-[10px] text-muted-foreground">Rose Coins earned</p>
-                    </div>
-                    <div className="flex gap-4 mt-1">
-                      {["Complete work", "Leave reviews", "Refer friends"].map((action) => (
-                        <div key={action} className="text-center">
-                          <div className="h-6 w-6 rounded-full bg-muted/40 border border-border/50 mx-auto mb-1" />
-                          <p className="text-[8px] text-muted-foreground">{action}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {activeFeature === 5 && (
-                  <div className="grid grid-cols-7 gap-1 flex-1">
-                    {Array.from({ length: 28 }, (_, i) => (
-                      <div
-                        key={i}
-                        className={`rounded-md aspect-square flex items-center justify-center text-[9px] ${
-                          [3, 7, 14, 21].includes(i)
-                            ? "bg-primary/15 text-primary font-medium"
-                            : "bg-muted/30 text-muted-foreground/40"
-                        }`}
-                      >
-                        {i + 1}
-                      </div>
-                    ))}
-                  </div>
-                )}
               </motion.div>
             </AnimatePresence>
           </div>
@@ -368,7 +313,20 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* $RHOZE Token */}
+      <section className="px-4 sm:px-6 py-8">
+        <div className="max-w-md mx-auto text-center">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 border border-border px-3 py-1 mb-3">
+            <Coins className="h-3 w-3 text-muted-foreground" />
+            <span className="text-[11px] font-medium text-muted-foreground">$RHOZE</span>
+          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Rhozeland is powered by <span className="font-semibold text-foreground">$RHOZE</span> — the token behind every booking, hire, and collaboration on the platform. Earn it by completing work, contributing to the community, and growing your creative reputation.
+          </p>
+        </div>
+      </section>
+
+
       <footer className="border-t border-border py-5">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
