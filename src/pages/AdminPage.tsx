@@ -36,9 +36,6 @@ const AdminPage = () => {
           <TabsTrigger value="overview" className="gap-2">
             <BarChart3 className="h-4 w-4" /> Overview
           </TabsTrigger>
-          <TabsTrigger value="services" className="gap-2">
-            <Briefcase className="h-4 w-4" /> Services
-          </TabsTrigger>
           <TabsTrigger value="staff" className="gap-2">
             <UserCog className="h-4 w-4" /> Staff
           </TabsTrigger>
