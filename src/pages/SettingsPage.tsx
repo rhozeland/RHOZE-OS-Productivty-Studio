@@ -150,6 +150,7 @@ const SettingsPage = () => {
       setIsPublic(p.is_public !== false);
       setAvatarUrl(p.avatar_url ?? "");
       setBannerGradient(p.banner_gradient ?? "");
+      setBannerImageUrl(p.banner_url ?? "");
       setProfileBackground(p.profile_background ?? "");
       setInstagramUrl(p.instagram_url ?? "");
       setTiktokUrl(p.tiktok_url ?? "");
