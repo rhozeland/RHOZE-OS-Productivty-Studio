@@ -6,7 +6,7 @@ import {
   FolderKanban,
   Building2,
   MessageSquare,
-  Search,
+  Palette,
   Calendar,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
