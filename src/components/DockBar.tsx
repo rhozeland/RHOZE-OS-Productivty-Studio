@@ -29,7 +29,6 @@ const DockBar = () => {
       <div className="flex items-center gap-1 px-4 py-2.5 bg-card/90 backdrop-blur-xl border border-border rounded-xl shadow-lg shadow-foreground/5">
         {dockItems.map((item) => {
           const active = isActive(item.path);
-          const showBadge = item.hasBadge && (unreadCount ?? 0) > 0;
 
           return (
             <Link
