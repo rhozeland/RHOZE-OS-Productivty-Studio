@@ -521,43 +521,44 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
                 </label>
                 <div className="grid gap-2 max-h-40 overflow-y-auto">
                   {staffMembers.map((staff) => (
-                    <button
-                      key={staff.id}
-                      onClick={() =>
-                        setSelectedStaffId(selectedStaffId === staff.id ? null : staff.id)
-                      }
-                      className={cn(
-                        "flex items-center gap-3 rounded-xl border p-3 transition-all text-left",
-                        selectedStaffId === staff.id
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:bg-muted/50"
-                      )}
-                    >
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage src={staff.avatar_url ?? undefined} />
-                        <AvatarFallback className="text-xs font-semibold bg-muted">
-                          {staff.display_name
-                            .split(" ")
-                            .map((n: string) => n[0])
-                            .join("")
-                            .toUpperCase()
-                            .slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {staff.display_name}
-                        </p>
-                        {staff.specialties && staff.specialties.length > 0 && (
-                          <p className="text-[11px] text-muted-foreground truncate">
-                            {staff.specialties.join(", ")}
-                          </p>
+                    <SpecialistHoverCard key={staff.id} userId={staff.user_id}>
+                      <button
+                        onClick={() =>
+                          setSelectedStaffId(selectedStaffId === staff.id ? null : staff.id)
+                        }
+                        className={cn(
+                          "flex items-center gap-3 rounded-xl border p-3 transition-all text-left",
+                          selectedStaffId === staff.id
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:bg-muted/50"
                         )}
-                      </div>
-                      {selectedStaffId === staff.id && (
-                        <Check className="h-4 w-4 text-primary shrink-0" />
-                      )}
-                    </button>
+                      >
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage src={staff.avatar_url ?? undefined} />
+                          <AvatarFallback className="text-xs font-semibold bg-muted">
+                            {staff.display_name
+                              .split(" ")
+                              .map((n: string) => n[0])
+                              .join("")
+                              .toUpperCase()
+                              .slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {staff.display_name}
+                          </p>
+                          {staff.specialties && staff.specialties.length > 0 && (
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              {staff.specialties.join(", ")}
+                            </p>
+                          )}
+                        </div>
+                        {selectedStaffId === staff.id && (
+                          <Check className="h-4 w-4 text-primary shrink-0" />
+                        )}
+                      </button>
+                    </SpecialistHoverCard>
                   ))}
                 </div>
               </div>
