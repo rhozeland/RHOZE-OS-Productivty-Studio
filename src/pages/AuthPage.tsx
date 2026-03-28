@@ -5,7 +5,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
@@ -81,58 +81,74 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Left side - branding */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between gradient-hero relative overflow-hidden p-12">
-        <div className="absolute top-10 left-1/4 w-72 h-72 rounded-full bg-teal/10 blur-3xl" />
-        <div className="absolute bottom-20 right-1/4 w-80 h-80 rounded-full bg-pink/10 blur-3xl" />
-        <div className="flex items-center gap-3">
-          <img src={rhozelandLogo} alt="Rhozeland" className="h-10 w-10" />
-          <span className="font-body text-xl font-bold tracking-tight text-foreground">Rhozeland</span>
+    <div className="relative flex min-h-screen items-center justify-center bg-background overflow-hidden">
+      {/* Soft aurora background — toned down to match landing */}
+      <div
+        className="pointer-events-none fixed inset-0 animate-aurora-drift"
+        style={{
+          background: `
+            radial-gradient(ellipse 60% 50% at 15% 50%, hsl(280 60% 75% / 0.12) 0%, transparent 70%),
+            radial-gradient(ellipse 50% 60% at 85% 30%, hsl(320 60% 65% / 0.10) 0%, transparent 70%),
+            radial-gradient(ellipse 55% 40% at 50% 90%, hsl(30 70% 65% / 0.08) 0%, transparent 70%),
+            radial-gradient(ellipse 40% 50% at 40% 15%, hsl(175 50% 55% / 0.08) 0%, transparent 70%)
+          `,
+        }}
+      />
+
+      {/* Grain texture */}
+      <div className="pointer-events-none fixed inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\' opacity=\'0.5\'/%3E%3C/svg%3E")' }} />
+
+      {/* Top nav */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-6 py-5"
+      >
+        <div className="flex items-center gap-2.5">
+          <img src={rhozelandLogo} alt="Rhozeland" className="h-8 w-8" />
+          <span className="font-body text-lg font-bold tracking-tight text-foreground">Rhozeland</span>
         </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
+        <button
+          onClick={() => setIsSignUp(!isSignUp)}
+          className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
         >
-          <p className="text-sm font-medium text-muted-foreground mb-4">✦ Collaboration & Payments, Built In</p>
-          <h1 className="font-display text-6xl font-bold leading-[1.05] tracking-tight text-foreground">
-            Project<br />Management<br />for Creatives
-          </h1>
-          <p className="mt-6 max-w-md text-muted-foreground leading-relaxed">
-            Manage projects, collaborate with your team, and handle payments — all in one platform built for creative professionals.
-          </p>
-        </motion.div>
+          {isSignUp ? "Already have an account?" : "Need an account?"}
+        </button>
+      </motion.div>
 
-        <p className="text-xs text-muted-foreground">© 2026 Rhozeland. All rights reserved.</p>
-      </div>
-
-      {/* Right side - form */}
-      <div className="flex flex-1 items-center justify-center p-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="w-full max-w-sm"
-        >
-          <div className="mb-8 lg:hidden flex items-center gap-3">
-            <img src={rhozelandLogo} alt="Rhozeland" className="h-10 w-10" />
-            <span className="font-body text-xl font-bold text-foreground">Rhozeland</span>
+      {/* Centered card */}
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6, delay: 0.15 }}
+        className="relative z-10 w-full max-w-md mx-4"
+      >
+        {/* Glass card */}
+        <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-8 sm:p-10">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200, delay: 0.3 }}
+              className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/5 border border-border/50 mb-5"
+            >
+              <Sparkles className="h-5 w-5 text-muted-foreground" />
+            </motion.div>
+            <h1 className="font-display text-2xl font-bold text-foreground">
+              {isSignUp ? "Create your account" : "Welcome back"}
+            </h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              {isSignUp ? "Join the creative workspace" : "Sign in to continue"}
+            </p>
           </div>
-
-          <h2 className="font-display text-2xl font-bold text-foreground">
-            {isSignUp ? "Create your account" : "Welcome back"}
-          </h2>
-          <p className="mt-1 mb-8 text-sm text-muted-foreground">
-            {isSignUp ? "Start managing your creative projects" : "Sign in to your workspace"}
-          </p>
 
           {/* Google sign-in */}
           <Button
             type="button"
             variant="outline"
-            className="w-full h-11 mb-4 font-medium"
+            className="w-full h-12 font-medium rounded-xl border-border/80 hover:bg-secondary/50 transition-all"
             onClick={handleGoogleSignIn}
             disabled={loading}
           >
@@ -145,32 +161,37 @@ const AuthPage = () => {
             Continue with Google
           </Button>
 
-          <div className="relative mb-4">
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
+              <div className="w-full border-t border-border/60" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-background px-2 text-muted-foreground">or</span>
+              <span className="bg-card/80 px-3 text-muted-foreground">or continue with email</span>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
-              <div className="space-y-1.5">
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="space-y-1.5"
+              >
                 <Label htmlFor="name" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Full Name</Label>
-                <Input id="name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your name" required className="h-11" />
-              </div>
+                <Input id="name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your name" required className="h-12 rounded-xl bg-secondary/30 border-border/50 focus:bg-background transition-colors" />
+              </motion.div>
             )}
             <div className="space-y-1.5">
               <Label htmlFor="email" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="hello@studio.com" required className="h-11" />
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="hello@studio.com" required className="h-12 rounded-xl bg-secondary/30 border-border/50 focus:bg-background transition-colors" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} className="h-11" />
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} className="h-12 rounded-xl bg-secondary/30 border-border/50 focus:bg-background transition-colors" />
             </div>
-            <Button type="submit" className="w-full h-11 font-semibold" disabled={loading}>
-              {loading ? "Loading..." : isSignUp ? "Create Account" : "Login"}
+            <Button type="submit" className="w-full h-12 font-semibold rounded-xl text-sm" disabled={loading}>
+              {loading ? "Loading..." : isSignUp ? "Create Account" : "Sign In"}
               <ArrowUpRight className="ml-2 h-4 w-4" />
             </Button>
           </form>
@@ -180,8 +201,13 @@ const AuthPage = () => {
               {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
             </button>
           </div>
-        </motion.div>
-      </div>
+        </div>
+
+        {/* Footer tagline */}
+        <p className="mt-6 text-center text-xs text-muted-foreground/60">
+          © 2026 Rhozeland. All rights reserved.
+        </p>
+      </motion.div>
     </div>
   );
 };
