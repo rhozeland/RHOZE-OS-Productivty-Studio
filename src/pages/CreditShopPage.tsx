@@ -468,7 +468,7 @@ const CreditShopPage = () => {
 
         <div className="space-y-2">
           <p className="text-sm text-muted-foreground">
-            1 credit ≈ ${CREDIT_PRICE.toFixed(2)}
+            1 $RHOZE ≈ ${TOKEN_PRICE.toFixed(2)}
           </p>
           <p className="font-display text-3xl font-bold text-foreground">
             {alaCarteCredits}
