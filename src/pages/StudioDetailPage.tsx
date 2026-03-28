@@ -243,7 +243,7 @@ const StudioDetailPage = () => {
 
             {user ? (
               <div className="space-y-3">
-                <Button className="w-full h-12 text-base rounded-full gap-2">
+                <Button className="w-full h-12 text-base rounded-full gap-2" onClick={() => setBookingOpen(true)}>
                   <Calendar className="h-4 w-4" /> Book This Studio
                 </Button>
                 <Link to={`/messages`}>
