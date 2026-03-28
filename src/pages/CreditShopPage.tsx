@@ -293,7 +293,7 @@ const CreditShopPage = () => {
               Studio Pass
             </h1>
             <p className="text-muted-foreground">
-              Your creative membership & credits
+              Your creative membership & $RHOZE wallet
             </p>
           </div>
           <div className="surface-card flex items-center gap-3 px-5 py-3">
