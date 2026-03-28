@@ -151,12 +151,6 @@ const QuoteBuilder = ({ recipientId, recipientName, open: controlledOpen, onOpen
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
-          <FileText className="h-3.5 w-3.5" />
-          Send Quote
-        </Button>
-      </DialogTrigger>
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display">
