@@ -64,11 +64,14 @@ interface FlowCardProps {
     file_url?: string | null;
     link_url?: string | null;
     tags?: string[] | null;
+    user_id?: string;
   };
   expanded: boolean;
   onToggleExpand: () => void;
   onSave: () => void;
   onShare: () => void;
+  onDelete?: () => void;
+  isOwner?: boolean;
 }
 
 const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare }: FlowCardProps) => {
