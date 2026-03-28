@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +9,9 @@ import {
   Globe, CheckCircle, UserPlus, UserCheck, MessageSquare, MapPin, Clock,
   Eye, EyeOff, Loader2, Palette, FolderOpen, Settings, Store, Star,
   ExternalLink, ShoppingBag, GripVertical, Sparkles, Image as ImageIcon,
+  X, Play, Music, FileText, Bookmark, Send,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
 import { motion, Reorder } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -35,6 +37,7 @@ const ProfileDetailPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [customizing, setCustomizing] = useState(false);
+  const [expandedPost, setExpandedPost] = useState<any>(null);
 
   const isOwnProfile = user?.id === id;
 
@@ -413,8 +416,8 @@ const ProfileDetailPage = () => {
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {flowPosts.map((post: any) => (
-                <div key={post.id}
-                  className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all duration-200">
+                <div key={post.id} onClick={() => setExpandedPost(post)}
+                  className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer">
                   {post.file_url && (post.category === "photo" || post.category === "design" || post.content_type === "image") ? (
                     <div className="aspect-square overflow-hidden bg-muted">
                       <img src={post.file_url} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
@@ -424,17 +427,20 @@ const ProfileDetailPage = () => {
                       <video src={post.file_url} className="h-full w-full object-cover" muted preload="metadata" />
                     </div>
                   ) : post.link_url && post.link_url.includes("youtu") ? (
-                    <div className="aspect-square overflow-hidden bg-muted">
+                    <div className="aspect-square overflow-hidden bg-muted relative">
                       <img src={`https://img.youtube.com/vi/${post.link_url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?\s]+)/)?.[1]}/mqdefault.jpg`} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center">
+                          <Play className="h-4 w-4 text-foreground ml-0.5" />
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <div className="aspect-square flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5 p-3">
                       {post.category === "music" ? (
-                        <span className="text-2xl">🎵</span>
+                        <Music className="h-6 w-6 text-muted-foreground/40" />
                       ) : post.category === "writing" ? (
-                        <span className="text-2xl">✍️</span>
-                      ) : post.category === "photo" || post.category === "design" ? (
-                        <ImageIcon className="h-6 w-6 text-muted-foreground/40" />
+                        <FileText className="h-6 w-6 text-muted-foreground/40" />
                       ) : (
                         <ImageIcon className="h-6 w-6 text-muted-foreground/40" />
                       )}
@@ -622,6 +628,67 @@ const ProfileDetailPage = () => {
           </motion.div>
         )}
       </div>
+
+      {/* Expanded Flow Post Dialog */}
+      <Dialog open={!!expandedPost} onOpenChange={(open) => !open && setExpandedPost(null)}>
+        <DialogContent className="max-w-lg p-0 overflow-hidden rounded-2xl">
+          <DialogDescription className="sr-only">Flow post details</DialogDescription>
+          {expandedPost && (
+            <div>
+              {expandedPost.file_url && (expandedPost.category === "photo" || expandedPost.category === "design" || expandedPost.content_type === "image") ? (
+                <div className="bg-muted">
+                  <img src={expandedPost.file_url} alt={expandedPost.title} className="w-full max-h-[60vh] object-contain" />
+                </div>
+              ) : expandedPost.file_url && (expandedPost.category === "video" || expandedPost.content_type === "video") ? (
+                <div className="bg-foreground/5 aspect-video">
+                  <video src={expandedPost.file_url} controls playsInline className="w-full h-full object-contain" />
+                </div>
+              ) : expandedPost.link_url && expandedPost.link_url.includes("youtu") ? (
+                <div className="aspect-video">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${expandedPost.link_url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?\s]+)/)?.[1]}?rel=0`}
+                    width="100%" height="100%" frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen className="rounded-t-2xl"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5 p-10">
+                  {expandedPost.category === "music" ? (
+                    <Music className="h-16 w-16 text-muted-foreground/30" />
+                  ) : expandedPost.category === "writing" ? (
+                    <FileText className="h-16 w-16 text-muted-foreground/30" />
+                  ) : (
+                    <ImageIcon className="h-16 w-16 text-muted-foreground/30" />
+                  )}
+                </div>
+              )}
+              <div className="p-5 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-display text-lg font-bold text-foreground">{expandedPost.title}</h3>
+                    <Badge variant="outline" className="text-[10px] mt-1 capitalize">{expandedPost.category}</Badge>
+                  </div>
+                  {expandedPost.link_url && (
+                    <a href={expandedPost.link_url} target="_blank" rel="noopener noreferrer"
+                      className="shrink-0 flex items-center gap-1 text-xs text-primary hover:underline">
+                      <ExternalLink className="h-3.5 w-3.5" /> Open
+                    </a>
+                  )}
+                </div>
+                {expandedPost.description && (
+                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{expandedPost.description}</p>
+                )}
+                {expandedPost.created_at && (
+                  <p className="text-[11px] text-muted-foreground/60">
+                    Posted {format(new Date(expandedPost.created_at), "MMM d, yyyy")}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
