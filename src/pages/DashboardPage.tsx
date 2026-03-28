@@ -158,7 +158,7 @@ const DashboardPage = () => {
             </Link>
             <Link to="/creators">
               <Button variant="secondary" className="rounded-full gap-2 glass">
-                <Palette className="h-4 w-4" /> Hire Talent
+                <Palette className="h-4 w-4" /> Creators Hub
               </Button>
             </Link>
           </div>
@@ -392,7 +392,7 @@ const DashboardPage = () => {
             >
               <Palette className="absolute top-4 right-4 h-8 w-8 text-accent/30" />
               <h3 className="font-display font-bold text-foreground group-hover:text-primary transition-colors">
-                Hire Creatives
+                Creators Hub
               </h3>
               <p className="text-xs text-muted-foreground mt-1">Freelance talent for your projects</p>
             </motion.div>

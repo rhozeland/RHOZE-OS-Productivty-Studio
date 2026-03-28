@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,45 +14,23 @@ import {
   Users,
   Clock,
   Plus,
-  Music,
-  Camera,
-  Video,
-  PenTool,
-  Palette,
-  Sparkles,
   DollarSign,
 } from "lucide-react";
 
-const CATEGORIES = [
-  { key: "all", label: "All Spaces", icon: Sparkles },
-  { key: "recording", label: "Recording", icon: Music, color: "hsl(280, 60%, 55%)" },
-  { key: "photo", label: "Photo", icon: Camera, color: "hsl(35, 90%, 50%)" },
-  { key: "video", label: "Video", icon: Video, color: "hsl(340, 70%, 55%)" },
-  { key: "design", label: "Design", icon: PenTool, color: "hsl(175, 60%, 45%)" },
-  { key: "art", label: "Art", icon: Palette, color: "hsl(310, 60%, 65%)" },
-];
-
 const StudiosPage = () => {
   const { user } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
-  const activeCategory = searchParams.get("category") || "all";
 
   const { data: studios, isLoading } = useQuery({
-    queryKey: ["studios", activeCategory],
+    queryKey: ["studios"],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("studios")
         .select("*")
         .eq("is_active", true)
         .eq("status", "approved")
         .order("rating_avg", { ascending: false });
 
-      if (activeCategory !== "all") {
-        query = query.eq("category", activeCategory);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
       return data ?? [];
     },
@@ -63,7 +41,8 @@ const StudiosPage = () => {
       !search ||
       s.name.toLowerCase().includes(search.toLowerCase()) ||
       s.location?.toLowerCase().includes(search.toLowerCase()) ||
-      s.city?.toLowerCase().includes(search.toLowerCase())
+      s.city?.toLowerCase().includes(search.toLowerCase()) ||
+      s.category?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -87,42 +66,15 @@ const StudiosPage = () => {
         )}
       </div>
 
-      {/* Search + Category filters */}
-      <div className="space-y-3">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name or location..."
-            className="pl-10 h-11 rounded-full"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          {CATEGORIES.map((cat) => {
-            const isActive = activeCategory === cat.key;
-            return (
-              <button
-                key={cat.key}
-                onClick={() => {
-                  const params = new URLSearchParams(searchParams);
-                  if (cat.key === "all") params.delete("category");
-                  else params.set("category", cat.key);
-                  setSearchParams(params);
-                }}
-                className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                  isActive
-                    ? "bg-foreground text-background shadow-sm"
-                    : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/20"
-                }`}
-              >
-                <cat.icon className="h-3.5 w-3.5" />
-                {cat.label}
-              </button>
-            );
-          })}
-        </div>
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search by name, location, or category..."
+          className="pl-10 h-11 rounded-full"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
 
       {/* Loading */}
@@ -141,8 +93,8 @@ const StudiosPage = () => {
           <h3 className="font-display text-lg font-semibold text-foreground mb-1">No studios found</h3>
           <p className="text-muted-foreground text-sm max-w-sm">
             {search
-              ? "Try a different search term or category."
-              : "No studios are listed in this category yet. Check back soon!"}
+              ? "Try a different search term."
+              : "No studios are listed yet. Check back soon!"}
           </p>
           {user && (
             <Link to="/studios/apply" className="mt-4">
@@ -185,6 +137,10 @@ const StudiosPage = () => {
                   <DollarSign className="h-3.5 w-3.5" />
                   {studio.hourly_rate}/hr
                 </div>
+                {/* Category badge */}
+                <div className="absolute top-3 left-3 rounded-full bg-background/90 backdrop-blur-sm px-3 py-1.5 text-xs font-medium text-foreground shadow-sm capitalize">
+                  {studio.category}
+                </div>
               </div>
 
               {/* Info */}
@@ -217,9 +173,6 @@ const StudiosPage = () => {
                       <Users className="h-3 w-3" /> Up to {studio.max_guests}
                     </span>
                   )}
-                  <span className="flex items-center gap-1 capitalize">
-                    <Clock className="h-3 w-3" /> {studio.category}
-                  </span>
                 </div>
               </div>
             </Link>

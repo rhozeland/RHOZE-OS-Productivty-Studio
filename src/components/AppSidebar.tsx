@@ -4,23 +4,13 @@ import {
   LayoutDashboard,
   FolderKanban,
   Calendar,
-  Store,
-  MessageSquare,
   Settings,
   LogOut,
-  Building2,
-  Coins,
   ShieldCheck,
-  Workflow,
-  
-  LayoutGrid,
-  Users,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
   SidebarContent,
@@ -35,23 +25,10 @@ import {
 } from "@/components/ui/sidebar";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-const getWorkspaceItems = (userId?: string) => [
+const mainItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: Calendar, label: "Calendar", path: "/calendar" },
-  { icon: MessageSquare, label: "Messages", path: "/messages", hasBadge: true },
-];
-
-const marketplaceItems = [
-  { icon: Building2, label: "Studios", path: "/studios" },
-  { icon: Store, label: "Creators Hub", path: "/creators" },
-  { icon: Coins, label: "Studio Pass", path: "/credits" },
-];
-
-const toolsItems = [
-  { icon: LayoutGrid, label: "Boards", path: "/smartboards" },
-  { icon: Workflow, label: "Flow", path: "/flow" },
-  { icon: Users, label: "Collab Rooms", path: "/drop-rooms" },
 ];
 
 const AppSidebar = () => {
@@ -63,37 +40,6 @@ const AppSidebar = () => {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
 
-  const { data: unreadCount } = useQuery({
-    queryKey: ["unread-messages-count", user?.id],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("messages")
-        .select("id", { count: "exact", head: true })
-        .eq("receiver_id", user!.id)
-        .eq("read", false);
-      if (error) return 0;
-      return count ?? 0;
-    },
-    enabled: !!user,
-    refetchInterval: 30000,
-  });
-
-  const { data: pendingInquiries } = useQuery({
-    queryKey: ["pending-inquiries-count", user?.id],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("listing_inquiries")
-        .select("id", { count: "exact", head: true })
-        .eq("receiver_id", user!.id)
-        .eq("status", "pending");
-      if (error) return 0;
-      return count ?? 0;
-    },
-    enabled: !!user,
-    refetchInterval: 30000,
-  });
-
-  const totalUnread = (unreadCount ?? 0) + (pendingInquiries ?? 0);
 
   const accountItems = [
     { icon: Settings, label: "Settings", path: "/settings" },
@@ -109,7 +55,6 @@ const AppSidebar = () => {
 
   const renderNavItem = (item: any) => {
     const active = isActive(item.path);
-    const showBadge = item.hasBadge && totalUnread > 0;
 
     return (
       <SidebarMenuItem key={item.path + item.label}>
@@ -134,14 +79,6 @@ const AppSidebar = () => {
             )} />
             {!collapsed && (
               <span className="flex-1">{item.label}</span>
-            )}
-            {!collapsed && showBadge && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1">
-                {totalUnread > 99 ? "99+" : totalUnread}
-              </span>
-            )}
-            {collapsed && showBadge && (
-              <span className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-primary" />
             )}
           </Link>
         </SidebarMenuButton>
@@ -183,9 +120,7 @@ const AppSidebar = () => {
       </Link>
 
       <SidebarContent className="px-2 pt-3">
-        {renderGroup("Workspace", getWorkspaceItems(user?.id))}
-        {renderGroup("Marketplace", marketplaceItems)}
-        {renderGroup("Tools", toolsItems)}
+        {renderGroup("Navigation", mainItems)}
       </SidebarContent>
 
       <SidebarFooter className="px-2 pb-3">
