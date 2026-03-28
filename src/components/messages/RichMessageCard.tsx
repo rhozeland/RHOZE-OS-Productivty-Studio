@@ -257,7 +257,7 @@ const StaffInviteCard = ({
   const [status, setStatus] = useState<"idle" | "accepting" | "declining" | "accepted" | "declined">("idle");
 
   // Check current status on mount
-  useState(() => {
+  useEffect(() => {
     if (!data.staff_member_id) return;
     supabase
       .from("staff_members")
@@ -268,7 +268,7 @@ const StaffInviteCard = ({
         if (staff && (staff as any).status === "accepted") setStatus("accepted");
         else if (staff && (staff as any).status === "declined") setStatus("declined");
       });
-  });
+  }, [data.staff_member_id]);
 
   const handleResponse = async (accept: boolean) => {
     if (!data.staff_member_id) {
