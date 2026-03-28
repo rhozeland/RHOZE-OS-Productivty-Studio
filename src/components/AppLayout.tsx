@@ -39,28 +39,28 @@ const AppLayout = () => {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/80 backdrop-blur-sm px-4 md:px-6 gap-4">
+          <header className="sticky top-0 z-30 flex h-12 items-center justify-between border-b border-border bg-background/90 backdrop-blur-sm px-4 md:px-6 gap-4">
             <SidebarTrigger className="mr-1 shrink-0" />
 
             {/* Search bar with Flow mode trigger */}
             <div className="hidden md:flex flex-1 max-w-md items-center gap-2">
               <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
                   placeholder="Search artists, music, design, services, and more..."
-                  className="pl-9 h-9 rounded-full bg-muted/50 border-border text-sm"
+                  className="pl-9 h-8 rounded-sm bg-muted/50 border-border text-xs font-body"
                 />
               </div>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => navigate("/flow")}
-                    className="shrink-0 h-9 w-9 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/20 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+                    className="shrink-0 h-8 w-8 rounded-sm bg-primary text-primary-foreground flex items-center justify-center transition-opacity hover:opacity-80 active:opacity-70"
                   >
-                    <Search className="h-4 w-4 text-primary" />
+                    <Search className="h-3.5 w-3.5" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">
+                <TooltipContent side="bottom" className="text-xs font-body">
                   Discover in Flow Mode
                 </TooltipContent>
               </Tooltip>
@@ -70,9 +70,9 @@ const AppLayout = () => {
               <NotificationBell />
               <WalletButton />
               <Link to={user?.id ? `/profiles/${user.id}` : "/settings"} className="ml-1">
-                <Avatar className="h-8 w-8 border border-border hover:ring-2 hover:ring-primary/30 transition-all cursor-pointer">
+                <Avatar className="h-7 w-7 border border-border hover:opacity-80 transition-opacity cursor-pointer">
                   <AvatarImage src={profile?.avatar_url ?? undefined} />
-                  <AvatarFallback className="text-xs font-semibold bg-muted text-muted-foreground">
+                  <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground font-body">
                     {initials}
                   </AvatarFallback>
                 </Avatar>

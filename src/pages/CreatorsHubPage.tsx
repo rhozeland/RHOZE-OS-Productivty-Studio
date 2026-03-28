@@ -13,13 +13,11 @@ import {
 } from "@/components/ui/select";
 import {
   Plus, Search, Sparkles, Briefcase, FileText, Package, ShoppingBag,
-  SlidersHorizontal, Flame, Users, Clock, Zap, LayoutGrid, ArrowRight,
-  Coins,
+  SlidersHorizontal, Users, Clock, Zap, LayoutGrid, ArrowRight, Coins,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import ListingCard from "@/components/marketplace/ListingCard";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import CategoryTiles from "@/components/creators/CategoryTiles";
@@ -34,16 +32,6 @@ const TYPES = [
   { key: "physical_product", label: "Physical", icon: Package },
   { key: "project_request", label: "Requests", icon: ShoppingBag },
 ];
-
-const ROOM_COLORS: Record<string, string> = {
-  general: "from-violet-500/20 to-purple-600/20",
-  music: "from-rose-500/20 to-pink-600/20",
-  design: "from-cyan-500/20 to-blue-600/20",
-  video: "from-amber-500/20 to-orange-600/20",
-  writing: "from-emerald-500/20 to-green-600/20",
-  code: "from-slate-500/20 to-gray-600/20",
-  business: "from-yellow-500/20 to-amber-600/20",
-};
 
 const CreatorsHubPage = () => {
   const { user } = useAuth();
@@ -84,7 +72,6 @@ const CreatorsHubPage = () => {
     },
   });
 
-  // Fetch active drop rooms
   const { data: dropRooms } = useQuery({
     queryKey: ["drop-rooms-hub"],
     queryFn: async () => {
@@ -99,7 +86,6 @@ const CreatorsHubPage = () => {
     },
   });
 
-  // Fetch public smartboards
   const { data: publicBoards } = useQuery({
     queryKey: ["public-boards-hub"],
     queryFn: async () => {
@@ -167,158 +153,155 @@ const CreatorsHubPage = () => {
   const hasPublicBoards = (publicBoards?.length ?? 0) > 0;
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Hero header */}
-      <div className="space-y-1">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="font-display text-2xl font-bold text-foreground">
-              Creators Hub
-            </h1>
-            <p className="text-muted-foreground text-sm mt-0.5">
-              Discover work, collaborate in real-time, and earn $RHOZE.
-            </p>
-          </div>
-          <Button onClick={() => setCreateOpen(true)} className="rounded-full shrink-0 self-start">
-            <Plus className="mr-1.5 h-4 w-4" /> Post Listing
-          </Button>
+    <div className="space-y-8 max-w-5xl mx-auto">
+      {/* Hero header — editorial */}
+      <div className="relative overflow-hidden rounded-lg">
+        <div className="absolute inset-0 grid-overlay pointer-events-none" />
+        <div className="absolute inset-0 overflow-hidden">
+          <div
+            className="iridescent-blob absolute -top-10 right-0 w-[400px] h-[250px] rounded-full opacity-50"
+            style={{
+              background: "linear-gradient(135deg, hsl(280, 80%, 70%), hsl(320, 80%, 60%), hsl(30, 90%, 60%))",
+              filter: "blur(50px)",
+            }}
+          />
+        </div>
+        <div className="relative z-10 px-8 py-12 md:px-10 md:py-16">
+          <p className="text-xs font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-3">
+            Community
+          </p>
+          <h1 className="font-display text-3xl md:text-5xl text-foreground leading-[1.1] mb-3">
+            Creators Hub
+          </h1>
+          <p className="text-sm text-muted-foreground max-w-md font-body leading-relaxed mb-6">
+            Discover work, collaborate in real-time, and earn $RHOZE.
+          </p>
+          <button onClick={() => setCreateOpen(true)} className="btn-editorial">
+            Post Listing <ArrowRight className="h-4 w-4" />
+          </button>
         </div>
       </div>
 
-      {/* Live Collab Rooms + Public Boards row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Live Collab + Public Boards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-[1px] bg-border rounded-lg overflow-hidden">
         {/* Collab Rooms */}
-        <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+        <div className="bg-card p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-primary" />
-              <h2 className="font-display text-sm font-semibold text-foreground">Live Collab Rooms</h2>
+              <Zap className="h-4 w-4 text-foreground" />
+              <h2 className="font-display text-base text-foreground">Live Collab Rooms</h2>
               {hasCollabRooms && (
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
                 </span>
               )}
             </div>
-            <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate("/drop-rooms")}>
-              View all
-            </Button>
+            <button onClick={() => navigate("/drop-rooms")} className="text-xs text-muted-foreground hover:text-foreground font-body transition-colors">
+              View all →
+            </button>
           </div>
           {hasCollabRooms ? (
             <div className="grid grid-cols-2 gap-2">
               {dropRooms!.slice(0, 4).map((room: any) => {
                 const memberCount = room.drop_room_members?.[0]?.count ?? 0;
-                const colorClass = ROOM_COLORS[room.category] || ROOM_COLORS.general;
                 return (
-                  <motion.button
+                  <button
                     key={room.id}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
                     onClick={() => navigate(`/drop-rooms/${room.id}`)}
-                    className={cn(
-                      "relative rounded-xl p-3 text-left border border-border/50 bg-gradient-to-br transition-all hover:shadow-md",
-                      colorClass
-                    )}
+                    className="card-dashed p-3 text-left hover:border-foreground/30 transition-colors"
                   >
-                    <p className="text-sm font-medium text-foreground truncate">{room.title}</p>
-                    <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground">
+                    <p className="text-sm font-medium text-foreground truncate font-body">{room.title}</p>
+                    <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground font-body">
                       <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {memberCount}</span>
                       <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {formatDistanceToNow(new Date(room.expires_at))}</span>
                     </div>
-                    <Badge variant="outline" className="absolute top-2 right-2 text-[9px] h-5 capitalize">{room.category}</Badge>
-                  </motion.button>
+                    <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1 font-body">{room.category}</span>
+                  </button>
                 );
               })}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-              <Zap className="h-8 w-8 text-muted-foreground/30 mb-2" />
-              <p className="text-xs text-muted-foreground">No live rooms right now</p>
-              <Button variant="outline" size="sm" className="mt-2 rounded-full text-xs" onClick={() => navigate("/drop-rooms")}>
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <Zap className="h-6 w-6 text-muted-foreground/30 mb-2" />
+              <p className="text-xs text-muted-foreground font-body">No live rooms right now</p>
+              <button onClick={() => navigate("/drop-rooms")} className="mt-3 text-xs font-body font-medium text-foreground underline underline-offset-2">
                 Start a Room
-              </Button>
+              </button>
             </div>
           )}
         </div>
 
         {/* Public Boards */}
-        <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+        <div className="bg-card p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <LayoutGrid className="h-4 w-4 text-primary" />
-              <h2 className="font-display text-sm font-semibold text-foreground">Community Boards</h2>
+              <LayoutGrid className="h-4 w-4 text-foreground" />
+              <h2 className="font-display text-base text-foreground">Community Boards</h2>
             </div>
-            <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate("/smartboards")}>
-              View all
-            </Button>
+            <button onClick={() => navigate("/smartboards")} className="text-xs text-muted-foreground hover:text-foreground font-body transition-colors">
+              View all →
+            </button>
           </div>
           {hasPublicBoards ? (
             <div className="grid grid-cols-2 gap-2">
               {publicBoards!.slice(0, 4).map((board: any) => (
-                <motion.button
+                <button
                   key={board.id}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
                   onClick={() => navigate(`/smartboards/${board.id}`)}
-                  className="rounded-xl p-3 text-left border border-border/50 bg-muted/30 transition-all hover:shadow-md hover:bg-muted/50"
+                  className="card-dashed p-3 text-left hover:border-foreground/30 transition-colors"
                 >
                   <div
-                    className="w-full h-8 rounded-lg mb-2"
+                    className="w-full h-6 rounded-sm mb-2"
                     style={{ background: board.cover_color || board.background_color || "hsl(var(--muted))" }}
                   />
-                  <p className="text-sm font-medium text-foreground truncate">{board.title}</p>
+                  <p className="text-sm font-medium text-foreground truncate font-body">{board.title}</p>
                   {board.description && (
-                    <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{board.description}</p>
+                    <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5 font-body">{board.description}</p>
                   )}
-                </motion.button>
+                </button>
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-              <LayoutGrid className="h-8 w-8 text-muted-foreground/30 mb-2" />
-              <p className="text-xs text-muted-foreground">No public boards yet</p>
-              <Button variant="outline" size="sm" className="mt-2 rounded-full text-xs" onClick={() => navigate("/smartboards")}>
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <LayoutGrid className="h-6 w-6 text-muted-foreground/30 mb-2" />
+              <p className="text-xs text-muted-foreground font-body">No public boards yet</p>
+              <button onClick={() => navigate("/smartboards")} className="mt-3 text-xs font-body font-medium text-foreground underline underline-offset-2">
                 Create a Board
-              </Button>
+              </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Earn $RHOZE banner */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/5 via-primary/10 to-accent/5 p-4 flex items-center justify-between gap-4"
-      >
+      {/* Earn $RHOZE — minimal banner */}
+      <div className="border border-dashed border-border rounded-lg p-5 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center">
-            <Coins className="h-5 w-5 text-primary" />
-          </div>
+          <Coins className="h-5 w-5 text-foreground shrink-0" />
           <div>
-            <p className="text-sm font-semibold text-foreground">Earn $RHOZE by creating</p>
-            <p className="text-xs text-muted-foreground">Post listings, collab in rooms, and curate boards to earn tokens.</p>
+            <p className="text-sm font-medium text-foreground font-body">Earn $RHOZE by creating</p>
+            <p className="text-xs text-muted-foreground font-body">Post listings, collab in rooms, and curate boards to earn tokens.</p>
           </div>
         </div>
-        <Button variant="outline" size="sm" className="rounded-full shrink-0 text-xs" onClick={() => navigate("/credits")}>
-          Learn more <ArrowRight className="ml-1 h-3 w-3" />
-        </Button>
-      </motion.div>
+        <button onClick={() => navigate("/credits")} className="text-xs font-body font-medium text-foreground underline underline-offset-2 shrink-0">
+          Learn more →
+        </button>
+      </div>
 
       {/* Search + Type filter bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search artists, music, design, services, and more..."
-            className="pl-10 rounded-full bg-card border-border/50"
+            className="pl-9 rounded-sm bg-card border-border text-sm font-body h-10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         <Select value={activeType} onValueChange={setActiveType}>
-          <SelectTrigger className="w-full sm:w-44 rounded-full">
-            <SlidersHorizontal className="h-4 w-4 mr-2 text-muted-foreground" />
+          <SelectTrigger className="w-full sm:w-44 rounded-sm h-10">
+            <SlidersHorizontal className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
             <SelectValue placeholder="All Types" />
           </SelectTrigger>
           <SelectContent>
@@ -331,7 +314,7 @@ const CreatorsHubPage = () => {
         </Select>
       </div>
 
-      {/* Category filter pills */}
+      {/* Category filter */}
       <CategoryTiles
         activeCategory={activeCategory}
         onSelect={setActiveCategory}
@@ -345,17 +328,17 @@ const CreatorsHubPage = () => {
       {isLoading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="bg-card border border-border animate-pulse rounded-xl h-72" />
+            <div key={i} className="bg-card border border-border animate-pulse rounded-lg h-72" />
           ))}
         </div>
       ) : !listings || listings.length === 0 ? (
-        <div className="surface-card flex flex-col items-center justify-center py-16 rounded-2xl">
-          <Sparkles className="mb-3 h-10 w-10 text-muted-foreground" />
-          <p className="text-foreground font-medium">{searchQuery ? "No results" : "No listings yet"}</p>
-          <p className="text-xs text-muted-foreground mt-1">Be the first to post something</p>
-          <Button className="mt-4 rounded-full" onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Post Listing
-          </Button>
+        <div className="card-dashed flex flex-col items-center justify-center py-16">
+          <Sparkles className="mb-3 h-8 w-8 text-muted-foreground/30" />
+          <p className="text-foreground font-medium font-body">{searchQuery ? "No results" : "No listings yet"}</p>
+          <p className="text-xs text-muted-foreground mt-1 font-body">Be the first to post something</p>
+          <button className="btn-editorial mt-4 text-xs" onClick={() => setCreateOpen(true)}>
+            Post Listing <ArrowRight className="h-3 w-3" />
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
