@@ -430,7 +430,11 @@ const CalendarPage = () => {
   };
 
   const handleMouseUp = () => {
-    if (isDragging && dragStartHour !== null && dragEndHour !== null) setBookingDialogOpen(true);
+    if (isDragging && dragStartHour !== null && dragEndHour !== null) {
+      // If coming from a service pre-selection, auto-set to studio
+      if (searchParams.get("service")) setEventType("studio");
+      setBookingDialogOpen(true);
+    }
     setIsDragging(false);
   };
 
