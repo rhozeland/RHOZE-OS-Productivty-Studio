@@ -392,7 +392,8 @@ const DashboardPage = () => {
             >
               <Palette className="absolute top-4 right-4 h-8 w-8 text-accent/30" />
               <h3 className="font-display font-bold text-foreground group-hover:text-primary transition-colors">
-                Hire Creatives
+                Creators Hub
+              </h3>
               </h3>
               <p className="text-xs text-muted-foreground mt-1">Freelance talent for your projects</p>
             </motion.div>
