@@ -8,10 +8,12 @@ import {
   MessageSquare,
   Palette,
   Calendar,
+  User,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const dockItems = [
   { icon: LayoutDashboard, label: "Home", path: "/dashboard" },
@@ -40,8 +42,28 @@ const DockBar = () => {
     refetchInterval: 30000,
   });
 
+  const { data: profile } = useQuery({
+    queryKey: ["my-profile-dock", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const initials = profile?.display_name
+    ? profile.display_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+    : user?.email?.charAt(0).toUpperCase() ?? "?";
+
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + "/");
+
+  const profilePath = user?.id ? `/profiles/${user.id}` : "/settings";
+  const profileActive = isActive(profilePath) || isActive("/settings");
 
   return (
     <motion.div
@@ -83,6 +105,31 @@ const DockBar = () => {
             </Link>
           );
         })}
+
+        {/* Profile avatar in dock */}
+        <Link to={profilePath} className="relative group ml-0.5">
+          <motion.div
+            whileHover={{ scale: 1.08, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+            className={cn(
+              "flex flex-col items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-md transition-colors duration-150 gap-0.5",
+              profileActive
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+            )}
+          >
+            <Avatar className="h-5 w-5 border border-border">
+              <AvatarImage src={profile?.avatar_url ?? undefined} />
+              <AvatarFallback className="text-[7px] font-semibold bg-muted text-muted-foreground font-body">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-[9px] font-body font-medium leading-none">
+              Profile
+            </span>
+          </motion.div>
+        </Link>
       </div>
     </motion.div>
   );
