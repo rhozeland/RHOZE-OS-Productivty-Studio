@@ -60,6 +60,7 @@ const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 8am - 8pm
 
 const CalendarPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());
