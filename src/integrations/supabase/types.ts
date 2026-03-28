@@ -1665,6 +1665,8 @@ export type Database = {
           id: string
           is_available: boolean
           specialties: string[] | null
+          status: string
+          studio_id: string | null
           updated_at: string
           user_id: string
         }
@@ -1675,6 +1677,8 @@ export type Database = {
           id?: string
           is_available?: boolean
           specialties?: string[] | null
+          status?: string
+          studio_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1685,10 +1689,20 @@ export type Database = {
           id?: string
           is_available?: boolean
           specialties?: string[] | null
+          status?: string
+          studio_id?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "staff_members_studio_id_fkey"
+            columns: ["studio_id"]
+            isOneToOne: false
+            referencedRelation: "studios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       studio_applications: {
         Row: {

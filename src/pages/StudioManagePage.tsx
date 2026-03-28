@@ -131,10 +131,10 @@ const StudioManagePage = () => {
       const { data } = await supabase
         .from("staff_members")
         .select("*")
-        .eq("user_id", user!.id);
+        .eq("studio_id", id!);
       return (data as any[]) ?? [];
     },
-    enabled: !!user,
+    enabled: !!id,
   });
 
   // Hard-coded specialty options
@@ -224,26 +224,38 @@ const StudioManagePage = () => {
     if (!selectedUserId) return;
     setSavingStaff(true);
 
-    // Send an invitation message to the user
-    const { error: msgError } = await supabase.from("messages").insert({
-      sender_id: user!.id,
-      receiver_id: selectedUserId,
-      content: `🤝 You've been invited to join the staff at **${studio?.name}**! Specialties: ${selectedSpecialties.join(", ") || "General"}. Please accept by replying to this message.`,
-    });
+    // Add them as staff with pending status
+    const { data: staffData, error } = await supabase.from("staff_members").insert({
+      user_id: selectedUserId,
+      display_name: selectedUserName || "Staff Member",
+      specialties: selectedSpecialties,
+      is_available: false,
+      status: "pending",
+      studio_id: id,
+    } as any).select().single();
 
-    if (msgError) {
-      toast.error(msgError.message);
+    if (error) {
+      toast.error(error.message);
       setSavingStaff(false);
       return;
     }
 
-    // Add them as staff
-    const { error } = await supabase.from("staff_members").insert({
-      user_id: selectedUserId,
-      display_name: selectedUserName || "Staff Member",
+    // Send a structured invitation message
+    const invitePayload = JSON.stringify({
+      studio_id: id,
+      studio_name: studio?.name,
       specialties: selectedSpecialties,
-      is_available: true,
-    } as any);
+      staff_member_id: (staffData as any)?.id,
+    });
+    const { error: msgError } = await supabase.from("messages").insert({
+      sender_id: user!.id,
+      receiver_id: selectedUserId,
+      content: `[STAFF_INVITE:${invitePayload}]`,
+    });
+
+    if (msgError) {
+      toast.error("Staff added but invitation message failed to send");
+    }
 
     if (error) {
       toast.error(error.message);
@@ -483,17 +495,29 @@ const StudioManagePage = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleStaffAvailability(member)}
-                        className={member.is_available ? "text-emerald-500" : "text-muted-foreground"}
-                      >
-                        {member.is_available ? <UserCheck className="h-4 w-4" /> : <UserX className="h-4 w-4" />}
-                      </Button>
-                      <Badge variant={member.is_available ? "default" : "secondary"} className="text-xs">
-                        {member.is_available ? "Available" : "Unavailable"}
-                      </Badge>
+                      {member.status === "pending" ? (
+                        <Badge variant="outline" className="text-xs text-warning border-warning/30 bg-warning/10">
+                          <Clock className="h-3 w-3 mr-1" /> Pending
+                        </Badge>
+                      ) : member.status === "declined" ? (
+                        <Badge variant="outline" className="text-xs text-destructive border-destructive/30 bg-destructive/10">
+                          <UserX className="h-3 w-3 mr-1" /> Declined
+                        </Badge>
+                      ) : (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleStaffAvailability(member)}
+                            className={member.is_available ? "text-primary" : "text-muted-foreground"}
+                          >
+                            {member.is_available ? <UserCheck className="h-4 w-4" /> : <UserX className="h-4 w-4" />}
+                          </Button>
+                          <Badge variant={member.is_available ? "default" : "secondary"} className="text-xs">
+                            {member.is_available ? "Available" : "Unavailable"}
+                          </Badge>
+                        </>
+                      )}
                       <Button variant="ghost" size="sm" onClick={() => removeStaffMember(member.id)} className="text-destructive hover:text-destructive">
                         <Trash2 className="h-4 w-4" />
                       </Button>
