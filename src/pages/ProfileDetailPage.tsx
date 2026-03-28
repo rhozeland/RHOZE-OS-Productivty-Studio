@@ -415,13 +415,17 @@ const ProfileDetailPage = () => {
               {flowPosts.map((post: any) => (
                 <div key={post.id}
                   className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all duration-200">
-                  {post.file_url && (post.content_type === "image" || post.category === "photo" || post.category === "design") ? (
+                  {post.file_url && (post.category === "photo" || post.category === "design" || post.content_type === "image") ? (
                     <div className="aspect-square overflow-hidden bg-muted">
-                      <img src={post.file_url} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <img src={post.file_url} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                     </div>
-                  ) : post.file_url && (post.content_type === "video" || post.category === "video") ? (
+                  ) : post.file_url && (post.category === "video" || post.content_type === "video") ? (
                     <div className="aspect-square overflow-hidden bg-muted">
                       <video src={post.file_url} className="h-full w-full object-cover" muted preload="metadata" />
+                    </div>
+                  ) : post.link_url && post.link_url.includes("youtu") ? (
+                    <div className="aspect-square overflow-hidden bg-muted">
+                      <img src={`https://img.youtube.com/vi/${post.link_url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?\s]+)/)?.[1]}/mqdefault.jpg`} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     </div>
                   ) : (
                     <div className="aspect-square flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5 p-3">
@@ -429,6 +433,8 @@ const ProfileDetailPage = () => {
                         <span className="text-2xl">🎵</span>
                       ) : post.category === "writing" ? (
                         <span className="text-2xl">✍️</span>
+                      ) : post.category === "photo" || post.category === "design" ? (
+                        <ImageIcon className="h-6 w-6 text-muted-foreground/40" />
                       ) : (
                         <ImageIcon className="h-6 w-6 text-muted-foreground/40" />
                       )}
