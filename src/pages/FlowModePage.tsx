@@ -237,6 +237,7 @@ const FlowModePage = () => {
   const [expandedCard, setExpandedCard] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [savePickerOpen, setSavePickerOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"swipe" | "browse">("swipe");
