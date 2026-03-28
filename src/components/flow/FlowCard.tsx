@@ -250,8 +250,9 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
               </div>
             ) : item.file_url ? (
               <div className="relative group">
-                <div className="aspect-[4/3] overflow-hidden bg-muted/20 flex items-center justify-center">
-                  <img src={item.file_url} alt={item.title} className="w-full h-full object-contain" draggable={false} />
+              <div className="overflow-hidden bg-muted/20 flex items-center justify-center">
+                      <img src={item.file_url} alt={item.title} className="w-full max-h-[60vh] object-contain" draggable={false}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); setImageEnlarged(true); }}
