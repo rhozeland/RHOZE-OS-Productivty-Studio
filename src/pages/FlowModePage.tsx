@@ -401,9 +401,8 @@ const FlowModePage = () => {
         return;
       }
     } else if (action === "share") {
-      interact.mutate({ itemId: currentItem.id, action });
-      toast("Shared!");
-      advanceCard();
+      setShareDialogOpen(true);
+      return;
     } else {
       interact.mutate({ itemId: currentItem.id, action });
       advanceCard();
