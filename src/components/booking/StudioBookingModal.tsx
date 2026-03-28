@@ -133,6 +133,38 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
     setDragDate(null);
   };
 
+  const resolveSlotFromTouch = useCallback((touch: { clientX: number; clientY: number }) => {
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (!el) return null;
+    const slotEl = el.closest("[data-bslot]") as HTMLElement | null;
+    if (!slotEl) return null;
+    const dayIndex = Number(slotEl.dataset.bday);
+    const hour = Number(slotEl.dataset.bhour);
+    if (isNaN(dayIndex) || isNaN(hour)) return null;
+    return { dayIndex, hour };
+  }, []);
+
+  const handleTouchMoveHandler = useCallback(
+    (e: React.TouchEvent) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      const slot = resolveSlotFromTouch(touch);
+      if (slot && slot.dayIndex === dragDay) {
+        setDragEndHour(slot.hour);
+      }
+    },
+    [isDragging, dragDay, resolveSlotFromTouch]
+  );
+
+  useEffect(() => {
+    const handler = () => {
+      if (isDragging) setIsDragging(false);
+    };
+    window.addEventListener("mouseup", handler);
+    return () => window.removeEventListener("mouseup", handler);
+  }, [isDragging]);
+
   if (!studio) return null;
 
   const selectedDuration =
@@ -144,6 +176,18 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
   const maxGuests = studio.max_guests ?? 10;
 
   const canProceedToDetails = dragDate && dragStartHour !== null && dragEndHour !== null && selectedDuration > 0;
+
+  const isSlotBooked = (dayIndex: number, hour: number) => {
+    const day = weekDays[dayIndex];
+    return (
+      existingBookings?.some((b) => {
+        const bStart = new Date(b.start_time);
+        const bEnd = new Date(b.end_time);
+        if (!isSameDay(bStart, day)) return false;
+        return hour >= bStart.getHours() && hour < bEnd.getHours();
+      }) ?? false
+    );
+  };
 
   // Drag handlers
   const handleMouseDown = (dayIndex: number, hour: number) => {
@@ -165,45 +209,10 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
     setIsDragging(false);
   };
 
-  const resolveSlotFromTouch = useCallback((touch: { clientX: number; clientY: number }) => {
-    const el = document.elementFromPoint(touch.clientX, touch.clientY);
-    if (!el) return null;
-    const slotEl = el.closest("[data-bslot]") as HTMLElement | null;
-    if (!slotEl) return null;
-    const dayIndex = Number(slotEl.dataset.bday);
-    const hour = Number(slotEl.dataset.bhour);
-    if (isNaN(dayIndex) || isNaN(hour)) return null;
-    return { dayIndex, hour };
-  }, []);
-
-  const handleTouchStart = useCallback(
-    (dayIndex: number, hour: number, e: React.TouchEvent) => {
-      e.preventDefault();
-      handleMouseDown(dayIndex, hour);
-    },
-    [weekDays]
-  );
-
-  const handleTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      if (!isDragging) return;
-      e.preventDefault();
-      const touch = e.touches[0];
-      const slot = resolveSlotFromTouch(touch);
-      if (slot && slot.dayIndex === dragDay) {
-        setDragEndHour(slot.hour);
-      }
-    },
-    [isDragging, dragDay, resolveSlotFromTouch]
-  );
-
-  useEffect(() => {
-    const handler = () => {
-      if (isDragging) handleMouseUp();
-    };
-    window.addEventListener("mouseup", handler);
-    return () => window.removeEventListener("mouseup", handler);
-  }, [isDragging]);
+  const handleTouchStart = (dayIndex: number, hour: number, e: React.TouchEvent) => {
+    e.preventDefault();
+    handleMouseDown(dayIndex, hour);
+  };
 
   const isSlotSelected = (dayIndex: number, hour: number) => {
     if (dragDay !== dayIndex || dragStartHour === null || dragEndHour === null) return false;
