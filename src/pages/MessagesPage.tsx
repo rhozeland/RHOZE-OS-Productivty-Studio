@@ -485,8 +485,23 @@ const MessagesPage = () => {
                       )}
                     </div>
                     <span className="font-display font-semibold text-foreground">{selectedUser.display_name || "Creator"}</span>
-                    <div className="ml-auto">
-                      <QuoteBuilder recipientId={selectedUser.user_id} recipientName={selectedUser.display_name || "Creator"} />
+                    <div className="ml-auto flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                        onClick={() => toast.info("Voice calls coming soon — tied to your Creator Pass tier")}
+                      >
+                        <Phone className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                        onClick={() => toast.info("Video calls coming soon — tied to your Creator Pass tier")}
+                      >
+                        <Video className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
 
