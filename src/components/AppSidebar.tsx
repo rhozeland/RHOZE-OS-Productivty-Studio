@@ -4,17 +4,9 @@ import {
   LayoutDashboard,
   FolderKanban,
   Calendar,
-  Store,
-  MessageSquare,
   Settings,
   LogOut,
-  Building2,
-  Coins,
   ShieldCheck,
-  Workflow,
-  
-  LayoutGrid,
-  Users,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
