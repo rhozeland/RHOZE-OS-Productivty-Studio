@@ -587,6 +587,7 @@ const FlowModePage = () => {
             className="space-y-4"
           >
             <Input placeholder="Title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
+            <Input placeholder="Creator / Artist name (optional)" value={newCreatorName} onChange={(e) => setNewCreatorName(e.target.value)} />
             <Textarea placeholder="Description (optional)" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={3} />
             <Select value={newCategory} onValueChange={(val) => { setNewCategory(val); setNewFile(null); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>

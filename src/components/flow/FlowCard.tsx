@@ -65,6 +65,8 @@ interface FlowCardProps {
     link_url?: string | null;
     tags?: string[] | null;
     user_id?: string;
+    creator_name?: string | null;
+    profiles?: { display_name?: string | null; avatar_url?: string | null } | null;
   };
   expanded: boolean;
   onToggleExpand: () => void;
