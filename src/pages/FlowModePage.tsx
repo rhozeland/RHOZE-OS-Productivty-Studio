@@ -613,7 +613,7 @@ const FlowModePage = () => {
               if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
             }}
           >
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <div className="absolute inset-0 bg-black/50" />
             <div className="relative flex flex-col items-center gap-8">
               {/* Up */}
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>

@@ -46,8 +46,9 @@ const FlowCardBackground = ({ fileUrl, category }: FlowCardBackgroundProps) => {
             alt=""
             className="absolute inset-0 w-full h-full object-cover"
             style={{
-              filter: "blur(90px) saturate(2) brightness(0.8)",
-              transform: "scale(1.4)",
+              filter: "blur(80px) saturate(1.6) brightness(0.85)",
+              transform: "scale(1.3)",
+              willChange: "transform",
             }}
           />
           {/* Animated color orbs derived from content */}
