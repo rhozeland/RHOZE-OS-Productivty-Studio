@@ -208,6 +208,7 @@ const FlowModePage = () => {
       setNewDesc("");
       setNewLink("");
       setNewFile(null);
+      setNewCreatorName("");
       toast.success("Content shared to Flow!");
     },
     onError: (e: any) => toast.error(e.message),
