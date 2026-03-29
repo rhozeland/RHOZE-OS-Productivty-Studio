@@ -281,6 +281,24 @@ const FlowModePage = () => {
     }
   }, [performAction, swipeMap]);
 
+  // Idle hint timer — show corner hints after 4s of no interaction, hide on any activity
+  const resetIdleTimer = useCallback(() => {
+    setShowIdleHints(false);
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    idleTimerRef.current = setTimeout(() => setShowIdleHints(true), 4000);
+  }, []);
+
+  useEffect(() => {
+    if (!calibrated || !currentItem || viewMode !== "swipe") return;
+    resetIdleTimer();
+    const events = ["pointerdown", "pointermove", "keydown", "scroll"];
+    events.forEach((e) => window.addEventListener(e, resetIdleTimer, { passive: true }));
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, resetIdleTimer));
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    };
+  }, [calibrated, currentItem, viewMode, resetIdleTimer]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!calibrated || !currentItem) return;
