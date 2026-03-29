@@ -117,25 +117,34 @@ const FlowModePage = () => {
   const { data: flowItems } = useQuery({
     queryKey: ["flow-items", selectedCategories],
     queryFn: async () => {
+      let items: any[] = [];
+
       // First try with selected categories
       if (selectedCategories.length > 0 && selectedCategories.length < CATEGORIES.length) {
-        const { data, error } = await supabase.from("flow_items").select("*, profiles!flow_items_user_id_fkey(display_name, avatar_url)")
+        const { data, error } = await supabase.from("flow_items").select("*")
           .in("category", selectedCategories)
           .order("created_at", { ascending: false }).limit(100);
-        if (error) {
-          // Fallback without join if FK doesn't exist
-          const { data: d2, error: e2 } = await supabase.from("flow_items").select("*")
-            .in("category", selectedCategories)
-            .order("created_at", { ascending: false }).limit(100);
-          if (e2) throw e2;
-          if (d2 && d2.length > 0) return d2;
-        } else if (data && data.length > 0) return data;
+        if (error) throw error;
+        if (data && data.length > 0) items = data;
       }
-      // Fallback: fetch all items regardless of category
-      const { data, error } = await supabase.from("flow_items").select("*")
-        .order("created_at", { ascending: false }).limit(100);
-      if (error) throw error;
-      return data ?? [];
+
+      // Fallback: fetch all items
+      if (items.length === 0) {
+        const { data, error } = await supabase.from("flow_items").select("*")
+          .order("created_at", { ascending: false }).limit(100);
+        if (error) throw error;
+        items = data ?? [];
+      }
+
+      // Batch-fetch uploader profiles
+      const userIds = [...new Set(items.map((i) => i.user_id).filter(Boolean))];
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", userIds);
+        const profileMap = new Map((profiles ?? []).map((p) => [p.user_id, p]));
+        items = items.map((i) => ({ ...i, profiles: profileMap.get(i.user_id) || null }));
+      }
+
+      return items;
     },
     enabled: calibrated,
   });
