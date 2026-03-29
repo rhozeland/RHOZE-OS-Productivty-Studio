@@ -521,22 +521,22 @@ const FlowModePage = () => {
       {/* ═══ SWIPE VIEW ═══ */}
       {viewMode === "swipe" && (
         <div className="relative z-10 flex flex-1 items-center justify-center px-4 pb-36 pt-2 md:pb-40">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="popLayout">
             {currentItem ? (
               <motion.div
                 key={`${currentItem.id}-${currentIndex}`}
-                className="w-full max-w-xs md:max-w-sm cursor-grab active:cursor-grabbing"
+                className="w-full max-w-xs md:max-w-sm cursor-grab active:cursor-grabbing will-change-transform"
                 drag
                 dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                dragElastic={0.6}
-                dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
+                dragElastic={0.5}
+                dragTransition={{ bounceStiffness: 400, bounceDamping: 30 }}
                 onDragEnd={handleDragEnd}
                 style={{ x, y, rotateZ, opacity: cardOpacity, scale: cardScale, boxShadow: shadowIntensity }}
-                initial={{ opacity: 0, scale: 0.92, y: 24 }}
+                initial={{ opacity: 0, scale: 0.97, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.85, y: -20, transition: { duration: 0.18, ease: "easeIn" } }}
-                transition={{ type: "spring", stiffness: 260, damping: 22 }}
-                whileTap={{ scale: 0.98 }}
+                exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.12, ease: "easeOut" } }}
+                transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
+                whileTap={{ scale: 0.99 }}
               >
                 <FlowCard
                   item={currentItem}
