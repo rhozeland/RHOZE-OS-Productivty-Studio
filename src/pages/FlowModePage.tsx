@@ -117,11 +117,17 @@ const FlowModePage = () => {
     queryFn: async () => {
       // First try with selected categories
       if (selectedCategories.length > 0 && selectedCategories.length < CATEGORIES.length) {
-        const { data, error } = await supabase.from("flow_items").select("*")
+        const { data, error } = await supabase.from("flow_items").select("*, profiles!flow_items_user_id_fkey(display_name, avatar_url)")
           .in("category", selectedCategories)
           .order("created_at", { ascending: false }).limit(100);
-        if (error) throw error;
-        if (data && data.length > 0) return data;
+        if (error) {
+          // Fallback without join if FK doesn't exist
+          const { data: d2, error: e2 } = await supabase.from("flow_items").select("*")
+            .in("category", selectedCategories)
+            .order("created_at", { ascending: false }).limit(100);
+          if (e2) throw e2;
+          if (d2 && d2.length > 0) return d2;
+        } else if (data && data.length > 0) return data;
       }
       // Fallback: fetch all items regardless of category
       const { data, error } = await supabase.from("flow_items").select("*")
