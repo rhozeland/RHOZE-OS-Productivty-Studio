@@ -521,22 +521,22 @@ const FlowModePage = () => {
       {/* ═══ SWIPE VIEW ═══ */}
       {viewMode === "swipe" && (
         <div className="relative z-10 flex flex-1 items-center justify-center px-4 pb-36 pt-2 md:pb-40">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="popLayout">
             {currentItem ? (
               <motion.div
                 key={`${currentItem.id}-${currentIndex}`}
-                className="w-full max-w-xs md:max-w-sm cursor-grab active:cursor-grabbing"
+                className="w-full max-w-xs md:max-w-sm cursor-grab active:cursor-grabbing will-change-transform"
                 drag
                 dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                dragElastic={0.6}
-                dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
+                dragElastic={0.5}
+                dragTransition={{ bounceStiffness: 400, bounceDamping: 30 }}
                 onDragEnd={handleDragEnd}
                 style={{ x, y, rotateZ, opacity: cardOpacity, scale: cardScale, boxShadow: shadowIntensity }}
-                initial={{ opacity: 0, scale: 0.92, y: 24 }}
+                initial={{ opacity: 0, scale: 0.97, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.85, y: -20, transition: { duration: 0.18, ease: "easeIn" } }}
-                transition={{ type: "spring", stiffness: 260, damping: 22 }}
-                whileTap={{ scale: 0.98 }}
+                exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.12, ease: "easeOut" } }}
+                transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
+                whileTap={{ scale: 0.99 }}
               >
                 <FlowCard
                   item={currentItem}
@@ -613,7 +613,7 @@ const FlowModePage = () => {
               if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
             }}
           >
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <div className="absolute inset-0 bg-black/50" />
             <div className="relative flex flex-col items-center gap-8">
               {/* Up */}
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
@@ -674,7 +674,7 @@ const FlowModePage = () => {
               transition={{ duration: 0.4, ease: "easeOut" }}
               className="pointer-events-none absolute left-0 right-0 top-16 z-40 flex justify-center"
             >
-              <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
+              <span className="flex items-center gap-1 rounded-full bg-card/80 border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm" style={{ textShadow: "0 1px 2px hsl(var(--background) / 0.5)" }}>
                 <ChevronUp className="h-3 w-3" /> Save
               </span>
             </motion.div>
@@ -686,7 +686,7 @@ const FlowModePage = () => {
               transition={{ duration: 0.4, ease: "easeOut", delay: 0.05 }}
               className="pointer-events-none absolute left-0 right-0 bottom-28 z-40 flex justify-center md:bottom-32"
             >
-              <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
+              <span className="flex items-center gap-1 rounded-full bg-card/80 border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm" style={{ textShadow: "0 1px 2px hsl(var(--background) / 0.5)" }}>
                 <ChevronDown className="h-3 w-3" /> Share
               </span>
             </motion.div>
@@ -698,7 +698,7 @@ const FlowModePage = () => {
               transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
               className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 z-40 md:left-8"
             >
-              <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
+              <span className="flex items-center gap-1 rounded-full bg-card/80 border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm" style={{ textShadow: "0 1px 2px hsl(var(--background) / 0.5)" }}>
                 <ChevronLeft className="h-3 w-3" /> Pass
               </span>
             </motion.div>
@@ -710,7 +710,7 @@ const FlowModePage = () => {
               transition={{ duration: 0.4, ease: "easeOut", delay: 0.15 }}
               className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 z-40 md:right-8"
             >
-              <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
+              <span className="flex items-center gap-1 rounded-full bg-card/80 border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm" style={{ textShadow: "0 1px 2px hsl(var(--background) / 0.5)" }}>
                 Next <ChevronRight className="h-3 w-3" />
               </span>
             </motion.div>
