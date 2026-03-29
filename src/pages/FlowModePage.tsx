@@ -524,10 +524,10 @@ const FlowModePage = () => {
               <ChevronUp className="h-3 w-3" /> Save
             </span>
             <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <ChevronDown className="h-3 w-3" /> Pass
+              <ChevronLeft className="h-3 w-3" /> Pass
             </span>
             <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <ChevronLeft className="h-3 w-3" /> Share
+              <ChevronDown className="h-3 w-3" /> Share
             </span>
             <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <ChevronRight className="h-3 w-3" /> Next
