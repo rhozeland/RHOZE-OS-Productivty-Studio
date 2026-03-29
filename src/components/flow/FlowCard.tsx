@@ -346,18 +346,30 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
           )}
         </div>
 
-        {/* ═══ POSTER INFO ═══ */}
-        {(item.creator_name || (item as any).profiles?.display_name) && (
-          <div className="px-4 pb-1">
-            <p className="text-[11px] text-muted-foreground">
-              {item.creator_name ? (
-                <>by <span className="font-medium text-foreground/80">{item.creator_name}</span></>
-              ) : (item as any).profiles?.display_name ? (
-                <>shared by <span className="font-medium text-foreground/80">{(item as any).profiles.display_name}</span></>
-              ) : null}
-            </p>
-          </div>
-        )}
+        {/* ═══ POSTER INFO — avatar + name, clickable to profile ═══ */}
+        <div className="px-4 pb-1 flex items-center gap-2">
+          {(item as any).profiles ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); navigate(`/profiles/${item.user_id}`); }}
+              className="flex items-center gap-2 group"
+            >
+              <Avatar className="h-5 w-5">
+                <AvatarImage src={(item as any).profiles?.avatar_url || ""} />
+                <AvatarFallback className="text-[8px] bg-muted">
+                  {((item as any).profiles?.display_name || "?").charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-[11px] text-muted-foreground group-hover:text-foreground transition-colors">
+                {(item as any).profiles?.display_name || "Unknown"}
+              </span>
+            </button>
+          ) : null}
+          {item.creator_name && (
+            <span className="text-[11px] text-muted-foreground">
+              {(item as any).profiles ? "·" : ""} by <span className="font-medium text-foreground/80">{item.creator_name}</span>
+            </span>
+          )}
+        </div>
 
         {/* ═══ TITLE + DESCRIPTION ═══ */}
         {!(isWriting && !isAudio && !isVideo && !isImage && !item.file_url && !item.link_url) && (
