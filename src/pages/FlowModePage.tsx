@@ -109,12 +109,26 @@ const FlowModePage = () => {
     ["0 8px 30px -8px hsl(var(--foreground) / 0.15)", "0 20px 40px -12px hsl(var(--foreground) / 0.08)", "0 8px 30px -8px hsl(var(--foreground) / 0.15)"]
   );
 
+  // Load calibration & check if tutorial was seen
   useEffect(() => {
     const saved = localStorage.getItem(`flow-calibrated-${user?.id}`);
     if (saved) {
       setCalibrated(true);
       setSelectedCategories(JSON.parse(saved));
+
+      // Show tutorial overlay for first-time users
+      const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${user?.id}`);
+      if (!tutorialSeen) {
+        setShowTutorialOverlay(true);
+        tutorialTimerRef.current = setTimeout(() => {
+          setShowTutorialOverlay(false);
+          localStorage.setItem(`flow-tutorial-seen-${user?.id}`, "true");
+        }, 8000);
+      }
     }
+    return () => {
+      if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
+    };
   }, [user]);
 
   const { data: flowItems } = useQuery({
