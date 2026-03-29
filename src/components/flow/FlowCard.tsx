@@ -292,55 +292,62 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
           </div>
         )}
 
-        {/* ═══ ACTION BAR — Save + Send ═══ */}
-        <div className="px-4 pt-3 pb-2 flex items-center gap-4">
-          <button
-            onClick={(e) => { e.stopPropagation(); onSave(); }}
-            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group"
-            title="Save to board"
-          >
-            <Bookmark className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
-            <span className="text-[11px] font-medium">Save</span>
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onShare(); }}
-            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group"
-            title="Send to someone"
-          >
-            <Send className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
-            <span className="text-[11px] font-medium">Send</span>
-          </button>
+        {/* ═══ Category badge + ACTION BAR ═══ */}
+        <div className="px-5 pt-4 pb-2 flex items-center gap-3">
+          <Badge className={`${catColor} border-0 rounded-full text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 flex items-center gap-1`}>
+            <CatIcon className="h-3 w-3" />
+            {item.category}
+          </Badge>
 
-          {isOwner && onDelete && (
+          <div className="ml-auto flex items-center gap-3">
             <button
-              onClick={(e) => { e.stopPropagation(); onDelete(); }}
-              className="flex items-center gap-1.5 text-muted-foreground hover:text-destructive transition-colors group"
-              title="Delete"
+              onClick={(e) => { e.stopPropagation(); onSave(); }}
+              className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group"
+              title="Save to board"
             >
-              <Trash2 className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
-              <span className="text-[11px] font-medium">Delete</span>
+              <Bookmark className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
+              <span className="text-[11px] font-medium">Save</span>
             </button>
-          )}
-
-          {item.link_url && (
-            <a
-              href={item.link_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="ml-auto flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-              title={`Open on ${platform?.name || "web"}`}
+            <button
+              onClick={(e) => { e.stopPropagation(); onShare(); }}
+              className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group"
+              title="Send to someone"
             >
-              <ExternalLink className="h-4 w-4" />
-              {platform && platform.name !== "Link" && (
-                <span className="text-[11px] font-medium">{platform.name}</span>
-              )}
-            </a>
-          )}
+              <Send className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
+              <span className="text-[11px] font-medium">Send</span>
+            </button>
+
+            {isOwner && onDelete && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                className="flex items-center gap-1.5 text-muted-foreground hover:text-destructive transition-colors group"
+                title="Delete"
+              >
+                <Trash2 className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
+                <span className="text-[11px] font-medium">Delete</span>
+              </button>
+            )}
+
+            {item.link_url && (
+              <a
+                href={item.link_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+                title={`Open on ${platform?.name || "web"}`}
+              >
+                <ExternalLink className="h-4 w-4" />
+                {platform && platform.name !== "Link" && (
+                  <span className="text-[11px] font-medium">{platform.name}</span>
+                )}
+              </a>
+            )}
+          </div>
         </div>
 
-        {/* ═══ POSTER INFO — avatar + name, clickable to profile ═══ */}
-        <div className="px-4 pb-1 flex items-center gap-2">
+        {/* ═══ POSTER INFO ═══ */}
+        <div className="px-5 pb-1.5 flex items-center gap-2">
           {(item as any).profiles ? (
             <button
               onClick={(e) => { e.stopPropagation(); navigate(`/profiles/${item.user_id}`); }}
@@ -366,7 +373,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
 
         {/* ═══ TITLE + DESCRIPTION ═══ */}
         {!(isWriting && !isAudio && !isVideo && !isImage && !item.file_url && !item.link_url) && (
-          <div className="px-4 pb-3">
+          <div className="px-5 pb-5">
             <h3 className="font-display font-bold text-foreground text-sm md:text-base leading-snug">{item.title}</h3>
             {item.description && (
               <p
