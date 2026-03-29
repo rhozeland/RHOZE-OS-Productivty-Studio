@@ -486,6 +486,22 @@ const FlowModePage = () => {
                     <Sparkles className="h-3.5 w-3.5 mr-2" />
                     Recalibrate
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full rounded-lg text-xs mt-2"
+                    onClick={() => {
+                      setSettingsOpen(false);
+                      setShowTutorialOverlay(true);
+                      if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
+                      tutorialTimerRef.current = setTimeout(() => {
+                        setShowTutorialOverlay(false);
+                      }, 8000);
+                    }}
+                  >
+                    <ChevronUp className="h-3.5 w-3.5 mr-2" />
+                    Show Swipe Tutorial
+                  </Button>
                 </div>
               </div>
             </SheetContent>
