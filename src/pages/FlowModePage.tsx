@@ -75,6 +75,7 @@ const FlowModePage = () => {
   const [newCategory, setNewCategory] = useState("design");
   const [newLink, setNewLink] = useState("");
   const [newFile, setNewFile] = useState<File | null>(null);
+  const [newCreatorName, setNewCreatorName] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(() => {
     const saved = localStorage.getItem("flow-sound-enabled");
@@ -82,8 +83,8 @@ const FlowModePage = () => {
   });
   const [swipeMap] = useState({
     up: "save",
-    down: "dislike",
-    left: "share",
+    down: "share",
+    left: "dislike",
     right: "skip",
   });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -116,11 +117,17 @@ const FlowModePage = () => {
     queryFn: async () => {
       // First try with selected categories
       if (selectedCategories.length > 0 && selectedCategories.length < CATEGORIES.length) {
-        const { data, error } = await supabase.from("flow_items").select("*")
+        const { data, error } = await supabase.from("flow_items").select("*, profiles!flow_items_user_id_fkey(display_name, avatar_url)")
           .in("category", selectedCategories)
           .order("created_at", { ascending: false }).limit(100);
-        if (error) throw error;
-        if (data && data.length > 0) return data;
+        if (error) {
+          // Fallback without join if FK doesn't exist
+          const { data: d2, error: e2 } = await supabase.from("flow_items").select("*")
+            .in("category", selectedCategories)
+            .order("created_at", { ascending: false }).limit(100);
+          if (e2) throw e2;
+          if (d2 && d2.length > 0) return d2;
+        } else if (data && data.length > 0) return data;
       }
       // Fallback: fetch all items regardless of category
       const { data, error } = await supabase.from("flow_items").select("*")
@@ -190,7 +197,8 @@ const FlowModePage = () => {
         link_url: newLink || null,
         file_url: fileUrl,
         content_type: contentType,
-      });
+        creator_name: newCreatorName || null,
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -200,6 +208,7 @@ const FlowModePage = () => {
       setNewDesc("");
       setNewLink("");
       setNewFile(null);
+      setNewCreatorName("");
       toast.success("Content shared to Flow!");
     },
     onError: (e: any) => toast.error(e.message),
@@ -234,7 +243,7 @@ const FlowModePage = () => {
     const targetItem = item || currentItem;
     if (!targetItem) return;
     if (navigator.vibrate) navigator.vibrate(20);
-    if (soundEnabled) playSwipeSound(action === "save" ? "up" : action === "dislike" ? "down" : action === "share" ? "left" : "right");
+    if (soundEnabled) playSwipeSound(action === "save" ? "up" : action === "dislike" ? "left" : action === "share" ? "down" : "right");
 
     if (action === "save") {
       if (smartboardId) {
@@ -524,10 +533,10 @@ const FlowModePage = () => {
               <ChevronUp className="h-3 w-3" /> Save
             </span>
             <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <ChevronDown className="h-3 w-3" /> Pass
+              <ChevronLeft className="h-3 w-3" /> Pass
             </span>
             <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <ChevronLeft className="h-3 w-3" /> Share
+              <ChevronDown className="h-3 w-3" /> Share
             </span>
             <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <ChevronRight className="h-3 w-3" /> Next
@@ -578,6 +587,7 @@ const FlowModePage = () => {
             className="space-y-4"
           >
             <Input placeholder="Title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
+            <Input placeholder="Creator / Artist name (optional)" value={newCreatorName} onChange={(e) => setNewCreatorName(e.target.value)} />
             <Textarea placeholder="Description (optional)" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={3} />
             <Select value={newCategory} onValueChange={(val) => { setNewCategory(val); setNewFile(null); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>

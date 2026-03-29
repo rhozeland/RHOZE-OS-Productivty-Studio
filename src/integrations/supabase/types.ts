@@ -542,6 +542,7 @@ export type Database = {
           category: string
           content_type: string
           created_at: string
+          creator_name: string | null
           description: string | null
           file_url: string | null
           id: string
@@ -554,6 +555,7 @@ export type Database = {
           category?: string
           content_type?: string
           created_at?: string
+          creator_name?: string | null
           description?: string | null
           file_url?: string | null
           id?: string
@@ -566,6 +568,7 @@ export type Database = {
           category?: string
           content_type?: string
           created_at?: string
+          creator_name?: string | null
           description?: string | null
           file_url?: string | null
           id?: string
