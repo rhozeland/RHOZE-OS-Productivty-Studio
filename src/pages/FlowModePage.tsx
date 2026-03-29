@@ -397,7 +397,7 @@ const FlowModePage = () => {
 
   // ──── MAIN SWIPE VIEW ────
   return (
-    <div className="relative flex flex-col min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8">
+    <div ref={flowContentRef} className="relative flex flex-col min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8">
       {/* Dynamic background */}
       <FlowCardBackground
         fileUrl={currentItem?.file_url}
