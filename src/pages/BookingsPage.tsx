@@ -133,17 +133,13 @@ const BookingsPage = () => {
       if (booking.service_id && user) {
         const { data: service } = await supabase.from("services").select("credits_cost").eq("id", booking.service_id).single();
         if (service && service.credits_cost > 0) {
-          const { data: creditRow } = await supabase.from("user_credits").select("balance").eq("user_id", user.id).single();
-          if (creditRow) {
-            await supabase.from("user_credits").update({ balance: creditRow.balance + service.credits_cost }).eq("user_id", user.id);
-            await supabase.from("credit_transactions").insert({
-              user_id: user.id,
-              amount: service.credits_cost,
-              type: "refund",
-              description: `Refund: ${booking.title} (cancelled)`,
-            });
-            creditsRefunded = service.credits_cost;
-          }
+          await supabase.rpc("adjust_user_credits", {
+            _user_id: user.id,
+            _amount: service.credits_cost,
+            _type: "refund",
+            _description: `Refund: ${booking.title} (cancelled)`,
+          });
+          creditsRefunded = service.credits_cost;
         }
       }
 

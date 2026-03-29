@@ -2179,6 +2179,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      adjust_user_credits: {
+        Args: {
+          _amount: number
+          _description: string
+          _payment_method?: string
+          _type: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       cleanup_old_notifications: { Args: never; Returns: undefined }
       convert_inquiry_to_project: {
         Args: {
@@ -2234,6 +2244,18 @@ export type Database = {
       }
       release_milestone_credits: {
         Args: { _approver_id: string; _milestone_id: string }
+        Returns: undefined
+      }
+      update_user_subscription: {
+        Args: {
+          _description: string
+          _payment_method?: string
+          _subscription_end: string
+          _subscription_start: string
+          _tier: string
+          _tier_credits_monthly: number
+          _user_id: string
+        }
         Returns: undefined
       }
     }

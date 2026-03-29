@@ -234,23 +234,17 @@ const CalendarPage = () => {
       // Deduct credits atomically after successful booking
       if (paymentMethod === "credits" && service) {
         // Use atomic decrement to avoid race conditions
-        const { error: deductError } = await supabase
-          .from("user_credits")
-          .update({ balance: (userCredits?.balance ?? 0) - service.credits_cost, updated_at: new Date().toISOString() })
-          .eq("user_id", user.id);
+        const { error: deductError } = await supabase.rpc("adjust_user_credits", {
+          _user_id: user.id,
+          _amount: -service.credits_cost,
+          _type: "usage",
+          _description: `Booking: ${service.title} (${duration}h)`,
+          _payment_method: "credits",
+        });
         if (deductError) {
           console.error("Credit deduction failed:", deductError);
           toast.error("Credit deduction failed — please contact support");
         }
-
-        const { error: txError } = await supabase.from("credit_transactions").insert({
-          user_id: user.id,
-          amount: -service.credits_cost,
-          type: "usage",
-          description: `Booking: ${service.title} (${duration}h)`,
-          payment_method: "credits",
-        });
-        if (txError) console.error("Transaction log failed:", txError);
       }
 
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
@@ -311,17 +305,13 @@ const CalendarPage = () => {
       if (booking.service_id && user) {
         const { data: service } = await supabase.from("services").select("credits_cost").eq("id", booking.service_id).single();
         if (service && service.credits_cost > 0) {
-          const { data: creditRow } = await supabase.from("user_credits").select("balance").eq("user_id", user.id).single();
-          if (creditRow) {
-            await supabase.from("user_credits").update({ balance: creditRow.balance + service.credits_cost }).eq("user_id", user.id);
-            await supabase.from("credit_transactions").insert({
-              user_id: user.id,
-              amount: service.credits_cost,
-              type: "refund",
-              description: `Refund: ${booking.title} (cancelled)`,
-            });
-            creditsRefunded = service.credits_cost;
-          }
+          await supabase.rpc("adjust_user_credits", {
+            _user_id: user.id,
+            _amount: service.credits_cost,
+            _type: "refund",
+            _description: `Refund: ${booking.title} (cancelled)`,
+          });
+          creditsRefunded = service.credits_cost;
         }
       }
 

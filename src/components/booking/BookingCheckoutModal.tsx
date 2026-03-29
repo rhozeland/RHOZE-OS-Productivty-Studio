@@ -139,18 +139,13 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
           setLoading(false);
           return;
         }
-        const { error: creditError } = await supabase
-          .from("user_credits")
-          .update({ balance: userCredits - service.credits_cost })
-          .eq("user_id", user.id);
-        if (creditError) throw creditError;
-
-        await supabase.from("credit_transactions").insert({
-          user_id: user.id,
-          amount: -service.credits_cost,
-          type: "usage",
-          description: `Booking: ${service.title}`,
+        const { error: creditError } = await supabase.rpc("adjust_user_credits", {
+          _user_id: user.id,
+          _amount: -service.credits_cost,
+          _type: "usage",
+          _description: `Booking: ${service.title}`,
         });
+        if (creditError) throw creditError;
       } else if (paymentMethod === "card") {
         const token = tokenOverride || cardToken;
         if (!token) {
