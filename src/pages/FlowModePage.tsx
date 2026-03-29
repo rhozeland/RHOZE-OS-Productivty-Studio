@@ -521,7 +521,7 @@ const FlowModePage = () => {
       {/* ═══ SWIPE VIEW ═══ */}
       {viewMode === "swipe" && (
         <div className="relative z-10 flex flex-1 items-center justify-center px-4 pb-36 pt-2 md:pb-40">
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence mode="wait">
             {currentItem ? (
               <motion.div
                 key={`${currentItem.id}-${currentIndex}`}
