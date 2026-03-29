@@ -666,25 +666,25 @@ const FlowModePage = () => {
       <AnimatePresence>
         {currentItem && viewMode === "swipe" && showIdleHints && !showTutorialOverlay && (
           <>
-            {/* Top — Save */}
+            {/* Top — Save (centered in the card area) */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
-              className="pointer-events-none absolute top-16 left-1/2 -translate-x-1/2 z-40"
+              className="pointer-events-none absolute left-0 right-0 top-16 z-40 flex justify-center"
             >
               <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
                 <ChevronUp className="h-3 w-3" /> Save
               </span>
             </motion.div>
-            {/* Bottom — Share */}
+            {/* Bottom — Share (centered in the card area, above dock) */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.4, ease: "easeOut", delay: 0.05 }}
-              className="pointer-events-none absolute bottom-28 left-1/2 -translate-x-1/2 z-40 md:bottom-32"
+              className="pointer-events-none absolute left-0 right-0 bottom-28 z-40 flex justify-center md:bottom-32"
             >
               <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
                 <ChevronDown className="h-3 w-3" /> Share
