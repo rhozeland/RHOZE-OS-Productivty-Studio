@@ -258,6 +258,16 @@ const FlowModePage = () => {
     setSelectedCategories(cats);
     localStorage.setItem(`flow-calibrated-${user?.id}`, JSON.stringify(cats));
     setCalibrated(true);
+
+    // Show tutorial for first-time users after calibration
+    const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${user?.id}`);
+    if (!tutorialSeen) {
+      setShowTutorialOverlay(true);
+      tutorialTimerRef.current = setTimeout(() => {
+        setShowTutorialOverlay(false);
+        localStorage.setItem(`flow-tutorial-seen-${user?.id}`, "true");
+      }, 8000);
+    }
   };
 
   const advanceCard = useCallback(() => {
