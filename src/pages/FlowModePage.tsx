@@ -63,7 +63,10 @@ const FlowModePage = () => {
   const queryClient = useQueryClient();
   const [calibrated, setCalibrated] = useState(false);
   const [showIdleHints, setShowIdleHints] = useState(false);
+  const [showTutorialOverlay, setShowTutorialOverlay] = useState(false);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tutorialTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flowContentRef = useRef<HTMLDivElement | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expandedCard, setExpandedCard] = useState(false);
@@ -106,12 +109,26 @@ const FlowModePage = () => {
     ["0 8px 30px -8px hsl(var(--foreground) / 0.15)", "0 20px 40px -12px hsl(var(--foreground) / 0.08)", "0 8px 30px -8px hsl(var(--foreground) / 0.15)"]
   );
 
+  // Load calibration & check if tutorial was seen
   useEffect(() => {
     const saved = localStorage.getItem(`flow-calibrated-${user?.id}`);
     if (saved) {
       setCalibrated(true);
       setSelectedCategories(JSON.parse(saved));
+
+      // Show tutorial overlay for first-time users
+      const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${user?.id}`);
+      if (!tutorialSeen) {
+        setShowTutorialOverlay(true);
+        tutorialTimerRef.current = setTimeout(() => {
+          setShowTutorialOverlay(false);
+          localStorage.setItem(`flow-tutorial-seen-${user?.id}`, "true");
+        }, 8000);
+      }
     }
+    return () => {
+      if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
+    };
   }, [user]);
 
   const { data: flowItems } = useQuery({
@@ -241,6 +258,16 @@ const FlowModePage = () => {
     setSelectedCategories(cats);
     localStorage.setItem(`flow-calibrated-${user?.id}`, JSON.stringify(cats));
     setCalibrated(true);
+
+    // Show tutorial for first-time users after calibration
+    const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${user?.id}`);
+    if (!tutorialSeen) {
+      setShowTutorialOverlay(true);
+      tutorialTimerRef.current = setTimeout(() => {
+        setShowTutorialOverlay(false);
+        localStorage.setItem(`flow-tutorial-seen-${user?.id}`, "true");
+      }, 8000);
+    }
   };
 
   const advanceCard = useCallback(() => {
@@ -370,7 +397,7 @@ const FlowModePage = () => {
 
   // ──── MAIN SWIPE VIEW ────
   return (
-    <div className="relative flex flex-col min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8">
+    <div ref={flowContentRef} className="relative flex flex-col min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8">
       {/* Dynamic background */}
       <FlowCardBackground
         fileUrl={currentItem?.file_url}
@@ -458,6 +485,22 @@ const FlowModePage = () => {
                   >
                     <Sparkles className="h-3.5 w-3.5 mr-2" />
                     Recalibrate
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full rounded-lg text-xs mt-2"
+                    onClick={() => {
+                      setSettingsOpen(false);
+                      setShowTutorialOverlay(true);
+                      if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
+                      tutorialTimerRef.current = setTimeout(() => {
+                        setShowTutorialOverlay(false);
+                      }, 8000);
+                    }}
+                  >
+                    <ChevronUp className="h-3.5 w-3.5 mr-2" />
+                    Show Swipe Tutorial
                   </Button>
                 </div>
               </div>
@@ -555,9 +598,73 @@ const FlowModePage = () => {
         </div>
       )}
 
-      {/* ═══ CORNER SWIPE HINTS — appear on idle ═══ */}
+      {/* ═══ FULL SWIPE TUTORIAL OVERLAY — first-time or on-demand ═══ */}
       <AnimatePresence>
-        {currentItem && viewMode === "swipe" && showIdleHints && (
+        {currentItem && viewMode === "swipe" && showTutorialOverlay && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="absolute inset-0 z-50 flex items-center justify-center pointer-events-auto"
+            onClick={() => {
+              setShowTutorialOverlay(false);
+              localStorage.setItem(`flow-tutorial-seen-${user?.id}`, "true");
+              if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
+            }}
+          >
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <div className="relative flex flex-col items-center gap-8">
+              {/* Up */}
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                <span className="flex flex-col items-center gap-1 text-white/90">
+                  <ChevronUp className="h-6 w-6" />
+                  <span className="text-sm font-medium">Save</span>
+                </span>
+              </motion.div>
+              {/* Middle row: Left + Center + Right */}
+              <div className="flex items-center gap-16">
+                <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
+                  <span className="flex items-center gap-1 text-white/90">
+                    <ChevronLeft className="h-6 w-6" />
+                    <span className="text-sm font-medium">Pass</span>
+                  </span>
+                </motion.div>
+                <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.05 }}>
+                  <div className="h-16 w-16 rounded-2xl border-2 border-white/30 flex items-center justify-center">
+                    <span className="text-white/50 text-xs">Swipe</span>
+                  </div>
+                </motion.div>
+                <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
+                  <span className="flex items-center gap-1 text-white/90">
+                    <span className="text-sm font-medium">Next</span>
+                    <ChevronRight className="h-6 w-6" />
+                  </span>
+                </motion.div>
+              </div>
+              {/* Down */}
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+                <span className="flex flex-col items-center gap-1 text-white/90">
+                  <span className="text-sm font-medium">Share</span>
+                  <ChevronDown className="h-6 w-6" />
+                </span>
+              </motion.div>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="text-white/50 text-xs mt-2"
+              >
+                Tap anywhere to dismiss
+              </motion.p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══ CORNER SWIPE HINTS — appear on idle (only when tutorial not showing) ═══ */}
+      <AnimatePresence>
+        {currentItem && viewMode === "swipe" && showIdleHints && !showTutorialOverlay && (
           <>
             {/* Top — Save */}
             <motion.div
@@ -565,7 +672,7 @@ const FlowModePage = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
-              className="pointer-events-none fixed top-16 left-1/2 -translate-x-1/2 z-40"
+              className="pointer-events-none absolute top-16 left-1/2 -translate-x-1/2 z-40"
             >
               <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
                 <ChevronUp className="h-3 w-3" /> Save
@@ -577,19 +684,19 @@ const FlowModePage = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.4, ease: "easeOut", delay: 0.05 }}
-              className="pointer-events-none fixed bottom-28 left-1/2 -translate-x-1/2 z-40 md:bottom-32"
+              className="pointer-events-none absolute bottom-28 left-1/2 -translate-x-1/2 z-40 md:bottom-32"
             >
               <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
                 <ChevronDown className="h-3 w-3" /> Share
               </span>
             </motion.div>
-            {/* Left — Pass */}
+            {/* Left — Pass (constrained inside content, not overlapping sidebar) */}
             <motion.div
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 10 }}
               transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
-              className="pointer-events-none fixed left-3 top-1/2 -translate-y-1/2 z-40 md:left-6"
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 z-40 md:left-8"
             >
               <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
                 <ChevronLeft className="h-3 w-3" /> Pass
@@ -601,7 +708,7 @@ const FlowModePage = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.4, ease: "easeOut", delay: 0.15 }}
-              className="pointer-events-none fixed right-3 top-1/2 -translate-y-1/2 z-40 md:right-6"
+              className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 z-40 md:right-8"
             >
               <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
                 Next <ChevronRight className="h-3 w-3" />
