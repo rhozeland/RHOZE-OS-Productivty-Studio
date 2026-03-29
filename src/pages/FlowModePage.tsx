@@ -598,9 +598,73 @@ const FlowModePage = () => {
         </div>
       )}
 
-      {/* ═══ CORNER SWIPE HINTS — appear on idle ═══ */}
+      {/* ═══ FULL SWIPE TUTORIAL OVERLAY — first-time or on-demand ═══ */}
       <AnimatePresence>
-        {currentItem && viewMode === "swipe" && showIdleHints && (
+        {currentItem && viewMode === "swipe" && showTutorialOverlay && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="absolute inset-0 z-50 flex items-center justify-center pointer-events-auto"
+            onClick={() => {
+              setShowTutorialOverlay(false);
+              localStorage.setItem(`flow-tutorial-seen-${user?.id}`, "true");
+              if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
+            }}
+          >
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <div className="relative flex flex-col items-center gap-8">
+              {/* Up */}
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                <span className="flex flex-col items-center gap-1 text-white/90">
+                  <ChevronUp className="h-6 w-6" />
+                  <span className="text-sm font-medium">Save</span>
+                </span>
+              </motion.div>
+              {/* Middle row: Left + Center + Right */}
+              <div className="flex items-center gap-16">
+                <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
+                  <span className="flex items-center gap-1 text-white/90">
+                    <ChevronLeft className="h-6 w-6" />
+                    <span className="text-sm font-medium">Pass</span>
+                  </span>
+                </motion.div>
+                <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.05 }}>
+                  <div className="h-16 w-16 rounded-2xl border-2 border-white/30 flex items-center justify-center">
+                    <span className="text-white/50 text-xs">Swipe</span>
+                  </div>
+                </motion.div>
+                <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
+                  <span className="flex items-center gap-1 text-white/90">
+                    <span className="text-sm font-medium">Next</span>
+                    <ChevronRight className="h-6 w-6" />
+                  </span>
+                </motion.div>
+              </div>
+              {/* Down */}
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+                <span className="flex flex-col items-center gap-1 text-white/90">
+                  <span className="text-sm font-medium">Share</span>
+                  <ChevronDown className="h-6 w-6" />
+                </span>
+              </motion.div>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="text-white/50 text-xs mt-2"
+              >
+                Tap anywhere to dismiss
+              </motion.p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══ CORNER SWIPE HINTS — appear on idle (only when tutorial not showing) ═══ */}
+      <AnimatePresence>
+        {currentItem && viewMode === "swipe" && showIdleHints && !showTutorialOverlay && (
           <>
             {/* Top — Save */}
             <motion.div
@@ -608,7 +672,7 @@ const FlowModePage = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
-              className="pointer-events-none fixed top-16 left-1/2 -translate-x-1/2 z-40"
+              className="pointer-events-none absolute top-16 left-1/2 -translate-x-1/2 z-40"
             >
               <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
                 <ChevronUp className="h-3 w-3" /> Save
@@ -620,19 +684,19 @@ const FlowModePage = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.4, ease: "easeOut", delay: 0.05 }}
-              className="pointer-events-none fixed bottom-28 left-1/2 -translate-x-1/2 z-40 md:bottom-32"
+              className="pointer-events-none absolute bottom-28 left-1/2 -translate-x-1/2 z-40 md:bottom-32"
             >
               <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
                 <ChevronDown className="h-3 w-3" /> Share
               </span>
             </motion.div>
-            {/* Left — Pass */}
+            {/* Left — Pass (constrained inside content, not overlapping sidebar) */}
             <motion.div
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 10 }}
               transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
-              className="pointer-events-none fixed left-3 top-1/2 -translate-y-1/2 z-40 md:left-6"
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 z-40 md:left-8"
             >
               <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
                 <ChevronLeft className="h-3 w-3" /> Pass
@@ -644,7 +708,7 @@ const FlowModePage = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.4, ease: "easeOut", delay: 0.15 }}
-              className="pointer-events-none fixed right-3 top-1/2 -translate-y-1/2 z-40 md:right-6"
+              className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 z-40 md:right-8"
             >
               <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
                 Next <ChevronRight className="h-3 w-3" />
