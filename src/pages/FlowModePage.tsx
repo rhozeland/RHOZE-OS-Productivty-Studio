@@ -234,7 +234,7 @@ const FlowModePage = () => {
     const targetItem = item || currentItem;
     if (!targetItem) return;
     if (navigator.vibrate) navigator.vibrate(20);
-    if (soundEnabled) playSwipeSound(action === "save" ? "up" : action === "dislike" ? "down" : action === "share" ? "left" : "right");
+    if (soundEnabled) playSwipeSound(action === "save" ? "up" : action === "dislike" ? "left" : action === "share" ? "down" : "right");
 
     if (action === "save") {
       if (smartboardId) {
