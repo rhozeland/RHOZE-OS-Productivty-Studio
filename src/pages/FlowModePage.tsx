@@ -197,7 +197,8 @@ const FlowModePage = () => {
         link_url: newLink || null,
         file_url: fileUrl,
         content_type: contentType,
-      });
+        creator_name: newCreatorName || null,
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
