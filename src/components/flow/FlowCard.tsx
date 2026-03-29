@@ -95,14 +95,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
 
   return (
     <>
-      <div className="relative rounded-[20px] bg-card shadow-2xl shadow-foreground/5 overflow-hidden border border-border/40 select-none">
-        {/* ═══ Category badge — always visible at top ═══ */}
-        <div className="absolute top-3 left-3 z-10">
-          <Badge className={`${catColor} border-0 rounded-full text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 flex items-center gap-1`}>
-            <CatIcon className="h-3 w-3" />
-            {item.category}
-          </Badge>
-        </div>
+      <div className="relative rounded-[24px] bg-card/60 backdrop-blur-xl shadow-2xl shadow-foreground/5 overflow-hidden border border-border/20 select-none">
 
         {/* ═══ PHOTO / DESIGN — Full image with click to enlarge ═══ */}
         {isImage && item.file_url && (
