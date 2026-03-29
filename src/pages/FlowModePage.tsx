@@ -686,7 +686,7 @@ const FlowModePage = () => {
               transition={{ duration: 0.4, ease: "easeOut", delay: 0.05 }}
               className="pointer-events-none absolute left-0 right-0 bottom-28 z-40 flex justify-center md:bottom-32"
             >
-              <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
+              <span className="flex items-center gap-1 rounded-full bg-card/80 border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm" style={{ textShadow: "0 1px 2px hsl(var(--background) / 0.5)" }}>
                 <ChevronDown className="h-3 w-3" /> Share
               </span>
             </motion.div>
