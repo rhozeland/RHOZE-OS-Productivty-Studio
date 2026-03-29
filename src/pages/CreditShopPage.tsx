@@ -147,32 +147,16 @@ const CreditShopPage = () => {
         endDate.setMonth(endDate.getMonth() + 1);
       }
 
-      const payload = {
-        balance: (userCredits?.balance as number) ?? 0,
-        tier: tier.key,
-        tier_credits_monthly: 0,
-        subscription_start: now.toISOString().split("T")[0],
-        subscription_end: endDate.toISOString().split("T")[0],
-      };
-
-      if (userCredits) {
-        const { error } = await supabase.from("user_credits").update(payload).eq("user_id", user!.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("user_credits").insert({ user_id: user!.id, ...payload });
-        if (error) throw error;
-      }
-
-      const { error: txError } = await supabase
-        .from("credit_transactions")
-        .insert({
-          user_id: user!.id,
-          amount: 0,
-          type: "subscription",
-          description: `${tier.name} subscription — ${billingCycle}`,
-          payment_method: subPaymentMethod,
-        });
-      if (txError) throw txError;
+      const { error } = await supabase.rpc("update_user_subscription", {
+        _user_id: user!.id,
+        _tier: tier.key,
+        _tier_credits_monthly: 0,
+        _subscription_start: now.toISOString().split("T")[0],
+        _subscription_end: endDate.toISOString().split("T")[0],
+        _description: `${tier.name} subscription — ${billingCycle}`,
+        _payment_method: subPaymentMethod,
+      });
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-credits"] });
