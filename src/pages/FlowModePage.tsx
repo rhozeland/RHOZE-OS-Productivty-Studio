@@ -546,24 +546,61 @@ const FlowModePage = () => {
         </div>
       )}
 
-      {currentItem && viewMode === "swipe" && (
-        <div className="pointer-events-none fixed bottom-20 left-0 right-0 z-40 flex justify-center px-4 md:bottom-24">
-          <div className="inline-flex items-center gap-3 rounded-full border border-border/30 bg-card/70 px-4 py-2 backdrop-blur-sm md:gap-5 md:px-5">
-            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <ChevronUp className="h-3 w-3" /> Save
-            </span>
-            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <ChevronLeft className="h-3 w-3" /> Pass
-            </span>
-            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <ChevronDown className="h-3 w-3" /> Share
-            </span>
-            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <ChevronRight className="h-3 w-3" /> Next
-            </span>
-          </div>
-        </div>
-      )}
+      {/* ═══ CORNER SWIPE HINTS — appear on idle ═══ */}
+      <AnimatePresence>
+        {currentItem && viewMode === "swipe" && showIdleHints && (
+          <>
+            {/* Top — Save */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="pointer-events-none fixed top-16 left-1/2 -translate-x-1/2 z-40"
+            >
+              <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
+                <ChevronUp className="h-3 w-3" /> Save
+              </span>
+            </motion.div>
+            {/* Bottom — Share */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.4, ease: "easeOut", delay: 0.05 }}
+              className="pointer-events-none fixed bottom-28 left-1/2 -translate-x-1/2 z-40 md:bottom-32"
+            >
+              <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
+                <ChevronDown className="h-3 w-3" /> Share
+              </span>
+            </motion.div>
+            {/* Left — Pass */}
+            <motion.div
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
+              className="pointer-events-none fixed left-3 top-1/2 -translate-y-1/2 z-40 md:left-6"
+            >
+              <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
+                <ChevronLeft className="h-3 w-3" /> Pass
+              </span>
+            </motion.div>
+            {/* Right — Next */}
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.4, ease: "easeOut", delay: 0.15 }}
+              className="pointer-events-none fixed right-3 top-1/2 -translate-y-1/2 z-40 md:right-6"
+            >
+              <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
+                Next <ChevronRight className="h-3 w-3" />
+              </span>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Save to Board picker */}
       <Dialog open={savePickerOpen} onOpenChange={setSavePickerOpen}>
