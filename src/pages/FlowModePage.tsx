@@ -82,8 +82,8 @@ const FlowModePage = () => {
   });
   const [swipeMap] = useState({
     up: "save",
-    down: "dislike",
-    left: "share",
+    down: "share",
+    left: "dislike",
     right: "skip",
   });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
