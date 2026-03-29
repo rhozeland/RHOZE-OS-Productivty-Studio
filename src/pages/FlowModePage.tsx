@@ -62,6 +62,8 @@ const FlowModePage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [calibrated, setCalibrated] = useState(false);
+  const [showIdleHints, setShowIdleHints] = useState(false);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expandedCard, setExpandedCard] = useState(false);
