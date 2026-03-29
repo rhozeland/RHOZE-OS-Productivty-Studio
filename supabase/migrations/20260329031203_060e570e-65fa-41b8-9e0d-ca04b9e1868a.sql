@@ -1,0 +1,1 @@
+ALTER TABLE public.flow_items ADD COLUMN IF NOT EXISTS creator_name text DEFAULT null;
