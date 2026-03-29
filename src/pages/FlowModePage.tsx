@@ -698,7 +698,7 @@ const FlowModePage = () => {
               transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
               className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 z-40 md:left-8"
             >
-              <span className="flex items-center gap-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm">
+              <span className="flex items-center gap-1 rounded-full bg-card/80 border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm" style={{ textShadow: "0 1px 2px hsl(var(--background) / 0.5)" }}>
                 <ChevronLeft className="h-3 w-3" /> Pass
               </span>
             </motion.div>
