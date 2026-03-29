@@ -75,6 +75,7 @@ const FlowModePage = () => {
   const [newCategory, setNewCategory] = useState("design");
   const [newLink, setNewLink] = useState("");
   const [newFile, setNewFile] = useState<File | null>(null);
+  const [newCreatorName, setNewCreatorName] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(() => {
     const saved = localStorage.getItem("flow-sound-enabled");
