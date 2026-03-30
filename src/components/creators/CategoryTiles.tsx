@@ -1,11 +1,14 @@
 import { Music, Palette, Camera, Video, PenTool } from "lucide-react";
 
+import { Music, Palette, Camera, Video, PenTool, Users } from "lucide-react";
+
 const CATEGORIES = [
   { key: "music", label: "Audio", icon: Music, accent: "hsl(280 60% 55%)" },
   { key: "design", label: "Design", icon: Palette, accent: "hsl(160 60% 50%)" },
   { key: "photo", label: "Photo", icon: Camera, accent: "hsl(35 90% 55%)" },
   { key: "video", label: "Video", icon: Video, accent: "hsl(340 70% 55%)" },
   { key: "writing", label: "Writing", icon: PenTool, accent: "hsl(210 60% 55%)" },
+  { key: "talent", label: "Talent", icon: Users, accent: "hsl(25 80% 55%)" },
 ];
 
 interface CategoryTilesProps {
