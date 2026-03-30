@@ -26,8 +26,14 @@ const detectPlatform = (url?: string | null) => {
 };
 
 const getYouTubeId = (url: string) => {
-  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?\s]+)/);
-  return match?.[1] || null;
+  try {
+    const cleaned = decodeURIComponent(url);
+    const match = cleaned.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([A-Za-z0-9_-]{11})/);
+    return match?.[1] || null;
+  } catch {
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([A-Za-z0-9_-]{11})/);
+    return match?.[1] || null;
+  }
 };
 
 const getSpotifyEmbed = (url: string) => {
