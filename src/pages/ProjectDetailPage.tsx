@@ -76,6 +76,20 @@ const ProjectDetailPage = () => {
     },
   });
 
+  const { data: milestones } = useQuery({
+    queryKey: ["project-milestones", contract?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_milestones")
+        .select("*")
+        .eq("contract_id", contract!.id)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!contract,
+  });
+
   // Linked smartboards
   const { data: linkedSmartboards } = useQuery({
     queryKey: ["project-smartboards", id],
