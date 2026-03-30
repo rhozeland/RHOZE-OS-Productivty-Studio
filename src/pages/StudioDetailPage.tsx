@@ -235,6 +235,53 @@ const StudioDetailPage = () => {
             </div>
           )}
 
+          {/* Services */}
+          {studioServices && studioServices.length > 0 && (
+            <div>
+              <h2 className="font-display text-lg font-semibold text-foreground mb-3">Services Offered</h2>
+              <div className="space-y-2">
+                {studioServices.map((svc: any) => (
+                  <div key={svc.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/50">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{svc.title}</p>
+                      {svc.description && <p className="text-xs text-muted-foreground mt-0.5">{svc.description}</p>}
+                    </div>
+                    <div className="text-right shrink-0 ml-3">
+                      <p className="text-sm font-semibold text-foreground">${svc.price}</p>
+                      <p className="text-xs text-muted-foreground">{svc.duration_hours}h</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Gallery */}
+          {(() => {
+            const photos = (studio.gallery_urls || []).filter((u: string) => !u.startsWith("[VIDEO]"));
+            const videoUrl = (studio.gallery_urls || []).find((u: string) => u.startsWith("[VIDEO]"))?.replace("[VIDEO]", "");
+            if (photos.length === 0 && !videoUrl) return null;
+            return (
+              <div>
+                <h2 className="font-display text-lg font-semibold text-foreground mb-3">Gallery</h2>
+                {photos.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+                    {photos.map((url: string, i: number) => (
+                      <div key={i} className="aspect-square rounded-lg overflow-hidden border border-border">
+                        <img src={url} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {videoUrl && (
+                  <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                    <iframe src={videoUrl} className="w-full h-full" allowFullScreen title="Studio video" />
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {/* Studio Hours */}
           {availability && availability.length > 0 && (
             <div>
