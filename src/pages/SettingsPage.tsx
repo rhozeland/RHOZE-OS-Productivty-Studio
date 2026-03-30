@@ -228,19 +228,6 @@ const SettingsPage = () => {
     }
   };
 
-  const handleEmojiAvatar = async (emoji: string) => {
-    if (!user) return;
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
-      <rect width="200" height="200" fill="hsl(175,60%,92%)" rx="100"/>
-      <text x="100" y="130" font-size="100" text-anchor="middle">${emoji}</text>
-    </svg>`;
-    const dataUrl = `data:image/svg+xml,${encodeURIComponent(svg)}`;
-    setAvatarUrl(dataUrl);
-    await supabase.from("profiles").update({ avatar_url: dataUrl }).eq("user_id", user.id);
-    queryClient.invalidateQueries({ queryKey: ["my-profile"] });
-    setShowAvatarPicker(false);
-    toast.success("Avatar updated!");
-  };
 
   const updateProfile = useMutation({
     mutationFn: async () => {
