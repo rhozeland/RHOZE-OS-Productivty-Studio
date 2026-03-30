@@ -2305,6 +2305,14 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_profiles_by_ids: {
+        Args: { _ids: string[] }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          user_id: string
+        }[]
+      }
       get_public_profile: {
         Args: { _user_id: string }
         Returns: {

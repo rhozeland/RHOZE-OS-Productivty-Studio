@@ -42,7 +42,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
     enabled: !!collaborators && collaborators.length > 0,
     queryFn: async () => {
       const ids = collaborators!.map((c) => c.user_id);
-      const { data, error } = await supabase.from("profiles").select("*").in("user_id", ids);
+      const { data, error } = await supabase.rpc("get_profiles_by_ids", { _ids: ids });
       if (error) throw error;
       return data;
     },
