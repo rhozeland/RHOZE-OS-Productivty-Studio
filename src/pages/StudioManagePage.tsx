@@ -417,6 +417,19 @@ const StudioManagePage = () => {
           </div>
         </TabsContent>
 
+        {/* Media */}
+        <TabsContent value="media" className="space-y-4 mt-4">
+          <StudioMediaManager
+            studioId={id!}
+            coverImageUrl={studio.cover_image_url}
+            galleryUrls={studio.gallery_urls as string[] | null}
+            onUpdate={() => {
+              queryClient.invalidateQueries({ queryKey: ["studio-manage", id] });
+              queryClient.invalidateQueries({ queryKey: ["studio", id] });
+            }}
+          />
+        </TabsContent>
+
         {/* Hours */}
         <TabsContent value="hours" className="space-y-4 mt-4">
           <div className="surface-card p-6 space-y-4">
