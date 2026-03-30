@@ -1,7 +1,17 @@
 import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Download, Shuffle, RotateCcw, Palette } from "lucide-react";
+import { Download, Shuffle, RotateCcw, Palette, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import {
   SectionKey,
@@ -18,10 +28,12 @@ import FillControls from "./logo-customizer/FillControls";
 
 interface LogoCustomizerProps {
   onExport?: (dataUrl: string) => void;
+  onSave?: (dataUrl: string) => void;
   compact?: boolean;
 }
 
-const LogoCustomizer = ({ onExport, compact = false }: LogoCustomizerProps) => {
+const LogoCustomizer = ({ onExport, onSave, compact = false }: LogoCustomizerProps) => {
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [fills, setFills] = useState<Record<SectionKey, SectionFill>>(
     JSON.parse(JSON.stringify(DEFAULT_FILLS))
   );
@@ -104,6 +116,13 @@ const LogoCustomizer = ({ onExport, compact = false }: LogoCustomizerProps) => {
     a.download = "my-toybox-logo.png";
     a.click();
   }, [renderToCanvas, onExport]);
+
+  const handleSaveAsAvatar = useCallback(async () => {
+    const dataUrl = await renderToCanvas();
+    if (!dataUrl) return;
+    onSave?.(dataUrl);
+    setShowSaveConfirm(false);
+  }, [renderToCanvas, onSave]);
 
   // Preview swatch for section pills
   const getSectionPreview = (key: SectionKey): React.CSSProperties => {
@@ -237,7 +256,7 @@ const LogoCustomizer = ({ onExport, compact = false }: LogoCustomizerProps) => {
       )}
 
       {/* Action buttons */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap justify-center">
         <Button variant="outline" size="sm" onClick={randomize} className="rounded-xl gap-1.5">
           <Shuffle className="w-3.5 h-3.5" />
           Randomize
@@ -250,7 +269,31 @@ const LogoCustomizer = ({ onExport, compact = false }: LogoCustomizerProps) => {
           <Download className="w-3.5 h-3.5" />
           Export
         </Button>
+        {onSave && (
+          <Button size="sm" onClick={() => setShowSaveConfirm(true)} className="rounded-xl gap-1.5">
+            <Save className="w-3.5 h-3.5" />
+            Set as Display Picture
+          </Button>
+        )}
       </div>
+
+      {/* Confirmation dialog */}
+      <AlertDialog open={showSaveConfirm} onOpenChange={setShowSaveConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Replace display picture?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will replace your current profile picture with your customized ToyBox logo. You can always change it back later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction className="rounded-xl" onClick={handleSaveAsAvatar}>
+              Replace
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
