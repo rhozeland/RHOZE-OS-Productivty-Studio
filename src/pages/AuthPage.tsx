@@ -35,8 +35,8 @@ const AuthPage = () => {
         if (error) throw error;
 
         if (data.session) {
-          toast.success("Account created — you're signed in.");
-          navigate("/dashboard", { replace: true });
+          toast.success("Account created — let's set things up!");
+          navigate("/onboarding", { replace: true });
           return;
         }
 

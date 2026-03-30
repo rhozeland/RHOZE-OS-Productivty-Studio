@@ -33,6 +33,7 @@ import StudioApplicationPage from "@/pages/StudioApplicationPage";
 import StudioManagePage from "@/pages/StudioManagePage";
 import ExploreStudiosPage from "@/pages/ExploreStudiosPage";
 import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
+import OnboardingPage from "@/pages/OnboardingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -66,6 +67,7 @@ const App = () => (
             {/* Public routes — no auth required */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
+            <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
             <Route path="/explore/studios" element={<ExploreStudiosPage />} />
             <Route path="/explore/studios/:id" element={<ExploreStudiosPage />} />
             <Route path="/explore/creators" element={<ExploreCreatorsPage />} />
