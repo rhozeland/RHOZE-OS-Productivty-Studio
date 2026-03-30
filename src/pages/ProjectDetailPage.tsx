@@ -25,8 +25,8 @@ import ProjectBudget from "@/components/project/ProjectBudget";
 import ProgressChart from "@/components/project/ProgressChart";
 import Timeline from "@/components/project/Timeline";
 import Collaborators from "@/components/project/Collaborators";
-import MilestoneTracker from "@/components/project/MilestoneTracker";
-import ProjectApproval from "@/components/project/ProjectApproval";
+
+
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -74,6 +74,20 @@ const ProjectDetailPage = () => {
       if (error) throw error;
       return data;
     },
+  });
+
+  const { data: milestones } = useQuery({
+    queryKey: ["project-milestones", contract?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_milestones")
+        .select("*")
+        .eq("contract_id", contract!.id)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!contract,
   });
 
   // Linked smartboards
@@ -251,10 +265,7 @@ const ProjectDetailPage = () => {
           {project.project_type !== "collaborative" && (
             <TabsTrigger value="budget">Budget</TabsTrigger>
           )}
-          {project.project_type !== "collaborative" && contract && (
-            <TabsTrigger value="milestones">Milestones</TabsTrigger>
-          )}
-          <TabsTrigger value="approval">Approval</TabsTrigger>
+          
           <TabsTrigger value="team">Team</TabsTrigger>
         </TabsList>
 
@@ -272,7 +283,14 @@ const ProjectDetailPage = () => {
             <TabsContent value="stages" className="space-y-6 mt-4">
               <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2">
-                  <StageRoadmap goals={goals} projectId={id!} />
+                  <StageRoadmap
+                    goals={goals}
+                    projectId={id!}
+                    projectTitle={project.title}
+                    contract={contract}
+                    milestones={milestones}
+                    isCollaborative={project.project_type === "collaborative"}
+                  />
                 </div>
                 <div>
                   <Timeline goals={goals} />
@@ -305,20 +323,8 @@ const ProjectDetailPage = () => {
           </TabsContent>
         )}
 
-        {project.project_type !== "collaborative" && contract && (
-          <TabsContent value="milestones">
-            <MilestoneTracker contractId={contract.id} />
-          </TabsContent>
-        )}
 
 
-        <TabsContent value="approval">
-          <ProjectApproval
-            projectId={id!}
-            projectTitle={project.title}
-            clientName={(project as any).client_name}
-          />
-        </TabsContent>
 
 
         <TabsContent value="team">

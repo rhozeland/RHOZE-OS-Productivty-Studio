@@ -44,6 +44,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import StageApproval from "@/components/project/StageApproval";
 
 interface Goal {
   id: string;
@@ -66,9 +67,24 @@ interface Goal {
 interface StageRoadmapProps {
   goals: Goal[] | undefined;
   projectId: string;
+  projectTitle?: string;
+  contract?: {
+    id: string;
+    client_id: string;
+    specialist_id: string;
+    status: string;
+  } | null;
+  milestones?: Array<{
+    id: string;
+    credit_amount: number;
+    status: string;
+    sort_order: number;
+    title: string;
+  }> | null;
+  isCollaborative?: boolean;
 }
 
-const StageRoadmap = ({ goals, projectId }: StageRoadmapProps) => {
+const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, isCollaborative }: StageRoadmapProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
@@ -707,6 +723,19 @@ const StageRoadmap = ({ goals, projectId }: StageRoadmapProps) => {
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              {/* Stage Approval */}
+              {(isComplete || (goals ?? []).filter(g => g.parent_id === stage.id).length > 0) && (
+                <StageApproval
+                  goalId={stage.id}
+                  projectId={projectId}
+                  projectTitle={projectTitle || ""}
+                  stageTitle={stage.title}
+                  stageComplete={isComplete}
+                  contract={!isCollaborative ? contract : null}
+                  milestone={!isCollaborative && milestones ? milestones.find((m, idx) => idx === i) : null}
+                />
+              )}
             </motion.div>
           );
         })}
