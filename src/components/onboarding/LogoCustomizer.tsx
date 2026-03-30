@@ -117,6 +117,13 @@ const LogoCustomizer = ({ onExport, onSave, compact = false }: LogoCustomizerPro
     a.click();
   }, [renderToCanvas, onExport]);
 
+  const handleSaveAsAvatar = useCallback(async () => {
+    const dataUrl = await renderToCanvas();
+    if (!dataUrl) return;
+    onSave?.(dataUrl);
+    setShowSaveConfirm(false);
+  }, [renderToCanvas, onSave]);
+
   // Preview swatch for section pills
   const getSectionPreview = (key: SectionKey): React.CSSProperties => {
     const fill = fills[key];
