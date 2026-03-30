@@ -66,6 +66,21 @@ const StudioDetailPage = () => {
     enabled: !!id,
   });
 
+  // Studio-specific services
+  const { data: studioServices } = useQuery({
+    queryKey: ["studio-detail-services", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("studio_services")
+        .select("*")
+        .eq("studio_id", id!)
+        .eq("is_active", true)
+        .order("sort_order");
+      return (data as any[]) ?? [];
+    },
+    enabled: !!id,
+  });
+
   const { data: availability } = useQuery({
     queryKey: ["studio-availability", id],
     queryFn: async () => {
