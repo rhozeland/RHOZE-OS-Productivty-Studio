@@ -41,13 +41,19 @@ const ProfileDetailPage = () => {
 
   const isOwnProfile = user?.id === id;
 
-  // Fetch profile
+  // Fetch profile — own profile gets full data, other users get public fields only
   const { data: profile, isLoading } = useQuery({
     queryKey: ["profile", id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("*").eq("user_id", id!).single();
+      if (isOwnProfile) {
+        const { data, error } = await supabase.from("profiles").select("*").eq("user_id", id!).single();
+        if (error) throw error;
+        return data;
+      }
+      // Use RPC for other users to avoid exposing shipping addresses
+      const { data, error } = await supabase.rpc("get_public_profile", { _user_id: id! });
       if (error) throw error;
-      return data;
+      return data?.[0] ?? null;
     },
     enabled: !!id,
   });
