@@ -1,7 +1,17 @@
 import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Download, Shuffle, RotateCcw, Palette } from "lucide-react";
+import { Download, Shuffle, RotateCcw, Palette, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import {
   SectionKey,
