@@ -178,10 +178,6 @@ const CreatorsHubPage = () => {
     switch (sortBy) {
       case "trending":
         return arr.sort((a, b) => ((inquiryCounts as any)?.[b.id] ?? 0) - ((inquiryCounts as any)?.[a.id] ?? 0));
-      case "price_low":
-        return arr.sort((a, b) => (a.credits_price ?? 0) - (b.credits_price ?? 0));
-      case "price_high":
-        return arr.sort((a, b) => (b.credits_price ?? 0) - (a.credits_price ?? 0));
       default:
         return arr;
     }
