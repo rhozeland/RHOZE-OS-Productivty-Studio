@@ -448,22 +448,6 @@ const SettingsPage = () => {
             }}
           />
         </div>
-        {showAvatarPicker === "emoji" && (
-          <div className="mt-4 p-4 rounded-lg border border-border bg-muted/30">
-            <p className="text-sm font-medium text-foreground mb-3">Choose an avatar</p>
-            <div className="grid grid-cols-8 gap-2">
-              {PRESET_AVATARS.map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => handleEmojiAvatar(emoji)}
-                  className="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-card hover:bg-primary/10 hover:border-primary transition-colors text-2xl"
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
         {showAvatarPicker === "toybox" && (
           <div className="mt-4 p-4 rounded-lg border border-border bg-muted/30">
             <p className="text-sm font-medium text-foreground mb-3">Customize your ToyBox mark</p>
