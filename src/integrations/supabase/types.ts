@@ -2206,6 +2206,37 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_public_profile: {
+        Args: { _user_id: string }
+        Returns: {
+          available: boolean
+          avatar_url: string
+          banner_gradient: string
+          banner_url: string
+          bio: string
+          created_at: string
+          display_name: string
+          headline: string
+          id: string
+          instagram_url: string
+          is_public: boolean
+          location: string
+          mediums: string[]
+          portfolio_url: string
+          profile_background: string
+          profile_layout: Json
+          show_flow_posts: boolean
+          show_offerings: boolean
+          show_public_boards: boolean
+          show_seller_stats: boolean
+          skills: string[]
+          tiktok_url: string
+          twitter_url: string
+          updated_at: string
+          user_id: string
+          youtube_url: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
