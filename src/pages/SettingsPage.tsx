@@ -24,7 +24,9 @@ import {
   AlertTriangle,
   Download,
   User,
+  Box,
 } from "lucide-react";
+import LogoCustomizer from "@/components/onboarding/LogoCustomizer";
 import { toast } from "sonner";
 
 const SectionCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
