@@ -647,7 +647,7 @@ const StudioManagePage = () => {
 
         {/* Services */}
         <TabsContent value="services" className="space-y-4 mt-4">
-          <StudioServices />
+          <StudioServiceManager studioId={id!} />
         </TabsContent>
 
         {/* Bookings */}
