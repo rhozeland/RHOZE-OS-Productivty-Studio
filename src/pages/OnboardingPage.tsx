@@ -7,6 +7,7 @@ import { LogoCustomizer } from "@/components/onboarding/LogoCustomizer";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
 const STEPS = [
   { id: "welcome", icon: Sparkles, title: "Welcome to Rhozeland" },
