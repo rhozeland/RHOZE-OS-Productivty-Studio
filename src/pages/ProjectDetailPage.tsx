@@ -269,7 +269,14 @@ const ProjectDetailPage = () => {
             <TabsContent value="stages" className="space-y-6 mt-4">
               <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2">
-                  <StageRoadmap goals={goals} projectId={id!} />
+                  <StageRoadmap
+                    goals={goals}
+                    projectId={id!}
+                    projectTitle={project.title}
+                    contract={contract}
+                    milestones={milestones}
+                    isCollaborative={project.project_type === "collaborative"}
+                  />
                 </div>
                 <div>
                   <Timeline goals={goals} />
