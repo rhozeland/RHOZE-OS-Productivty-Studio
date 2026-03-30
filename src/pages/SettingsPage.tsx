@@ -374,6 +374,25 @@ const SettingsPage = () => {
         </div>
       </SectionCard>
 
+      {/* ─── Dock Customizer ─── */}
+      <SectionCard>
+        <SectionTitle icon={LayoutDashboard}>Dock Menu</SectionTitle>
+        <p className="text-sm text-muted-foreground mb-4">
+          Choose which 5 features appear in your bottom dock bar and reorder them.
+        </p>
+        <DockCustomizer
+          dockConfig={(profile as any)?.dock_config as string[] | null}
+          onSave={async (config) => {
+            await supabase
+              .from("profiles")
+              .update({ dock_config: config } as any)
+              .eq("user_id", user!.id);
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            queryClient.invalidateQueries({ queryKey: ["my-profile-dock"] });
+          }}
+        />
+      </SectionCard>
+
       {/* ─── Avatar ─── */}
       <SectionCard>
         <SectionTitle icon={User}>Display Picture</SectionTitle>
