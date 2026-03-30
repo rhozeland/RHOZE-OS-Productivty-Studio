@@ -336,6 +336,7 @@ const StudioManagePage = () => {
       <Tabs defaultValue="details">
         <TabsList className="flex-wrap">
           <TabsTrigger value="details" className="gap-1.5"><Settings className="h-3.5 w-3.5" /> Details</TabsTrigger>
+          <TabsTrigger value="media" className="gap-1.5"><ImageIcon className="h-3.5 w-3.5" /> Media</TabsTrigger>
           <TabsTrigger value="hours" className="gap-1.5"><Clock className="h-3.5 w-3.5" /> Hours</TabsTrigger>
           <TabsTrigger value="staff" className="gap-1.5"><Users className="h-3.5 w-3.5" /> Staff</TabsTrigger>
           <TabsTrigger value="services" className="gap-1.5"><Wrench className="h-3.5 w-3.5" /> Services</TabsTrigger>
