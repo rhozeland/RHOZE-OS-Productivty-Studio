@@ -165,7 +165,7 @@ const StudioApplicationPage = () => {
               <div>
                 <h2 className="text-lg font-semibold text-foreground mb-1">Add some photos of your studio</h2>
                 <p className="text-sm text-muted-foreground">
-                  You'll need at least 1 photo to get started. You can add up to 5. Show off your space, equipment, and vibe.
+                  You'll need at least 1 photo to get started. You can add up to 12. Show off your space, equipment, and vibe.
                 </p>
               </div>
 
@@ -208,7 +208,7 @@ const StudioApplicationPage = () => {
                         )}
                       </div>
                     ))}
-                    {photos.length < 5 && (
+                    {photos.length < 12 && (
                       <button
                         onClick={() => fileInputRef.current?.click()}
                         className="aspect-[4/3] rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 hover:border-primary/50 hover:bg-primary/5 transition-colors cursor-pointer"
