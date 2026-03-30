@@ -11,7 +11,7 @@ import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
 const STEPS = [
   { id: "welcome", icon: Sparkles, title: "Welcome to Rhozeland" },
-  { id: "logo", icon: Palette, title: "Create Your Mark" },
+  { id: "logo", icon: Palette, title: "Create Your Toybox" },
   { id: "tour", icon: Layout, title: "Quick Tour" },
   { id: "ready", icon: CheckCircle2, title: "You're All Set" },
 ];
@@ -275,7 +275,7 @@ const OnboardingPage = () => {
               <div className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-8 sm:p-10">
                 <div className="text-center mb-6">
                   <h2 className="font-display text-2xl font-bold text-foreground mb-1.5">
-                    Create Your Mark
+                    Create Your Toybox
                   </h2>
                   <p className="text-sm text-muted-foreground">
                     Tap each section of the logo and pick your colors. This becomes your profile icon.
@@ -298,10 +298,25 @@ const OnboardingPage = () => {
                   <Button variant="ghost" onClick={prev} className="rounded-xl gap-1.5">
                     <ArrowLeft className="w-4 h-4" /> Back
                   </Button>
-                  <Button onClick={next} className="rounded-xl gap-1.5">
-                    {logoDataUrl ? "Next" : "Skip This"}
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={next} className="rounded-xl gap-1.5">
+                      Skip
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (!logoDataUrl) {
+                          toast("Customize and export your logo first!", { description: "Click Export to save your Toybox logo." });
+                          return;
+                        }
+                        next();
+                      }}
+                      className="rounded-xl gap-1.5"
+                    >
+                      Save & Continue
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </motion.div>
