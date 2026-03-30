@@ -90,7 +90,7 @@ const SettingsPage = () => {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
-  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [showAvatarPicker, setShowAvatarPicker] = useState<false | "emoji" | "toybox">(false);
   const [bannerGradient, setBannerGradient] = useState("");
   const [bannerImageUrl, setBannerImageUrl] = useState("");
   const [profileBackground, setProfileBackground] = useState("");
@@ -410,13 +410,25 @@ const SettingsPage = () => {
             </button>
           </div>
           <div className="space-y-2">
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
                 <Upload className="mr-2 h-4 w-4" />
                 {uploading ? "Uploading..." : "Upload Photo"}
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setShowAvatarPicker(!showAvatarPicker)}>
-                Pick Avatar
+              <Button
+                variant={showAvatarPicker === "toybox" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowAvatarPicker(showAvatarPicker === "toybox" ? false : "toybox")}
+              >
+                <Box className="mr-2 h-4 w-4" />
+                ToyBox Logo
+              </Button>
+              <Button
+                variant={showAvatarPicker === "emoji" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowAvatarPicker(showAvatarPicker === "emoji" ? false : "emoji")}
+              >
+                Emoji Avatar
               </Button>
               {avatarUrl && (
                 <Button variant="ghost" size="sm" onClick={async () => {
@@ -443,7 +455,7 @@ const SettingsPage = () => {
             }}
           />
         </div>
-        {showAvatarPicker && (
+        {showAvatarPicker === "emoji" && (
           <div className="mt-4 p-4 rounded-lg border border-border bg-muted/30">
             <p className="text-sm font-medium text-foreground mb-3">Choose an avatar</p>
             <div className="grid grid-cols-8 gap-2">
@@ -459,35 +471,37 @@ const SettingsPage = () => {
             </div>
           </div>
         )}
-      </SectionCard>
-
-      {/* ─── ToyBox Logo ─── */}
-      <SectionCard>
-        <SectionTitle icon={Box}>ToyBox Logo</SectionTitle>
-        <p className="text-xs text-muted-foreground mb-4">
-          Customize your personal ToyBox mark. Click a section, pick a color, then save it as your avatar.
-        </p>
-        <LogoCustomizer
-          compact
-          onExport={async (dataUrl) => {
-            if (!user) return;
-            try {
-              const res = await fetch(dataUrl);
-              const blob = await res.blob();
-              const path = `${user.id}/toybox-logo.png`;
-              await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/png" });
-              const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
-              const url = `${urlData.publicUrl}?t=${Date.now()}`;
-              setAvatarUrl(url);
-              await supabase.from("profiles").update({ avatar_url: url }).eq("user_id", user.id);
-              queryClient.invalidateQueries({ queryKey: ["my-profile"] });
-              queryClient.invalidateQueries({ queryKey: ["my-profile-sidebar"] });
-              toast.success("ToyBox logo set as your avatar!");
-            } catch (err: any) {
-              toast.error(err.message || "Failed to save logo");
-            }
-          }}
-        />
+        {showAvatarPicker === "toybox" && (
+          <div className="mt-4 p-4 rounded-lg border border-border bg-muted/30">
+            <p className="text-sm font-medium text-foreground mb-3">Customize your ToyBox mark</p>
+            <p className="text-xs text-muted-foreground mb-4">
+              Click a section, pick a color, then export to set it as your display picture.
+            </p>
+            <LogoCustomizer
+              compact
+              onExport={async (dataUrl) => {
+                if (!user) return;
+                const confirmed = window.confirm("This will replace your current avatar with the ToyBox logo. Continue?");
+                if (!confirmed) return;
+                try {
+                  const res = await fetch(dataUrl);
+                  const blob = await res.blob();
+                  const path = `${user.id}/toybox-logo.png`;
+                  await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/png" });
+                  const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+                  const url = `${urlData.publicUrl}?t=${Date.now()}`;
+                  setAvatarUrl(url);
+                  await supabase.from("profiles").update({ avatar_url: url }).eq("user_id", user.id);
+                  queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+                  queryClient.invalidateQueries({ queryKey: ["my-profile-sidebar"] });
+                  toast.success("ToyBox logo set as your avatar!");
+                } catch (err: any) {
+                  toast.error(err.message || "Failed to save logo");
+                }
+              }}
+            />
+          </div>
+        )}
       </SectionCard>
 
       {/* ─── Banner ─── */}
