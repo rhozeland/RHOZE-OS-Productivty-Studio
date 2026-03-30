@@ -43,6 +43,8 @@ import {
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import StudioMediaManager from "@/components/studio/StudioMediaManager";
+import StudioServiceManager from "@/components/studio/StudioServiceManager";
 
 const StudioManagePage = () => {
   const { id } = useParams<{ id: string }>();
