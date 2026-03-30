@@ -7,33 +7,36 @@ import {
   Video,
   PenTool,
   Sparkles,
-  Coins,
   Clock,
   MessageCircle,
-  ShoppingBag,
   Briefcase,
-  FileText,
-  Package,
+  Search,
+  Users,
   Play,
   Star,
+  DollarSign,
+  Theater,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import AudioPreview from "./AudioPreview";
 import StarRating from "./StarRating";
 
 const CATEGORIES: Record<string, { label: string; icon: any; color: string }> = {
+  audio: { label: "Audio", icon: Music, color: "hsl(280, 60%, 55%)" },
   music: { label: "Music", icon: Music, color: "hsl(280, 60%, 55%)" },
   design: { label: "Design", icon: Palette, color: "hsl(160, 60%, 50%)" },
   photo: { label: "Photo", icon: Camera, color: "hsl(35, 90%, 55%)" },
   video: { label: "Video", icon: Video, color: "hsl(340, 70%, 55%)" },
   writing: { label: "Writing", icon: PenTool, color: "hsl(210, 60%, 55%)" },
+  talent: { label: "Talent", icon: Theater, color: "hsl(50, 80%, 50%)" },
 };
 
 const TYPE_META: Record<string, { label: string; icon: any }> = {
-  service: { label: "Service", icon: Briefcase },
-  digital_product: { label: "Digital", icon: FileText },
-  physical_product: { label: "Physical", icon: Package },
-  project_request: { label: "Project Request", icon: ShoppingBag },
+  service: { label: "Offering", icon: Briefcase },
+  project_request: { label: "Looking For", icon: Search },
+  collaboration: { label: "Collab", icon: Users },
+  digital_product: { label: "Offering", icon: Briefcase },
+  physical_product: { label: "Offering", icon: Briefcase },
 };
 
 interface ListingCardProps {
@@ -62,7 +65,8 @@ const ListingCard = ({
   const typeMeta = TYPE_META[listing.listing_type] || TYPE_META.service;
   const TypeIcon = typeMeta.icon;
 
-  // Find first audio and first image from media
+  const isRequest = listing.listing_type === "project_request";
+
   const coverImage = listing.cover_url || media?.find((m: any) => m.file_type?.startsWith("image"))?.file_url;
   const audioFile = media?.find((m: any) => m.file_type?.startsWith("audio"));
   const videoFile = media?.find((m: any) => m.file_type?.startsWith("video"));
@@ -76,7 +80,7 @@ const ListingCard = ({
       className="group relative overflow-hidden rounded-xl bg-card border border-border shadow-sm hover:shadow-lg transition-all cursor-pointer"
       onClick={onClick}
     >
-      {/* Cover image / video thumbnail */}
+      {/* Cover */}
       {coverImage ? (
         <div className="relative aspect-[16/10] overflow-hidden bg-muted">
           <img
@@ -92,9 +96,11 @@ const ListingCard = ({
               </div>
             </div>
           )}
-          {/* Type badge overlay */}
           <div className="absolute top-2 left-2">
-            <Badge variant="secondary" className="bg-card/80 backdrop-blur-sm text-xs gap-1">
+            <Badge
+              variant="secondary"
+              className={`bg-card/80 backdrop-blur-sm text-xs gap-1 ${isRequest ? "border-amber-500/30" : ""}`}
+            >
               <TypeIcon className="h-3 w-3" />
               {typeMeta.label}
             </Badge>
@@ -107,7 +113,10 @@ const ListingCard = ({
         >
           <CatIcon className="h-12 w-12" style={{ color: catMeta.color, opacity: 0.4 }} />
           <div className="absolute top-2 left-2">
-            <Badge variant="secondary" className="bg-card/80 backdrop-blur-sm text-xs gap-1">
+            <Badge
+              variant="secondary"
+              className={`bg-card/80 backdrop-blur-sm text-xs gap-1 ${isRequest ? "border-amber-500/30" : ""}`}
+            >
               <TypeIcon className="h-3 w-3" />
               {typeMeta.label}
             </Badge>
@@ -115,7 +124,7 @@ const ListingCard = ({
         </div>
       )}
 
-      {/* Inline audio preview */}
+      {/* Audio preview */}
       {audioFile && (
         <div className="border-t border-border" onClick={(e) => e.stopPropagation()}>
           <AudioPreview src={audioFile.file_url} title={audioFile.file_name} compact />
@@ -123,16 +132,16 @@ const ListingCard = ({
       )}
 
       <div className="p-4 space-y-2.5">
-        {/* Category + Price */}
+        {/* Category + Budget */}
         <div className="flex items-center justify-between">
           <Badge variant="outline" className="text-[10px] gap-1 rounded-full">
             <CatIcon className="h-3 w-3" style={{ color: catMeta.color }} />
             {catMeta.label}
           </Badge>
-          {listing.credits_price != null && (
-            <span className="flex items-center gap-1 font-display font-bold text-foreground text-sm">
-              <Coins className="h-3.5 w-3.5 text-primary" />
-              {listing.credits_price}
+          {listing.contact_info && (
+            <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+              <DollarSign className="h-3 w-3" />
+              {listing.contact_info}
             </span>
           )}
         </div>
@@ -182,7 +191,7 @@ const ListingCard = ({
               onClick={(e) => { e.stopPropagation(); onInquire(); }}
             >
               <MessageCircle className="h-3 w-3" />
-              Inquire
+              {isRequest ? "Apply" : "Inquire"}
             </Button>
           )}
         </div>
