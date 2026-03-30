@@ -12,7 +12,7 @@ import {
 import {
   Plus, Sparkles, Briefcase, FileText, Package, ShoppingBag,
   SlidersHorizontal, Users, Clock, Zap, LayoutGrid, ArrowRight, Coins,
-  Trophy, Flame,
+  Trophy, Flame, TrendingUp,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ import ListingCard from "@/components/marketplace/ListingCard";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import CategoryTiles from "@/components/creators/CategoryTiles";
 import Leaderboard from "@/components/creators/Leaderboard";
+import FlowFeed from "@/components/creators/FlowFeed";
 import { formatDistanceToNow, isPast } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -32,10 +33,18 @@ const TYPES = [
   { key: "project_request", label: "Requests", icon: ShoppingBag },
 ];
 
+const SORT_OPTIONS = [
+  { key: "recent", label: "Most Recent" },
+  { key: "trending", label: "Trending" },
+  { key: "price_low", label: "Price: Low → High" },
+  { key: "price_high", label: "Price: High → Low" },
+];
+
 const TABS = [
+  { key: "listings", label: "Listings", icon: Sparkles },
+  { key: "flow", label: "Flow", icon: Flame },
   { key: "collab", label: "Collab Rooms", icon: Zap },
   { key: "boards", label: "Boards", icon: LayoutGrid },
-  { key: "listings", label: "Listings", icon: Sparkles },
 ] as const;
 
 type TabKey = typeof TABS[number]["key"];
@@ -44,9 +53,10 @@ const CreatorsHubPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<TabKey>("collab");
+  const [activeTab, setActiveTab] = useState<TabKey>("listings");
   const [activeCategory, setActiveCategory] = useState("all");
   const [activeType, setActiveType] = useState("all");
+  const [sortBy, setSortBy] = useState("recent");
   const [createOpen, setCreateOpen] = useState(false);
 
   const { data: listings, isLoading } = useQuery({
@@ -108,6 +118,7 @@ const CreatorsHubPage = () => {
   }, [allListings]);
 
   const listingIds = listings?.map((l: any) => l.id) ?? [];
+
   const { data: allMedia } = useQuery({
     queryKey: ["listing-media-bulk", listingIds],
     queryFn: async () => {
@@ -126,6 +137,19 @@ const CreatorsHubPage = () => {
       const { data, error } = await supabase.from("reviews").select("listing_id, rating").in("listing_id", listingIds);
       if (error) throw error;
       return data as any[];
+    },
+    enabled: listingIds.length > 0,
+  });
+
+  // Inquiry counts for trending sort
+  const { data: inquiryCounts } = useQuery({
+    queryKey: ["listing-inquiry-counts", listingIds],
+    queryFn: async () => {
+      if (listingIds.length === 0) return {};
+      const { data } = await supabase.from("listing_inquiries").select("listing_id").in("listing_id", listingIds);
+      const counts: Record<string, number> = {};
+      data?.forEach((i) => { counts[i.listing_id] = (counts[i.listing_id] || 0) + 1; });
+      return counts;
     },
     enabled: listingIds.length > 0,
   });
@@ -150,12 +174,28 @@ const CreatorsHubPage = () => {
 
   const getMediaForListing = (listingId: string) => allMedia?.filter((m: any) => m.listing_id === listingId) ?? [];
 
+  // Sort listings
+  const sortedListings = useMemo(() => {
+    if (!listings) return [];
+    const arr = [...listings];
+    switch (sortBy) {
+      case "trending":
+        return arr.sort((a, b) => ((inquiryCounts as any)?.[b.id] ?? 0) - ((inquiryCounts as any)?.[a.id] ?? 0));
+      case "price_low":
+        return arr.sort((a, b) => (a.credits_price ?? 0) - (b.credits_price ?? 0));
+      case "price_high":
+        return arr.sort((a, b) => (b.credits_price ?? 0) - (a.credits_price ?? 0));
+      default:
+        return arr;
+    }
+  }, [listings, sortBy, inquiryCounts]);
+
   const hasCollabRooms = (dropRooms?.length ?? 0) > 0;
   const hasPublicBoards = (publicBoards?.length ?? 0) > 0;
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      {/* Hero — compact with reward highlight */}
+      {/* Hero */}
       <div className="relative overflow-hidden rounded-lg">
         <div className="absolute inset-0 grid-overlay pointer-events-none" />
         <div className="absolute inset-0 overflow-hidden">
@@ -177,11 +217,10 @@ const CreatorsHubPage = () => {
                 Creators Hub
               </h1>
               <p className="text-sm text-muted-foreground max-w-md font-body leading-relaxed">
-                Collaborate, create, and earn $RHOZE together.
+                Discover services, hire talent, and explore creative content.
               </p>
             </div>
 
-            {/* $RHOZE reward badge — prominent */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -206,11 +245,11 @@ const CreatorsHubPage = () => {
         </div>
       </div>
 
-      {/* Leaderboard — right at top for engagement */}
+      {/* Leaderboard */}
       <Leaderboard />
 
-      {/* Three-tab navigation */}
-      <div className="flex items-center gap-1 border-b border-border">
+      {/* Four-tab navigation */}
+      <div className="flex items-center gap-1 border-b border-border overflow-x-auto">
         {TABS.map((tab) => {
           const active = activeTab === tab.key;
           return (
@@ -218,7 +257,7 @@ const CreatorsHubPage = () => {
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={cn(
-                "flex items-center gap-2 px-5 py-3 text-sm font-body font-medium transition-colors relative",
+                "flex items-center gap-2 px-5 py-3 text-sm font-body font-medium transition-colors relative whitespace-nowrap shrink-0",
                 active
                   ? "text-foreground"
                   : "text-muted-foreground hover:text-foreground"
@@ -245,6 +284,104 @@ const CreatorsHubPage = () => {
 
       {/* Tab content */}
       <AnimatePresence mode="wait">
+        {/* ───── LISTINGS TAB ───── */}
+        {activeTab === "listings" && (
+          <motion.div
+            key="listings"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-5"
+          >
+            {/* Filters row */}
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+              <CategoryTiles
+                activeCategory={activeCategory}
+                onSelect={setActiveCategory}
+                listingCounts={listingCounts}
+              />
+              <div className="flex items-center gap-2 flex-wrap">
+                <Select value={activeType} onValueChange={setActiveType}>
+                  <SelectTrigger className="w-36 rounded-sm h-9 text-xs">
+                    <SlidersHorizontal className="h-3 w-3 mr-1.5 text-muted-foreground" />
+                    <SelectValue placeholder="All Types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TYPES.map((t) => (
+                      <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-40 rounded-sm h-9 text-xs">
+                    <TrendingUp className="h-3 w-3 mr-1.5 text-muted-foreground" />
+                    <SelectValue placeholder="Sort" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SORT_OPTIONS.map((s) => (
+                      <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <button onClick={() => setCreateOpen(true)} className="btn-editorial text-xs">
+                  <Plus className="h-3.5 w-3.5" /> Post
+                </button>
+              </div>
+            </div>
+
+            {/* Listings grid */}
+            {isLoading ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="bg-card border border-border animate-pulse rounded-lg h-72" />
+                ))}
+              </div>
+            ) : !sortedListings || sortedListings.length === 0 ? (
+              <div className="card-dashed flex flex-col items-center justify-center py-16">
+                <Sparkles className="mb-3 h-8 w-8 text-muted-foreground/30" />
+                <p className="text-foreground font-medium font-body">No listings yet</p>
+                <p className="text-xs text-muted-foreground mt-1 font-body">Be the first to post a service or request</p>
+                <button className="btn-editorial mt-4 text-xs" onClick={() => setCreateOpen(true)}>
+                  Post Listing <ArrowRight className="h-3 w-3" />
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <AnimatePresence>
+                  {sortedListings.map((listing: any, i: number) => (
+                    <ListingCard
+                      key={listing.id}
+                      listing={listing}
+                      media={getMediaForListing(listing.id)}
+                      reviewStats={getReviewStatsForListing(listing.id)}
+                      index={i}
+                      isOwner={listing.user_id === user?.id}
+                      onInquire={() => navigate(`/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`)}
+                      onClick={() => navigate(`/creators/${listing.id}`)}
+                      onDelete={() => deleteListing.mutate(listing.id)}
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* ───── FLOW TAB ───── */}
+        {activeTab === "flow" && (
+          <motion.div
+            key="flow"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+          >
+            <FlowFeed />
+          </motion.div>
+        )}
+
+        {/* ───── COLLAB ROOMS TAB ───── */}
         {activeTab === "collab" && (
           <motion.div
             key="collab"
@@ -307,6 +444,7 @@ const CreatorsHubPage = () => {
           </motion.div>
         )}
 
+        {/* ───── BOARDS TAB ───── */}
         {activeTab === "boards" && (
           <motion.div
             key="boards"
@@ -354,78 +492,6 @@ const CreatorsHubPage = () => {
                 <LayoutGrid className="h-8 w-8 text-muted-foreground/30 mb-3" />
                 <p className="text-sm font-medium text-foreground font-body">No community boards yet</p>
                 <p className="text-xs text-muted-foreground mt-1 font-body">Curate a board and earn $RHOZE</p>
-              </div>
-            )}
-          </motion.div>
-        )}
-
-        {activeTab === "listings" && (
-          <motion.div
-            key="listings"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-5"
-          >
-            {/* Filters row */}
-            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-              <CategoryTiles
-                activeCategory={activeCategory}
-                onSelect={setActiveCategory}
-                listingCounts={listingCounts}
-              />
-              <div className="flex items-center gap-2">
-                <Select value={activeType} onValueChange={setActiveType}>
-                  <SelectTrigger className="w-36 rounded-sm h-9 text-xs">
-                    <SlidersHorizontal className="h-3 w-3 mr-1.5 text-muted-foreground" />
-                    <SelectValue placeholder="All Types" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TYPES.map((t) => (
-                      <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <button onClick={() => setCreateOpen(true)} className="btn-editorial text-xs">
-                  <Plus className="h-3.5 w-3.5" /> Post
-                </button>
-              </div>
-            </div>
-
-            {/* Listings grid */}
-            {isLoading ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="bg-card border border-border animate-pulse rounded-lg h-72" />
-                ))}
-              </div>
-            ) : !listings || listings.length === 0 ? (
-              <div className="card-dashed flex flex-col items-center justify-center py-16">
-                <Sparkles className="mb-3 h-8 w-8 text-muted-foreground/30" />
-                <p className="text-foreground font-medium font-body">No listings yet</p>
-                <p className="text-xs text-muted-foreground mt-1 font-body">Be the first to post something and earn $RHOZE</p>
-                <button className="btn-editorial mt-4 text-xs" onClick={() => setCreateOpen(true)}>
-                  Post Listing <ArrowRight className="h-3 w-3" />
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <AnimatePresence>
-                  {listings.map((listing: any, i: number) => (
-                    <ListingCard
-                      key={listing.id}
-                      listing={listing}
-                      media={getMediaForListing(listing.id)}
-                      reviewStats={getReviewStatsForListing(listing.id)}
-                      index={i}
-                      isOwner={listing.user_id === user?.id}
-                      onInquire={() => navigate(`/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`)}
-                      onClick={() => navigate(`/creators/${listing.id}`)}
-                      onDelete={() => deleteListing.mutate(listing.id)}
-                    />
-                  ))}
-                </AnimatePresence>
               </div>
             )}
           </motion.div>

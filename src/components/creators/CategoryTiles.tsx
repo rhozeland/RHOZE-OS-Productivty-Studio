@@ -1,5 +1,3 @@
-import { Music, Palette, Camera, Video, PenTool } from "lucide-react";
-
 import { Music, Palette, Camera, Video, PenTool, Users } from "lucide-react";
 
 const CATEGORIES = [
