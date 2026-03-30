@@ -38,6 +38,7 @@ import {
   X,
   Loader2,
   Wrench,
+  Image as ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
