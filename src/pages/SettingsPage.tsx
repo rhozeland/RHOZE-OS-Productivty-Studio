@@ -39,10 +39,6 @@ const SectionTitle = ({ icon: Icon, children }: { icon: any; children: React.Rea
   </h2>
 );
 
-const PRESET_AVATARS = [
-  "🎨", "🎵", "📸", "🎬", "✍️", "🎤", "💡", "🖌️",
-  "🎸", "🎹", "📐", "🎭", "🌟", "🔥", "💎", "🦋",
-];
 
 const BANNER_GRADIENTS = [
   { label: "Mint Fade", value: "linear-gradient(135deg, hsl(175,60%,80%), hsl(200,40%,90%), hsl(330,30%,92%))" },
@@ -232,19 +228,6 @@ const SettingsPage = () => {
     }
   };
 
-  const handleEmojiAvatar = async (emoji: string) => {
-    if (!user) return;
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
-      <rect width="200" height="200" fill="hsl(175,60%,92%)" rx="100"/>
-      <text x="100" y="130" font-size="100" text-anchor="middle">${emoji}</text>
-    </svg>`;
-    const dataUrl = `data:image/svg+xml,${encodeURIComponent(svg)}`;
-    setAvatarUrl(dataUrl);
-    await supabase.from("profiles").update({ avatar_url: dataUrl }).eq("user_id", user.id);
-    queryClient.invalidateQueries({ queryKey: ["my-profile"] });
-    setShowAvatarPicker(false);
-    toast.success("Avatar updated!");
-  };
 
   const updateProfile = useMutation({
     mutationFn: async () => {
@@ -423,13 +406,6 @@ const SettingsPage = () => {
                 <Box className="mr-2 h-4 w-4" />
                 ToyBox Logo
               </Button>
-              <Button
-                variant={showAvatarPicker === "emoji" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setShowAvatarPicker(showAvatarPicker === "emoji" ? false : "emoji")}
-              >
-                Emoji Avatar
-              </Button>
               {avatarUrl && (
                 <Button variant="ghost" size="sm" onClick={async () => {
                   setAvatarUrl("");
@@ -455,22 +431,6 @@ const SettingsPage = () => {
             }}
           />
         </div>
-        {showAvatarPicker === "emoji" && (
-          <div className="mt-4 p-4 rounded-lg border border-border bg-muted/30">
-            <p className="text-sm font-medium text-foreground mb-3">Choose an avatar</p>
-            <div className="grid grid-cols-8 gap-2">
-              {PRESET_AVATARS.map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => handleEmojiAvatar(emoji)}
-                  className="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-card hover:bg-primary/10 hover:border-primary transition-colors text-2xl"
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
         {showAvatarPicker === "toybox" && (
           <div className="mt-4 p-4 rounded-lg border border-border bg-muted/30">
             <p className="text-sm font-medium text-foreground mb-3">Customize your ToyBox mark</p>
