@@ -90,7 +90,7 @@ const SettingsPage = () => {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
-  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [showAvatarPicker, setShowAvatarPicker] = useState<false | "emoji" | "toybox">(false);
   const [bannerGradient, setBannerGradient] = useState("");
   const [bannerImageUrl, setBannerImageUrl] = useState("");
   const [profileBackground, setProfileBackground] = useState("");
