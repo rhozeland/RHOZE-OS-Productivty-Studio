@@ -132,28 +132,133 @@ const OnboardingPage = () => {
               className="text-center"
             >
               <div className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-10 sm:p-14">
-                <motion.div
-                  animate={{ rotate: [0, 8, -8, 0], scale: [1, 1.15, 0.95, 1] }}
-                  transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
-                  className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/5 border border-border/50 mb-6"
-                >
-                  <Sparkles className="h-7 w-7 text-muted-foreground" />
-                </motion.div>
-                <h1 className="font-display text-3xl font-bold text-foreground mb-3">
-                  Welcome to Rhozeland
-                </h1>
-                <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mx-auto mb-2">
-                  Your creative workspace is almost ready. Let's personalize your experience in a few quick steps.
-                </p>
-                <p className="text-xs text-muted-foreground/60">Takes about 1 minute</p>
+                {/* Rose-bloom logo animation */}
+                <div className="relative inline-flex items-center justify-center w-28 h-28 mb-6">
+                  {/* Petal rings that bloom outward */}
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <motion.div
+                      key={`petal-${i}`}
+                      initial={{ scale: 0, opacity: 0, rotate: i * 72 }}
+                      animate={{
+                        scale: [0, 1.2, 1],
+                        opacity: [0, 0.6, 0.15],
+                        rotate: i * 72 + 360,
+                      }}
+                      transition={{
+                        duration: 2,
+                        delay: 0.2 + i * 0.12,
+                        ease: [0.16, 1, 0.3, 1],
+                        rotate: { duration: 20, repeat: Infinity, ease: "linear" },
+                      }}
+                      className="absolute inset-0 rounded-full"
+                      style={{
+                        background: `radial-gradient(ellipse at ${50 + Math.cos(i * 1.26) * 30}% ${50 + Math.sin(i * 1.26) * 30}%, hsl(${340 + i * 15} 60% 70% / 0.5), transparent 70%)`,
+                      }}
+                    />
+                  ))}
 
-                <Button
-                  onClick={next}
-                  className="mt-8 rounded-xl h-12 px-8 font-semibold"
+                  {/* Inner glow */}
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 1.2, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                    className="absolute inset-2 rounded-full"
+                    style={{
+                      background: "radial-gradient(circle, hsl(var(--primary) / 0.15), transparent 70%)",
+                    }}
+                  />
+
+                  {/* Logo container with bloom-in */}
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: [0, 1.15, 1], opacity: 1 }}
+                    transition={{
+                      duration: 1,
+                      delay: 0.4,
+                      ease: [0.34, 1.56, 0.64, 1],
+                    }}
+                    className="relative z-10 w-16 h-16 rounded-2xl bg-card border border-border/50 shadow-lg flex items-center justify-center overflow-hidden"
+                  >
+                    <motion.img
+                      src={rhozelandLogo}
+                      alt="Rhozeland"
+                      className="w-10 h-10 object-contain"
+                      animate={{
+                        scale: [1, 1.05, 1],
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        repeatDelay: 1.5,
+                        ease: "easeInOut",
+                      }}
+                    />
+                  </motion.div>
+
+                  {/* Sparkle particles */}
+                  {[0, 1, 2, 3, 4, 5].map((i) => {
+                    const angle = (i / 6) * Math.PI * 2;
+                    const radius = 48;
+                    return (
+                      <motion.div
+                        key={`sparkle-${i}`}
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{
+                          scale: [0, 1, 0],
+                          opacity: [0, 1, 0],
+                          x: Math.cos(angle) * radius,
+                          y: Math.sin(angle) * radius,
+                        }}
+                        transition={{
+                          duration: 1.5,
+                          delay: 1 + i * 0.15,
+                          repeat: Infinity,
+                          repeatDelay: 3 + i * 0.3,
+                        }}
+                        className="absolute w-1.5 h-1.5 rounded-full bg-primary/60"
+                      />
+                    );
+                  })}
+                </div>
+
+                <motion.h1
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                  className="font-display text-3xl font-bold text-foreground mb-3"
                 >
-                  Let's Go
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                  Welcome to Rhozeland
+                </motion.h1>
+                <motion.p
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1, duration: 0.6 }}
+                  className="text-muted-foreground text-sm leading-relaxed max-w-sm mx-auto mb-2"
+                >
+                  Your creative workspace is almost ready. Let's personalize your experience in a few quick steps.
+                </motion.p>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.2 }}
+                  className="text-xs text-muted-foreground/60"
+                >
+                  Takes about 1 minute
+                </motion.p>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.4, duration: 0.5 }}
+                >
+                  <Button
+                    onClick={next}
+                    className="mt-8 rounded-xl h-12 px-8 font-semibold"
+                  >
+                    Let's Go
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </motion.div>
               </div>
             </motion.div>
           )}
