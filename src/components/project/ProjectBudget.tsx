@@ -100,7 +100,7 @@ const ProjectBudget = ({ project, goals, milestones }: ProjectBudgetProps) => {
         .select("goal_id, role")
         .in("goal_id", stageIds);
       if (error) throw error;
-      return data as Array<{ goal_id: string; role: string }>;
+      return data as unknown as Array<{ goal_id: string; role: string }>;
     },
     enabled: stageIds.length > 0,
   });
