@@ -26,18 +26,15 @@ import { formatDistanceToNow, isPast } from "date-fns";
 import { cn } from "@/lib/utils";
 
 const TYPES = [
-  { key: "all", label: "All Types" },
+  { key: "all", label: "All Listings" },
   { key: "service", label: "Services", icon: Briefcase },
-  { key: "digital_product", label: "Digital", icon: FileText },
-  { key: "physical_product", label: "Physical", icon: Package },
-  { key: "project_request", label: "Requests", icon: ShoppingBag },
+  { key: "project_request", label: "Job Requests", icon: ShoppingBag },
+  { key: "collaboration", label: "Collabs", icon: Users },
 ];
 
 const SORT_OPTIONS = [
   { key: "recent", label: "Most Recent" },
   { key: "trending", label: "Trending" },
-  { key: "price_low", label: "Price: Low → High" },
-  { key: "price_high", label: "Price: High → Low" },
 ];
 
 const TABS = [
@@ -181,10 +178,6 @@ const CreatorsHubPage = () => {
     switch (sortBy) {
       case "trending":
         return arr.sort((a, b) => ((inquiryCounts as any)?.[b.id] ?? 0) - ((inquiryCounts as any)?.[a.id] ?? 0));
-      case "price_low":
-        return arr.sort((a, b) => (a.credits_price ?? 0) - (b.credits_price ?? 0));
-      case "price_high":
-        return arr.sort((a, b) => (b.credits_price ?? 0) - (a.credits_price ?? 0));
       default:
         return arr;
     }
@@ -217,7 +210,7 @@ const CreatorsHubPage = () => {
                 Creators Hub
               </h1>
               <p className="text-sm text-muted-foreground max-w-md font-body leading-relaxed">
-                Discover services, hire talent, and explore creative content.
+                Discover services, find talent, and post creative projects.
               </p>
             </div>
 
@@ -341,9 +334,9 @@ const CreatorsHubPage = () => {
               <div className="card-dashed flex flex-col items-center justify-center py-16">
                 <Sparkles className="mb-3 h-8 w-8 text-muted-foreground/30" />
                 <p className="text-foreground font-medium font-body">No listings yet</p>
-                <p className="text-xs text-muted-foreground mt-1 font-body">Be the first to post a service or request</p>
+                <p className="text-xs text-muted-foreground mt-1 font-body">Be the first to post a service or job request</p>
                 <button className="btn-editorial mt-4 text-xs" onClick={() => setCreateOpen(true)}>
-                  Post Listing <ArrowRight className="h-3 w-3" />
+                  Post a Listing <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
             ) : (

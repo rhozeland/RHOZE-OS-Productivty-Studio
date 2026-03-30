@@ -24,20 +24,28 @@ import {
   X,
   Plus,
   Briefcase,
-  FileText,
-  Package,
-  ShoppingBag,
+  Search,
   ImageIcon,
   Music,
   Video,
+  FileText,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 
 const LISTING_TYPES = [
-  { key: "service", label: "Service", desc: "Offer your skills", icon: Briefcase },
-  { key: "digital_product", label: "Digital Product", desc: "Beats, presets, templates", icon: FileText },
-  { key: "physical_product", label: "Physical Product", desc: "Merch, prints, goods", icon: Package },
-  { key: "project_request", label: "Project Request", desc: "Need help? Post it", icon: ShoppingBag },
+  { key: "service", label: "Offering a Service", desc: "I can do this for you", icon: Briefcase },
+  { key: "project_request", label: "Looking for Help", desc: "I need someone to do this", icon: Search },
+  { key: "collaboration", label: "Seeking Collaborators", desc: "Let's work on this together", icon: Users },
+];
+
+const CATEGORIES = [
+  { value: "audio", label: "🎵 Audio / Music" },
+  { value: "design", label: "🎨 Design" },
+  { value: "photo", label: "📷 Photography" },
+  { value: "video", label: "🎬 Video / Film" },
+  { value: "writing", label: "✍️ Writing" },
+  { value: "talent", label: "🎭 Talent" },
 ];
 
 interface CreateListingDialogProps {
@@ -56,12 +64,11 @@ const CreateListingDialog = ({ open, onOpenChange }: CreateListingDialogProps) =
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("design");
-  const [creditsPrice, setCreditsPrice] = useState("");
+  const [budgetRange, setBudgetRange] = useState("");
   const [deliveryDays, setDeliveryDays] = useState("");
   const [revisions, setRevisions] = useState("");
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
-  const [shippingInfo, setShippingInfo] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
 
@@ -79,12 +86,11 @@ const CreateListingDialog = ({ open, onOpenChange }: CreateListingDialogProps) =
     setTitle("");
     setDescription("");
     setCategory("design");
-    setCreditsPrice("");
+    setBudgetRange("");
     setDeliveryDays("");
     setRevisions("");
     setTags([]);
     setTagInput("");
-    setShippingInfo("");
     setFiles([]);
   };
 
@@ -93,7 +99,6 @@ const CreateListingDialog = ({ open, onOpenChange }: CreateListingDialogProps) =
       if (!user) throw new Error("Not authenticated");
       setUploading(true);
 
-      // 1. Create listing
       const { data: listing, error } = await supabase
         .from("marketplace_listings")
         .insert({
@@ -102,18 +107,16 @@ const CreateListingDialog = ({ open, onOpenChange }: CreateListingDialogProps) =
           description: description || null,
           category,
           listing_type: listingType,
-          credits_price: creditsPrice ? parseFloat(creditsPrice) : null,
-          price: creditsPrice ? parseFloat(creditsPrice) : null,
+          contact_info: budgetRange || null,
           delivery_days: deliveryDays ? parseInt(deliveryDays) : null,
           revisions: revisions ? parseInt(revisions) : null,
           tags: tags.length > 0 ? tags : null,
-          shipping_info: listingType === "physical_product" ? shippingInfo || null : null,
         })
         .select()
         .single();
       if (error) throw error;
 
-      // 2. Upload media files
+      // Upload media files
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const ext = file.name.split(".").pop();
@@ -122,7 +125,6 @@ const CreateListingDialog = ({ open, onOpenChange }: CreateListingDialogProps) =
         if (upErr) { toast.error(`Failed to upload ${file.name}`); continue; }
         const { data: urlData } = supabase.storage.from("listing-media").getPublicUrl(path);
 
-        // Set first image as cover
         if (i === 0 && file.type.startsWith("image")) {
           await supabase.from("marketplace_listings").update({ cover_url: urlData.publicUrl }).eq("id", listing.id);
         }
@@ -141,7 +143,7 @@ const CreateListingDialog = ({ open, onOpenChange }: CreateListingDialogProps) =
       queryClient.invalidateQueries({ queryKey: ["marketplace-listings"] });
       onOpenChange(false);
       reset();
-      toast.success("Listing published! 🎉");
+      toast.success("Listing posted! 🎉");
       setUploading(false);
     },
     onError: (e: any) => { toast.error(e.message); setUploading(false); },
@@ -155,31 +157,39 @@ const CreateListingDialog = ({ open, onOpenChange }: CreateListingDialogProps) =
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const isOffering = listingType === "service";
+  const isRequest = listingType === "project_request";
+
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) reset(); }}>
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="font-display">
             {step === 0 ? "What are you posting?" : step === 1 ? "Listing Details" : "Add Media"}
           </DialogTitle>
         </DialogHeader>
 
         {/* Step 0: Choose type */}
         {step === 0 && (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-3">
             {LISTING_TYPES.map((t) => {
               const Icon = t.icon;
+              const selected = listingType === t.key;
               return (
                 <button
                   key={t.key}
                   onClick={() => { setListingType(t.key); setStep(1); }}
-                  className={`flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all hover:border-primary/50 hover:bg-primary/5 ${
-                    listingType === t.key ? "border-primary bg-primary/5" : "border-border"
+                  className={`flex items-center gap-4 w-full p-4 rounded-xl border-2 transition-all text-left hover:border-primary/50 hover:bg-primary/5 ${
+                    selected ? "border-primary bg-primary/5" : "border-border"
                   }`}
                 >
-                  <Icon className="h-6 w-6 text-primary" />
-                  <span className="font-display font-semibold text-sm text-foreground">{t.label}</span>
-                  <span className="text-[10px] text-muted-foreground">{t.desc}</span>
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-display font-semibold text-sm text-foreground">{t.label}</p>
+                    <p className="text-xs text-muted-foreground">{t.desc}</p>
+                  </div>
                 </button>
               );
             })}
@@ -193,67 +203,60 @@ const CreateListingDialog = ({ open, onOpenChange }: CreateListingDialogProps) =
             className="space-y-4"
           >
             <Input
-              placeholder="Listing title *"
+              placeholder={isOffering ? "What service are you offering? *" : isRequest ? "What do you need done? *" : "What's the project? *"}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
             />
             <Textarea
-              placeholder="Describe what you're offering..."
+              placeholder={isOffering ? "Describe your skills, experience, and what you deliver..." : isRequest ? "Describe the project, requirements, and expectations..." : "Describe the collaboration opportunity..."}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
             />
             <div className="grid grid-cols-2 gap-3">
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="music">🎵 Music</SelectItem>
-                  <SelectItem value="design">🎨 Design</SelectItem>
-                  <SelectItem value="photo">📷 Photo</SelectItem>
-                  <SelectItem value="video">🎬 Video</SelectItem>
-                  <SelectItem value="writing">✍️ Writing</SelectItem>
-                </SelectContent>
-              </Select>
+              <div>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map((c) => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <Input
-                placeholder="Credits price"
-                type="number"
-                min="0"
-                value={creditsPrice}
-                onChange={(e) => setCreditsPrice(e.target.value)}
+                placeholder="Budget range (e.g. $500-1000)"
+                value={budgetRange}
+                onChange={(e) => setBudgetRange(e.target.value)}
               />
             </div>
-            {(listingType === "service" || listingType === "project_request") && (
+            {(isOffering || isRequest) && (
               <div className="grid grid-cols-2 gap-3">
                 <Input
-                  placeholder="Delivery (days)"
+                  placeholder={isOffering ? "Typical turnaround (days)" : "Deadline (days)"}
                   type="number"
                   min="1"
                   value={deliveryDays}
                   onChange={(e) => setDeliveryDays(e.target.value)}
                 />
-                <Input
-                  placeholder="Revisions included"
-                  type="number"
-                  min="0"
-                  value={revisions}
-                  onChange={(e) => setRevisions(e.target.value)}
-                />
+                {isOffering && (
+                  <Input
+                    placeholder="Revisions included"
+                    type="number"
+                    min="0"
+                    value={revisions}
+                    onChange={(e) => setRevisions(e.target.value)}
+                  />
+                )}
               </div>
-            )}
-            {listingType === "physical_product" && (
-              <Input
-                placeholder="Shipping info (e.g. US only, 3-5 days)"
-                value={shippingInfo}
-                onChange={(e) => setShippingInfo(e.target.value)}
-              />
             )}
 
             {/* Tags */}
             <div>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Add tag..."
+                  placeholder="Add a skill or keyword tag..."
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
@@ -303,7 +306,7 @@ const CreateListingDialog = ({ open, onOpenChange }: CreateListingDialogProps) =
               className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-primary/40 transition-colors"
             >
               <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Click to upload images, audio, video, or PDFs</p>
+              <p className="text-sm text-muted-foreground">Add portfolio samples, examples, or reference files</p>
               <p className="text-xs text-muted-foreground/60 mt-1">Max 20MB per file</p>
             </div>
 
@@ -335,7 +338,7 @@ const CreateListingDialog = ({ open, onOpenChange }: CreateListingDialogProps) =
                 onClick={() => createListing.mutate()}
                 disabled={uploading}
               >
-                {uploading ? "Publishing..." : files.length > 0 ? "Publish with Media" : "Publish without Media"}
+                {uploading ? "Publishing..." : "Publish Listing"}
               </Button>
             </div>
           </div>
