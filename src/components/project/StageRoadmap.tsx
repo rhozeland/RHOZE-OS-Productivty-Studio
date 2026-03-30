@@ -44,6 +44,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import StageApproval from "@/components/project/StageApproval";
 
 interface Goal {
   id: string;
