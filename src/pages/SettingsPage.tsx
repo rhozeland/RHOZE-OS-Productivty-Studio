@@ -39,10 +39,6 @@ const SectionTitle = ({ icon: Icon, children }: { icon: any; children: React.Rea
   </h2>
 );
 
-const PRESET_AVATARS = [
-  "🎨", "🎵", "📸", "🎬", "✍️", "🎤", "💡", "🖌️",
-  "🎸", "🎹", "📐", "🎭", "🌟", "🔥", "💎", "🦋",
-];
 
 const BANNER_GRADIENTS = [
   { label: "Mint Fade", value: "linear-gradient(135deg, hsl(175,60%,80%), hsl(200,40%,90%), hsl(330,30%,92%))" },
