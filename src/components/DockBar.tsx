@@ -102,7 +102,7 @@ const DockBar = () => {
       transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
       className="fixed bottom-4 left-0 right-0 z-50 flex justify-center pointer-events-none"
     >
-      <div className="flex items-center gap-1 px-4 py-2.5 bg-card/90 backdrop-blur-xl border border-border rounded-xl shadow-lg shadow-foreground/5 pointer-events-auto">
+      <div className="flex items-center gap-2 sm:gap-1 px-5 sm:px-4 py-3 sm:py-2.5 bg-card/90 backdrop-blur-xl border border-border rounded-xl shadow-lg shadow-foreground/5 pointer-events-auto">
         {dockIds.map((id) => {
           const Icon = ICON_MAP[id];
           const label = LABEL_MAP[id];
