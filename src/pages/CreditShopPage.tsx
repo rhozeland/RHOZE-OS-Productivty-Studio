@@ -338,7 +338,7 @@ const CreditShopPage = () => {
             })}
           </div>
 
-          <TransactionHistory userId={user?.id} />
+          
         </TabsContent>
 
         {/* ═══════ $RHOZE Tab ═══════ */}
