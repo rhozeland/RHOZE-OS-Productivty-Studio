@@ -210,7 +210,7 @@ const CreatorsHubPage = () => {
                 Creators Hub
               </h1>
               <p className="text-sm text-muted-foreground max-w-md font-body leading-relaxed">
-                Discover services, hire talent, and explore creative content.
+                Discover services, find talent, and post creative projects.
               </p>
             </div>
 
