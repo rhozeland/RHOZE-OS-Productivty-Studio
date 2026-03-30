@@ -95,7 +95,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
 
   return (
     <>
-      <div className="relative rounded-[24px] bg-card/60 backdrop-blur-xl shadow-2xl shadow-foreground/5 overflow-hidden border border-border/20 select-none">
+      <div <div className="relative rounded-[32px] bg-card/50 backdrop-blur-2xl shadow-2xl shadow-foreground/5 overflow-hidden border border-border/15 select-none">>
 
         {/* ═══ PHOTO / DESIGN — Full image with click to enlarge ═══ */}
         {isImage && item.file_url && (
