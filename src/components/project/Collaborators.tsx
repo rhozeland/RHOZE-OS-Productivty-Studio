@@ -50,12 +50,11 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
 
   const invite = useMutation({
     mutationFn: async () => {
-      // Find user by looking up profiles with display_name matching email (simplified)
-      const { data: profile, error: profileErr } = await supabase
-        .from("profiles")
-        .select("user_id, display_name")
-        .eq("display_name", email)
-        .maybeSingle();
+      // Find user by display name using secure lookup function
+      const { data: profiles, error: profileErr } = await supabase
+        .rpc("lookup_user_by_display_name", { _name: email });
+
+      const profile = profiles?.[0] ?? null;
 
       if (profileErr) throw profileErr;
       if (!profile) throw new Error("User not found. They must have a profile on the platform.");
