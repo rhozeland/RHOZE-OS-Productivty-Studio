@@ -26,18 +26,15 @@ import { formatDistanceToNow, isPast } from "date-fns";
 import { cn } from "@/lib/utils";
 
 const TYPES = [
-  { key: "all", label: "All Types" },
+  { key: "all", label: "All Listings" },
   { key: "service", label: "Services", icon: Briefcase },
-  { key: "digital_product", label: "Digital", icon: FileText },
-  { key: "physical_product", label: "Physical", icon: Package },
-  { key: "project_request", label: "Requests", icon: ShoppingBag },
+  { key: "project_request", label: "Job Requests", icon: ShoppingBag },
+  { key: "collaboration", label: "Collabs", icon: Users },
 ];
 
 const SORT_OPTIONS = [
   { key: "recent", label: "Most Recent" },
   { key: "trending", label: "Trending" },
-  { key: "price_low", label: "Price: Low → High" },
-  { key: "price_high", label: "Price: High → Low" },
 ];
 
 const TABS = [
