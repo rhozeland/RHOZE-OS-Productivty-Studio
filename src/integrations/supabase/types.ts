@@ -2351,6 +2351,13 @@ export type Database = {
         Args: { _amount: number; _client_id: string; _contract_id: string }
         Returns: undefined
       }
+      lookup_user_by_display_name: {
+        Args: { _name: string }
+        Returns: {
+          display_name: string
+          user_id: string
+        }[]
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
