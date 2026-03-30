@@ -723,6 +723,19 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, is
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              {/* Stage Approval */}
+              {(isComplete || (goals ?? []).filter(g => g.parent_id === stage.id).length > 0) && (
+                <StageApproval
+                  goalId={stage.id}
+                  projectId={projectId}
+                  projectTitle={projectTitle || ""}
+                  stageTitle={stage.title}
+                  stageComplete={isComplete}
+                  contract={!isCollaborative ? contract : null}
+                  milestone={!isCollaborative && milestones ? milestones.find((m, idx) => idx === i) : null}
+                />
+              )}
             </motion.div>
           );
         })}
