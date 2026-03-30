@@ -2,7 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Eye, Heart, MessageCircle, TrendingUp, Clock, Sparkles } from "lucide-react";
+import { Eye, Heart, MessageCircle, TrendingUp, Clock, Sparkles, Play } from "lucide-react";
+
+const getYouTubeId = (url?: string | null) => {
+  if (!url) return null;
+  try {
+    const cleaned = decodeURIComponent(url);
+    const match = cleaned.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([A-Za-z0-9_-]{11})/);
+    return match?.[1] || null;
+  } catch {
+    return null;
+  }
+};
 
 const FlowFeed = () => {
   const navigate = useNavigate();
