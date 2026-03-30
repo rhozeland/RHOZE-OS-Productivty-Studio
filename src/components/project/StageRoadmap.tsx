@@ -83,7 +83,7 @@ interface StageRoadmapProps {
   isCollaborative?: boolean;
 }
 
-const StageRoadmap = ({ goals, projectId }: StageRoadmapProps) => {
+const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, isCollaborative }: StageRoadmapProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
