@@ -27,7 +27,9 @@ import {
   Box,
 } from "lucide-react";
 import LogoCustomizer from "@/components/onboarding/LogoCustomizer";
+import DockCustomizer from "@/components/settings/DockCustomizer";
 import { toast } from "sonner";
+import { LayoutDashboard } from "lucide-react";
 
 const SectionCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
   <div className={`surface-card max-w-2xl p-6 ${className}`}>{children}</div>
