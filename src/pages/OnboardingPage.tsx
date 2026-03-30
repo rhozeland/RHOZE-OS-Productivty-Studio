@@ -299,26 +299,37 @@ const OnboardingPage = () => {
                   <Button variant="ghost" onClick={prev} className="rounded-xl gap-1.5">
                     <ArrowLeft className="w-4 h-4" /> Back
                   </Button>
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={next} className="rounded-xl gap-1.5">
-                      Skip
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        if (!logoDataUrl) {
-                          toast("Customize and export your logo first!", { description: "Click Export to save your Toybox logo." });
-                          return;
-                        }
-                        next();
-                      }}
-                      className="rounded-xl gap-1.5"
-                    >
-                      Save & Continue
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={() => {
+                      if (!logoDataUrl) {
+                        setShowExportHint(true);
+                        setTimeout(() => setShowExportHint(false), 4000);
+                      }
+                      next();
+                    }}
+                    className="rounded-xl gap-1.5"
+                  >
+                    Continue
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
                 </div>
+
+                {/* Export hint lightbox */}
+                <AnimatePresence>
+                  {showExportHint && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 4 }}
+                      className="mt-4 p-4 rounded-2xl border border-primary/20 bg-primary/5 backdrop-blur-sm text-center"
+                    >
+                      <p className="text-sm font-medium text-foreground mb-1">💡 Tip</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        You can tap <span className="font-semibold text-foreground">Export</span> anytime to download your Toybox logo — or update it later in Settings.
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.div>
           )}
