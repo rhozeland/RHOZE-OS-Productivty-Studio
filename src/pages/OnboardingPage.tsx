@@ -39,6 +39,7 @@ const OnboardingPage = () => {
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const [tourSlide, setTourSlide] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [showExportHint, setShowExportHint] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
 
