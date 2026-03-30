@@ -32,7 +32,8 @@ interface LogoCustomizerProps {
   compact?: boolean;
 }
 
-const LogoCustomizer = ({ onExport, compact = false }: LogoCustomizerProps) => {
+const LogoCustomizer = ({ onExport, onSave, compact = false }: LogoCustomizerProps) => {
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [fills, setFills] = useState<Record<SectionKey, SectionFill>>(
     JSON.parse(JSON.stringify(DEFAULT_FILLS))
   );
