@@ -256,7 +256,7 @@ const LogoCustomizer = ({ onExport, onSave, compact = false }: LogoCustomizerPro
       )}
 
       {/* Action buttons */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap justify-center">
         <Button variant="outline" size="sm" onClick={randomize} className="rounded-xl gap-1.5">
           <Shuffle className="w-3.5 h-3.5" />
           Randomize
@@ -269,7 +269,31 @@ const LogoCustomizer = ({ onExport, onSave, compact = false }: LogoCustomizerPro
           <Download className="w-3.5 h-3.5" />
           Export
         </Button>
+        {onSave && (
+          <Button size="sm" onClick={() => setShowSaveConfirm(true)} className="rounded-xl gap-1.5">
+            <Save className="w-3.5 h-3.5" />
+            Set as Display Picture
+          </Button>
+        )}
       </div>
+
+      {/* Confirmation dialog */}
+      <AlertDialog open={showSaveConfirm} onOpenChange={setShowSaveConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Replace display picture?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will replace your current profile picture with your customized ToyBox logo. You can always change it back later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction className="rounded-xl" onClick={handleSaveAsAvatar}>
+              Replace
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
