@@ -66,6 +66,21 @@ interface Goal {
 interface StageRoadmapProps {
   goals: Goal[] | undefined;
   projectId: string;
+  projectTitle?: string;
+  contract?: {
+    id: string;
+    client_id: string;
+    specialist_id: string;
+    status: string;
+  } | null;
+  milestones?: Array<{
+    id: string;
+    credit_amount: number;
+    status: string;
+    sort_order: number;
+    title: string;
+  }> | null;
+  isCollaborative?: boolean;
 }
 
 const StageRoadmap = ({ goals, projectId }: StageRoadmapProps) => {
