@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Plus, X } from "lucide-react";
+import { Users, Plus, X, Search } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -19,9 +19,32 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [email, setEmail] = useState("");
+  const [search, setSearch] = useState("");
+  const [selectedUser, setSelectedUser] = useState<{ user_id: string; display_name: string } | null>(null);
   const [role, setRole] = useState("viewer");
   const [projectRole, setProjectRole] = useState("client");
+  const [showResults, setShowResults] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  // Debounced search results
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const { data: searchResults } = useQuery({
+    queryKey: ["user-search", debouncedSearch],
+    enabled: debouncedSearch.length >= 2 && !selectedUser,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("lookup_user_by_display_name", { _name: debouncedSearch });
+      if (error) throw error;
+      // Filter out current user and existing collaborators
+      const existingIds = new Set(collaborators?.map((c) => c.user_id) ?? []);
+      existingIds.add(user?.id ?? "");
+      return (data ?? []).filter((p: any) => !existingIds.has(p.user_id));
+    },
+  });
 
   const { data: collaborators } = useQuery({
     queryKey: ["project-collaborators", projectId],
@@ -36,7 +59,6 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
     },
   });
 
-  // Get profiles for collaborator user_ids
   const { data: collabProfiles } = useQuery({
     queryKey: ["collab-profiles", collaborators?.map((c) => c.user_id)],
     enabled: !!collaborators && collaborators.length > 0,
@@ -50,18 +72,11 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
 
   const invite = useMutation({
     mutationFn: async () => {
-      // Find user by display name using secure lookup function
-      const { data: profiles, error: profileErr } = await supabase
-        .rpc("lookup_user_by_display_name", { _name: email });
-
-      const profile = profiles?.[0] ?? null;
-
-      if (profileErr) throw profileErr;
-      if (!profile) throw new Error("User not found. They must have a profile on the platform.");
+      if (!selectedUser) throw new Error("Please select a user from the search results.");
 
       const { error } = await supabase.from("project_collaborators").insert({
         project_id: projectId,
-        user_id: profile.user_id,
+        user_id: selectedUser.user_id,
         invited_by: user!.id,
         role,
         project_role: isCollaborative ? "collaborator" : projectRole,
@@ -71,7 +86,8 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project-collaborators", projectId] });
       setOpen(false);
-      setEmail("");
+      setSearch("");
+      setSelectedUser(null);
       toast.success("Collaborator invited!");
     },
     onError: (e: any) => toast.error(e.message),
@@ -88,7 +104,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
     },
   });
 
-  const profileMap = new Map(collabProfiles?.map((p) => [p.user_id, p]) ?? []);
+  const profileMap = new Map(collabProfiles?.map((p: any) => [p.user_id, p]) ?? []);
 
   const roleColors: Record<string, string> = {
     viewer: "bg-secondary text-secondary-foreground",
@@ -101,6 +117,18 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
     specialist: "bg-emerald-500/10 text-emerald-600",
   };
 
+  const handleSelectUser = (u: { user_id: string; display_name: string }) => {
+    setSelectedUser(u);
+    setSearch(u.display_name);
+    setShowResults(false);
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    setSelectedUser(null);
+    setShowResults(true);
+  };
+
   return (
     <div className="surface-card p-6">
       <div className="mb-4 flex items-center justify-between">
@@ -108,14 +136,66 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
           <Users className="h-5 w-5 text-primary" />
           <h2 className="font-display text-lg font-semibold text-foreground">Team</h2>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setSearch(""); setSelectedUser(null); } }}>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm"><Plus className="mr-1 h-4 w-4" />Invite</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Invite Collaborator</DialogTitle></DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); invite.mutate(); }} className="space-y-4">
-              <Input placeholder="Display name" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <div className="relative">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name..."
+                    value={search}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    onFocus={() => !selectedUser && setShowResults(true)}
+                    className="pl-9"
+                    required
+                  />
+                </div>
+
+                {/* Search results dropdown */}
+                {showResults && debouncedSearch.length >= 2 && !selectedUser && (
+                  <div
+                    ref={resultsRef}
+                    className="absolute z-50 mt-1 w-full rounded-lg border border-border bg-popover shadow-lg overflow-hidden"
+                  >
+                    {searchResults && searchResults.length > 0 ? (
+                      searchResults.map((u: any) => (
+                        <button
+                          key={u.user_id}
+                          type="button"
+                          onClick={() => handleSelectUser(u)}
+                          className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-accent transition-colors"
+                        >
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-secondary-foreground text-xs font-bold shrink-0">
+                            {(u.display_name?.[0] ?? "?").toUpperCase()}
+                          </div>
+                          <span className="text-sm font-medium text-foreground truncate">{u.display_name}</span>
+                        </button>
+                      ))
+                    ) : (
+                      <p className="px-3 py-3 text-sm text-muted-foreground">No users found</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Selected user chip */}
+                {selectedUser && (
+                  <div className="mt-2 flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 w-fit">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                      {(selectedUser.display_name?.[0] ?? "?").toUpperCase()}
+                    </div>
+                    <span className="text-sm font-medium text-primary">{selectedUser.display_name}</span>
+                    <button type="button" onClick={() => { setSelectedUser(null); setSearch(""); }} className="ml-1">
+                      <X className="h-3.5 w-3.5 text-primary/60 hover:text-primary" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {!isCollaborative && (
                 <Select value={projectRole} onValueChange={setProjectRole}>
                   <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
@@ -133,7 +213,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
-              <Button type="submit" className="w-full" disabled={invite.isPending}>
+              <Button type="submit" className="w-full" disabled={invite.isPending || !selectedUser}>
                 {invite.isPending ? "Inviting..." : "Invite"}
               </Button>
             </form>
