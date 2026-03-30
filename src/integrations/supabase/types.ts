@@ -958,6 +958,7 @@ export type Database = {
       project_approvals: {
         Row: {
           created_at: string
+          goal_id: string | null
           id: string
           printed_name: string
           project_id: string
@@ -967,6 +968,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          goal_id?: string | null
           id?: string
           printed_name: string
           project_id: string
@@ -976,6 +978,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          goal_id?: string | null
           id?: string
           printed_name?: string
           project_id?: string
@@ -984,6 +987,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "project_approvals_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "project_goals"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "project_approvals_project_id_fkey"
             columns: ["project_id"]
