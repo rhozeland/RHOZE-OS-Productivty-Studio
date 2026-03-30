@@ -461,6 +461,35 @@ const SettingsPage = () => {
         )}
       </SectionCard>
 
+      {/* ─── ToyBox Logo ─── */}
+      <SectionCard>
+        <SectionTitle icon={Box}>ToyBox Logo</SectionTitle>
+        <p className="text-xs text-muted-foreground mb-4">
+          Customize your personal ToyBox mark. Click a section, pick a color, then save it as your avatar.
+        </p>
+        <LogoCustomizer
+          compact
+          onExport={async (dataUrl) => {
+            if (!user) return;
+            try {
+              const res = await fetch(dataUrl);
+              const blob = await res.blob();
+              const path = `${user.id}/toybox-logo.png`;
+              await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/png" });
+              const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+              const url = `${urlData.publicUrl}?t=${Date.now()}`;
+              setAvatarUrl(url);
+              await supabase.from("profiles").update({ avatar_url: url }).eq("user_id", user.id);
+              queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+              queryClient.invalidateQueries({ queryKey: ["my-profile-sidebar"] });
+              toast.success("ToyBox logo set as your avatar!");
+            } catch (err: any) {
+              toast.error(err.message || "Failed to save logo");
+            }
+          }}
+        />
+      </SectionCard>
+
       {/* ─── Banner ─── */}
       <SectionCard>
         <h2 className="mb-2 font-display text-lg font-semibold text-foreground">Banner</h2>
