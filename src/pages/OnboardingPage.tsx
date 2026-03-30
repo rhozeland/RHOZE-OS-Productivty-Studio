@@ -11,7 +11,7 @@ import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
 const STEPS = [
   { id: "welcome", icon: Sparkles, title: "Welcome to Rhozeland" },
-  { id: "logo", icon: Palette, title: "Create Your Mark" },
+  { id: "logo", icon: Palette, title: "Create Your Toybox" },
   { id: "tour", icon: Layout, title: "Quick Tour" },
   { id: "ready", icon: CheckCircle2, title: "You're All Set" },
 ];
