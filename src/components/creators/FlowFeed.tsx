@@ -101,26 +101,49 @@ const FlowFeed = () => {
             className="group relative rounded-xl bg-card border border-border overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
           >
             {/* Cover / media */}
-            {item.file_url ? (
-              <div className="aspect-[16/10] overflow-hidden bg-muted">
-                {item.content_type === "image" ? (
-                  <img
-                    src={item.file_url}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
-                    <Sparkles className="h-10 w-10 text-muted-foreground/30" />
+            {(() => {
+              const ytId = getYouTubeId(item.link_url);
+              if (item.file_url) {
+                return (
+                  <div className="aspect-[16/10] overflow-hidden bg-muted">
+                    {item.content_type === "image" ? (
+                      <img
+                        src={item.file_url}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
+                        <Sparkles className="h-10 w-10 text-muted-foreground/30" />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            ) : (
-              <div className="aspect-[16/10] flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-                <Sparkles className="h-10 w-10 text-muted-foreground/20" />
-              </div>
-            )}
+                );
+              }
+              if (ytId) {
+                return (
+                  <div className="aspect-[16/10] overflow-hidden bg-muted relative">
+                    <img
+                      src={`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="h-12 w-12 rounded-full bg-foreground/70 flex items-center justify-center">
+                        <Play className="h-5 w-5 text-background fill-background ml-0.5" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <div className="aspect-[16/10] flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                  <Sparkles className="h-10 w-10 text-muted-foreground/20" />
+                </div>
+              );
+            })()}
 
             <div className="p-4 space-y-2.5">
               {/* Creator */}
