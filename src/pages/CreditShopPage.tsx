@@ -338,7 +338,7 @@ const CreditShopPage = () => {
             })}
           </div>
 
-          <TransactionHistory userId={user?.id} />
+          
         </TabsContent>
 
         {/* ═══════ $RHOZE Tab ═══════ */}
@@ -410,14 +410,15 @@ const CreditShopPage = () => {
           </div>
         </TabsContent>
 
-        {/* ═══════ Purchases Tab ═══════ */}
-        <TabsContent value="purchases" className="mt-4">
+        {/* ═══════ Purchases & History Tab ═══════ */}
+        <TabsContent value="purchases" className="mt-4 space-y-6">
+          {/* Purchases */}
           {purchasesLoading ? (
             <div className="flex items-center justify-center py-20">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             </div>
           ) : !purchases?.length ? (
-            <div className="text-center py-20 space-y-4">
+            <div className="text-center py-12 space-y-4">
               <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground/40" />
               <p className="text-muted-foreground">No purchases yet</p>
               <Link to="/creators">
@@ -426,6 +427,7 @@ const CreditShopPage = () => {
             </div>
           ) : (
             <div className="space-y-4">
+              <h2 className="font-display text-lg font-semibold text-foreground">Purchases</h2>
               {purchases.map((purchase: any) => {
                 const listing = purchaseListingsMap.get(purchase.listing_id);
                 const media = purchaseMediaMap.get(purchase.listing_id) ?? [];
@@ -461,6 +463,9 @@ const CreditShopPage = () => {
               })}
             </div>
           )}
+
+          {/* Payment History */}
+          <TransactionHistory userId={user?.id} />
         </TabsContent>
       </Tabs>
 
