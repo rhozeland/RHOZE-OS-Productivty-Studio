@@ -439,10 +439,8 @@ const SettingsPage = () => {
             </p>
             <LogoCustomizer
               compact
-              onExport={async (dataUrl) => {
+              onSave={async (dataUrl) => {
                 if (!user) return;
-                const confirmed = window.confirm("This will replace your current avatar with the ToyBox logo. Continue?");
-                if (!confirmed) return;
                 try {
                   const res = await fetch(dataUrl);
                   const blob = await res.blob();
@@ -454,7 +452,7 @@ const SettingsPage = () => {
                   await supabase.from("profiles").update({ avatar_url: url }).eq("user_id", user.id);
                   queryClient.invalidateQueries({ queryKey: ["my-profile"] });
                   queryClient.invalidateQueries({ queryKey: ["my-profile-sidebar"] });
-                  toast.success("ToyBox logo set as your avatar!");
+                  toast.success("ToyBox logo set as your display picture!");
                 } catch (err: any) {
                   toast.error(err.message || "Failed to save logo");
                 }
