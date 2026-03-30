@@ -7,18 +7,90 @@ import {
   FolderKanban,
   Flame,
   MessageSquare,
+  Palette,
+  Radio,
+  ShoppingBag,
+  Calendar,
+  CreditCard,
+  User,
+  Settings,
+  Store,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { DEFAULT_DOCK_IDS } from "@/components/settings/DockCustomizer";
 
-const dockItems = [
-  { icon: Home, label: "Home", path: "/dashboard" },
-  { icon: Building2, label: "Studios", path: "/studios" },
-  { icon: FolderKanban, label: "Projects", path: "/projects" },
-  { icon: Flame, label: "Hub", path: "/creators" },
-  { icon: MessageSquare, label: "Inbox", path: "/messages" },
-];
+const ICON_MAP: Record<string, any> = {
+  dashboard: Home,
+  studios: Building2,
+  projects: FolderKanban,
+  hub: Flame,
+  messages: MessageSquare,
+  boards: Palette,
+  droprooms: Radio,
+  marketplace: ShoppingBag,
+  calendar: Calendar,
+  bookings: Calendar,
+  credits: CreditCard,
+  profile: User,
+  settings: Settings,
+  services: Store,
+};
+
+const LABEL_MAP: Record<string, string> = {
+  dashboard: "Home",
+  studios: "Studios",
+  projects: "Projects",
+  hub: "Hub",
+  messages: "Inbox",
+  boards: "Boards",
+  droprooms: "Drops",
+  marketplace: "Market",
+  calendar: "Calendar",
+  bookings: "Bookings",
+  credits: "Credits",
+  profile: "Profile",
+  settings: "Settings",
+  services: "Services",
+};
+
+const PATH_MAP: Record<string, string> = {
+  dashboard: "/dashboard",
+  studios: "/studios",
+  projects: "/projects",
+  hub: "/creators",
+  messages: "/messages",
+  boards: "/smartboards",
+  droprooms: "/droprooms",
+  marketplace: "/marketplace",
+  calendar: "/calendar",
+  bookings: "/bookings",
+  credits: "/credits",
+  profile: "/profiles",
+  settings: "/settings",
+  services: "/services",
+};
 
 const DockBar = () => {
   const location = useLocation();
+  const { user } = useAuth();
+
+  const { data: profile } = useQuery({
+    queryKey: ["my-profile-dock"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("dock_config")
+        .eq("user_id", user!.id)
+        .single();
+      return data;
+    },
+    enabled: !!user,
+    staleTime: 60000,
+  });
+
+  const dockIds = (profile?.dock_config as string[] | null) || DEFAULT_DOCK_IDS;
 
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + "/");
@@ -31,15 +103,15 @@ const DockBar = () => {
       className="fixed bottom-4 left-0 right-0 z-50 flex justify-center pointer-events-none"
     >
       <div className="flex items-center gap-1 px-4 py-2.5 bg-card/90 backdrop-blur-xl border border-border rounded-xl shadow-lg shadow-foreground/5 pointer-events-auto">
-        {dockItems.map((item) => {
-          const active = isActive(item.path);
+        {dockIds.map((id) => {
+          const Icon = ICON_MAP[id];
+          const label = LABEL_MAP[id];
+          const path = PATH_MAP[id];
+          if (!Icon || !path) return null;
+          const active = isActive(path);
 
           return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className="relative group"
-            >
+            <Link key={id} to={path} className="relative group">
               <motion.div
                 whileHover={{ scale: 1.08, y: -2 }}
                 whileTap={{ scale: 0.95 }}
@@ -51,9 +123,9 @@ const DockBar = () => {
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                 )}
               >
-                <item.icon className="h-5 w-5" />
+                <Icon className="h-5 w-5" />
                 <span className="text-[10px] font-body font-medium leading-none">
-                  {item.label}
+                  {label}
                 </span>
               </motion.div>
             </Link>
