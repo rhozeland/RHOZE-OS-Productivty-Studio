@@ -423,13 +423,6 @@ const SettingsPage = () => {
                 <Box className="mr-2 h-4 w-4" />
                 ToyBox Logo
               </Button>
-              <Button
-                variant={showAvatarPicker === "emoji" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setShowAvatarPicker(showAvatarPicker === "emoji" ? false : "emoji")}
-              >
-                Emoji Avatar
-              </Button>
               {avatarUrl && (
                 <Button variant="ghost" size="sm" onClick={async () => {
                   setAvatarUrl("");
