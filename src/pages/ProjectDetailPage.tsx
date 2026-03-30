@@ -309,20 +309,8 @@ const ProjectDetailPage = () => {
           </TabsContent>
         )}
 
-        {project.project_type !== "collaborative" && contract && (
-          <TabsContent value="milestones">
-            <MilestoneTracker contractId={contract.id} />
-          </TabsContent>
-        )}
 
 
-        <TabsContent value="approval">
-          <ProjectApproval
-            projectId={id!}
-            projectTitle={project.title}
-            clientName={(project as any).client_name}
-          />
-        </TabsContent>
 
 
         <TabsContent value="team">
