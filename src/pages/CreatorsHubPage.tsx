@@ -334,9 +334,9 @@ const CreatorsHubPage = () => {
               <div className="card-dashed flex flex-col items-center justify-center py-16">
                 <Sparkles className="mb-3 h-8 w-8 text-muted-foreground/30" />
                 <p className="text-foreground font-medium font-body">No listings yet</p>
-                <p className="text-xs text-muted-foreground mt-1 font-body">Be the first to post a service or request</p>
+                <p className="text-xs text-muted-foreground mt-1 font-body">Be the first to post a service or job request</p>
                 <button className="btn-editorial mt-4 text-xs" onClick={() => setCreateOpen(true)}>
-                  Post Listing <ArrowRight className="h-3 w-3" />
+                  Post a Listing <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
             ) : (
