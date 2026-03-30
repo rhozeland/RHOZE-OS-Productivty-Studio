@@ -208,7 +208,7 @@ const StudioApplicationPage = () => {
                         )}
                       </div>
                     ))}
-                    {photos.length < 5 && (
+                    {photos.length < 12 && (
                       <button
                         onClick={() => fileInputRef.current?.click()}
                         className="aspect-[4/3] rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 hover:border-primary/50 hover:bg-primary/5 transition-colors cursor-pointer"
