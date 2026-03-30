@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { uploadAndGetUrl } from "@/lib/storage-utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -148,10 +149,9 @@ const SmartboardDetailPage = () => {
       if (uploadTypes.includes(itemType) && imageFile) {
         const ext = imageFile.name.split(".").pop();
         const path = `${user!.id}/${id}/${Date.now()}.${ext}`;
-        const { error: uploadErr } = await supabase.storage.from("smartboard-files").upload(path, imageFile);
-        if (uploadErr) throw uploadErr;
-        const { data: urlData } = supabase.storage.from("smartboard-files").getPublicUrl(path);
-        fileUrl = urlData.publicUrl;
+        const { url, error: uploadErrMsg } = await uploadAndGetUrl("smartboard-files", path, imageFile);
+        if (uploadErrMsg) throw new Error(uploadErrMsg);
+        fileUrl = url;
       }
 
       // For image/video/audio/pdf with URL but no file upload, use link as file_url

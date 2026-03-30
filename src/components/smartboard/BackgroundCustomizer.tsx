@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
+import { uploadAndGetUrl } from "@/lib/storage-utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Paintbrush, ImageIcon, Upload, X } from "lucide-react";
@@ -76,10 +77,9 @@ const BackgroundCustomizer = ({
     setUploading(true);
     const ext = file.name.split(".").pop();
     const path = `${user.id}/bg-${boardId}-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("smartboard-files").upload(path, file);
-    if (error) { toast.error(error.message); setUploading(false); return; }
-    const { data } = supabase.storage.from("smartboard-files").getPublicUrl(path);
-    setImageUrl(data.publicUrl);
+    const { url, error: uploadErrMsg } = await uploadAndGetUrl("smartboard-files", path, file);
+    if (uploadErrMsg) { toast.error(uploadErrMsg); setUploading(false); return; }
+    setImageUrl(url);
     setUploading(false);
   };
 

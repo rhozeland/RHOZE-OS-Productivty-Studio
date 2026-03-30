@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { uploadAndGetUrl } from "@/lib/storage-utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -101,21 +102,16 @@ const ChatAttachmentMenu = ({ onSendMessage, onSendQuote, disabled }: ChatAttach
         }
         const fileExt = file.name.split(".").pop();
         const filePath = `chat/${user.id}/${crypto.randomUUID()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from("smartboard-files")
-          .upload(filePath, file);
-        if (uploadError) {
+        const { url: signedUrl, error: uploadErrMsg } = await uploadAndGetUrl("smartboard-files", filePath, file);
+        if (uploadErrMsg) {
           toast.error(`Failed to upload ${file.name}`);
           continue;
         }
-        const { data: urlData } = supabase.storage
-          .from("smartboard-files")
-          .getPublicUrl(filePath);
 
         // Send as a rich file message
         const fileMsg = `[FILE:${JSON.stringify({
           name: file.name,
-          url: urlData.publicUrl,
+          url: signedUrl,
           type: file.type,
           size: file.size,
         })}]`;
