@@ -28,6 +28,7 @@ import FillControls from "./logo-customizer/FillControls";
 
 interface LogoCustomizerProps {
   onExport?: (dataUrl: string) => void;
+  onSave?: (dataUrl: string) => void;
   compact?: boolean;
 }
 
