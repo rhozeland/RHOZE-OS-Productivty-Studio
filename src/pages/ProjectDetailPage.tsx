@@ -319,7 +319,7 @@ const ProjectDetailPage = () => {
 
         {project.project_type !== "collaborative" && (
           <TabsContent value="budget">
-            <ProjectBudget project={project} goals={goals} />
+            <ProjectBudget project={project} goals={goals} milestones={milestones} />
           </TabsContent>
         )}
 
