@@ -845,6 +845,7 @@ export type Database = {
           created_at: string
           dashboard_layout: Json | null
           display_name: string | null
+          dock_config: Json | null
           email_notif_inquiries: boolean | null
           email_notif_messages: boolean | null
           email_notif_purchases: boolean | null
@@ -884,6 +885,7 @@ export type Database = {
           created_at?: string
           dashboard_layout?: Json | null
           display_name?: string | null
+          dock_config?: Json | null
           email_notif_inquiries?: boolean | null
           email_notif_messages?: boolean | null
           email_notif_purchases?: boolean | null
@@ -923,6 +925,7 @@ export type Database = {
           created_at?: string
           dashboard_layout?: Json | null
           display_name?: string | null
+          dock_config?: Json | null
           email_notif_inquiries?: boolean | null
           email_notif_messages?: boolean | null
           email_notif_purchases?: boolean | null
@@ -1853,6 +1856,42 @@ export type Database = {
           },
         ]
       }
+      studio_global_services: {
+        Row: {
+          created_at: string
+          id: string
+          service_id: string
+          studio_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          service_id: string
+          studio_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          service_id?: string
+          studio_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_global_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_global_services_studio_id_fkey"
+            columns: ["studio_id"]
+            isOneToOne: false
+            referencedRelation: "studios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       studio_reviews: {
         Row: {
           booking_id: string | null
@@ -1891,6 +1930,56 @@ export type Database = {
           },
           {
             foreignKeyName: "studio_reviews_studio_id_fkey"
+            columns: ["studio_id"]
+            isOneToOne: false
+            referencedRelation: "studios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      studio_services: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          duration_hours: number | null
+          id: string
+          is_active: boolean
+          price: number | null
+          sort_order: number
+          studio_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration_hours?: number | null
+          id?: string
+          is_active?: boolean
+          price?: number | null
+          sort_order?: number
+          studio_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration_hours?: number | null
+          id?: string
+          is_active?: boolean
+          price?: number | null
+          sort_order?: number
+          studio_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_services_studio_id_fkey"
             columns: ["studio_id"]
             isOneToOne: false
             referencedRelation: "studios"
