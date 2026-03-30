@@ -27,7 +27,9 @@ import {
   Box,
 } from "lucide-react";
 import LogoCustomizer from "@/components/onboarding/LogoCustomizer";
+import DockCustomizer from "@/components/settings/DockCustomizer";
 import { toast } from "sonner";
+import { LayoutDashboard } from "lucide-react";
 
 const SectionCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
   <div className={`surface-card max-w-2xl p-6 ${className}`}>{children}</div>
@@ -370,6 +372,25 @@ const SettingsPage = () => {
           </div>
           <Switch checked={theme === "dark"} onCheckedChange={toggleTheme} />
         </div>
+      </SectionCard>
+
+      {/* ─── Dock Customizer ─── */}
+      <SectionCard>
+        <SectionTitle icon={LayoutDashboard}>Dock Menu</SectionTitle>
+        <p className="text-sm text-muted-foreground mb-4">
+          Choose which 5 features appear in your bottom dock bar and reorder them.
+        </p>
+        <DockCustomizer
+          dockConfig={(profile as any)?.dock_config as string[] | null}
+          onSave={async (config) => {
+            await supabase
+              .from("profiles")
+              .update({ dock_config: config } as any)
+              .eq("user_id", user!.id);
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            queryClient.invalidateQueries({ queryKey: ["my-profile-dock"] });
+          }}
+        />
       </SectionCard>
 
       {/* ─── Avatar ─── */}
