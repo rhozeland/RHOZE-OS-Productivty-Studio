@@ -6,11 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Users, Plus, X, Search, Info, ChevronDown } from "lucide-react";
+import { Users, Plus, X, Search } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 
 interface CollaboratorsProps {
   projectId: string;
@@ -95,18 +93,6 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const updateRole = useMutation({
-    mutationFn: async ({ id, role }: { id: string; role: string }) => {
-      const { error } = await supabase.from("project_collaborators").update({ role }).eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project-collaborators", projectId] });
-      toast.success("Role updated");
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-
   const remove = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("project_collaborators").delete().eq("id", id);
@@ -117,12 +103,6 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
       toast.success("Collaborator removed");
     },
   });
-
-  const roleDescriptions: Record<string, string> = {
-    viewer: "Can view project details, goals, and files but cannot make changes.",
-    editor: "Can edit goals, upload files, and update project content.",
-    admin: "Full access — can manage team members, settings, and all project data.",
-  };
 
   const profileMap = new Map(collabProfiles?.map((p: any) => [p.user_id, p]) ?? []);
 
@@ -150,25 +130,11 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
   };
 
   return (
-    <TooltipProvider>
     <div className="surface-card p-6">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" />
           <h2 className="font-display text-lg font-semibold text-foreground">Team</h2>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="max-w-xs text-left space-y-2 p-3">
-              <p className="font-semibold text-xs">Permission Levels</p>
-              <div className="space-y-1.5">
-                <p className="text-xs"><span className="font-medium">Viewer:</span> {roleDescriptions.viewer}</p>
-                <p className="text-xs"><span className="font-medium">Editor:</span> {roleDescriptions.editor}</p>
-                <p className="text-xs"><span className="font-medium">Admin:</span> {roleDescriptions.admin}</p>
-              </div>
-            </TooltipContent>
-          </Tooltip>
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setSearch(""); setSelectedUser(null); } }}>
           <DialogTrigger asChild>
