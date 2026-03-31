@@ -95,6 +95,18 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const updateRole = useMutation({
+    mutationFn: async ({ id, role }: { id: string; role: string }) => {
+      const { error } = await supabase.from("project_collaborators").update({ role }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-collaborators", projectId] });
+      toast.success("Role updated");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const remove = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("project_collaborators").delete().eq("id", id);
@@ -105,6 +117,12 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
       toast.success("Collaborator removed");
     },
   });
+
+  const roleDescriptions: Record<string, string> = {
+    viewer: "Can view project details, goals, and files but cannot make changes.",
+    editor: "Can edit goals, upload files, and update project content.",
+    admin: "Full access — can manage team members, settings, and all project data.",
+  };
 
   const profileMap = new Map(collabProfiles?.map((p: any) => [p.user_id, p]) ?? []);
 
