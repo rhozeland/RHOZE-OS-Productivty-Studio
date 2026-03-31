@@ -154,6 +154,22 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" />
           <h2 className="font-display text-lg font-semibold text-foreground">Team</h2>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="text-muted-foreground hover:text-foreground transition-colors">
+                <Info className="h-4 w-4" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 text-sm space-y-3" side="bottom" align="start">
+              <p className="font-semibold text-foreground">Role Permissions</p>
+              {Object.entries(ROLE_INFO).map(([key, info]) => (
+                <div key={key}>
+                  <p className="font-medium text-foreground capitalize">{info.label}</p>
+                  <p className="text-xs text-muted-foreground">{info.description}</p>
+                </div>
+              ))}
+            </PopoverContent>
+          </Popover>
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setSearch(""); setSelectedUser(null); } }}>
           <DialogTrigger asChild>
