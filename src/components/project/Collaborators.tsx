@@ -6,9 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Plus, X, Search } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Users, Plus, X, Search, Info, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+
+const ROLE_INFO: Record<string, { label: string; description: string }> = {
+  viewer: { label: "Viewer", description: "Can view project details, goals, and files but cannot make changes." },
+  editor: { label: "Editor", description: "Can edit goals, upload files, post updates, and manage deliverables." },
+  admin: { label: "Admin", description: "Full access — can invite/remove members, edit settings, and approve stages." },
+};
 
 interface CollaboratorsProps {
   projectId: string;
@@ -104,6 +111,18 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
     },
   });
 
+  const updateRole = useMutation({
+    mutationFn: async ({ id, role }: { id: string; role: string }) => {
+      const { error } = await supabase.from("project_collaborators").update({ role }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-collaborators", projectId] });
+      toast.success("Role updated");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const profileMap = new Map(collabProfiles?.map((p: any) => [p.user_id, p]) ?? []);
 
   const roleColors: Record<string, string> = {
@@ -135,6 +154,22 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" />
           <h2 className="font-display text-lg font-semibold text-foreground">Team</h2>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="text-muted-foreground hover:text-foreground transition-colors">
+                <Info className="h-4 w-4" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 text-sm space-y-3" side="bottom" align="start">
+              <p className="font-semibold text-foreground">Role Permissions</p>
+              {Object.entries(ROLE_INFO).map(([key, info]) => (
+                <div key={key}>
+                  <p className="font-medium text-foreground capitalize">{info.label}</p>
+                  <p className="text-xs text-muted-foreground">{info.description}</p>
+                </div>
+              ))}
+            </PopoverContent>
+          </Popover>
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setSearch(""); setSelectedUser(null); } }}>
           <DialogTrigger asChild>
@@ -253,12 +288,21 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                     {(collab as any).project_role || "client"}
                   </span>
                 )}
-                <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${roleColors[collab.role] ?? roleColors.viewer}`}>
-                  {collab.role}
-                </span>
               </div>
             </div>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => remove.mutate(collab.id)}>
+            <Select value={collab.role} onValueChange={(val) => updateRole.mutate({ id: collab.id, role: val })}>
+              <SelectTrigger className="h-7 w-[100px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(ROLE_INFO).map(([key, info]) => (
+                  <SelectItem key={key} value={key}>
+                    <span className="capitalize">{info.label}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => remove.mutate(collab.id)}>
               <X className="h-3.5 w-3.5 text-muted-foreground" />
             </Button>
           </motion.div>
