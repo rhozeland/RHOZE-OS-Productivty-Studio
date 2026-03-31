@@ -6,9 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Plus, X, Search } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Users, Plus, X, Search, Info, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+
+const ROLE_INFO: Record<string, { label: string; description: string }> = {
+  viewer: { label: "Viewer", description: "Can view project details, goals, and files but cannot make changes." },
+  editor: { label: "Editor", description: "Can edit goals, upload files, post updates, and manage deliverables." },
+  admin: { label: "Admin", description: "Full access — can invite/remove members, edit settings, and approve stages." },
+};
 
 interface CollaboratorsProps {
   projectId: string;
