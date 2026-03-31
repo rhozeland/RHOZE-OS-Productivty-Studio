@@ -150,11 +150,25 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
   };
 
   return (
+    <TooltipProvider>
     <div className="surface-card p-6">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" />
           <h2 className="font-display text-lg font-semibold text-foreground">Team</h2>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs text-left space-y-2 p-3">
+              <p className="font-semibold text-xs">Permission Levels</p>
+              <div className="space-y-1.5">
+                <p className="text-xs"><span className="font-medium">Viewer:</span> {roleDescriptions.viewer}</p>
+                <p className="text-xs"><span className="font-medium">Editor:</span> {roleDescriptions.editor}</p>
+                <p className="text-xs"><span className="font-medium">Admin:</span> {roleDescriptions.admin}</p>
+              </div>
+            </TooltipContent>
+          </Tooltip>
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setSearch(""); setSelectedUser(null); } }}>
           <DialogTrigger asChild>
