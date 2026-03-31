@@ -288,12 +288,21 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                     {(collab as any).project_role || "client"}
                   </span>
                 )}
-                <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${roleColors[collab.role] ?? roleColors.viewer}`}>
-                  {collab.role}
-                </span>
               </div>
             </div>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => remove.mutate(collab.id)}>
+            <Select value={collab.role} onValueChange={(val) => updateRole.mutate({ id: collab.id, role: val })}>
+              <SelectTrigger className="h-7 w-[100px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(ROLE_INFO).map(([key, info]) => (
+                  <SelectItem key={key} value={key}>
+                    <span className="capitalize">{info.label}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => remove.mutate(collab.id)}>
               <X className="h-3.5 w-3.5 text-muted-foreground" />
             </Button>
           </motion.div>
