@@ -42,6 +42,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import AudioPreview from "@/components/marketplace/AudioPreview";
 import StarRating from "@/components/marketplace/StarRating";
+import QuickMessageDialog from "@/components/messages/QuickMessageDialog";
 
 const CATEGORIES: Record<string, { label: string; icon: any; color: string }> = {
   music: { label: "Music", icon: Music, color: "hsl(280, 60%, 55%)" },
@@ -68,6 +69,7 @@ const ListingDetailPage = () => {
   const [inquiryMsg, setInquiryMsg] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  const [dmOpen, setDmOpen] = useState(false);
 
   const { data: listing } = useQuery({
     queryKey: ["listing", id],
@@ -602,7 +604,7 @@ const ListingDetailPage = () => {
                 <Button
                   variant="outline"
                   className="w-full rounded-full"
-                  onClick={() => navigate(`/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`)}
+                  onClick={() => setDmOpen(true)}
                 >
                   Direct Message
                 </Button>
@@ -662,6 +664,17 @@ const ListingDetailPage = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {listing && (
+        <QuickMessageDialog
+          open={dmOpen}
+          onOpenChange={setDmOpen}
+          recipientId={listing.user_id}
+          recipientName={sellerProfile?.display_name || "Creator"}
+          recipientAvatar={sellerProfile?.avatar_url}
+          prefillMessage={`Hi! I'm interested in your listing "${listing.title}". Could we discuss the details?`}
+        />
+      )}
     </div>
   );
 };

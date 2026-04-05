@@ -5,7 +5,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -15,7 +14,6 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   Inbox,
-  Send,
   FolderKanban,
   CheckCircle,
   XCircle,
@@ -40,14 +38,14 @@ const InquiriesPage = () => {
   const [convertDialog, setConvertDialog] = useState<any>(null);
   const [totalCredits, setTotalCredits] = useState("");
 
-  // Received inquiries (I'm the seller)
-  const { data: received, isLoading: loadingReceived } = useQuery({
-    queryKey: ["inquiries-received", user?.id],
+  // All inquiries (merged view)
+  const { data: inquiries, isLoading } = useQuery({
+    queryKey: ["inquiries-all", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("listing_inquiries")
         .select("*")
-        .eq("receiver_id", user!.id)
+        .or(`sender_id.eq.${user!.id},receiver_id.eq.${user!.id}`)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -55,60 +53,38 @@ const InquiriesPage = () => {
     enabled: !!user,
   });
 
-  // Sent inquiries (I'm the buyer)
-  const { data: sent, isLoading: loadingSent } = useQuery({
-    queryKey: ["inquiries-sent", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("listing_inquiries")
-        .select("*")
-        .eq("sender_id", user!.id)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
-
-  // Get listing titles for all inquiries
-  const allListingIds = [
-    ...(received?.map((i) => i.listing_id) ?? []),
-    ...(sent?.map((i) => i.listing_id) ?? []),
-  ];
-  const uniqueListingIds = [...new Set(allListingIds)];
-
+  const allListingIds = [...new Set(inquiries?.map((i) => i.listing_id) ?? [])];
   const { data: listings } = useQuery({
-    queryKey: ["inquiry-listings", uniqueListingIds],
+    queryKey: ["inquiry-listings", allListingIds],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("marketplace_listings")
         .select("id, title, credits_price, listing_type, category")
-        .in("id", uniqueListingIds);
+        .in("id", allListingIds);
       if (error) throw error;
       return data;
     },
-    enabled: uniqueListingIds.length > 0,
+    enabled: allListingIds.length > 0,
   });
 
-  // Get profile names for senders
-  const senderIds = [...new Set(received?.map((i) => i.sender_id) ?? [])];
-  const { data: senderProfiles } = useQuery({
-    queryKey: ["inquiry-senders", senderIds],
+  const allUserIds = [...new Set([
+    ...(inquiries?.map((i) => i.sender_id) ?? []),
+    ...(inquiries?.map((i) => i.receiver_id) ?? []),
+  ].filter(id => id !== user?.id))];
+
+  const { data: userProfiles } = useQuery({
+    queryKey: ["inquiry-profiles", allUserIds],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("user_id, display_name")
-        .in("user_id", senderIds);
+      const { data, error } = await supabase.rpc("get_profiles_by_ids", { _ids: allUserIds });
       if (error) throw error;
       return data;
     },
-    enabled: senderIds.length > 0,
+    enabled: allUserIds.length > 0,
   });
 
   const listingsMap = new Map(listings?.map((l) => [l.id, l]) ?? []);
-  const sendersMap = new Map(senderProfiles?.map((p) => [p.user_id, p.display_name]) ?? []);
+  const profilesMap = new Map(userProfiles?.map((p: any) => [p.user_id, p.display_name]) ?? []);
 
-  // Decline mutation
   const declineMutation = useMutation({
     mutationFn: async (inquiryId: string) => {
       const { error } = await supabase
@@ -118,13 +94,12 @@ const InquiriesPage = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inquiries-received"] });
+      queryClient.invalidateQueries({ queryKey: ["inquiries-all"] });
       toast.success("Inquiry declined");
     },
     onError: (e: any) => toast.error(e.message),
   });
 
-  // Convert to project mutation
   const convertMutation = useMutation({
     mutationFn: async ({ inquiryId, credits }: { inquiryId: string; credits: number }) => {
       const { data, error } = await supabase.rpc("convert_inquiry_to_project" as any, {
@@ -136,23 +111,23 @@ const InquiriesPage = () => {
       return data as any;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["inquiries-received"] });
+      queryClient.invalidateQueries({ queryKey: ["inquiries-all"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       setConvertDialog(null);
       toast.success("Project created! Redirecting...");
       const projectId = typeof data === "object" ? data.project_id : null;
-      if (projectId) {
-        navigate(`/projects/${projectId}`);
-      }
+      if (projectId) navigate(`/projects/${projectId}`);
     },
     onError: (e: any) => toast.error(e.message),
   });
 
-  const renderInquiry = (inquiry: any, type: "received" | "sent") => {
+  const renderInquiry = (inquiry: any) => {
     const listing = listingsMap.get(inquiry.listing_id);
     const statusMeta = STATUS_META[inquiry.status] ?? STATUS_META.pending;
     const StatusIcon = statusMeta.icon;
-    const senderName = type === "received" ? sendersMap.get(inquiry.sender_id) ?? "Someone" : "You";
+    const isSender = inquiry.sender_id === user?.id;
+    const otherUserId = isSender ? inquiry.receiver_id : inquiry.sender_id;
+    const otherName = profilesMap.get(otherUserId) ?? (isSender ? "Seller" : "Someone");
 
     return (
       <div key={inquiry.id} className="surface-card p-4 space-y-3">
@@ -162,6 +137,9 @@ const InquiriesPage = () => {
               <Badge className={`${statusMeta.color} border-0 gap-1 text-xs`}>
                 <StatusIcon className="h-3 w-3" />
                 {statusMeta.label}
+              </Badge>
+              <Badge variant="outline" className="text-[10px]">
+                {isSender ? "Sent" : "Received"}
               </Badge>
               <span className="text-xs text-muted-foreground">
                 {format(new Date(inquiry.created_at), "MMM d, yyyy")}
@@ -174,11 +152,10 @@ const InquiriesPage = () => {
               {listing?.title ?? "Listing"}
             </Link>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {type === "received" ? `From: ${senderName}` : `Sent to seller`}
+              {isSender ? `To: ${otherName}` : `From: ${otherName}`}
             </p>
           </div>
 
-          {/* Project link if accepted */}
           {inquiry.status === "accepted" && inquiry.project_id && (
             <Link to={`/projects/${inquiry.project_id}`}>
               <Button variant="outline" size="sm" className="gap-1 rounded-full text-xs">
@@ -189,13 +166,11 @@ const InquiriesPage = () => {
           )}
         </div>
 
-        {/* Message */}
         <div className="bg-muted/50 rounded-lg p-3">
           <p className="text-sm text-foreground whitespace-pre-wrap">{inquiry.message}</p>
         </div>
 
-        {/* Actions for received pending inquiries */}
-        {type === "received" && inquiry.status === "pending" && (
+        {!isSender && inquiry.status === "pending" && (
           <div className="flex gap-2 pt-1">
             <Button
               size="sm"
@@ -233,13 +208,6 @@ const InquiriesPage = () => {
     );
   };
 
-  const EmptyState = ({ icon: Icon, text }: { icon: any; text: string }) => (
-    <div className="text-center py-16 space-y-3">
-      <Icon className="h-10 w-10 mx-auto text-muted-foreground/30" />
-      <p className="text-sm text-muted-foreground">{text}</p>
-    </div>
-  );
-
   return (
     <div className="space-y-6">
       <div>
@@ -247,47 +215,20 @@ const InquiriesPage = () => {
         <p className="text-muted-foreground">Manage marketplace inquiries and convert to projects</p>
       </div>
 
-      <Tabs defaultValue="received">
-        <TabsList>
-          <TabsTrigger value="received" className="gap-1.5">
-            <Inbox className="h-3.5 w-3.5" />
-            Received
-            {received && received.filter((i) => i.status === "pending").length > 0 && (
-              <span className="ml-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
-                {received.filter((i) => i.status === "pending").length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="sent" className="gap-1.5">
-            <Send className="h-3.5 w-3.5" />
-            Sent
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="received" className="space-y-3 mt-4">
-          {loadingReceived ? (
-            <div className="flex justify-center py-12">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            </div>
-          ) : !received?.length ? (
-            <EmptyState icon={Inbox} text="No inquiries received yet" />
-          ) : (
-            received.map((i) => renderInquiry(i, "received"))
-          )}
-        </TabsContent>
-
-        <TabsContent value="sent" className="space-y-3 mt-4">
-          {loadingSent ? (
-            <div className="flex justify-center py-12">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            </div>
-          ) : !sent?.length ? (
-            <EmptyState icon={Send} text="You haven't sent any inquiries yet" />
-          ) : (
-            sent.map((i) => renderInquiry(i, "sent"))
-          )}
-        </TabsContent>
-      </Tabs>
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      ) : !inquiries?.length ? (
+        <div className="text-center py-16 space-y-3">
+          <Inbox className="h-10 w-10 mx-auto text-muted-foreground/30" />
+          <p className="text-sm text-muted-foreground">No inquiries yet</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {inquiries.map((i) => renderInquiry(i))}
+        </div>
+      )}
 
       {/* Convert to Project Dialog */}
       <Dialog open={!!convertDialog} onOpenChange={(open) => !open && setConvertDialog(null)}>

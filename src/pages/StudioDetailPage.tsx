@@ -19,11 +19,13 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import StudioBookingModal from "@/components/booking/StudioBookingModal";
+import QuickMessageDialog from "@/components/messages/QuickMessageDialog";
 
 const StudioDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [dmOpen, setDmOpen] = useState(false);
 
   const { data: studio, isLoading } = useQuery({
     queryKey: ["studio", id],
@@ -354,11 +356,9 @@ const StudioDetailPage = () => {
                 <Button className="w-full h-12 text-base rounded-full gap-2" onClick={() => setBookingOpen(true)}>
                   <Calendar className="h-4 w-4" /> Book This Studio
                 </Button>
-                <Link to={`/messages`}>
-                  <Button variant="outline" className="w-full rounded-full gap-2">
-                    <MessageSquare className="h-4 w-4" /> Message Host
-                  </Button>
-                </Link>
+                <Button variant="outline" className="w-full rounded-full gap-2" onClick={() => setDmOpen(true)}>
+                  <MessageSquare className="h-4 w-4" /> Message Host
+                </Button>
               </div>
             ) : (
               <div className="space-y-3">
@@ -399,6 +399,15 @@ const StudioDetailPage = () => {
             max_guests: studio.max_guests,
             currency: studio.currency,
           }}
+        />
+      )}
+
+      {studio && (
+        <QuickMessageDialog
+          open={dmOpen}
+          onOpenChange={setDmOpen}
+          recipientId={studio.owner_id}
+          recipientName={studio.name}
         />
       )}
     </div>

@@ -55,7 +55,7 @@ const TIERS = [
     bestFor: "Exploring the platform, getting started",
     features: [
       "3 Boards",
-      "Collab Rooms — 1 hr max",
+      "Drop Rooms — 1 hr max",
       "Browse studios & creators",
       "Basic profile",
     ],
@@ -71,7 +71,7 @@ const TIERS = [
     bestFor: "New creators, freelancers, side-hustlers",
     features: [
       "15 Boards",
-      "Collab Rooms — 4 hr max",
+      "Drop Rooms — 4 hr max",
       "5% off studio bookings",
       "Marketplace access",
     ],
@@ -87,7 +87,7 @@ const TIERS = [
     bestFor: "Semi-pros, scaling creators",
     features: [
       "50 Boards",
-      "Collab Rooms — 12 hr max",
+      "Drop Rooms — 12 hr max",
       "10% off studio bookings",
       "Priority booking",
       "Marketplace access",
@@ -104,7 +104,7 @@ const TIERS = [
     bestFor: "Full-time creators, funded artists",
     features: [
       "Unlimited Boards",
-      "Unlimited Collab Rooms",
+      "Unlimited Drop Rooms",
       "15% off studio bookings",
       "Priority booking",
       "Marketplace access",
