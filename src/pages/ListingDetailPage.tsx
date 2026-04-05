@@ -664,6 +664,17 @@ const ListingDetailPage = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {listing && (
+        <QuickMessageDialog
+          open={dmOpen}
+          onOpenChange={setDmOpen}
+          recipientId={listing.user_id}
+          recipientName={sellerProfile?.display_name || "Creator"}
+          recipientAvatar={sellerProfile?.avatar_url}
+          prefillMessage={`Hi! I'm interested in your listing "${listing.title}". Could we discuss the details?`}
+        />
+      )}
     </div>
   );
 };
