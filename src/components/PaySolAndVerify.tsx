@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { PublicKey } from "@solana/web3.js";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +38,7 @@ const PaySolAndVerify = ({
   disabled,
 }: PaySolAndVerifyProps) => {
   const { publicKey, sendTransaction, connected } = useWallet();
+  const { setVisible } = useWalletModal();
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
 
@@ -90,7 +92,7 @@ const PaySolAndVerify = ({
 
   if (!connected) {
     return (
-      <Button variant={variant} className={className} disabled>
+      <Button variant={variant} className={className} onClick={() => setVisible(true)}>
         <Wallet className="mr-2 h-4 w-4" />
         Connect Wallet First
       </Button>
