@@ -19,11 +19,13 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import StudioBookingModal from "@/components/booking/StudioBookingModal";
+import QuickMessageDialog from "@/components/messages/QuickMessageDialog";
 
 const StudioDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [dmOpen, setDmOpen] = useState(false);
 
   const { data: studio, isLoading } = useQuery({
     queryKey: ["studio", id],
