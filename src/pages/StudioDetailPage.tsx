@@ -401,6 +401,15 @@ const StudioDetailPage = () => {
           }}
         />
       )}
+
+      {studio && (
+        <QuickMessageDialog
+          open={dmOpen}
+          onOpenChange={setDmOpen}
+          recipientId={studio.owner_id}
+          recipientName={studio.name}
+        />
+      )}
     </div>
   );
 };
