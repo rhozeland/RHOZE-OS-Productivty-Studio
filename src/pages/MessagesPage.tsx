@@ -16,7 +16,7 @@ import {
 import {
   Search, Send, User, MessageSquare, ArrowLeft,
   Inbox, FolderKanban, CheckCircle, XCircle, Clock, ArrowRight, Loader2,
-  DollarSign, Video, Phone,
+  DollarSign, Video, Phone, Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
@@ -56,22 +56,10 @@ const MessagesPage = () => {
   const [messageText, setMessageText] = useState("");
   const [search, setSearch] = useState("");
   const [quoteOpen, setQuoteOpen] = useState(false);
+  const [newConvoOpen, setNewConvoOpen] = useState(false);
+  const [newConvoSearch, setNewConvoSearch] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inquiryHandled = useRef(false);
-
-  // Get all profiles (potential contacts)
-  const { data: profiles } = useQuery({
-    queryKey: ["all-profiles"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("user_id, display_name, avatar_url")
-        .neq("user_id", user!.id);
-      if (error) throw error;
-      return data as Profile[];
-    },
-    enabled: !!user,
-  });
 
   // Get conversations (users we've messaged with)
   const { data: conversations } = useQuery({
@@ -84,7 +72,6 @@ const MessagesPage = () => {
         .order("created_at", { ascending: false });
       if (error) throw error;
 
-      // Group by conversation partner and get latest message
       const convMap = new Map<string, Message>();
       for (const msg of (data as Message[])) {
         const partnerId = msg.sender_id === user!.id ? msg.receiver_id : msg.sender_id;
@@ -95,6 +82,35 @@ const MessagesPage = () => {
       return convMap;
     },
     enabled: !!user,
+  });
+
+  // Get profiles for conversation partners
+  const conversationPartnerIds = conversations ? Array.from(conversations.keys()) : [];
+  const { data: partnerProfiles } = useQuery({
+    queryKey: ["partner-profiles", conversationPartnerIds],
+    queryFn: async () => {
+      if (conversationPartnerIds.length === 0) return [];
+      const { data, error } = await supabase.rpc("get_profiles_by_ids", {
+        _ids: conversationPartnerIds,
+      });
+      if (error) throw error;
+      return (data as Profile[]) ?? [];
+    },
+    enabled: conversationPartnerIds.length > 0,
+  });
+
+  // Search for new conversations
+  const { data: searchResults } = useQuery({
+    queryKey: ["user-search", newConvoSearch],
+    queryFn: async () => {
+      if (!newConvoSearch.trim()) return [];
+      const { data, error } = await supabase.rpc("lookup_user_by_display_name", {
+        _name: newConvoSearch.trim(),
+      });
+      if (error) throw error;
+      return (data ?? []).filter((p: any) => p.user_id !== user!.id) as Profile[];
+    },
+    enabled: !!newConvoSearch.trim() && newConvoOpen,
   });
 
   // Get messages for selected conversation
@@ -118,19 +134,13 @@ const MessagesPage = () => {
   // Real-time subscription
   useEffect(() => {
     if (!user) return;
-
     const channel = supabase
       .channel("messages-realtime")
       .on(
         "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-        },
+        { event: "INSERT", schema: "public", table: "messages" },
         (payload) => {
           const newMsg = payload.new as Message;
-          // Only process if we're involved
           if (newMsg.sender_id === user.id || newMsg.receiver_id === user.id) {
             queryClient.invalidateQueries({ queryKey: ["messages", selectedUser?.user_id] });
             queryClient.invalidateQueries({ queryKey: ["conversations"] });
@@ -138,16 +148,10 @@ const MessagesPage = () => {
         }
       )
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [user, selectedUser?.user_id, queryClient]);
 
-  // Scroll to bottom on new messages
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   // Mark messages as read
   useEffect(() => {
@@ -162,24 +166,34 @@ const MessagesPage = () => {
     }
   }, [messages, selectedUser, user, queryClient]);
 
-  // Handle inquiry deep-link from marketplace
+  // Handle deep-link (e.g. ?to=userId)
   useEffect(() => {
-    if (inquiryHandled.current || !profiles) return;
+    if (inquiryHandled.current || !partnerProfiles) return;
     const toUserId = searchParams.get("to");
     const listingTitle = searchParams.get("listing");
     if (!toUserId) return;
 
-    const targetProfile = profiles.find((p) => p.user_id === toUserId);
-    if (targetProfile) {
+    // Check if we have the profile already, if not fetch it
+    let targetProfile = partnerProfiles.find((p) => p.user_id === toUserId);
+    if (!targetProfile) {
+      // Fetch the profile via RPC
+      supabase.rpc("get_profiles_by_ids", { _ids: [toUserId] }).then(({ data }) => {
+        if (data && data.length > 0) {
+          setSelectedUser(data[0] as Profile);
+          if (listingTitle) {
+            setMessageText(`Hi! I'm interested in your listing "${decodeURIComponent(listingTitle)}". Could we discuss the details?`);
+          }
+        }
+      });
+    } else {
       setSelectedUser(targetProfile);
       if (listingTitle) {
         setMessageText(`Hi! I'm interested in your listing "${decodeURIComponent(listingTitle)}". Could we discuss the details?`);
       }
-      // Clean up URL params
-      setSearchParams({}, { replace: true });
-      inquiryHandled.current = true;
     }
-  }, [profiles, searchParams, setSearchParams]);
+    setSearchParams({}, { replace: true });
+    inquiryHandled.current = true;
+  }, [partnerProfiles, searchParams, setSearchParams]);
 
   const sendMessage = useMutation({
     mutationFn: async () => {
@@ -197,20 +211,18 @@ const MessagesPage = () => {
     },
   });
 
-  // Build contacts list: people we've talked to + searchable profiles
+  // Build contacts list: only people we've messaged with, filtered by search
   const contactsList = (() => {
-    if (!profiles) return [];
-    const conversationPartnerIds = conversations ? Array.from(conversations.keys()) : [];
-
-    // Sort: conversation partners first, then others
-    const sorted = [...profiles].sort((a, b) => {
-      const aHasConv = conversationPartnerIds.includes(a.user_id);
-      const bHasConv = conversationPartnerIds.includes(b.user_id);
-      if (aHasConv && !bHasConv) return -1;
-      if (!aHasConv && bHasConv) return 1;
-      return 0;
+    if (!partnerProfiles) return [];
+    // Sort by latest message time
+    const sorted = [...partnerProfiles].sort((a, b) => {
+      const aMsg = conversations?.get(a.user_id);
+      const bMsg = conversations?.get(b.user_id);
+      if (!aMsg && !bMsg) return 0;
+      if (!aMsg) return 1;
+      if (!bMsg) return -1;
+      return new Date(bMsg.created_at).getTime() - new Date(aMsg.created_at).getTime();
     });
-
     if (!search) return sorted;
     return sorted.filter((p) =>
       p.display_name?.toLowerCase().includes(search.toLowerCase())
@@ -221,7 +233,7 @@ const MessagesPage = () => {
   const getUnreadCount = (userId: string) => {
     const msg = conversations?.get(userId);
     if (!msg || msg.sender_id === user?.id || msg.read) return 0;
-    return 1; // simplified
+    return 1;
   };
 
   const formatTime = (dateStr: string) => {
@@ -249,27 +261,22 @@ const MessagesPage = () => {
     setSearchParams(searchParams, { replace: true });
   };
 
-  const { data: receivedInquiries } = useQuery({
-    queryKey: ["inquiries-received", user?.id],
+  // All inquiries (both sent and received)
+  const { data: allInquiries } = useQuery({
+    queryKey: ["inquiries-all", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("listing_inquiries").select("*").eq("receiver_id", user!.id).order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("listing_inquiries")
+        .select("*")
+        .or(`sender_id.eq.${user!.id},receiver_id.eq.${user!.id}`)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
     enabled: !!user,
   });
 
-  const { data: sentInquiries } = useQuery({
-    queryKey: ["inquiries-sent", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("listing_inquiries").select("*").eq("sender_id", user!.id).order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
-
-  const allInquiryListingIds = [...new Set([...(receivedInquiries?.map((i) => i.listing_id) ?? []), ...(sentInquiries?.map((i) => i.listing_id) ?? [])])];
+  const allInquiryListingIds = [...new Set(allInquiries?.map((i) => i.listing_id) ?? [])];
   const { data: inquiryListings } = useQuery({
     queryKey: ["inquiry-listings", allInquiryListingIds],
     queryFn: async () => {
@@ -280,19 +287,25 @@ const MessagesPage = () => {
     enabled: allInquiryListingIds.length > 0,
   });
 
-  const senderIds = [...new Set(receivedInquiries?.map((i) => i.sender_id) ?? [])];
-  const { data: senderProfiles } = useQuery({
-    queryKey: ["inquiry-senders", senderIds],
+  const allInquiryUserIds = [...new Set([
+    ...(allInquiries?.map((i) => i.sender_id) ?? []),
+    ...(allInquiries?.map((i) => i.receiver_id) ?? []),
+  ].filter(id => id !== user?.id))];
+
+  const { data: inquiryProfiles } = useQuery({
+    queryKey: ["inquiry-profiles", allInquiryUserIds],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("user_id, display_name").in("user_id", senderIds);
+      const { data, error } = await supabase.rpc("get_profiles_by_ids", { _ids: allInquiryUserIds });
       if (error) throw error;
       return data;
     },
-    enabled: senderIds.length > 0,
+    enabled: allInquiryUserIds.length > 0,
   });
 
   const inquiryListingsMap = new Map(inquiryListings?.map((l) => [l.id, l]) ?? []);
-  const sendersMap = new Map(senderProfiles?.map((p) => [p.user_id, p.display_name]) ?? []);
+  const inquiryProfilesMap = new Map(inquiryProfiles?.map((p: any) => [p.user_id, p.display_name]) ?? []);
+
+  const pendingCount = allInquiries?.filter((i) => i.receiver_id === user?.id && i.status === "pending").length ?? 0;
 
   const declineMutation = useMutation({
     mutationFn: async (inquiryId: string) => {
@@ -300,7 +313,7 @@ const MessagesPage = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inquiries-received"] });
+      queryClient.invalidateQueries({ queryKey: ["inquiries-all"] });
       toast.success("Inquiry declined");
     },
     onError: (e: any) => toast.error(e.message),
@@ -315,7 +328,7 @@ const MessagesPage = () => {
       return data as any;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["inquiries-received"] });
+      queryClient.invalidateQueries({ queryKey: ["inquiries-all"] });
       setConvertDialog(null);
       toast.success("Project created!");
       const projectId = typeof data === "object" ? data.project_id : null;
@@ -324,13 +337,13 @@ const MessagesPage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const pendingCount = receivedInquiries?.filter((i) => i.status === "pending").length ?? 0;
-
-  const renderInquiry = (inquiry: any, type: "received" | "sent") => {
+  const renderInquiry = (inquiry: any) => {
     const listing = inquiryListingsMap.get(inquiry.listing_id);
     const statusMeta = STATUS_META[inquiry.status] ?? STATUS_META.pending;
     const StatusIcon = statusMeta.icon;
-    const senderName = type === "received" ? sendersMap.get(inquiry.sender_id) ?? "Someone" : "You";
+    const isSender = inquiry.sender_id === user?.id;
+    const otherUserId = isSender ? inquiry.receiver_id : inquiry.sender_id;
+    const otherName = inquiryProfilesMap.get(otherUserId) ?? (isSender ? "Seller" : "Someone");
 
     return (
       <div key={inquiry.id} className="surface-card p-4 space-y-3">
@@ -341,8 +354,8 @@ const MessagesPage = () => {
                 <StatusIcon className="h-3 w-3" />
                 {statusMeta.label}
               </Badge>
-              <Badge variant="outline" className="gap-1 text-[10px]">
-                <DollarSign className="h-2.5 w-2.5" /> Inquiry
+              <Badge variant="outline" className="text-[10px]">
+                {isSender ? "Sent" : "Received"}
               </Badge>
               <span className="text-xs text-muted-foreground">{format(new Date(inquiry.created_at), "MMM d, yyyy")}</span>
             </div>
@@ -350,7 +363,7 @@ const MessagesPage = () => {
               {listing?.title ?? "Listing"}
             </Link>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {type === "received" ? `From: ${senderName}` : `Sent to seller`}
+              {isSender ? `To: ${otherName}` : `From: ${otherName}`}
             </p>
           </div>
           {inquiry.status === "accepted" && inquiry.project_id && (
@@ -364,7 +377,7 @@ const MessagesPage = () => {
         <div className="bg-muted/50 rounded-lg p-3">
           <p className="text-sm text-foreground whitespace-pre-wrap">{inquiry.message}</p>
         </div>
-        {type === "received" && inquiry.status === "pending" && (
+        {!isSender && inquiry.status === "pending" && (
           <div className="flex gap-2 pt-1">
             <Button size="sm" className="gap-1.5 rounded-full" onClick={() => {
               setConvertDialog(inquiry);
@@ -380,6 +393,13 @@ const MessagesPage = () => {
         )}
       </div>
     );
+  };
+
+  const startNewConversation = (profile: Profile) => {
+    setSelectedUser(profile);
+    setNewConvoOpen(false);
+    setNewConvoSearch("");
+    setActiveTab("messages");
   };
 
   return (
@@ -406,20 +426,43 @@ const MessagesPage = () => {
 
         <TabsContent value="messages" className="mt-4">
           <div className="surface-card flex h-[calc(100vh-20rem)] overflow-hidden">
-            {/* Sidebar - Contacts */}
+            {/* Sidebar - Conversations only */}
             <div className={cn(
               "flex flex-col border-r border-border",
               selectedUser ? "hidden md:flex md:w-80" : "w-full md:w-80"
             )}>
-              <div className="p-3">
+              <div className="p-3 space-y-2">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search creators..." className="pl-9" />
+                  <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search conversations..." className="pl-9" />
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full rounded-full gap-1.5 text-xs"
+                  onClick={() => setNewConvoOpen(true)}
+                >
+                  <Plus className="h-3.5 w-3.5" /> Start a Conversation
+                </Button>
               </div>
               <ScrollArea className="flex-1">
                 {contactsList.length === 0 ? (
-                  <p className="p-4 text-center text-sm text-muted-foreground">No creators found</p>
+                  <div className="p-6 text-center space-y-2">
+                    <MessageSquare className="h-8 w-8 mx-auto text-muted-foreground/30" />
+                    <p className="text-sm text-muted-foreground">
+                      {search ? "No conversations match your search" : "No conversations yet"}
+                    </p>
+                    {!search && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-full gap-1.5 text-xs"
+                        onClick={() => setNewConvoOpen(true)}
+                      >
+                        <Plus className="h-3.5 w-3.5" /> Start a Conversation
+                      </Button>
+                    )}
+                  </div>
                 ) : (
                   contactsList.map((profile) => {
                     const lastMsg = getLastMessage(profile.user_id);
@@ -469,7 +512,7 @@ const MessagesPage = () => {
                 <div className="flex flex-1 flex-col items-center justify-center text-muted-foreground">
                   <MessageSquare className="mb-4 h-12 w-12" />
                   <p className="text-lg font-medium">Select a conversation</p>
-                  <p className="text-sm">Choose a creator from the list to start chatting</p>
+                  <p className="text-sm">Choose from your conversations or start a new one</p>
                 </div>
               ) : (
                 <>
@@ -487,16 +530,14 @@ const MessagesPage = () => {
                     <span className="font-display font-semibold text-foreground">{selectedUser.display_name || "Creator"}</span>
                     <div className="ml-auto flex items-center gap-1">
                       <Button
-                        variant="ghost"
-                        size="icon"
+                        variant="ghost" size="icon"
                         className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60"
                         onClick={() => toast.info("Voice calls coming soon — tied to your Creator Pass tier")}
                       >
                         <Phone className="h-4 w-4" />
                       </Button>
                       <Button
-                        variant="ghost"
-                        size="icon"
+                        variant="ghost" size="icon"
                         className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60"
                         onClick={() => toast.info("Video calls coming soon — tied to your Creator Pass tier")}
                       >
@@ -562,7 +603,6 @@ const MessagesPage = () => {
             </div>
           </div>
 
-          {/* Quote Builder Dialog (controlled from attachment menu) */}
           {selectedUser && (
             <QuoteBuilder
               recipientId={selectedUser.user_id}
@@ -573,32 +613,64 @@ const MessagesPage = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="inquiries" className="mt-4">
-          <Tabs defaultValue="received">
-            <TabsList>
-              <TabsTrigger value="received" className="gap-1.5">
-                <Inbox className="h-3.5 w-3.5" /> Received
-                {pendingCount > 0 && (
-                  <span className="ml-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">{pendingCount}</span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="sent" className="gap-1.5">
-                <Send className="h-3.5 w-3.5" /> Sent
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="received" className="space-y-3 mt-4">
-              {!receivedInquiries?.length ? (
-                <div className="text-center py-16"><Inbox className="h-10 w-10 mx-auto text-muted-foreground/30" /><p className="text-sm text-muted-foreground mt-3">No inquiries received yet</p></div>
-              ) : receivedInquiries.map((i) => renderInquiry(i, "received"))}
-            </TabsContent>
-            <TabsContent value="sent" className="space-y-3 mt-4">
-              {!sentInquiries?.length ? (
-                <div className="text-center py-16"><Send className="h-10 w-10 mx-auto text-muted-foreground/30" /><p className="text-sm text-muted-foreground mt-3">You haven't sent any inquiries yet</p></div>
-              ) : sentInquiries.map((i) => renderInquiry(i, "sent"))}
-            </TabsContent>
-          </Tabs>
+        <TabsContent value="inquiries" className="mt-4 space-y-3">
+          {!allInquiries?.length ? (
+            <div className="text-center py-16">
+              <Inbox className="h-10 w-10 mx-auto text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground mt-3">No inquiries yet</p>
+            </div>
+          ) : (
+            allInquiries.map((i) => renderInquiry(i))
+          )}
         </TabsContent>
       </Tabs>
+
+      {/* New Conversation Dialog */}
+      <Dialog open={newConvoOpen} onOpenChange={setNewConvoOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display">Start a Conversation</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={newConvoSearch}
+                onChange={(e) => setNewConvoSearch(e.target.value)}
+                placeholder="Search by name or handle..."
+                className="pl-9"
+                autoFocus
+              />
+            </div>
+            <ScrollArea className="max-h-64">
+              {newConvoSearch.trim() && searchResults?.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-6">No users found</p>
+              )}
+              {searchResults?.map((profile) => (
+                <button
+                  key={profile.user_id}
+                  onClick={() => startNewConversation(profile)}
+                  className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-muted/60 transition-colors"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    {profile.avatar_url ? (
+                      <img src={profile.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
+                    ) : (
+                      <User className="h-4 w-4 text-primary" />
+                    )}
+                  </div>
+                  <span className="text-sm font-medium text-foreground">{profile.display_name || "Creator"}</span>
+                </button>
+              ))}
+              {!newConvoSearch.trim() && (
+                <p className="text-sm text-muted-foreground text-center py-6">
+                  Type a name to find someone to message
+                </p>
+              )}
+            </ScrollArea>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Convert to Project Dialog */}
       <Dialog open={!!convertDialog} onOpenChange={(open) => !open && setConvertDialog(null)}>
