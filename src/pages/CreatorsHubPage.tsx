@@ -40,7 +40,7 @@ const SORT_OPTIONS = [
 const TABS = [
   { key: "listings", label: "Listings", icon: Sparkles },
   { key: "flow", label: "Flow", icon: Flame },
-  { key: "collab", label: "Collab Rooms", icon: Zap },
+  { key: "collab", label: "Drop Rooms", icon: Zap },
   { key: "boards", label: "Boards", icon: LayoutGrid },
 ] as const;
 

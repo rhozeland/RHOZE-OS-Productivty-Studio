@@ -602,7 +602,7 @@ const ListingDetailPage = () => {
                 <Button
                   variant="outline"
                   className="w-full rounded-full"
-                  onClick={() => navigate(`/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`)}
+                  onClick={() => setDmOpen(true)}
                 >
                   Direct Message
                 </Button>

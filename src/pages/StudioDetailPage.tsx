@@ -354,11 +354,9 @@ const StudioDetailPage = () => {
                 <Button className="w-full h-12 text-base rounded-full gap-2" onClick={() => setBookingOpen(true)}>
                   <Calendar className="h-4 w-4" /> Book This Studio
                 </Button>
-                <Link to={`/messages`}>
-                  <Button variant="outline" className="w-full rounded-full gap-2">
-                    <MessageSquare className="h-4 w-4" /> Message Host
-                  </Button>
-                </Link>
+                <Button variant="outline" className="w-full rounded-full gap-2" onClick={() => setDmOpen(true)}>
+                  <MessageSquare className="h-4 w-4" /> Message Host
+                </Button>
               </div>
             ) : (
               <div className="space-y-3">
