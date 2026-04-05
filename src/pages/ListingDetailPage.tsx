@@ -69,6 +69,7 @@ const ListingDetailPage = () => {
   const [inquiryMsg, setInquiryMsg] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  const [dmOpen, setDmOpen] = useState(false);
 
   const { data: listing } = useQuery({
     queryKey: ["listing", id],
