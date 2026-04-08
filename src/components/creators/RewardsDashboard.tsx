@@ -1,10 +1,15 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
-import { Coins, Flame, TrendingUp, Zap, Star, MessageSquare, Award, ArrowRight } from "lucide-react";
+import { Coins, Flame, TrendingUp, Zap, Star, MessageSquare, Award, ArrowRight, Download, Shield } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { useRhozeBalance } from "@/hooks/useRhozeBalance";
+import ClaimRhozeButton from "@/components/ClaimRhozeButton";
+import { Input } from "@/components/ui/input";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 const REWARD_ACTIONS = [
   { action: "Post to Flow", reward: "+2 $RHOZE", icon: Flame, description: "Share creative work in your Flow feed" },
@@ -18,6 +23,9 @@ const REWARD_ACTIONS = [
 const RewardsDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { connected } = useWallet();
+  const { data: tokenInfo } = useRhozeBalance();
+  const [claimAmount, setClaimAmount] = useState(0);
 
   const { data: credits } = useQuery({
     queryKey: ["user-credits-rewards", user?.id],
@@ -143,6 +151,94 @@ const RewardsDashboard = () => {
             <p className={`text-2xl font-display ${stat.accent ? "text-primary" : "text-foreground"}`}>{stat.value}</p>
           </motion.div>
         ))}
+      </div>
+
+      {/* Claim & Wallet Token Section */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Claim to wallet */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="p-4 rounded-lg border border-primary/20 bg-primary/5 space-y-3"
+        >
+          <div className="flex items-center gap-2">
+            <Download className="h-4 w-4 text-primary" />
+            <span className="text-sm font-body font-semibold text-foreground">Claim to Wallet</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground font-body">
+            Convert your earned credits into real $RHOZE tokens on Solana.
+          </p>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              min={1}
+              max={credits?.balance ?? 0}
+              value={claimAmount || ""}
+              onChange={(e) => setClaimAmount(Number(e.target.value))}
+              placeholder="Amount"
+              className="h-9 text-sm w-24"
+            />
+            <span className="text-xs text-muted-foreground font-body">
+              / {credits?.balance ?? 0} available
+            </span>
+          </div>
+          <ClaimRhozeButton
+            creditsToClaim={claimAmount}
+            onSuccess={() => setClaimAmount(0)}
+            className="w-full"
+            disabled={claimAmount <= 0 || claimAmount > (credits?.balance ?? 0)}
+          />
+        </motion.div>
+
+        {/* On-chain token info */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="p-4 rounded-lg border border-border bg-card/60 space-y-3"
+        >
+          <div className="flex items-center gap-2">
+            <Shield className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-body font-semibold text-foreground">Wallet Token Balance</span>
+          </div>
+          {connected && tokenInfo ? (
+            <>
+              <p className="text-2xl font-display text-foreground">
+                {tokenInfo.balance.toLocaleString()} <span className="text-sm text-muted-foreground">$RHOZE</span>
+              </p>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-body font-semibold px-2 py-0.5 rounded-full ${
+                  tokenInfo.tier === "diamond" ? "bg-primary/20 text-primary" :
+                  tokenInfo.tier === "gold" ? "bg-yellow-500/20 text-yellow-500" :
+                  tokenInfo.tier === "silver" ? "bg-gray-400/20 text-gray-400" :
+                  tokenInfo.tier === "bronze" ? "bg-orange-500/20 text-orange-500" :
+                  tokenInfo.tier === "holder" ? "bg-accent/20 text-accent" :
+                  "bg-muted text-muted-foreground"
+                }`}>
+                  {tokenInfo.tier.charAt(0).toUpperCase() + tokenInfo.tier.slice(1)} Holder
+                </span>
+              </div>
+              {tokenInfo.perks.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-body">Your Perks</p>
+                  {tokenInfo.perks.map((perk) => (
+                    <p key={perk} className="text-xs text-foreground font-body flex items-center gap-1.5">
+                      <span className="h-1 w-1 rounded-full bg-primary shrink-0" />
+                      {perk}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-xs text-muted-foreground font-body">
+                Connect your Solana wallet to see your on-chain $RHOZE balance and holder tier.
+              </p>
+            </div>
+          )}
+        </motion.div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
