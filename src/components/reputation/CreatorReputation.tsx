@@ -125,7 +125,12 @@ const CreatorReputation = ({ userId, isOwner = false }: CreatorReputationProps) 
       <div className="space-y-2 max-h-[400px] overflow-y-auto">
         {proofs && proofs.length > 0 ? (
           proofs.map((proof) => (
-            <ContributionProofCard key={proof.id} proof={proof} />
+            <ContributionProofCard key={proof.id} proof={{
+              ...proof,
+              metadata: (typeof proof.metadata === 'object' && proof.metadata !== null && !Array.isArray(proof.metadata))
+                ? proof.metadata as Record<string, unknown>
+                : {},
+            }} />
           ))
         ) : (
           <p className="text-sm text-muted-foreground text-center py-4">
