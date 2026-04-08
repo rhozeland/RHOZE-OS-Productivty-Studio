@@ -118,15 +118,15 @@ Deno.serve(async (req) => {
           const connection = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
 
           const buybackPubkey = new PublicKey(config.buyback_wallet);
-          const sourceATA = await getAssociatedTokenAddress(RHOZE_MINT, keypair.publicKey);
-          const destATA = await getAssociatedTokenAddress(RHOZE_MINT, buybackPubkey);
+          const sourceATA = getAssociatedTokenAddress(RHOZE_MINT, keypair.publicKey);
+          const destATA = getAssociatedTokenAddress(RHOZE_MINT, buybackPubkey);
 
           const tokenAmount = BigInt(buybackAmount) * BigInt(10 ** TOKEN_DECIMALS);
           const instructions: TransactionInstruction[] = [];
 
-          // Check if dest ATA exists
+          // Try to check if dest ATA exists, create if not
           try {
-            await getAccount(connection, destATA);
+            await connection.getAccountInfo(destATA);
           } catch {
             instructions.push(
               createAssociatedTokenAccountInstruction(
