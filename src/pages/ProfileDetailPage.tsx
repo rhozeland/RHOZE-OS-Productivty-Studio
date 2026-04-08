@@ -16,6 +16,7 @@ import { motion, Reorder } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import ProfileSellerStats from "@/components/profile/ProfileSellerStats";
+import CreatorReputation from "@/components/reputation/CreatorReputation";
 import ProfileBadges from "@/components/profile/ProfileBadges";
 import { cn } from "@/lib/utils";
 
@@ -609,6 +610,11 @@ const ProfileDetailPage = () => {
 
         {/* Sections rendered in layout order */}
         {layout.map((sectionId, i) => renderSection(sectionId, i))}
+
+        {/* On-Chain Reputation */}
+        {id && (
+          <CreatorReputation userId={id} isOwner={isOwnProfile} />
+        )}
 
         {/* Projects — own profile only, always at bottom */}
         {isOwnProfile && publicProjects && publicProjects.length > 0 && (
