@@ -1,10 +1,15 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
-import { Coins, Flame, TrendingUp, Zap, Star, MessageSquare, Award, ArrowRight } from "lucide-react";
+import { Coins, Flame, TrendingUp, Zap, Star, MessageSquare, Award, ArrowRight, Download, Shield } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { useRhozeBalance } from "@/hooks/useRhozeBalance";
+import ClaimRhozeButton from "@/components/ClaimRhozeButton";
+import { Input } from "@/components/ui/input";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 const REWARD_ACTIONS = [
   { action: "Post to Flow", reward: "+2 $RHOZE", icon: Flame, description: "Share creative work in your Flow feed" },
