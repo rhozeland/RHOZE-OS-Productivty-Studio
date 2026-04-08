@@ -20,6 +20,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRewardStreak } from "@/hooks/useRewardStreak";
 
 const PAGES = [
   { name: "Dashboard", path: "/dashboard", icon: FolderKanban },
@@ -36,6 +37,7 @@ const AppLayout = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
+  useRewardStreak();
 
   // Keyboard shortcut
   useEffect(() => {
