@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,6 +22,7 @@ import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import CategoryTiles from "@/components/creators/CategoryTiles";
 import Leaderboard from "@/components/creators/Leaderboard";
 import FlowFeed from "@/components/creators/FlowFeed";
+import RewardsDashboard from "@/components/creators/RewardsDashboard";
 import { formatDistanceToNow, isPast } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +43,7 @@ const TABS = [
   { key: "flow", label: "Flow", icon: Flame },
   { key: "collab", label: "Drop Rooms", icon: Zap },
   { key: "boards", label: "Boards", icon: LayoutGrid },
+  { key: "rewards", label: "$RHOZE", icon: Coins },
 ] as const;
 
 type TabKey = typeof TABS[number]["key"];
