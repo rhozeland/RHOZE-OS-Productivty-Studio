@@ -2206,6 +2206,8 @@ export type Database = {
           balance: number
           created_at: string
           id: string
+          last_reward_login: string | null
+          reward_streak: number
           subscription_end: string | null
           subscription_start: string | null
           tier: string
@@ -2217,6 +2219,8 @@ export type Database = {
           balance?: number
           created_at?: string
           id?: string
+          last_reward_login?: string | null
+          reward_streak?: number
           subscription_end?: string | null
           subscription_start?: string | null
           tier?: string
@@ -2228,6 +2232,8 @@ export type Database = {
           balance?: number
           created_at?: string
           id?: string
+          last_reward_login?: string | null
+          reward_streak?: number
           subscription_end?: string | null
           subscription_start?: string | null
           tier?: string
@@ -2286,6 +2292,10 @@ export type Database = {
           _type: string
           _user_id: string
         }
+        Returns: undefined
+      }
+      award_rhoze: {
+        Args: { _amount: number; _description: string; _user_id: string }
         Returns: undefined
       }
       cleanup_old_notifications: { Args: never; Returns: undefined }
