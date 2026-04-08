@@ -37,6 +37,7 @@ const AppLayout = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
+  useRewardStreak();
 
   // Keyboard shortcut
   useEffect(() => {
