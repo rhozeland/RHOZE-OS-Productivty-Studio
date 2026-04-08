@@ -23,6 +23,9 @@ const REWARD_ACTIONS = [
 const RewardsDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { connected } = useWallet();
+  const { data: tokenInfo } = useRhozeBalance();
+  const [claimAmount, setClaimAmount] = useState(0);
 
   const { data: credits } = useQuery({
     queryKey: ["user-credits-rewards", user?.id],
