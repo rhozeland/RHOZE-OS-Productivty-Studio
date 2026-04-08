@@ -552,7 +552,7 @@ const CreditShopPage = () => {
                   <PaySolAndVerify
                     solAmount={+(getPrice(pendingTier) / 150).toFixed(4)}
                     creditsToAdd={0}
-                    description={`${pendingTier.name} subscription (${billingCycle}, crypto)`}
+                    description={`${pendingTier.name} subscription (${billingCycle}, SOL)`}
                     label={`Pay ~${(getPrice(pendingTier) / 150).toFixed(4)} SOL`}
                     className="w-full"
                     onSuccess={async () => {
@@ -561,8 +561,25 @@ const CreditShopPage = () => {
                       setPendingTier(null);
                     }}
                   />
+                  <div className="relative flex items-center gap-2 my-2">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-[10px] text-muted-foreground font-body">or pay with $RHOZE</span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+                  <PayWithRhozeButton
+                    tokenAmount={Math.ceil(getPrice(pendingTier) * 100)}
+                    creditsToAdd={0}
+                    description={`${pendingTier.name} subscription (${billingCycle}, $RHOZE)`}
+                    label={`Pay ${Math.ceil(getPrice(pendingTier) * 100)} $RHOZE`}
+                    className="w-full"
+                    onSuccess={async () => {
+                      await subscribeTier.mutateAsync(pendingTier);
+                      setSubPaymentOpen(false);
+                      setPendingTier(null);
+                    }}
+                  />
                   <p className="text-xs text-center text-muted-foreground">
-                    One-time crypto payment • Pay via Phantom or Solflare
+                    Pay via Phantom or Solflare • SOL or $RHOZE accepted
                   </p>
                 </div>
               )}
