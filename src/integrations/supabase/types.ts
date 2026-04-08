@@ -200,6 +200,39 @@ export type Database = {
         }
         Relationships: []
       }
+      contribution_proofs: {
+        Row: {
+          action_type: string
+          anchored_at: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          reference_id: string | null
+          solana_signature: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          anchored_at?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          reference_id?: string | null
+          solana_signature?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          anchored_at?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          reference_id?: string | null
+          solana_signature?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           amount: number
@@ -1418,6 +1451,117 @@ export type Database = {
             columns: ["listing_id"]
             isOneToOne: false
             referencedRelation: "marketplace_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revenue_split_configs: {
+        Row: {
+          buyback_pct: number
+          buyback_wallet: string | null
+          contract_id: string | null
+          created_at: string
+          creator_id: string
+          creator_pct: number
+          curator_id: string | null
+          curator_pct: number
+          id: string
+          is_active: boolean
+          listing_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          buyback_pct?: number
+          buyback_wallet?: string | null
+          contract_id?: string | null
+          created_at?: string
+          creator_id: string
+          creator_pct?: number
+          curator_id?: string | null
+          curator_pct?: number
+          id?: string
+          is_active?: boolean
+          listing_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          buyback_pct?: number
+          buyback_wallet?: string | null
+          contract_id?: string | null
+          created_at?: string
+          creator_id?: string
+          creator_pct?: number
+          curator_id?: string | null
+          curator_pct?: number
+          id?: string
+          is_active?: boolean
+          listing_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_split_configs_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "project_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revenue_split_configs_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revenue_split_logs: {
+        Row: {
+          buyback_amount: number
+          config_id: string
+          created_at: string
+          creator_amount: number
+          curator_amount: number
+          id: string
+          purchase_id: string | null
+          solana_signature: string | null
+          total_amount: number
+        }
+        Insert: {
+          buyback_amount?: number
+          config_id: string
+          created_at?: string
+          creator_amount: number
+          curator_amount?: number
+          id?: string
+          purchase_id?: string | null
+          solana_signature?: string | null
+          total_amount: number
+        }
+        Update: {
+          buyback_amount?: number
+          config_id?: string
+          created_at?: string
+          creator_amount?: number
+          curator_amount?: number
+          id?: string
+          purchase_id?: string | null
+          solana_signature?: string | null
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_split_logs_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "revenue_split_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revenue_split_logs_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "purchases"
             referencedColumns: ["id"]
           },
         ]
