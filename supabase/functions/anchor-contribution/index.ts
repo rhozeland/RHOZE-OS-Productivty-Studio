@@ -1,4 +1,4 @@
-import { corsHeaders } from "@supabase/supabase-js/cors";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   Connection,
   Keypair,
@@ -6,8 +6,12 @@ import {
   Transaction,
   TransactionInstruction,
   clusterApiUrl,
-} from "npm:@solana/web3.js@1.98.0";
-import { createClient } from "npm:@supabase/supabase-js@2.49.4";
+} from "https://esm.sh/@solana/web3.js@1.98.4";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 const MEMO_PROGRAM_ID = new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
 
