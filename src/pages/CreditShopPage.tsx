@@ -34,6 +34,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { Link, useSearchParams } from "react-router-dom";
 import PaySolAndVerify from "@/components/PaySolAndVerify";
+import PayWithRhozeButton from "@/components/PayWithRhozeButton";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
 
 const CAT_ICONS: Record<string, any> = {
