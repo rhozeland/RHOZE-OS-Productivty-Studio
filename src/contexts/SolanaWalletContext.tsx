@@ -10,7 +10,7 @@ import { clusterApiUrl } from "@solana/web3.js";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
 
-const SOLANA_NETWORK = "mainnet-beta";
+const SOLANA_NETWORK = "devnet";
 
 export const SolanaWalletProvider = ({ children }: { children: ReactNode }) => {
   const endpoint = useMemo(() => clusterApiUrl(SOLANA_NETWORK), []);
