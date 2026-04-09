@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 const RHOZE_MINT = new PublicKey("7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump");
-const NETWORK = "mainnet-beta";
+const NETWORK = "devnet";
 // pump.fun tokens use 6 decimals
 const RHOZE_DECIMALS = 6;
 
