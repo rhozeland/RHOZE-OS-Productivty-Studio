@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
     const privateKeyArray = JSON.parse(privateKeyStr);
     const keypair = Keypair.fromSecretKey(new Uint8Array(privateKeyArray));
 
-    const connection = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
+    const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
 
     const memoInstruction = new TransactionInstruction({
       keys: [{ pubkey: keypair.publicKey, isSigner: true, isWritable: false }],
@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
       .eq("id", proof_id);
 
     return new Response(
-      JSON.stringify({ signature, explorer: `https://solscan.io/tx/${signature}` }),
+      JSON.stringify({ signature, explorer: `https://solscan.io/tx/${signature}?cluster=devnet` }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

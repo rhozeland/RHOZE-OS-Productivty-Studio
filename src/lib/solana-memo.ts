@@ -7,7 +7,7 @@ import {
 } from "@solana/web3.js";
 
 const MEMO_PROGRAM_ID = new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
-const NETWORK = "mainnet-beta";
+const NETWORK = "devnet";
 
 /**
  * Creates a Solana memo transaction that anchors data on-chain.

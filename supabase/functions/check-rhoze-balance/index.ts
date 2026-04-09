@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 const RHOZE_MINT = new PublicKey("7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump");
-const NETWORK = "mainnet-beta";
+const NETWORK = "devnet";
 const RHOZE_DECIMALS = 6;
 
 // Token-gated tier thresholds
