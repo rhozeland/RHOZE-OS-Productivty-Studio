@@ -405,106 +405,99 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* ═══════════ HOW IT WORKS + FLYWHEEL ═══════════ */}
-      <section className="px-4 sm:px-6 py-16 sm:py-20 relative overflow-hidden">
-        {/* Subtle background glow */}
+      {/* ═══════════ ABOUT — HOW IT WORKS + FLYWHEEL + DEEP DIVE ═══════════ */}
+      <section id="about" className="px-4 sm:px-6 py-16 sm:py-24 relative overflow-hidden">
+        {/* Background glows */}
         <div className="absolute inset-0 pointer-events-none">
-          <div
-            className="absolute top-[10%] left-[50%] -translate-x-1/2 w-[600px] h-[600px] rounded-full opacity-[0.06]"
-            style={{
-              background: "radial-gradient(circle, hsl(280 80% 65%) 0%, transparent 70%)",
-            }}
-          />
+          <div className="absolute top-[5%] left-[30%] w-[500px] h-[500px] rounded-full opacity-[0.04]"
+            style={{ background: "radial-gradient(circle, hsl(280 80% 65%) 0%, transparent 70%)" }} />
+          <div className="absolute bottom-[10%] right-[20%] w-[400px] h-[400px] rounded-full opacity-[0.04]"
+            style={{ background: "radial-gradient(circle, hsl(175 70% 50%) 0%, transparent 70%)" }} />
         </div>
 
-        <div className="max-w-4xl mx-auto relative z-10">
+        <div className="max-w-5xl mx-auto relative z-10">
           {/* Section header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="text-center mb-14"
+            className="text-center mb-16"
           >
             <div className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 border border-border px-3 py-1 mb-4">
               <Coins className="h-3 w-3 text-muted-foreground" />
-              <span className="text-[11px] font-medium text-muted-foreground tracking-wide">
-                THE $RHOZE ECONOMY
+              <span className="text-[11px] font-medium text-muted-foreground tracking-wide uppercase">
+                About Rhozeland
               </span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
-              How It Works
+              How the ecosystem works
             </h2>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-              A self-reinforcing ecosystem where creating, proving, and spending power each other forward.
+            <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+              A self-reinforcing creative economy where every action — creating, proving, spending — powers the next.
             </p>
           </motion.div>
 
-          {/* Flywheel + Steps layout */}
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            {/* ── Flywheel ── */}
+          {/* ── Top row: Flywheel + Step Cards ── */}
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center mb-20">
+            {/* Flywheel — new hex-ring design */}
             <div ref={flywheelRef} className="flex items-center justify-center">
-              <div className="relative w-[280px] h-[280px] sm:w-[320px] sm:h-[320px]">
-                {/* Outer ring */}
+              <div className="relative w-[280px] h-[280px] sm:w-[340px] sm:h-[340px]">
+                {/* Pulsing outer ring */}
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
+                  initial={{ opacity: 0, scale: 0.7 }}
                   animate={flywheelInView ? { opacity: 1, scale: 1 } : {}}
-                  transition={{ duration: 0.6 }}
-                  className="absolute inset-0 rounded-full border border-border/40"
+                  transition={{ duration: 0.7, type: "spring" }}
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    border: "1px solid hsl(var(--border) / 0.3)",
+                    boxShadow: "0 0 60px hsl(280 80% 65% / 0.06), inset 0 0 60px hsl(280 80% 65% / 0.03)",
+                  }}
                 />
 
-                {/* Spinning dashed track */}
-                <motion.svg
-                  viewBox="0 0 320 320"
-                  className="absolute inset-0 w-full h-full"
-                  initial={{ opacity: 0 }}
-                  animate={flywheelInView ? { opacity: 0.3, rotate: 360 } : {}}
-                  transition={{
-                    opacity: { duration: 0.6 },
-                    rotate: { duration: 60, repeat: Infinity, ease: "linear" },
-                  }}
-                >
-                  <circle
-                    cx="160"
-                    cy="160"
-                    r="130"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1"
-                    strokeDasharray="8 12"
-                    className="text-muted-foreground"
-                  />
-                </motion.svg>
-
-                {/* Inner glow */}
+                {/* Rotating gradient ring */}
                 <motion.div
                   initial={{ opacity: 0 }}
-                  animate={flywheelInView ? { opacity: 1 } : {}}
-                  transition={{ delay: 0.3, duration: 0.8 }}
-                  className="absolute inset-[25%] rounded-full"
-                  style={{
-                    background: "radial-gradient(circle, hsl(280 80% 65% / 0.08) 0%, transparent 70%)",
+                  animate={flywheelInView ? { opacity: 1, rotate: 360 } : {}}
+                  transition={{
+                    opacity: { duration: 0.5, delay: 0.3 },
+                    rotate: { duration: 40, repeat: Infinity, ease: "linear" },
                   }}
+                  className="absolute inset-[6px] rounded-full"
+                  style={{
+                    background: "conic-gradient(from 0deg, hsl(280 80% 65% / 0.15), hsl(175 70% 50% / 0.15), hsl(30 90% 60% / 0.15), hsl(320 80% 60% / 0.15), hsl(280 80% 65% / 0.15))",
+                    mask: "radial-gradient(circle, transparent 85%, black 86%, black 100%)",
+                    WebkitMask: "radial-gradient(circle, transparent 85%, black 86%, black 100%)",
+                  }}
+                />
+
+                {/* Inner subtle ring */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={flywheelInView ? { opacity: 0.3, scale: 1 } : {}}
+                  transition={{ delay: 0.4, duration: 0.6 }}
+                  className="absolute inset-[30%] rounded-full border border-border/30"
                 />
 
                 {/* Center label */}
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.5 }}
+                  initial={{ opacity: 0, scale: 0.3 }}
                   animate={flywheelInView ? { opacity: 1, scale: 1 } : {}}
-                  transition={{ delay: 0.4, duration: 0.5, type: "spring" }}
+                  transition={{ delay: 0.5, duration: 0.5, type: "spring" }}
                   className="absolute inset-0 flex items-center justify-center"
                 >
                   <div className="text-center">
-                    <p className="text-lg font-bold text-foreground">$RHOZE</p>
-                    <p className="text-[10px] text-muted-foreground tracking-wide">FLYWHEEL</p>
+                    <Layers className="h-5 w-5 mx-auto mb-1 text-primary/60" />
+                    <p className="text-base font-bold text-foreground">$RHOZE</p>
+                    <p className="text-[9px] text-muted-foreground tracking-[0.2em] uppercase">Flywheel</p>
                   </div>
                 </motion.div>
 
-                {/* Nodes positioned around the circle */}
+                {/* Nodes */}
                 {FLYWHEEL_NODES.map((node, i) => {
                   const angle = (i * 360) / FLYWHEEL_NODES.length - 90;
                   const rad = (angle * Math.PI) / 180;
-                  const radius = 42; // percentage from center
+                  const radius = 42;
                   const x = 50 + radius * Math.cos(rad);
                   const y = 50 + radius * Math.sin(rad);
 
@@ -513,23 +506,20 @@ const LandingPage = () => {
                       key={node.label}
                       initial={{ opacity: 0, scale: 0 }}
                       animate={flywheelInView ? { opacity: 1, scale: 1 } : {}}
-                      transition={{ delay: 0.2 + i * 0.15, duration: 0.4, type: "spring" }}
-                      className="absolute flex flex-col items-center gap-1.5"
-                      style={{
-                        left: `${x}%`,
-                        top: `${y}%`,
-                        transform: "translate(-50%, -50%)",
-                      }}
+                      transition={{ delay: 0.3 + i * 0.12, duration: 0.45, type: "spring" }}
+                      className="absolute flex flex-col items-center gap-1"
+                      style={{ left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)" }}
                     >
-                      <div
-                        className="h-11 w-11 sm:h-12 sm:w-12 rounded-xl flex items-center justify-center backdrop-blur-sm border border-border/50 shadow-lg"
+                      <motion.div
+                        whileHover={{ scale: 1.15 }}
+                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl flex items-center justify-center border border-border/40 shadow-lg cursor-default"
                         style={{
-                          background: `linear-gradient(135deg, ${node.color}20, ${node.color}08)`,
-                          boxShadow: `0 4px 20px ${node.color}15`,
+                          background: `linear-gradient(145deg, ${node.color}18, ${node.color}06)`,
+                          boxShadow: `0 6px 24px ${node.color}12`,
                         }}
                       >
-                        <node.icon className="h-5 w-5" style={{ color: node.color }} />
-                      </div>
+                        <node.icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: node.color }} />
+                      </motion.div>
                       <span className="text-[10px] font-semibold text-foreground tracking-wide">
                         {node.label}
                       </span>
@@ -537,41 +527,35 @@ const LandingPage = () => {
                   );
                 })}
 
-                {/* Animated connecting arcs */}
+                {/* Arrow arcs */}
                 <motion.svg
-                  viewBox="0 0 320 320"
+                  viewBox="0 0 340 340"
                   className="absolute inset-0 w-full h-full pointer-events-none"
                   initial={{ opacity: 0 }}
                   animate={flywheelInView ? { opacity: 1 } : {}}
-                  transition={{ delay: 0.8, duration: 0.5 }}
+                  transition={{ delay: 0.9, duration: 0.5 }}
                 >
                   {FLYWHEEL_NODES.map((node, i) => {
-                    const angle1 = (i * 360) / FLYWHEEL_NODES.length - 90;
-                    const angle2 = (((i + 1) % FLYWHEEL_NODES.length) * 360) / FLYWHEEL_NODES.length - 90;
-                    const r = 134;
-                    const cx = 160, cy = 160;
-                    const startAngle = angle1 + 18;
-                    const endAngle = angle2 - 18;
-                    const s = { x: cx + r * Math.cos((startAngle * Math.PI) / 180), y: cy + r * Math.sin((startAngle * Math.PI) / 180) };
-                    const e = { x: cx + r * Math.cos((endAngle * Math.PI) / 180), y: cy + r * Math.sin((endAngle * Math.PI) / 180) };
+                    const a1 = (i * 360) / FLYWHEEL_NODES.length - 90;
+                    const a2 = (((i + 1) % FLYWHEEL_NODES.length) * 360) / FLYWHEEL_NODES.length - 90;
+                    const r = 143;
+                    const cx = 170, cy = 170;
+                    const sa = a1 + 20;
+                    const ea = a2 - 20;
+                    const s = { x: cx + r * Math.cos((sa * Math.PI) / 180), y: cy + r * Math.sin((sa * Math.PI) / 180) };
+                    const e = { x: cx + r * Math.cos((ea * Math.PI) / 180), y: cy + r * Math.sin((ea * Math.PI) / 180) };
                     return (
-                      <path
-                        key={i}
-                        d={`M ${s.x} ${s.y} A ${r} ${r} 0 0 1 ${e.x} ${e.y}`}
-                        fill="none"
-                        stroke={node.color}
-                        strokeWidth="1.5"
-                        strokeOpacity="0.25"
-                        strokeLinecap="round"
-                      />
+                      <path key={i} d={`M ${s.x} ${s.y} A ${r} ${r} 0 0 1 ${e.x} ${e.y}`}
+                        fill="none" stroke={node.color} strokeWidth="1.5" strokeOpacity="0.2"
+                        strokeLinecap="round" strokeDasharray="6 4" />
                     );
                   })}
                 </motion.svg>
               </div>
             </div>
 
-            {/* ── Step cards ── */}
-            <div className="flex flex-col gap-4">
+            {/* Step cards */}
+            <div className="flex flex-col gap-3.5">
               {STEPS.map((step, i) => (
                 <motion.div
                   key={step.num}
@@ -581,27 +565,20 @@ const LandingPage = () => {
                   transition={{ delay: i * 0.1, duration: 0.4 }}
                   className="group relative rounded-xl border border-border/60 bg-card/60 backdrop-blur-sm p-4 sm:p-5 hover:border-border transition-all"
                 >
-                  {/* Accent line */}
                   <div
                     className="absolute left-0 top-3 bottom-3 w-[2px] rounded-full opacity-40 group-hover:opacity-80 transition-opacity"
                     style={{ background: step.accent }}
                   />
-
                   <div className="flex items-start gap-3.5 pl-3">
                     <div
                       className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0 border border-border/40"
-                      style={{
-                        background: `linear-gradient(135deg, ${step.accent}15, ${step.accent}05)`,
-                      }}
+                      style={{ background: `linear-gradient(135deg, ${step.accent}15, ${step.accent}05)` }}
                     >
                       <step.icon className="h-4 w-4" style={{ color: step.accent }} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span
-                          className="text-[10px] font-bold tracking-wider"
-                          style={{ color: step.accent }}
-                        >
+                        <span className="text-[10px] font-bold tracking-wider" style={{ color: step.accent }}>
                           {step.num}
                         </span>
                         <h3 className="text-sm font-semibold text-foreground">{step.title}</h3>
@@ -614,21 +591,68 @@ const LandingPage = () => {
             </div>
           </div>
 
-          {/* Bottom connector line */}
+          {/* ── Deep-dive pillar cards ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mb-6"
+          >
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground/50 text-center mb-8">
+              The three pillars
+            </p>
+          </motion.div>
+
+          <div className="grid sm:grid-cols-3 gap-4 sm:gap-5 mb-14">
+            {PILLARS.map((pillar, i) => (
+              <motion.div
+                key={pillar.title}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ delay: i * 0.12, duration: 0.45 }}
+                className="rounded-2xl border border-border/50 bg-card/70 backdrop-blur-sm p-5 sm:p-6 hover:border-border/80 transition-all group"
+              >
+                <div
+                  className="h-10 w-10 rounded-xl flex items-center justify-center mb-4 border border-border/30"
+                  style={{
+                    background: `linear-gradient(145deg, ${pillar.color}18, ${pillar.color}06)`,
+                    boxShadow: `0 4px 16px ${pillar.color}10`,
+                  }}
+                >
+                  <pillar.icon className="h-5 w-5" style={{ color: pillar.color }} />
+                </div>
+                <h3 className="text-sm font-bold text-foreground mb-3">{pillar.title}</h3>
+                <ul className="space-y-2">
+                  {pillar.points.map((point, j) => (
+                    <li key={j} className="flex items-start gap-2 text-xs text-muted-foreground leading-relaxed">
+                      <div
+                        className="mt-1.5 h-1 w-1 rounded-full shrink-0"
+                        style={{ background: pillar.color }}
+                      />
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Divider + CTA */}
           <motion.div
             initial={{ scaleX: 0 }}
             whileInView={{ scaleX: 1 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.5, duration: 0.8 }}
-            className="mt-14 mx-auto max-w-xs h-px bg-gradient-to-r from-transparent via-border to-transparent"
+            transition={{ delay: 0.3, duration: 0.8 }}
+            className="mx-auto max-w-xs h-px bg-gradient-to-r from-transparent via-border to-transparent"
           />
 
-          {/* Bottom CTA */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.7, duration: 0.4 }}
+            transition={{ delay: 0.5, duration: 0.4 }}
             className="text-center mt-8"
           >
             <p className="text-xs text-muted-foreground mb-4">
