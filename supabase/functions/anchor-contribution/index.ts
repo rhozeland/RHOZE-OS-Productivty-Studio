@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
       .eq("id", proof_id);
 
     return new Response(
-      JSON.stringify({ signature, explorer: `https://solscan.io/tx/${signature}` }),
+      JSON.stringify({ signature, explorer: `https://solscan.io/tx/${signature}?cluster=devnet` }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
