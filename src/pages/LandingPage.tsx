@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,15 @@ import {
   Users,
   FolderKanban,
   Coins,
+  Sparkles,
+  Shield,
+  TrendingUp,
+  Repeat,
+  Zap,
+  Award,
+  Link as LinkIcon,
+  PieChart,
+  Wallet,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -22,11 +31,53 @@ const FEATURES = [
   { icon: FolderKanban, label: "Projects", desc: "Manage work with milestones & budgets" },
 ];
 
+/* ── How-it-works steps ── */
+const STEPS = [
+  {
+    num: "01",
+    icon: Zap,
+    title: "Create & Contribute",
+    desc: "Post to Flow, complete milestones, review peers, or join Drop Rooms. Every meaningful action earns $RHOZE credits automatically.",
+    accent: "hsl(280 80% 65%)",
+  },
+  {
+    num: "02",
+    icon: Award,
+    title: "Build Reputation",
+    desc: "Each reward generates a Contribution Proof — a tamper-proof record of your work. Anchor it on Solana for a portable, verifiable creative identity.",
+    accent: "hsl(175 70% 50%)",
+  },
+  {
+    num: "03",
+    icon: Wallet,
+    title: "Spend & Unlock",
+    desc: "Use $RHOZE to book studios, hire talent, and purchase marketplace offerings. Higher token tiers unlock premium perks and visibility.",
+    accent: "hsl(30 90% 60%)",
+  },
+  {
+    num: "04",
+    icon: PieChart,
+    title: "Revenue Sharing",
+    desc: "When your work sells, revenue splits automatically between creator, curator, and a 10% buyback pool that strengthens the ecosystem.",
+    accent: "hsl(320 80% 60%)",
+  },
+];
+
+/* ── Flywheel nodes ── */
+const FLYWHEEL_NODES = [
+  { icon: Sparkles, label: "Earn", color: "hsl(280 80% 65%)" },
+  { icon: Shield, label: "Prove", color: "hsl(175 70% 50%)" },
+  { icon: TrendingUp, label: "Grow", color: "hsl(30 90% 60%)" },
+  { icon: Repeat, label: "Reinvest", color: "hsl(320 80% 60%)" },
+];
+
 const LandingPage = () => {
   const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
+  const flywheelRef = useRef<HTMLDivElement>(null);
+  const flywheelInView = useInView(flywheelRef, { once: true, amount: 0.4 });
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -313,19 +364,244 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* $RHOZE Token */}
-      <section className="px-4 sm:px-6 py-8">
-        <div className="max-w-md mx-auto text-center">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 border border-border px-3 py-1 mb-3">
-            <Coins className="h-3 w-3 text-muted-foreground" />
-            <span className="text-[11px] font-medium text-muted-foreground">$RHOZE</span>
+      {/* ═══════════ HOW IT WORKS + FLYWHEEL ═══════════ */}
+      <section className="px-4 sm:px-6 py-16 sm:py-20 relative overflow-hidden">
+        {/* Subtle background glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div
+            className="absolute top-[10%] left-[50%] -translate-x-1/2 w-[600px] h-[600px] rounded-full opacity-[0.06]"
+            style={{
+              background: "radial-gradient(circle, hsl(280 80% 65%) 0%, transparent 70%)",
+            }}
+          />
+        </div>
+
+        <div className="max-w-4xl mx-auto relative z-10">
+          {/* Section header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-14"
+          >
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 border border-border px-3 py-1 mb-4">
+              <Coins className="h-3 w-3 text-muted-foreground" />
+              <span className="text-[11px] font-medium text-muted-foreground tracking-wide">
+                THE $RHOZE ECONOMY
+              </span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
+              How It Works
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+              A self-reinforcing ecosystem where creating, proving, and spending power each other forward.
+            </p>
+          </motion.div>
+
+          {/* Flywheel + Steps layout */}
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* ── Flywheel ── */}
+            <div ref={flywheelRef} className="flex items-center justify-center">
+              <div className="relative w-[280px] h-[280px] sm:w-[320px] sm:h-[320px]">
+                {/* Outer ring */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={flywheelInView ? { opacity: 1, scale: 1 } : {}}
+                  transition={{ duration: 0.6 }}
+                  className="absolute inset-0 rounded-full border border-border/40"
+                />
+
+                {/* Spinning dashed track */}
+                <motion.svg
+                  viewBox="0 0 320 320"
+                  className="absolute inset-0 w-full h-full"
+                  initial={{ opacity: 0 }}
+                  animate={flywheelInView ? { opacity: 0.3, rotate: 360 } : {}}
+                  transition={{
+                    opacity: { duration: 0.6 },
+                    rotate: { duration: 60, repeat: Infinity, ease: "linear" },
+                  }}
+                >
+                  <circle
+                    cx="160"
+                    cy="160"
+                    r="130"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1"
+                    strokeDasharray="8 12"
+                    className="text-muted-foreground"
+                  />
+                </motion.svg>
+
+                {/* Inner glow */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={flywheelInView ? { opacity: 1 } : {}}
+                  transition={{ delay: 0.3, duration: 0.8 }}
+                  className="absolute inset-[25%] rounded-full"
+                  style={{
+                    background: "radial-gradient(circle, hsl(280 80% 65% / 0.08) 0%, transparent 70%)",
+                  }}
+                />
+
+                {/* Center label */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={flywheelInView ? { opacity: 1, scale: 1 } : {}}
+                  transition={{ delay: 0.4, duration: 0.5, type: "spring" }}
+                  className="absolute inset-0 flex items-center justify-center"
+                >
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-foreground">$RHOZE</p>
+                    <p className="text-[10px] text-muted-foreground tracking-wide">FLYWHEEL</p>
+                  </div>
+                </motion.div>
+
+                {/* Nodes positioned around the circle */}
+                {FLYWHEEL_NODES.map((node, i) => {
+                  const angle = (i * 360) / FLYWHEEL_NODES.length - 90;
+                  const rad = (angle * Math.PI) / 180;
+                  const radius = 42; // percentage from center
+                  const x = 50 + radius * Math.cos(rad);
+                  const y = 50 + radius * Math.sin(rad);
+
+                  return (
+                    <motion.div
+                      key={node.label}
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={flywheelInView ? { opacity: 1, scale: 1 } : {}}
+                      transition={{ delay: 0.2 + i * 0.15, duration: 0.4, type: "spring" }}
+                      className="absolute flex flex-col items-center gap-1.5"
+                      style={{
+                        left: `${x}%`,
+                        top: `${y}%`,
+                        transform: "translate(-50%, -50%)",
+                      }}
+                    >
+                      <div
+                        className="h-11 w-11 sm:h-12 sm:w-12 rounded-xl flex items-center justify-center backdrop-blur-sm border border-border/50 shadow-lg"
+                        style={{
+                          background: `linear-gradient(135deg, ${node.color}20, ${node.color}08)`,
+                          boxShadow: `0 4px 20px ${node.color}15`,
+                        }}
+                      >
+                        <node.icon className="h-5 w-5" style={{ color: node.color }} />
+                      </div>
+                      <span className="text-[10px] font-semibold text-foreground tracking-wide">
+                        {node.label}
+                      </span>
+                    </motion.div>
+                  );
+                })}
+
+                {/* Animated connecting arcs */}
+                <motion.svg
+                  viewBox="0 0 320 320"
+                  className="absolute inset-0 w-full h-full pointer-events-none"
+                  initial={{ opacity: 0 }}
+                  animate={flywheelInView ? { opacity: 1 } : {}}
+                  transition={{ delay: 0.8, duration: 0.5 }}
+                >
+                  {FLYWHEEL_NODES.map((node, i) => {
+                    const angle1 = (i * 360) / FLYWHEEL_NODES.length - 90;
+                    const angle2 = (((i + 1) % FLYWHEEL_NODES.length) * 360) / FLYWHEEL_NODES.length - 90;
+                    const r = 134;
+                    const cx = 160, cy = 160;
+                    const startAngle = angle1 + 18;
+                    const endAngle = angle2 - 18;
+                    const s = { x: cx + r * Math.cos((startAngle * Math.PI) / 180), y: cy + r * Math.sin((startAngle * Math.PI) / 180) };
+                    const e = { x: cx + r * Math.cos((endAngle * Math.PI) / 180), y: cy + r * Math.sin((endAngle * Math.PI) / 180) };
+                    return (
+                      <path
+                        key={i}
+                        d={`M ${s.x} ${s.y} A ${r} ${r} 0 0 1 ${e.x} ${e.y}`}
+                        fill="none"
+                        stroke={node.color}
+                        strokeWidth="1.5"
+                        strokeOpacity="0.25"
+                        strokeLinecap="round"
+                      />
+                    );
+                  })}
+                </motion.svg>
+              </div>
+            </div>
+
+            {/* ── Step cards ── */}
+            <div className="flex flex-col gap-4">
+              {STEPS.map((step, i) => (
+                <motion.div
+                  key={step.num}
+                  initial={{ opacity: 0, x: 24 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, amount: 0.5 }}
+                  transition={{ delay: i * 0.1, duration: 0.4 }}
+                  className="group relative rounded-xl border border-border/60 bg-card/60 backdrop-blur-sm p-4 sm:p-5 hover:border-border transition-all"
+                >
+                  {/* Accent line */}
+                  <div
+                    className="absolute left-0 top-3 bottom-3 w-[2px] rounded-full opacity-40 group-hover:opacity-80 transition-opacity"
+                    style={{ background: step.accent }}
+                  />
+
+                  <div className="flex items-start gap-3.5 pl-3">
+                    <div
+                      className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0 border border-border/40"
+                      style={{
+                        background: `linear-gradient(135deg, ${step.accent}15, ${step.accent}05)`,
+                      }}
+                    >
+                      <step.icon className="h-4 w-4" style={{ color: step.accent }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span
+                          className="text-[10px] font-bold tracking-wider"
+                          style={{ color: step.accent }}
+                        >
+                          {step.num}
+                        </span>
+                        <h3 className="text-sm font-semibold text-foreground">{step.title}</h3>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{step.desc}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Rhozeland is powered by <span className="font-semibold text-foreground">$RHOZE</span> — the token behind every booking, hire, and collaboration on the platform. Earn it by completing work, contributing to the community, and growing your creative reputation.
-          </p>
+
+          {/* Bottom connector line */}
+          <motion.div
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.5, duration: 0.8 }}
+            className="mt-14 mx-auto max-w-xs h-px bg-gradient-to-r from-transparent via-border to-transparent"
+          />
+
+          {/* Bottom CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.7, duration: 0.4 }}
+            className="text-center mt-8"
+          >
+            <p className="text-xs text-muted-foreground mb-4">
+              Every action fuels the flywheel — the more you create, the more the ecosystem grows.
+            </p>
+            <Link to={user ? "/dashboard" : "/auth"}>
+              <Button variant="outline" size="sm" className="rounded-full gap-2 text-xs">
+                {user ? "Go to Dashboard" : "Start Creating"}
+                <ArrowRight className="h-3 w-3" />
+              </Button>
+            </Link>
+          </motion.div>
         </div>
       </section>
-
 
       <footer className="border-t border-border py-5">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between">
