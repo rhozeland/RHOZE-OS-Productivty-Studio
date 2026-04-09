@@ -20,6 +20,10 @@ import {
   Link as LinkIcon,
   PieChart,
   Wallet,
+  CircleDollarSign,
+  BadgeCheck,
+  GitBranch,
+  Layers,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -69,6 +73,43 @@ const FLYWHEEL_NODES = [
   { icon: Shield, label: "Prove", color: "hsl(175 70% 50%)" },
   { icon: TrendingUp, label: "Grow", color: "hsl(30 90% 60%)" },
   { icon: Repeat, label: "Reinvest", color: "hsl(320 80% 60%)" },
+];
+
+/* ── Deep-dive pillars for the About section ── */
+const PILLARS = [
+  {
+    icon: CircleDollarSign,
+    title: "$RHOZE Economy",
+    color: "hsl(280 80% 65%)",
+    points: [
+      "SPL token on Solana — transparent & auditable",
+      "Earned by posting, reviewing, completing milestones",
+      "Spent on studios, marketplace, and hiring talent",
+      "Tier system: Spark → Glow → Blaze → Inferno",
+    ],
+  },
+  {
+    icon: BadgeCheck,
+    title: "Reputation System",
+    color: "hsl(175 70% 50%)",
+    points: [
+      "Contribution Proofs logged for every reward",
+      "Anchor proofs on-chain via Solana Memo program",
+      "Portable identity — take your rep anywhere",
+      "Verifiable creative history, not just a star rating",
+    ],
+  },
+  {
+    icon: GitBranch,
+    title: "Revenue Sharing",
+    color: "hsl(30 90% 60%)",
+    points: [
+      "Automatic splits: Creator / Curator / Buyback",
+      "Configurable percentages per listing or contract",
+      "10% buyback pool strengthens token value",
+      "On-chain audit trail for every split event",
+    ],
+  },
 ];
 
 const LandingPage = () => {
