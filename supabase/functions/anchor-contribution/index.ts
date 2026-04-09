@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 import {
   Connection,
   Keypair,
@@ -6,12 +6,19 @@ import {
   Transaction,
   TransactionInstruction,
   clusterApiUrl,
-} from "https://esm.sh/@solana/web3.js@1.98.4";
+} from "npm:@solana/web3.js@1.98.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+function respond(status: number, body: Record<string, unknown>) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 const MEMO_PROGRAM_ID = new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
 
@@ -21,13 +28,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: "No auth" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return respond(401, { error: "No auth" });
     }
 
     const supabase = createClient(
@@ -38,21 +41,21 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return respond(401, { error: "Unauthorized" });
     }
 
-    const { proof_id } = await req.json();
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return respond(400, { error: "Invalid JSON body" });
+    }
+
+    const proof_id = body.proof_id as string | undefined;
     if (!proof_id) {
-      return new Response(JSON.stringify({ error: "proof_id required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return respond(400, { error: "proof_id required" });
     }
 
-    // Get the contribution proof
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -67,13 +70,9 @@ Deno.serve(async (req) => {
       .single();
 
     if (proofError || !proof) {
-      return new Response(
-        JSON.stringify({ error: "Proof not found or already anchored" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return respond(404, { error: "Proof not found or already anchored" });
     }
 
-    // Build memo content
     const memo = JSON.stringify({
       protocol: "rhozeland",
       version: "1",
@@ -85,13 +84,9 @@ Deno.serve(async (req) => {
       meta: proof.metadata,
     });
 
-    // Sign with airdrop wallet (platform authority)
     const privateKeyStr = Deno.env.get("RHOZE_AIRDROP_PRIVATE_KEY");
     if (!privateKeyStr) {
-      return new Response(JSON.stringify({ error: "Airdrop wallet not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return respond(500, { error: "Airdrop wallet not configured" });
     }
 
     const privateKeyArray = JSON.parse(privateKeyStr);
@@ -114,7 +109,6 @@ Deno.serve(async (req) => {
 
     const signature = await connection.sendRawTransaction(transaction.serialize());
 
-    // Update proof with signature
     await adminClient
       .from("contribution_proofs")
       .update({
@@ -123,14 +117,9 @@ Deno.serve(async (req) => {
       })
       .eq("id", proof_id);
 
-    return new Response(
-      JSON.stringify({ signature, explorer: `https://solscan.io/tx/${signature}?cluster=devnet` }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return respond(200, { signature, explorer: `https://solscan.io/tx/${signature}?cluster=devnet` });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("anchor-contribution error:", err);
+    return respond(500, { error: err instanceof Error ? err.message : "Unknown error" });
   }
 });
