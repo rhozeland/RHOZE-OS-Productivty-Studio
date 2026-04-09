@@ -28,6 +28,10 @@
 
   <body>
     <div id="root"></div>
+    <script type="module">
+      import { Buffer } from '/node_modules/.vite/deps/buffer.js?v=polyfill';
+      globalThis.Buffer = Buffer;
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
