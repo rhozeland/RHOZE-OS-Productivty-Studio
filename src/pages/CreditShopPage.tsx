@@ -24,6 +24,16 @@ import {
   ShoppingBag,
   Download,
   Music,
+  Info,
+  CircleDollarSign,
+  BadgeCheck,
+  ArrowRightLeft,
+  Zap,
+  Shield,
+  TrendingUp,
+  RefreshCw,
+  Award,
+  Link2,
   Palette,
   Camera,
   Video,
@@ -242,6 +252,7 @@ const CreditShopPage = () => {
           <TabsTrigger value="shop" className="gap-1.5"><Coins className="h-3.5 w-3.5" /> Plans</TabsTrigger>
           <TabsTrigger value="rhoze" className="gap-1.5"><Wallet className="h-3.5 w-3.5" /> $RHOZE</TabsTrigger>
           <TabsTrigger value="purchases" className="gap-1.5"><ShoppingBag className="h-3.5 w-3.5" /> Purchases</TabsTrigger>
+          <TabsTrigger value="how" className="gap-1.5"><Info className="h-3.5 w-3.5" /> How It Works</TabsTrigger>
         </TabsList>
 
         {/* ═══════ Plans Tab ═══════ */}
@@ -409,6 +420,132 @@ const CreditShopPage = () => {
               ))}
             </div>
           </div>
+        </TabsContent>
+
+        {/* ═══════ How It Works Tab ═══════ */}
+        <TabsContent value="how" className="mt-4 space-y-8">
+          {/* Intro */}
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-2xl mx-auto space-y-2">
+            <h2 className="font-display text-2xl font-bold text-foreground">How Rhozeland Works</h2>
+            <p className="text-muted-foreground text-sm">
+              Create, earn, prove your work on-chain, and share in the revenue — all powered by $RHOZE.
+            </p>
+          </motion.div>
+
+          {/* Step-by-step journey */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { icon: Zap, step: "01", title: "Create & Contribute", desc: "Post to Flow, complete milestones, review creators, and earn $RHOZE rewards automatically.", color: "hsl(210, 70%, 55%)" },
+              { icon: Shield, step: "02", title: "Build Reputation", desc: "Every reward generates a Contribution Proof. Anchor them to Solana for a verifiable on-chain identity.", color: "hsl(335, 60%, 60%)" },
+              { icon: TrendingUp, step: "03", title: "Spend & Unlock", desc: "Use $RHOZE for studio bookings, marketplace purchases, and unlock higher Creator Pass tiers.", color: "hsl(28, 80%, 55%)" },
+              { icon: RefreshCw, step: "04", title: "Revenue Sharing", desc: "10% of every sale goes into a buyback pool — flowing back to creators, curators, and the ecosystem.", color: "hsl(45, 80%, 50%)" },
+            ].map((s, i) => (
+              <motion.div
+                key={s.step}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="rounded-2xl border border-border bg-card p-5 space-y-3 relative overflow-hidden group hover:shadow-lg transition-shadow"
+              >
+                <div className="absolute top-0 right-0 w-20 h-20 rounded-bl-full opacity-10 group-hover:opacity-20 transition-opacity" style={{ background: s.color }} />
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: `${s.color}20` }}>
+                    <s.icon className="h-5 w-5" style={{ color: s.color }} />
+                  </div>
+                  <span className="text-xs font-bold text-muted-foreground tracking-widest">STEP {s.step}</span>
+                </div>
+                <h3 className="font-display font-semibold text-foreground">{s.title}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">{s.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Deep Dive Pillars */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[
+              {
+                icon: CircleDollarSign,
+                title: "$RHOZE Economy",
+                color: "hsl(45, 80%, 50%)",
+                points: [
+                  "SPL token on Solana (pump.fun launch)",
+                  "Earned by platform actions — posts, reviews, milestones",
+                  "Spent on studios, talent, and marketplace items",
+                  "Tier system: Spark → Bloom → Glow → Play",
+                ],
+              },
+              {
+                icon: BadgeCheck,
+                title: "Reputation System",
+                color: "hsl(210, 70%, 55%)",
+                points: [
+                  "Each reward creates a Contribution Proof",
+                  "Proofs can be anchored to Solana via Memo tx",
+                  "Portable, verifiable creator identity",
+                  "Builds trust for clients and collaborators",
+                ],
+              },
+              {
+                icon: ArrowRightLeft,
+                title: "Revenue Sharing",
+                color: "hsl(150, 55%, 45%)",
+                points: [
+                  "Automatic 3-way split on every sale",
+                  "Creator receives the majority share",
+                  "Curator earns for curation & referrals",
+                  "10% buyback pool reinvests into $RHOZE",
+                ],
+              },
+            ].map((pillar, i) => (
+              <motion.div
+                key={pillar.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 + i * 0.1 }}
+                className="rounded-2xl border border-border bg-card overflow-hidden"
+              >
+                <div className="p-5 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: `${pillar.color}20` }}>
+                      <pillar.icon className="h-5 w-5" style={{ color: pillar.color }} />
+                    </div>
+                    <h3 className="font-display font-semibold text-foreground">{pillar.title}</h3>
+                  </div>
+                  <ul className="space-y-2">
+                    {pillar.points.map((pt) => (
+                      <li key={pt} className="flex items-start gap-2 text-xs text-muted-foreground leading-relaxed">
+                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 shrink-0 mt-0.5">
+                          <Check className="h-2.5 w-2.5 text-primary" />
+                        </span>
+                        {pt}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Flywheel summary */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="rounded-2xl border border-border bg-muted/30 p-6 text-center space-y-3 max-w-xl mx-auto"
+          >
+            <Award className="h-8 w-8 text-primary mx-auto" />
+            <h3 className="font-display text-lg font-semibold text-foreground">The Flywheel Effect</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Every action feeds the next — create content, earn $RHOZE, build reputation, unlock opportunities, and reinvest
+              through revenue sharing. The more you contribute, the more the ecosystem grows.
+            </p>
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-2">
+              <Link2 className="h-3.5 w-3.5" />
+              <a href={PUMP_FUN_URL} target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">
+                View $RHOZE on Pump Fun
+              </a>
+            </div>
+          </motion.div>
         </TabsContent>
 
         {/* ═══════ Purchases & History Tab ═══════ */}
