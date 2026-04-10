@@ -1,16 +1,9 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import {
-  Connection,
-  Keypair,
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-  clusterApiUrl,
-} from "npm:@solana/web3.js@1.98.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 function respond(status: number, body: Record<string, unknown>) {
@@ -19,8 +12,6 @@ function respond(status: number, body: Record<string, unknown>) {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
-
-const MEMO_PROGRAM_ID = new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -36,10 +27,13 @@ Deno.serve(async (req) => {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
+      { global: { headers: { Authorization: authHeader } } },
     );
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return respond(401, { error: "Unauthorized" });
     }
@@ -58,7 +52,7 @@ Deno.serve(async (req) => {
 
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
     const { data: proof, error: proofError } = await adminClient
@@ -89,25 +83,44 @@ Deno.serve(async (req) => {
       return respond(500, { error: "Airdrop wallet not configured" });
     }
 
+    // Dynamic import to avoid top-level crash if the module fails to load
+    const {
+      Connection,
+      Keypair,
+      PublicKey,
+      Transaction,
+      TransactionInstruction,
+      clusterApiUrl,
+    } = await import("npm:@solana/web3.js@1.98.0");
+
+    const MEMO_PROGRAM_ID = new PublicKey(
+      "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
+    );
+
     const privateKeyArray = JSON.parse(privateKeyStr);
     const keypair = Keypair.fromSecretKey(new Uint8Array(privateKeyArray));
 
     const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
 
     const memoInstruction = new TransactionInstruction({
-      keys: [{ pubkey: keypair.publicKey, isSigner: true, isWritable: false }],
+      keys: [
+        { pubkey: keypair.publicKey, isSigner: true, isWritable: false },
+      ],
       programId: MEMO_PROGRAM_ID,
       data: new TextEncoder().encode(memo),
     });
 
     const transaction = new Transaction().add(memoInstruction);
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+    const { blockhash, lastValidBlockHeight } =
+      await connection.getLatestBlockhash();
     transaction.recentBlockhash = blockhash;
     transaction.lastValidBlockHeight = lastValidBlockHeight;
     transaction.feePayer = keypair.publicKey;
     transaction.sign(keypair);
 
-    const signature = await connection.sendRawTransaction(transaction.serialize());
+    const signature = await connection.sendRawTransaction(
+      transaction.serialize(),
+    );
 
     await adminClient
       .from("contribution_proofs")
@@ -117,9 +130,14 @@ Deno.serve(async (req) => {
       })
       .eq("id", proof_id);
 
-    return respond(200, { signature, explorer: `https://solscan.io/tx/${signature}?cluster=devnet` });
+    return respond(200, {
+      signature,
+      explorer: `https://solscan.io/tx/${signature}?cluster=devnet`,
+    });
   } catch (err) {
     console.error("anchor-contribution error:", err);
-    return respond(500, { error: err instanceof Error ? err.message : "Unknown error" });
+    return respond(500, {
+      error: err instanceof Error ? err.message : "Unknown error",
+    });
   }
 });
