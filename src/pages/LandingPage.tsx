@@ -88,7 +88,7 @@ const PILLARS = [
       "SPL token on Solana — transparent & auditable",
       "Earned by posting, reviewing, completing milestones",
       "Spent on studios, marketplace, and hiring talent",
-      "Tier system: Spark → Glow → Blaze → Inferno",
+      "Tier system: Spark → Bloom → Glow → Play",
     ],
   },
   {
