@@ -1,4 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+
+/** Animated counter that counts from 0 to `end` */
+const CountUp = ({ end, delay = 0 }: { end: number; delay?: number }) => {
+  const [value, setValue] = useState(0);
+  const ref = useRef(false);
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (ref.current) return;
+      ref.current = true;
+      const duration = 1200;
+      const steps = 30;
+      const increment = end / steps;
+      let current = 0;
+      const interval = setInterval(() => {
+        current += increment;
+        if (current >= end) {
+          setValue(end);
+          clearInterval(interval);
+        } else {
+          setValue(Math.round(current));
+        }
+      }, duration / steps);
+    }, delay * 1000);
+    return () => clearTimeout(timeout);
+  }, [end, delay]);
+  return <>{value}</>;
+};
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
