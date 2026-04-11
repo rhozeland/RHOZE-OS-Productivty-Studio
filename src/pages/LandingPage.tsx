@@ -71,10 +71,11 @@ const STEPS = [
 
 /* ── Flywheel nodes ── */
 const FLYWHEEL_NODES = [
-  { icon: Sparkles, label: "Earn", color: "hsl(280 80% 65%)" },
-  { icon: Shield, label: "Prove", color: "hsl(175 70% 50%)" },
-  { icon: TrendingUp, label: "Grow", color: "hsl(30 90% 60%)" },
-  { icon: Repeat, label: "Reinvest", color: "hsl(320 80% 60%)" },
+  { icon: Sparkles, label: "Create", color: "hsl(150 55% 45%)" },
+  { icon: Coins, label: "Earn", color: "hsl(40 80% 50%)" },
+  { icon: TrendingUp, label: "Grow", color: "hsl(210 60% 55%)" },
+  { icon: Shield, label: "Reputation", color: "hsl(280 60% 60%)" },
+  { icon: ArrowRightLeft, label: "Reinvest", color: "hsl(350 60% 55%)" },
 ];
 
 /* ── Deep-dive pillars for the About section ── */
