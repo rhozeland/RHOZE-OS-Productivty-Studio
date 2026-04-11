@@ -24,6 +24,8 @@ import {
   BadgeCheck,
   GitBranch,
   Layers,
+  ArrowRightLeft,
+  RefreshCw,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -69,10 +71,11 @@ const STEPS = [
 
 /* ── Flywheel nodes ── */
 const FLYWHEEL_NODES = [
-  { icon: Sparkles, label: "Earn", color: "hsl(280 80% 65%)" },
-  { icon: Shield, label: "Prove", color: "hsl(175 70% 50%)" },
-  { icon: TrendingUp, label: "Grow", color: "hsl(30 90% 60%)" },
-  { icon: Repeat, label: "Reinvest", color: "hsl(320 80% 60%)" },
+  { icon: Sparkles, label: "Create", color: "hsl(150 55% 45%)" },
+  { icon: Coins, label: "Earn", color: "hsl(40 80% 50%)" },
+  { icon: TrendingUp, label: "Grow", color: "hsl(210 60% 55%)" },
+  { icon: Shield, label: "Reputation", color: "hsl(280 60% 60%)" },
+  { icon: ArrowRightLeft, label: "Reinvest", color: "hsl(350 60% 55%)" },
 ];
 
 /* ── Deep-dive pillars for the About section ── */
@@ -85,7 +88,7 @@ const PILLARS = [
       "SPL token on Solana — transparent & auditable",
       "Earned by posting, reviewing, completing milestones",
       "Spent on studios, marketplace, and hiring talent",
-      "Tier system: Spark → Glow → Blaze → Inferno",
+      "Tier system: Spark → Bloom → Glow → Play",
     ],
   },
   {
@@ -604,7 +607,7 @@ const LandingPage = () => {
             </p>
           </motion.div>
 
-          <div className="grid sm:grid-cols-3 gap-4 sm:gap-5 mb-14">
+          <div className="grid sm:grid-cols-3 gap-4 sm:gap-5 mb-8">
             {PILLARS.map((pillar, i) => (
               <motion.div
                 key={pillar.title}
@@ -635,9 +638,64 @@ const LandingPage = () => {
                     </li>
                   ))}
                 </ul>
+                {/* Fee breakdown bar on Revenue Sharing card */}
+                {pillar.title === "Revenue Sharing" && (
+                  <div className="space-y-2.5 pt-4 mt-3 border-t border-border/30">
+                    <div className="flex h-4 w-full overflow-hidden rounded-full">
+                      <div className="h-full bg-[hsl(150,55%,45%)]" style={{ width: "75%" }} />
+                      <div className="h-full bg-[hsl(210,60%,55%)]" style={{ width: "15%" }} />
+                      <div className="h-full bg-[hsl(40,80%,50%)]" style={{ width: "10%" }} />
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                      <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[hsl(150,55%,45%)]" />75% Creator</span>
+                      <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[hsl(210,60%,55%)]" />15% Curator</span>
+                      <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[hsl(40,80%,50%)]" />10% Buyback</span>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             ))}
           </div>
+
+          {/* ── Platform Economics KPI strip ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="rounded-2xl border border-primary/15 bg-gradient-to-r from-primary/5 via-card to-primary/5 p-5 mb-14"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <CircleDollarSign className="h-4 w-4 text-primary" />
+              <p className="text-xs font-semibold text-foreground">Platform Economics</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { value: "5-15%", label: "Transaction Fees", icon: ArrowRightLeft, color: "text-primary" },
+                { value: "10%", label: "Buyback Pool", icon: RefreshCw, color: "text-[hsl(40,80%,50%)]" },
+                { value: "75%", label: "Creator Share", icon: Sparkles, color: "text-[hsl(150,55%,45%)]" },
+                { value: "3x", label: "ROI Multiplier", icon: TrendingUp, color: "text-[hsl(280,60%,60%)]" },
+              ].map((kpi) => (
+                <div key={kpi.label} className="rounded-xl border border-border bg-card p-3 text-center">
+                  <kpi.icon className={`h-4 w-4 mx-auto mb-1.5 ${kpi.color}`} />
+                  <p className={`font-display text-lg font-bold ${kpi.color}`}>{kpi.value}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{kpi.label}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 justify-center">
+              {[
+                "Rewards = low-cost user acquisition",
+                "Active users → transactions → fees",
+                "Fees fund buyback → token demand ↑",
+                "Rising value → creator retention",
+              ].map((line) => (
+                <span key={line} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <Zap className="h-2.5 w-2.5 text-primary shrink-0" />{line}
+                </span>
+              ))}
+            </div>
+          </motion.div>
 
           {/* Divider + CTA */}
           <motion.div
