@@ -579,6 +579,34 @@ const CreditShopPage = () => {
               </div>
             </div>
 
+            {/* Animated KPI counters */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { end: 15, suffix: "%", label: "Max Fee", color: "text-primary" },
+                { end: 10, suffix: "%", label: "Buyback Pool", color: "text-[hsl(40,80%,50%)]" },
+                { end: 75, suffix: "%", label: "Creator Share", color: "text-[hsl(150,55%,45%)]" },
+                { end: 3, suffix: "x", label: "ROI Multiplier", color: "text-[hsl(280,60%,60%)]" },
+              ].map((kpi, i) => (
+                <motion.div
+                  key={kpi.label}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.5 + i * 0.1, type: "spring", stiffness: 200 }}
+                  className="rounded-xl border border-border bg-card p-4 text-center"
+                >
+                  <motion.span
+                    className={`font-display text-2xl font-bold ${kpi.color}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.7 + i * 0.1 }}
+                  >
+                    <CountUp end={kpi.end} delay={0.7 + i * 0.1} />{kpi.suffix}
+                  </motion.span>
+                  <p className="text-[11px] text-muted-foreground mt-1">{kpi.label}</p>
+                </motion.div>
+              ))}
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {[
                 { icon: ArrowRightLeft, label: "Transaction Fees (5-15%)", desc: "Every marketplace sale, studio booking, and service hire generates platform revenue." },
@@ -625,17 +653,97 @@ const CreditShopPage = () => {
             </div>
           </motion.div>
 
-          {/* Flywheel summary */}
+          {/* Visual Flywheel Diagram */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="rounded-2xl border border-border bg-muted/30 p-6 text-center space-y-3 max-w-xl mx-auto"
+            className="rounded-2xl border border-border bg-muted/30 p-6 space-y-6 max-w-2xl mx-auto"
           >
-            <Award className="h-8 w-8 text-primary mx-auto" />
-            <h3 className="font-display text-lg font-semibold text-foreground">The Flywheel Effect</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Every action feeds the next — create content, earn $RHOZE, build reputation, unlock opportunities, and reinvest
+            <div className="text-center space-y-1">
+              <Award className="h-8 w-8 text-primary mx-auto" />
+              <h3 className="font-display text-lg font-semibold text-foreground">The Flywheel Effect</h3>
+              <p className="text-sm text-muted-foreground">Every action feeds the next</p>
+            </div>
+
+            {/* Circular flywheel */}
+            <div className="relative mx-auto" style={{ width: 280, height: 280 }}>
+              {/* Spinning ring */}
+              <motion.div
+                className="absolute inset-0 rounded-full border-2 border-dashed border-primary/20"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              />
+              {/* Center hub */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="h-20 w-20 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
+                  <RefreshCw className="h-7 w-7 text-primary" />
+                </div>
+              </div>
+              {/* Flywheel nodes */}
+              {[
+                { icon: Sparkles, label: "Create", angle: 0, color: "hsl(150,55%,45%)" },
+                { icon: Coins, label: "Earn", angle: 72, color: "hsl(40,80%,50%)" },
+                { icon: TrendingUp, label: "Grow", angle: 144, color: "hsl(210,60%,55%)" },
+                { icon: Shield, label: "Reputation", angle: 216, color: "hsl(280,60%,60%)" },
+                { icon: ArrowRightLeft, label: "Reinvest", angle: 288, color: "hsl(350,60%,55%)" },
+              ].map((node, i) => {
+                const rad = (node.angle - 90) * (Math.PI / 180);
+                const r = 115;
+                const x = 140 + r * Math.cos(rad) - 28;
+                const y = 140 + r * Math.sin(rad) - 28;
+                return (
+                  <motion.div
+                    key={node.label}
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.7 + i * 0.12, type: "spring", stiffness: 200 }}
+                    className="absolute flex flex-col items-center gap-1"
+                    style={{ left: x, top: y, width: 56 }}
+                  >
+                    <div
+                      className="h-11 w-11 rounded-full flex items-center justify-center shadow-md"
+                      style={{ backgroundColor: node.color + "22", border: `2px solid ${node.color}` }}
+                    >
+                      <node.icon className="h-5 w-5" style={{ color: node.color }} />
+                    </div>
+                    <span className="text-[10px] font-semibold text-foreground whitespace-nowrap">{node.label}</span>
+                  </motion.div>
+                );
+              })}
+              {/* Curved arrows between nodes */}
+              <svg className="absolute inset-0" viewBox="0 0 280 280" fill="none">
+                {[0, 72, 144, 216, 288].map((angle, i) => {
+                  const rad1 = (angle - 90) * (Math.PI / 180);
+                  const rad2 = ((angle + 72) - 90) * (Math.PI / 180);
+                  const r = 90;
+                  const x1 = 140 + r * Math.cos(rad1);
+                  const y1 = 140 + r * Math.sin(rad1);
+                  const x2 = 140 + r * Math.cos(rad2);
+                  const y2 = 140 + r * Math.sin(rad2);
+                  const midAngle = (angle + 36 - 90) * (Math.PI / 180);
+                  const cx = 140 + (r + 20) * Math.cos(midAngle);
+                  const cy = 140 + (r + 20) * Math.sin(midAngle);
+                  return (
+                    <motion.path
+                      key={i}
+                      d={`M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`}
+                      stroke="hsl(var(--primary))"
+                      strokeWidth="1.5"
+                      strokeOpacity="0.25"
+                      strokeDasharray="4 3"
+                      fill="none"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ delay: 1.2 + i * 0.15, duration: 0.5 }}
+                    />
+                  );
+                })}
+              </svg>
+            </div>
+
+            <p className="text-sm text-muted-foreground leading-relaxed text-center max-w-md mx-auto">
+              Create content, earn $RHOZE, build reputation, unlock opportunities, and reinvest
               through revenue sharing. The more you contribute, the more the ecosystem grows.
             </p>
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-2">
