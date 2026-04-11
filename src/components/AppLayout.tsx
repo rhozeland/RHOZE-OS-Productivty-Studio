@@ -25,12 +25,13 @@ import { useRewardStreak } from "@/hooks/useRewardStreak";
 const PAGES = [
   { name: "Dashboard", path: "/dashboard", icon: FolderKanban },
   { name: "Studios", path: "/studios", icon: Building2 },
-  { name: "Marketplace", path: "/marketplace", icon: ShoppingBag },
-  { name: "Creators Hub", path: "/hub", icon: User },
+  { name: "Creators Hub", path: "/creators", icon: User },
   { name: "Smartboards", path: "/smartboards", icon: Palette },
-  { name: "Drop Rooms", path: "/droprooms", icon: Radio },
+  { name: "Drop Rooms", path: "/drop-rooms", icon: Radio },
   { name: "Messages", path: "/messages", icon: User },
   { name: "Projects", path: "/projects", icon: FolderKanban },
+  { name: "Credits", path: "/credits", icon: ShoppingBag },
+  { name: "Settings", path: "/settings", icon: User },
 ];
 
 const AppLayout = () => {
