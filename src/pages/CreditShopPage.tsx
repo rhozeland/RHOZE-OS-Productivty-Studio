@@ -526,6 +526,69 @@ const CreditShopPage = () => {
             ))}
           </div>
 
+          {/* ── Platform Economics ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-card p-6 space-y-5"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                <CircleDollarSign className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-display text-lg font-semibold text-foreground">Platform Economics</h3>
+                <p className="text-xs text-muted-foreground">What powers the engine</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { icon: ArrowRightLeft, label: "Transaction Fees (5-15%)", desc: "Every marketplace sale, studio booking, and service hire generates platform revenue." },
+                { icon: Coins, label: "Credit Shop Sales", desc: "Users purchase $RHOZE credits with SOL or card, creating direct revenue." },
+                { icon: Sparkles, label: "Creator Pass Subscriptions", desc: "Monthly tiers (Bloom / Glow / Play) provide recurring revenue." },
+                { icon: RefreshCw, label: "10% Buyback Pool", desc: "A portion of all earnings flows back to buy $RHOZE, strengthening the token & treasury." },
+              ].map((item, i) => (
+                <motion.div
+                  key={item.label}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.55 + i * 0.08 }}
+                  className="rounded-xl border border-border bg-card p-4 space-y-2 relative"
+                >
+                  {i < 3 && (
+                    <span className="hidden lg:block absolute -right-2 top-1/2 -translate-y-1/2 text-muted-foreground/30 text-lg">→</span>
+                  )}
+                  <item.icon className="h-5 w-5 text-primary" />
+                  <p className="text-sm font-semibold text-foreground leading-tight">{item.label}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Why Rewards Pay for Themselves */}
+            <div className="rounded-xl border border-dashed border-primary/30 bg-primary/5 p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                <p className="text-sm font-semibold text-foreground">Why Rewards Pay for Themselves</p>
+              </div>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
+                {[
+                  "Rewards = low-cost user acquisition",
+                  "Active users generate transactions → fees",
+                  "Fees fund buyback → token demand rises",
+                  "Rising token value → more creator retention",
+                ].map((line) => (
+                  <li key={line} className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Zap className="h-3 w-3 text-primary shrink-0" />
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </motion.div>
+
           {/* Flywheel summary */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
