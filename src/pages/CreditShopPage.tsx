@@ -521,6 +521,42 @@ const CreditShopPage = () => {
                       </li>
                     ))}
                   </ul>
+
+                  {/* Visual fee breakdown for Revenue Sharing card */}
+                  {pillar.title === "Revenue Sharing" && (
+                    <div className="space-y-3 pt-2">
+                      {/* Stacked bar */}
+                      <div className="flex h-5 w-full overflow-hidden rounded-full">
+                        <div className="h-full bg-[hsl(150,55%,45%)]" style={{ width: "75%" }} />
+                        <div className="h-full bg-[hsl(210,60%,55%)]" style={{ width: "15%" }} />
+                        <div className="h-full bg-[hsl(40,80%,50%)]" style={{ width: "10%" }} />
+                      </div>
+                      {/* Legend */}
+                      <div className="grid grid-cols-3 gap-2 text-[11px]">
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-2.5 w-2.5 rounded-full bg-[hsl(150,55%,45%)] shrink-0" />
+                          <div>
+                            <span className="font-semibold text-foreground">75%</span>
+                            <span className="text-muted-foreground ml-1">Creator</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-2.5 w-2.5 rounded-full bg-[hsl(210,60%,55%)] shrink-0" />
+                          <div>
+                            <span className="font-semibold text-foreground">15%</span>
+                            <span className="text-muted-foreground ml-1">Curator</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-2.5 w-2.5 rounded-full bg-[hsl(40,80%,50%)] shrink-0" />
+                          <div>
+                            <span className="font-semibold text-foreground">10%</span>
+                            <span className="text-muted-foreground ml-1">Buyback</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))}
