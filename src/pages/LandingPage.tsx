@@ -443,114 +443,93 @@ const LandingPage = () => {
 
           {/* ── Top row: Flywheel + Step Cards ── */}
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center mb-20">
-            {/* Flywheel — new hex-ring design */}
+            {/* Flywheel — matching Creator Pass design */}
             <div ref={flywheelRef} className="flex items-center justify-center">
-              <div className="relative w-[280px] h-[280px] sm:w-[340px] sm:h-[340px]">
-                {/* Pulsing outer ring */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.7 }}
-                  animate={flywheelInView ? { opacity: 1, scale: 1 } : {}}
-                  transition={{ duration: 0.7, type: "spring" }}
-                  className="absolute inset-0 rounded-full"
-                  style={{
-                    border: "1px solid hsl(var(--border) / 0.3)",
-                    boxShadow: "0 0 60px hsl(280 80% 65% / 0.06), inset 0 0 60px hsl(280 80% 65% / 0.03)",
-                  }}
-                />
-
-                {/* Rotating gradient ring */}
+              <div className="relative" style={{ width: 280, height: 280 }}>
+                {/* Spinning dashed ring */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={flywheelInView ? { opacity: 1, rotate: 360 } : {}}
                   transition={{
                     opacity: { duration: 0.5, delay: 0.3 },
-                    rotate: { duration: 40, repeat: Infinity, ease: "linear" },
+                    rotate: { duration: 20, repeat: Infinity, ease: "linear" },
                   }}
-                  className="absolute inset-[6px] rounded-full"
-                  style={{
-                    background: "conic-gradient(from 0deg, hsl(280 80% 65% / 0.15), hsl(175 70% 50% / 0.15), hsl(30 90% 60% / 0.15), hsl(320 80% 60% / 0.15), hsl(280 80% 65% / 0.15))",
-                    mask: "radial-gradient(circle, transparent 85%, black 86%, black 100%)",
-                    WebkitMask: "radial-gradient(circle, transparent 85%, black 86%, black 100%)",
-                  }}
+                  className="absolute inset-0 rounded-full border-2 border-dashed border-primary/20"
                 />
-
-                {/* Inner subtle ring */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={flywheelInView ? { opacity: 0.3, scale: 1 } : {}}
-                  transition={{ delay: 0.4, duration: 0.6 }}
-                  className="absolute inset-[30%] rounded-full border border-border/30"
-                />
-
-                {/* Center label */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.3 }}
-                  animate={flywheelInView ? { opacity: 1, scale: 1 } : {}}
-                  transition={{ delay: 0.5, duration: 0.5, type: "spring" }}
-                  className="absolute inset-0 flex items-center justify-center"
-                >
-                  <div className="text-center">
-                    <Layers className="h-5 w-5 mx-auto mb-1 text-primary/60" />
-                    <p className="text-base font-bold text-foreground">$RHOZE</p>
-                    <p className="text-[9px] text-muted-foreground tracking-[0.2em] uppercase">Flywheel</p>
-                  </div>
-                </motion.div>
-
+                {/* Center hub */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.3 }}
+                    animate={flywheelInView ? { opacity: 1, scale: 1 } : {}}
+                    transition={{ delay: 0.5, duration: 0.5, type: "spring" }}
+                    className="h-20 w-20 rounded-full bg-primary/10 border border-primary/30 flex flex-col items-center justify-center"
+                  >
+                    <RefreshCw className="h-6 w-6 text-primary mb-0.5" />
+                    <span className="text-[8px] font-bold text-primary tracking-widest uppercase">$RHOZE</span>
+                  </motion.div>
+                </div>
                 {/* Nodes */}
                 {FLYWHEEL_NODES.map((node, i) => {
-                  const angle = (i * 360) / FLYWHEEL_NODES.length - 90;
-                  const rad = (angle * Math.PI) / 180;
-                  const radius = 42;
-                  const x = 50 + radius * Math.cos(rad);
-                  const y = 50 + radius * Math.sin(rad);
-
+                  const rad = (i * 72 - 90) * (Math.PI / 180);
+                  const r = 115;
+                  const x = 140 + r * Math.cos(rad) - 28;
+                  const y = 140 + r * Math.sin(rad) - 28;
                   return (
                     <motion.div
                       key={node.label}
                       initial={{ opacity: 0, scale: 0 }}
                       animate={flywheelInView ? { opacity: 1, scale: 1 } : {}}
-                      transition={{ delay: 0.3 + i * 0.12, duration: 0.45, type: "spring" }}
+                      transition={{ delay: 0.7 + i * 0.12, type: "spring", stiffness: 200 }}
                       className="absolute flex flex-col items-center gap-1"
-                      style={{ left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)" }}
+                      style={{ left: x, top: y, width: 56 }}
                     >
                       <motion.div
                         whileHover={{ scale: 1.15 }}
-                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl flex items-center justify-center border border-border/40 shadow-lg cursor-default"
-                        style={{
-                          background: `linear-gradient(145deg, ${node.color}18, ${node.color}06)`,
-                          boxShadow: `0 6px 24px ${node.color}12`,
-                        }}
+                        className="h-11 w-11 rounded-full flex items-center justify-center shadow-md cursor-default"
+                        style={{ backgroundColor: node.color + "22", border: `2px solid ${node.color}` }}
                       >
-                        <node.icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: node.color }} />
+                        <node.icon className="h-5 w-5" style={{ color: node.color }} />
                       </motion.div>
-                      <span className="text-[10px] font-semibold text-foreground tracking-wide">
+                      <span className="text-[10px] font-semibold text-foreground whitespace-nowrap text-center">
                         {node.label}
                       </span>
                     </motion.div>
                   );
                 })}
-
-                {/* Arrow arcs */}
+                {/* Curved arrow paths */}
                 <motion.svg
-                  viewBox="0 0 340 340"
-                  className="absolute inset-0 w-full h-full pointer-events-none"
+                  className="absolute inset-0"
+                  viewBox="0 0 280 280"
+                  fill="none"
                   initial={{ opacity: 0 }}
                   animate={flywheelInView ? { opacity: 1 } : {}}
-                  transition={{ delay: 0.9, duration: 0.5 }}
+                  transition={{ delay: 1.2, duration: 0.5 }}
                 >
                   {FLYWHEEL_NODES.map((node, i) => {
-                    const a1 = (i * 360) / FLYWHEEL_NODES.length - 90;
-                    const a2 = (((i + 1) % FLYWHEEL_NODES.length) * 360) / FLYWHEEL_NODES.length - 90;
-                    const r = 143;
-                    const cx = 170, cy = 170;
-                    const sa = a1 + 20;
-                    const ea = a2 - 20;
-                    const s = { x: cx + r * Math.cos((sa * Math.PI) / 180), y: cy + r * Math.sin((sa * Math.PI) / 180) };
-                    const e = { x: cx + r * Math.cos((ea * Math.PI) / 180), y: cy + r * Math.sin((ea * Math.PI) / 180) };
+                    const angle = i * 72;
+                    const rad1 = (angle - 90) * (Math.PI / 180);
+                    const rad2 = (angle + 72 - 90) * (Math.PI / 180);
+                    const r = 90;
+                    const x1 = 140 + r * Math.cos(rad1);
+                    const y1 = 140 + r * Math.sin(rad1);
+                    const x2 = 140 + r * Math.cos(rad2);
+                    const y2 = 140 + r * Math.sin(rad2);
+                    const midAngle = (angle + 36 - 90) * (Math.PI / 180);
+                    const cx = 140 + (r + 20) * Math.cos(midAngle);
+                    const cy = 140 + (r + 20) * Math.sin(midAngle);
                     return (
-                      <path key={i} d={`M ${s.x} ${s.y} A ${r} ${r} 0 0 1 ${e.x} ${e.y}`}
-                        fill="none" stroke={node.color} strokeWidth="1.5" strokeOpacity="0.2"
-                        strokeLinecap="round" strokeDasharray="6 4" />
+                      <motion.path
+                        key={i}
+                        d={`M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`}
+                        stroke={node.color}
+                        strokeWidth="1.5"
+                        strokeOpacity="0.25"
+                        strokeDasharray="4 3"
+                        fill="none"
+                        initial={{ pathLength: 0 }}
+                        animate={flywheelInView ? { pathLength: 1 } : {}}
+                        transition={{ delay: 1.2 + i * 0.15, duration: 0.5 }}
+                      />
                     );
                   })}
                 </motion.svg>
