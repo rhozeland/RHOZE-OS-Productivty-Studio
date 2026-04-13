@@ -568,11 +568,20 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
+                            <span className={cn(
+                              "inline-flex items-center justify-center h-5 w-5 rounded-full text-[10px] font-bold text-white",
+                              isComplete ? "bg-green-500" : STAGE_COLORS[i % STAGE_COLORS.length].replace("border-l-", "bg-")
+                            )}>
+                              {i + 1}
+                            </span>
                             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                               Stage {i + 1}
                             </span>
                             {isComplete && (
                               <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            )}
+                            {isLocked && (
+                              <Lock className="h-3 w-3 text-muted-foreground/50" />
                             )}
                           </div>
                           <h3 className="font-display text-base font-semibold text-foreground mt-0.5">
