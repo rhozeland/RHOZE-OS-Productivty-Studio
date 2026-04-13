@@ -27,16 +27,15 @@ const AdminOverview = () => {
   const [confirming, setConfirming] = useState<string | null>(null);
 
   const fetchData = async () => {
-    const [
-      profiles, services, bookings, transactions,
-      studios, smartboards, flowItems, pendingRewards,
-      adminRoles, bannedProfiles,
-    ] = await Promise.all([
+    const [profiles, services, bookings, transactions, studios] = await Promise.all([
       supabase.from("profiles").select("id", { count: "exact", head: true }),
       supabase.from("services").select("id", { count: "exact", head: true }),
       supabase.from("bookings").select("id", { count: "exact", head: true }),
       supabase.from("credit_transactions").select("amount"),
       supabase.from("studios").select("id", { count: "exact", head: true }),
+    ]);
+
+    const [smartboards, flowItems, pendingRewards, adminRoles, bannedProfiles] = await Promise.all([
       supabase.from("smartboards").select("id", { count: "exact", head: true }),
       supabase.from("flow_items").select("id", { count: "exact", head: true }),
       supabase.from("pending_rewards").select("id", { count: "exact", head: true }).eq("status", "pending"),
