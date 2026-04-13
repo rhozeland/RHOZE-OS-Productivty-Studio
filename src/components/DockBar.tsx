@@ -1,6 +1,7 @@
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, useAnimationControls } from "framer-motion";
 import {
   Home,
   Building2,
@@ -73,9 +74,15 @@ const PATH_MAP: Record<string, string> = {
   services: "/services",
 };
 
+const SCROLL_THRESHOLD = 8; // minimum delta to trigger hide/show
+
 const DockBar = () => {
   const location = useLocation();
   const { user } = useAuth();
+  const controls = useAnimationControls();
+  const lastScrollY = useRef(0);
+  const isVisible = useRef(true);
+  const ticking = useRef(false);
 
   const { data: profile } = useQuery({
     queryKey: ["my-profile-dock"],
@@ -96,12 +103,49 @@ const DockBar = () => {
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + "/");
 
+  const handleScroll = useCallback(() => {
+    if (ticking.current) return;
+    ticking.current = true;
+
+    requestAnimationFrame(() => {
+      const currentY = window.scrollY;
+      const delta = currentY - lastScrollY.current;
+
+      if (delta > SCROLL_THRESHOLD && isVisible.current && currentY > 60) {
+        // Scrolling down — hide
+        isVisible.current = false;
+        controls.start({ y: 100, opacity: 0, transition: { duration: 0.25, ease: "easeIn" } });
+      } else if (delta < -SCROLL_THRESHOLD && !isVisible.current) {
+        // Scrolling up — show
+        isVisible.current = true;
+        controls.start({ y: 0, opacity: 1, transition: { type: "spring", stiffness: 300, damping: 28 } });
+      }
+
+      lastScrollY.current = currentY;
+      ticking.current = false;
+    });
+  }, [controls]);
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
+  // Reset visibility on route change
+  useEffect(() => {
+    isVisible.current = true;
+    controls.start({ y: 0, opacity: 1, transition: { duration: 0.2 } });
+  }, [location.pathname, controls]);
+
   return (
     <motion.div
       initial={{ y: 80, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
+      animate={controls}
       transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
       className="fixed bottom-4 left-0 right-0 z-50 flex justify-center pointer-events-none"
+      onAnimationStart={() => {
+        // Ensure pointer events work during animation
+      }}
     >
       <div className="flex items-center gap-2 sm:gap-1 px-5 sm:px-4 py-3 sm:py-2.5 bg-card/90 backdrop-blur-xl border border-border rounded-xl shadow-lg shadow-foreground/5 pointer-events-auto">
         {dockIds.map((id) => {
