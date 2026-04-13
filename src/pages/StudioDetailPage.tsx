@@ -164,7 +164,7 @@ const StudioDetailPage = () => {
                 <div className="flex items-center gap-1 shrink-0 mt-1">
                   <Star className="h-4 w-4 text-warm fill-warm" />
                   <span className="font-bold text-foreground">{Number(studio.rating_avg).toFixed(1)}</span>
-                  <span className="text-sm text-muted-foreground">({studio.review_count} reviews)</span>
+                  <span className="text-sm text-muted-foreground">({studio.review_count} ratings)</span>
                 </div>
               )}
             </div>
