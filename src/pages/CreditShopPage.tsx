@@ -160,6 +160,7 @@ const CreditShopPage = () => {
   const [subPaymentMethod, setSubPaymentMethod] = useState<"card" | "crypto">("card");
   const [pendingTier, setPendingTier] = useState<(typeof TIERS)[number] | null>(null);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
+  const [purchaseSubTab, setPurchaseSubTab] = useState<"history" | "buy">("history");
 
   const activeTab = searchParams.get("tab") || "pass";
 
