@@ -35,13 +35,11 @@ const AdminOverview = () => {
       supabase.from("studios").select("id", { count: "exact", head: true }),
     ]);
 
-    const [smartboards, flowItems, pendingRewards, adminRoles, bannedProfiles] = await Promise.all([
-      supabase.from("smartboards").select("id", { count: "exact", head: true }),
-      supabase.from("flow_items").select("id", { count: "exact", head: true }),
-      supabase.from("pending_rewards").select("id", { count: "exact", head: true }).eq("status", "pending"),
-      supabase.from("user_roles").select("id", { count: "exact", head: true }).eq("role", "admin"),
-      supabase.from("profiles").select("id", { count: "exact", head: true }).eq("ban_status" as any, "banned"),
-    ]);
+    const smartboards = await supabase.from("smartboards").select("id", { count: "exact", head: true });
+    const flowItems = await supabase.from("flow_items").select("id", { count: "exact", head: true });
+    const pendingRewards = await supabase.from("pending_rewards").select("id", { count: "exact", head: true }).eq("status", "pending");
+    const adminRoles = await supabase.from("user_roles").select("id", { count: "exact", head: true }).eq("role", "admin");
+    const bannedProfiles = await supabase.from("profiles").select("id", { count: "exact", head: true }).eq("ban_status" as any, "banned");
 
     const totalRevenue = (transactions.data || [])
       .reduce((sum, t) => sum + Number(t.amount), 0);
