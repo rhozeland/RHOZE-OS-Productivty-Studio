@@ -721,14 +721,16 @@ const DashboardPage = () => {
         </motion.section>
       )}
 
-      {/* Customizer toggle */}
-      <div className="flex items-center justify-between mb-4">
-        <div />
-        <button onClick={() => setShowCustomizer(!showCustomizer)} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 font-body transition-colors">
-          <Settings2 className="h-3.5 w-3.5" />
-          Customize
-        </button>
-      </div>
+      {/* Customizer toggle — only for logged-in users */}
+      {user && (
+        <div className="flex items-center justify-between mb-4">
+          <div />
+          <button onClick={() => setShowCustomizer(!showCustomizer)} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 font-body transition-colors">
+            <Settings2 className="h-3.5 w-3.5" />
+            Customize
+          </button>
+        </div>
+      )}
 
       {/* Customizer panel */}
       <AnimatePresence>
