@@ -57,6 +57,30 @@ const AdminUsers = () => {
   // Delete dialog
   const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null);
 
+  // Warning dialog
+  const [warnTarget, setWarnTarget] = useState<Profile | null>(null);
+  const [warnMessage, setWarnMessage] = useState("");
+  const [warnProcessing, setWarnProcessing] = useState(false);
+
+  const handleSendWarning = async () => {
+    if (!warnTarget) return;
+    setWarnProcessing(true);
+    const { error } = await supabase.from("notifications").insert({
+      user_id: warnTarget.user_id,
+      title: "⚠️ Account Warning",
+      body: warnMessage || "Your account has been flagged for violating community guidelines. Please review our terms of service. Continued violations may result in account suspension.",
+      type: "warning",
+      link: "/settings",
+    });
+    if (error) toast.error(error.message);
+    else {
+      toast.success(`Warning sent to ${warnTarget.display_name || "user"}`);
+      setWarnTarget(null);
+      setWarnMessage("");
+    }
+    setWarnProcessing(false);
+  };
+
   const fetchData = async () => {
     const [{ data: profileData }, { data: creditData }, { data: roleData }] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
