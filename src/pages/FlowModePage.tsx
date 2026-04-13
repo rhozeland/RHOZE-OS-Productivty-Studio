@@ -549,6 +549,7 @@ const FlowModePage = () => {
                   onShare={() => performAction("share")}
                   onDelete={() => deleteFlowItem.mutate(currentItem.id)}
                   isOwner={currentItem.user_id === user?.id}
+                  isAdmin={isAdmin}
                 />
               </motion.div>
             ) : (
@@ -583,6 +584,7 @@ const FlowModePage = () => {
                     onShare={() => performAction("share", undefined, item)}
                     onDelete={() => deleteFlowItem.mutate(item.id)}
                     isOwner={item.user_id === user?.id}
+                    isAdmin={isAdmin}
                   />
                 </div>
               ))}
