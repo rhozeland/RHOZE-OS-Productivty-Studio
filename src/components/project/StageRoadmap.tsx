@@ -64,6 +64,13 @@ interface Goal {
   location: string | null;
 }
 
+interface Collaborator {
+  id: string;
+  user_id: string;
+  project_role: string;
+  role: string;
+}
+
 interface StageRoadmapProps {
   goals: Goal[] | undefined;
   projectId: string;
@@ -81,10 +88,23 @@ interface StageRoadmapProps {
     sort_order: number;
     title: string;
   }> | null;
+  collaborators?: Collaborator[] | null;
   isCollaborative?: boolean;
+  isLocked?: boolean;
 }
 
-const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, isCollaborative }: StageRoadmapProps) => {
+const STAGE_COLORS = [
+  "border-l-violet-500",
+  "border-l-blue-500",
+  "border-l-emerald-500",
+  "border-l-amber-500",
+  "border-l-rose-500",
+  "border-l-cyan-500",
+  "border-l-orange-500",
+  "border-l-pink-500",
+];
+
+const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, collaborators, isCollaborative, isLocked }: StageRoadmapProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
