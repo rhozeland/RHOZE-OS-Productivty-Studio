@@ -103,29 +103,44 @@ const ProjectsPage = () => {
 
   return (
     <div className="space-y-8">
-      {/* Header with animated accent */}
+      {/* Hero Header with blue gradient */}
       <motion.div
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex items-center justify-between"
+        className="relative overflow-hidden rounded-2xl"
       >
-        <div className="relative">
-          <h1 className="font-display text-3xl font-bold text-foreground">Projects</h1>
-          <p className="text-muted-foreground mt-1">Manage your creative projects</p>
-          <motion.div
-            className="absolute -bottom-2 left-0 h-[2px] bg-gradient-to-r from-primary via-primary/50 to-transparent"
-            initial={{ width: 0 }}
-            animate={{ width: "100%" }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-          />
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />New Project
-            </Button>
-          </DialogTrigger>
+        {/* Gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(210,90%,50%)] via-[hsl(220,80%,60%)] to-[hsl(240,70%,55%)]" />
+        {/* Decorative blobs */}
+        <div
+          className="absolute -top-16 -right-16 w-[300px] h-[300px] rounded-full opacity-30"
+          style={{ background: "radial-gradient(circle, hsl(200,100%,75%), transparent 70%)" }}
+        />
+        <div
+          className="absolute -bottom-20 -left-20 w-[250px] h-[250px] rounded-full opacity-20"
+          style={{ background: "radial-gradient(circle, hsl(260,80%,70%), transparent 70%)" }}
+        />
+        <div className="absolute inset-0 grid-overlay opacity-[0.06]" />
+
+        <div className="relative z-10 px-8 py-10 md:px-10 md:py-12 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div>
+            <p className="text-[10px] font-body font-semibold text-white/60 uppercase tracking-[0.25em] mb-2">
+              Workspace
+            </p>
+            <h1 className="font-display text-3xl md:text-4xl font-bold text-white leading-tight">
+              Projects
+            </h1>
+            <p className="text-sm text-white/70 mt-1 max-w-md font-body">
+              Manage your creative projects, track milestones, and collaborate with your team.
+            </p>
+          </div>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 bg-white/15 hover:bg-white/25 text-white border border-white/20 backdrop-blur-sm shadow-lg">
+                <Plus className="h-4 w-4" />New Project
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create Project</DialogTitle>
