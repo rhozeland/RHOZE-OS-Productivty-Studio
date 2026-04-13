@@ -678,7 +678,9 @@ const DashboardPage = () => {
         </div>
       </motion.div>
 
-      {/* Stat grid — only for logged-in users */}
+      {/* Guest users see a platform overview instead of empty sections */}
+      {!user && <GuestDashboardPreview />}
+
       {user && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-[1px] bg-border mb-8 rounded-lg overflow-hidden">
           {[
