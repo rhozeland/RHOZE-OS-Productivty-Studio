@@ -313,6 +313,11 @@ const AdminUsers = () => {
                           <ShieldOff className="h-3.5 w-3.5 mr-2" /> Revoke Admin
                         </DropdownMenuItem>
                       )}
+                      {!banned && !isSelf && (
+                        <DropdownMenuItem onClick={() => { setWarnTarget(p); setWarnMessage(""); }}>
+                          <AlertTriangle className="h-3.5 w-3.5 mr-2" /> Send Warning
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuSeparator />
                       {!banned ? (
                         <DropdownMenuItem
