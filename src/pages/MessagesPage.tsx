@@ -509,6 +509,7 @@ const MessagesPage = () => {
                   })
                 )}
               </ScrollArea>
+              <BuddyList onSelectUser={setSelectedUser} selectedUserId={selectedUser?.user_id} />
             </div>
 
             {/* Chat Area */}
