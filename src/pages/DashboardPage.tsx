@@ -26,6 +26,7 @@ import {
 import { Link } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import GuestDashboardPreview from "@/components/guest/GuestDashboardPreview";
 import { Switch } from "@/components/ui/switch";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, startOfWeek, endOfWeek } from "date-fns";
 

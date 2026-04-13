@@ -74,6 +74,7 @@ import PaySolAndVerify from "@/components/PaySolAndVerify";
 import PayWithRhozeButton from "@/components/PayWithRhozeButton";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
 import CreatorPassCard from "@/components/creators/CreatorPassCard";
+import GuestCreditsPreview from "@/components/guest/GuestCreditsPreview";
 
 const CAT_ICONS: Record<string, any> = {
   music: Music, design: Palette, photo: Camera, video: Video, writing: PenTool,
@@ -154,6 +155,11 @@ const TIERS = [
 
 const CreditShopPage = () => {
   const { user } = useAuth();
+
+  // Guest preview
+  if (!user) {
+    return <GuestCreditsPreview />;
+  }
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [subPaymentOpen, setSubPaymentOpen] = useState(false);

@@ -28,6 +28,7 @@ import ChatAttachmentMenu from "@/components/messages/ChatAttachmentMenu";
 import RichMessageCard, { isRichMessage } from "@/components/messages/RichMessageCard";
 import CirclesTab from "@/components/messages/CirclesTab";
 import BuddyList from "@/components/messages/BuddyList";
+import GuestMessagesPreview from "@/components/guest/GuestMessagesPreview";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pending", color: "bg-amber-500/15 text-amber-600", icon: Clock },
@@ -52,6 +53,11 @@ type Message = {
 
 const MessagesPage = () => {
   const { user } = useAuth();
+
+  // Guest preview — avoid broken queries
+  if (!user) {
+    return <GuestMessagesPreview />;
+  }
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
