@@ -1,7 +1,7 @@
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Navigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Users, Award, Building2, Coins, Settings, ShieldCheck, AlertTriangle } from "lucide-react";
+import { BarChart3, Users, Award, Building2, Coins, Settings, ShieldCheck, AlertTriangle, Wallet } from "lucide-react";
 import AdminOverview from "@/components/admin/AdminOverview";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminBadges from "@/components/admin/AdminBadges";
@@ -11,6 +11,7 @@ import AdminSettings from "@/components/admin/AdminSettings";
 import AdminStaff from "@/components/admin/AdminStaff";
 import AdminServices from "@/components/admin/AdminServices";
 import AdminDisputes from "@/components/admin/AdminDisputes";
+import AdminWithdrawals from "@/components/admin/AdminWithdrawals";
 
 const AdminPage = () => {
   const { isAdmin, loading } = useAdminCheck();
@@ -60,6 +61,9 @@ const AdminPage = () => {
           <TabsTrigger value="disputes" className="gap-1.5 text-xs shrink-0">
             <AlertTriangle className="h-3.5 w-3.5" /> Disputes
           </TabsTrigger>
+          <TabsTrigger value="withdrawals" className="gap-1.5 text-xs shrink-0">
+            <Wallet className="h-3.5 w-3.5" /> Withdrawals
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview"><AdminOverview /></TabsContent>
@@ -70,6 +74,7 @@ const AdminPage = () => {
         <TabsContent value="staff"><AdminStaff /></TabsContent>
         <TabsContent value="disputes"><AdminDisputes /></TabsContent>
         <TabsContent value="services"><AdminServices /></TabsContent>
+        <TabsContent value="withdrawals"><AdminWithdrawals /></TabsContent>
       </Tabs>
     </div>
   );

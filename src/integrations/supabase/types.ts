@@ -2647,6 +2647,48 @@ export type Database = {
         }
         Relationships: []
       }
+      withdrawal_requests: {
+        Row: {
+          admin_note: string | null
+          amount: number
+          created_at: string
+          id: string
+          payout_details: Json | null
+          payout_method: string
+          processed_at: string | null
+          processed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount: number
+          created_at?: string
+          id?: string
+          payout_details?: Json | null
+          payout_method?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          payout_details?: Json | null
+          payout_method?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -2775,6 +2817,15 @@ export type Database = {
         }
         Returns: number
       }
+      process_withdrawal: {
+        Args: {
+          _admin_id: string
+          _new_status: string
+          _note?: string
+          _request_id: string
+        }
+        Returns: undefined
+      }
       purchase_listing: {
         Args: { _buyer_id: string; _listing_id: string }
         Returns: string
@@ -2794,6 +2845,15 @@ export type Database = {
       release_milestone_credits: {
         Args: { _approver_id: string; _milestone_id: string }
         Returns: undefined
+      }
+      request_withdrawal: {
+        Args: {
+          _amount: number
+          _payout_details?: Json
+          _payout_method: string
+          _user_id: string
+        }
+        Returns: string
       }
       update_user_subscription: {
         Args: {
