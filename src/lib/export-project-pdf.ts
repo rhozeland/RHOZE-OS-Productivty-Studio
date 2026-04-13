@@ -18,6 +18,7 @@ interface Goal {
   stage_date_start: string | null;
   stage_date_end: string | null;
   location: string | null;
+  assignee_id?: string | null;
 }
 
 interface Project {
@@ -37,6 +38,20 @@ interface Project {
   project_type?: string | null;
 }
 
+interface Approval {
+  printed_name: string;
+  role: string;
+  signed_at: string;
+  goal_id?: string | null;
+}
+
+interface ContractInfo {
+  status?: string;
+  total_credits?: number;
+  released_credits?: number;
+  escrowed_credits?: number;
+}
+
 const CURRENCIES: Record<string, string> = {
   CAD: "$",
   USD: "$",
@@ -44,7 +59,6 @@ const CURRENCIES: Record<string, string> = {
   GBP: "£",
 };
 
-// Brand colors
 const BRAND = {
   black: [30, 30, 30] as [number, number, number],
   gray: [100, 100, 100] as [number, number, number],
@@ -52,6 +66,7 @@ const BRAND = {
   yellow: [255, 230, 0] as [number, number, number],
   white: [255, 255, 255] as [number, number, number],
   highlight: [255, 255, 140] as [number, number, number],
+  green: [34, 197, 94] as [number, number, number],
 };
 
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -64,16 +79,11 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-interface Approval {
-  printed_name: string;
-  role: string;
-  signed_at: string;
-}
-
 export async function exportProjectPDF(
   project: Project,
   goals: Goal[] | undefined,
-  approvals?: Approval[]
+  approvals?: Approval[],
+  contractInfo?: ContractInfo
 ) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -94,35 +104,37 @@ export async function exportProjectPDF(
 
   const currencySymbol = CURRENCIES[project.currency] || "$";
 
-  // Helper: add footer
+  // Roadmap-level approvals (goal_id is null)
+  const roadmapApprovals = approvals?.filter((a) => !a.goal_id) ?? [];
+  const stageApprovals = approvals?.filter((a) => !!a.goal_id) ?? [];
+  const isLocked = contractInfo?.status === "active" || contractInfo?.status === "completed" || roadmapApprovals.length >= 2;
+
   const addFooter = (pageNum: number) => {
     doc.setFontSize(9);
     doc.setTextColor(...BRAND.gray);
     doc.text(String(pageNum), marginLeft, pageHeight - 12);
     doc.text("www.rhozeland.com", marginLeft, pageHeight - 7);
+    if (isLocked) {
+      doc.setTextColor(...BRAND.green);
+      doc.text("LOCKED", pageWidth - marginRight, pageHeight - 7, { align: "right" });
+    }
   };
 
-  // Helper: add header with logo
   const addHeader = async () => {
     try {
       const img = await loadImage(rhozelandLogo);
       doc.addImage(img, "PNG", pageWidth / 2 - 40, y, 18, 18);
-      // "RHOZELAND" text next to logo
       doc.setFontSize(28);
       doc.setTextColor(...BRAND.black);
       doc.setFont("helvetica", "normal");
-      // Letter-spaced "RHOZELAND"
-      const letters = "R H O Z E L A N D";
-      doc.text(letters, pageWidth / 2 - 18, y + 13);
+      doc.text("R H O Z E L A N D", pageWidth / 2 - 18, y + 13);
     } catch {
-      // Fallback if logo fails
       doc.setFontSize(28);
       doc.setTextColor(...BRAND.black);
       doc.text("R H O Z E L A N D", pageWidth / 2, y + 13, { align: "center" });
     }
   };
 
-  // Helper: section header with underline
   const sectionHeader = (title: string) => {
     checkPageBreak(15);
     doc.setFontSize(11);
@@ -136,7 +148,6 @@ export async function exportProjectPDF(
     y += 6;
   };
 
-  // Helper: check page break
   const checkPageBreak = (needed: number) => {
     if (y + needed > pageHeight - 20) {
       addFooter(doc.getNumberOfPages());
@@ -145,7 +156,6 @@ export async function exportProjectPDF(
     }
   };
 
-  // Helper: body text with wrapping
   const bodyText = (text: string, indent = 0) => {
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
@@ -162,18 +172,27 @@ export async function exportProjectPDF(
   await addHeader();
   y += 25;
 
-  // Title
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...BRAND.black);
   doc.text("DESIGN PROJECT ROADMAP", pageWidth / 2, y, { align: "center" });
-  y += 12;
+  y += 4;
 
-  // Client info block
+  // Locked status badge
+  if (isLocked) {
+    doc.setFontSize(10);
+    doc.setTextColor(...BRAND.green);
+    doc.text("✓ ROADMAP LOCKED & APPROVED", pageWidth / 2, y, { align: "center" });
+    y += 4;
+  }
+  y += 8;
+
+  // Client info
   const infoRows: [string, string][] = [];
   if (project.client_name) infoRows.push(["NAME:", project.client_name]);
   infoRows.push(["DATE ISSUED:", format(new Date(project.created_at), "dd MMM yyyy")]);
   infoRows.push(["REFERENCE ID:", project.id.slice(0, 8).toUpperCase()]);
+  infoRows.push(["STATUS:", isLocked ? "Active (Locked)" : project.is_estimate ? "Estimate" : "Draft"]);
   if (project.project_type && project.project_type !== "standard") {
     infoRows.push(["TYPE:", project.project_type.charAt(0).toUpperCase() + project.project_type.slice(1)]);
   }
@@ -189,31 +208,26 @@ export async function exportProjectPDF(
     y += 6;
   }
 
-  // Separator line
   y += 2;
   doc.setDrawColor(...BRAND.black);
   doc.setLineWidth(0.5);
   doc.line(marginLeft, y, pageWidth - marginRight, y);
   y += 10;
 
-  // Executive Summary (project description)
   if (project.description) {
     sectionHeader("EXECUTIVE SUMMARY:");
     bodyText(project.description, 5);
     y += 6;
   }
 
-  // Scope of Work categories
   if (project.categories && project.categories.length > 0) {
     sectionHeader("SCOPE OF WORK:");
-    // Category pills in a row
     const cats = project.categories;
     const catWidth = contentWidth / Math.max(cats.length, 1);
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
     cats.forEach((cat, i) => {
       const x = marginLeft + i * catWidth;
-      // Highlight box for active categories
       doc.setFillColor(...BRAND.highlight);
       doc.rect(x, y - 4, catWidth - 3, 6, "F");
       doc.setTextColor(...BRAND.black);
@@ -222,10 +236,8 @@ export async function exportProjectPDF(
     y += 10;
   }
 
-  // Scope of Work details
   if (project.scope_of_work) {
     sectionHeader("DELIVERABLES:");
-    // Split by newlines and render
     const scopeLines = project.scope_of_work.split("\n");
     for (const line of scopeLines) {
       const trimmed = line.trim();
@@ -253,18 +265,30 @@ export async function exportProjectPDF(
     doc.setFont("helvetica", "normal");
 
     const budgetRows: string[][] = [];
-    budgetRows.push(["Grand Total" + (project.is_estimate ? " (Estimate)" : ""),
-      `${currencySymbol}${project.total_budget.toLocaleString(undefined, { minimumFractionDigits: 2 })}`]);
+    budgetRows.push([
+      "Grand Total" + (project.is_estimate ? " (Estimate)" : isLocked ? " (Finalized)" : ""),
+      `${currencySymbol}${project.total_budget.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+    ]);
 
     const stageTotal = stages.reduce((sum, s) => sum + (s.budget_amount || 0), 0);
-    stages.filter(s => s.budget_amount > 0).forEach((stage, i) => {
-      budgetRows.push([`  Stage ${i + 1}: ${stage.title}`,
-        `${currencySymbol}${stage.budget_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`]);
+    stages.filter((s) => s.budget_amount > 0).forEach((stage, i) => {
+      budgetRows.push([
+        `  Stage ${i + 1}: ${stage.title}`,
+        `${currencySymbol}${stage.budget_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+      ]);
     });
 
     if (project.total_budget > stageTotal && stageTotal > 0) {
-      budgetRows.push(["  Unallocated",
-        `${currencySymbol}${(project.total_budget - stageTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}`]);
+      budgetRows.push([
+        "  Unallocated",
+        `${currencySymbol}${(project.total_budget - stageTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+      ]);
+    }
+
+    // Escrow info
+    if (contractInfo && contractInfo.total_credits && contractInfo.total_credits > 0) {
+      budgetRows.push(["", ""]);
+      budgetRows.push(["Credit Escrow", `${contractInfo.released_credits ?? 0}/${contractInfo.total_credits} cr released`]);
     }
 
     autoTable(doc, {
@@ -290,21 +314,18 @@ export async function exportProjectPDF(
 
   addFooter(1);
 
-  // ======== PAGE 2: Vision & Roadmap ========
+  // ======== PAGE 2: Roadmap ========
   doc.addPage();
   y = 20;
   await addHeader();
   y += 25;
 
-  // Vision Details
   if (project.vision || project.runtime_notes) {
     sectionHeader("VISION DETAILS");
-
     if (project.vision) {
       bodyText(project.vision, 0);
       y += 4;
     }
-
     if (project.runtime_notes) {
       checkPageBreak(10);
       doc.setFontSize(10);
@@ -318,7 +339,6 @@ export async function exportProjectPDF(
     y += 4;
   }
 
-  // Roadmap stages
   if (stages.length > 0) {
     sectionHeader("ROADMAP");
 
@@ -326,13 +346,11 @@ export async function exportProjectPDF(
       checkPageBreak(25);
       const subItems = getSubItems(stage.id);
 
-      // Stage header row with date highlight
       const dateStr = [
         stage.stage_date_start ? format(new Date(stage.stage_date_start), "MMM d, yyyy") : "",
         stage.stage_date_end ? format(new Date(stage.stage_date_end), "MMM d, yyyy") : "",
       ].filter(Boolean).join(" - ");
 
-      // Build table data
       const tableBody: string[][] = [];
 
       subItems.forEach((item, j) => {
@@ -342,14 +360,23 @@ export async function exportProjectPDF(
         tableBody.push([check, desc]);
       });
 
-      // If stage has description but no sub-items, show description
       if (subItems.length === 0 && stage.description) {
         tableBody.push(["", stage.description]);
       }
 
-      // Location info
       if (stage.location) {
-        tableBody.push(["", `Where: ${stage.location}`]);
+        tableBody.push(["📍", `Location: ${stage.location}`]);
+      }
+
+      if (stage.budget_amount > 0) {
+        tableBody.push(["💰", `Budget: ${currencySymbol}${stage.budget_amount.toLocaleString()}`]);
+      }
+
+      // Stage approval info
+      const stageApprovalsForThis = stageApprovals.filter((a) => a.goal_id === stage.id);
+      if (stageApprovalsForThis.length > 0) {
+        const signers = stageApprovalsForThis.map((a) => `${a.printed_name} (${a.role})`).join(", ");
+        tableBody.push(["✍", `Approved by: ${signers}`]);
       }
 
       autoTable(doc, {
@@ -379,7 +406,6 @@ export async function exportProjectPDF(
           1: { cellWidth: contentWidth - 15 },
         },
         didParseCell: (data) => {
-          // Highlight date cells
           if (data.section === "head" && data.column.index === 1) {
             data.cell.styles.fillColor = BRAND.highlight;
           }
@@ -400,49 +426,68 @@ export async function exportProjectPDF(
 
   sectionHeader("APPROVAL AND FINAL SIGN-OFF");
 
-  const clientApproval = approvals?.find((a) => a.role === "client");
-  const specialistApproval = approvals?.find((a) => a.role === "specialist");
+  // Roadmap-level approvals
+  const roadmapClientApproval = roadmapApprovals.find((a) => a.role === "client");
+  const roadmapSpecialistApproval = roadmapApprovals.find((a) => a.role === "specialist");
 
-  autoTable(doc, {
-    startY: y,
-    margin: { left: marginLeft, right: marginRight },
-    theme: "grid",
-    styles: {
-      fontSize: 10,
-      cellPadding: 5,
-      textColor: BRAND.black,
-      lineColor: BRAND.lightGray,
-      lineWidth: 0.3,
-    },
-    head: [["APPROVAL AND FINAL SIGN-OFF", "ADMINISTERED BY"]],
-    headStyles: {
-      fillColor: BRAND.white,
-      textColor: BRAND.black,
-      fontStyle: "bold",
-    },
-    body: [
-      [
-        `Print Name: ${clientApproval?.printed_name || project.client_name || "________________"}`,
-        `Print Name: ${specialistApproval?.printed_name || "________________"}`,
+  if (isLocked && (roadmapClientApproval || roadmapSpecialistApproval)) {
+    checkPageBreak(15);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...BRAND.green);
+    doc.text("ROADMAP APPROVED", marginLeft, y);
+    y += 6;
+
+    autoTable(doc, {
+      startY: y,
+      margin: { left: marginLeft, right: marginRight },
+      theme: "grid",
+      styles: { fontSize: 10, cellPadding: 5, textColor: BRAND.black, lineColor: BRAND.lightGray, lineWidth: 0.3 },
+      head: [["SPECIALIST", "CLIENT"]],
+      headStyles: { fillColor: BRAND.white, textColor: BRAND.black, fontStyle: "bold" },
+      body: [
+        [
+          roadmapSpecialistApproval ? `${roadmapSpecialistApproval.printed_name}\n${format(new Date(roadmapSpecialistApproval.signed_at), "MMM d, yyyy")}` : "Awaiting",
+          roadmapClientApproval ? `${roadmapClientApproval.printed_name}\n${format(new Date(roadmapClientApproval.signed_at), "MMM d, yyyy")}` : "Awaiting",
+        ],
       ],
-      [
-        clientApproval
-          ? `Signed: ${format(new Date(clientApproval.signed_at), "MMM d, yyyy")}`
-          : "Signature: ________________",
-        specialistApproval
-          ? `Signed: ${format(new Date(specialistApproval.signed_at), "MMM d, yyyy")}`
-          : "Signature: ________________",
+      columnStyles: { 0: { cellWidth: contentWidth / 2 }, 1: { cellWidth: contentWidth / 2 } },
+    });
+    y = (doc as any).lastAutoTable.finalY + 10;
+  }
+
+  // Legacy project-level sign-off
+  const clientApproval = approvals?.find((a) => a.role === "client" && !a.goal_id) || roadmapClientApproval;
+  const specialistApproval = approvals?.find((a) => a.role === "specialist" && !a.goal_id) || roadmapSpecialistApproval;
+
+  if (!isLocked) {
+    autoTable(doc, {
+      startY: y,
+      margin: { left: marginLeft, right: marginRight },
+      theme: "grid",
+      styles: { fontSize: 10, cellPadding: 5, textColor: BRAND.black, lineColor: BRAND.lightGray, lineWidth: 0.3 },
+      head: [["APPROVAL AND FINAL SIGN-OFF", "ADMINISTERED BY"]],
+      headStyles: { fillColor: BRAND.white, textColor: BRAND.black, fontStyle: "bold" },
+      body: [
+        [
+          `Print Name: ${clientApproval?.printed_name || project.client_name || "________________"}`,
+          `Print Name: ${specialistApproval?.printed_name || "________________"}`,
+        ],
+        [
+          clientApproval
+            ? `Signed: ${format(new Date(clientApproval.signed_at), "MMM d, yyyy")}`
+            : "Signature: ________________",
+          specialistApproval
+            ? `Signed: ${format(new Date(specialistApproval.signed_at), "MMM d, yyyy")}`
+            : "Signature: ________________",
+        ],
       ],
-    ],
-    columnStyles: {
-      0: { cellWidth: contentWidth / 2 },
-      1: { cellWidth: contentWidth / 2 },
-    },
-  });
+      columnStyles: { 0: { cellWidth: contentWidth / 2 }, 1: { cellWidth: contentWidth / 2 } },
+    });
+    y = (doc as any).lastAutoTable.finalY + 15;
+  }
 
-  y = (doc as any).lastAutoTable.finalY + 15;
-
-  // Payment info placeholder
+  // Payment info
   checkPageBreak(30);
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
@@ -450,13 +495,19 @@ export async function exportProjectPDF(
   doc.text("Payment Information:", marginLeft, y);
   y += 6;
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
 
   if (project.total_budget > 0) {
     doc.text(
-      `Total: ${currencySymbol}${project.total_budget.toLocaleString(undefined, { minimumFractionDigits: 2 })}${project.is_estimate ? " (Estimate)" : ""}`,
-      marginLeft,
-      y
+      `Total: ${currencySymbol}${project.total_budget.toLocaleString(undefined, { minimumFractionDigits: 2 })}${project.is_estimate ? " (Estimate)" : isLocked ? " (Finalized)" : ""}`,
+      marginLeft, y
+    );
+    y += 6;
+  }
+
+  if (contractInfo?.total_credits && contractInfo.total_credits > 0) {
+    doc.text(
+      `Escrow: ${contractInfo.released_credits ?? 0}/${contractInfo.total_credits} credits released`,
+      marginLeft, y
     );
     y += 6;
   }
@@ -467,7 +518,6 @@ export async function exportProjectPDF(
 
   addFooter(3);
 
-  // Save
   const fileName = `${project.title.replace(/[^a-zA-Z0-9]/g, "_")}_Roadmap.pdf`;
   doc.save(fileName);
 }

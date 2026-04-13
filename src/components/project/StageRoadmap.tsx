@@ -39,6 +39,7 @@ import {
   Pencil,
   Check,
   X,
+  Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -64,6 +65,13 @@ interface Goal {
   location: string | null;
 }
 
+interface Collaborator {
+  id: string;
+  user_id: string;
+  project_role: string;
+  role: string;
+}
+
 interface StageRoadmapProps {
   goals: Goal[] | undefined;
   projectId: string;
@@ -81,10 +89,23 @@ interface StageRoadmapProps {
     sort_order: number;
     title: string;
   }> | null;
+  collaborators?: Collaborator[] | null;
   isCollaborative?: boolean;
+  isLocked?: boolean;
 }
 
-const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, isCollaborative }: StageRoadmapProps) => {
+const STAGE_COLORS = [
+  "border-l-violet-500",
+  "border-l-blue-500",
+  "border-l-emerald-500",
+  "border-l-amber-500",
+  "border-l-rose-500",
+  "border-l-cyan-500",
+  "border-l-orange-500",
+  "border-l-pink-500",
+];
+
+const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, collaborators, isCollaborative, isLocked }: StageRoadmapProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
@@ -419,7 +440,7 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, is
                 "surface-card overflow-hidden border-l-4",
                 isComplete
                   ? "border-l-green-500"
-                  : priorityColors[stage.priority] || priorityColors.medium
+                  : STAGE_COLORS[i % STAGE_COLORS.length]
               )}
             >
               {/* Stage Header */}
@@ -548,11 +569,20 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, is
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
+                            <span className={cn(
+                              "inline-flex items-center justify-center h-5 w-5 rounded-full text-[10px] font-bold text-white",
+                              isComplete ? "bg-green-500" : STAGE_COLORS[i % STAGE_COLORS.length].replace("border-l-", "bg-")
+                            )}>
+                              {i + 1}
+                            </span>
                             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                               Stage {i + 1}
                             </span>
                             {isComplete && (
                               <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            )}
+                            {isLocked && (
+                              <Lock className="h-3 w-3 text-muted-foreground/50" />
                             )}
                           </div>
                           <h3 className="font-display text-base font-semibold text-foreground mt-0.5">

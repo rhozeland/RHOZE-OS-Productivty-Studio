@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import ProjectVision from "@/components/project/ProjectVision";
 import RoadmapListView from "@/components/project/RoadmapListView";
 import RoadmapCalendarView from "@/components/project/RoadmapCalendarView";
@@ -15,7 +16,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, LayoutGrid, Link2, X, FileDown, Pencil, Check, Milestone, ListTodo } from "lucide-react";
+import {
+  Plus, Trash2, LayoutGrid, Link2, X, FileDown, Pencil, Check,
+  Milestone, ListTodo, CalendarDays, Lock, Unlock,
+} from "lucide-react";
 import { exportProjectPDF } from "@/lib/export-project-pdf";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -25,8 +29,7 @@ import ProjectBudget from "@/components/project/ProjectBudget";
 import ProgressChart from "@/components/project/ProgressChart";
 import Timeline from "@/components/project/Timeline";
 import Collaborators from "@/components/project/Collaborators";
-
-
+import RoadmapLockFlow from "@/components/project/RoadmapLockFlow";
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -90,6 +93,19 @@ const ProjectDetailPage = () => {
     enabled: !!contract,
   });
 
+  const { data: collaborators } = useQuery({
+    queryKey: ["project-collaborators", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_collaborators")
+        .select("*")
+        .eq("project_id", id!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Linked smartboards
   const { data: linkedSmartboards } = useQuery({
     queryKey: ["project-smartboards", id],
@@ -125,7 +141,6 @@ const ProjectDetailPage = () => {
     },
     enabled: !!user && linkDialogOpen,
   });
-
 
   const linkSmartboard = useMutation({
     mutationFn: async (smartboardId: string) => {
@@ -172,10 +187,11 @@ const ProjectDetailPage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
-
   if (!project) return <div className="text-muted-foreground">Loading...</div>;
 
   const availableToLink = mySmartboards?.filter((s) => !linkedIds.includes(s.id)) ?? [];
+  const isPaid = project.project_type !== "collaborative";
+  const isLocked = contract?.status === "active" || contract?.status === "completed";
 
   const startEditing = () => {
     setEditTitle(project.title);
@@ -228,6 +244,11 @@ const ProjectDetailPage = () => {
                   style={{ backgroundColor: project.cover_color ?? "hsl(var(--primary))" }}
                 />
                 <h1 className="font-display text-3xl font-bold text-foreground">{project.title}</h1>
+                {isLocked && (
+                  <Badge variant="outline" className="gap-1 text-xs bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20">
+                    <Lock className="h-3 w-3" /> Locked
+                  </Badge>
+                )}
                 <Pencil className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <p className="mt-1 text-muted-foreground pl-7">
@@ -243,11 +264,24 @@ const ProjectDetailPage = () => {
           size="sm"
           className="shrink-0 gap-1.5"
           onClick={() => {
-            toast.promise(exportProjectPDF(project as any, goals, approvals as any), {
-              loading: "Generating PDF...",
-              success: "PDF downloaded!",
-              error: "Failed to generate PDF",
-            });
+            toast.promise(
+              exportProjectPDF(
+                project as any,
+                goals,
+                approvals as any,
+                contract ? {
+                  status: contract.status,
+                  total_credits: contract.total_credits,
+                  released_credits: contract.released_credits,
+                  escrowed_credits: contract.escrowed_credits,
+                } : undefined
+              ),
+              {
+                loading: "Generating PDF...",
+                success: "PDF downloaded!",
+                error: "Failed to generate PDF",
+              }
+            );
           }}
         >
           <FileDown className="h-4 w-4" />
@@ -259,14 +293,11 @@ const ProjectDetailPage = () => {
       <ProgressChart goals={goals} />
 
       <Tabs defaultValue="roadmap" className="w-full">
-        <TabsList className="mb-4 flex-wrap">
-          <TabsTrigger value="roadmap">Roadmap</TabsTrigger>
-          <TabsTrigger value="vision">Scope</TabsTrigger>
-          {project.project_type !== "collaborative" && (
-            <TabsTrigger value="budget">Budget</TabsTrigger>
-          )}
-          
-          <TabsTrigger value="team">Team</TabsTrigger>
+        <TabsList className="mb-4 w-full justify-start overflow-x-auto flex-nowrap shrink-0">
+          <TabsTrigger value="roadmap" className="shrink-0">Roadmap</TabsTrigger>
+          <TabsTrigger value="vision" className="shrink-0">Scope</TabsTrigger>
+          {isPaid && <TabsTrigger value="budget" className="shrink-0">Budget</TabsTrigger>}
+          <TabsTrigger value="team" className="shrink-0">Team</TabsTrigger>
         </TabsList>
 
         <TabsContent value="roadmap" className="space-y-4">
@@ -277,6 +308,9 @@ const ProjectDetailPage = () => {
               </TabsTrigger>
               <TabsTrigger value="list" className="gap-1.5 text-xs">
                 <ListTodo className="h-3.5 w-3.5" /> List
+              </TabsTrigger>
+              <TabsTrigger value="calendar" className="gap-1.5 text-xs">
+                <CalendarDays className="h-3.5 w-3.5" /> Calendar
               </TabsTrigger>
             </TabsList>
 
@@ -289,18 +323,32 @@ const ProjectDetailPage = () => {
                     projectTitle={project.title}
                     contract={contract}
                     milestones={milestones}
+                    collaborators={collaborators}
                     isCollaborative={project.project_type === "collaborative"}
+                    isLocked={isLocked}
                   />
                 </div>
-                <div>
+                <div className="space-y-4">
                   <Timeline goals={goals} />
+                  {/* Roadmap Lock Flow - only for paid projects */}
+                  {isPaid && (
+                    <RoadmapLockFlow
+                      projectId={id!}
+                      project={project}
+                      goals={goals}
+                      contract={contract}
+                      collaborators={collaborators}
+                    />
+                  )}
                 </div>
               </div>
-              <RoadmapCalendarView goals={goals} projectId={id!} />
             </TabsContent>
 
             <TabsContent value="list" className="mt-4 space-y-6">
               <RoadmapListView goals={goals} projectId={id!} />
+            </TabsContent>
+
+            <TabsContent value="calendar" className="mt-4">
               <RoadmapCalendarView goals={goals} projectId={id!} />
             </TabsContent>
           </Tabs>
@@ -317,15 +365,11 @@ const ProjectDetailPage = () => {
           />
         </TabsContent>
 
-        {project.project_type !== "collaborative" && (
+        {isPaid && (
           <TabsContent value="budget">
             <ProjectBudget project={project} goals={goals} milestones={milestones} />
           </TabsContent>
         )}
-
-
-
-
 
         <TabsContent value="team">
           <Collaborators projectId={id!} isCollaborative={project.project_type === "collaborative"} />
