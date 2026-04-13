@@ -82,9 +82,10 @@ interface FlowCardProps {
   onShare: () => void;
   onDelete?: () => void;
   isOwner?: boolean;
+  isAdmin?: boolean;
 }
 
-const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner }: FlowCardProps) => {
+const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner, isAdmin }: FlowCardProps) => {
   const navigate = useNavigate();
   const [imageEnlarged, setImageEnlarged] = useState(false);
   const platform = detectPlatform(item.link_url);
@@ -323,14 +324,14 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
               <span className="text-[11px] font-medium">Send</span>
             </button>
 
-            {isOwner && onDelete && (
+            {(isOwner || isAdmin) && onDelete && (
               <button
                 onClick={(e) => { e.stopPropagation(); onDelete(); }}
                 className="flex items-center gap-1.5 text-muted-foreground hover:text-destructive transition-colors group"
-                title="Delete"
+                title={isAdmin && !isOwner ? "Remove (Admin)" : "Delete"}
               >
                 <Trash2 className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
-                <span className="text-[11px] font-medium">Delete</span>
+                <span className="text-[11px] font-medium">{isAdmin && !isOwner ? "Remove" : "Delete"}</span>
               </button>
             )}
 
