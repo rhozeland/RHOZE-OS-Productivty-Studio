@@ -2181,6 +2181,7 @@ export type Database = {
           review_count: number | null
           rules: string | null
           short_description: string | null
+          show_price: boolean
           state: string | null
           status: string
           updated_at: string
@@ -2210,6 +2211,7 @@ export type Database = {
           review_count?: number | null
           rules?: string | null
           short_description?: string | null
+          show_price?: boolean
           state?: string | null
           status?: string
           updated_at?: string
@@ -2239,6 +2241,7 @@ export type Database = {
           review_count?: number | null
           rules?: string | null
           short_description?: string | null
+          show_price?: boolean
           state?: string | null
           status?: string
           updated_at?: string

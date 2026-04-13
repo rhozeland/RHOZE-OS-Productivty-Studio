@@ -133,10 +133,12 @@ const StudiosPage = () => {
                   </div>
                 )}
                 {/* Price badge */}
-                <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-background/90 backdrop-blur-sm px-3 py-1.5 text-sm font-bold text-foreground shadow-sm">
-                  <DollarSign className="h-3.5 w-3.5" />
-                  {studio.hourly_rate}/hr
-                </div>
+                {(studio as any).show_price !== false && studio.hourly_rate > 0 && (
+                  <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-background/90 backdrop-blur-sm px-3 py-1.5 text-sm font-bold text-foreground shadow-sm">
+                    <DollarSign className="h-3.5 w-3.5" />
+                    {studio.hourly_rate}/hr
+                  </div>
+                )}
                 {/* Category badge */}
                 <div className="absolute top-3 left-3 rounded-full bg-background/90 backdrop-blur-sm px-3 py-1.5 text-xs font-medium text-foreground shadow-sm capitalize">
                   {studio.category}

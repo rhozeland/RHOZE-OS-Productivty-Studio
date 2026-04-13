@@ -334,24 +334,29 @@ const StudioDetailPage = () => {
             </div>
           )}
 
-          {/* Reviews */}
+          {/* Ratings */}
           {reviews && reviews.length > 0 && (
             <div>
-              <h2 className="font-display text-lg font-semibold text-foreground mb-3">Reviews</h2>
-              <div className="space-y-3">
-                {reviews.map((review) => (
-                  <div key={review.id} className="p-4 rounded-xl bg-muted/40 border border-border/50 space-y-2">
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-3.5 w-3.5 ${i < review.rating ? "text-warm fill-warm" : "text-muted-foreground/20"}`}
-                        />
-                      ))}
-                    </div>
-                    {review.comment && <p className="text-sm text-muted-foreground">{review.comment}</p>}
+              <h2 className="font-display text-lg font-semibold text-foreground mb-3">Ratings</h2>
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/40 border border-border/50">
+                <div className="text-center">
+                  <p className="font-display text-3xl font-bold text-foreground">
+                    {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
+                  </p>
+                  <div className="flex items-center gap-0.5 mt-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-3.5 w-3.5 ${
+                          i < Math.round(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length)
+                            ? "text-warm fill-warm"
+                            : "text-muted-foreground/20"
+                        }`}
+                      />
+                    ))}
                   </div>
-                ))}
+                  <p className="text-xs text-muted-foreground mt-1">{reviews.length} rating{reviews.length !== 1 ? "s" : ""}</p>
+                </div>
               </div>
             </div>
           )}
@@ -360,14 +365,23 @@ const StudioDetailPage = () => {
         {/* Right — booking card */}
         <div className="lg:col-span-1">
           <div className="sticky top-20 rounded-2xl bg-card border border-border p-6 shadow-lg space-y-4">
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-display text-3xl font-bold text-foreground">${studio.hourly_rate}</span>
-              <span className="text-muted-foreground text-sm">/ hour</span>
-            </div>
-            {studio.daily_rate && (
-              <p className="text-sm text-muted-foreground">
-                <DollarSign className="inline h-3.5 w-3.5" />{studio.daily_rate}/day rate available
-              </p>
+            {(studio as any).show_price !== false && studio.hourly_rate > 0 ? (
+              <>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="font-display text-3xl font-bold text-foreground">${studio.hourly_rate}</span>
+                  <span className="text-muted-foreground text-sm">/ hour</span>
+                </div>
+                {studio.daily_rate && (
+                  <p className="text-sm text-muted-foreground">
+                    <DollarSign className="inline h-3.5 w-3.5" />{studio.daily_rate}/day rate available
+                  </p>
+                )}
+              </>
+            ) : (
+              <div>
+                <p className="font-display text-lg font-bold text-foreground">Inquire for Pricing</p>
+                <p className="text-sm text-muted-foreground">Message the host for rates and availability</p>
+              </div>
             )}
 
             {user ? (

@@ -34,7 +34,6 @@ import StudioManagePage from "@/pages/StudioManagePage";
 import ExploreStudiosPage from "@/pages/ExploreStudiosPage";
 import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import OnboardingPage from "@/pages/OnboardingPage";
-import NetworkPage from "@/pages/NetworkPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -103,7 +102,7 @@ const App = () => (
               <Route path="/drop-rooms" element={<DropRoomsPage />} />
               <Route path="/drop-rooms/:id" element={<DropRoomDetailPage />} />
               <Route path="/messages" element={<MessagesPage />} />
-              <Route path="/network" element={<NetworkPage />} />
+              <Route path="/network" element={<Navigate to="/messages" replace />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/admin" element={<AdminPage />} />
             </Route>
