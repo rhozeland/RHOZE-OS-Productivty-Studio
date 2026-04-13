@@ -196,6 +196,7 @@ const AppLayout = () => {
           )}
         </CommandList>
       </CommandDialog>
+      <UsernamePrompt />
     </SidebarProvider>
   );
 };
