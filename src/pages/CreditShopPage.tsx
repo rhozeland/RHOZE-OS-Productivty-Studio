@@ -387,74 +387,8 @@ const CreditShopPage = () => {
           
         </TabsContent>
 
-        {/* ═══════ $RHOZE Tab ═══════ */}
-        <TabsContent value="rhoze" className="space-y-6 mt-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left — info */}
-            <div className="space-y-6">
-              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                <h2 className="font-display text-2xl font-bold text-foreground">$RHOZE Token</h2>
-                <p className="text-muted-foreground">
-                  $RHOZE is the native utility token for Rhozeland. Use it to pay for studio bookings at a discount,
-                  trade on the marketplace, and support creators directly on-chain.
-                </p>
 
-                <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contract Address</p>
-                  <code className="text-xs text-foreground bg-muted px-2 py-1 rounded font-mono break-all block">
-                    {RHOZE_CA}
-                  </code>
-                  <p className="text-xs text-muted-foreground">Solana · SPL Token</p>
-                </div>
 
-                <a href={PUMP_FUN_URL} target="_blank" rel="noopener noreferrer">
-                  <Button className="w-full h-12 text-base rounded-full gap-2">
-                    <ExternalLink className="h-4 w-4" /> Buy on Pump Fun
-                  </Button>
-                </a>
-              </motion.div>
-            </div>
-
-            {/* Right — embedded swap widget */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="rounded-2xl border border-border bg-card overflow-hidden"
-            >
-              <div className="p-4 border-b border-border">
-                <h3 className="font-display font-semibold text-foreground">Swap Widget</h3>
-                <p className="text-xs text-muted-foreground">Swap SOL → $RHOZE directly — powered by Jupiter</p>
-              </div>
-              <iframe
-                src={`https://jup.ag/swap/SOL-${RHOZE_CA}?embedded=true`}
-                className="w-full h-[500px] border-0"
-                title="Buy $RHOZE"
-                allow="clipboard-write; clipboard-read"
-              />
-            </motion.div>
-          </div>
-
-          {/* How it works */}
-          <div className="surface-card p-6">
-            <h3 className="font-display text-lg font-semibold text-foreground mb-4">How it works</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {[
-                { step: "1", title: "Connect Wallet", desc: "Connect your Phantom or Solflare wallet to get started." },
-                { step: "2", title: "Swap SOL → $RHOZE", desc: "Use Pump Fun or any Solana DEX to swap SOL for $RHOZE tokens." },
-                { step: "3", title: "Pay with Crypto", desc: "Use SOL or $RHOZE to pay for studio bookings and marketplace items at a discount." },
-              ].map((item) => (
-                <div key={item.step} className="flex gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm shrink-0">{item.step}</div>
-                  <div>
-                    <p className="font-medium text-foreground text-sm">{item.title}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </TabsContent>
 
         {/* ═══════ How It Works Tab ═══════ */}
         <TabsContent value="how" className="mt-4 space-y-8">
