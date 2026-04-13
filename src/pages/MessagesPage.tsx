@@ -414,7 +414,10 @@ const MessagesPage = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="messages" className="gap-1.5">
-            <MessageSquare className="h-3.5 w-3.5" /> All Messages
+            <MessageSquare className="h-3.5 w-3.5" /> DMs
+          </TabsTrigger>
+          <TabsTrigger value="circles" className="gap-1.5">
+            <Users className="h-3.5 w-3.5" /> Circles
           </TabsTrigger>
           <TabsTrigger value="inquiries" className="gap-1.5">
             <Inbox className="h-3.5 w-3.5" /> Inquiries
