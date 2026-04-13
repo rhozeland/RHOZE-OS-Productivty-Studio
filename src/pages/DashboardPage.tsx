@@ -26,6 +26,7 @@ import {
 import { Link } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import GuestDashboardPreview from "@/components/guest/GuestDashboardPreview";
 import { Switch } from "@/components/ui/switch";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, startOfWeek, endOfWeek } from "date-fns";
 
@@ -677,7 +678,9 @@ const DashboardPage = () => {
         </div>
       </motion.div>
 
-      {/* Stat grid — only for logged-in users */}
+      {/* Guest users see a platform overview instead of empty sections */}
+      {!user && <GuestDashboardPreview />}
+
       {user && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-[1px] bg-border mb-8 rounded-lg overflow-hidden">
           {[
@@ -772,10 +775,12 @@ const DashboardPage = () => {
         )}
       </AnimatePresence>
 
-      {/* Dynamic sections — 2-column grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {visibleSections.map((key) => sectionMap[key]?.())}
-      </div>
+      {/* Dynamic sections — 2-column grid (auth only) */}
+      {user && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {visibleSections.map((key) => sectionMap[key]?.())}
+        </div>
+      )}
     </div>
   );
 };
