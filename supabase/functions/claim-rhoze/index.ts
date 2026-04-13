@@ -6,15 +6,29 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const RHOZE_MINT_STR = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
-const NETWORK = "devnet";
+const RHOZE_MINT = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
+const RPC_URL = "https://api.devnet.solana.com";
 const RHOZE_DECIMALS = 6;
+
+// SPL Token Program & Associated Token Program IDs
+const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+const ATA_PROGRAM_ID = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
+const SYSTEM_PROGRAM_ID = "11111111111111111111111111111111";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+async function rpcCall(method: string, params: unknown[]) {
+  const res = await fetch(RPC_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+  });
+  return await res.json();
 }
 
 Deno.serve(async (req) => {
@@ -46,22 +60,7 @@ Deno.serve(async (req) => {
       return json({ error: "Missing wallet_address or credits_to_claim" }, 400);
     }
 
-    // Dynamic imports to avoid top-level init crash
-    const { Connection, Keypair, PublicKey, Transaction, clusterApiUrl } = await import(
-      "https://esm.sh/@solana/web3.js@1.98.4"
-    );
-    const {
-      getAssociatedTokenAddressSync,
-      createTransferInstruction,
-      createAssociatedTokenAccountInstruction,
-    } = await import("https://esm.sh/@solana/spl-token@0.4.9");
-
-    const RHOZE_MINT = new PublicKey(RHOZE_MINT_STR);
-
-    let recipientPubkey: InstanceType<typeof PublicKey>;
-    try {
-      recipientPubkey = new PublicKey(wallet_address);
-    } catch {
+    if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(wallet_address)) {
       return json({ error: "Invalid wallet address" }, 400);
     }
 
@@ -83,11 +82,22 @@ Deno.serve(async (req) => {
       }, 400);
     }
 
-    // Load airdrop wallet
+    // Load airdrop wallet - we need the SDK for signing transactions
+    // Use a lighter approach: build the transaction using the SDK dynamically
     const privateKeyStr = Deno.env.get("RHOZE_AIRDROP_PRIVATE_KEY");
     if (!privateKeyStr) {
       return json({ error: "Airdrop wallet not configured" }, 500);
     }
+
+    // Import only what we need, dynamically
+    const { Keypair, PublicKey, Transaction, Connection } = await import(
+      "https://esm.sh/@solana/web3.js@1.98.4?bundle"
+    );
+    const {
+      getAssociatedTokenAddressSync,
+      createTransferInstruction,
+      createAssociatedTokenAccountInstruction,
+    } = await import("https://esm.sh/@solana/spl-token@0.4.9?bundle");
 
     let airdropKeypair: InstanceType<typeof Keypair>;
     try {
@@ -98,32 +108,30 @@ Deno.serve(async (req) => {
       airdropKeypair = Keypair.fromSecretKey(bs58.decode(privateKeyStr));
     }
 
-    const connection = new Connection(clusterApiUrl(NETWORK));
-
-    // 1 credit = 1 $RHOZE token
+    const mintPubkey = new PublicKey(RHOZE_MINT);
+    const recipientPubkey = new PublicKey(wallet_address);
     const tokenAmount = BigInt(Math.floor(credits_to_claim * Math.pow(10, RHOZE_DECIMALS)));
 
-    const airdropATA = getAssociatedTokenAddressSync(RHOZE_MINT, airdropKeypair.publicKey);
-    const recipientATA = getAssociatedTokenAddressSync(RHOZE_MINT, recipientPubkey);
+    const airdropATA = getAssociatedTokenAddressSync(mintPubkey, airdropKeypair.publicKey);
+    const recipientATA = getAssociatedTokenAddressSync(mintPubkey, recipientPubkey);
 
-    // Check if recipient ATA exists
-    const recipientATAInfo = await connection.getAccountInfo(recipientATA);
+    // Check if recipient ATA exists via RPC (lighter than SDK method)
+    const ataCheck = await rpcCall("getAccountInfo", [recipientATA.toBase58(), { encoding: "base64" }]);
 
+    const connection = new Connection(RPC_URL);
     const transaction = new Transaction();
 
-    // Create ATA for recipient if needed (funded by airdrop wallet)
-    if (!recipientATAInfo) {
+    if (!ataCheck?.result?.value) {
       transaction.add(
         createAssociatedTokenAccountInstruction(
           airdropKeypair.publicKey,
           recipientATA,
           recipientPubkey,
-          RHOZE_MINT
+          mintPubkey
         )
       );
     }
 
-    // Transfer tokens
     transaction.add(
       createTransferInstruction(
         airdropATA,
