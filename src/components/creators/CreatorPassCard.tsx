@@ -275,9 +275,9 @@ const CreatorPassCard = () => {
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { tier: "Spark", hold: "0", benefits: ["3 Boards", "1 hr Drop Rooms"], active: effectiveTier === "spark", gradient: "linear-gradient(135deg, hsl(205 75% 65%), hsl(220 55% 42%))", glowColor: "hsl(210, 70%, 55%)" },
-            { tier: "Bloom", hold: "1M–24M", benefits: ["15 Boards", "4 hr Rooms", "5% studio discount"], active: effectiveTier === "bloom", gradient: "linear-gradient(135deg, hsl(330 65% 72%), hsl(345 55% 48%))", glowColor: "hsl(335, 60%, 65%)" },
-            { tier: "Glow", hold: "25M–49M", benefits: ["50 Boards", "12 hr Rooms", "10% discount", "Priority booking"], active: effectiveTier === "glow", gradient: "linear-gradient(135deg, hsl(30 90% 60%), hsl(20 80% 42%))", glowColor: "hsl(28, 85%, 55%)" },
+            { tier: "Spark", hold: "0+", benefits: ["3 Boards", "1 hr Drop Rooms"], active: effectiveTier === "spark", gradient: "linear-gradient(135deg, hsl(205 75% 65%), hsl(220 55% 42%))", glowColor: "hsl(210, 70%, 55%)" },
+            { tier: "Bloom", hold: "1M–24M+", benefits: ["15 Boards", "4 hr Rooms", "5% studio discount"], active: effectiveTier === "bloom", gradient: "linear-gradient(135deg, hsl(330 65% 72%), hsl(345 55% 48%))", glowColor: "hsl(335, 60%, 65%)" },
+            { tier: "Glow", hold: "25M–49M+", benefits: ["50 Boards", "12 hr Rooms", "10% discount", "Priority booking"], active: effectiveTier === "glow", gradient: "linear-gradient(135deg, hsl(30 90% 60%), hsl(20 80% 42%))", glowColor: "hsl(28, 85%, 55%)" },
             { tier: "Play", hold: "50M+", benefits: ["∞ Boards", "∞ Rooms", "15% discount", "Priority + all perks"], active: effectiveTier === "play", gradient: "linear-gradient(135deg, hsl(50 90% 58%), hsl(38 80% 40%))", glowColor: "hsl(45, 85%, 52%)" },
           ].map((t) => (
             <motion.div
@@ -296,7 +296,7 @@ const CreatorPassCard = () => {
                   <span className="text-sm font-display font-bold drop-shadow-sm">{t.tier}</span>
                   {t.active && <span className="text-[9px] bg-white/25 backdrop-blur-sm px-1.5 py-0.5 rounded-full font-bold">ACTIVE</span>}
                 </div>
-                <p className="text-[10px] opacity-80 font-body mt-0.5 relative z-10">Hold {t.hold}+</p>
+                <p className="text-[10px] opacity-80 font-body mt-0.5 relative z-10">Hold {t.hold}</p>
               </div>
               {/* Benefits body */}
               <div className="p-3 bg-card space-y-1">
