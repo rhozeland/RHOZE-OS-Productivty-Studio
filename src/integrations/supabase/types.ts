@@ -1005,6 +1005,9 @@ export type Database = {
         Row: {
           available: boolean | null
           avatar_url: string | null
+          ban_reason: string | null
+          ban_status: string
+          banned_at: string | null
           banner_gradient: string | null
           banner_url: string | null
           bio: string | null
@@ -1047,6 +1050,9 @@ export type Database = {
         Insert: {
           available?: boolean | null
           avatar_url?: string | null
+          ban_reason?: string | null
+          ban_status?: string
+          banned_at?: string | null
           banner_gradient?: string | null
           banner_url?: string | null
           bio?: string | null
@@ -1089,6 +1095,9 @@ export type Database = {
         Update: {
           available?: boolean | null
           avatar_url?: string | null
+          ban_reason?: string | null
+          ban_status?: string
+          banned_at?: string | null
           banner_gradient?: string | null
           banner_url?: string | null
           bio?: string | null
