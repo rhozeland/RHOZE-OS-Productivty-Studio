@@ -775,10 +775,12 @@ const DashboardPage = () => {
         )}
       </AnimatePresence>
 
-      {/* Dynamic sections — 2-column grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {visibleSections.map((key) => sectionMap[key]?.())}
-      </div>
+      {/* Dynamic sections — 2-column grid (auth only) */}
+      {user && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {visibleSections.map((key) => sectionMap[key]?.())}
+        </div>
+      )}
     </div>
   );
 };
