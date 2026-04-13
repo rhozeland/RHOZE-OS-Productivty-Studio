@@ -509,7 +509,7 @@ const MessagesPage = () => {
             {/* Chat Area */}
             <div className={cn("flex flex-1 flex-col", !selectedUser ? "hidden md:flex" : "flex")}>
               {!selectedUser ? (
-                <div className="flex flex-1 flex-col items-center justify-center text-muted-foreground">
+                <div className="flex flex-1 flex-col items-center justify-center text-center text-muted-foreground px-4">
                   <MessageSquare className="mb-4 h-12 w-12" />
                   <p className="text-lg font-medium">Select a conversation</p>
                   <p className="text-sm">Choose from your conversations or start a new one</p>
