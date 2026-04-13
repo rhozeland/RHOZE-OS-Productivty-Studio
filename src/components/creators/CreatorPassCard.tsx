@@ -31,9 +31,9 @@ const TIER_GRADIENTS: Record<string, string> = {
 
 /** Token thresholds that unlock tiers without paying monthly */
 const TOKEN_TIER_MAP = [
-  { tier: "play", min: 2_000_000 },
-  { tier: "glow", min: 750_000 },
-  { tier: "bloom", min: 100_000 },
+  { tier: "play", min: 50_000_000 },
+  { tier: "glow", min: 25_000_000 },
+  { tier: "bloom", min: 1_000_000 },
   { tier: "spark", min: 0 },
 ];
 
@@ -224,7 +224,7 @@ const CreatorPassCard = () => {
                 </p>
               )}
               <div className="text-[10px] text-muted-foreground font-body space-y-0.5">
-                <p>100K → Bloom • 750K → Glow • 2M → Play</p>
+                <p>1M–24M → Bloom • 25M–49M → Glow • 50M+ → Play</p>
               </div>
             </>
           ) : (
@@ -276,9 +276,9 @@ const CreatorPassCard = () => {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { tier: "Spark", hold: "0", benefits: ["3 Boards", "1 hr Drop Rooms"], active: effectiveTier === "spark", gradient: "linear-gradient(135deg, hsl(205 75% 65%), hsl(220 55% 42%))", glowColor: "hsl(210, 70%, 55%)" },
-            { tier: "Bloom", hold: "100K", benefits: ["15 Boards", "4 hr Rooms", "5% studio discount"], active: effectiveTier === "bloom", gradient: "linear-gradient(135deg, hsl(330 65% 72%), hsl(345 55% 48%))", glowColor: "hsl(335, 60%, 65%)" },
-            { tier: "Glow", hold: "750K", benefits: ["50 Boards", "12 hr Rooms", "10% discount", "Priority booking"], active: effectiveTier === "glow", gradient: "linear-gradient(135deg, hsl(30 90% 60%), hsl(20 80% 42%))", glowColor: "hsl(28, 85%, 55%)" },
-            { tier: "Play", hold: "2M", benefits: ["∞ Boards", "∞ Rooms", "15% discount", "Priority + all perks"], active: effectiveTier === "play", gradient: "linear-gradient(135deg, hsl(50 90% 58%), hsl(38 80% 40%))", glowColor: "hsl(45, 85%, 52%)" },
+            { tier: "Bloom", hold: "1M–24M", benefits: ["15 Boards", "4 hr Rooms", "5% studio discount"], active: effectiveTier === "bloom", gradient: "linear-gradient(135deg, hsl(330 65% 72%), hsl(345 55% 48%))", glowColor: "hsl(335, 60%, 65%)" },
+            { tier: "Glow", hold: "25M–49M", benefits: ["50 Boards", "12 hr Rooms", "10% discount", "Priority booking"], active: effectiveTier === "glow", gradient: "linear-gradient(135deg, hsl(30 90% 60%), hsl(20 80% 42%))", glowColor: "hsl(28, 85%, 55%)" },
+            { tier: "Play", hold: "50M+", benefits: ["∞ Boards", "∞ Rooms", "15% discount", "Priority + all perks"], active: effectiveTier === "play", gradient: "linear-gradient(135deg, hsl(50 90% 58%), hsl(38 80% 40%))", glowColor: "hsl(45, 85%, 52%)" },
           ].map((t) => (
             <motion.div
               key={t.tier}
