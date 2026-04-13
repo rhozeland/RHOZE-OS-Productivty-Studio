@@ -209,11 +209,10 @@ const RewardsDashboard = () => {
               </p>
               <div className="flex items-center gap-2">
                 <span className={`text-xs font-body font-semibold px-2 py-0.5 rounded-full ${
-                  tokenInfo.tier === "diamond" ? "bg-primary/20 text-primary" :
-                  tokenInfo.tier === "gold" ? "bg-yellow-500/20 text-yellow-500" :
-                  tokenInfo.tier === "silver" ? "bg-gray-400/20 text-gray-400" :
-                  tokenInfo.tier === "bronze" ? "bg-orange-500/20 text-orange-500" :
-                  tokenInfo.tier === "holder" ? "bg-accent/20 text-accent" :
+                  tokenInfo.tier === "play" ? "bg-primary/20 text-primary" :
+                  tokenInfo.tier === "glow" ? "bg-yellow-500/20 text-yellow-500" :
+                  tokenInfo.tier === "bloom" ? "bg-pink-500/20 text-pink-500" :
+                  tokenInfo.tier === "spark" ? "bg-accent/20 text-accent" :
                   "bg-muted text-muted-foreground"
                 }`}>
                   {tokenInfo.tier.charAt(0).toUpperCase() + tokenInfo.tier.slice(1)} Holder
