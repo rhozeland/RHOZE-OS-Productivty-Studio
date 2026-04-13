@@ -311,9 +311,18 @@ const DashboardPage = () => {
         </Link>
       </div>
       {projects?.length === 0 ? (
-        <div className="card-dashed p-10 text-center">
-          <FolderKanban className="h-8 w-8 mx-auto text-muted-foreground/30 mb-3" />
-          <p className="text-sm text-muted-foreground font-body mb-4">No projects yet</p>
+        <div className="border border-dashed border-primary/20 rounded-lg p-6 bg-primary/[0.02]">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <FolderKanban className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground font-body mb-1">Manage creative work</p>
+              <p className="text-xs text-muted-foreground font-body leading-relaxed">
+                Projects let you track milestones, set budgets, and collaborate with your team. Each completed milestone earns $RHOZE credits.
+              </p>
+            </div>
+          </div>
           <Link to="/projects" className="btn-editorial text-xs">Start a Project <ArrowRight className="h-3 w-3" /></Link>
         </div>
       ) : (
@@ -380,9 +389,18 @@ const DashboardPage = () => {
           </div>
         </div>
       ) : events?.length === 0 ? (
-        <div className="card-dashed p-10 text-center">
-          <Calendar className="h-8 w-8 mx-auto text-muted-foreground/30 mb-3" />
-          <p className="text-sm text-muted-foreground font-body mb-4">No events scheduled</p>
+        <div className="border border-dashed border-primary/20 rounded-lg p-6 bg-primary/[0.02]">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Calendar className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground font-body mb-1">Book studio time & schedule sessions</p>
+              <p className="text-xs text-muted-foreground font-body leading-relaxed">
+                Use credits to book studios, schedule sessions with collaborators, and manage your creative calendar all in one place.
+              </p>
+            </div>
+          </div>
           <Link to="/calendar" className="btn-editorial text-xs">Create Event <ArrowRight className="h-3 w-3" /></Link>
         </div>
       ) : (
@@ -419,9 +437,18 @@ const DashboardPage = () => {
           </Link>
         </div>
         {!hubListings || hubListings.length === 0 ? (
-          <div className="card-dashed p-10 text-center">
-            <Flame className="h-8 w-8 mx-auto text-muted-foreground/30 mb-3" />
-            <p className="text-sm text-muted-foreground font-body mb-4">No listings in the hub yet</p>
+          <div className="border border-dashed border-primary/20 rounded-lg p-6 bg-primary/[0.02]">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Flame className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground font-body mb-1">Discover & earn in the Hub</p>
+                <p className="text-xs text-muted-foreground font-body leading-relaxed">
+                  The Creators Hub is where you post services, find talent, and browse listings. Every interaction — posting, reviewing, curating — earns $RHOZE.
+                </p>
+              </div>
+            </div>
             <Link to="/creators" className="btn-editorial text-xs">Visit Hub <ArrowRight className="h-3 w-3" /></Link>
           </div>
         ) : (
@@ -529,9 +556,18 @@ const DashboardPage = () => {
         </Link>
       </div>
       {!recentMessages || recentMessages.length === 0 ? (
-        <div className="card-dashed p-10 text-center">
-          <MessageSquare className="h-8 w-8 mx-auto text-muted-foreground/30 mb-3" />
-          <p className="text-sm text-muted-foreground font-body mb-4">No unread messages</p>
+        <div className="border border-dashed border-primary/20 rounded-lg p-6 bg-primary/[0.02]">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <MessageSquare className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground font-body mb-1">Connect with creators</p>
+              <p className="text-xs text-muted-foreground font-body leading-relaxed">
+                Message collaborators, send quotes, and manage inquiries. Use the Network tab to discover new connections.
+              </p>
+            </div>
+          </div>
           <Link to="/messages" className="btn-editorial text-xs">Open Inbox <ArrowRight className="h-3 w-3" /></Link>
         </div>
       ) : (

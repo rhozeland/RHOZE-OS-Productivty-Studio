@@ -22,6 +22,7 @@ import {
   User,
   Save,
   GripVertical,
+  Users,
 } from "lucide-react";
 
 const ALL_DOCK_OPTIONS = [
@@ -39,6 +40,7 @@ const ALL_DOCK_OPTIONS = [
   { id: "profile", icon: User, label: "Profile", path: "/profiles" },
   { id: "settings", icon: Settings, label: "Settings", path: "/settings" },
   { id: "services", icon: Store, label: "Services", path: "/services" },
+  { id: "network", icon: Users, label: "Network", path: "/network" },
 ];
 
 export const DEFAULT_DOCK_IDS = ["dashboard", "studios", "projects", "hub", "messages"];
