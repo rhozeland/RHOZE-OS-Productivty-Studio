@@ -233,7 +233,7 @@ const ProfileDetailPage = () => {
     );
   }
 
-  const initials = (profile.display_name || "?").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+  const initials = (profile.display_name || (profile as any).username || "?").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
   const profileBg = (profile as any).profile_background;
   const bannerGradient = (profile as any).banner_gradient || "linear-gradient(135deg, hsl(220,15%,40%), hsl(220,10%,55%), hsl(175,30%,65%))";
   const bannerImageUrl = (profile as any).banner_url;
@@ -537,7 +537,7 @@ const ProfileDetailPage = () => {
             <div className="mt-3">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground tracking-tight break-words">
-                  {profile.display_name || "Creator"}
+                  {profile.display_name || (profile as any).username || "Creator"}
                 </h1>
                 {profile.available && (
                   <Badge variant="secondary" className="text-[10px] gap-1 font-medium">
@@ -551,8 +551,16 @@ const ProfileDetailPage = () => {
                   </Badge>
                 )}
               </div>
+              {(profile as any).username && (
+                <p className="text-xs text-muted-foreground mt-0.5">@{(profile as any).username}</p>
+              )}
               {(profile as any).headline && <p className="text-sm text-muted-foreground mt-0.5">{(profile as any).headline}</p>}
               {(profile as any).location && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><MapPin className="h-3 w-3" /> {(profile as any).location}</p>}
+              {(profile as any).wallet_address && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1 font-mono">
+                  💳 {(profile as any).wallet_address.slice(0, 4)}...{(profile as any).wallet_address.slice(-4)}
+                </p>
+              )}
               {!isOwnProfile && user && (
                 <div className="flex gap-2 mt-3 flex-wrap">
                   <Button variant={isFollowing ? "outline" : "default"} size="sm" onClick={() => followMutation.mutate()} disabled={followMutation.isPending}>

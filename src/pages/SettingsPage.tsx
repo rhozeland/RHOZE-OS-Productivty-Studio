@@ -77,6 +77,7 @@ const SettingsPage = () => {
 
   // Profile fields
   const [displayName, setDisplayName] = useState("");
+  const [username, setUsername] = useState("");
   const [headline, setHeadline] = useState("");
   const [bio, setBio] = useState("");
   const [portfolioUrl, setPortfolioUrl] = useState("");
@@ -140,6 +141,7 @@ const SettingsPage = () => {
     if (profile && !initialized) {
       const p = profile as any;
       setDisplayName(p.display_name ?? "");
+      setUsername(p.username ?? "");
       setHeadline(p.headline ?? "");
       setBio(p.bio ?? "");
       setPortfolioUrl(p.portfolio_url ?? "");
@@ -237,6 +239,7 @@ const SettingsPage = () => {
         .from("profiles")
         .update({
           display_name: displayName,
+          username: username.toLowerCase() || null,
           headline,
           bio,
           portfolio_url: portfolioUrl || null,
@@ -617,9 +620,17 @@ const SettingsPage = () => {
               <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Headline</Label>
-              <Input value={headline} onChange={(e) => setHeadline(e.target.value)} placeholder="e.g. Music Producer & Visual Artist" />
+              <Label>Username</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
+                <Input value={username} onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))} placeholder="your_username" className="pl-8" maxLength={20} />
+              </div>
+              <p className="text-[10px] text-muted-foreground">3-20 characters, letters, numbers, underscores</p>
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Headline</Label>
+            <Input value={headline} onChange={(e) => setHeadline(e.target.value)} placeholder="e.g. Music Producer & Visual Artist" />
           </div>
           <div className="space-y-2">
             <Label>Bio</Label>
