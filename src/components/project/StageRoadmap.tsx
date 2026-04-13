@@ -439,7 +439,7 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
                 "surface-card overflow-hidden border-l-4",
                 isComplete
                   ? "border-l-green-500"
-                  : priorityColors[stage.priority] || priorityColors.medium
+                  : STAGE_COLORS[i % STAGE_COLORS.length]
               )}
             >
               {/* Stage Header */}
