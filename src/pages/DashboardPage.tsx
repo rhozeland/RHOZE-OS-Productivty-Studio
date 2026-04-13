@@ -99,6 +99,7 @@ const DashboardPage = () => {
 
   const saveLayout = useMutation({
     mutationFn: async (newLayout: DashboardLayout) => {
+      if (!user) return;
       await supabase
         .from("profiles")
         .update({ dashboard_layout: newLayout } as any)
@@ -108,6 +109,7 @@ const DashboardPage = () => {
   });
 
   const persistLayout = (order: string[], hidden: string[], cal: boolean) => {
+    if (!user) return;
     saveLayout.mutate({ sections: order, hiddenSections: hidden, showCalendar: cal });
   };
 
@@ -262,7 +264,7 @@ const DashboardPage = () => {
   const completedTasks = tasks?.filter((t) => t.completed).length ?? 0;
   const totalTasks = tasks?.length ?? 0;
   const activeProjects = projects?.filter((p) => p.status === "active").length ?? 0;
-  const firstName = profile?.display_name?.split(" ")[0] || user?.email?.split("@")[0] || "";
+  const firstName = profile?.display_name?.split(" ")[0] || (user ? user.email?.split("@")[0] : "") || "";
 
   const getProjectProgress = (projectId: string) => {
     const projectTasks = tasks?.filter((t) => t.project_id === projectId) ?? [];
