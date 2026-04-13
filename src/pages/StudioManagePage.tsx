@@ -95,6 +95,7 @@ const StudioManagePage = () => {
     city: form.city ?? studio?.city ?? "",
     state: form.state ?? studio?.state ?? "",
     address: form.address ?? studio?.address ?? "",
+    show_price: form.show_price ?? (studio as any)?.show_price ?? true,
   };
 
   const updateStudio = useMutation({
@@ -112,9 +113,10 @@ const StudioManagePage = () => {
           amenities: studioForm.amenities,
           equipment: studioForm.equipment,
           city: studioForm.city || null,
-          state: studioForm.state || null,
-          address: studioForm.address || null,
-        })
+           state: studioForm.state || null,
+           address: studioForm.address || null,
+           show_price: studioForm.show_price,
+         } as any)
         .eq("id", id!)
         .eq("owner_id", user!.id);
       if (error) throw error;
@@ -375,6 +377,19 @@ const StudioManagePage = () => {
                 <Label>Max Guests</Label>
                 <Input type="number" value={studioForm.max_guests} onChange={(e) => updateField("max_guests", e.target.value)} />
               </div>
+            </div>
+
+            <div className="flex items-center gap-3 py-2">
+              <input
+                type="checkbox"
+                id="show-price"
+                checked={studioForm.show_price}
+                onChange={(e) => updateField("show_price", e.target.checked)}
+                className="h-4 w-4 rounded border-border"
+              />
+              <label htmlFor="show-price" className="text-sm text-foreground cursor-pointer">
+                Show pricing publicly on studio listing
+              </label>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
