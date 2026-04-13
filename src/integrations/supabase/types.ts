@@ -998,6 +998,8 @@ export type Database = {
           twitter_url: string | null
           updated_at: string
           user_id: string
+          username: string | null
+          wallet_address: string | null
           youtube_url: string | null
         }
         Insert: {
@@ -1038,6 +1040,8 @@ export type Database = {
           twitter_url?: string | null
           updated_at?: string
           user_id: string
+          username?: string | null
+          wallet_address?: string | null
           youtube_url?: string | null
         }
         Update: {
@@ -1078,6 +1082,8 @@ export type Database = {
           twitter_url?: string | null
           updated_at?: string
           user_id?: string
+          username?: string | null
+          wallet_address?: string | null
           youtube_url?: string | null
         }
         Relationships: []
@@ -2539,6 +2545,10 @@ export type Database = {
         Args: { _amount: number; _description: string; _user_id: string }
         Returns: undefined
       }
+      check_username_available: {
+        Args: { _username: string }
+        Returns: boolean
+      }
       cleanup_old_notifications: { Args: never; Returns: undefined }
       convert_inquiry_to_project: {
         Args: {
@@ -2592,6 +2602,8 @@ export type Database = {
           twitter_url: string
           updated_at: string
           user_id: string
+          username: string
+          wallet_address: string
           youtube_url: string
         }[]
       }

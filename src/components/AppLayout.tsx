@@ -6,6 +6,7 @@ import DockBar from "@/components/DockBar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import WalletButton from "@/components/WalletButton";
 import NotificationBell from "@/components/NotificationBell";
+import UsernamePrompt from "@/components/UsernamePrompt";
 import { Input } from "@/components/ui/input";
 import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -195,6 +196,7 @@ const AppLayout = () => {
           )}
         </CommandList>
       </CommandDialog>
+      <UsernamePrompt />
     </SidebarProvider>
   );
 };
