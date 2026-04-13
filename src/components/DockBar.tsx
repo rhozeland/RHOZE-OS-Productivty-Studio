@@ -15,6 +15,7 @@ import {
   User,
   Settings,
   Store,
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -36,6 +37,7 @@ const ICON_MAP: Record<string, any> = {
   profile: User,
   settings: Settings,
   services: Store,
+  network: Users,
 };
 
 const LABEL_MAP: Record<string, string> = {
@@ -53,6 +55,7 @@ const LABEL_MAP: Record<string, string> = {
   profile: "Profile",
   settings: "Settings",
   services: "Services",
+  network: "Network",
 };
 
 const PATH_MAP: Record<string, string> = {
@@ -70,6 +73,7 @@ const PATH_MAP: Record<string, string> = {
   profile: "/profiles",
   settings: "/settings",
   services: "/services",
+  network: "/network",
 };
 
 const DockBar = () => {
