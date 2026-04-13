@@ -156,10 +156,14 @@ const TIERS = [
 const CreditShopPage = () => {
   const { user } = useAuth();
 
-  // Guest preview
   if (!user) {
     return <GuestCreditsPreview />;
   }
+
+  return <AuthenticatedCreditShopPage user={user} />;
+};
+
+const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<typeof useAuth>["user"]> }) => {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [subPaymentOpen, setSubPaymentOpen] = useState(false);
