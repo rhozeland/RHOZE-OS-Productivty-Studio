@@ -54,10 +54,14 @@ type Message = {
 const MessagesPage = () => {
   const { user } = useAuth();
 
-  // Guest preview — avoid broken queries
   if (!user) {
     return <GuestMessagesPreview />;
   }
+
+  return <AuthenticatedMessagesPage user={user} />;
+};
+
+const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<typeof useAuth>["user"]> }) => {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
