@@ -1,26 +1,16 @@
 
 
-## Plan: Add Visual Fee Breakdown to Revenue Sharing Deep-Dive Card
+## Shorter Tech Stack Answer
 
-### What
-Add a horizontal bar chart and percentage breakdown inside the existing "Revenue Sharing" deep-dive pillar card, visually showing the split between creator earnings, curator share, and buyback pool.
+Here's a condensed version that fits within the 1000-character limit:
 
-### Where
-`src/pages/CreditShopPage.tsx` — Extend the Revenue Sharing pillar card (around line 488-498) to include a visual breakdown below the existing bullet points.
+---
 
-### Design
+**Technologies:**
 
-After the existing `<ul>` of bullet points, add:
+React 18, TypeScript, and Vite frontend with Tailwind CSS. Supabase for auth, Postgres database, edge functions, and file storage. Solana Web3.js for all on-chain interactions — $RHOZE SPL token transfers, memo-based Proof-of-Contribution anchoring, and escrow lock/release/refund flows (devnet). Square SDK for fiat payments. LiveKit for real-time video in Drop Rooms. Server-side edge functions handle token distribution, revenue splitting, and booking confirmations. Wallet adapter integration for Phantom/Solflare connectivity.
 
-1. **Horizontal stacked bar** — A single rounded bar split into three colored segments:
-   - Creator (75%) — green
-   - Curator (15%) — blue  
-   - Buyback Pool (10%) — amber/gold
+---
 
-2. **Legend row** — Three labeled items below the bar showing icon, label, percentage, and a one-line description.
-
-Uses the same `motion.div` animation pattern and existing color/spacing conventions. No new dependencies.
-
-### Files Changed
-- `src/pages/CreditShopPage.tsx` — Add ~30 lines of JSX inside the Revenue Sharing pillar card, after the bullet list.
+That's ~520 characters — well within the limit while covering every major integration.
 
