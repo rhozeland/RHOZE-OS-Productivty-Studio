@@ -21,6 +21,7 @@ import ListingCard from "@/components/marketplace/ListingCard";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import CategoryTiles from "@/components/creators/CategoryTiles";
 import Leaderboard from "@/components/creators/Leaderboard";
+import CreatorJourney from "@/components/creators/CreatorJourney";
 import FlowFeed from "@/components/creators/FlowFeed";
 import RewardsDashboard from "@/components/creators/RewardsDashboard";
 import { formatDistanceToNow, isPast } from "date-fns";
@@ -239,6 +240,9 @@ const CreatorsHubPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Creator Journey */}
+      <CreatorJourney />
 
       {/* Leaderboard */}
       <Leaderboard />
