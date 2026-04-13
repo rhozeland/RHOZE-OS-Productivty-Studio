@@ -2716,6 +2716,10 @@ export type Database = {
         Args: { _amount: number; _description: string; _user_id: string }
         Returns: undefined
       }
+      can_read_smartboard_file: {
+        Args: { _file_path: string; _user_id: string }
+        Returns: boolean
+      }
       check_username_available: {
         Args: { _username: string }
         Returns: boolean
