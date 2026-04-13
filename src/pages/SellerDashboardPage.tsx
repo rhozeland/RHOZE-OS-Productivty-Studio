@@ -4,33 +4,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  DollarSign,
-  TrendingUp,
-  ShoppingBag,
-  Inbox,
-  Star,
-  Package,
-  ArrowUpRight,
-  BarChart3,
+  DollarSign, TrendingUp, ShoppingBag, Inbox, Star, Package, ArrowUpRight, BarChart3,
 } from "lucide-react";
 import WithdrawalPanel from "@/components/seller/WithdrawalPanel";
 import { format, subDays, startOfMonth } from "date-fns";
 import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar,
 } from "recharts";
+
+const fmt = (v: number) => `$${v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const SellerDashboardPage = () => {
   const { user } = useAuth();
 
-  // Total earnings (credits received from sales)
   const { data: earnings } = useQuery({
     queryKey: ["seller-earnings", user?.id],
     queryFn: async () => {
@@ -44,7 +30,6 @@ const SellerDashboardPage = () => {
     enabled: !!user,
   });
 
-  // Purchases (sales to this seller)
   const { data: sales } = useQuery({
     queryKey: ["seller-sales", user?.id],
     queryFn: async () => {
@@ -58,7 +43,6 @@ const SellerDashboardPage = () => {
     enabled: !!user,
   });
 
-  // Listings
   const { data: listings } = useQuery({
     queryKey: ["seller-listings", user?.id],
     queryFn: async () => {
@@ -71,7 +55,6 @@ const SellerDashboardPage = () => {
     enabled: !!user,
   });
 
-  // Inquiries received
   const { data: inquiries } = useQuery({
     queryKey: ["seller-inquiries", user?.id],
     queryFn: async () => {
@@ -84,7 +67,6 @@ const SellerDashboardPage = () => {
     enabled: !!user,
   });
 
-  // Reviews on seller's listings
   const { data: reviews } = useQuery({
     queryKey: ["seller-reviews", user?.id],
     queryFn: async () => {
@@ -97,7 +79,6 @@ const SellerDashboardPage = () => {
     enabled: !!user,
   });
 
-  // Contracts
   const { data: contracts } = useQuery({
     queryKey: ["seller-contracts", user?.id],
     queryFn: async () => {
@@ -110,7 +91,6 @@ const SellerDashboardPage = () => {
     enabled: !!user,
   });
 
-  // Compute stats
   const totalEarnings = (earnings || []).reduce((s, e) => s + Number(e.amount), 0);
   const totalSales = (sales || []).length;
   const activeListings = (listings || []).filter((l) => l.is_active).length;
@@ -123,7 +103,6 @@ const SellerDashboardPage = () => {
   const activeContracts = (contracts || []).filter((c) => c.status === "active").length;
   const escrowedTotal = (contracts || []).reduce((s, c) => s + Number(c.escrowed_credits), 0);
 
-  // Earnings over time (last 30 days)
   const earningsChart = (() => {
     const days: Record<string, number> = {};
     for (let i = 29; i >= 0; i--) {
@@ -137,7 +116,6 @@ const SellerDashboardPage = () => {
     return Object.entries(days).map(([date, amount]) => ({ date, amount }));
   })();
 
-  // Sales by listing
   const salesByListing = (() => {
     const map: Record<string, { title: string; count: number; revenue: number }> = {};
     (sales || []).forEach((s) => {
@@ -149,60 +127,21 @@ const SellerDashboardPage = () => {
       map[lid].count++;
       map[lid].revenue += Number(s.credits_paid);
     });
-    return Object.values(map)
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 6);
+    return Object.values(map).sort((a, b) => b.revenue - a.revenue).slice(0, 6);
   })();
 
-  // Monthly earnings
   const monthStart = startOfMonth(new Date());
   const monthlyEarnings = (earnings || [])
     .filter((e) => new Date(e.created_at) >= monthStart)
     .reduce((s, e) => s + Number(e.amount), 0);
 
   const statCards = [
-    {
-      label: "Total Earnings",
-      value: `${totalEarnings} credits`,
-      icon: DollarSign,
-      accent: "text-emerald-500",
-      bg: "bg-emerald-500/10",
-    },
-    {
-      label: "This Month",
-      value: `${monthlyEarnings} credits`,
-      icon: TrendingUp,
-      accent: "text-primary",
-      bg: "bg-primary/10",
-    },
-    {
-      label: "Total Sales",
-      value: totalSales,
-      icon: ShoppingBag,
-      accent: "text-blue-500",
-      bg: "bg-blue-500/10",
-    },
-    {
-      label: "Active Listings",
-      value: activeListings,
-      icon: Package,
-      accent: "text-violet-500",
-      bg: "bg-violet-500/10",
-    },
-    {
-      label: "Avg Rating",
-      value: avgRating > 0 ? avgRating.toFixed(1) + " ★" : "—",
-      icon: Star,
-      accent: "text-amber-500",
-      bg: "bg-amber-500/10",
-    },
-    {
-      label: "Pending Inquiries",
-      value: pendingInquiries,
-      icon: Inbox,
-      accent: "text-orange-500",
-      bg: "bg-orange-500/10",
-    },
+    { label: "Total Earnings", value: fmt(totalEarnings), icon: DollarSign, accent: "text-emerald-500", bg: "bg-emerald-500/10" },
+    { label: "This Month", value: fmt(monthlyEarnings), icon: TrendingUp, accent: "text-primary", bg: "bg-primary/10" },
+    { label: "Total Sales", value: totalSales, icon: ShoppingBag, accent: "text-blue-500", bg: "bg-blue-500/10" },
+    { label: "Active Listings", value: activeListings, icon: Package, accent: "text-violet-500", bg: "bg-violet-500/10" },
+    { label: "Avg Rating", value: avgRating > 0 ? avgRating.toFixed(1) + " ★" : "—", icon: Star, accent: "text-amber-500", bg: "bg-amber-500/10" },
+    { label: "Pending Inquiries", value: pendingInquiries, icon: Inbox, accent: "text-orange-500", bg: "bg-orange-500/10" },
   ];
 
   return (
@@ -217,7 +156,6 @@ const SellerDashboardPage = () => {
         </p>
       </div>
 
-      {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {statCards.map((s) => (
           <Card key={s.label} className="relative overflow-hidden">
@@ -232,9 +170,7 @@ const SellerDashboardPage = () => {
         ))}
       </div>
 
-      {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Earnings over time */}
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Earnings — Last 30 Days</CardTitle>
@@ -250,35 +186,19 @@ const SellerDashboardPage = () => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 10 }}
-                    className="text-muted-foreground"
-                    interval="preserveStartEnd"
-                  />
-                  <YAxis tick={{ fontSize: 10 }} className="text-muted-foreground" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} className="text-muted-foreground" interval="preserveStartEnd" />
+                  <YAxis tick={{ fontSize: 10 }} className="text-muted-foreground" tickFormatter={(v) => `$${v}`} />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                    }}
+                    formatter={(v: number) => [fmt(v), "Earnings"]}
+                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
                   />
-                  <Area
-                    type="monotone"
-                    dataKey="amount"
-                    stroke="hsl(var(--primary))"
-                    fill="url(#earnGrad)"
-                    strokeWidth={2}
-                  />
+                  <Area type="monotone" dataKey="amount" stroke="hsl(var(--primary))" fill="url(#earnGrad)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        {/* Top listings by revenue */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Top Listings</CardTitle>
@@ -291,21 +211,11 @@ const SellerDashboardPage = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={salesByListing} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis type="number" tick={{ fontSize: 10 }} />
-                    <YAxis
-                      dataKey="title"
-                      type="category"
-                      width={100}
-                      tick={{ fontSize: 10 }}
-                      className="text-muted-foreground"
-                    />
+                    <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(v) => `$${v}`} />
+                    <YAxis dataKey="title" type="category" width={100} tick={{ fontSize: 10 }} className="text-muted-foreground" />
                     <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                      }}
+                      formatter={(v: number) => [fmt(v), "Revenue"]}
+                      contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
                     />
                     <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                   </BarChart>
@@ -316,16 +226,12 @@ const SellerDashboardPage = () => {
         </Card>
       </div>
 
-      {/* Bottom row: Inquiries + Contracts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Inquiry breakdown */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center justify-between">
               Inquiry Stats
-              <Badge variant="outline" className="font-normal text-xs">
-                {totalInquiries} total
-              </Badge>
+              <Badge variant="outline" className="font-normal text-xs">{totalInquiries} total</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -344,10 +250,7 @@ const SellerDashboardPage = () => {
                       <span className="font-medium">{count}</span>
                     </div>
                     <div className="h-2 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${row.color} transition-all`}
-                        style={{ width: `${pct}%` }}
-                      />
+                      <div className={`h-full rounded-full ${row.color} transition-all`} style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 );
@@ -356,33 +259,26 @@ const SellerDashboardPage = () => {
           </CardContent>
         </Card>
 
-        {/* Active contracts */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center justify-between">
               Contracts
-              <Badge variant="outline" className="font-normal text-xs">
-                {activeContracts} active
-              </Badge>
+              <Badge variant="outline" className="font-normal text-xs">{activeContracts} active</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">In Escrow</span>
-                <span className="text-lg font-bold">{escrowedTotal} credits</span>
+                <span className="text-lg font-bold">{fmt(escrowedTotal)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Total Released</span>
-                <span className="text-lg font-bold">
-                  {(contracts || []).reduce((s, c) => s + Number(c.released_credits), 0)} credits
-                </span>
+                <span className="text-lg font-bold">{fmt((contracts || []).reduce((s, c) => s + Number(c.released_credits), 0))}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Total Contract Value</span>
-                <span className="text-lg font-bold">
-                  {(contracts || []).reduce((s, c) => s + Number(c.total_credits), 0)} credits
-                </span>
+                <span className="text-lg font-bold">{fmt((contracts || []).reduce((s, c) => s + Number(c.total_credits), 0))}</span>
               </div>
               {(contracts || []).length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-4">No contracts yet</p>
@@ -392,10 +288,8 @@ const SellerDashboardPage = () => {
         </Card>
       </div>
 
-      {/* Wallet & Withdrawals */}
       <WithdrawalPanel />
 
-      {/* Recent sales */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
@@ -405,9 +299,7 @@ const SellerDashboardPage = () => {
         </CardHeader>
         <CardContent>
           {(sales || []).length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              No sales yet — your first sale will show up here!
-            </p>
+            <p className="text-sm text-muted-foreground text-center py-8">No sales yet — your first sale will show up here!</p>
           ) : (
             <div className="divide-y divide-border">
               {(sales || []).slice(0, 10).map((sale) => {
@@ -416,13 +308,9 @@ const SellerDashboardPage = () => {
                   <div key={sale.id} className="flex items-center justify-between py-3">
                     <div>
                       <p className="text-sm font-medium">{listing?.title || "Unknown listing"}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(sale.created_at), "MMM d, yyyy · h:mm a")}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{format(new Date(sale.created_at), "MMM d, yyyy · h:mm a")}</p>
                     </div>
-                    <Badge variant="secondary" className="font-mono">
-                      +{sale.credits_paid} credits
-                    </Badge>
+                    <Badge variant="secondary" className="font-mono">+{fmt(Number(sale.credits_paid))}</Badge>
                   </div>
                 );
               })}

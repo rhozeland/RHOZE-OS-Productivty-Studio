@@ -12,10 +12,12 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle2, Loader2, ArrowDownToLine } from "lucide-react";
+import { CheckCircle2, Loader2, ArrowDownToLine, User, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+
+const fmt = (v: number) => `$${v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-500/10 text-amber-600 border-amber-500/20",
@@ -44,7 +46,6 @@ const AdminWithdrawals = () => {
     },
   });
 
-  // Fetch profiles for display names
   const userIds = [...new Set((requests ?? []).map((r: any) => r.user_id))];
   const { data: profiles } = useQuery({
     queryKey: ["profiles-for-withdrawals", userIds],
@@ -81,6 +82,28 @@ const AdminWithdrawals = () => {
     return p?.display_name || uid.slice(0, 8);
   };
 
+  const renderPayoutDetails = (details: any) => {
+    if (!details) return null;
+    if (typeof details === "string") return <span>{details}</span>;
+    return (
+      <div className="space-y-1">
+        {details.recipient_name && (
+          <div className="flex items-center gap-1.5">
+            <User className="h-3 w-3 text-muted-foreground" />
+            <span>{details.recipient_name}</span>
+          </div>
+        )}
+        {details.account_info && (
+          <div className="flex items-center gap-1.5">
+            <CreditCard className="h-3 w-3 text-muted-foreground" />
+            <span>{details.account_info}</span>
+          </div>
+        )}
+        {details.notes && <span>{details.notes}</span>}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
@@ -108,18 +131,18 @@ const AdminWithdrawals = () => {
                     </Badge>
                     <span className="text-sm font-medium">{getName(r.user_id)}</span>
                   </div>
-                  <span className="text-sm font-bold">{Number(r.amount)} credits</span>
+                  <span className="text-sm font-bold">{fmt(Number(r.amount))}</span>
                 </div>
 
                 <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                  <span className="capitalize">{r.payout_method.replace("_", " ")}</span>
+                  <span className="capitalize">{r.payout_method.replace(/_/g, " ")}</span>
                   <span>{format(new Date(r.created_at), "MMM d, yyyy h:mm a")}</span>
                 </div>
 
                 {r.payout_details && (
-                  <p className="text-xs text-muted-foreground bg-muted/30 rounded p-2">
-                    {typeof r.payout_details === "object" ? JSON.stringify(r.payout_details) : r.payout_details}
-                  </p>
+                  <div className="text-xs text-muted-foreground bg-muted/30 rounded p-2">
+                    {renderPayoutDetails(r.payout_details)}
+                  </div>
                 )}
 
                 {r.admin_note && (
@@ -163,19 +186,14 @@ const AdminWithdrawals = () => {
                 <SelectContent>
                   <SelectItem value="approved">Approved</SelectItem>
                   <SelectItem value="processing">Processing</SelectItem>
-                  <SelectItem value="completed">Completed (deducts credits)</SelectItem>
+                  <SelectItem value="completed">Completed (deducts balance)</SelectItem>
                   <SelectItem value="rejected">Rejected</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Note</label>
-              <Textarea
-                value={adminNote}
-                onChange={(e) => setAdminNote(e.target.value)}
-                placeholder="Optional note..."
-                rows={3}
-              />
+              <Textarea value={adminNote} onChange={(e) => setAdminNote(e.target.value)} placeholder="Optional note..." rows={3} />
             </div>
           </div>
           <DialogFooter>
