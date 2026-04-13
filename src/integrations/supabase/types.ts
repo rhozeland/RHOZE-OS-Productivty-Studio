@@ -1329,6 +1329,76 @@ export type Database = {
           },
         ]
       }
+      project_disputes: {
+        Row: {
+          contract_id: string
+          created_at: string
+          dispute_type: string
+          filed_by: string
+          id: string
+          milestone_id: string | null
+          project_id: string
+          reason: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          dispute_type?: string
+          filed_by: string
+          id?: string
+          milestone_id?: string | null
+          project_id: string
+          reason: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          dispute_type?: string
+          filed_by?: string
+          id?: string
+          milestone_id?: string | null
+          project_id?: string
+          reason?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_disputes_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "project_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_disputes_milestone_id_fkey"
+            columns: ["milestone_id"]
+            isOneToOne: false
+            referencedRelation: "project_milestones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_disputes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_goals: {
         Row: {
           assignee_id: string | null
@@ -2609,6 +2679,10 @@ export type Database = {
         Returns: boolean
       }
       cleanup_old_notifications: { Args: never; Returns: undefined }
+      complete_project_early: {
+        Args: { _contract_id: string; _reason?: string; _requester_id: string }
+        Returns: undefined
+      }
       convert_inquiry_to_project: {
         Args: {
           _inquiry_id: string
