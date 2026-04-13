@@ -667,8 +667,30 @@ const StudioManagePage = () => {
 
         {/* Bookings */}
         <TabsContent value="bookings" className="space-y-4 mt-4">
+          {/* Revenue Summary */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {(() => {
+              const allBookings = bookings || [];
+              const confirmed = allBookings.filter((b) => b.status === "confirmed" || b.status === "completed");
+              const totalRevenue = allBookings.reduce((s, b) => s + Number(b.total_price || 0), 0);
+              const confirmedRevenue = confirmed.reduce((s, b) => s + Number(b.total_price || 0), 0);
+              const pending = allBookings.filter((b) => b.status === "pending").length;
+              return [
+                { label: "Total Bookings", value: allBookings.length },
+                { label: "Total Revenue", value: `$${totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2 })}` },
+                { label: "Confirmed Revenue", value: `$${confirmedRevenue.toLocaleString("en-US", { minimumFractionDigits: 2 })}` },
+                { label: "Pending", value: pending },
+              ].map((stat) => (
+                <div key={stat.label} className="rounded-xl border border-border bg-muted/20 p-3 text-center">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{stat.label}</p>
+                  <p className="text-lg font-bold text-foreground mt-1">{stat.value}</p>
+                </div>
+              ));
+            })()}
+          </div>
+
           <div className="surface-card p-6 space-y-4">
-            <h3 className="font-display font-semibold text-foreground">Recent Bookings</h3>
+            <h3 className="font-display font-semibold text-foreground">Booking History</h3>
 
             {bookings && bookings.length > 0 ? (
               <div className="space-y-2">
@@ -683,11 +705,12 @@ const StudioManagePage = () => {
                         {new Date(booking.end_time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {booking.guest_count} guest(s) • ${booking.total_price}
+                        {booking.guest_count} guest(s) • ${Number(booking.total_price).toFixed(2)}
+                        {booking.payment_method && ` • ${booking.payment_method}`}
                         {booking.notes && ` • ${booking.notes}`}
                       </p>
                     </div>
-                    <Badge variant={booking.status === "confirmed" ? "default" : "secondary"} className="capitalize">
+                    <Badge variant={booking.status === "confirmed" ? "default" : booking.status === "cancelled" ? "destructive" : "secondary"} className="capitalize">
                       {booking.status}
                     </Badge>
                   </div>
