@@ -39,6 +39,7 @@ import {
   Pencil,
   Check,
   X,
+  Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
