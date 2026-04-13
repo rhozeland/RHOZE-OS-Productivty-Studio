@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Button } from "@/components/ui/button";
 import {
   ChevronUp,
@@ -60,6 +61,7 @@ const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; link
 
 const FlowModePage = () => {
   const { user } = useAuth();
+  const { isAdmin } = useAdminCheck();
   const queryClient = useQueryClient();
   const [calibrated, setCalibrated] = useState(false);
   const [showIdleHints, setShowIdleHints] = useState(false);
@@ -189,13 +191,14 @@ const FlowModePage = () => {
 
   const deleteFlowItem = useMutation({
     mutationFn: async (itemId: string) => {
-      const { error } = await supabase.from("flow_items").delete().eq("id", itemId).eq("user_id", user!.id);
+      let query = supabase.from("flow_items").delete().eq("id", itemId);
+      if (!isAdmin) query = query.eq("user_id", user!.id);
+      const { error } = await query;
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["flow-items"] });
       toast.success("Deleted");
-      // Don't advance — the list will re-render and currentIndex stays, pointing to the next item
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -546,6 +549,7 @@ const FlowModePage = () => {
                   onShare={() => performAction("share")}
                   onDelete={() => deleteFlowItem.mutate(currentItem.id)}
                   isOwner={currentItem.user_id === user?.id}
+                  isAdmin={isAdmin}
                 />
               </motion.div>
             ) : (
@@ -580,6 +584,7 @@ const FlowModePage = () => {
                     onShare={() => performAction("share", undefined, item)}
                     onDelete={() => deleteFlowItem.mutate(item.id)}
                     isOwner={item.user_id === user?.id}
+                    isAdmin={isAdmin}
                   />
                 </div>
               ))}

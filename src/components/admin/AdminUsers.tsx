@@ -57,6 +57,30 @@ const AdminUsers = () => {
   // Delete dialog
   const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null);
 
+  // Warning dialog
+  const [warnTarget, setWarnTarget] = useState<Profile | null>(null);
+  const [warnMessage, setWarnMessage] = useState("");
+  const [warnProcessing, setWarnProcessing] = useState(false);
+
+  const handleSendWarning = async () => {
+    if (!warnTarget) return;
+    setWarnProcessing(true);
+    const { error } = await supabase.from("notifications").insert({
+      user_id: warnTarget.user_id,
+      title: "⚠️ Account Warning",
+      body: warnMessage || "Your account has been flagged for violating community guidelines. Please review our terms of service. Continued violations may result in account suspension.",
+      type: "warning",
+      link: "/settings",
+    });
+    if (error) toast.error(error.message);
+    else {
+      toast.success(`Warning sent to ${warnTarget.display_name || "user"}`);
+      setWarnTarget(null);
+      setWarnMessage("");
+    }
+    setWarnProcessing(false);
+  };
+
   const fetchData = async () => {
     const [{ data: profileData }, { data: creditData }, { data: roleData }] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
@@ -289,6 +313,11 @@ const AdminUsers = () => {
                           <ShieldOff className="h-3.5 w-3.5 mr-2" /> Revoke Admin
                         </DropdownMenuItem>
                       )}
+                      {!banned && !isSelf && (
+                        <DropdownMenuItem onClick={() => { setWarnTarget(p); setWarnMessage(""); }}>
+                          <AlertTriangle className="h-3.5 w-3.5 mr-2" /> Send Warning
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuSeparator />
                       {!banned ? (
                         <DropdownMenuItem
@@ -375,6 +404,38 @@ const AdminUsers = () => {
             <Button variant="destructive" onClick={handleDeleteBanned}>
               <Trash2 className="h-4 w-4 mr-1" /> Delete Forever
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Warning dialog */}
+      <Dialog open={!!warnTarget} onOpenChange={(open) => !open && setWarnTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" /> Send Warning
+            </DialogTitle>
+            <DialogDescription>
+              Send a warning notification to {warnTarget?.display_name || "this user"}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium text-foreground block mb-1.5">Message (optional)</label>
+              <Textarea
+                value={warnMessage}
+                onChange={(e) => setWarnMessage(e.target.value)}
+                placeholder="Leave blank for default warning message..."
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setWarnTarget(null)}>Cancel</Button>
+              <Button onClick={handleSendWarning} disabled={warnProcessing} className="gap-1.5">
+                {warnProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <AlertTriangle className="h-4 w-4" />}
+                Send Warning
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
