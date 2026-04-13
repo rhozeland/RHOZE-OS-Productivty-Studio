@@ -15,7 +15,7 @@ const NAV_BUBBLES = [
   { key: "flow", label: "Flow", icon: Flame, path: "/flow", color: "hsl(30 90% 60%)" },
   { key: "droprooms", label: "Drop Rooms", icon: Zap, path: "/drop-rooms", color: "hsl(175 70% 50%)" },
   { key: "boards", label: "Boards", icon: LayoutGrid, path: "/smartboards", color: "hsl(210 60% 55%)" },
-  { key: "rhoze", label: "$RHOZE", icon: Coins, path: "/credits", color: "hsl(40 80% 50%)" },
+  { key: "claim", label: "Claim", icon: Coins, path: "/credits", color: "hsl(40 80% 50%)" },
 ];
 
 const CreatorsHubPage = () => {
