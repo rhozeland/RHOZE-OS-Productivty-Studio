@@ -9,9 +9,9 @@ const RPC_URL = "https://api.devnet.solana.com";
 const RHOZE_DECIMALS = 6;
 
 const TIERS = [
-  { name: "play", min: 2000000, perks: ["Unlimited Boards", "Unlimited Drop Rooms", "15% studio discount", "Priority booking", "All perks unlocked"] },
-  { name: "glow", min: 750000, perks: ["50 Boards", "12 hr Drop Rooms", "10% studio discount", "Priority booking"] },
-  { name: "bloom", min: 100000, perks: ["15 Boards", "4 hr Drop Rooms", "5% studio discount", "Marketplace access"] },
+  { name: "play", min: 50000000, perks: ["Unlimited Boards", "Unlimited Drop Rooms", "15% studio discount", "Priority booking", "All perks unlocked"] },
+  { name: "glow", min: 25000000, perks: ["50 Boards", "12 hr Drop Rooms", "10% studio discount", "Priority booking"] },
+  { name: "bloom", min: 1000000, perks: ["15 Boards", "4 hr Drop Rooms", "5% studio discount", "Marketplace access"] },
   { name: "spark", min: 1, perks: ["Holder badge"] },
   { name: "none", min: 0, perks: [] },
 ];
