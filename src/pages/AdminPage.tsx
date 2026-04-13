@@ -1,7 +1,7 @@
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Navigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Users, Award, Building2, Coins, Settings, ShieldCheck } from "lucide-react";
+import { BarChart3, Users, Award, Building2, Coins, Settings, ShieldCheck, AlertTriangle } from "lucide-react";
 import AdminOverview from "@/components/admin/AdminOverview";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminBadges from "@/components/admin/AdminBadges";
@@ -10,6 +10,7 @@ import AdminPendingRewards from "@/components/admin/AdminPendingRewards";
 import AdminSettings from "@/components/admin/AdminSettings";
 import AdminStaff from "@/components/admin/AdminStaff";
 import AdminServices from "@/components/admin/AdminServices";
+import AdminDisputes from "@/components/admin/AdminDisputes";
 
 const AdminPage = () => {
   const { isAdmin, loading } = useAdminCheck();
@@ -56,6 +57,9 @@ const AdminPage = () => {
           <TabsTrigger value="services" className="gap-1.5 text-xs shrink-0">
             <Settings className="h-3.5 w-3.5" /> Services
           </TabsTrigger>
+          <TabsTrigger value="disputes" className="gap-1.5 text-xs shrink-0">
+            <AlertTriangle className="h-3.5 w-3.5" /> Disputes
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview"><AdminOverview /></TabsContent>
@@ -64,6 +68,7 @@ const AdminPage = () => {
         <TabsContent value="badges"><AdminBadges /></TabsContent>
         <TabsContent value="studios"><AdminStudioApplications /></TabsContent>
         <TabsContent value="staff"><AdminStaff /></TabsContent>
+        <TabsContent value="disputes"><AdminDisputes /></TabsContent>
         <TabsContent value="services"><AdminServices /></TabsContent>
       </Tabs>
     </div>
