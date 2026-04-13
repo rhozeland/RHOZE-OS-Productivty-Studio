@@ -619,6 +619,10 @@ const MessagesPage = () => {
           )}
         </TabsContent>
 
+        <TabsContent value="circles" className="mt-4">
+          <CirclesTab />
+        </TabsContent>
+
         <TabsContent value="inquiries" className="mt-4 space-y-3">
           {!allInquiries?.length ? (
             <div className="text-center py-16">
