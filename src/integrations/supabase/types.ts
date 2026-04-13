@@ -2176,6 +2176,7 @@ export type Database = {
           max_guests: number | null
           name: string
           owner_id: string
+          parking_info: string | null
           rating_avg: number | null
           review_count: number | null
           rules: string | null
@@ -2204,6 +2205,7 @@ export type Database = {
           max_guests?: number | null
           name: string
           owner_id: string
+          parking_info?: string | null
           rating_avg?: number | null
           review_count?: number | null
           rules?: string | null
@@ -2232,6 +2234,7 @@ export type Database = {
           max_guests?: number | null
           name?: string
           owner_id?: string
+          parking_info?: string | null
           rating_avg?: number | null
           review_count?: number | null
           rules?: string | null

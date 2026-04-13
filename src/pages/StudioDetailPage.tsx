@@ -210,6 +210,25 @@ const StudioDetailPage = () => {
             </div>
           )}
 
+          {/* Parking & Logistics */}
+          {((studio as any).parking_info || studio.location) && (
+            <div>
+              <h2 className="font-display text-lg font-semibold text-foreground mb-3">Parking & Logistics</h2>
+              <div className="rounded-xl bg-muted/30 border border-border/50 p-4 space-y-2">
+                {(studio as any).parking_info ? (
+                  <p className="text-sm text-muted-foreground leading-relaxed">{(studio as any).parking_info}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">Contact the studio host for parking details.</p>
+                )}
+                {studio.location && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 shrink-0" /> {studio.location}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Amenities */}
           {studio.amenities && studio.amenities.length > 0 && (
             <div>

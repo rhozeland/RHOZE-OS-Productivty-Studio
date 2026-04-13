@@ -26,6 +26,7 @@ const PAGES = [
   { name: "Dashboard", path: "/dashboard", icon: FolderKanban },
   { name: "Studios", path: "/studios", icon: Building2 },
   { name: "Creators Hub", path: "/creators", icon: User },
+  { name: "Network", path: "/network", icon: User },
   { name: "Smartboards", path: "/smartboards", icon: Palette },
   { name: "Drop Rooms", path: "/drop-rooms", icon: Radio },
   { name: "Messages", path: "/messages", icon: User },
@@ -102,7 +103,7 @@ const AppLayout = () => {
   }, [navigate]);
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
@@ -174,7 +175,7 @@ const AppLayout = () => {
           {listings && listings.length > 0 && (
             <CommandGroup heading="Marketplace">
               {listings.map((l) => (
-                <CommandItem key={l.id} onSelect={() => goTo(`/marketplace/${l.id}`)}>
+                <CommandItem key={l.id} onSelect={() => goTo(`/creators/${l.id}`)}>
                   <ShoppingBag className="mr-2 h-4 w-4 text-muted-foreground" />
                   {l.title}
                   <span className="ml-auto text-xs text-muted-foreground capitalize">{l.category}</span>
