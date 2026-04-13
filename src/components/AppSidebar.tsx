@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard,
+  Home,
   Calendar,
   Settings,
   LogOut,
@@ -30,7 +30,7 @@ import {
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
 const mainItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+  { icon: Home, label: "Home", path: "/dashboard" },
   { icon: MessageSquare, label: "Inbox", path: "/messages" },
   { icon: CreditCard, label: "Creator Pass", path: "/credits" },
 ];
