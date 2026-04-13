@@ -186,6 +186,7 @@ const ProjectsPage = () => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </motion.div>
 
       {/* Stats bar */}
