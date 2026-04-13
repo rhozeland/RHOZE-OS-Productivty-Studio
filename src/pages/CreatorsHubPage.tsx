@@ -1,14 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Sparkles, Coins, Zap, LayoutGrid, Flame, ArrowRight,
+  Star, MessageSquare, Award, TrendingUp,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import Leaderboard from "@/components/creators/Leaderboard";
 import CreatorJourney from "@/components/creators/CreatorJourney";
-import { cn } from "@/lib/utils";
 
 const NAV_BUBBLES = [
   { key: "listings", label: "Listings", icon: Sparkles, path: "/marketplace", color: "hsl(280 60% 60%)" },
@@ -16,6 +14,15 @@ const NAV_BUBBLES = [
   { key: "droprooms", label: "Drop Rooms", icon: Zap, path: "/drop-rooms", color: "hsl(175 70% 50%)" },
   { key: "boards", label: "Boards", icon: LayoutGrid, path: "/smartboards", color: "hsl(210 60% 55%)" },
   { key: "claim", label: "Claim", icon: Coins, path: "/credits", color: "hsl(40 80% 50%)" },
+];
+
+const REWARD_ACTIONS = [
+  { action: "Post to Flow", reward: "+2 $RHOZE", icon: Flame, description: "Share creative work in your Flow feed" },
+  { action: "Receive a Like/Save", reward: "+1 $RHOZE", icon: Star, description: "Earned when someone engages with your post" },
+  { action: "Leave a Review", reward: "+3 $RHOZE", icon: MessageSquare, description: "Review a listing you purchased" },
+  { action: "Milestone Approved", reward: "+10 $RHOZE", icon: Award, description: "Complete a project milestone for a client" },
+  { action: "Post in Drop Room", reward: "+1 $RHOZE", icon: Zap, description: "Contribute ideas in collaborative rooms" },
+  { action: "7-Day Streak", reward: "+5 $RHOZE", icon: TrendingUp, description: "Log in 7 days in a row" },
 ];
 
 const CreatorsHubPage = () => {
@@ -95,6 +102,42 @@ const CreatorsHubPage = () => {
           </motion.button>
         ))}
       </div>
+
+      {/* How to Earn $RHOZE */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="rounded-xl border border-border bg-card p-5"
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <Coins className="h-5 w-5 text-primary" />
+          <h2 className="font-display text-lg font-semibold text-foreground">How to Earn $RHOZE</h2>
+          <span className="ml-auto text-[10px] text-muted-foreground font-body bg-muted px-2 py-0.5 rounded-full">
+            Admin-verified before credited
+          </span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {REWARD_ACTIONS.map((action, i) => (
+            <motion.div
+              key={action.action}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.02 * i }}
+              className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card/40 hover:bg-card/80 transition-colors"
+            >
+              <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                <action.icon className="h-4 w-4 text-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-body font-medium text-foreground">{action.action}</p>
+                <p className="text-[10px] text-muted-foreground font-body">{action.description}</p>
+              </div>
+              <span className="text-xs font-body font-semibold text-primary shrink-0">{action.reward}</span>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
 
       {/* Creator Journey */}
       <CreatorJourney />
