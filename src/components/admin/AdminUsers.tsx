@@ -407,6 +407,38 @@ const AdminUsers = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Warning dialog */}
+      <Dialog open={!!warnTarget} onOpenChange={(open) => !open && setWarnTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" /> Send Warning
+            </DialogTitle>
+            <DialogDescription>
+              Send a warning notification to {warnTarget?.display_name || "this user"}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium text-foreground block mb-1.5">Message (optional)</label>
+              <Textarea
+                value={warnMessage}
+                onChange={(e) => setWarnMessage(e.target.value)}
+                placeholder="Leave blank for default warning message..."
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setWarnTarget(null)}>Cancel</Button>
+              <Button onClick={handleSendWarning} disabled={warnProcessing} className="gap-1.5">
+                {warnProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <AlertTriangle className="h-4 w-4" />}
+                Send Warning
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
