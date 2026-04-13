@@ -1,6 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Connection, Keypair, PublicKey, clusterApiUrl } from "https://esm.sh/@solana/web3.js@1.98.4";
-import { getAssociatedTokenAddressSync, createTransferInstruction, createAssociatedTokenAccountInstruction, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "https://esm.sh/@solana/spl-token@0.4.9";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,10 +6,16 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const RHOZE_MINT = new PublicKey("7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump");
+const RHOZE_MINT_STR = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
 const NETWORK = "devnet";
-// pump.fun tokens use 6 decimals
 const RHOZE_DECIMALS = 6;
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -22,10 +26,7 @@ Deno.serve(async (req) => {
     // Auth check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Unauthorized" }, 401);
     }
 
     const supabaseUser = createClient(
@@ -36,30 +37,32 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: authErr } = await supabaseUser.auth.getUser();
     if (authErr || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Unauthorized" }, 401);
     }
 
     const { wallet_address, credits_to_claim } = await req.json();
 
     if (!wallet_address || !credits_to_claim || credits_to_claim <= 0) {
-      return new Response(JSON.stringify({ error: "Missing wallet_address or credits_to_claim" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Missing wallet_address or credits_to_claim" }, 400);
     }
 
-    // Validate wallet address
-    let recipientPubkey: PublicKey;
+    // Dynamic imports to avoid top-level init crash
+    const { Connection, Keypair, PublicKey, Transaction, clusterApiUrl } = await import(
+      "https://esm.sh/@solana/web3.js@1.98.4"
+    );
+    const {
+      getAssociatedTokenAddressSync,
+      createTransferInstruction,
+      createAssociatedTokenAccountInstruction,
+    } = await import("https://esm.sh/@solana/spl-token@0.4.9");
+
+    const RHOZE_MINT = new PublicKey(RHOZE_MINT_STR);
+
+    let recipientPubkey: InstanceType<typeof PublicKey>;
     try {
       recipientPubkey = new PublicKey(wallet_address);
     } catch {
-      return new Response(JSON.stringify({ error: "Invalid wallet address" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Invalid wallet address" }, 400);
     }
 
     const supabaseAdmin = createClient(
@@ -67,7 +70,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Check user's claimable balance (reward-type credits only)
+    // Check user's claimable balance
     const { data: creditData } = await supabaseAdmin
       .from("user_credits")
       .select("balance")
@@ -75,55 +78,47 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!creditData || creditData.balance < credits_to_claim) {
-      return new Response(JSON.stringify({ error: `Insufficient credits. You have ${creditData?.balance ?? 0} but tried to claim ${credits_to_claim}` }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({
+        error: `Insufficient credits. You have ${creditData?.balance ?? 0} but tried to claim ${credits_to_claim}`,
+      }, 400);
     }
 
     // Load airdrop wallet
     const privateKeyStr = Deno.env.get("RHOZE_AIRDROP_PRIVATE_KEY");
     if (!privateKeyStr) {
-      return new Response(JSON.stringify({ error: "Airdrop wallet not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Airdrop wallet not configured" }, 500);
     }
 
-    let airdropKeypair: Keypair;
+    let airdropKeypair: InstanceType<typeof Keypair>;
     try {
-      // Support both JSON array format [1,2,3,...] and base58
       const parsed = JSON.parse(privateKeyStr);
       airdropKeypair = Keypair.fromSecretKey(new Uint8Array(parsed));
     } catch {
-      // Try base58 decode
       const { default: bs58 } = await import("https://esm.sh/bs58@6.0.0");
       airdropKeypair = Keypair.fromSecretKey(bs58.decode(privateKeyStr));
     }
 
     const connection = new Connection(clusterApiUrl(NETWORK));
 
-    // Token amount: credits * 10^decimals (1 credit = 1 $RHOZE token)
+    // 1 credit = 1 $RHOZE token
     const tokenAmount = BigInt(Math.floor(credits_to_claim * Math.pow(10, RHOZE_DECIMALS)));
 
-    // Get or create associated token accounts
     const airdropATA = getAssociatedTokenAddressSync(RHOZE_MINT, airdropKeypair.publicKey);
     const recipientATA = getAssociatedTokenAddressSync(RHOZE_MINT, recipientPubkey);
 
     // Check if recipient ATA exists
     const recipientATAInfo = await connection.getAccountInfo(recipientATA);
 
-    const { Transaction } = await import("https://esm.sh/@solana/web3.js@1.98.4");
     const transaction = new Transaction();
 
-    // If recipient doesn't have an ATA, create one (funded by airdrop wallet)
+    // Create ATA for recipient if needed (funded by airdrop wallet)
     if (!recipientATAInfo) {
       transaction.add(
         createAssociatedTokenAccountInstruction(
-          airdropKeypair.publicKey, // payer
-          recipientATA, // ata
-          recipientPubkey, // owner
-          RHOZE_MINT // mint
+          airdropKeypair.publicKey,
+          recipientATA,
+          recipientPubkey,
+          RHOZE_MINT
         )
       );
     }
@@ -131,9 +126,9 @@ Deno.serve(async (req) => {
     // Transfer tokens
     transaction.add(
       createTransferInstruction(
-        airdropATA, // source
-        recipientATA, // destination
-        airdropKeypair.publicKey, // authority
+        airdropATA,
+        recipientATA,
+        airdropKeypair.publicKey,
         tokenAmount
       )
     );
@@ -167,15 +162,9 @@ Deno.serve(async (req) => {
         payment_reference: signature,
       });
 
-    return new Response(
-      JSON.stringify({ success: true, signature, tokens_sent: credits_to_claim }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json({ success: true, signature, tokens_sent: credits_to_claim });
   } catch (err) {
     console.error("claim-rhoze error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: err.message }, 500);
   }
 });
