@@ -1,13 +1,15 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   Home,
   Calendar,
   Settings,
   LogOut,
+  LogIn,
   ShieldCheck,
   CreditCard,
   MessageSquare,
+  UserPlus,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -37,6 +39,7 @@ const mainItems = [
 
 const AppSidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { signOut } = useAuth();
   const { theme } = useTheme();
@@ -149,45 +152,76 @@ const AppSidebar = () => {
       </SidebarContent>
 
       <SidebarFooter className="px-2 pb-4 mt-auto">
-        <Link
-          to={profilePath}
-          onClick={handleNavClick}
-          className={cn(
-            "flex items-center gap-3 rounded-xl px-3 py-2.5 mb-3 transition-all duration-250",
-            profileActive
-              ? "bg-muted text-foreground"
-              : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-            collapsed && "justify-center px-2"
-          )}
-        >
-          <Avatar className="h-7 w-7 border border-border shrink-0">
-            <AvatarImage src={profile?.avatar_url ?? undefined} />
-            <AvatarFallback className="text-[9px] font-semibold bg-muted text-muted-foreground font-body">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          {!collapsed && (
-            <span className="text-sm font-medium truncate">
-              {profile?.display_name || user?.email?.split("@")[0] || "Profile"}
-            </span>
-          )}
-        </Link>
+        {/* Authenticated: show profile + settings + sign out */}
+        {user ? (
+          <>
+            <Link
+              to={profilePath}
+              onClick={handleNavClick}
+              className={cn(
+                "flex items-center gap-3 rounded-xl px-3 py-2.5 mb-3 transition-all duration-250",
+                profileActive
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                collapsed && "justify-center px-2"
+              )}
+            >
+              <Avatar className="h-7 w-7 border border-border shrink-0">
+                <AvatarImage src={profile?.avatar_url ?? undefined} />
+                <AvatarFallback className="text-[9px] font-semibold bg-muted text-muted-foreground font-body">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              {!collapsed && (
+                <span className="text-sm font-medium truncate">
+                  {profile?.display_name || user?.email?.split("@")[0] || "Profile"}
+                </span>
+              )}
+            </Link>
 
-        <div className="border-t border-sidebar-border pt-3">
-          <SidebarMenu className="space-y-0.5">
-            {accountItems.map(renderNavItem)}
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                tooltip={collapsed ? "Sign Out" : undefined}
-                onClick={signOut}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-250"
-              >
-                <LogOut className="h-[18px] w-[18px] shrink-0" />
-                {!collapsed && <span>Sign Out</span>}
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </div>
+            <div className="border-t border-sidebar-border pt-3">
+              <SidebarMenu className="space-y-0.5">
+                {accountItems.map(renderNavItem)}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    tooltip={collapsed ? "Sign Out" : undefined}
+                    onClick={signOut}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-250"
+                  >
+                    <LogOut className="h-[18px] w-[18px] shrink-0" />
+                    {!collapsed && <span>Sign Out</span>}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </div>
+          </>
+        ) : (
+          /* Guest: show sign in / sign up */
+          <div className="border-t border-sidebar-border pt-3 space-y-1">
+            <SidebarMenu className="space-y-0.5">
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip={collapsed ? "Sign In" : undefined}
+                  onClick={() => navigate("/auth")}
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all duration-250"
+                >
+                  <LogIn className="h-[18px] w-[18px] shrink-0" />
+                  {!collapsed && <span>Sign In</span>}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip={collapsed ? "Sign Up" : undefined}
+                  onClick={() => navigate("/auth")}
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-primary-foreground bg-primary hover:opacity-90 transition-all duration-250"
+                >
+                  <UserPlus className="h-[18px] w-[18px] shrink-0" />
+                  {!collapsed && <span>Sign Up Free</span>}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </div>
+        )}
       </SidebarFooter>
     </Sidebar>
   );

@@ -7,7 +7,6 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import WalletButton from "@/components/WalletButton";
 import NotificationBell from "@/components/NotificationBell";
 import UsernamePrompt from "@/components/UsernamePrompt";
-import { Input } from "@/components/ui/input";
 import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -24,10 +23,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRewardStreak } from "@/hooks/useRewardStreak";
 
 const PAGES = [
-  { name: "Dashboard", path: "/dashboard", icon: FolderKanban },
+  { name: "Home", path: "/dashboard", icon: FolderKanban },
   { name: "Studios", path: "/studios", icon: Building2 },
   { name: "Creators Hub", path: "/creators", icon: User },
-  { name: "Network", path: "/network", icon: User },
   { name: "Smartboards", path: "/smartboards", icon: Palette },
   { name: "Drop Rooms", path: "/drop-rooms", icon: Radio },
   { name: "Messages", path: "/messages", icon: User },
@@ -40,6 +38,8 @@ const AppLayout = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // Only run reward streak for authenticated users
   useRewardStreak();
 
   // Keyboard shortcut
@@ -138,8 +138,16 @@ const AppLayout = () => {
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <NotificationBell />
-              <WalletButton />
+              {user && <NotificationBell />}
+              {user && <WalletButton />}
+              {!user && (
+                <button
+                  onClick={() => navigate("/auth")}
+                  className="text-xs font-body font-medium text-primary-foreground bg-primary px-4 py-1.5 rounded-full hover:opacity-90 transition-opacity"
+                >
+                  Sign Up
+                </button>
+              )}
             </div>
           </header>
           <main className="flex-1 p-4 md:p-8 pb-32">
@@ -196,7 +204,7 @@ const AppLayout = () => {
           )}
         </CommandList>
       </CommandDialog>
-      <UsernamePrompt />
+      {user && <UsernamePrompt />}
     </SidebarProvider>
   );
 };
