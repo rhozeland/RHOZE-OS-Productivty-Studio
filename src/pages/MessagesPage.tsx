@@ -16,7 +16,7 @@ import {
 import {
   Search, Send, User, MessageSquare, ArrowLeft,
   Inbox, FolderKanban, CheckCircle, XCircle, Clock, ArrowRight, Loader2,
-  DollarSign, Video, Phone, Plus,
+  DollarSign, Video, Phone, Plus, Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
@@ -26,6 +26,8 @@ import QuoteBuilder from "@/components/messages/QuoteBuilder";
 import QuoteCard, { isQuoteMessage } from "@/components/messages/QuoteCard";
 import ChatAttachmentMenu from "@/components/messages/ChatAttachmentMenu";
 import RichMessageCard, { isRichMessage } from "@/components/messages/RichMessageCard";
+import CirclesTab from "@/components/messages/CirclesTab";
+import BuddyList from "@/components/messages/BuddyList";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pending", color: "bg-amber-500/15 text-amber-600", icon: Clock },
@@ -412,7 +414,10 @@ const MessagesPage = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="messages" className="gap-1.5">
-            <MessageSquare className="h-3.5 w-3.5" /> All Messages
+            <MessageSquare className="h-3.5 w-3.5" /> DMs
+          </TabsTrigger>
+          <TabsTrigger value="circles" className="gap-1.5">
+            <Users className="h-3.5 w-3.5" /> Circles
           </TabsTrigger>
           <TabsTrigger value="inquiries" className="gap-1.5">
             <Inbox className="h-3.5 w-3.5" /> Inquiries
@@ -504,6 +509,7 @@ const MessagesPage = () => {
                   })
                 )}
               </ScrollArea>
+              <BuddyList onSelectUser={setSelectedUser} selectedUserId={selectedUser?.user_id} />
             </div>
 
             {/* Chat Area */}
@@ -611,6 +617,10 @@ const MessagesPage = () => {
               onOpenChange={setQuoteOpen}
             />
           )}
+        </TabsContent>
+
+        <TabsContent value="circles" className="mt-4">
+          <CirclesTab />
         </TabsContent>
 
         <TabsContent value="inquiries" className="mt-4 space-y-3">
