@@ -677,23 +677,25 @@ const DashboardPage = () => {
         </div>
       </motion.div>
 
-      {/* Stat grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-[1px] bg-border mb-8 rounded-lg overflow-hidden">
-        {[
-          { icon: FolderKanban, label: "Active Projects", value: activeProjects, path: "/projects" },
-          { icon: MessageSquare, label: "Unread Messages", value: unreadCount ?? 0, path: "/messages" },
-          { icon: Calendar, label: "Upcoming Events", value: events?.length ?? 0, path: "/calendar" },
-          { icon: Zap, label: "Tasks Completed", value: `${completedTasks}/${totalTasks}`, path: "/projects" },
-        ].map((stat, i) => (
-          <Link key={stat.label} to={stat.path}>
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.05 }} className="bg-card p-6 hover:bg-muted/50 transition-colors cursor-pointer group">
-              <stat.icon className="h-5 w-5 text-muted-foreground mb-4 group-hover:text-foreground transition-colors" />
-              <p className="font-display text-3xl text-foreground">{stat.value}</p>
-              <p className="text-xs text-muted-foreground mt-1 font-body">{stat.label}</p>
-            </motion.div>
-          </Link>
-        ))}
-      </div>
+      {/* Stat grid — only for logged-in users */}
+      {user && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-[1px] bg-border mb-8 rounded-lg overflow-hidden">
+          {[
+            { icon: FolderKanban, label: "Active Projects", value: activeProjects, path: "/projects" },
+            { icon: MessageSquare, label: "Unread Messages", value: unreadCount ?? 0, path: "/messages" },
+            { icon: Calendar, label: "Upcoming Events", value: events?.length ?? 0, path: "/calendar" },
+            { icon: Zap, label: "Tasks Completed", value: `${completedTasks}/${totalTasks}`, path: "/projects" },
+          ].map((stat, i) => (
+            <Link key={stat.label} to={stat.path}>
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.05 }} className="bg-card p-6 hover:bg-muted/50 transition-colors cursor-pointer group">
+                <stat.icon className="h-5 w-5 text-muted-foreground mb-4 group-hover:text-foreground transition-colors" />
+                <p className="font-display text-3xl text-foreground">{stat.value}</p>
+                <p className="text-xs text-muted-foreground mt-1 font-body">{stat.label}</p>
+              </motion.div>
+            </Link>
+          ))}
+        </div>
+      )}
 
       {/* Studio sessions */}
       {studioBookings && studioBookings.length > 0 && (
