@@ -1,17 +1,13 @@
-import { Connection, PublicKey, clusterApiUrl } from "https://esm.sh/@solana/web3.js@1.98.4";
-import { getAssociatedTokenAddressSync } from "https://esm.sh/@solana/spl-token@0.4.9";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const RHOZE_MINT = new PublicKey("7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump");
-const NETWORK = "devnet";
+const RHOZE_MINT = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
+const RPC_URL = "https://api.devnet.solana.com";
 const RHOZE_DECIMALS = 6;
 
-// Token-gated tier thresholds
 const TIERS = [
   { name: "diamond", min: 100000, perks: ["Boosted listings", "Exclusive Drop Rooms", "Priority support", "Custom profile badge"] },
   { name: "gold", min: 10000, perks: ["Boosted listings", "Exclusive Drop Rooms", "Priority support"] },
@@ -20,6 +16,22 @@ const TIERS = [
   { name: "holder", min: 1, perks: ["Holder badge"] },
   { name: "none", min: 0, perks: [] },
 ];
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+async function rpcCall(method: string, params: unknown[]) {
+  const res = await fetch(RPC_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+  });
+  return await res.json();
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -31,52 +43,38 @@ Deno.serve(async (req) => {
     const walletAddress = url.searchParams.get("wallet");
 
     if (!walletAddress) {
-      return new Response(JSON.stringify({ error: "Missing wallet parameter" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Missing wallet parameter" }, 400);
     }
 
-    let walletPubkey: PublicKey;
-    try {
-      walletPubkey = new PublicKey(walletAddress);
-    } catch {
-      return new Response(JSON.stringify({ error: "Invalid wallet address" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Validate it looks like a base58 pubkey (32-44 chars, no invalid chars)
+    if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(walletAddress)) {
+      return json({ error: "Invalid wallet address" }, 400);
     }
 
-    const connection = new Connection(clusterApiUrl(NETWORK));
-    const ata = getAssociatedTokenAddressSync(RHOZE_MINT, walletPubkey);
+    // Use getTokenAccountsByOwner RPC to find $RHOZE token accounts
+    const result = await rpcCall("getTokenAccountsByOwner", [
+      walletAddress,
+      { mint: RHOZE_MINT },
+      { encoding: "jsonParsed" },
+    ]);
 
     let balance = 0;
-    try {
-      const tokenAccount = await connection.getTokenAccountBalance(ata);
-      balance = Number(tokenAccount.value.amount) / Math.pow(10, RHOZE_DECIMALS);
-    } catch {
-      // ATA doesn't exist = 0 balance
-      balance = 0;
+    if (result?.result?.value?.length > 0) {
+      const info = result.result.value[0].account.data.parsed.info;
+      balance = Number(info.tokenAmount.amount) / Math.pow(10, RHOZE_DECIMALS);
     }
 
-    // Determine tier
     const tier = TIERS.find((t) => balance >= t.min) || TIERS[TIERS.length - 1];
 
-    return new Response(
-      JSON.stringify({
-        wallet: walletAddress,
-        balance,
-        tier: tier.name,
-        perks: tier.perks,
-        tiers: TIERS.map((t) => ({ name: t.name, min: t.min, perks: t.perks })),
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json({
+      wallet: walletAddress,
+      balance,
+      tier: tier.name,
+      perks: tier.perks,
+      tiers: TIERS.map((t) => ({ name: t.name, min: t.min, perks: t.perks })),
+    });
   } catch (err) {
     console.error("check-rhoze-balance error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: err.message }, 500);
   }
 });
