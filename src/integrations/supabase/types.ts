@@ -2602,6 +2602,8 @@ export type Database = {
           twitter_url: string
           updated_at: string
           user_id: string
+          username: string
+          wallet_address: string
           youtube_url: string
         }[]
       }
