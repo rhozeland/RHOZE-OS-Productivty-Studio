@@ -342,6 +342,22 @@ const ProjectDetailPage = () => {
                       collaborators={collaborators}
                     />
                   )}
+                  {/* Project Controls - early completion */}
+                  {isPaid && contract && (
+                    <ProjectControls
+                      projectId={id!}
+                      contractId={contract.id}
+                      contractStatus={contract.status}
+                    />
+                  )}
+                  {/* Disputes */}
+                  {isPaid && contract && (
+                    <ProjectDisputes
+                      projectId={id!}
+                      contractId={contract.id}
+                      milestones={milestones}
+                    />
+                  )}
                 </div>
               </div>
             </TabsContent>
