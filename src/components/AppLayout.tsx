@@ -141,7 +141,7 @@ const AppLayout = () => {
               <WalletButton />
             </div>
           </header>
-          <main className="flex-1 p-4 md:p-8 pb-24">
+          <main className="flex-1 p-4 md:p-8 pb-32">
             <Outlet />
           </main>
           <DockBar />
