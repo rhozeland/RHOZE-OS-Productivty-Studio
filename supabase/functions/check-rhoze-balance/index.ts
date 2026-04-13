@@ -4,8 +4,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const RHOZE_MINT_STR = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
-const NETWORK = "devnet";
+const RHOZE_MINT = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
+const RPC_URL = "https://api.devnet.solana.com";
 const RHOZE_DECIMALS = 6;
 
 const TIERS = [
@@ -24,6 +24,15 @@ function json(body: unknown, status = 200) {
   });
 }
 
+async function rpcCall(method: string, params: unknown[]) {
+  const res = await fetch(RPC_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+  });
+  return await res.json();
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -37,32 +46,22 @@ Deno.serve(async (req) => {
       return json({ error: "Missing wallet parameter" }, 400);
     }
 
-    // Dynamic import to avoid top-level init crash
-    const { Connection, PublicKey, clusterApiUrl } = await import(
-      "https://esm.sh/@solana/web3.js@1.98.4"
-    );
-    const { getAssociatedTokenAddressSync } = await import(
-      "https://esm.sh/@solana/spl-token@0.4.9"
-    );
-
-    const RHOZE_MINT = new PublicKey(RHOZE_MINT_STR);
-
-    let walletPubkey: InstanceType<typeof PublicKey>;
-    try {
-      walletPubkey = new PublicKey(walletAddress);
-    } catch {
+    // Validate it looks like a base58 pubkey (32-44 chars, no invalid chars)
+    if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(walletAddress)) {
       return json({ error: "Invalid wallet address" }, 400);
     }
 
-    const connection = new Connection(clusterApiUrl(NETWORK));
-    const ata = getAssociatedTokenAddressSync(RHOZE_MINT, walletPubkey);
+    // Use getTokenAccountsByOwner RPC to find $RHOZE token accounts
+    const result = await rpcCall("getTokenAccountsByOwner", [
+      walletAddress,
+      { mint: RHOZE_MINT },
+      { encoding: "jsonParsed" },
+    ]);
 
     let balance = 0;
-    try {
-      const tokenAccount = await connection.getTokenAccountBalance(ata);
-      balance = Number(tokenAccount.value.amount) / Math.pow(10, RHOZE_DECIMALS);
-    } catch {
-      balance = 0;
+    if (result?.result?.value?.length > 0) {
+      const info = result.result.value[0].account.data.parsed.info;
+      balance = Number(info.tokenAmount.amount) / Math.pow(10, RHOZE_DECIMALS);
     }
 
     const tier = TIERS.find((t) => balance >= t.min) || TIERS[TIERS.length - 1];
