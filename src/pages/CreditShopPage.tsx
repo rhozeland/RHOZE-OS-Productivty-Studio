@@ -160,6 +160,7 @@ const CreditShopPage = () => {
   const [subPaymentMethod, setSubPaymentMethod] = useState<"card" | "crypto">("card");
   const [pendingTier, setPendingTier] = useState<(typeof TIERS)[number] | null>(null);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
+  const [purchaseSubTab, setPurchaseSubTab] = useState<"history" | "buy">("history");
 
   const activeTab = searchParams.get("tab") || "pass";
 
@@ -279,9 +280,8 @@ const CreditShopPage = () => {
         <TabsList>
           <TabsTrigger value="pass" className="gap-1.5"><Award className="h-3.5 w-3.5" /> My Pass</TabsTrigger>
           <TabsTrigger value="shop" className="gap-1.5"><Coins className="h-3.5 w-3.5" /> Plans</TabsTrigger>
-          <TabsTrigger value="rhoze" className="gap-1.5"><Wallet className="h-3.5 w-3.5" /> $RHOZE</TabsTrigger>
-          <TabsTrigger value="purchases" className="gap-1.5"><ShoppingBag className="h-3.5 w-3.5" /> Purchases</TabsTrigger>
           <TabsTrigger value="how" className="gap-1.5"><Info className="h-3.5 w-3.5" /> How It Works</TabsTrigger>
+          <TabsTrigger value="purchases" className="gap-1.5"><ShoppingBag className="h-3.5 w-3.5" /> Purchases & $RHOZE</TabsTrigger>
         </TabsList>
 
         {/* ═══════ My Pass Tab (Primary) ═══════ */}
@@ -387,74 +387,8 @@ const CreditShopPage = () => {
           
         </TabsContent>
 
-        {/* ═══════ $RHOZE Tab ═══════ */}
-        <TabsContent value="rhoze" className="space-y-6 mt-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left — info */}
-            <div className="space-y-6">
-              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                <h2 className="font-display text-2xl font-bold text-foreground">$RHOZE Token</h2>
-                <p className="text-muted-foreground">
-                  $RHOZE is the native utility token for Rhozeland. Use it to pay for studio bookings at a discount,
-                  trade on the marketplace, and support creators directly on-chain.
-                </p>
 
-                <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contract Address</p>
-                  <code className="text-xs text-foreground bg-muted px-2 py-1 rounded font-mono break-all block">
-                    {RHOZE_CA}
-                  </code>
-                  <p className="text-xs text-muted-foreground">Solana · SPL Token</p>
-                </div>
 
-                <a href={PUMP_FUN_URL} target="_blank" rel="noopener noreferrer">
-                  <Button className="w-full h-12 text-base rounded-full gap-2">
-                    <ExternalLink className="h-4 w-4" /> Buy on Pump Fun
-                  </Button>
-                </a>
-              </motion.div>
-            </div>
-
-            {/* Right — embedded swap widget */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="rounded-2xl border border-border bg-card overflow-hidden"
-            >
-              <div className="p-4 border-b border-border">
-                <h3 className="font-display font-semibold text-foreground">Swap Widget</h3>
-                <p className="text-xs text-muted-foreground">Swap SOL → $RHOZE directly — powered by Jupiter</p>
-              </div>
-              <iframe
-                src={`https://jup.ag/swap/SOL-${RHOZE_CA}?embedded=true`}
-                className="w-full h-[500px] border-0"
-                title="Buy $RHOZE"
-                allow="clipboard-write; clipboard-read"
-              />
-            </motion.div>
-          </div>
-
-          {/* How it works */}
-          <div className="surface-card p-6">
-            <h3 className="font-display text-lg font-semibold text-foreground mb-4">How it works</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {[
-                { step: "1", title: "Connect Wallet", desc: "Connect your Phantom or Solflare wallet to get started." },
-                { step: "2", title: "Swap SOL → $RHOZE", desc: "Use Pump Fun or any Solana DEX to swap SOL for $RHOZE tokens." },
-                { step: "3", title: "Pay with Crypto", desc: "Use SOL or $RHOZE to pay for studio bookings and marketplace items at a discount." },
-              ].map((item) => (
-                <div key={item.step} className="flex gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm shrink-0">{item.step}</div>
-                  <div>
-                    <p className="font-medium text-foreground text-sm">{item.title}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </TabsContent>
 
         {/* ═══════ How It Works Tab ═══════ */}
         <TabsContent value="how" className="mt-4 space-y-8">
@@ -789,62 +723,135 @@ const CreditShopPage = () => {
           </motion.div>
         </TabsContent>
 
-        {/* ═══════ Purchases & History Tab ═══════ */}
+        {/* ═══════ Purchases & $RHOZE Tab ═══════ */}
         <TabsContent value="purchases" className="mt-4 space-y-6">
-          {/* Purchases */}
-          {purchasesLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            </div>
-          ) : !purchases?.length ? (
-            <div className="text-center py-12 space-y-4">
-              <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground/40" />
-              <p className="text-muted-foreground">No purchases yet</p>
-              <Link to="/creators">
-                <Button variant="outline" className="rounded-full">Browse Creators Hub</Button>
-              </Link>
-            </div>
+          {/* Sub-tab toggle */}
+          <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-fit">
+            <button
+              onClick={() => setPurchaseSubTab("history")}
+              className={`px-4 py-2 rounded-md text-xs font-medium transition-all ${purchaseSubTab === "history" ? "bg-card shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              <ShoppingBag className="inline h-3.5 w-3.5 mr-1.5" />Purchase History
+            </button>
+            <button
+              onClick={() => setPurchaseSubTab("buy")}
+              className={`px-4 py-2 rounded-md text-xs font-medium transition-all ${purchaseSubTab === "buy" ? "bg-card shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              <Wallet className="inline h-3.5 w-3.5 mr-1.5" />Buy $RHOZE
+            </button>
+          </div>
+
+          {purchaseSubTab === "history" ? (
+            <>
+              {/* Purchases */}
+              {purchasesLoading ? (
+                <div className="flex items-center justify-center py-20">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                </div>
+              ) : !purchases?.length ? (
+                <div className="text-center py-12 space-y-4">
+                  <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground/40" />
+                  <p className="text-muted-foreground">No purchases yet</p>
+                  <Link to="/creators">
+                    <Button variant="outline" className="rounded-full">Browse Creators Hub</Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <h2 className="font-display text-lg font-semibold text-foreground">Purchases</h2>
+                  {purchases.map((purchase: any) => {
+                    const listing = purchaseListingsMap.get(purchase.listing_id);
+                    const media = purchaseMediaMap.get(purchase.listing_id) ?? [];
+                    const CatIcon = CAT_ICONS[listing?.category] ?? Sparkles;
+                    return (
+                      <div key={purchase.id} className="surface-card p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              <CatIcon className="h-5 w-5 text-primary" />
+                            </div>
+                            <div className="min-w-0">
+                              <Link to={`/creators/${purchase.listing_id}`} className="font-semibold text-foreground hover:text-primary transition-colors truncate block">
+                                {listing?.title ?? "Listing"}
+                              </Link>
+                              <p className="text-xs text-muted-foreground">{format(new Date(purchase.created_at), "MMM d, yyyy 'at' h:mm a")}</p>
+                            </div>
+                          </div>
+                          <Badge variant="secondary" className="gap-1 flex-shrink-0"><Coins className="h-3 w-3" />{purchase.credits_paid}</Badge>
+                        </div>
+                        {media.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {media.map((m: any) => (
+                              <a key={m.id} href={m.file_url} download={m.file_name} target="_blank" rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-xs text-primary hover:bg-muted/80 transition-colors">
+                                <Download className="h-3 w-3" />{m.file_name}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <TransactionHistory userId={user?.id} />
+            </>
           ) : (
-            <div className="space-y-4">
-              <h2 className="font-display text-lg font-semibold text-foreground">Purchases</h2>
-              {purchases.map((purchase: any) => {
-                const listing = purchaseListingsMap.get(purchase.listing_id);
-                const media = purchaseMediaMap.get(purchase.listing_id) ?? [];
-                const CatIcon = CAT_ICONS[listing?.category] ?? Sparkles;
-                return (
-                  <div key={purchase.id} className="surface-card p-4 space-y-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <CatIcon className="h-5 w-5 text-primary" />
-                        </div>
-                        <div className="min-w-0">
-                          <Link to={`/creators/${purchase.listing_id}`} className="font-semibold text-foreground hover:text-primary transition-colors truncate block">
-                            {listing?.title ?? "Listing"}
-                          </Link>
-                          <p className="text-xs text-muted-foreground">{format(new Date(purchase.created_at), "MMM d, yyyy 'at' h:mm a")}</p>
-                        </div>
-                      </div>
-                      <Badge variant="secondary" className="gap-1 flex-shrink-0"><Coins className="h-3 w-3" />{purchase.credits_paid}</Badge>
+            /* Buy $RHOZE sub-tab */
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-6">
+                  <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                    <h2 className="font-display text-2xl font-bold text-foreground">$RHOZE Token</h2>
+                    <p className="text-muted-foreground">
+                      $RHOZE is the native utility token for Rhozeland. Use it to pay for studio bookings at a discount,
+                      trade on the marketplace, and support creators directly on-chain.
+                    </p>
+                    <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contract Address</p>
+                      <code className="text-xs text-foreground bg-muted px-2 py-1 rounded font-mono break-all block">{RHOZE_CA}</code>
+                      <p className="text-xs text-muted-foreground">Solana · SPL Token</p>
                     </div>
-                    {media.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {media.map((m: any) => (
-                          <a key={m.id} href={m.file_url} download={m.file_name} target="_blank" rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-xs text-primary hover:bg-muted/80 transition-colors">
-                            <Download className="h-3 w-3" />{m.file_name}
-                          </a>
-                        ))}
-                      </div>
-                    )}
+                    <a href={PUMP_FUN_URL} target="_blank" rel="noopener noreferrer">
+                      <Button className="w-full h-12 text-base rounded-full gap-2">
+                        <ExternalLink className="h-4 w-4" /> Buy on Pump Fun
+                      </Button>
+                    </a>
+                  </motion.div>
+                </div>
+                <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="rounded-2xl border border-border bg-card overflow-hidden">
+                  <div className="p-4 border-b border-border">
+                    <h3 className="font-display font-semibold text-foreground">Swap Widget</h3>
+                    <p className="text-xs text-muted-foreground">Swap SOL → $RHOZE directly — powered by Jupiter</p>
                   </div>
-                );
-              })}
+                  <iframe
+                    src={`https://jup.ag/swap/SOL-${RHOZE_CA}?embedded=true`}
+                    className="w-full h-[500px] border-0"
+                    title="Buy $RHOZE"
+                    allow="clipboard-write; clipboard-read"
+                  />
+                </motion.div>
+              </div>
+              <div className="surface-card p-6">
+                <h3 className="font-display text-lg font-semibold text-foreground mb-4">How it works</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {[
+                    { step: "1", title: "Connect Wallet", desc: "Connect your Phantom or Solflare wallet to get started." },
+                    { step: "2", title: "Swap SOL → $RHOZE", desc: "Use Pump Fun or any Solana DEX to swap SOL for $RHOZE tokens." },
+                    { step: "3", title: "Pay with Crypto", desc: "Use SOL or $RHOZE to pay for studio bookings and marketplace items at a discount." },
+                  ].map((item) => (
+                    <div key={item.step} className="flex gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm shrink-0">{item.step}</div>
+                      <div>
+                        <p className="font-medium text-foreground text-sm">{item.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
-
-          {/* Payment History */}
-          <TransactionHistory userId={user?.id} />
         </TabsContent>
       </Tabs>
 

@@ -273,28 +273,41 @@ const CreatorPassCard = () => {
         <p className="text-xs text-muted-foreground font-body">
           Hold tokens in your wallet to unlock the same benefits as a monthly subscription — no payment required.
         </p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { tier: "Spark", hold: "0", benefits: ["3 Boards", "1 hr Drop Rooms"], active: effectiveTier === "spark" },
-            { tier: "Bloom", hold: "100K", benefits: ["15 Boards", "4 hr Rooms", "5% studio discount"], active: effectiveTier === "bloom" },
-            { tier: "Glow", hold: "750K", benefits: ["50 Boards", "12 hr Rooms", "10% discount", "Priority booking"], active: effectiveTier === "glow" },
-            { tier: "Play", hold: "2M", benefits: ["∞ Boards", "∞ Rooms", "15% discount", "Priority + all perks"], active: effectiveTier === "play" },
+            { tier: "Spark", hold: "0", benefits: ["3 Boards", "1 hr Drop Rooms"], active: effectiveTier === "spark", gradient: "linear-gradient(135deg, hsl(205 75% 65%), hsl(220 55% 42%))", glowColor: "hsl(210, 70%, 55%)" },
+            { tier: "Bloom", hold: "100K", benefits: ["15 Boards", "4 hr Rooms", "5% studio discount"], active: effectiveTier === "bloom", gradient: "linear-gradient(135deg, hsl(330 65% 72%), hsl(345 55% 48%))", glowColor: "hsl(335, 60%, 65%)" },
+            { tier: "Glow", hold: "750K", benefits: ["50 Boards", "12 hr Rooms", "10% discount", "Priority booking"], active: effectiveTier === "glow", gradient: "linear-gradient(135deg, hsl(30 90% 60%), hsl(20 80% 42%))", glowColor: "hsl(28, 85%, 55%)" },
+            { tier: "Play", hold: "2M", benefits: ["∞ Boards", "∞ Rooms", "15% discount", "Priority + all perks"], active: effectiveTier === "play", gradient: "linear-gradient(135deg, hsl(50 90% 58%), hsl(38 80% 40%))", glowColor: "hsl(45, 85%, 52%)" },
           ].map((t) => (
-            <div key={t.tier} className={`rounded-xl border p-3 space-y-2 ${t.active ? "border-primary bg-primary/5" : "border-border bg-card/40"}`}>
-              <div className="flex items-center justify-between">
-                <span className={`text-sm font-display font-bold ${t.active ? "text-primary" : "text-foreground"}`}>{t.tier}</span>
-                {t.active && <span className="text-[9px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-bold">ACTIVE</span>}
+            <motion.div
+              key={t.tier}
+              whileHover={{ y: -4, scale: 1.02 }}
+              className={`rounded-2xl overflow-hidden border transition-all ${t.active ? "border-2 border-white/50 shadow-xl" : "border border-border shadow-md hover:shadow-lg"}`}
+              style={{ boxShadow: t.active ? `0 8px 30px -6px ${t.glowColor}50` : undefined }}
+            >
+              {/* Colored header */}
+              <div
+                className="px-3 py-3 text-white relative overflow-hidden"
+                style={{ background: t.gradient }}
+              >
+                <div className="absolute inset-0 opacity-20" style={{ background: "radial-gradient(circle at 30% 20%, rgba(255,255,255,0.4) 0%, transparent 60%)" }} />
+                <div className="relative z-10 flex items-center justify-between">
+                  <span className="text-sm font-display font-bold drop-shadow-sm">{t.tier}</span>
+                  {t.active && <span className="text-[9px] bg-white/25 backdrop-blur-sm px-1.5 py-0.5 rounded-full font-bold">ACTIVE</span>}
+                </div>
+                <p className="text-[10px] opacity-80 font-body mt-0.5 relative z-10">Hold {t.hold}+</p>
               </div>
-              <p className="text-[10px] text-muted-foreground font-body font-semibold">Hold {t.hold}+</p>
-              <ul className="space-y-0.5">
+              {/* Benefits body */}
+              <div className="p-3 bg-card space-y-1">
                 {t.benefits.map((b) => (
-                  <li key={b} className="text-[10px] text-muted-foreground font-body flex items-center gap-1">
-                    <span className="h-1 w-1 rounded-full bg-primary shrink-0" />
+                  <p key={b} className="text-[10px] text-muted-foreground font-body flex items-center gap-1.5">
+                    <span className="h-1 w-1 rounded-full shrink-0" style={{ background: t.glowColor }} />
                     {b}
-                  </li>
+                  </p>
                 ))}
-              </ul>
-            </div>
+              </div>
+            </motion.div>
           ))}
         </div>
       </motion.div>
