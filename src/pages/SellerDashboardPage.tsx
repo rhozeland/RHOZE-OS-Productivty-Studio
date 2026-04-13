@@ -13,6 +13,7 @@ import {
   ArrowUpRight,
   BarChart3,
 } from "lucide-react";
+import WithdrawalPanel from "@/components/seller/WithdrawalPanel";
 import { format, subDays, startOfMonth } from "date-fns";
 import {
   AreaChart,
@@ -390,6 +391,9 @@ const SellerDashboardPage = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Wallet & Withdrawals */}
+      <WithdrawalPanel />
 
       {/* Recent sales */}
       <Card>
