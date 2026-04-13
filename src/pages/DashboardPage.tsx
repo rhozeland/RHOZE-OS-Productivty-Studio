@@ -99,6 +99,7 @@ const DashboardPage = () => {
 
   const saveLayout = useMutation({
     mutationFn: async (newLayout: DashboardLayout) => {
+      if (!user) return;
       await supabase
         .from("profiles")
         .update({ dashboard_layout: newLayout } as any)
@@ -108,6 +109,7 @@ const DashboardPage = () => {
   });
 
   const persistLayout = (order: string[], hidden: string[], cal: boolean) => {
+    if (!user) return;
     saveLayout.mutate({ sections: order, hiddenSections: hidden, showCalendar: cal });
   };
 
@@ -262,7 +264,7 @@ const DashboardPage = () => {
   const completedTasks = tasks?.filter((t) => t.completed).length ?? 0;
   const totalTasks = tasks?.length ?? 0;
   const activeProjects = projects?.filter((p) => p.status === "active").length ?? 0;
-  const firstName = profile?.display_name?.split(" ")[0] || user?.email?.split("@")[0] || "";
+  const firstName = profile?.display_name?.split(" ")[0] || (user ? user.email?.split("@")[0] : "") || "";
 
   const getProjectProgress = (projectId: string) => {
     const projectTasks = tasks?.filter((t) => t.project_id === projectId) ?? [];
@@ -628,47 +630,72 @@ const DashboardPage = () => {
         </div>
         <div className="relative z-10 px-8 py-14 md:px-12 md:py-20">
           <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-xs font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-4">
-            Your Workspace
+            {user ? "Your Workspace" : "Welcome to Rhozeland"}
           </motion.p>
           <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="font-display text-4xl md:text-5xl lg:text-6xl text-foreground leading-[1.1] mb-4">
-            {greeting()}{firstName ? "," : ""}<br />
-            {firstName || "Creator"}
+            {user ? (
+              <>{greeting()}{firstName ? "," : ""}<br />{firstName || "Creator"}</>
+            ) : (
+              <>Create. Earn.<br />Build Reputation.</>
+            )}
           </motion.h1>
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="text-sm text-muted-foreground max-w-md mb-8 leading-relaxed">
-            {activeProjects > 0
-              ? `You have ${activeProjects} active project${activeProjects > 1 ? "s" : ""}`
-              : "Start by creating a project or booking a studio"}
-            {(unreadCount ?? 0) > 0 && ` · ${unreadCount} unread message${(unreadCount ?? 0) > 1 ? "s" : ""}`}
+            {user ? (
+              <>
+                {activeProjects > 0
+                  ? `You have ${activeProjects} active project${activeProjects > 1 ? "s" : ""}`
+                  : "Start by creating a project or booking a studio"}
+                {(unreadCount ?? 0) > 0 && ` · ${unreadCount} unread message${(unreadCount ?? 0) > 1 ? "s" : ""}`}
+              </>
+            ) : (
+              "Explore studios, browse creative services, and discover talent. Sign up to unlock your full workspace."
+            )}
           </motion.p>
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex items-center gap-3 flex-wrap">
-            <Link to="/projects" className="btn-editorial">New Project <ArrowRight className="h-4 w-4" /></Link>
-            <Link to="/studios" className="inline-flex items-center gap-3 px-6 py-3 border border-dashed border-foreground/30 text-sm font-medium text-foreground hover:border-foreground transition-colors">
-              Book a Studio <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link to="/creators" className="inline-flex items-center gap-3 px-6 py-3 border border-dashed border-foreground/30 text-sm font-medium text-foreground hover:border-foreground transition-colors">
-              Creators Hub <ArrowRight className="h-4 w-4" />
-            </Link>
+            {user ? (
+              <>
+                <Link to="/projects" className="btn-editorial">New Project <ArrowRight className="h-4 w-4" /></Link>
+                <Link to="/studios" className="inline-flex items-center gap-3 px-6 py-3 border border-dashed border-foreground/30 text-sm font-medium text-foreground hover:border-foreground transition-colors">
+                  Book a Studio <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link to="/creators" className="inline-flex items-center gap-3 px-6 py-3 border border-dashed border-foreground/30 text-sm font-medium text-foreground hover:border-foreground transition-colors">
+                  Creators Hub <ArrowRight className="h-4 w-4" />
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/auth" className="btn-editorial">Get Started <ArrowRight className="h-4 w-4" /></Link>
+                <Link to="/creators" className="inline-flex items-center gap-3 px-6 py-3 border border-dashed border-foreground/30 text-sm font-medium text-foreground hover:border-foreground transition-colors">
+                  Browse Creators <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link to="/studios" className="inline-flex items-center gap-3 px-6 py-3 border border-dashed border-foreground/30 text-sm font-medium text-foreground hover:border-foreground transition-colors">
+                  Explore Studios <ArrowRight className="h-4 w-4" />
+                </Link>
+              </>
+            )}
           </motion.div>
         </div>
       </motion.div>
 
-      {/* Stat grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-[1px] bg-border mb-8 rounded-lg overflow-hidden">
-        {[
-          { icon: FolderKanban, label: "Active Projects", value: activeProjects, path: "/projects" },
-          { icon: MessageSquare, label: "Unread Messages", value: unreadCount ?? 0, path: "/messages" },
-          { icon: Calendar, label: "Upcoming Events", value: events?.length ?? 0, path: "/calendar" },
-          { icon: Zap, label: "Tasks Completed", value: `${completedTasks}/${totalTasks}`, path: "/projects" },
-        ].map((stat, i) => (
-          <Link key={stat.label} to={stat.path}>
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.05 }} className="bg-card p-6 hover:bg-muted/50 transition-colors cursor-pointer group">
-              <stat.icon className="h-5 w-5 text-muted-foreground mb-4 group-hover:text-foreground transition-colors" />
-              <p className="font-display text-3xl text-foreground">{stat.value}</p>
-              <p className="text-xs text-muted-foreground mt-1 font-body">{stat.label}</p>
-            </motion.div>
-          </Link>
-        ))}
-      </div>
+      {/* Stat grid — only for logged-in users */}
+      {user && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-[1px] bg-border mb-8 rounded-lg overflow-hidden">
+          {[
+            { icon: FolderKanban, label: "Active Projects", value: activeProjects, path: "/projects" },
+            { icon: MessageSquare, label: "Unread Messages", value: unreadCount ?? 0, path: "/messages" },
+            { icon: Calendar, label: "Upcoming Events", value: events?.length ?? 0, path: "/calendar" },
+            { icon: Zap, label: "Tasks Completed", value: `${completedTasks}/${totalTasks}`, path: "/projects" },
+          ].map((stat, i) => (
+            <Link key={stat.label} to={stat.path}>
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.05 }} className="bg-card p-6 hover:bg-muted/50 transition-colors cursor-pointer group">
+                <stat.icon className="h-5 w-5 text-muted-foreground mb-4 group-hover:text-foreground transition-colors" />
+                <p className="font-display text-3xl text-foreground">{stat.value}</p>
+                <p className="text-xs text-muted-foreground mt-1 font-body">{stat.label}</p>
+              </motion.div>
+            </Link>
+          ))}
+        </div>
+      )}
 
       {/* Studio sessions */}
       {studioBookings && studioBookings.length > 0 && (
@@ -694,14 +721,16 @@ const DashboardPage = () => {
         </motion.section>
       )}
 
-      {/* Customizer toggle */}
-      <div className="flex items-center justify-between mb-4">
-        <div />
-        <button onClick={() => setShowCustomizer(!showCustomizer)} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 font-body transition-colors">
-          <Settings2 className="h-3.5 w-3.5" />
-          Customize
-        </button>
-      </div>
+      {/* Customizer toggle — only for logged-in users */}
+      {user && (
+        <div className="flex items-center justify-between mb-4">
+          <div />
+          <button onClick={() => setShowCustomizer(!showCustomizer)} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 font-body transition-colors">
+            <Settings2 className="h-3.5 w-3.5" />
+            Customize
+          </button>
+        </div>
+      )}
 
       {/* Customizer panel */}
       <AnimatePresence>
