@@ -73,6 +73,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import PaySolAndVerify from "@/components/PaySolAndVerify";
 import PayWithRhozeButton from "@/components/PayWithRhozeButton";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
+import CreatorPassCard from "@/components/creators/CreatorPassCard";
 
 const CAT_ICONS: Record<string, any> = {
   music: Music, design: Palette, photo: Camera, video: Video, writing: PenTool,
@@ -160,7 +161,7 @@ const CreditShopPage = () => {
   const [pendingTier, setPendingTier] = useState<(typeof TIERS)[number] | null>(null);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
 
-  const activeTab = searchParams.get("tab") || "shop";
+  const activeTab = searchParams.get("tab") || "pass";
 
   const { data: userCredits } = useQuery({
     queryKey: ["user-credits", user?.id],
@@ -246,7 +247,7 @@ const CreditShopPage = () => {
   });
 
   const setTab = (v: string) => {
-    if (v === "shop") searchParams.delete("tab"); else searchParams.set("tab", v);
+    if (v === "pass") searchParams.delete("tab"); else searchParams.set("tab", v);
     setSearchParams(searchParams, { replace: true });
   };
 
@@ -276,11 +277,17 @@ const CreditShopPage = () => {
 
       <Tabs value={activeTab} onValueChange={setTab}>
         <TabsList>
+          <TabsTrigger value="pass" className="gap-1.5"><Award className="h-3.5 w-3.5" /> My Pass</TabsTrigger>
           <TabsTrigger value="shop" className="gap-1.5"><Coins className="h-3.5 w-3.5" /> Plans</TabsTrigger>
           <TabsTrigger value="rhoze" className="gap-1.5"><Wallet className="h-3.5 w-3.5" /> $RHOZE</TabsTrigger>
           <TabsTrigger value="purchases" className="gap-1.5"><ShoppingBag className="h-3.5 w-3.5" /> Purchases</TabsTrigger>
           <TabsTrigger value="how" className="gap-1.5"><Info className="h-3.5 w-3.5" /> How It Works</TabsTrigger>
         </TabsList>
+
+        {/* ═══════ My Pass Tab (Primary) ═══════ */}
+        <TabsContent value="pass" className="mt-4">
+          <CreatorPassCard />
+        </TabsContent>
 
         {/* ═══════ Plans Tab ═══════ */}
         <TabsContent value="shop" className="space-y-6 mt-4">
