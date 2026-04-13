@@ -37,9 +37,9 @@ const AdminOverview = () => {
 
     const smartboards = await supabase.from("smartboards").select("id", { count: "exact", head: true });
     const flowItems = await supabase.from("flow_items").select("id", { count: "exact", head: true });
-    const pendingRewards = await supabase.from("pending_rewards").select("id", { count: "exact", head: true }).eq("status", "pending");
-    const adminRoles = await supabase.from("user_roles").select("id", { count: "exact", head: true }).eq("role", "admin");
-    const bannedProfiles = await supabase.from("profiles").select("id", { count: "exact", head: true }).eq("ban_status" as any, "banned");
+    const pendingRewards = await (supabase.from("pending_rewards").select("id", { count: "exact", head: true }) as any).eq("status", "pending");
+    const adminRoles = await (supabase.from("user_roles").select("id", { count: "exact", head: true }) as any).eq("role", "admin");
+    const bannedProfiles = await (supabase.from("profiles").select("id", { count: "exact", head: true }) as any).eq("ban_status", "banned");
 
     const totalRevenue = (transactions.data || [])
       .reduce((sum, t) => sum + Number(t.amount), 0);
