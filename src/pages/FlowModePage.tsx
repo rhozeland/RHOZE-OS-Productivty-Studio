@@ -191,13 +191,14 @@ const FlowModePage = () => {
 
   const deleteFlowItem = useMutation({
     mutationFn: async (itemId: string) => {
-      const { error } = await supabase.from("flow_items").delete().eq("id", itemId).eq("user_id", user!.id);
+      let query = supabase.from("flow_items").delete().eq("id", itemId);
+      if (!isAdmin) query = query.eq("user_id", user!.id);
+      const { error } = await query;
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["flow-items"] });
       toast.success("Deleted");
-      // Don't advance — the list will re-render and currentIndex stays, pointing to the next item
     },
     onError: (e: any) => toast.error(e.message),
   });
