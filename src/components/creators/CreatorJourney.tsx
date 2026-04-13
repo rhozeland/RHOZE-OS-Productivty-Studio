@@ -26,14 +26,13 @@ const CreatorJourney = () => {
   const { data: xpData } = useQuery({
     queryKey: ["creator-xp", user?.id],
     queryFn: async () => {
-      const [{ count: proofCount }, { count: txCount }, { data: streak }] = await Promise.all([
+      const [{ count: proofCount }, { count: txCount }, streakRes] = await Promise.all([
         supabase.from("contribution_proofs").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
         supabase.from("credit_transactions").select("id", { count: "exact", head: true }).eq("user_id", user!.id).eq("type", "reward"),
-        supabase.from("user_credits").select("reward_streak").eq("user_id", user!.id).maybeSingle(),
+        supabase.from("user_credits" as any).select("reward_streak").eq("user_id", user!.id).maybeSingle(),
       ]);
-      // 1 XP per contribution proof, 2 XP per reward transaction
       const totalXP = (proofCount ?? 0) + (txCount ?? 0) * 2;
-      return { totalXP, streak: (streak?.data as any)?.reward_streak ?? 0 };
+      return { totalXP, streak: (streakRes?.data as any)?.reward_streak ?? 0 };
     },
     enabled: !!user,
   });
