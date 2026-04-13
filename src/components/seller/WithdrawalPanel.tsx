@@ -12,11 +12,14 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Wallet, ArrowDownToLine, Loader2, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Wallet, ArrowDownToLine, Loader2, Clock, Info } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, addBusinessDays } from "date-fns";
 import { cn } from "@/lib/utils";
+
+const fmt = (v: number) => `$${v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const MINIMUM_WITHDRAWAL = 10;
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-500/10 text-amber-600 border-amber-500/20",
@@ -26,6 +29,13 @@ const statusColors: Record<string, string> = {
   rejected: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
+const payoutMethods = [
+  { value: "bank_transfer", label: "Bank Transfer (ACH)", placeholder: "Bank name, routing number, account number" },
+  { value: "paypal", label: "PayPal", placeholder: "PayPal email address" },
+  { value: "cashapp", label: "Cash App", placeholder: "Cash App $cashtag" },
+  { value: "zelle", label: "Zelle", placeholder: "Zelle email or phone number" },
+];
+
 const WithdrawalPanel = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -33,6 +43,7 @@ const WithdrawalPanel = () => {
   const [amount, setAmount] = useState("");
   const [payoutMethod, setPayoutMethod] = useState("bank_transfer");
   const [payoutDetails, setPayoutDetails] = useState("");
+  const [recipientName, setRecipientName] = useState("");
 
   const { data: balance } = useQuery({
     queryKey: ["user-credits", user?.id],
@@ -67,13 +78,20 @@ const WithdrawalPanel = () => {
 
   const available = (balance ?? 0) - pendingAmount;
 
+  const selectedMethod = payoutMethods.find((m) => m.value === payoutMethod)!;
+  const numAmount = Number(amount);
+  const canSubmit = numAmount >= MINIMUM_WITHDRAWAL && numAmount <= available && payoutDetails.trim().length > 0 && recipientName.trim().length > 0;
+
   const requestWithdrawal = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.rpc("request_withdrawal", {
         _user_id: user!.id,
-        _amount: Number(amount),
+        _amount: numAmount,
         _payout_method: payoutMethod,
-        _payout_details: payoutDetails.trim() ? { notes: payoutDetails.trim() } : null,
+        _payout_details: {
+          recipient_name: recipientName.trim(),
+          account_info: payoutDetails.trim(),
+        },
       });
       if (error) throw error;
     },
@@ -82,10 +100,14 @@ const WithdrawalPanel = () => {
       setDialogOpen(false);
       setAmount("");
       setPayoutDetails("");
-      toast.success("Withdrawal request submitted! We'll process it shortly.");
+      setRecipientName("");
+      toast.success("Withdrawal request submitted! Review takes 3-5 business days.");
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const estimatedApproval = format(addBusinessDays(new Date(), 5), "MMM d, yyyy");
+  const estimatedDelivery = format(addBusinessDays(new Date(), 8), "MMM d, yyyy");
 
   return (
     <Card>
@@ -106,15 +128,15 @@ const WithdrawalPanel = () => {
         <div className="grid grid-cols-3 gap-3">
           <div className="rounded-lg border border-border bg-muted/20 p-3 text-center">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Total Balance</p>
-            <p className="text-lg font-bold text-foreground">{balance ?? 0}</p>
+            <p className="text-lg font-bold text-foreground">{fmt(balance ?? 0)}</p>
           </div>
           <div className="rounded-lg border border-border bg-muted/20 p-3 text-center">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Pending</p>
-            <p className="text-lg font-bold text-amber-600">{pendingAmount}</p>
+            <p className="text-lg font-bold text-amber-600">{fmt(pendingAmount)}</p>
           </div>
           <div className="rounded-lg border border-border bg-muted/20 p-3 text-center">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Available</p>
-            <p className="text-lg font-bold text-emerald-600">{available}</p>
+            <p className="text-lg font-bold text-emerald-600">{fmt(available)}</p>
           </div>
         </div>
 
@@ -129,13 +151,13 @@ const WithdrawalPanel = () => {
                     <Badge variant="outline" className={cn("text-[10px] capitalize", statusColors[w.status])}>
                       {w.status}
                     </Badge>
-                    <span className="text-xs text-muted-foreground capitalize">{w.payout_method.replace("_", " ")}</span>
+                    <span className="text-xs text-muted-foreground capitalize">{w.payout_method.replace(/_/g, " ")}</span>
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-0.5">
                     {format(new Date(w.created_at), "MMM d, yyyy")}
                   </p>
                 </div>
-                <span className="text-sm font-bold text-foreground">{Number(w.amount)} credits</span>
+                <span className="text-sm font-bold text-foreground">{fmt(Number(w.amount))}</span>
               </div>
             ))}
           </div>
@@ -152,22 +174,27 @@ const WithdrawalPanel = () => {
                 Request Withdrawal
               </DialogTitle>
               <DialogDescription>
-                Withdraw your earned credits. Available: <strong>{available} credits</strong>.
-                Requests are reviewed by the platform team.
+                Withdraw your earnings. Available: <strong>{fmt(available)}</strong>.
+                Minimum withdrawal is {fmt(MINIMUM_WITHDRAWAL)}.
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Amount</label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={available}
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder={`Up to ${available}`}
-                />
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Amount (USD)</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                  <Input
+                    type="number"
+                    min={MINIMUM_WITHDRAWAL}
+                    max={available}
+                    step="0.01"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder={`${MINIMUM_WITHDRAWAL}.00`}
+                    className="pl-7"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -175,27 +202,60 @@ const WithdrawalPanel = () => {
                 <Select value={payoutMethod} onValueChange={setPayoutMethod}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                    <SelectItem value="paypal">PayPal</SelectItem>
-                    <SelectItem value="crypto_wallet">Crypto Wallet</SelectItem>
+                    {payoutMethods.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Payout Details
+                  Recipient Name
                 </label>
-                <Textarea
+                <Input
+                  value={recipientName}
+                  onChange={(e) => setRecipientName(e.target.value)}
+                  placeholder="Legal name on the account"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Account Details
+                </label>
+                <Input
                   value={payoutDetails}
                   onChange={(e) => setPayoutDetails(e.target.value)}
-                  placeholder={
-                    payoutMethod === "bank_transfer" ? "Bank name, account number, routing..." :
-                    payoutMethod === "paypal" ? "PayPal email address..." :
-                    "Wallet address..."
-                  }
-                  rows={3}
+                  placeholder={selectedMethod.placeholder}
                 />
+              </div>
+
+              {/* Timeline info */}
+              <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-2">
+                <p className="text-xs font-semibold flex items-center gap-1.5 text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" />
+                  Estimated Timeline
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <p className="text-muted-foreground">Review & Approval</p>
+                    <p className="font-medium text-foreground">3-5 business days</p>
+                    <p className="text-[10px] text-muted-foreground">by {estimatedApproval}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Payout Delivery</p>
+                    <p className="font-medium text-foreground">1-3 days after</p>
+                    <p className="text-[10px] text-muted-foreground">by {estimatedDelivery}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2 rounded-lg bg-primary/5 border border-primary/10 p-2.5">
+                <Info className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Funds are held securely until admin review is complete. You'll be notified at each step of the process.
+                </p>
               </div>
             </div>
 
@@ -203,11 +263,11 @@ const WithdrawalPanel = () => {
               <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
               <Button
                 onClick={() => requestWithdrawal.mutate()}
-                disabled={!amount || Number(amount) <= 0 || Number(amount) > available || requestWithdrawal.isPending}
+                disabled={!canSubmit || requestWithdrawal.isPending}
                 className="gap-1.5"
               >
                 {requestWithdrawal.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowDownToLine className="h-4 w-4" />}
-                Request Withdrawal
+                Request {amount ? fmt(numAmount) : "Withdrawal"}
               </Button>
             </DialogFooter>
           </DialogContent>
