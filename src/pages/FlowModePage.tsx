@@ -61,6 +61,7 @@ const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; link
 
 const FlowModePage = () => {
   const { user } = useAuth();
+  const { isAdmin } = useAdminCheck();
   const queryClient = useQueryClient();
   const [calibrated, setCalibrated] = useState(false);
   const [showIdleHints, setShowIdleHints] = useState(false);
