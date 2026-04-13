@@ -26,6 +26,8 @@ import QuoteBuilder from "@/components/messages/QuoteBuilder";
 import QuoteCard, { isQuoteMessage } from "@/components/messages/QuoteCard";
 import ChatAttachmentMenu from "@/components/messages/ChatAttachmentMenu";
 import RichMessageCard, { isRichMessage } from "@/components/messages/RichMessageCard";
+import CirclesTab from "@/components/messages/CirclesTab";
+import BuddyList from "@/components/messages/BuddyList";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pending", color: "bg-amber-500/15 text-amber-600", icon: Clock },
