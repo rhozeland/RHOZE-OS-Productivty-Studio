@@ -959,6 +959,48 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_rewards: {
+        Row: {
+          action_type: string
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          reference_id: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           available: boolean | null
@@ -2541,6 +2583,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      approve_pending_reward: {
+        Args: { _admin_id: string; _note?: string; _reward_id: string }
+        Returns: undefined
+      }
+      approve_pending_rewards_batch: {
+        Args: { _admin_id: string; _reward_ids: string[] }
+        Returns: number
+      }
       award_rhoze: {
         Args: { _amount: number; _description: string; _user_id: string }
         Returns: undefined
@@ -2653,6 +2703,10 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      reject_pending_reward: {
+        Args: { _admin_id: string; _note?: string; _reward_id: string }
+        Returns: undefined
       }
       release_milestone_credits: {
         Args: { _approver_id: string; _milestone_id: string }
