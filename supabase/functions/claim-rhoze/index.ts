@@ -100,10 +100,7 @@ Deno.serve(async (req) => {
         .eq("user_id", user.id);
     }
 
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    // Check user's claimable balance (supabaseAdmin already created above)
 
     // Check user's claimable balance
     const { data: creditData } = await supabaseAdmin
