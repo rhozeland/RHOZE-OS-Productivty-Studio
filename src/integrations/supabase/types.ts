@@ -1045,6 +1045,7 @@ export type Database = {
           user_id: string
           username: string | null
           wallet_address: string | null
+          wallet_locked: boolean
           youtube_url: string | null
         }
         Insert: {
@@ -1090,6 +1091,7 @@ export type Database = {
           user_id: string
           username?: string | null
           wallet_address?: string | null
+          wallet_locked?: boolean
           youtube_url?: string | null
         }
         Update: {
@@ -1135,6 +1137,7 @@ export type Database = {
           user_id?: string
           username?: string | null
           wallet_address?: string | null
+          wallet_locked?: boolean
           youtube_url?: string | null
         }
         Relationships: []
@@ -2647,6 +2650,48 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_change_requests: {
+        Row: {
+          admin_note: string | null
+          created_at: string
+          current_wallet: string
+          id: string
+          processed_at: string | null
+          processed_by: string | null
+          reason: string | null
+          requested_wallet: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          created_at?: string
+          current_wallet: string
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          reason?: string | null
+          requested_wallet: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          created_at?: string
+          current_wallet?: string
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          reason?: string | null
+          requested_wallet?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       withdrawal_requests: {
         Row: {
           admin_note: string | null
@@ -2820,6 +2865,15 @@ export type Database = {
           source_queue: string
         }
         Returns: number
+      }
+      process_wallet_change: {
+        Args: {
+          _admin_id: string
+          _approve: boolean
+          _note?: string
+          _request_id: string
+        }
+        Returns: undefined
       }
       process_withdrawal: {
         Args: {
