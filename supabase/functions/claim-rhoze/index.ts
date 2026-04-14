@@ -69,6 +69,42 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Enforce wallet binding: wallet must match the one stored in profile
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("wallet_address, wallet_locked")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!profile) {
+      return json({ error: "Profile not found" }, 400);
+    }
+
+    if (profile.wallet_address && profile.wallet_address !== wallet_address) {
+      return json({
+        error: "Wallet mismatch. Your account is bound to " + profile.wallet_address.slice(0, 6) + "... — submit a change request to switch wallets.",
+      }, 403);
+    }
+
+    // If no wallet set yet, bind this one and lock it
+    if (!profile.wallet_address) {
+      await supabaseAdmin
+        .from("profiles")
+        .update({ wallet_address, wallet_locked: true, updated_at: new Date().toISOString() } as any)
+        .eq("user_id", user.id);
+    } else if (!profile.wallet_locked) {
+      // Lock existing wallet
+      await supabaseAdmin
+        .from("profiles")
+        .update({ wallet_locked: true, updated_at: new Date().toISOString() } as any)
+        .eq("user_id", user.id);
+    }
+
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
     // Check user's claimable balance
     const { data: creditData } = await supabaseAdmin
       .from("user_credits")
