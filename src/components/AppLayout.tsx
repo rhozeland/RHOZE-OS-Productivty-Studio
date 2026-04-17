@@ -150,10 +150,10 @@ const AppLayout = () => {
               )}
             </div>
           </header>
-          <main className="flex-1 p-4 md:p-8 pb-32">
+          <main className={`flex-1 p-4 md:p-8 ${user ? "pb-32" : "pb-8"}`}>
             <Outlet />
           </main>
-          <DockBar />
+          {user && <DockBar />}
         </div>
       </div>
 
