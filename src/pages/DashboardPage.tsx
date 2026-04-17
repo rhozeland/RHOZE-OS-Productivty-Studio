@@ -664,15 +664,7 @@ const DashboardPage = () => {
                 </Link>
               </>
             ) : (
-              <>
-                <Link to="/auth" className="btn-editorial">Get Started <ArrowRight className="h-4 w-4" /></Link>
-                <Link to="/creators" className="inline-flex items-center gap-3 px-6 py-3 border border-dashed border-foreground/30 text-sm font-medium text-foreground hover:border-foreground transition-colors">
-                  Browse Creators <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link to="/studios" className="inline-flex items-center gap-3 px-6 py-3 border border-dashed border-foreground/30 text-sm font-medium text-foreground hover:border-foreground transition-colors">
-                  Explore Studios <ArrowRight className="h-4 w-4" />
-                </Link>
-              </>
+              <Link to="/auth" className="btn-editorial">Get Started <ArrowRight className="h-4 w-4" /></Link>
             )}
           </motion.div>
         </div>
