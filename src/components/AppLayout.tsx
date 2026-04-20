@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, NavLink, Link } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import AppSidebar from "@/components/AppSidebar";
 import DockBar from "@/components/DockBar";
@@ -7,8 +7,18 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import WalletButton from "@/components/WalletButton";
 import NotificationBell from "@/components/NotificationBell";
 import UsernamePrompt from "@/components/UsernamePrompt";
-import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar } from "lucide-react";
+import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Sun, Moon, Settings as SettingsIcon, LogOut, Flame } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useTheme } from "@/contexts/ThemeContext";
+import { cn } from "@/lib/utils";
 import {
   CommandDialog,
   CommandEmpty,
@@ -25,18 +35,27 @@ import { useRewardStreak } from "@/hooks/useRewardStreak";
 const PAGES = [
   { name: "Home", path: "/dashboard", icon: FolderKanban },
   { name: "Studios", path: "/studios", icon: Building2 },
-  { name: "Creators Hub", path: "/creators", icon: User },
+  { name: "Creators Hub", path: "/creators", icon: Flame },
   { name: "Smartboards", path: "/smartboards", icon: Palette },
-  { name: "Drop Rooms", path: "/drop-rooms", icon: Radio },
+  { name: "Drop Rooms", path: "/droprooms", icon: Radio },
   { name: "Messages", path: "/messages", icon: User },
   { name: "Projects", path: "/projects", icon: FolderKanban },
   { name: "Credits", path: "/credits", icon: ShoppingBag },
-  { name: "Settings", path: "/settings", icon: User },
+  { name: "Settings", path: "/settings", icon: SettingsIcon },
+];
+
+// Persistent top-nav links shown in header for both guests and signed-in users
+const HEADER_NAV = [
+  { name: "Studios", path: "/studios" },
+  { name: "Hub", path: "/creators" },
+  { name: "Boards", path: "/smartboards" },
+  { name: "Drops", path: "/droprooms" },
 ];
 
 const AppLayout = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [searchOpen, setSearchOpen] = useState(false);
 
   // Only run reward streak for authenticated users
