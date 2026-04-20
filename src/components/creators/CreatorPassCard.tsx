@@ -229,7 +229,7 @@ const CreatorPassCard = () => {
             </>
           ) : (
             <p className="text-xs text-muted-foreground font-body py-4 text-center">
-              Connect your Solana wallet to see your on-chain $RHOZE balance and unlock tier benefits by holding.
+              Connect your wallet to see your verified $RHOZE balance and unlock tier benefits by holding.
             </p>
           )}
         </motion.div>
@@ -241,7 +241,7 @@ const CreatorPassCard = () => {
             <span className="text-sm font-body font-semibold text-foreground">Claim to Wallet</span>
           </div>
           <p className="text-[11px] text-muted-foreground font-body">
-            Convert earned credits into real $RHOZE tokens on Solana.
+            Convert earned credits into real $RHOZE tokens in your wallet.
           </p>
           <div className="flex items-center gap-2">
             <Input

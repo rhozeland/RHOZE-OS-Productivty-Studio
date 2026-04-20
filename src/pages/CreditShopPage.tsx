@@ -406,7 +406,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-2xl mx-auto space-y-2">
             <h2 className="font-display text-2xl font-bold text-foreground">How Rhozeland Works</h2>
             <p className="text-muted-foreground text-sm">
-              Create, earn, prove your work on-chain, and share in the revenue — all powered by $RHOZE.
+              Create, earn, build a verified record of your work, and share in the revenue — all powered by $RHOZE.
             </p>
           </motion.div>
 
@@ -414,7 +414,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { icon: Zap, step: "01", title: "Create & Contribute", desc: "Post to Flow, complete milestones, review creators, and earn $RHOZE rewards automatically.", color: "hsl(210, 70%, 55%)" },
-              { icon: Shield, step: "02", title: "Build Reputation", desc: "Every reward generates a Contribution Proof. Anchor them to Solana for a verifiable on-chain identity.", color: "hsl(335, 60%, 60%)" },
+              { icon: Shield, step: "02", title: "Build Reputation", desc: "Every reward becomes a verified entry in your Earning History — a portable, tamper-proof record of your work.", color: "hsl(335, 60%, 60%)" },
               { icon: TrendingUp, step: "03", title: "Spend & Unlock", desc: "Use $RHOZE for studio bookings, marketplace purchases, and unlock higher Creator Pass tiers.", color: "hsl(28, 80%, 55%)" },
               { icon: RefreshCw, step: "04", title: "Revenue Sharing", desc: "10% of every sale goes into a buyback pool — flowing back to creators, curators, and the ecosystem.", color: "hsl(45, 80%, 50%)" },
             ].map((s, i) => (
@@ -457,8 +457,8 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
                 title: "Reputation System",
                 color: "hsl(210, 70%, 55%)",
                 points: [
-                  "Each reward creates a Contribution Proof",
-                  "Proofs can be anchored to Solana via Memo tx",
+                  "Each reward creates a verified Earning entry",
+                  "Entries can be independently verified on the public ledger",
                   "Portable, verifiable creator identity",
                   "Builds trust for clients and collaborators",
                 ],
@@ -815,7 +815,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
                     <h2 className="font-display text-2xl font-bold text-foreground">$RHOZE Token</h2>
                     <p className="text-muted-foreground">
                       $RHOZE is the native utility token for Rhozeland. Use it to pay for studio bookings at a discount,
-                      trade on the marketplace, and support creators directly on-chain.
+                      trade on the marketplace, and support creators directly.
                     </p>
                     <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contract Address</p>
