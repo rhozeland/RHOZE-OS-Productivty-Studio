@@ -242,7 +242,8 @@ const DropRoomDetailPage = () => {
     : formatDistanceToNow(new Date(room.expires_at), { addSuffix: false }) + " left";
 
   return (
-    <div className="flex flex-col h-[calc(100vh-7rem)] max-h-[calc(100vh-7rem)]">
+    // Constrain height so the page content sits above the floating dock (~5rem)
+    <div className="flex flex-col h-[calc(100vh-12rem)] max-h-[calc(100vh-12rem)]">
       {/* Header */}
       <div className="flex items-center gap-3 pb-4 border-b border-border shrink-0">
         <Button variant="ghost" size="icon" onClick={() => navigate("/drop-rooms")}>

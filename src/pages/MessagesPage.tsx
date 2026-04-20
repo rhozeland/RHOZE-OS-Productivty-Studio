@@ -440,7 +440,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
         </TabsList>
 
         <TabsContent value="messages" className="mt-4">
-          <div className="surface-card flex h-[calc(100vh-20rem)] overflow-hidden">
+          <div className="surface-card flex h-[calc(100vh-22rem)] min-h-[480px] overflow-hidden">
             {/* Sidebar - Conversations only */}
             <div className={cn(
               "flex flex-col border-r border-border",
