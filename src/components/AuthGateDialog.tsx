@@ -25,8 +25,17 @@ export const AuthGateProvider = ({
   children: React.ReactNode;
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
+
+  // Preserve current location so user lands back here after signing in
+  const goToAuth = () => {
+    setOpen(false);
+    const here = `${location.pathname}${location.search}${location.hash}`;
+    const redirectParam = here && here !== "/auth" ? `?redirect=${encodeURIComponent(here)}` : "";
+    navigate(`/auth${redirectParam}`);
+  };
 
   const requireAuth = useCallback(
     (msg?: string) => {
@@ -57,17 +66,10 @@ export const AuthGateProvider = ({
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2 mt-2">
-            <Button
-              onClick={() => { setOpen(false); navigate("/auth"); }}
-              className="w-full gap-2"
-            >
+            <Button onClick={goToAuth} className="w-full gap-2">
               <UserPlus className="h-4 w-4" /> Sign Up Free
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => { setOpen(false); navigate("/auth"); }}
-              className="w-full gap-2"
-            >
+            <Button variant="outline" onClick={goToAuth} className="w-full gap-2">
               <LogIn className="h-4 w-4" /> I Already Have an Account
             </Button>
           </div>
