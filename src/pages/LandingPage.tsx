@@ -97,9 +97,9 @@ const LandingPage = () => {
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto w-full py-16 sm:py-24">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-12 items-center justify-items-center lg:justify-items-stretch text-center lg:text-left">
             {/* Left — copy */}
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="flex flex-col items-center lg:items-start max-w-md mx-auto lg:mx-0">
               <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/15 px-3 py-1 mb-6">
                 <Flame className="h-3 w-3 text-primary" />
                 <span className="text-[11px] font-medium text-primary tracking-wide">THE DIGITAL STUDIO</span>
@@ -111,13 +111,13 @@ const LandingPage = () => {
                 rewarded.
               </h1>
 
-              <p className="text-sm sm:text-base text-muted-foreground max-w-md mb-8 leading-relaxed">
+              <p className="text-sm sm:text-base text-muted-foreground mb-8 leading-relaxed">
                 Book studios. Hire talent. Ship projects.
                 <br />
                 Every action earns $RHOZE — unlocking exclusive spaces, networking, and more.
               </p>
 
-              <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-3 flex-wrap justify-center lg:justify-start">
                 <Link to="/auth">
                   <Button className="rounded-full h-11 px-6 gap-2 text-sm font-medium">
                     Get Started <ArrowRight className="h-3.5 w-3.5" />
