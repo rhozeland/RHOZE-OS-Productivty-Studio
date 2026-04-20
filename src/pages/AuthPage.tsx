@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,9 @@ const AuthPage = () => {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Where to send the user after a successful sign in (e.g. ?redirect=/studios/abc)
+  const redirectTo = searchParams.get("redirect") || "/dashboard";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +48,7 @@ const AuthPage = () => {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Signed in.");
-        navigate("/dashboard", { replace: true });
+        navigate(redirectTo, { replace: true });
       }
     } catch (error: any) {
       toast.error(error.message);
@@ -72,7 +75,7 @@ const AuthPage = () => {
       }
 
       toast.success("Signed in with Google.");
-      navigate("/dashboard", { replace: true });
+      navigate(redirectTo, { replace: true });
     } catch (error: any) {
       toast.error(error.message || "Google sign-in failed");
     } finally {

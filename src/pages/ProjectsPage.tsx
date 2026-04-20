@@ -60,23 +60,38 @@ const ProjectsPage = () => {
 
   const createProject = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("projects").insert({
-        title,
-        description,
-        cover_color: coverColor,
-        user_id: user!.id,
-        project_type: projectType,
-      });
+      if (!user) throw new Error("You must be signed in to create a project.");
+      if (!title.trim()) throw new Error("Project title is required.");
+      const { data, error } = await supabase
+        .from("projects")
+        .insert({
+          title: title.trim(),
+          description: description.trim() || null,
+          cover_color: coverColor,
+          user_id: user.id,
+          project_type: projectType,
+          status: "active",
+        })
+        .select()
+        .single();
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => {
+    // Optimistic update so the new project appears instantly without a refresh
+    onSuccess: (newProject) => {
+      queryClient.setQueryData(["projects"], (old: any[] | undefined) =>
+        old ? [newProject, ...old] : [newProject]
+      );
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       setOpen(false);
       setTitle("");
       setDescription("");
       toast.success("Project created!");
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => {
+      console.error("Create project failed:", e);
+      toast.error(e?.message || "Could not create project. Please try again.");
+    },
   });
 
   const deleteProject = useMutation({

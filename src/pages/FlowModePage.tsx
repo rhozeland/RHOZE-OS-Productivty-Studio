@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -61,6 +62,7 @@ const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; link
 
 const FlowModePage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { isAdmin } = useAdminCheck();
   const queryClient = useQueryClient();
   const [calibrated, setCalibrated] = useState(false);
@@ -515,8 +517,20 @@ const FlowModePage = () => {
             size="icon"
             className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9"
             onClick={() => setAddOpen(true)}
+            aria-label="Add to Flow"
           >
             <Plus className="h-4 w-4" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9"
+            onClick={() => navigate("/dashboard")}
+            aria-label="Exit Flow Mode"
+            title="Exit Flow Mode"
+          >
+            <X className="h-4 w-4" />
           </Button>
         </div>
       </div>

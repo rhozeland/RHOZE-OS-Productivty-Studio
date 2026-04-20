@@ -7,7 +7,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import WalletButton from "@/components/WalletButton";
 import NotificationBell from "@/components/NotificationBell";
 import UsernamePrompt from "@/components/UsernamePrompt";
-import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban } from "lucide-react";
+import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   CommandDialog,
@@ -138,6 +138,14 @@ const AppLayout = () => {
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
+              {/* Mobile search trigger — desktop has the inline search bar */}
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="md:hidden h-8 w-8 rounded-full border border-border bg-card flex items-center justify-center hover:bg-muted/50 transition-colors"
+                aria-label="Search"
+              >
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
               {user && <NotificationBell />}
               {user && <WalletButton />}
               {!user && (
