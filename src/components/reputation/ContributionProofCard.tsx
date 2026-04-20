@@ -34,7 +34,7 @@ const ContributionProofCard = ({ proof }: { proof: ContributionProof }) => {
         body: { proof_id: proof.id },
       });
       if (error) throw error;
-      toast.success(`Anchored on Solana! Tx: ${data.signature.slice(0, 8)}...`);
+      toast.success(`Verified! Receipt: ${data.signature.slice(0, 8)}...`);
       window.location.reload();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to anchor";
@@ -86,7 +86,7 @@ const ContributionProofCard = ({ proof }: { proof: ContributionProof }) => {
           className="shrink-0 gap-1.5"
         >
           {anchoring ? <Loader2 className="h-3 w-3 animate-spin" /> : <Shield className="h-3 w-3" />}
-          {anchoring ? "Anchoring..." : "Anchor"}
+          {anchoring ? "Verifying..." : "Verify"}
         </Button>
       )}
     </div>

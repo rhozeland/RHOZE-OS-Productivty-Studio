@@ -53,7 +53,7 @@ const CreatorReputation = ({ userId, isOwner = false }: CreatorReputationProps) 
         // continue anchoring others
       }
     }
-    toast.success(`Anchored ${success} contributions on Solana!`);
+    toast.success(`Verified ${success} contributions!`);
     setAnchoringAll(false);
     window.location.reload();
   };
@@ -72,7 +72,7 @@ const CreatorReputation = ({ userId, isOwner = false }: CreatorReputationProps) 
         <div className="flex items-center gap-2">
           <Award className="h-5 w-5 text-accent" />
           <h3 className="font-display text-lg font-semibold text-foreground">
-            On-Chain Reputation
+            Earning History
           </h3>
         </div>
         <div className="flex items-center gap-2">
@@ -92,7 +92,7 @@ const CreatorReputation = ({ userId, isOwner = false }: CreatorReputationProps) 
               ) : (
                 <Shield className="h-3 w-3" />
               )}
-              Anchor All ({Math.min(unanchoredCount, 5)})
+              Verify All ({Math.min(unanchoredCount, 5)})
             </Button>
           )}
         </div>
@@ -142,15 +142,7 @@ const CreatorReputation = ({ userId, isOwner = false }: CreatorReputationProps) 
       {anchoredCount > 0 && (
         <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
           <ExternalLink className="h-3 w-3" />
-          All proofs verifiable on{" "}
-          <a
-            href="https://solscan.io"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
-          >
-            Solscan
-          </a>
+          Independently verifiable on the public ledger
         </p>
       )}
     </div>

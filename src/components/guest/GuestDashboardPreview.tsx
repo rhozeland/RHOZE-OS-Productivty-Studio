@@ -102,7 +102,7 @@ const GuestDashboardPreview = () => (
         {[
           { step: "1", label: "Create", desc: "Post services, share work, build your portfolio" },
           { step: "2", label: "Earn", desc: "Every action earns $RHOZE tokens" },
-          { step: "3", label: "Grow", desc: "Build on-chain reputation with Proof-of-Contribution" },
+          { step: "3", label: "Grow", desc: "Build a verified Earning History as proof of your work" },
           { step: "4", label: "Reinvest", desc: "Use tokens for bookings, upgrades & marketplace" },
         ].map((s, i) => (
           <div key={s.step} className="space-y-2">

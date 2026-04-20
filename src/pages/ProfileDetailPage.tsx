@@ -281,12 +281,11 @@ const ProfileDetailPage = () => {
                     💳 {p.wallet_address.slice(0, 4)}...{p.wallet_address.slice(-4)}
                   </span>
                 )}
-                {/* On-chain reputation badge — subtle inline */}
+                {/* Verified earnings badge — subtle inline */}
                 {totalProofs > 0 && (
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Shield className="h-3 w-3 text-primary" />
-                    {anchoredCount > 0 ? `${anchoredCount} verified` : `${totalProofs} proofs`}
-                    <span className="text-muted-foreground/60">on Solana</span>
+                    {anchoredCount > 0 ? `${anchoredCount} verified earnings` : `${totalProofs} earnings`}
                   </span>
                 )}
               </div>
@@ -436,8 +435,7 @@ const ProfileDetailPage = () => {
             {anchoredCount > 0 && (
               <p className="text-xs text-muted-foreground text-center mt-3 flex items-center justify-center gap-1">
                 <ExternalLink className="h-3 w-3" />
-                All proofs verifiable on{" "}
-                <a href="https://solscan.io" target="_blank" rel="noopener noreferrer" className="underline">Solscan</a>
+                Independently verifiable on the public ledger
               </p>
             )}
           </motion.div>
@@ -562,7 +560,7 @@ const AnchorButton = ({ proofs }: { proofs: any[] }) => {
         if (!error) success++;
       } catch { /* continue */ }
     }
-    toast.success(`Anchored ${success} contributions on Solana!`);
+    toast.success(`Verified ${success} earnings!`);
     setAnchoring(false);
     window.location.reload();
   };
@@ -570,7 +568,7 @@ const AnchorButton = ({ proofs }: { proofs: any[] }) => {
   return (
     <Button size="sm" variant="outline" onClick={handleAnchor} disabled={anchoring} className="gap-1.5 text-xs">
       {anchoring ? <Loader2 className="h-3 w-3 animate-spin" /> : <Shield className="h-3 w-3" />}
-      Anchor ({Math.min(unanchored.length, 5)})
+      Verify ({Math.min(unanchored.length, 5)})
     </Button>
   );
 };
