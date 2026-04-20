@@ -117,6 +117,24 @@ const AppLayout = () => {
     enabled: searchOpen,
   });
 
+  // Header avatar
+  const { data: myProfile } = useQuery({
+    queryKey: ["my-profile-header", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const initials = myProfile?.display_name
+    ? myProfile.display_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+    : user?.email?.charAt(0).toUpperCase() ?? "?";
+
   const goTo = useCallback((path: string) => {
     setSearchOpen(false);
     navigate(path);
