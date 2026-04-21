@@ -68,7 +68,7 @@ const RevenueSplitLog = ({ configId }: RevenueSplitLogProps) => {
               </span>
               {log.solana_signature && (
                 <a
-                  href={`https://solscan.io/tx/${log.solana_signature}?cluster=devnet`}
+                  href={`https://solscan.io/tx/${log.solana_signature}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

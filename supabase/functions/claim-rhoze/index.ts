@@ -20,7 +20,7 @@ const corsHeaders = {
 };
 
 const RHOZE_MINT = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
-const RPC_URL = "https://api.devnet.solana.com";
+const RPC_URL = "https://api.mainnet-beta.solana.com";
 const RHOZE_DECIMALS = 6;
 const MIN_SOL_FOR_FEES = 0.002;
 
@@ -158,14 +158,14 @@ Deno.serve(async (req) => {
     if (airdropSolBalance < MIN_SOL_FOR_FEES * 1e9) {
       return respond({
         ok: false,
-        error: "Reward claiming is temporarily unavailable because the payout wallet does not have enough devnet SOL for network fees.",
+        error: "Reward claiming is temporarily unavailable: payout wallet needs SOL for network fees.",
       });
     }
 
     if (!airdropAtaInfo) {
       return respond({
         ok: false,
-        error: "Reward claiming is temporarily unavailable because the payout wallet does not have a $RHOZE token account on devnet.",
+        error: "Reward claiming is temporarily unavailable: payout wallet has no $RHOZE token account.",
       });
     }
 
@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
     if (sourceTokenAmount < tokenAmount) {
       return respond({
         ok: false,
-        error: "Reward claiming is temporarily unavailable because the payout wallet does not currently hold enough $RHOZE on devnet.",
+        error: "Reward claiming is temporarily unavailable: payout wallet does not currently hold enough $RHOZE.",
       });
     }
 
@@ -216,7 +216,7 @@ Deno.serve(async (req) => {
         return respond({
           ok: false,
           error:
-            "Reward claiming is temporarily unavailable because the payout wallet could not complete the token transfer on devnet.",
+            "Reward claiming failed: token transfer could not be completed.",
           details: error.message,
         });
       }

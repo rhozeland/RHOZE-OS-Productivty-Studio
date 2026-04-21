@@ -5,7 +5,7 @@ const corsHeaders = {
 };
 
 const RHOZE_MINT = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
-const RPC_URL = "https://api.devnet.solana.com";
+const RPC_URL = "https://api.mainnet-beta.solana.com";
 const RHOZE_DECIMALS = 6;
 
 const TIERS = [

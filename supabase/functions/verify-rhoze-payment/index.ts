@@ -9,7 +9,7 @@ const corsHeaders = {
 
 const RHOZE_MINT = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
 const TREASURY_ADDRESS = "6znjR2ttDJ5c6ScePsE4jU8e2g29dChX7cCVk6xjizr";
-const NETWORK = "devnet";
+const NETWORK = "mainnet-beta";
 const RHOZE_DECIMALS = 6;
 
 Deno.serve(async (req) => {
