@@ -22,6 +22,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_DOCK_IDS } from "@/components/settings/DockCustomizer";
+import { useSidebar } from "@/components/ui/sidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const ICON_MAP: Record<string, any> = {
   dashboard: Home,
@@ -79,10 +81,15 @@ const SCROLL_THRESHOLD = 8; // minimum delta to trigger hide/show
 const DockBar = () => {
   const location = useLocation();
   const { user } = useAuth();
+  const { state } = useSidebar();
+  const isMobile = useIsMobile();
   const controls = useAnimationControls();
   const lastScrollY = useRef(0);
   const isVisible = useRef(true);
   const ticking = useRef(false);
+
+  // Offset to keep dock centered over the main content area (not viewport)
+  const sidebarOffset = isMobile ? 0 : state === "expanded" ? 256 : 48;
 
   const { data: profile } = useQuery({
     queryKey: ["my-profile-dock"],
@@ -142,7 +149,8 @@ const DockBar = () => {
       initial={{ y: 80, opacity: 0 }}
       animate={controls}
       transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
-      className="fixed bottom-4 left-0 right-0 z-50 flex justify-center pointer-events-none"
+      className="fixed bottom-4 right-0 z-50 flex justify-center pointer-events-none transition-[left] duration-200 ease-linear"
+      style={{ left: sidebarOffset }}
       onAnimationStart={() => {
         // Ensure pointer events work during animation
       }}
