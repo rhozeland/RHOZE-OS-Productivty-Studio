@@ -10,6 +10,10 @@ const corsHeaders = {
 const TREASURY_ADDRESS = "6znjR2ttDJ5c6ScePsE4jU8e2g29dChX7cCVk6xjizr";
 const NETWORK = "mainnet-beta";
 
+// Server-side conversion rate: 1 SOL ≈ 150 USD (approx) -> 150 credits per SOL.
+// Adjust here only — never trust client values.
+const CREDITS_PER_SOL = 150;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -38,10 +42,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { signature, expected_sol, credits_to_add, description, type } = await req.json();
+    const { signature, expected_sol, description, type, intent } = await req.json();
 
-    if (!signature || !expected_sol || !credits_to_add) {
-      return new Response(JSON.stringify({ error: "Missing required fields: signature, expected_sol, credits_to_add" }), {
+    if (!signature || !expected_sol) {
+      return new Response(JSON.stringify({ error: "Missing required fields: signature, expected_sol" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -103,6 +107,11 @@ Deno.serve(async (req) => {
       });
     }
 
+    // SECURITY: derive credits server-side from the verified on-chain amount.
+    // Subscription payments do not award credits (tier benefits are applied separately).
+    const isSubscription = intent === "subscription" || type === "subscription";
+    const creditsToAdd = isSubscription ? 0 : Math.floor(receivedSol * CREDITS_PER_SOL);
+
     // Use service role to credit the user
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -123,41 +132,45 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Upsert user credits
-    const { data: existing } = await supabaseAdmin
-      .from("user_credits")
-      .select("balance")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    if (creditsToAdd > 0) {
+      // Upsert user credits
+      const { data: existing } = await supabaseAdmin
+        .from("user_credits")
+        .select("balance")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-    if (existing) {
-      const { error } = await supabaseAdmin
-        .from("user_credits")
-        .update({ balance: existing.balance + credits_to_add, updated_at: new Date().toISOString() })
-        .eq("user_id", user.id);
-      if (error) throw error;
-    } else {
-      const { error } = await supabaseAdmin
-        .from("user_credits")
-        .insert({ user_id: user.id, balance: credits_to_add });
-      if (error) throw error;
+      if (existing) {
+        const { error } = await supabaseAdmin
+          .from("user_credits")
+          .update({ balance: existing.balance + creditsToAdd, updated_at: new Date().toISOString() })
+          .eq("user_id", user.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabaseAdmin
+          .from("user_credits")
+          .insert({ user_id: user.id, balance: creditsToAdd });
+        if (error) throw error;
+      }
     }
 
-    // Log the transaction
+    // Log the transaction (always, even for subscription payments — for audit)
     const { error: txErr } = await supabaseAdmin
       .from("credit_transactions")
       .insert({
         user_id: user.id,
-        amount: credits_to_add,
-        type: type || "purchase",
-        description: description || `${credits_to_add} credit(s) via SOL`,
+        amount: creditsToAdd,
+        type: type || (isSubscription ? "subscription" : "purchase"),
+        description: description || (isSubscription
+          ? `Subscription payment via SOL (${receivedSol.toFixed(4)} SOL)`
+          : `${creditsToAdd} credit(s) via SOL`),
         payment_method: "crypto",
         payment_reference: signature,
       });
     if (txErr) throw txErr;
 
     return new Response(
-      JSON.stringify({ success: true, credits_added: credits_to_add, sol_received: receivedSol }),
+      JSON.stringify({ success: true, credits_added: creditsToAdd, sol_received: receivedSol }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
