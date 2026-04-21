@@ -946,7 +946,8 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
                 <div className="space-y-3">
                   <PaySolAndVerify
                     solAmount={+(getPrice(pendingTier) / 150).toFixed(4)}
-                    creditsToAdd={0}
+                    intent="subscription"
+                    type="subscription"
                     description={`${pendingTier.name} subscription (${billingCycle}, SOL)`}
                     label={`Pay ~${(getPrice(pendingTier) / 150).toFixed(4)} SOL`}
                     className="w-full"
@@ -963,7 +964,8 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
                   </div>
                   <PayWithRhozeButton
                     tokenAmount={Math.ceil(getPrice(pendingTier) * 100)}
-                    creditsToAdd={0}
+                    intent="subscription"
+                    type="subscription"
                     description={`${pendingTier.name} subscription (${billingCycle}, $RHOZE)`}
                     label={`Pay ${Math.ceil(getPrice(pendingTier) * 100)} $RHOZE`}
                     className="w-full"
