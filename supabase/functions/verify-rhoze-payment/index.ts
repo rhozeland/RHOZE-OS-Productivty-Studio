@@ -12,6 +12,10 @@ const TREASURY_ADDRESS = "6znjR2ttDJ5c6ScePsE4jU8e2g29dChX7cCVk6xjizr";
 const NETWORK = "mainnet-beta";
 const RHOZE_DECIMALS = 6;
 
+// Server-side conversion rate: 100 $RHOZE ≈ 1 USD ≈ 1 credit
+// Adjust here only — never trust client values.
+const RHOZE_PER_CREDIT = 100;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -40,10 +44,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { signature, expected_tokens, credits_to_add, description, type } = await req.json();
+    const { signature, expected_tokens, description, type, intent } = await req.json();
 
-    if (!signature || !expected_tokens || !credits_to_add) {
-      return new Response(JSON.stringify({ error: "Missing required fields" }), {
+    if (!signature || !expected_tokens) {
+      return new Response(JSON.stringify({ error: "Missing required fields: signature, expected_tokens" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -85,7 +89,6 @@ Deno.serve(async (req) => {
         parsed.type === "transfer" &&
         parsed.info?.mint === RHOZE_MINT
       ) {
-        // Check destination is treasury's ATA
         transferAmount = Number(parsed.info.amount || parsed.info.tokenAmount?.amount || 0);
         transferFound = true;
         break;
@@ -140,6 +143,10 @@ Deno.serve(async (req) => {
       });
     }
 
+    // SECURITY: derive credits server-side from the verified on-chain amount.
+    const isSubscription = intent === "subscription" || type === "subscription";
+    const creditsToAdd = isSubscription ? 0 : Math.floor(receivedTokens / RHOZE_PER_CREDIT);
+
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -159,37 +166,41 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Credit user
-    const { data: existing } = await supabaseAdmin
-      .from("user_credits")
-      .select("balance")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    if (creditsToAdd > 0) {
+      // Credit user
+      const { data: existing } = await supabaseAdmin
+        .from("user_credits")
+        .select("balance")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-    if (existing) {
-      await supabaseAdmin
-        .from("user_credits")
-        .update({ balance: existing.balance + credits_to_add, updated_at: new Date().toISOString() })
-        .eq("user_id", user.id);
-    } else {
-      await supabaseAdmin
-        .from("user_credits")
-        .insert({ user_id: user.id, balance: credits_to_add });
+      if (existing) {
+        await supabaseAdmin
+          .from("user_credits")
+          .update({ balance: existing.balance + creditsToAdd, updated_at: new Date().toISOString() })
+          .eq("user_id", user.id);
+      } else {
+        await supabaseAdmin
+          .from("user_credits")
+          .insert({ user_id: user.id, balance: creditsToAdd });
+      }
     }
 
     await supabaseAdmin
       .from("credit_transactions")
       .insert({
         user_id: user.id,
-        amount: credits_to_add,
-        type: type || "purchase",
-        description: description || `${credits_to_add} credit(s) via $RHOZE token`,
+        amount: creditsToAdd,
+        type: type || (isSubscription ? "subscription" : "purchase"),
+        description: description || (isSubscription
+          ? `Subscription payment via $RHOZE (${receivedTokens} tokens)`
+          : `${creditsToAdd} credit(s) via $RHOZE token`),
         payment_method: "rhoze_token",
         payment_reference: signature,
       });
 
     return new Response(
-      JSON.stringify({ success: true, credits_added: credits_to_add, tokens_received: receivedTokens }),
+      JSON.stringify({ success: true, credits_added: creditsToAdd, tokens_received: receivedTokens }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

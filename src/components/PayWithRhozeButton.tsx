@@ -20,9 +20,15 @@ const RHOZE_DECIMALS = 6;
 
 interface PayWithRhozeButtonProps {
   tokenAmount: number;
-  creditsToAdd: number;
+  /**
+   * @deprecated Credits are now derived server-side from the verified on-chain amount.
+   * This value is no longer trusted by the backend. Kept for backward compatibility only.
+   */
+  creditsToAdd?: number;
   description: string;
   type?: string;
+  /** "subscription" tells the backend not to award credits (tier benefits applied separately). */
+  intent?: "credits" | "subscription";
   onSuccess?: () => void;
   label?: string;
   className?: string;
@@ -32,9 +38,9 @@ interface PayWithRhozeButtonProps {
 
 const PayWithRhozeButton = ({
   tokenAmount,
-  creditsToAdd,
   description,
   type = "purchase",
+  intent = "credits",
   onSuccess,
   label,
   className,
@@ -91,16 +97,21 @@ const PayWithRhozeButton = ({
         body: {
           signature,
           expected_tokens: tokenAmount,
-          credits_to_add: creditsToAdd,
           description,
           type,
+          intent,
         },
       });
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast.success(`Paid ${tokenAmount} $RHOZE! ${creditsToAdd} credits added.`);
+      const awarded = data?.credits_added ?? 0;
+      toast.success(
+        intent === "subscription"
+          ? `Paid ${tokenAmount} $RHOZE!`
+          : `Paid ${tokenAmount} $RHOZE! ${awarded} credits added.`
+      );
       onSuccess?.();
     } catch (error: any) {
       const msg = error?.message || "Transaction failed";
