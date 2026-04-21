@@ -4,6 +4,7 @@ import {
   PublicKey,
   Transaction,
   Connection,
+  SendTransactionError,
 } from "npm:@solana/web3.js@1.98.4";
 import {
   getAssociatedTokenAddressSync,
@@ -21,10 +22,11 @@ const corsHeaders = {
 const RHOZE_MINT = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
 const RPC_URL = "https://api.devnet.solana.com";
 const RHOZE_DECIMALS = 6;
+const MIN_SOL_FOR_FEES = 0.002;
 
-function json(body: unknown, status = 200) {
+function respond(body: unknown) {
   return new Response(JSON.stringify(body), {
-    status,
+    status: 200,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
@@ -38,6 +40,15 @@ async function rpcCall(method: string, params: unknown[]) {
   return await res.json();
 }
 
+function parseAirdropKeypair(privateKeyStr: string) {
+  try {
+    const parsed = JSON.parse(privateKeyStr);
+    return Keypair.fromSecretKey(new Uint8Array(parsed));
+  } catch {
+    return Keypair.fromSecretKey(bs58.decode(privateKeyStr));
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -46,7 +57,7 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return json({ ok: false, error: "Unauthorized" }, 401);
+      return respond({ ok: false, error: "Unauthorized" });
     }
 
     const supabaseUser = createClient(
@@ -55,19 +66,23 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: { user }, error: authErr } = await supabaseUser.auth.getUser();
+    const {
+      data: { user },
+      error: authErr,
+    } = await supabaseUser.auth.getUser();
+
     if (authErr || !user) {
-      return json({ ok: false, error: "Unauthorized" }, 401);
+      return respond({ ok: false, error: "Unauthorized" });
     }
 
     const { wallet_address, credits_to_claim } = await req.json();
 
     if (!wallet_address || !credits_to_claim || credits_to_claim <= 0) {
-      return json({ ok: false, error: "Missing wallet_address or credits_to_claim" }, 400);
+      return respond({ ok: false, error: "Missing wallet_address or credits_to_claim" });
     }
 
     if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(wallet_address)) {
-      return json({ ok: false, error: "Invalid wallet address" }, 400);
+      return respond({ ok: false, error: "Invalid wallet address" });
     }
 
     const supabaseAdmin = createClient(
@@ -82,25 +97,28 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!profile) {
-      return json({ ok: false, error: "Profile not found" }, 400);
+      return respond({ ok: false, error: "Profile not found" });
     }
 
     if (profile.wallet_address && profile.wallet_address !== wallet_address) {
-      return json({
+      return respond({
         ok: false,
-        error: "Wallet mismatch. Your account is bound to " + profile.wallet_address.slice(0, 6) + "... — submit a change request to switch wallets.",
-      }, 403);
+        error:
+          "Wallet mismatch. Your account is bound to " +
+          profile.wallet_address.slice(0, 6) +
+          "... — submit a change request to switch wallets.",
+      });
     }
 
     if (!profile.wallet_address) {
       await supabaseAdmin
         .from("profiles")
-        .update({ wallet_address, wallet_locked: true, updated_at: new Date().toISOString() } as any)
+        .update({ wallet_address, wallet_locked: true, updated_at: new Date().toISOString() } as never)
         .eq("user_id", user.id);
     } else if (!profile.wallet_locked) {
       await supabaseAdmin
         .from("profiles")
-        .update({ wallet_locked: true, updated_at: new Date().toISOString() } as any)
+        .update({ wallet_locked: true, updated_at: new Date().toISOString() } as never)
         .eq("user_id", user.id);
     }
 
@@ -111,25 +129,19 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!creditData || creditData.balance < credits_to_claim) {
-      return json({
+      return respond({
         ok: false,
         error: `Insufficient credits. You have ${creditData?.balance ?? 0} but tried to claim ${credits_to_claim}`,
-      }, 400);
+      });
     }
 
     const privateKeyStr = Deno.env.get("RHOZE_AIRDROP_PRIVATE_KEY");
     if (!privateKeyStr) {
-      return json({ ok: false, error: "Airdrop wallet not configured" }, 500);
+      return respond({ ok: false, error: "Reward payout wallet is not configured yet." });
     }
 
-    let airdropKeypair: Keypair;
-    try {
-      const parsed = JSON.parse(privateKeyStr);
-      airdropKeypair = Keypair.fromSecretKey(new Uint8Array(parsed));
-    } catch {
-      airdropKeypair = Keypair.fromSecretKey(bs58.decode(privateKeyStr));
-    }
-
+    const airdropKeypair = parseAirdropKeypair(privateKeyStr);
+    const connection = new Connection(RPC_URL);
     const mintPubkey = new PublicKey(RHOZE_MINT);
     const recipientPubkey = new PublicKey(wallet_address);
     const tokenAmount = BigInt(Math.floor(credits_to_claim * Math.pow(10, RHOZE_DECIMALS)));
@@ -137,12 +149,39 @@ Deno.serve(async (req) => {
     const airdropATA = getAssociatedTokenAddressSync(mintPubkey, airdropKeypair.publicKey);
     const recipientATA = getAssociatedTokenAddressSync(mintPubkey, recipientPubkey);
 
-    const ataCheck = await rpcCall("getAccountInfo", [recipientATA.toBase58(), { encoding: "base64" }]);
+    const [airdropSolBalance, airdropAtaInfo, recipientAtaCheck] = await Promise.all([
+      connection.getBalance(airdropKeypair.publicKey),
+      connection.getAccountInfo(airdropATA),
+      rpcCall("getAccountInfo", [recipientATA.toBase58(), { encoding: "base64" }]),
+    ]);
 
-    const connection = new Connection(RPC_URL);
+    if (airdropSolBalance < MIN_SOL_FOR_FEES * 1e9) {
+      return respond({
+        ok: false,
+        error: "Reward claiming is temporarily unavailable because the payout wallet does not have enough devnet SOL for network fees.",
+      });
+    }
+
+    if (!airdropAtaInfo) {
+      return respond({
+        ok: false,
+        error: "Reward claiming is temporarily unavailable because the payout wallet does not have a $RHOZE token account on devnet.",
+      });
+    }
+
+    const sourceTokenBalance = await connection.getTokenAccountBalance(airdropATA).catch(() => null);
+    const sourceTokenAmount = BigInt(sourceTokenBalance?.value?.amount ?? "0");
+
+    if (sourceTokenAmount < tokenAmount) {
+      return respond({
+        ok: false,
+        error: "Reward claiming is temporarily unavailable because the payout wallet does not currently hold enough $RHOZE on devnet.",
+      });
+    }
+
     const transaction = new Transaction();
 
-    if (!ataCheck?.result?.value) {
+    if (!recipientAtaCheck?.result?.value) {
       transaction.add(
         createAssociatedTokenAccountInstruction(
           airdropKeypair.publicKey,
@@ -166,9 +205,24 @@ Deno.serve(async (req) => {
     transaction.recentBlockhash = blockhash;
     transaction.lastValidBlockHeight = lastValidBlockHeight;
     transaction.feePayer = airdropKeypair.publicKey;
-
     transaction.sign(airdropKeypair);
-    const signature = await connection.sendRawTransaction(transaction.serialize());
+
+    let signature = "";
+
+    try {
+      signature = await connection.sendRawTransaction(transaction.serialize());
+    } catch (error) {
+      if (error instanceof SendTransactionError) {
+        return respond({
+          ok: false,
+          error:
+            "Reward claiming is temporarily unavailable because the payout wallet could not complete the token transfer on devnet.",
+          details: error.message,
+        });
+      }
+
+      throw error;
+    }
 
     await supabaseAdmin
       .from("user_credits")
@@ -178,20 +232,21 @@ Deno.serve(async (req) => {
       })
       .eq("user_id", user.id);
 
-    await supabaseAdmin
-      .from("credit_transactions")
-      .insert({
-        user_id: user.id,
-        amount: -credits_to_claim,
-        type: "claim",
-        description: `Claimed ${credits_to_claim} $RHOZE to ${wallet_address.slice(0, 6)}...`,
-        payment_method: "crypto",
-        payment_reference: signature,
-      });
+    await supabaseAdmin.from("credit_transactions").insert({
+      user_id: user.id,
+      amount: -credits_to_claim,
+      type: "claim",
+      description: `Claimed ${credits_to_claim} $RHOZE to ${wallet_address.slice(0, 6)}...`,
+      payment_method: "crypto",
+      payment_reference: signature,
+    });
 
-    return json({ ok: true, success: true, signature, tokens_sent: credits_to_claim });
-  } catch (err: any) {
+    return respond({ ok: true, success: true, signature, tokens_sent: credits_to_claim });
+  } catch (err: unknown) {
     console.error("claim-rhoze error:", err);
-    return json({ ok: false, error: err?.message ?? String(err) }, 500);
+    return respond({
+      ok: false,
+      error: err instanceof Error ? err.message : "Claim failed unexpectedly.",
+    });
   }
 });
