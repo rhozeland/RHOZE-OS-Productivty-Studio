@@ -39,64 +39,81 @@ const StudioMediaManager = ({
   const [videoInput, setVideoInput] = useState(videoUrl || "");
   const [savingVideo, setSavingVideo] = useState(false);
 
-  const uploadFile = async (file: File, path: string) => {
+  // Crop dialog state
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const [cropAspect, setCropAspect] = useState(2); // 2:1 cover, 1:1 gallery
+  const [cropMode, setCropMode] = useState<"cover" | "gallery">("cover");
+  const [cropOpen, setCropOpen] = useState(false);
+
+  const uploadBlob = async (blob: Blob, path: string) => {
     const { error } = await supabase.storage
       .from("studio-media")
-      .upload(path, file, { upsert: true });
+      .upload(path, blob, { upsert: true, contentType: blob.type });
     if (error) throw error;
     const { data } = supabase.storage.from("studio-media").getPublicUrl(path);
     return `${data.publicUrl}?t=${Date.now()}`;
   };
 
-  const handleCoverUpload = async (file: File) => {
-    if (!user || file.size > 10 * 1024 * 1024) {
+  const openCropForCover = (file: File) => {
+    if (file.size > 10 * 1024 * 1024) {
       toast.error("Image must be under 10MB");
       return;
     }
-    setUploadingCover(true);
-    try {
-      const ext = file.name.split(".").pop();
-      const url = await uploadFile(file, `${studioId}/cover.${ext}`);
-      await supabase
-        .from("studios")
-        .update({ cover_image_url: url })
-        .eq("id", studioId);
-      toast.success("Cover image updated!");
-      onUpdate();
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setUploadingCover(false);
-    }
+    setCropFile(file);
+    setCropAspect(2);
+    setCropMode("cover");
+    setCropOpen(true);
   };
 
-  const handleGalleryUpload = async (files: FileList) => {
-    if (!user) return;
-    setUploadingGallery(true);
-    try {
-      const existing = galleryUrls || [];
-      const newUrls: string[] = [];
-      for (let i = 0; i < Math.min(files.length, 12 - existing.length); i++) {
-        const file = files[i];
-        if (file.size > 10 * 1024 * 1024) continue;
-        const ext = file.name.split(".").pop();
-        const url = await uploadFile(
-          file,
-          `${studioId}/gallery/${Date.now()}-${i}.${ext}`
-        );
-        newUrls.push(url);
+  const openCropForGallery = (file: File) => {
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image must be under 10MB");
+      return;
+    }
+    setCropFile(file);
+    setCropAspect(1);
+    setCropMode("gallery");
+    setCropOpen(true);
+  };
+
+  const handleCroppedBlob = async (blob: Blob) => {
+    if (!user || !cropFile) return;
+    const ext = (cropFile.name.split(".").pop() || "jpg").toLowerCase();
+
+    if (cropMode === "cover") {
+      setUploadingCover(true);
+      try {
+        const url = await uploadBlob(blob, `${studioId}/cover.${ext}`);
+        await supabase
+          .from("studios")
+          .update({ cover_image_url: url })
+          .eq("id", studioId);
+        toast.success("Cover image updated!");
+        onUpdate();
+      } catch (err: any) {
+        toast.error(err.message);
+      } finally {
+        setUploadingCover(false);
       }
-      const updated = [...existing, ...newUrls];
-      await supabase
-        .from("studios")
-        .update({ gallery_urls: updated })
-        .eq("id", studioId);
-      toast.success(`${newUrls.length} photo(s) added!`);
-      onUpdate();
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setUploadingGallery(false);
+    } else {
+      setUploadingGallery(true);
+      try {
+        const existing = galleryUrls || [];
+        const url = await uploadBlob(
+          blob,
+          `${studioId}/gallery/${Date.now()}.${ext}`
+        );
+        await supabase
+          .from("studios")
+          .update({ gallery_urls: [...existing, url] })
+          .eq("id", studioId);
+        toast.success("Photo added!");
+        onUpdate();
+      } catch (err: any) {
+        toast.error(err.message);
+      } finally {
+        setUploadingGallery(false);
+      }
     }
   };
 
