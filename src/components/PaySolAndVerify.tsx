@@ -16,9 +16,15 @@ export const TREASURY_ADDRESS = "6znjR2ttDJ5c6ScePsE4jU8e2g29dChX7cCVk6xjizr";
 
 interface PaySolAndVerifyProps {
   solAmount: number;
-  creditsToAdd: number;
+  /**
+   * @deprecated Credits are now derived server-side from the verified on-chain amount.
+   * This value is no longer trusted by the backend. Kept for backward compatibility only.
+   */
+  creditsToAdd?: number;
   description: string;
   type?: string;
+  /** "subscription" tells the backend not to award credits (tier benefits applied separately). */
+  intent?: "credits" | "subscription";
   onSuccess?: () => void;
   label?: string;
   className?: string;
@@ -28,9 +34,9 @@ interface PaySolAndVerifyProps {
 
 const PaySolAndVerify = ({
   solAmount,
-  creditsToAdd,
   description,
   type = "purchase",
+  intent = "credits",
   onSuccess,
   label,
   className,
@@ -66,16 +72,21 @@ const PaySolAndVerify = ({
         body: {
           signature,
           expected_sol: solAmount,
-          credits_to_add: creditsToAdd,
           description,
           type,
+          intent,
         },
       });
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast.success(`Payment confirmed! ${creditsToAdd} credit(s) added. Tx: ${signature.slice(0, 8)}...`);
+      const awarded = data?.credits_added ?? 0;
+      toast.success(
+        intent === "subscription"
+          ? `Payment confirmed! Tx: ${signature.slice(0, 8)}...`
+          : `Payment confirmed! ${awarded} credit(s) added. Tx: ${signature.slice(0, 8)}...`
+      );
       onSuccess?.();
     } catch (error: any) {
       const msg = error?.message || "Transaction failed";
