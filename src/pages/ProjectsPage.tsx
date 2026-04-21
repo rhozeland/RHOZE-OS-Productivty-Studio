@@ -248,7 +248,7 @@ const ProjectsPage = () => {
             Projects let you organize work, set milestones, invite collaborators, and track progress.
           </p>
           <Button
-            onClick={() => setShowCreate(true)}
+            onClick={() => setOpen(true)}
             className="mt-6 rounded-full gap-2"
             size="lg"
           >
