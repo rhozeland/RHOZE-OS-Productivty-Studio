@@ -57,22 +57,67 @@ const ProfilesPage = () => {
       .slice(0, 2)
       .toUpperCase();
 
+  const ROLE_FILTERS = [
+    { key: "all", label: "All" },
+    { key: "music", label: "🎵 Music" },
+    { key: "design", label: "🎨 Design" },
+    { key: "photo", label: "📷 Photo" },
+    { key: "video", label: "🎬 Video" },
+    { key: "writing", label: "✍️ Writing" },
+    { key: "available", label: "✅ Available" },
+  ];
+  const [activeRole, setActiveRole] = useState("all");
+
+  const directoryFiltered = filteredProfiles?.filter((p) => {
+    if (activeRole === "all") return true;
+    if (activeRole === "available") return p.available;
+    const haystack = [
+      ...(p.skills ?? []),
+      ...((p as any).mediums ?? []),
+      p.headline ?? "",
+      p.bio ?? "",
+    ].join(" ").toLowerCase();
+    return haystack.includes(activeRole);
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">Creator Profiles</h1>
-          <p className="text-muted-foreground">Discover and connect with talented creators</p>
+          <h1 className="font-display text-3xl font-bold text-foreground">Creator Directory</h1>
+          <p className="text-muted-foreground text-sm">
+            Find collaborators by skill, role, or vibe — drummers, designers, editors and more.
+          </p>
         </div>
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name, skill, medium..."
+            placeholder="Search by name, skill, role…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
           />
         </div>
+      </div>
+
+      {/* Role / skill filter chips */}
+      <div className="flex flex-wrap gap-2">
+        {ROLE_FILTERS.map((r) => {
+          const isActive = activeRole === r.key;
+          return (
+            <button
+              key={r.key}
+              onClick={() => setActiveRole(r.key)}
+              className={`rounded-full px-3 py-1.5 text-xs font-medium border transition-all ${
+                isActive
+                  ? "border-primary/30 bg-primary/10 text-primary"
+                  : "border-border bg-card text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {r.label}
+            </button>
+          );
+        })}
       </div>
 
       {isLoading ? (
@@ -81,17 +126,17 @@ const ProfilesPage = () => {
             <div key={i} className="surface-card h-64 animate-pulse" />
           ))}
         </div>
-      ) : filteredProfiles?.length === 0 ? (
+      ) : directoryFiltered?.length === 0 ? (
         <div className="text-center py-16">
           <User className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-          <p className="text-foreground font-medium">No profiles found</p>
+          <p className="text-foreground font-medium">No creators found</p>
           <p className="text-sm text-muted-foreground mt-1">
-            {search ? "Try a different search term" : "No creators have signed up yet"}
+            {search || activeRole !== "all" ? "Try a different search or filter" : "No creators have signed up yet"}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredProfiles?.map((profile, i) => (
+          {directoryFiltered?.map((profile, i) => (
             <motion.div
               key={profile.id}
               initial={{ opacity: 0, y: 16 }}
