@@ -15,6 +15,24 @@ import {
   X,
   Plus,
 } from "lucide-react";
+import ImageCropDialog from "./ImageCropDialog";
+
+// Convert any YouTube/Vimeo URL into an embeddable iframe URL.
+const toEmbedUrl = (raw: string): string => {
+  if (!raw) return "";
+  const url = raw.trim();
+  const ytShort = url.match(/youtu\.be\/([\w-]{6,})/);
+  if (ytShort) return `https://www.youtube.com/embed/${ytShort[1]}`;
+  const ytWatch = url.match(/[?&]v=([\w-]{6,})/);
+  if (ytWatch && /youtube\.com/.test(url)) return `https://www.youtube.com/embed/${ytWatch[1]}`;
+  const ytEmbed = url.match(/youtube\.com\/embed\/([\w-]{6,})/);
+  if (ytEmbed) return `https://www.youtube.com/embed/${ytEmbed[1]}`;
+  const ytShorts = url.match(/youtube\.com\/shorts\/([\w-]{6,})/);
+  if (ytShorts) return `https://www.youtube.com/embed/${ytShorts[1]}`;
+  const vimeo = url.match(/vimeo\.com\/(\d+)/);
+  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`;
+  return url;
+};
 
 interface StudioMediaManagerProps {
   studioId: string;
@@ -234,7 +252,7 @@ const StudioMediaManager = ({
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) handleCoverUpload(file);
+            if (file) openCropForCover(file);
             e.target.value = "";
           }}
         />
@@ -299,10 +317,10 @@ const StudioMediaManager = ({
           ref={galleryRef}
           type="file"
           accept="image/*"
-          multiple
           className="hidden"
           onChange={(e) => {
-            if (e.target.files?.length) handleGalleryUpload(e.target.files);
+            const file = e.target.files?.[0];
+            if (file) openCropForGallery(file);
             e.target.value = "";
           }}
         />
@@ -335,14 +353,24 @@ const StudioMediaManager = ({
         {(currentVideo || videoInput) && (
           <div className="aspect-video rounded-lg overflow-hidden bg-muted">
             <iframe
-              src={currentVideo || videoInput}
+              src={toEmbedUrl(currentVideo || videoInput)}
               className="w-full h-full"
               allowFullScreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               title="Studio video"
             />
           </div>
         )}
       </div>
+
+      <ImageCropDialog
+        open={cropOpen}
+        onOpenChange={setCropOpen}
+        file={cropFile}
+        aspect={cropAspect}
+        onCropped={handleCroppedBlob}
+        title={cropMode === "cover" ? "Crop cover image (2:1)" : "Crop photo (1:1)"}
+      />
     </div>
   );
 };
