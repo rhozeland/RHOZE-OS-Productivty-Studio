@@ -142,7 +142,7 @@ const DockBar = () => {
       initial={{ y: 80, opacity: 0 }}
       animate={controls}
       transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
-      className="fixed bottom-4 left-0 right-0 z-50 flex justify-center pointer-events-none"
+      className="fixed bottom-4 left-0 right-0 md:left-[var(--sidebar-width,0px)] z-50 flex justify-center pointer-events-none transition-[left] duration-200 ease-linear"
       onAnimationStart={() => {
         // Ensure pointer events work during animation
       }}
