@@ -243,8 +243,18 @@ const ProjectsPage = () => {
           <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
             <Sparkles className="h-8 w-8 text-primary" />
           </div>
-          <p className="text-muted-foreground text-lg">No projects yet</p>
-          <p className="text-muted-foreground/60 text-sm mt-1">Create your first project to get started</p>
+          <p className="text-foreground text-lg font-medium">Start your first project</p>
+          <p className="text-muted-foreground/80 text-sm mt-1 max-w-xs">
+            Projects let you organize work, set milestones, invite collaborators, and track progress.
+          </p>
+          <Button
+            onClick={() => setShowCreate(true)}
+            className="mt-6 rounded-full gap-2"
+            size="lg"
+          >
+            <Sparkles className="h-4 w-4" />
+            Create your first project
+          </Button>
         </motion.div>
       ) : (
         <motion.div
