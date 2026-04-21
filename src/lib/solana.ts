@@ -7,7 +7,7 @@ import {
   clusterApiUrl,
 } from "@solana/web3.js";
 
-const NETWORK = "devnet";
+const NETWORK = "mainnet-beta";
 
 export const getConnection = () => new Connection(clusterApiUrl(NETWORK));
 

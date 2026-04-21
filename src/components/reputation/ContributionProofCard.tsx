@@ -67,7 +67,7 @@ const ContributionProofCard = ({ proof }: { proof: ContributionProof }) => {
 
       {proof.solana_signature ? (
         <a
-          href={`https://solscan.io/tx/${proof.solana_signature}?cluster=devnet`}
+          href={`https://solscan.io/tx/${proof.solana_signature}`}
           target="_blank"
           rel="noopener noreferrer"
           className="shrink-0"

@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
     const privateKeyArray = JSON.parse(privateKeyStr);
     const keypair = Keypair.fromSecretKey(new Uint8Array(privateKeyArray));
 
-    const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+    const connection = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
 
     const memoInstruction = new TransactionInstruction({
       keys: [
@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
 
     return respond(200, {
       signature,
-      explorer: `https://solscan.io/tx/${signature}?cluster=devnet`,
+      explorer: `https://solscan.io/tx/${signature}`,
     });
   } catch (err) {
     console.error("anchor-contribution error:", err);

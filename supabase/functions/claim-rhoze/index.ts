@@ -10,6 +10,7 @@ import {
   getAssociatedTokenAddressSync,
   createTransferInstruction,
   createAssociatedTokenAccountInstruction,
+  TOKEN_2022_PROGRAM_ID,
 } from "npm:@solana/spl-token@0.4.9";
 import bs58 from "npm:bs58@6.0.0";
 
@@ -20,7 +21,7 @@ const corsHeaders = {
 };
 
 const RHOZE_MINT = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
-const RPC_URL = "https://api.devnet.solana.com";
+const RPC_URL = "https://api.mainnet-beta.solana.com";
 const RHOZE_DECIMALS = 6;
 const MIN_SOL_FOR_FEES = 0.002;
 
@@ -146,8 +147,8 @@ Deno.serve(async (req) => {
     const recipientPubkey = new PublicKey(wallet_address);
     const tokenAmount = BigInt(Math.floor(credits_to_claim * Math.pow(10, RHOZE_DECIMALS)));
 
-    const airdropATA = getAssociatedTokenAddressSync(mintPubkey, airdropKeypair.publicKey);
-    const recipientATA = getAssociatedTokenAddressSync(mintPubkey, recipientPubkey);
+    const airdropATA = getAssociatedTokenAddressSync(mintPubkey, airdropKeypair.publicKey, false, TOKEN_2022_PROGRAM_ID);
+    const recipientATA = getAssociatedTokenAddressSync(mintPubkey, recipientPubkey, false, TOKEN_2022_PROGRAM_ID);
 
     const [airdropSolBalance, airdropAtaInfo, recipientAtaCheck] = await Promise.all([
       connection.getBalance(airdropKeypair.publicKey),
@@ -158,14 +159,14 @@ Deno.serve(async (req) => {
     if (airdropSolBalance < MIN_SOL_FOR_FEES * 1e9) {
       return respond({
         ok: false,
-        error: "Reward claiming is temporarily unavailable because the payout wallet does not have enough devnet SOL for network fees.",
+        error: "Reward claiming is temporarily unavailable: payout wallet needs SOL for network fees.",
       });
     }
 
     if (!airdropAtaInfo) {
       return respond({
         ok: false,
-        error: "Reward claiming is temporarily unavailable because the payout wallet does not have a $RHOZE token account on devnet.",
+        error: "Reward claiming is temporarily unavailable: payout wallet has no $RHOZE token account.",
       });
     }
 
@@ -175,7 +176,7 @@ Deno.serve(async (req) => {
     if (sourceTokenAmount < tokenAmount) {
       return respond({
         ok: false,
-        error: "Reward claiming is temporarily unavailable because the payout wallet does not currently hold enough $RHOZE on devnet.",
+        error: "Reward claiming is temporarily unavailable: payout wallet does not currently hold enough $RHOZE.",
       });
     }
 
@@ -187,7 +188,8 @@ Deno.serve(async (req) => {
           airdropKeypair.publicKey,
           recipientATA,
           recipientPubkey,
-          mintPubkey
+          mintPubkey,
+          TOKEN_2022_PROGRAM_ID
         )
       );
     }
@@ -197,7 +199,9 @@ Deno.serve(async (req) => {
         airdropATA,
         recipientATA,
         airdropKeypair.publicKey,
-        tokenAmount
+        tokenAmount,
+        [],
+        TOKEN_2022_PROGRAM_ID
       )
     );
 
@@ -216,7 +220,7 @@ Deno.serve(async (req) => {
         return respond({
           ok: false,
           error:
-            "Reward claiming is temporarily unavailable because the payout wallet could not complete the token transfer on devnet.",
+            "Reward claiming failed: token transfer could not be completed.",
           details: error.message,
         });
       }

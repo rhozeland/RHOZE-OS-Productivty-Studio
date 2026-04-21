@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
         if (privateKeyStr) {
           const privateKeyArray = JSON.parse(privateKeyStr);
           const keypair = Keypair.fromSecretKey(new Uint8Array(privateKeyArray));
-          const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+          const connection = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
 
           const buybackPubkey = new PublicKey(config.buyback_wallet);
           const sourceATA = getAssociatedTokenAddress(RHOZE_MINT, keypair.publicKey);
