@@ -140,7 +140,10 @@ const SmartboardsPage = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">My Boards</h1>
+          <h1 className="font-display text-3xl font-bold text-foreground">
+            My Boards
+            <span className="ml-2 text-xs font-normal text-muted-foreground align-middle">· Visual Mood & Curation</span>
+          </h1>
           <p className="text-muted-foreground text-sm">Curate, collaborate, and brainstorm</p>
         </div>
         <div className="flex items-center gap-2">
