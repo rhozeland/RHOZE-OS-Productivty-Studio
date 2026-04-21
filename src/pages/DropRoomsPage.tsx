@@ -162,9 +162,10 @@ const DropRoomsPage = () => {
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Zap className="h-6 w-6 text-primary" />
             Drop Rooms
+            <span className="text-xs font-normal text-muted-foreground">· Pop-up Collab Spaces</span>
           </h1>
           <p className="text-muted-foreground mt-1">
-            Temporary creative collaboration spaces — jump in, build ideas, drop out.
+            24-hour collaboration spaces — jump in, build together, then drop out.
           </p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

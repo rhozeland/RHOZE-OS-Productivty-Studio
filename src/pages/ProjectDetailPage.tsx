@@ -18,8 +18,9 @@ import {
 } from "@/components/ui/dialog";
 import {
   Plus, Trash2, LayoutGrid, Link2, X, FileDown, Pencil, Check,
-  Milestone, ListTodo, CalendarDays, Lock, Unlock,
+  Milestone, ListTodo, CalendarDays, Lock, Unlock, ShoppingBag,
 } from "lucide-react";
+import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import { exportProjectPDF } from "@/lib/export-project-pdf";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -41,6 +42,7 @@ const ProjectDetailPage = () => {
   const [editingHeader, setEditingHeader] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [listingDialogOpen, setListingDialogOpen] = useState(false);
 
   const { data: project } = useQuery({
     queryKey: ["project", id],
@@ -261,35 +263,59 @@ const ProjectDetailPage = () => {
             </div>
           )}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="shrink-0 gap-1.5"
-          onClick={() => {
-            toast.promise(
-              exportProjectPDF(
-                project as any,
-                goals,
-                approvals as any,
-                contract ? {
-                  status: contract.status,
-                  total_credits: contract.total_credits,
-                  released_credits: contract.released_credits,
-                  escrowed_credits: contract.escrowed_credits,
-                } : undefined
-              ),
-              {
-                loading: "Generating PDF...",
-                success: "PDF downloaded!",
-                error: "Failed to generate PDF",
-              }
-            );
-          }}
-        >
-          <FileDown className="h-4 w-4" />
-          Export PDF
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          {project.user_id === user?.id && (
+            <Button
+              variant="default"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setListingDialogOpen(true)}
+            >
+              <ShoppingBag className="h-4 w-4" />
+              List on Marketplace
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => {
+              toast.promise(
+                exportProjectPDF(
+                  project as any,
+                  goals,
+                  approvals as any,
+                  contract ? {
+                    status: contract.status,
+                    total_credits: contract.total_credits,
+                    released_credits: contract.released_credits,
+                    escrowed_credits: contract.escrowed_credits,
+                  } : undefined
+                ),
+                {
+                  loading: "Generating PDF...",
+                  success: "PDF downloaded!",
+                  error: "Failed to generate PDF",
+                }
+              );
+            }}
+          >
+            <FileDown className="h-4 w-4" />
+            Export PDF
+          </Button>
+        </div>
       </div>
+
+      <CreateListingDialog
+        open={listingDialogOpen}
+        onOpenChange={setListingDialogOpen}
+        prefill={{
+          title: project.title,
+          description: project.description ?? undefined,
+          listing_type: "project_request",
+          category: project.categories?.[0] ?? "design",
+        }}
+      />
 
       {/* Progress Overview */}
       <ProgressChart goals={goals} />

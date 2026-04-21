@@ -51,19 +51,25 @@ const CATEGORIES = [
 interface CreateListingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  prefill?: {
+    title?: string;
+    description?: string;
+    listing_type?: string;
+    category?: string;
+  };
 }
 
-const CreateListingDialog = ({ open, onOpenChange }: CreateListingDialogProps) => {
+const CreateListingDialog = ({ open, onOpenChange, prefill }: CreateListingDialogProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(0);
 
   // Form
-  const [listingType, setListingType] = useState("service");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("design");
+  const [listingType, setListingType] = useState(prefill?.listing_type ?? "service");
+  const [title, setTitle] = useState(prefill?.title ?? "");
+  const [description, setDescription] = useState(prefill?.description ?? "");
+  const [category, setCategory] = useState(prefill?.category ?? "design");
   const [budgetRange, setBudgetRange] = useState("");
   const [deliveryDays, setDeliveryDays] = useState("");
   const [revisions, setRevisions] = useState("");
@@ -82,10 +88,10 @@ const CreateListingDialog = ({ open, onOpenChange }: CreateListingDialogProps) =
 
   const reset = () => {
     setStep(0);
-    setListingType("service");
-    setTitle("");
-    setDescription("");
-    setCategory("design");
+    setListingType(prefill?.listing_type ?? "service");
+    setTitle(prefill?.title ?? "");
+    setDescription(prefill?.description ?? "");
+    setCategory(prefill?.category ?? "design");
     setBudgetRange("");
     setDeliveryDays("");
     setRevisions("");

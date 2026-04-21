@@ -134,6 +134,9 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
   const projectRoleColors: Record<string, string> = {
     client: "bg-blue-500/10 text-blue-600",
     specialist: "bg-emerald-500/10 text-emerald-600",
+    manager: "bg-purple-500/10 text-purple-600",
+    label: "bg-amber-500/10 text-amber-600",
+    contributor: "bg-pink-500/10 text-pink-600",
   };
 
   const handleSelectUser = (u: { user_id: string; display_name: string }) => {
@@ -233,10 +236,13 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
 
               {!isCollaborative && (
                 <Select value={projectRole} onValueChange={setProjectRole}>
-                  <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Project role" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="client">Client</SelectItem>
                     <SelectItem value="specialist">Specialist</SelectItem>
+                    <SelectItem value="manager">Manager</SelectItem>
+                    <SelectItem value="label">Record Label</SelectItem>
+                    <SelectItem value="contributor">Contributor</SelectItem>
                   </SelectContent>
                 </Select>
               )}
