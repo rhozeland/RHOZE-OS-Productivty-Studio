@@ -1,4 +1,16 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  Keypair,
+  PublicKey,
+  Transaction,
+  Connection,
+} from "npm:@solana/web3.js@1.98.4";
+import {
+  getAssociatedTokenAddressSync,
+  createTransferInstruction,
+  createAssociatedTokenAccountInstruction,
+} from "npm:@solana/spl-token@0.4.9";
+import bs58 from "npm:bs58@6.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,11 +21,6 @@ const corsHeaders = {
 const RHOZE_MINT = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
 const RPC_URL = "https://api.devnet.solana.com";
 const RHOZE_DECIMALS = 6;
-
-// SPL Token Program & Associated Token Program IDs
-const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
-const ATA_PROGRAM_ID = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
-const SYSTEM_PROGRAM_ID = "11111111111111111111111111111111";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -37,10 +44,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Auth check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return json({ error: "Unauthorized" }, 401);
+      return json({ ok: false, error: "Unauthorized" }, 401);
     }
 
     const supabaseUser = createClient(
@@ -51,17 +57,17 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: authErr } = await supabaseUser.auth.getUser();
     if (authErr || !user) {
-      return json({ error: "Unauthorized" }, 401);
+      return json({ ok: false, error: "Unauthorized" }, 401);
     }
 
     const { wallet_address, credits_to_claim } = await req.json();
 
     if (!wallet_address || !credits_to_claim || credits_to_claim <= 0) {
-      return json({ error: "Missing wallet_address or credits_to_claim" }, 400);
+      return json({ ok: false, error: "Missing wallet_address or credits_to_claim" }, 400);
     }
 
     if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(wallet_address)) {
-      return json({ error: "Invalid wallet address" }, 400);
+      return json({ ok: false, error: "Invalid wallet address" }, 400);
     }
 
     const supabaseAdmin = createClient(
@@ -69,7 +75,6 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Enforce wallet binding: wallet must match the one stored in profile
     const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("wallet_address, wallet_locked")
@@ -77,32 +82,28 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!profile) {
-      return json({ error: "Profile not found" }, 400);
+      return json({ ok: false, error: "Profile not found" }, 400);
     }
 
     if (profile.wallet_address && profile.wallet_address !== wallet_address) {
       return json({
+        ok: false,
         error: "Wallet mismatch. Your account is bound to " + profile.wallet_address.slice(0, 6) + "... — submit a change request to switch wallets.",
       }, 403);
     }
 
-    // If no wallet set yet, bind this one and lock it
     if (!profile.wallet_address) {
       await supabaseAdmin
         .from("profiles")
         .update({ wallet_address, wallet_locked: true, updated_at: new Date().toISOString() } as any)
         .eq("user_id", user.id);
     } else if (!profile.wallet_locked) {
-      // Lock existing wallet
       await supabaseAdmin
         .from("profiles")
         .update({ wallet_locked: true, updated_at: new Date().toISOString() } as any)
         .eq("user_id", user.id);
     }
 
-    // Check user's claimable balance (supabaseAdmin already created above)
-
-    // Check user's claimable balance
     const { data: creditData } = await supabaseAdmin
       .from("user_credits")
       .select("balance")
@@ -111,33 +112,21 @@ Deno.serve(async (req) => {
 
     if (!creditData || creditData.balance < credits_to_claim) {
       return json({
+        ok: false,
         error: `Insufficient credits. You have ${creditData?.balance ?? 0} but tried to claim ${credits_to_claim}`,
       }, 400);
     }
 
-    // Load airdrop wallet - we need the SDK for signing transactions
-    // Use a lighter approach: build the transaction using the SDK dynamically
     const privateKeyStr = Deno.env.get("RHOZE_AIRDROP_PRIVATE_KEY");
     if (!privateKeyStr) {
-      return json({ error: "Airdrop wallet not configured" }, 500);
+      return json({ ok: false, error: "Airdrop wallet not configured" }, 500);
     }
 
-    // Import only what we need, dynamically
-    const { Keypair, PublicKey, Transaction, Connection } = await import(
-      "https://esm.sh/@solana/web3.js@1.98.4?bundle"
-    );
-    const {
-      getAssociatedTokenAddressSync,
-      createTransferInstruction,
-      createAssociatedTokenAccountInstruction,
-    } = await import("https://esm.sh/@solana/spl-token@0.4.9?bundle");
-
-    let airdropKeypair: InstanceType<typeof Keypair>;
+    let airdropKeypair: Keypair;
     try {
       const parsed = JSON.parse(privateKeyStr);
       airdropKeypair = Keypair.fromSecretKey(new Uint8Array(parsed));
     } catch {
-      const { default: bs58 } = await import("https://esm.sh/bs58@6.0.0");
       airdropKeypair = Keypair.fromSecretKey(bs58.decode(privateKeyStr));
     }
 
@@ -148,7 +137,6 @@ Deno.serve(async (req) => {
     const airdropATA = getAssociatedTokenAddressSync(mintPubkey, airdropKeypair.publicKey);
     const recipientATA = getAssociatedTokenAddressSync(mintPubkey, recipientPubkey);
 
-    // Check if recipient ATA exists via RPC (lighter than SDK method)
     const ataCheck = await rpcCall("getAccountInfo", [recipientATA.toBase58(), { encoding: "base64" }]);
 
     const connection = new Connection(RPC_URL);
@@ -182,7 +170,6 @@ Deno.serve(async (req) => {
     transaction.sign(airdropKeypair);
     const signature = await connection.sendRawTransaction(transaction.serialize());
 
-    // Deduct credits from user balance
     await supabaseAdmin
       .from("user_credits")
       .update({
@@ -191,7 +178,6 @@ Deno.serve(async (req) => {
       })
       .eq("user_id", user.id);
 
-    // Log the claim transaction
     await supabaseAdmin
       .from("credit_transactions")
       .insert({
@@ -203,9 +189,9 @@ Deno.serve(async (req) => {
         payment_reference: signature,
       });
 
-    return json({ success: true, signature, tokens_sent: credits_to_claim });
-  } catch (err) {
+    return json({ ok: true, success: true, signature, tokens_sent: credits_to_claim });
+  } catch (err: any) {
     console.error("claim-rhoze error:", err);
-    return json({ error: err.message }, 500);
+    return json({ ok: false, error: err?.message ?? String(err) }, 500);
   }
 });
