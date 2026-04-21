@@ -101,8 +101,11 @@ const LandingPage = () => {
             {/* Left — copy */}
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="flex flex-col items-center lg:items-start max-w-md mx-auto lg:mx-0">
               <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/15 px-3 py-1 mb-6">
-                <Flame className="h-3 w-3 text-primary" />
-                <span className="text-[11px] font-medium text-primary tracking-wide">THE DIGITAL STUDIO</span>
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                <span className="text-[11px] font-medium text-primary tracking-wide">50+ CREATORS BUILDING NOW</span>
               </div>
 
               <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold leading-[1.1] text-foreground mb-4">

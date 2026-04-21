@@ -55,6 +55,13 @@ const CreatorsHubPage = () => {
               <p className="text-sm text-muted-foreground max-w-md font-body leading-relaxed">
                 Discover services, find talent, and post creative projects.
               </p>
+              <div className="mt-3 inline-flex items-center gap-2 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                50+ creators online
+              </div>
             </div>
 
             <motion.div
