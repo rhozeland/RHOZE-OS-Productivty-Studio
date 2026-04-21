@@ -10,6 +10,7 @@ import {
   getAssociatedTokenAddressSync,
   createTransferInstruction,
   createAssociatedTokenAccountInstruction,
+  TOKEN_2022_PROGRAM_ID,
 } from "npm:@solana/spl-token@0.4.9";
 import bs58 from "npm:bs58@6.0.0";
 
@@ -146,8 +147,8 @@ Deno.serve(async (req) => {
     const recipientPubkey = new PublicKey(wallet_address);
     const tokenAmount = BigInt(Math.floor(credits_to_claim * Math.pow(10, RHOZE_DECIMALS)));
 
-    const airdropATA = getAssociatedTokenAddressSync(mintPubkey, airdropKeypair.publicKey);
-    const recipientATA = getAssociatedTokenAddressSync(mintPubkey, recipientPubkey);
+    const airdropATA = getAssociatedTokenAddressSync(mintPubkey, airdropKeypair.publicKey, false, TOKEN_2022_PROGRAM_ID);
+    const recipientATA = getAssociatedTokenAddressSync(mintPubkey, recipientPubkey, false, TOKEN_2022_PROGRAM_ID);
 
     const [airdropSolBalance, airdropAtaInfo, recipientAtaCheck] = await Promise.all([
       connection.getBalance(airdropKeypair.publicKey),
@@ -187,7 +188,8 @@ Deno.serve(async (req) => {
           airdropKeypair.publicKey,
           recipientATA,
           recipientPubkey,
-          mintPubkey
+          mintPubkey,
+          TOKEN_2022_PROGRAM_ID
         )
       );
     }
@@ -197,7 +199,9 @@ Deno.serve(async (req) => {
         airdropATA,
         recipientATA,
         airdropKeypair.publicKey,
-        tokenAmount
+        tokenAmount,
+        [],
+        TOKEN_2022_PROGRAM_ID
       )
     );
 
