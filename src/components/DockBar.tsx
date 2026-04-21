@@ -22,6 +22,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_DOCK_IDS } from "@/components/settings/DockCustomizer";
+import { useSidebar } from "@/components/ui/sidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const ICON_MAP: Record<string, any> = {
   dashboard: Home,
