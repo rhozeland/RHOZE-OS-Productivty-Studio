@@ -84,6 +84,9 @@ const FlowModePage = () => {
   const [newCategory, setNewCategory] = useState("design");
   const [newLink, setNewLink] = useState("");
   const [newFile, setNewFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounterRef = useRef(0);
   const [newCreatorName, setNewCreatorName] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(() => {
