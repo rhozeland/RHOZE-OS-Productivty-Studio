@@ -766,7 +766,7 @@ const FlowModePage = () => {
 
       {/* Add content dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Share to Flow</DialogTitle>
             <DialogDescription>Upload your work for others to discover.</DialogDescription>
@@ -778,9 +778,99 @@ const FlowModePage = () => {
             }}
             className="space-y-4"
           >
+            {/* Live preview — shows file or link content above the form fields */}
+            {(() => {
+              const fileUrl = newFile ? URL.createObjectURL(newFile) : null;
+              const fileType = newFile?.type || "";
+              const trimmedLink = newLink.trim();
+              const linkLooksImage = /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(trimmedLink);
+              const ytMatch = trimmedLink.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
+              const vimeoMatch = trimmedLink.match(/vimeo\.com\/(\d+)/);
+              const hasAnyPreview = !!fileUrl || !!trimmedLink;
+
+              if (!hasAnyPreview) {
+                return (
+                  <div className="aspect-video rounded-xl border-2 border-dashed border-border/60 bg-muted/30 flex flex-col items-center justify-center text-muted-foreground">
+                    <Upload className="h-7 w-7 mb-1.5 opacity-40" />
+                    <p className="text-xs font-body">Preview will appear here</p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="relative rounded-xl overflow-hidden border border-border bg-muted/30">
+                  {/* File preview takes priority over link preview */}
+                  {fileUrl && fileType.startsWith("image/") && (
+                    <img src={fileUrl} alt="preview" className="w-full max-h-72 object-contain bg-background" />
+                  )}
+                  {fileUrl && fileType.startsWith("video/") && (
+                    <video src={fileUrl} controls className="w-full max-h-72 bg-background" />
+                  )}
+                  {fileUrl && fileType.startsWith("audio/") && (
+                    <div className="p-4 bg-background">
+                      <audio src={fileUrl} controls className="w-full" />
+                      <p className="text-xs text-muted-foreground mt-2 truncate">{newFile?.name}</p>
+                    </div>
+                  )}
+                  {fileUrl && !fileType.startsWith("image/") && !fileType.startsWith("video/") && !fileType.startsWith("audio/") && (
+                    <div className="p-5 flex items-center gap-3 bg-background">
+                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                        <Check className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{newFile?.name}</p>
+                        <p className="text-[11px] text-muted-foreground">Ready to share · {(newFile!.size / 1024).toFixed(0)} KB</p>
+                      </div>
+                    </div>
+                  )}
+                  {!fileUrl && trimmedLink && linkLooksImage && (
+                    <img src={trimmedLink} alt="link preview" className="w-full max-h-72 object-contain bg-background" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                  )}
+                  {!fileUrl && ytMatch && (
+                    <div className="aspect-video bg-background">
+                      <iframe
+                        src={`https://www.youtube.com/embed/${ytMatch[1]}`}
+                        title="YouTube preview"
+                        className="w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  )}
+                  {!fileUrl && !ytMatch && vimeoMatch && (
+                    <div className="aspect-video bg-background">
+                      <iframe
+                        src={`https://player.vimeo.com/video/${vimeoMatch[1]}`}
+                        title="Vimeo preview"
+                        className="w-full h-full"
+                        allow="autoplay; fullscreen; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  )}
+                  {!fileUrl && trimmedLink && !linkLooksImage && !ytMatch && !vimeoMatch && (
+                    <a
+                      href={trimmedLink}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="flex items-center gap-3 p-4 bg-background hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                        <ChevronRight className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-muted-foreground font-body uppercase tracking-wider">External link</p>
+                        <p className="text-sm font-medium text-foreground truncate">{trimmedLink}</p>
+                      </div>
+                    </a>
+                  )}
+                </div>
+              );
+            })()}
+
             <Input placeholder="Title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
             <Input placeholder="Creator / Artist name (optional)" value={newCreatorName} onChange={(e) => setNewCreatorName(e.target.value)} />
-            <Textarea placeholder="Description (optional)" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={3} />
+            <Textarea placeholder="Description (optional)" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={2} />
             <Select value={newCategory} onValueChange={(val) => { setNewCategory(val); setNewFile(null); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -801,7 +891,7 @@ const FlowModePage = () => {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full border-2 border-dashed border-border rounded-xl p-5 text-center hover:border-primary/30 transition-colors"
+                className="w-full border-2 border-dashed border-border rounded-xl p-4 text-center hover:border-primary/30 transition-colors"
               >
                 {newFile ? (
                   <div className="flex items-center justify-center gap-2">
@@ -817,7 +907,7 @@ const FlowModePage = () => {
                   </div>
                 ) : (
                   <>
-                    <Upload className="h-6 w-6 text-muted-foreground mx-auto mb-1.5" />
+                    <Upload className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
                     <p className="text-sm text-muted-foreground">{CATEGORY_UPLOAD_HINTS[newCategory]?.hint || "Upload a file"}</p>
                   </>
                 )}
