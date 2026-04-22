@@ -62,6 +62,7 @@ const ClaimRhozeButton = ({
       queryClient.invalidateQueries({ queryKey: ["user-credits"] });
       queryClient.invalidateQueries({ queryKey: ["rhoze-balance"] });
       queryClient.invalidateQueries({ queryKey: ["reward-history"] });
+      queryClient.invalidateQueries({ queryKey: ["rhoze-claim-history"] });
       onSuccess?.();
     } catch (error: any) {
       toast.error(error?.message || "Claim failed");
