@@ -35,6 +35,7 @@ import StudioManagePage from "@/pages/StudioManagePage";
 import ExploreStudiosPage from "@/pages/ExploreStudiosPage";
 import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import OnboardingPage from "@/pages/OnboardingPage";
+import MarketplacePage from "@/pages/MarketplacePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -107,8 +108,8 @@ const App = () => (
                 <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
                 <Route path="/creators" element={<CreatorsHubPage />} />
                 <Route path="/creators/:id" element={<ListingDetailPage />} />
-                <Route path="/marketplace" element={<Navigate to="/creators" replace />} />
-                <Route path="/marketplace/:id" element={<Navigate to="/creators" replace />} />
+                <Route path="/marketplace" element={<MarketplacePage />} />
+                <Route path="/marketplace/:id" element={<ListingDetailPage />} />
                 <Route path="/seller" element={<Navigate to="/settings" replace />} />
                 <Route path="/inquiries" element={<Navigate to="/messages?tab=inquiries" replace />} />
                 <Route path="/profiles" element={<Navigate to="/creators?tab=creators" replace />} />
