@@ -896,7 +896,7 @@ const FlowModePage = () => {
             <Input placeholder="Title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
             <Input placeholder="Creator / Artist name (optional)" value={newCreatorName} onChange={(e) => setNewCreatorName(e.target.value)} />
             <Textarea placeholder="Description (optional)" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={2} />
-            <Select value={newCategory} onValueChange={(val) => { setNewCategory(val); setNewFile(null); }}>
+            <Select value={newCategory} onValueChange={(val) => { setNewCategory(val); setNewFile(null); setFileError(null); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {CATEGORIES.map((cat) => (
@@ -911,12 +911,48 @@ const FlowModePage = () => {
                 type="file"
                 accept={CATEGORY_UPLOAD_HINTS[newCategory]?.accept || "*/*"}
                 className="hidden"
-                onChange={(e) => setNewFile(e.target.files?.[0] || null)}
+                onChange={(e) => { selectFile(e.target.files?.[0]); e.target.value = ""; }}
               />
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full border-2 border-dashed border-border rounded-xl p-4 text-center hover:border-primary/30 transition-colors"
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  dragCounterRef.current += 1;
+                  if (e.dataTransfer.types.includes("Files")) setIsDragging(true);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.dataTransfer.dropEffect = "copy";
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  dragCounterRef.current -= 1;
+                  if (dragCounterRef.current <= 0) {
+                    dragCounterRef.current = 0;
+                    setIsDragging(false);
+                  }
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  dragCounterRef.current = 0;
+                  setIsDragging(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) selectFile(file);
+                }}
+                aria-label="Upload file or drop here"
+                className={cn(
+                  "w-full border-2 border-dashed rounded-xl p-4 text-center transition-all",
+                  isDragging
+                    ? "border-primary bg-primary/5 scale-[1.01]"
+                    : fileError
+                    ? "border-destructive/60 hover:border-destructive"
+                    : "border-border hover:border-primary/30"
+                )}
               >
                 {newFile ? (
                   <div className="flex items-center justify-center gap-2">
@@ -924,19 +960,28 @@ const FlowModePage = () => {
                     <span className="text-sm text-foreground truncate max-w-[200px]">{newFile.name}</span>
                     <span
                       role="button"
-                      onClick={(e) => { e.stopPropagation(); setNewFile(null); }}
+                      onClick={(e) => { e.stopPropagation(); setNewFile(null); setFileError(null); }}
                       className="text-muted-foreground hover:text-destructive cursor-pointer"
                     >
                       <X className="h-3.5 w-3.5" />
                     </span>
                   </div>
+                ) : isDragging ? (
+                  <>
+                    <Upload className="h-5 w-5 text-primary mx-auto mb-1 animate-pulse" />
+                    <p className="text-sm text-primary font-medium">Drop file to upload</p>
+                  </>
                 ) : (
                   <>
                     <Upload className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
                     <p className="text-sm text-muted-foreground">{CATEGORY_UPLOAD_HINTS[newCategory]?.hint || "Upload a file"}</p>
+                    <p className="text-[11px] text-muted-foreground/70 mt-1">Click or drag &amp; drop</p>
                   </>
                 )}
               </button>
+              {fileError && (
+                <p className="text-xs text-destructive mt-1.5 px-1" role="alert">{fileError}</p>
+              )}
             </div>
 
             <Input
