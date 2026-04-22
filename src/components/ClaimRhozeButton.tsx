@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Loader2, Download, Wallet } from "lucide-react";
+import RhozeClaimCelebration from "@/components/RhozeClaimCelebration";
 
 interface ClaimRhozeButtonProps {
   creditsToClaim: number;
@@ -27,6 +28,10 @@ const ClaimRhozeButton = ({
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
+  const [celebration, setCelebration] = useState<{ open: boolean; amount: number; signature?: string }>({
+    open: false,
+    amount: 0,
+  });
 
   const handleClaim = async () => {
     if (!publicKey || !user) {
@@ -52,6 +57,7 @@ const ClaimRhozeButton = ({
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
+      setCelebration({ open: true, amount: creditsToClaim, signature: data.signature });
       toast.success(`Claimed ${creditsToClaim} $RHOZE! Tx: ${data.signature?.slice(0, 8)}...`);
       queryClient.invalidateQueries({ queryKey: ["user-credits"] });
       queryClient.invalidateQueries({ queryKey: ["rhoze-balance"] });
@@ -75,24 +81,32 @@ const ClaimRhozeButton = ({
   }
 
   return (
-    <Button
-      variant="outline"
-      className={className}
-      onClick={handleClaim}
-      disabled={loading || disabled || creditsToClaim <= 0}
-    >
-      {loading ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          {status || "Processing..."}
-        </>
-      ) : (
-        <>
-          <Download className="mr-2 h-4 w-4" />
-          Claim {creditsToClaim} $RHOZE to Wallet
-        </>
-      )}
-    </Button>
+    <>
+      <Button
+        variant="outline"
+        className={className}
+        onClick={handleClaim}
+        disabled={loading || disabled || creditsToClaim <= 0}
+      >
+        {loading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            {status || "Processing..."}
+          </>
+        ) : (
+          <>
+            <Download className="mr-2 h-4 w-4" />
+            Claim {creditsToClaim} $RHOZE to Wallet
+          </>
+        )}
+      </Button>
+      <RhozeClaimCelebration
+        open={celebration.open}
+        amount={celebration.amount}
+        signature={celebration.signature}
+        onClose={() => setCelebration((c) => ({ ...c, open: false }))}
+      />
+    </>
   );
 };
 
