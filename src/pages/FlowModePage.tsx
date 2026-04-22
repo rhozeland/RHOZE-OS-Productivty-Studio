@@ -325,6 +325,71 @@ const FlowModePage = () => {
   const allItems = flowItems ?? [];
   const currentItem = allItems.length > 0 ? allItems[currentIndex % allItems.length] : null;
 
+  // Validate file selection: type must match category, size must be under cap
+  const handleFileSelect = useCallback(
+    (file: File | null) => {
+      setFileError(null);
+      if (!file) {
+        setNewFile(null);
+        return;
+      }
+      const cap = MAX_FILE_MB[newCategory] ?? 25;
+      const sizeMb = file.size / (1024 * 1024);
+      if (sizeMb > cap) {
+        setFileError(`File is ${sizeMb.toFixed(1)} MB — max for ${newCategory} is ${cap} MB.`);
+        setNewFile(null);
+        return;
+      }
+      setNewFile(file);
+    },
+    [newCategory],
+  );
+
+  // Detect link platform metadata from the entered URL
+  const linkMeta = useMemo(() => {
+    const trimmed = newLink.trim();
+    if (!trimmed) return null;
+    let host = "";
+    let safeUrl: URL | null = null;
+    try {
+      safeUrl = new URL(trimmed.startsWith("http") ? trimmed : `https://${trimmed}`);
+      host = safeUrl.hostname.replace(/^www\./, "");
+    } catch {
+      return { invalid: true } as const;
+    }
+    const platform = LINK_PLATFORMS.find((p) => p.match.test(trimmed));
+    const ytMatch = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
+    const vimeoMatch = trimmed.match(/vimeo\.com\/(\d+)/);
+    const looksImage = /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(safeUrl.pathname);
+    return {
+      invalid: false,
+      url: safeUrl.toString(),
+      host,
+      favicon: `https://www.google.com/s2/favicons?sz=64&domain=${host}`,
+      platform,
+      ytId: ytMatch?.[1],
+      vimeoId: vimeoMatch?.[1],
+      looksImage,
+    } as const;
+  }, [newLink]);
+
+  // Revoke object URLs when the file changes or the dialog closes
+  useEffect(() => {
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+    if (newFile) {
+      objectUrlRef.current = URL.createObjectURL(newFile);
+    }
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+    };
+  }, [newFile]);
+
   const handleCalibrationSelect = (option: string) => {
     const updated = selectedCategories.includes(option)
       ? selectedCategories.filter((c) => c !== option)
