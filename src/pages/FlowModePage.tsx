@@ -1008,20 +1008,7 @@ const FlowModePage = () => {
                     </div>
                   )}
                   {!fileUrl && trimmedLink && !linkLooksImage && !ytMatch && !vimeoMatch && (
-                    <a
-                      href={trimmedLink}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="flex items-center gap-3 p-4 bg-background hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                        <ChevronRight className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs text-muted-foreground font-body uppercase tracking-wider">External link</p>
-                        <p className="text-sm font-medium text-foreground truncate">{trimmedLink}</p>
-                      </div>
-                    </a>
+                    <LinkPreviewCard url={trimmedLink} />
                   )}
                 </div>
               );
