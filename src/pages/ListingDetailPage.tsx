@@ -57,11 +57,81 @@ const CATEGORIES: Record<string, { label: string; icon: any; color: string }> = 
   writing: { label: "Writing", icon: PenTool, color: "hsl(210, 60%, 55%)" },
 };
 
-const TYPE_META: Record<string, { label: string; icon: any }> = {
-  service: { label: "Service", icon: Briefcase },
-  digital_product: { label: "Digital Product", icon: FileText },
-  physical_product: { label: "Physical Product", icon: Package },
-  project_request: { label: "Project Request", icon: ShoppingBag },
+const TYPE_META: Record<
+  string,
+  {
+    label: string;
+    icon: any;
+    accent: string;
+    headline: string;
+    subline: string;
+    primaryCta: string;
+    secondaryCta: string;
+    inquiryTitle: string;
+    inquiryHint: string;
+    inquiryPlaceholder: string;
+  }
+> = {
+  service: {
+    label: "Service",
+    icon: Briefcase,
+    accent: "hsl(160, 70%, 45%)",
+    headline: "Available for hire",
+    subline: "This creator is offering this as a service. Book them, send a brief, or start a conversation.",
+    primaryCta: "Hire This Creator",
+    secondaryCta: "Direct Message",
+    inquiryTitle: "Hire request",
+    inquiryHint: "Tell the creator what you need, your budget, and your timeline.",
+    inquiryPlaceholder: "Hi! I'd like to hire you for...\n\nScope:\nBudget:\nDeadline:",
+  },
+  digital_product: {
+    label: "Digital Product",
+    icon: FileText,
+    accent: "hsl(280, 60%, 55%)",
+    headline: "Instant download",
+    subline: "Buy once and download immediately. Files unlock the moment your purchase clears.",
+    primaryCta: "Buy Now",
+    secondaryCta: "Ask a Question",
+    inquiryTitle: "Question about this product",
+    inquiryHint: "Need to know something before buying? Ask away.",
+    inquiryPlaceholder: "Hi! Quick question about this product...",
+  },
+  physical_product: {
+    label: "Physical Product",
+    icon: Package,
+    accent: "hsl(35, 90%, 55%)",
+    headline: "Ships to you",
+    subline: "A real, tangible item. Shipping details are arranged with the seller after purchase.",
+    primaryCta: "Order Now",
+    secondaryCta: "Ask a Question",
+    inquiryTitle: "Question about this item",
+    inquiryHint: "Ask about size, shipping, condition, or anything else.",
+    inquiryPlaceholder: "Hi! I'd like to know more about...",
+  },
+  project_request: {
+    label: "Looking for Help",
+    icon: Search,
+    accent: "hsl(210, 80%, 55%)",
+    headline: "Open project — pitch yourself",
+    subline: "Someone needs this work done. Pitch your skills, rate, and availability to win the gig.",
+    primaryCta: "Submit a Pitch",
+    secondaryCta: "Direct Message",
+    inquiryTitle: "Pitch for this project",
+    inquiryHint: "Sell yourself. Share relevant work, your rate, and how soon you can start.",
+    inquiryPlaceholder: "Hi! I'd love to take this on. Here's why I'm a fit...\n\nRate:\nAvailability:\nPortfolio:",
+  },
+  collaboration: {
+    label: "Seeking Collaborators",
+    icon: HandshakeIcon,
+    accent: "hsl(340, 70%, 55%)",
+    headline: "Open to collaborate",
+    subline: "Not a paid gig — a creative partnership. Share what you bring to the table.",
+    primaryCta: "Join the Project",
+    secondaryCta: "Direct Message",
+    inquiryTitle: "Collaboration request",
+    inquiryHint: "Introduce yourself and share what you'd contribute to the collab.",
+    inquiryPlaceholder: "Hey! I'd love to collaborate. Here's what I bring...\n\nMy role:\nWhat I'm into:\nLinks:",
+  },
 };
 
 const ListingDetailPage = () => {
