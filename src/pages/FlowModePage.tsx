@@ -923,7 +923,7 @@ const FlowModePage = () => {
       </Dialog>
 
       {/* Add content dialog */}
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+      <Dialog open={addOpen} onOpenChange={(open) => { if (!open) cancelUpload(); setAddOpen(open); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Share to Flow</DialogTitle>
