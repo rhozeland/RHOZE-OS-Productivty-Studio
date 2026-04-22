@@ -8,6 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { useRhozeBalance } from "@/hooks/useRhozeBalance";
 import ClaimRhozeButton from "@/components/ClaimRhozeButton";
+import RhozeClaimHistory from "@/components/RhozeClaimHistory";
 import { Input } from "@/components/ui/input";
 import { useWallet } from "@solana/wallet-adapter-react";
 
@@ -338,6 +339,9 @@ const RewardsDashboard = () => {
               </div>
             )}
           </div>
+
+          {/* On-chain claim history */}
+          <RhozeClaimHistory />
         </div>
       </div>
     </div>
