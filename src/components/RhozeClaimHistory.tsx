@@ -1,9 +1,11 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { Download, ExternalLink, History } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
+import RhozeStreakBadge, { computeClaimStreak } from "@/components/RhozeStreakBadge";
 
 interface ClaimRow {
   id: string;
