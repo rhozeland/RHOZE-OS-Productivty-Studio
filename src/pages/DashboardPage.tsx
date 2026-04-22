@@ -228,7 +228,7 @@ const DashboardPage = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("marketplace_listings")
-        .select("id, title, category, listing_type, credits_price, cover_url, image_url, user_id")
+        .select("id, title, description, category, listing_type, credits_price, price, currency, cover_url, image_url, user_id")
         .eq("is_active", true)
         .order("created_at", { ascending: false })
         .limit(8);
