@@ -16,7 +16,11 @@ import {
   Upload,
   Settings2,
   Sparkles,
+  AlertTriangle,
+  RotateCcw,
+  Loader2,
 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
