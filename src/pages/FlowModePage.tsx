@@ -242,6 +242,109 @@ const FlowModePage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
+  // Cleanup any in-flight upload trackers
+  const clearUploadTimers = () => {
+    if (stallTimerRef.current) { clearInterval(stallTimerRef.current); stallTimerRef.current = null; }
+    if (hardTimeoutRef.current) { clearTimeout(hardTimeoutRef.current); hardTimeoutRef.current = null; }
+  };
+
+  const cancelUpload = () => {
+    if (xhrRef.current) {
+      try { xhrRef.current.abort(); } catch {}
+      xhrRef.current = null;
+    }
+    clearUploadTimers();
+    setUploadStage("idle");
+    setUploadProgress(0);
+    setUploadError(null);
+  };
+
+  // Upload a file to Supabase Storage with real progress events via XHR.
+  // Resolves with the public URL.
+  const uploadWithProgress = (file: File, path: string): Promise<string> => {
+    return new Promise(async (resolve, reject) => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) { reject(new Error("Not authenticated")); return; }
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+      const url = `${supabaseUrl}/storage/v1/object/flow-uploads/${encodeURI(path)}`;
+      const xhr = new XMLHttpRequest();
+      xhrRef.current = xhr;
+
+      const STALL_MS = 15000;     // no progress for 15s ⇒ stalled
+      const HARD_TIMEOUT_MS = 120000; // 2-min absolute cap
+
+      lastProgressAtRef.current = Date.now();
+      setUploadStage("uploading");
+      setUploadProgress(0);
+      setUploadError(null);
+
+      // Stall watchdog
+      stallTimerRef.current = setInterval(() => {
+        if (Date.now() - lastProgressAtRef.current > STALL_MS) {
+          setUploadStage("stalled");
+        }
+      }, 1000);
+
+      // Absolute timeout
+      hardTimeoutRef.current = setTimeout(() => {
+        try { xhr.abort(); } catch {}
+        clearUploadTimers();
+        setUploadStage("error");
+        setUploadError("Upload timed out. Please check your connection and try again.");
+        reject(new Error("Upload timed out"));
+      }, HARD_TIMEOUT_MS);
+
+      xhr.upload.onprogress = (evt) => {
+        if (!evt.lengthComputable) return;
+        lastProgressAtRef.current = Date.now();
+        const pct = Math.round((evt.loaded / evt.total) * 100);
+        setUploadProgress(pct);
+        // Recover from stalled if data started flowing again
+        setUploadStage((s) => (s === "stalled" ? "uploading" : s));
+      };
+
+      xhr.onload = () => {
+        clearUploadTimers();
+        xhrRef.current = null;
+        if (xhr.status >= 200 && xhr.status < 300) {
+          setUploadProgress(100);
+          const { data: urlData } = supabase.storage.from("flow-uploads").getPublicUrl(path);
+          resolve(urlData.publicUrl);
+        } else {
+          let msg = `Upload failed (${xhr.status})`;
+          try { const body = JSON.parse(xhr.responseText); if (body?.message) msg = body.message; } catch {}
+          setUploadStage("error");
+          setUploadError(msg);
+          reject(new Error(msg));
+        }
+      };
+
+      xhr.onerror = () => {
+        clearUploadTimers();
+        xhrRef.current = null;
+        setUploadStage("error");
+        setUploadError("Network error during upload.");
+        reject(new Error("Network error"));
+      };
+
+      xhr.onabort = () => {
+        clearUploadTimers();
+        xhrRef.current = null;
+        // State already set by caller
+        reject(new Error("Upload cancelled"));
+      };
+
+      xhr.open("POST", url, true);
+      xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
+      xhr.setRequestHeader("apikey", import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string);
+      xhr.setRequestHeader("x-upsert", "false");
+      if (file.type) xhr.setRequestHeader("Content-Type", file.type);
+      xhr.send(file);
+    });
+  };
+
   const createFlowItem = useMutation({
     mutationFn: async () => {
       let fileUrl: string | null = null;
@@ -249,11 +352,10 @@ const FlowModePage = () => {
       if (newFile) {
         const ext = newFile.name.split(".").pop();
         const path = `${user!.id}/${Date.now()}.${ext}`;
-        const { error: uploadErr } = await supabase.storage.from("flow-uploads").upload(path, newFile);
-        if (uploadErr) throw uploadErr;
-        const { data: urlData } = supabase.storage.from("flow-uploads").getPublicUrl(path);
-        fileUrl = urlData.publicUrl;
+        fileUrl = await uploadWithProgress(newFile, path);
       }
+
+      setUploadStage("saving");
 
       const contentType = newFile
         ? (newFile.type.startsWith("image") ? "image" : newFile.type.startsWith("video") ? "video" : newFile.type.startsWith("audio") ? "audio" : "file")
@@ -279,10 +381,29 @@ const FlowModePage = () => {
       setNewLink("");
       setNewFile(null);
       setNewCreatorName("");
+      setUploadStage("idle");
+      setUploadProgress(0);
+      setUploadError(null);
       toast.success("Content shared to Flow!");
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => {
+      // Don't toast cancellations
+      if (e?.message !== "Upload cancelled") {
+        if (uploadStage !== "error") {
+          setUploadStage("error");
+          setUploadError(e?.message || "Something went wrong");
+        }
+        toast.error(e?.message || "Failed to share");
+      }
+    },
   });
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => { cancelUpload(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   // All items — loop through them endlessly
   const allItems = flowItems ?? [];
