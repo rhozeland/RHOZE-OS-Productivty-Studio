@@ -228,7 +228,7 @@ const DashboardPage = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("marketplace_listings")
-        .select("id, title, category, listing_type, credits_price, cover_url, image_url, user_id")
+        .select("id, title, description, category, listing_type, credits_price, price, currency, cover_url, image_url, user_id")
         .eq("is_active", true)
         .order("created_at", { ascending: false })
         .limit(8);
@@ -427,9 +427,27 @@ const DashboardPage = () => {
     </motion.section>
   );
 
+  // Deterministic gradient seeded from a string id
+  const gradientFor = (id: string) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
+    const h1 = Math.abs(hash) % 360;
+    const h2 = (h1 + 40) % 360;
+    return `linear-gradient(135deg, hsl(${h1} 70% 22% / 0.85), hsl(${h2} 65% 12% / 0.95))`;
+  };
+
   const renderHubSection = () => {
     const currentListing = hubListings?.[hubSlide];
     const creatorProfile = currentListing ? hubProfileMap.get(currentListing.user_id) : null;
+    const isOwnListing = currentListing && user?.id === currentListing.user_id;
+    const allMissingCovers = hubListings?.every((l) => !l.cover_url && !l.image_url) ?? false;
+    const priceLabel = currentListing?.credits_price
+      ? `${currentListing.credits_price} ◊ $RHOZE`
+      : currentListing?.price
+      ? `$${Number(currentListing.price).toFixed(2)} ${currentListing.currency || "USD"}`
+      : null;
+    const excerpt = currentListing?.description?.trim() || null;
+    const categoryGlyph = (currentListing?.category || "R").charAt(0).toUpperCase();
 
     return (
       <motion.section key="hub" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
@@ -457,7 +475,7 @@ const DashboardPage = () => {
         ) : (
           <div className="relative border border-border rounded-lg bg-card overflow-hidden">
             {/* Slideshow */}
-            <div className="relative h-48 sm:h-56 overflow-hidden">
+            <div className="relative h-44 sm:h-52 overflow-hidden">
               <AnimatePresence mode="wait">
                 {currentListing && (
                   <motion.div
@@ -475,38 +493,61 @@ const DashboardPage = () => {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                        <ShoppingBag className="h-12 w-12 text-muted-foreground/30" />
+                      <div
+                        className="relative w-full h-full overflow-hidden"
+                        style={{ background: gradientFor(currentListing.id) }}
+                      >
+                        <span
+                          className="absolute -right-4 -bottom-10 font-display font-bold text-foreground/[0.08] select-none leading-none"
+                          style={{ fontSize: "14rem" }}
+                        >
+                          {categoryGlyph}
+                        </span>
+                        <div
+                          className="absolute inset-0 opacity-[0.15] mix-blend-overlay pointer-events-none"
+                          style={{
+                            backgroundImage:
+                              "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
+                          }}
+                        />
                       </div>
                     )}
                     {/* Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-5">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-wider bg-background/80 backdrop-blur-sm rounded-full px-2.5 py-0.5">
                           {currentListing.category}
                         </span>
-                        {currentListing.credits_price && (
+                        {priceLabel && (
                           <span className="text-[10px] font-body font-bold text-primary bg-primary/10 rounded-full px-2.5 py-0.5">
-                            {currentListing.credits_price} ◊
+                            {priceLabel}
                           </span>
                         )}
                       </div>
                       <Link to={`/creators/${currentListing.id}`} className="hover:underline">
-                        <h3 className="font-display text-lg font-bold text-foreground leading-snug">{currentListing.title}</h3>
+                        <h3 className="font-display text-lg font-bold text-foreground leading-snug line-clamp-1">{currentListing.title}</h3>
                       </Link>
-                      {creatorProfile && (
-                        <div className="flex items-center gap-2 mt-2">
+                      {excerpt && (
+                        <p className="text-xs text-muted-foreground font-body mt-1 line-clamp-1">{excerpt}</p>
+                      )}
+                      <div className="flex items-center justify-between gap-2 mt-2">
+                        <div className="flex items-center gap-2 min-w-0">
                           <div className="h-5 w-5 rounded-full bg-muted overflow-hidden shrink-0">
-                            {creatorProfile.avatar_url ? (
+                            {creatorProfile?.avatar_url ? (
                               <img src={creatorProfile.avatar_url} alt="" className="h-full w-full object-cover" />
                             ) : (
                               <div className="h-full w-full flex items-center justify-center"><User className="h-3 w-3 text-muted-foreground" /></div>
                             )}
                           </div>
-                          <span className="text-xs text-muted-foreground font-body">{creatorProfile.display_name || "Creator"}</span>
+                          <span className="text-xs text-muted-foreground font-body truncate">
+                            {creatorProfile?.display_name || "Rhozeland Creator"}
+                          </span>
                         </div>
-                      )}
+                        {isOwnListing && !currentListing.cover_url && !currentListing.image_url && allMissingCovers && (
+                          <span className="text-[10px] font-body text-muted-foreground/70 italic shrink-0">Add a cover image</span>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 )}
