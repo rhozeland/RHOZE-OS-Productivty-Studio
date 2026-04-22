@@ -383,6 +383,7 @@ const FlowModePage = () => {
       setNewLink("");
       setNewFile(null);
       setNewCreatorName("");
+      setShareStep("compose");
       setUploadStage("idle");
       setUploadProgress(0);
       setUploadError(null);
