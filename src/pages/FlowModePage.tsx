@@ -88,11 +88,31 @@ const FlowModePage = () => {
   const [newDesc, setNewDesc] = useState("");
   const [newCategory, setNewCategory] = useState("design");
   const [newLink, setNewLink] = useState("");
-  const [newFile, setNewFile] = useState<File | null>(null);
+  const [newFile, setNewFile] = useState<File | null>(null); // legacy single-file (unused, kept for type-stability if any)
   const [fileError, setFileError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragCounterRef = useRef(0);
-  // Real upload progress + stall handling
+
+  // Multi-file upload state — each file tracks its own progress, xhr, and error.
+  type PendingFile = {
+    id: string;
+    file: File;
+    previewUrl: string;
+    status: "ready" | "uploading" | "stalled" | "done" | "error";
+    progress: number;
+    error: string | null;
+    uploadedUrl: string | null;
+  };
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  // Map of file id → in-flight XHR + watchdog refs (kept outside state to avoid re-renders).
+  const xhrMapRef = useRef<Map<string, XMLHttpRequest>>(new Map());
+  const stallTimerMapRef = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
+  const hardTimeoutMapRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const lastProgressMapRef = useRef<Map<string, number>>(new Map());
+  // Aggregate publish state used by the action button + confirm step.
+  const [publishingIndex, setPublishingIndex] = useState<{ current: number; total: number } | null>(null);
+
+  // Legacy single-upload state retained only for safe cleanup of old refs (no longer rendered).
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStage, setUploadStage] = useState<"idle" | "uploading" | "saving" | "stalled" | "error">("idle");
   const [uploadError, setUploadError] = useState<string | null>(null);
