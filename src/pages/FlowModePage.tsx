@@ -101,6 +101,7 @@ const FlowModePage = () => {
   const hardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastProgressAtRef = useRef<number>(0);
   const [newCreatorName, setNewCreatorName] = useState("");
+  const [shareStep, setShareStep] = useState<"compose" | "confirm">("compose");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(() => {
     const saved = localStorage.getItem("flow-sound-enabled");
