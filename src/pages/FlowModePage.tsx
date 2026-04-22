@@ -335,91 +335,123 @@ const FlowModePage = () => {
     if (hardTimeoutRef.current) { clearTimeout(hardTimeoutRef.current); hardTimeoutRef.current = null; }
   };
 
+  // Cancel every in-flight per-file upload + clear watchdogs. Used on dialog close.
   const cancelUpload = () => {
-    if (xhrRef.current) {
-      try { xhrRef.current.abort(); } catch {}
-      xhrRef.current = null;
-    }
+    xhrMapRef.current.forEach((xhr) => { try { xhr.abort(); } catch {} });
+    xhrMapRef.current.clear();
+    stallTimerMapRef.current.forEach((t) => clearInterval(t));
+    stallTimerMapRef.current.clear();
+    hardTimeoutMapRef.current.forEach((t) => clearTimeout(t));
+    hardTimeoutMapRef.current.clear();
+    lastProgressMapRef.current.clear();
+    // Mark any in-flight files as cancelled (visually).
+    setPendingFiles((prev) =>
+      prev.map((f) =>
+        f.status === "uploading" || f.status === "stalled"
+          ? { ...f, status: "ready", progress: 0 }
+          : f,
+      ),
+    );
+    setPublishingIndex(null);
+    // Legacy single-upload cleanup (defensive — UI no longer uses it).
+    if (xhrRef.current) { try { xhrRef.current.abort(); } catch {} xhrRef.current = null; }
     clearUploadTimers();
     setUploadStage("idle");
     setUploadProgress(0);
     setUploadError(null);
   };
 
-  // Upload a file to Supabase Storage with real progress events via XHR.
-  // Resolves with the public URL.
-  const uploadWithProgress = (file: File, path: string): Promise<string> => {
+  // Helper: patch a single pending file by id without touching others.
+  const patchPendingFile = (id: string, patch: Partial<PendingFile>) => {
+    setPendingFiles((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+  };
+
+  // Upload one pending file with real progress/stall/timeout tracking.
+  // Updates `pendingFiles[id]` directly. Resolves with the public URL.
+  const uploadPendingFile = (pf: PendingFile, path: string): Promise<string> => {
     return new Promise(async (resolve, reject) => {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
-      if (!accessToken) { reject(new Error("Not authenticated")); return; }
+      if (!accessToken) {
+        patchPendingFile(pf.id, { status: "error", error: "Not authenticated" });
+        reject(new Error("Not authenticated"));
+        return;
+      }
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
       const url = `${supabaseUrl}/storage/v1/object/flow-uploads/${encodeURI(path)}`;
       const xhr = new XMLHttpRequest();
-      xhrRef.current = xhr;
+      xhrMapRef.current.set(pf.id, xhr);
 
-      const STALL_MS = 15000;     // no progress for 15s ⇒ stalled
-      const HARD_TIMEOUT_MS = 120000; // 2-min absolute cap
+      const STALL_MS = 15000;
+      const HARD_TIMEOUT_MS = 120000;
 
-      lastProgressAtRef.current = Date.now();
-      setUploadStage("uploading");
-      setUploadProgress(0);
-      setUploadError(null);
+      lastProgressMapRef.current.set(pf.id, Date.now());
+      patchPendingFile(pf.id, { status: "uploading", progress: 0, error: null });
 
-      // Stall watchdog
-      stallTimerRef.current = setInterval(() => {
-        if (Date.now() - lastProgressAtRef.current > STALL_MS) {
-          setUploadStage("stalled");
+      const stallTimer = setInterval(() => {
+        const last = lastProgressMapRef.current.get(pf.id) || Date.now();
+        if (Date.now() - last > STALL_MS) {
+          patchPendingFile(pf.id, { status: "stalled" });
         }
       }, 1000);
+      stallTimerMapRef.current.set(pf.id, stallTimer);
 
-      // Absolute timeout
-      hardTimeoutRef.current = setTimeout(() => {
+      const hardTimer = setTimeout(() => {
         try { xhr.abort(); } catch {}
-        clearUploadTimers();
-        setUploadStage("error");
-        setUploadError("Upload timed out. Please check your connection and try again.");
+        clearInterval(stallTimer);
+        stallTimerMapRef.current.delete(pf.id);
+        hardTimeoutMapRef.current.delete(pf.id);
+        patchPendingFile(pf.id, { status: "error", error: "Upload timed out. Check your connection." });
         reject(new Error("Upload timed out"));
       }, HARD_TIMEOUT_MS);
+      hardTimeoutMapRef.current.set(pf.id, hardTimer);
+
+      const cleanupTimers = () => {
+        clearInterval(stallTimer);
+        clearTimeout(hardTimer);
+        stallTimerMapRef.current.delete(pf.id);
+        hardTimeoutMapRef.current.delete(pf.id);
+        xhrMapRef.current.delete(pf.id);
+      };
 
       xhr.upload.onprogress = (evt) => {
         if (!evt.lengthComputable) return;
-        lastProgressAtRef.current = Date.now();
+        lastProgressMapRef.current.set(pf.id, Date.now());
         const pct = Math.round((evt.loaded / evt.total) * 100);
-        setUploadProgress(pct);
-        // Recover from stalled if data started flowing again
-        setUploadStage((s) => (s === "stalled" ? "uploading" : s));
+        // Recover from stalled if data started flowing again.
+        setPendingFiles((prev) =>
+          prev.map((p) =>
+            p.id === pf.id
+              ? { ...p, progress: pct, status: p.status === "stalled" ? "uploading" : p.status }
+              : p,
+          ),
+        );
       };
 
       xhr.onload = () => {
-        clearUploadTimers();
-        xhrRef.current = null;
+        cleanupTimers();
         if (xhr.status >= 200 && xhr.status < 300) {
-          setUploadProgress(100);
           const { data: urlData } = supabase.storage.from("flow-uploads").getPublicUrl(path);
+          patchPendingFile(pf.id, { status: "done", progress: 100, uploadedUrl: urlData.publicUrl, error: null });
           resolve(urlData.publicUrl);
         } else {
           let msg = `Upload failed (${xhr.status})`;
           try { const body = JSON.parse(xhr.responseText); if (body?.message) msg = body.message; } catch {}
-          setUploadStage("error");
-          setUploadError(msg);
+          patchPendingFile(pf.id, { status: "error", error: msg });
           reject(new Error(msg));
         }
       };
 
       xhr.onerror = () => {
-        clearUploadTimers();
-        xhrRef.current = null;
-        setUploadStage("error");
-        setUploadError("Network error during upload.");
+        cleanupTimers();
+        patchPendingFile(pf.id, { status: "error", error: "Network error during upload." });
         reject(new Error("Network error"));
       };
 
       xhr.onabort = () => {
-        clearUploadTimers();
-        xhrRef.current = null;
-        // State already set by caller
+        cleanupTimers();
+        // Don't overwrite a status the caller may have set; just resolve as cancelled.
         reject(new Error("Upload cancelled"));
       };
 
@@ -427,37 +459,80 @@ const FlowModePage = () => {
       xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
       xhr.setRequestHeader("apikey", import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string);
       xhr.setRequestHeader("x-upsert", "false");
-      if (file.type) xhr.setRequestHeader("Content-Type", file.type);
-      xhr.send(file);
+      if (pf.file.type) xhr.setRequestHeader("Content-Type", pf.file.type);
+      xhr.send(pf.file);
     });
+  };
+
+  // Retry a single failed/cancelled file. Independent of the publish loop so the user
+  // can re-upload before the final publish step.
+  const retryPendingFile = async (id: string) => {
+    const target = pendingFiles.find((p) => p.id === id);
+    if (!target) return;
+    const ext = target.file.name.split(".").pop();
+    const path = `${user!.id}/${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`;
+    try {
+      await uploadPendingFile(target, path);
+    } catch {
+      // Error already captured into pendingFiles state by uploadPendingFile.
+    }
   };
 
   const createFlowItem = useMutation({
     mutationFn: async () => {
-      let fileUrl: string | null = null;
+      // Upload any pending files that haven't completed yet (sequential to keep the UI
+      // honest about progress and to avoid hammering Storage).
+      const filesToProcess = pendingFiles;
+      const total = filesToProcess.length;
 
-      if (newFile) {
-        const ext = newFile.name.split(".").pop();
-        const path = `${user!.id}/${Date.now()}.${ext}`;
-        fileUrl = await uploadWithProgress(newFile, path);
+      for (let i = 0; i < filesToProcess.length; i++) {
+        const pf = filesToProcess[i];
+        setPublishingIndex({ current: i + 1, total: Math.max(total, 1) });
+        if (!pf.uploadedUrl) {
+          const ext = pf.file.name.split(".").pop();
+          const path = `${user!.id}/${Date.now()}-${i}.${ext}`;
+          try {
+            await uploadPendingFile(pf, path);
+          } catch (err: any) {
+            // Surface the failing file by name so the user knows which row to retry.
+            throw new Error(`${pf.file.name}: ${err?.message || "upload failed"}`);
+          }
+        }
       }
 
-      setUploadStage("saving");
+      setPublishingIndex(null);
+      // Re-read latest pendingFiles via a functional setter trick (state may have been
+      // mutated by uploadPendingFile callbacks). Capture from xhrMap-aware closure:
+      const latest = await new Promise<PendingFile[]>((res) => {
+        setPendingFiles((cur) => { res(cur); return cur; });
+      });
 
-      const contentType = newFile
-        ? (newFile.type.startsWith("image") ? "image" : newFile.type.startsWith("video") ? "video" : newFile.type.startsWith("audio") ? "audio" : "file")
-        : (newLink ? "link" : "text");
-
-      const { error } = await supabase.from("flow_items").insert({
+      // Build one flow_items row per file. If there are no files, still publish a single
+      // row carrying just the link/text content (preserves prior behavior).
+      const baseRow = {
         user_id: user!.id,
         title: newTitle,
         description: newDesc || null,
         category: newCategory,
         link_url: newLink || null,
-        file_url: fileUrl,
-        content_type: contentType,
         creator_name: newCreatorName || null,
-      } as any);
+      };
+
+      const rows = latest.length === 0
+        ? [{ ...baseRow, file_url: null, content_type: newLink ? "link" : "text" }]
+        : latest.map((pf) => ({
+            ...baseRow,
+            file_url: pf.uploadedUrl,
+            content_type: pf.file.type.startsWith("image")
+              ? "image"
+              : pf.file.type.startsWith("video")
+              ? "video"
+              : pf.file.type.startsWith("audio")
+              ? "audio"
+              : "file",
+          }));
+
+      const { error } = await supabase.from("flow_items").insert(rows as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -466,25 +541,19 @@ const FlowModePage = () => {
       setNewTitle("");
       setNewDesc("");
       setNewLink("");
-      setNewFile(null);
       setNewCreatorName("");
       setShareStep("compose");
-      setUploadStage("idle");
-      setUploadProgress(0);
-      setUploadError(null);
-      toast.success("Content shared to Flow!");
+      resetPendingFiles();
+      toast.success(pendingFiles.length > 1 ? `Shared ${pendingFiles.length} items to Flow!` : "Content shared to Flow!");
     },
     onError: (e: any) => {
-      // Don't toast cancellations
+      setPublishingIndex(null);
       if (e?.message !== "Upload cancelled") {
-        if (uploadStage !== "error") {
-          setUploadStage("error");
-          setUploadError(e?.message || "Something went wrong");
-        }
         toast.error(e?.message || "Failed to share");
       }
     },
   });
+
 
   // Cleanup on unmount
   useEffect(() => {
