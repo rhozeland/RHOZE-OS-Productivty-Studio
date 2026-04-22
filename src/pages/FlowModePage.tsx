@@ -1080,8 +1080,410 @@ const FlowModePage = () => {
       </Dialog>
 
       {/* Add content dialog */}
-      <Dialog open={addOpen} onOpenChange={(open) => { if (!open) { cancelUpload(); setShareStep("compose"); } setAddOpen(open); }}>
-        <DialogContent className="max-w-md">
+      <Dialog open={addOpen} onOpenChange={(open) => { if (!open) { cancelUpload(); resetPendingFiles(); setShareStep("compose"); } setAddOpen(open); }}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{shareStep === "confirm" ? "Confirm & publish" : "Share to Flow"}</DialogTitle>
+            <DialogDescription>
+              {shareStep === "confirm"
+                ? "Review your post below. Once everything looks right, publish it to the Flow."
+                : "Upload one or more files for others to discover."}
+            </DialogDescription>
+          </DialogHeader>
+          {(() => {
+            // ---- Validation summary ----
+            const trimmedTitle = newTitle.trim();
+            const trimmedLinkRaw = newLink.trim();
+            const linkProvided = trimmedLinkRaw.length > 0;
+            let linkValid = true;
+            if (linkProvided) {
+              try {
+                const u = new URL(/^https?:\/\//i.test(trimmedLinkRaw) ? trimmedLinkRaw : `https://${trimmedLinkRaw}`);
+                linkValid = !!u.hostname && u.hostname.includes(".");
+              } catch {
+                linkValid = false;
+              }
+            }
+            const fileCount = pendingFiles.length;
+            const hasMedia = fileCount > 0 || linkProvided;
+            const filesUploading = pendingFiles.some((f) => f.status === "uploading" || f.status === "stalled");
+            const filesErrored = pendingFiles.filter((f) => f.status === "error");
+            const noFileErrors = filesErrored.length === 0;
+            const checks = [
+              { ok: !!trimmedTitle, label: "Title added" },
+              { ok: hasMedia, label: fileCount > 1 ? `${fileCount} files attached` : "File or link attached" },
+              { ok: noFileErrors, label: filesErrored.length > 0 ? `Resolve ${filesErrored.length} file error${filesErrored.length > 1 ? "s" : ""}` : "All files uploaded cleanly" },
+              { ok: !linkProvided || linkValid, label: linkProvided ? "Link looks valid" : "Link looks valid (optional)" },
+              { ok: !filesUploading, label: "No active uploads" },
+            ];
+            const allValid = checks.every((c) => c.ok);
+            const canPublish = allValid && !createFlowItem.isPending;
+
+            return (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (shareStep === "compose") {
+                    if (allValid) setShareStep("confirm");
+                    return;
+                  }
+                  if (canPublish) createFlowItem.mutate();
+                }}
+                className="space-y-4"
+              >
+                {shareStep === "confirm" && (
+                  <div className="rounded-xl border border-border bg-muted/30 p-3 space-y-3">
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Pre-publish checks</p>
+                    <ul className="space-y-1.5">
+                      {checks.map((c) => (
+                        <li key={c.label} className="flex items-center gap-2 text-sm">
+                          <span className={cn(
+                            "h-4 w-4 rounded-full flex items-center justify-center shrink-0",
+                            c.ok ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                          )}>
+                            {c.ok ? <Check className="h-2.5 w-2.5" strokeWidth={3} /> : <X className="h-2.5 w-2.5" strokeWidth={3} />}
+                          </span>
+                          <span className={c.ok ? "text-foreground" : "text-muted-foreground"}>{c.label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    {!allValid && (
+                      <p className="text-[11px] text-muted-foreground pt-1">Go back to fix the items above before publishing.</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Link/text live preview (only when no files attached, to keep the dialog scannable). */}
+                {fileCount === 0 && (() => {
+                  const trimmedLink = newLink.trim();
+                  const linkLooksImage = /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(trimmedLink);
+                  const ytMatch = trimmedLink.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
+                  const vimeoMatch = trimmedLink.match(/vimeo\.com\/(\d+)/);
+
+                  if (!trimmedLink) {
+                    return (
+                      <div className="aspect-video rounded-xl border-2 border-dashed border-border/60 bg-muted/30 flex flex-col items-center justify-center text-muted-foreground">
+                        <Upload className="h-7 w-7 mb-1.5 opacity-40" />
+                        <p className="text-xs font-body">Preview will appear here</p>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="relative rounded-xl overflow-hidden border border-border bg-muted/30">
+                      {linkLooksImage && (
+                        <img src={trimmedLink} alt="link preview" className="w-full max-h-72 object-contain bg-background" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                      )}
+                      {!linkLooksImage && ytMatch && (
+                        <div className="aspect-video bg-background">
+                          <iframe
+                            src={`https://www.youtube.com/embed/${ytMatch[1]}`}
+                            title="YouTube preview"
+                            className="w-full h-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        </div>
+                      )}
+                      {!linkLooksImage && !ytMatch && vimeoMatch && (
+                        <div className="aspect-video bg-background">
+                          <iframe
+                            src={`https://player.vimeo.com/video/${vimeoMatch[1]}`}
+                            title="Vimeo preview"
+                            className="w-full h-full"
+                            allow="autoplay; fullscreen; picture-in-picture"
+                            allowFullScreen
+                          />
+                        </div>
+                      )}
+                      {!linkLooksImage && !ytMatch && !vimeoMatch && (
+                        <LinkPreviewCard url={trimmedLink} />
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Per-file preview list — visible in BOTH compose and confirm steps */}
+                {fileCount > 0 && (
+                  <div className="space-y-2" role="list" aria-label="Files to share">
+                    <div className="flex items-center justify-between px-1">
+                      <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+                        {fileCount} file{fileCount > 1 ? "s" : ""}
+                      </p>
+                      {shareStep === "compose" && filesErrored.length > 0 && (
+                        <span className="text-[11px] text-destructive">{filesErrored.length} failed</span>
+                      )}
+                    </div>
+                    {pendingFiles.map((pf) => {
+                      const isImg = pf.file.type.startsWith("image/");
+                      const isVid = pf.file.type.startsWith("video/");
+                      const isAud = pf.file.type.startsWith("audio/");
+                      const showProgress = pf.status === "uploading" || pf.status === "stalled" || (pf.status === "done" && pf.progress > 0 && pf.progress < 100);
+                      return (
+                        <div
+                          key={pf.id}
+                          role="listitem"
+                          className={cn(
+                            "rounded-xl border bg-background/40 p-2.5 flex gap-3 items-start transition-colors",
+                            pf.status === "error" ? "border-destructive/40 bg-destructive/5" : "border-border",
+                          )}
+                        >
+                          {/* Thumbnail */}
+                          <div className="h-14 w-14 rounded-lg overflow-hidden shrink-0 bg-muted flex items-center justify-center">
+                            {isImg ? (
+                              <img src={pf.previewUrl} alt="" className="h-full w-full object-cover" />
+                            ) : isVid ? (
+                              <video src={pf.previewUrl} className="h-full w-full object-cover" muted playsInline />
+                            ) : isAud ? (
+                              <div className="text-muted-foreground text-[10px] font-medium">AUDIO</div>
+                            ) : (
+                              <div className="text-muted-foreground text-[10px] font-medium uppercase">
+                                {pf.file.name.split(".").pop()?.slice(0, 4) || "FILE"}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Meta + progress + actions */}
+                          <div className="flex-1 min-w-0 space-y-1.5">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-foreground truncate" title={pf.file.name}>{pf.file.name}</p>
+                                <p className="text-[11px] text-muted-foreground">
+                                  {(pf.file.size / 1024).toFixed(0)} KB
+                                  {pf.status === "done" && <span className="text-primary"> · Uploaded</span>}
+                                  {pf.status === "uploading" && <span> · Uploading {pf.progress}%</span>}
+                                  {pf.status === "stalled" && <span className="text-foreground/70"> · Stalled — retrying</span>}
+                                  {pf.status === "error" && <span className="text-destructive"> · Failed</span>}
+                                  {pf.status === "ready" && <span> · Ready</span>}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                {(pf.status === "error" || pf.status === "stalled") && (
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-7 w-7"
+                                    aria-label={`Retry ${pf.file.name}`}
+                                    onClick={() => retryPendingFile(pf.id)}
+                                  >
+                                    <RotateCcw className="h-3.5 w-3.5" />
+                                  </Button>
+                                )}
+                                <Button
+                                  type="button"
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                  aria-label={`Remove ${pf.file.name}`}
+                                  disabled={createFlowItem.isPending}
+                                  onClick={() => removePendingFile(pf.id)}
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </div>
+                            {showProgress && (
+                              <Progress value={pf.progress} className="h-1" />
+                            )}
+                            {pf.status === "stalled" && (
+                              <div className="flex items-center gap-1.5 text-[11px] text-foreground/70">
+                                <AlertTriangle className="h-3 w-3" />
+                                <span>No data has moved in 15s.</span>
+                              </div>
+                            )}
+                            {pf.status === "error" && pf.error && (
+                              <p className="text-[11px] text-destructive break-words" role="alert">{pf.error}</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {shareStep === "compose" && (
+                  <>
+                    <Input placeholder="Title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
+                    <Input placeholder="Creator / Artist name (optional)" value={newCreatorName} onChange={(e) => setNewCreatorName(e.target.value)} />
+                    <Textarea placeholder="Description (optional)" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={2} />
+                    <Select value={newCategory} onValueChange={(val) => { setNewCategory(val); resetPendingFiles(); }}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {CATEGORIES.map((cat) => (
+                          <SelectItem key={cat} value={cat} className="capitalize">{cat}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept={CATEGORY_UPLOAD_HINTS[newCategory]?.accept || "*/*"}
+                        className="hidden"
+                        onChange={(e) => { addPendingFiles(e.target.files); e.target.value = ""; }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        onDragEnter={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          dragCounterRef.current += 1;
+                          if (e.dataTransfer.types.includes("Files")) setIsDragging(true);
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          e.dataTransfer.dropEffect = "copy";
+                        }}
+                        onDragLeave={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          dragCounterRef.current -= 1;
+                          if (dragCounterRef.current <= 0) {
+                            dragCounterRef.current = 0;
+                            setIsDragging(false);
+                          }
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          dragCounterRef.current = 0;
+                          setIsDragging(false);
+                          addPendingFiles(e.dataTransfer.files);
+                        }}
+                        aria-label="Upload files or drop here"
+                        className={cn(
+                          "w-full border-2 border-dashed rounded-xl p-4 text-center transition-all",
+                          isDragging
+                            ? "border-primary bg-primary/5 scale-[1.01]"
+                            : fileError
+                            ? "border-destructive/60 hover:border-destructive"
+                            : "border-border hover:border-primary/30"
+                        )}
+                      >
+                        {isDragging ? (
+                          <>
+                            <Upload className="h-5 w-5 text-primary mx-auto mb-1 animate-pulse" />
+                            <p className="text-sm text-primary font-medium">Drop files to upload</p>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
+                            <p className="text-sm text-muted-foreground">
+                              {fileCount > 0 ? "Add more files" : (CATEGORY_UPLOAD_HINTS[newCategory]?.hint || "Upload files")}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground/70 mt-1">Click or drag &amp; drop · multiple allowed</p>
+                          </>
+                        )}
+                      </button>
+                      {fileError && (
+                        <p className="text-xs text-destructive mt-1.5 px-1" role="alert">{fileError}</p>
+                      )}
+                    </div>
+
+                    <Input
+                      placeholder={CATEGORY_UPLOAD_HINTS[newCategory]?.linkHint || "Link URL (optional)"}
+                      value={newLink}
+                      onChange={(e) => setNewLink(e.target.value)}
+                    />
+                  </>
+                )}
+
+                {shareStep === "confirm" && (
+                  <div className="rounded-xl border border-border bg-background/40 p-3 space-y-2">
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Post details</p>
+                    <div className="space-y-1.5 text-sm">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-muted-foreground text-xs w-20 shrink-0">Title</span>
+                        <span className="text-foreground font-medium break-words">{newTitle.trim() || <span className="text-muted-foreground italic">—</span>}</span>
+                      </div>
+                      {newCreatorName.trim() && (
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-muted-foreground text-xs w-20 shrink-0">Creator</span>
+                          <span className="text-foreground break-words">{newCreatorName.trim()}</span>
+                        </div>
+                      )}
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-muted-foreground text-xs w-20 shrink-0">Category</span>
+                        <span className="text-foreground capitalize">{newCategory}</span>
+                      </div>
+                      {newDesc.trim() && (
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-muted-foreground text-xs w-20 shrink-0">Description</span>
+                          <span className="text-foreground break-words">{newDesc.trim()}</span>
+                        </div>
+                      )}
+                      {fileCount > 0 && (
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-muted-foreground text-xs w-20 shrink-0">Files</span>
+                          <span className="text-foreground">
+                            {fileCount} item{fileCount > 1 ? "s" : ""} · publishes one Flow card per file
+                          </span>
+                        </div>
+                      )}
+                      {newLink.trim() && (
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-muted-foreground text-xs w-20 shrink-0">Link</span>
+                          <span className="text-foreground break-all">{newLink.trim()}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Aggregate publish progress (visible during the publish loop) */}
+                {publishingIndex && (
+                  <div className="rounded-xl border border-border bg-muted/40 p-3" role="status" aria-live="polite">
+                    <div className="flex items-center gap-2 text-xs text-foreground font-medium">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                      <span>Publishing file {publishingIndex.current} of {publishingIndex.total}…</span>
+                    </div>
+                  </div>
+                )}
+
+                {shareStep === "compose" ? (
+                  <Button
+                    type="submit"
+                    className="w-full rounded-full"
+                    disabled={!allValid || createFlowItem.isPending}
+                  >
+                    Review &amp; confirm
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="rounded-full"
+                      disabled={createFlowItem.isPending}
+                      onClick={() => setShareStep("compose")}
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="flex-1 rounded-full"
+                      disabled={!canPublish}
+                      aria-disabled={!canPublish}
+                    >
+                      {createFlowItem.isPending
+                        ? (publishingIndex
+                            ? `Publishing ${publishingIndex.current}/${publishingIndex.total}…`
+                            : "Publishing…")
+                        : fileCount > 1
+                        ? `Publish ${fileCount} items`
+                        : "Publish to Flow"}
+                    </Button>
+                  </div>
+                )}
+              </form>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
           <DialogHeader>
             <DialogTitle>{shareStep === "confirm" ? "Confirm & publish" : "Share to Flow"}</DialogTitle>
             <DialogDescription>
