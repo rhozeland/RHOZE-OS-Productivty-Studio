@@ -486,80 +486,96 @@ const DashboardPage = () => {
                     transition={{ duration: 0.3 }}
                     className="absolute inset-0"
                   >
-                    {(currentListing.cover_url || currentListing.image_url) ? (
-                      <img
-                        src={currentListing.cover_url || currentListing.image_url || ""}
-                        alt={currentListing.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div
-                        className="relative w-full h-full overflow-hidden"
-                        style={{ background: gradientFor(currentListing.id) }}
-                      >
-                        <span
-                          className="absolute -right-4 -bottom-10 font-display font-bold text-foreground/[0.08] select-none leading-none"
-                          style={{ fontSize: "14rem" }}
-                        >
-                          {categoryGlyph}
-                        </span>
-                        <div
-                          className="absolute inset-0 opacity-[0.15] mix-blend-overlay pointer-events-none"
-                          style={{
-                            backgroundImage:
-                              "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
-                          }}
+                    <Link
+                      to={`/marketplace/${currentListing.id}`}
+                      aria-label={`Open listing: ${currentListing.title}`}
+                      className="absolute inset-0 block group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                    >
+                      {(currentListing.cover_url || currentListing.image_url) ? (
+                        <img
+                          src={currentListing.cover_url || currentListing.image_url || ""}
+                          alt={currentListing.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                         />
-                      </div>
-                    )}
-                    {/* Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-wider bg-background/80 backdrop-blur-sm rounded-full px-2.5 py-0.5">
-                          {currentListing.category}
-                        </span>
-                        {priceLabel && (
-                          <span className="text-[10px] font-body font-bold text-primary bg-primary/10 rounded-full px-2.5 py-0.5">
-                            {priceLabel}
+                      ) : (
+                        <div
+                          className="relative w-full h-full overflow-hidden transition-transform duration-500 group-hover:scale-[1.03]"
+                          style={{ background: gradientFor(currentListing.id) }}
+                        >
+                          <span
+                            className="absolute -right-4 -bottom-10 font-display font-bold text-foreground/[0.08] select-none leading-none"
+                            style={{ fontSize: "14rem" }}
+                          >
+                            {categoryGlyph}
                           </span>
-                        )}
-                      </div>
-                      <Link to={`/creators/${currentListing.id}`} className="hover:underline">
-                        <h3 className="font-display text-lg font-bold text-foreground leading-snug line-clamp-1">{currentListing.title}</h3>
-                      </Link>
-                      {excerpt && (
-                        <p className="text-xs text-muted-foreground font-body mt-1 line-clamp-1">{excerpt}</p>
-                      )}
-                      <div className="flex items-center justify-between gap-2 mt-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="h-5 w-5 rounded-full bg-muted overflow-hidden shrink-0">
-                            {creatorProfile?.avatar_url ? (
-                              <img src={creatorProfile.avatar_url} alt="" className="h-full w-full object-cover" />
-                            ) : (
-                              <div className="h-full w-full flex items-center justify-center"><User className="h-3 w-3 text-muted-foreground" /></div>
-                            )}
-                          </div>
-                          <span className="text-xs text-muted-foreground font-body truncate">
-                            {creatorProfile?.display_name || "Rhozeland Creator"}
-                          </span>
+                          <div
+                            className="absolute inset-0 opacity-[0.15] mix-blend-overlay pointer-events-none"
+                            style={{
+                              backgroundImage:
+                                "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
+                            }}
+                          />
                         </div>
-                        {isOwnListing && !currentListing.cover_url && !currentListing.image_url && allMissingCovers && (
-                          <span className="text-[10px] font-body text-muted-foreground/70 italic shrink-0">Add a cover image</span>
+                      )}
+                      {/* Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-5">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-wider bg-background/80 backdrop-blur-sm rounded-full px-2.5 py-0.5">
+                            {currentListing.category}
+                          </span>
+                          {priceLabel && (
+                            <span className="text-[10px] font-body font-bold text-primary bg-primary/10 rounded-full px-2.5 py-0.5">
+                              {priceLabel}
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="font-display text-lg font-bold text-foreground leading-snug line-clamp-1 group-hover:text-primary transition-colors">
+                          {currentListing.title}
+                        </h3>
+                        {excerpt && (
+                          <p className="text-xs text-muted-foreground font-body mt-1 line-clamp-1">{excerpt}</p>
                         )}
+                        <div className="flex items-center justify-between gap-2 mt-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="h-5 w-5 rounded-full bg-muted overflow-hidden shrink-0">
+                              {creatorProfile?.avatar_url ? (
+                                <img src={creatorProfile.avatar_url} alt="" className="h-full w-full object-cover" />
+                              ) : (
+                                <div className="h-full w-full flex items-center justify-center"><User className="h-3 w-3 text-muted-foreground" /></div>
+                              )}
+                            </div>
+                            <span className="text-xs text-muted-foreground font-body truncate">
+                              {creatorProfile?.display_name || "Rhozeland Creator"}
+                            </span>
+                          </div>
+                          {isOwnListing && !currentListing.cover_url && !currentListing.image_url && allMissingCovers && (
+                            <span className="text-[10px] font-body text-muted-foreground/70 italic shrink-0">Add a cover image</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    </Link>
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {/* Nav arrows */}
+              {/* Nav arrows — sit above the link to intercept clicks */}
               {hubCount > 1 && (
                 <>
-                  <button onClick={prevSlide} className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background transition-colors z-10">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); prevSlide(); }}
+                    aria-label="Previous listing"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background transition-colors z-20"
+                  >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
-                  <button onClick={nextSlide} className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background transition-colors z-10">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); nextSlide(); }}
+                    aria-label="Next listing"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background transition-colors z-20"
+                  >
                     <ChevronRight className="h-4 w-4" />
                   </button>
                 </>
