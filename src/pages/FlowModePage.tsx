@@ -1122,8 +1122,77 @@ const FlowModePage = () => {
               value={newLink}
               onChange={(e) => setNewLink(e.target.value)}
             />
+            {/* Real upload progress + stall/error UI */}
+            {(uploadStage === "uploading" || uploadStage === "saving" || uploadStage === "stalled") && (
+              <div className="rounded-xl border border-border bg-muted/40 p-3 space-y-2" role="status" aria-live="polite">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 text-foreground font-medium">
+                    {uploadStage === "stalled" ? (
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                    ) : (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                    )}
+                    <span>
+                      {uploadStage === "uploading" && `Uploading ${newFile?.name || "file"}`}
+                      {uploadStage === "stalled" && "Upload stalled — still trying…"}
+                      {uploadStage === "saving" && "Saving to Flow…"}
+                    </span>
+                  </div>
+                  <span className="text-muted-foreground tabular-nums">
+                    {uploadStage === "saving" ? "—" : `${uploadProgress}%`}
+                  </span>
+                </div>
+                <Progress value={uploadStage === "saving" ? 100 : uploadProgress} className="h-1.5" />
+                {uploadStage === "stalled" && (
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <p className="text-[11px] text-muted-foreground">No data has moved in 15s. Slow network?</p>
+                    <Button type="button" size="sm" variant="ghost" className="h-7 text-xs" onClick={cancelUpload}>
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+            {uploadStage === "error" && uploadError && (
+              <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-3 space-y-2" role="alert">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground">Upload failed</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 break-words">{uploadError}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs gap-1.5"
+                    onClick={() => { setUploadError(null); setUploadStage("idle"); setUploadProgress(0); createFlowItem.mutate(); }}
+                  >
+                    <RotateCcw className="h-3 w-3" /> Try again
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 text-xs"
+                    onClick={() => { setUploadError(null); setUploadStage("idle"); setUploadProgress(0); }}
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <Button type="submit" className="w-full rounded-full" disabled={!newTitle.trim() || createFlowItem.isPending}>
-              {createFlowItem.isPending ? "Sharing..." : "Share to Flow"}
+              {uploadStage === "uploading" || uploadStage === "stalled"
+                ? `Uploading… ${uploadProgress}%`
+                : uploadStage === "saving"
+                ? "Saving…"
+                : createFlowItem.isPending
+                ? "Sharing…"
+                : "Share to Flow"}
             </Button>
           </form>
         </DialogContent>
