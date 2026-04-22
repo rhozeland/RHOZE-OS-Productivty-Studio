@@ -803,28 +803,54 @@ const ListingDetailPage = () => {
         </div>
       </div>
 
-      {/* Inquiry dialog */}
+      {/* Inquiry dialog — type-specific framing */}
       <Dialog open={inquiryOpen} onOpenChange={setInquiryOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Send Inquiry</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <div
+                className="h-7 w-7 rounded-full flex items-center justify-center"
+                style={{ background: `${typeMeta.accent}26`, color: typeMeta.accent }}
+              >
+                <TypeIcon className="h-3.5 w-3.5" />
+              </div>
+              {typeMeta.inquiryTitle}
+            </DialogTitle>
           </DialogHeader>
           <form
             onSubmit={(e) => { e.preventDefault(); if (inquiryMsg.trim()) sendInquiry.mutate(); }}
             className="space-y-4"
           >
-            <p className="text-sm text-muted-foreground">
-              Interested in <strong className="text-foreground">{listing.title}</strong>? Send a message to the seller.
+            <div className="rounded-lg bg-muted/40 p-3 space-y-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Re: {typeMeta.label}
+              </p>
+              <p className="text-sm font-medium text-foreground line-clamp-2">
+                {listing.title}
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {typeMeta.inquiryHint}
             </p>
             <Textarea
-              placeholder="Hi! I'm interested in..."
+              placeholder={typeMeta.inquiryPlaceholder}
               value={inquiryMsg}
               onChange={(e) => setInquiryMsg(e.target.value)}
-              rows={4}
+              rows={6}
               required
+              className="text-sm resize-none"
             />
-            <Button type="submit" className="w-full rounded-full" disabled={!inquiryMsg.trim() || sendInquiry.isPending}>
-              Send Inquiry
+            <Button
+              type="submit"
+              className="w-full rounded-full h-11"
+              disabled={!inquiryMsg.trim() || sendInquiry.isPending}
+              style={{ background: typeMeta.accent, color: "white" }}
+            >
+              {sendInquiry.isPending ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending...</>
+              ) : (
+                <><Send className="mr-2 h-4 w-4" />{typeMeta.primaryCta}</>
+              )}
             </Button>
           </form>
         </DialogContent>
