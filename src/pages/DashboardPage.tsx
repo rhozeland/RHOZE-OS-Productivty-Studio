@@ -427,9 +427,27 @@ const DashboardPage = () => {
     </motion.section>
   );
 
+  // Deterministic gradient seeded from a string id
+  const gradientFor = (id: string) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
+    const h1 = Math.abs(hash) % 360;
+    const h2 = (h1 + 40) % 360;
+    return `linear-gradient(135deg, hsl(${h1} 70% 22% / 0.85), hsl(${h2} 65% 12% / 0.95))`;
+  };
+
   const renderHubSection = () => {
     const currentListing = hubListings?.[hubSlide];
     const creatorProfile = currentListing ? hubProfileMap.get(currentListing.user_id) : null;
+    const isOwnListing = currentListing && user?.id === currentListing.user_id;
+    const allMissingCovers = hubListings?.every((l) => !l.cover_url && !l.image_url) ?? false;
+    const priceLabel = currentListing?.credits_price
+      ? `${currentListing.credits_price} ◊ $RHOZE`
+      : currentListing?.price
+      ? `$${Number(currentListing.price).toFixed(2)} ${currentListing.currency || "USD"}`
+      : null;
+    const excerpt = currentListing?.description?.trim() || null;
+    const categoryGlyph = (currentListing?.category || "R").charAt(0).toUpperCase();
 
     return (
       <motion.section key="hub" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
