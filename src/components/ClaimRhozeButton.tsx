@@ -238,7 +238,7 @@ const ClaimRhozeButton = ({
               </div>
               <div className="flex-1 space-y-1">
                 <p className="text-xs font-body font-medium text-foreground flex items-center gap-1.5">
-                  <AlertTriangle className="h-3 w-3 text-amber-500" />
+                  <AlertTriangle className="h-3 w-3 text-primary" />
                   I confirm this is my wallet
                 </p>
                 <p className="text-[11px] text-muted-foreground font-body leading-relaxed">
