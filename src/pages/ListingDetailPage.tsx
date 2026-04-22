@@ -36,6 +36,11 @@ import {
   CheckCircle,
   Loader2,
   Download,
+  Search,
+  Users,
+  Send,
+  HandshakeIcon,
+  Zap,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
