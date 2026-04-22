@@ -1276,16 +1276,44 @@ const FlowModePage = () => {
               </div>
             )}
 
-            <Button type="submit" className="w-full rounded-full" disabled={!newTitle.trim() || createFlowItem.isPending}>
-              {uploadStage === "uploading" || uploadStage === "stalled"
-                ? `Uploading… ${uploadProgress}%`
-                : uploadStage === "saving"
-                ? "Saving…"
-                : createFlowItem.isPending
-                ? "Sharing…"
-                : "Share to Flow"}
-            </Button>
+            {shareStep === "compose" ? (
+              <Button
+                type="submit"
+                className="w-full rounded-full"
+                disabled={!allValid || uploadBusy || createFlowItem.isPending}
+              >
+                Review &amp; confirm
+              </Button>
+            ) : (
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-full"
+                  disabled={uploadBusy || createFlowItem.isPending}
+                  onClick={() => setShareStep("compose")}
+                >
+                  Back
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1 rounded-full"
+                  disabled={!canPublish}
+                  aria-disabled={!canPublish}
+                >
+                  {uploadStage === "uploading" || uploadStage === "stalled"
+                    ? `Publishing… ${uploadProgress}%`
+                    : uploadStage === "saving"
+                    ? "Saving…"
+                    : createFlowItem.isPending
+                    ? "Publishing…"
+                    : "Publish to Flow"}
+                </Button>
+              </div>
+            )}
           </form>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 
