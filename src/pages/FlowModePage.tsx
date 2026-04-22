@@ -135,9 +135,9 @@ const FlowModePage = () => {
   });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Shared file validation against the current category's accept rules
-  const selectFile = (file: File | null | undefined) => {
-    if (!file) return;
+  // Validate one file against the current category's accept rules. Returns null if OK,
+  // otherwise a human-readable reason.
+  const validateAgainstCategory = (file: File): string | null => {
     const acceptStr = CATEGORY_UPLOAD_HINTS[newCategory]?.accept || "*/*";
     const accepts = acceptStr.split(",").map((s) => s.trim()).filter(Boolean);
     const fileName = file.name.toLowerCase();
@@ -148,13 +148,78 @@ const FlowModePage = () => {
       if (rule.endsWith("/*")) return fileType.startsWith(rule.slice(0, -1).toLowerCase());
       return fileType === rule.toLowerCase();
     });
-    if (!matches) {
-      setFileError(`This file type isn't allowed for ${newCategory}. Try: ${CATEGORY_UPLOAD_HINTS[newCategory]?.hint}`);
-      setNewFile(null);
-      return;
+    return matches
+      ? null
+      : `${file.name}: type not allowed for ${newCategory}. Try: ${CATEGORY_UPLOAD_HINTS[newCategory]?.hint}`;
+  };
+
+  // Add files to the pending list. Invalid files surface a single combined error message
+  // (older error is replaced) but do not block previously-validated entries.
+  const addPendingFiles = (incoming: FileList | File[] | null | undefined) => {
+    if (!incoming) return;
+    const arr = Array.from(incoming as ArrayLike<File>);
+    if (arr.length === 0) return;
+    const accepted: PendingFile[] = [];
+    const rejections: string[] = [];
+    for (const file of arr) {
+      const reason = validateAgainstCategory(file);
+      if (reason) {
+        rejections.push(reason);
+        continue;
+      }
+      accepted.push({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${file.name}`,
+        file,
+        previewUrl: URL.createObjectURL(file),
+        status: "ready",
+        progress: 0,
+        error: null,
+        uploadedUrl: null,
+      });
     }
+    if (accepted.length) setPendingFiles((prev) => [...prev, ...accepted]);
+    if (rejections.length) {
+      setFileError(rejections.length === 1 ? rejections[0] : `${rejections.length} files rejected. ${rejections[0]}`);
+    } else {
+      setFileError(null);
+    }
+  };
+
+  // Legacy single-file selector kept for backward-compat call sites; routes through addPendingFiles.
+  const selectFile = (file: File | null | undefined) => {
+    if (!file) return;
+    addPendingFiles([file]);
+  };
+
+  // Remove a pending file: abort any in-flight xhr, revoke its blob URL, drop from list.
+  const removePendingFile = (id: string) => {
+    const xhr = xhrMapRef.current.get(id);
+    if (xhr) { try { xhr.abort(); } catch {} xhrMapRef.current.delete(id); }
+    const stall = stallTimerMapRef.current.get(id);
+    if (stall) { clearInterval(stall); stallTimerMapRef.current.delete(id); }
+    const hard = hardTimeoutMapRef.current.get(id);
+    if (hard) { clearTimeout(hard); hardTimeoutMapRef.current.delete(id); }
+    lastProgressMapRef.current.delete(id);
+    setPendingFiles((prev) => {
+      const target = prev.find((p) => p.id === id);
+      if (target) { try { URL.revokeObjectURL(target.previewUrl); } catch {} }
+      return prev.filter((p) => p.id !== id);
+    });
+  };
+
+  // Reset everything related to the current pending file batch (used on dialog close & after success).
+  const resetPendingFiles = () => {
+    pendingFiles.forEach((p) => { try { URL.revokeObjectURL(p.previewUrl); } catch {} });
+    xhrMapRef.current.forEach((xhr) => { try { xhr.abort(); } catch {} });
+    xhrMapRef.current.clear();
+    stallTimerMapRef.current.forEach((t) => clearInterval(t));
+    stallTimerMapRef.current.clear();
+    hardTimeoutMapRef.current.forEach((t) => clearTimeout(t));
+    hardTimeoutMapRef.current.clear();
+    lastProgressMapRef.current.clear();
+    setPendingFiles([]);
     setFileError(null);
-    setNewFile(file);
+    setPublishingIndex(null);
   };
 
   const x = useMotionValue(0);
