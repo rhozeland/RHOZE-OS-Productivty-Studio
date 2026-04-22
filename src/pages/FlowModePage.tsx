@@ -1073,6 +1073,8 @@ const FlowModePage = () => {
               );
             })()}
 
+            {shareStep === "compose" && (
+              <>
             <Input placeholder="Title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
             <Input placeholder="Creator / Artist name (optional)" value={newCreatorName} onChange={(e) => setNewCreatorName(e.target.value)} />
             <Textarea placeholder="Description (optional)" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={2} />
@@ -1169,6 +1171,48 @@ const FlowModePage = () => {
               value={newLink}
               onChange={(e) => setNewLink(e.target.value)}
             />
+              </>
+            )}
+
+            {shareStep === "confirm" && (
+              <div className="rounded-xl border border-border bg-background/40 p-3 space-y-2">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Post details</p>
+                <div className="space-y-1.5 text-sm">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-muted-foreground text-xs w-20 shrink-0">Title</span>
+                    <span className="text-foreground font-medium break-words">{newTitle.trim() || <span className="text-muted-foreground italic">—</span>}</span>
+                  </div>
+                  {newCreatorName.trim() && (
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-muted-foreground text-xs w-20 shrink-0">Creator</span>
+                      <span className="text-foreground break-words">{newCreatorName.trim()}</span>
+                    </div>
+                  )}
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-muted-foreground text-xs w-20 shrink-0">Category</span>
+                    <span className="text-foreground capitalize">{newCategory}</span>
+                  </div>
+                  {newDesc.trim() && (
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-muted-foreground text-xs w-20 shrink-0">Description</span>
+                      <span className="text-foreground break-words">{newDesc.trim()}</span>
+                    </div>
+                  )}
+                  {newFile && (
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-muted-foreground text-xs w-20 shrink-0">File</span>
+                      <span className="text-foreground break-all">{newFile.name} <span className="text-muted-foreground">· {(newFile.size / 1024).toFixed(0)} KB</span></span>
+                    </div>
+                  )}
+                  {newLink.trim() && (
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-muted-foreground text-xs w-20 shrink-0">Link</span>
+                      <span className="text-foreground break-all">{newLink.trim()}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             {/* Real upload progress + stall/error UI */}
             {(uploadStage === "uploading" || uploadStage === "saving" || uploadStage === "stalled") && (
               <div className="rounded-xl border border-border bg-muted/40 p-3 space-y-2" role="status" aria-live="polite">
