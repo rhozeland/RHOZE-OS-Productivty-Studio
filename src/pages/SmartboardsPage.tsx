@@ -40,15 +40,20 @@ const SmartboardsPage = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data: boards } = useQuery({
-    queryKey: ["smartboards"],
+    queryKey: ["smartboards", user?.id],
     queryFn: async () => {
+      if (!user) return [];
+      // Only the user's OWN boards. Public boards belong in the Hub for discovery,
+      // not on personal "My Boards". Invited/collab boards appear in "Shared with Me" below.
       const { data, error } = await supabase
         .from("smartboards")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 
   const { data: memberBoards } = useQuery({
@@ -144,7 +149,7 @@ const SmartboardsPage = () => {
             My Boards
             <span className="ml-2 text-xs font-normal text-muted-foreground align-middle">· Visual Mood & Curation</span>
           </h1>
-          <p className="text-muted-foreground text-sm">Curate, collaborate, and brainstorm</p>
+          <p className="text-muted-foreground text-sm">Your private + public boards. Discover others in the <Link to="/creators" className="underline hover:text-foreground">Hub</Link>.</p>
         </div>
         <div className="flex items-center gap-2">
           <button
