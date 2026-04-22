@@ -101,6 +101,28 @@ const FlowModePage = () => {
   });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Shared file validation against the current category's accept rules
+  const selectFile = (file: File | null | undefined) => {
+    if (!file) return;
+    const acceptStr = CATEGORY_UPLOAD_HINTS[newCategory]?.accept || "*/*";
+    const accepts = acceptStr.split(",").map((s) => s.trim()).filter(Boolean);
+    const fileName = file.name.toLowerCase();
+    const fileType = (file.type || "").toLowerCase();
+    const matches = accepts.some((rule) => {
+      if (rule === "*/*") return true;
+      if (rule.startsWith(".")) return fileName.endsWith(rule.toLowerCase());
+      if (rule.endsWith("/*")) return fileType.startsWith(rule.slice(0, -1).toLowerCase());
+      return fileType === rule.toLowerCase();
+    });
+    if (!matches) {
+      setFileError(`This file type isn't allowed for ${newCategory}. Try: ${CATEGORY_UPLOAD_HINTS[newCategory]?.hint}`);
+      setNewFile(null);
+      return;
+    }
+    setFileError(null);
+    setNewFile(file);
+  };
+
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const rotateZ = useTransform(x, [-200, 200], [-8, 8]);
