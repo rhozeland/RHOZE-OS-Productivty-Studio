@@ -251,15 +251,37 @@ const FlowModePage = () => {
   const createFlowItem = useMutation({
     mutationFn: async () => {
       let fileUrl: string | null = null;
+      setUploadError(null);
 
       if (newFile) {
-        const ext = newFile.name.split(".").pop();
-        const path = `${user!.id}/${Date.now()}.${ext}`;
-        const { error: uploadErr } = await supabase.storage.from("flow-uploads").upload(path, newFile);
-        if (uploadErr) throw uploadErr;
-        const { data: urlData } = supabase.storage.from("flow-uploads").getPublicUrl(path);
-        fileUrl = urlData.publicUrl;
+        setUploadStage("uploading");
+        setUploadProgress(0);
+
+        // Supabase JS doesn't expose progress; simulate steady progress while
+        // the upload is in flight, then snap to 100 on success.
+        const startedAt = Date.now();
+        const simulatedDurationMs = Math.max(1500, Math.min(15000, newFile.size / 50_000));
+        const progressTimer = setInterval(() => {
+          const pct = Math.min(92, ((Date.now() - startedAt) / simulatedDurationMs) * 100);
+          setUploadProgress(pct);
+        }, 120);
+
+        try {
+          const ext = newFile.name.split(".").pop();
+          const path = `${user!.id}/${Date.now()}.${ext}`;
+          const { error: uploadErr } = await supabase.storage
+            .from("flow-uploads")
+            .upload(path, newFile);
+          if (uploadErr) throw uploadErr;
+          const { data: urlData } = supabase.storage.from("flow-uploads").getPublicUrl(path);
+          fileUrl = urlData.publicUrl;
+          setUploadProgress(100);
+        } finally {
+          clearInterval(progressTimer);
+        }
       }
+
+      setUploadStage("saving");
 
       const contentType = newFile
         ? (newFile.type.startsWith("image") ? "image" : newFile.type.startsWith("video") ? "video" : newFile.type.startsWith("audio") ? "audio" : "file")
@@ -276,6 +298,7 @@ const FlowModePage = () => {
         creator_name: newCreatorName || null,
       } as any);
       if (error) throw error;
+      setUploadStage("done");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["flow-items"] });
@@ -285,9 +308,17 @@ const FlowModePage = () => {
       setNewLink("");
       setNewFile(null);
       setNewCreatorName("");
+      setFileError(null);
+      setUploadProgress(0);
+      setUploadStage("idle");
+      setUploadError(null);
       toast.success("Content shared to Flow!");
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => {
+      setUploadStage("error");
+      setUploadError(e?.message || "Something went wrong. Please try again.");
+      toast.error(e?.message || "Upload failed");
+    },
   });
 
   // All items — loop through them endlessly
