@@ -995,8 +995,7 @@ const FlowModePage = () => {
                     )}
                   </div>
                 )}
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {(null as any)}
+
             {/* Live preview — shows file or link content above the form fields */}
             {(() => {
               const fileUrl = newFile ? URL.createObjectURL(newFile) : null;
