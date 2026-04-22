@@ -69,6 +69,35 @@ const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; link
   writing: { accept: ".txt,.md,.pdf,.doc,.docx", hint: "TXT, PDF, DOC, or text files", linkHint: "Medium, Substack, or blog link" },
 };
 
+// Per-category file size cap (in MB). Audio & video are larger by nature.
+const MAX_FILE_MB: Record<string, number> = {
+  design: 25,
+  music: 50,
+  photo: 25,
+  video: 100,
+  writing: 10,
+};
+
+// Recognized link platforms with branded preview metadata
+type LinkPlatform = {
+  key: string;
+  match: RegExp;
+  label: string;
+  icon: typeof Link2;
+  accent: string;
+};
+const LINK_PLATFORMS: LinkPlatform[] = [
+  { key: "youtube", match: /(?:youtu\.be|youtube\.com)/i, label: "YouTube", icon: Youtube, accent: "hsl(0 80% 55%)" },
+  { key: "vimeo", match: /vimeo\.com/i, label: "Vimeo", icon: Youtube, accent: "hsl(195 100% 45%)" },
+  { key: "spotify", match: /spotify\.com/i, label: "Spotify", icon: MusicIcon, accent: "hsl(141 76% 48%)" },
+  { key: "soundcloud", match: /soundcloud\.com/i, label: "SoundCloud", icon: MusicIcon, accent: "hsl(20 100% 50%)" },
+  { key: "behance", match: /behance\.net/i, label: "Behance", icon: ImageIcon, accent: "hsl(220 100% 50%)" },
+  { key: "dribbble", match: /dribbble\.com/i, label: "Dribbble", icon: ImageIcon, accent: "hsl(335 78% 58%)" },
+  { key: "figma", match: /figma\.com/i, label: "Figma", icon: ImageIcon, accent: "hsl(265 78% 60%)" },
+  { key: "medium", match: /medium\.com/i, label: "Medium", icon: FileTextIcon, accent: "hsl(0 0% 15%)" },
+  { key: "substack", match: /substack\.com/i, label: "Substack", icon: FileTextIcon, accent: "hsl(20 100% 50%)" },
+];
+
 const FlowModePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
