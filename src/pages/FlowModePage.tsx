@@ -91,6 +91,14 @@ const FlowModePage = () => {
   const [fileError, setFileError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragCounterRef = useRef(0);
+  // Real upload progress + stall handling
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStage, setUploadStage] = useState<"idle" | "uploading" | "saving" | "stalled" | "error">("idle");
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
+  const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastProgressAtRef = useRef<number>(0);
   const [newCreatorName, setNewCreatorName] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(() => {
