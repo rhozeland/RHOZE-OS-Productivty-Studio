@@ -52,6 +52,7 @@ import { playSwipeSound } from "@/lib/swipe-sound";
 import FlowCard from "@/components/flow/FlowCard";
 import FlowCardBackground from "@/components/flow/FlowCardBackground";
 import FlowShareDialog from "@/components/flow/FlowShareDialog";
+import LinkPreviewCard from "@/components/flow/LinkPreviewCard";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
