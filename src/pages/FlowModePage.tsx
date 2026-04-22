@@ -123,6 +123,11 @@ const FlowModePage = () => {
   const [newLink, setNewLink] = useState("");
   const [newFile, setNewFile] = useState<File | null>(null);
   const [newCreatorName, setNewCreatorName] = useState("");
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStage, setUploadStage] = useState<"idle" | "uploading" | "saving" | "done" | "error">("idle");
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(() => {
     const saved = localStorage.getItem("flow-sound-enabled");
