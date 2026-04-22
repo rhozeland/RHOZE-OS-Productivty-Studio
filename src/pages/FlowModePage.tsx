@@ -926,19 +926,77 @@ const FlowModePage = () => {
       </Dialog>
 
       {/* Add content dialog */}
-      <Dialog open={addOpen} onOpenChange={(open) => { if (!open) cancelUpload(); setAddOpen(open); }}>
+      <Dialog open={addOpen} onOpenChange={(open) => { if (!open) { cancelUpload(); setShareStep("compose"); } setAddOpen(open); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Share to Flow</DialogTitle>
-            <DialogDescription>Upload your work for others to discover.</DialogDescription>
+            <DialogTitle>{shareStep === "confirm" ? "Confirm & publish" : "Share to Flow"}</DialogTitle>
+            <DialogDescription>
+              {shareStep === "confirm"
+                ? "Review your post below. Once everything looks right, publish it to the Flow."
+                : "Upload your work for others to discover."}
+            </DialogDescription>
           </DialogHeader>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (newTitle.trim()) createFlowItem.mutate();
-            }}
-            className="space-y-4"
-          >
+          {(() => {
+            // Validation summary used by both compose CTA and confirm checklist
+            const trimmedTitle = newTitle.trim();
+            const trimmedLinkRaw = newLink.trim();
+            const linkProvided = trimmedLinkRaw.length > 0;
+            let linkValid = true;
+            if (linkProvided) {
+              try {
+                const u = new URL(/^https?:\/\//i.test(trimmedLinkRaw) ? trimmedLinkRaw : `https://${trimmedLinkRaw}`);
+                linkValid = !!u.hostname && u.hostname.includes(".");
+              } catch {
+                linkValid = false;
+              }
+            }
+            const hasMedia = !!newFile || linkProvided;
+            const uploadBusy = uploadStage === "uploading" || uploadStage === "saving" || uploadStage === "stalled";
+            const checks = [
+              { ok: !!trimmedTitle, label: "Title added" },
+              { ok: hasMedia, label: "File or link attached" },
+              { ok: !fileError, label: fileError ? "File type allowed" : "File type allowed" },
+              { ok: !linkProvided || linkValid, label: linkProvided ? "Link looks valid" : "Link looks valid (optional)" },
+              { ok: uploadStage !== "error", label: "No pending errors" },
+            ];
+            const allValid = checks.every((c) => c.ok);
+            const canPublish = allValid && !uploadBusy && !createFlowItem.isPending;
+
+            return (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (shareStep === "compose") {
+                    if (allValid) setShareStep("confirm");
+                    return;
+                  }
+                  if (canPublish) createFlowItem.mutate();
+                }}
+                className="space-y-4"
+              >
+                {shareStep === "confirm" && (
+                  <div className="rounded-xl border border-border bg-muted/30 p-3 space-y-3">
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Pre-publish checks</p>
+                    <ul className="space-y-1.5">
+                      {checks.map((c) => (
+                        <li key={c.label} className="flex items-center gap-2 text-sm">
+                          <span className={cn(
+                            "h-4 w-4 rounded-full flex items-center justify-center shrink-0",
+                            c.ok ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                          )}>
+                            {c.ok ? <Check className="h-2.5 w-2.5" strokeWidth={3} /> : <X className="h-2.5 w-2.5" strokeWidth={3} />}
+                          </span>
+                          <span className={c.ok ? "text-foreground" : "text-muted-foreground"}>{c.label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    {!allValid && (
+                      <p className="text-[11px] text-muted-foreground pt-1">Go back to fix the items above before publishing.</p>
+                    )}
+                  </div>
+                )}
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {(null as any)}
             {/* Live preview — shows file or link content above the form fields */}
             {(() => {
               const fileUrl = newFile ? URL.createObjectURL(newFile) : null;
