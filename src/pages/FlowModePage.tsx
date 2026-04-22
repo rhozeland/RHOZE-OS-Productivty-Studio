@@ -904,117 +904,196 @@ const FlowModePage = () => {
       </Dialog>
 
       {/* Add content dialog */}
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-w-md">
+      <Dialog
+        open={addOpen}
+        onOpenChange={(open) => {
+          setAddOpen(open);
+          if (!open) {
+            // Reset transient state when closing so a re-open is clean
+            setFileError(null);
+            setUploadError(null);
+            setUploadProgress(0);
+            setUploadStage("idle");
+          }
+        }}
+      >
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Share to Flow</DialogTitle>
-            <DialogDescription>Upload your work for others to discover.</DialogDescription>
+            <DialogDescription>Preview your work below before publishing it to the feed.</DialogDescription>
           </DialogHeader>
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              if (newTitle.trim()) createFlowItem.mutate();
+              if (newTitle.trim() && uploadStage !== "uploading" && uploadStage !== "saving") {
+                createFlowItem.mutate();
+              }
             }}
             className="space-y-4"
           >
-            {/* Live preview — shows file or link content above the form fields */}
+            {/* Live preview — file takes priority, then rich link */}
             {(() => {
-              const fileUrl = newFile ? URL.createObjectURL(newFile) : null;
+              const fileObjectUrl = objectUrlRef.current;
               const fileType = newFile?.type || "";
-              const trimmedLink = newLink.trim();
-              const linkLooksImage = /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(trimmedLink);
-              const ytMatch = trimmedLink.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
-              const vimeoMatch = trimmedLink.match(/vimeo\.com\/(\d+)/);
-              const hasAnyPreview = !!fileUrl || !!trimmedLink;
+              const hasFilePreview = !!newFile && !!fileObjectUrl;
+              const hasLinkPreview = !!linkMeta && !linkMeta.invalid;
 
-              if (!hasAnyPreview) {
+              if (!hasFilePreview && !hasLinkPreview) {
                 return (
                   <div className="aspect-video rounded-xl border-2 border-dashed border-border/60 bg-muted/30 flex flex-col items-center justify-center text-muted-foreground">
                     <Upload className="h-7 w-7 mb-1.5 opacity-40" />
-                    <p className="text-xs font-body">Preview will appear here</p>
+                    <p className="text-xs font-body">Pick a file or paste a link to preview</p>
                   </div>
                 );
               }
 
               return (
                 <div className="relative rounded-xl overflow-hidden border border-border bg-muted/30">
-                  {/* File preview takes priority over link preview */}
-                  {fileUrl && fileType.startsWith("image/") && (
-                    <img src={fileUrl} alt="preview" className="w-full max-h-72 object-contain bg-background" />
+                  {/* FILE PREVIEW */}
+                  {hasFilePreview && fileType.startsWith("image/") && (
+                    <img src={fileObjectUrl!} alt="preview" className="w-full max-h-72 object-contain bg-background" />
                   )}
-                  {fileUrl && fileType.startsWith("video/") && (
-                    <video src={fileUrl} controls className="w-full max-h-72 bg-background" />
+                  {hasFilePreview && fileType.startsWith("video/") && (
+                    <video src={fileObjectUrl!} controls className="w-full max-h-72 bg-background" />
                   )}
-                  {fileUrl && fileType.startsWith("audio/") && (
+                  {hasFilePreview && fileType.startsWith("audio/") && (
                     <div className="p-4 bg-background">
-                      <audio src={fileUrl} controls className="w-full" />
+                      <audio src={fileObjectUrl!} controls className="w-full" />
                       <p className="text-xs text-muted-foreground mt-2 truncate">{newFile?.name}</p>
                     </div>
                   )}
-                  {fileUrl && !fileType.startsWith("image/") && !fileType.startsWith("video/") && !fileType.startsWith("audio/") && (
-                    <div className="p-5 flex items-center gap-3 bg-background">
-                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                        <Check className="h-5 w-5" />
+                  {hasFilePreview &&
+                    !fileType.startsWith("image/") &&
+                    !fileType.startsWith("video/") &&
+                    !fileType.startsWith("audio/") && (
+                      <div className="p-5 flex items-center gap-3 bg-background">
+                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                          <FileTextIcon className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{newFile?.name}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            Ready · {(newFile!.size / (1024 * 1024)).toFixed(2)} MB
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{newFile?.name}</p>
-                        <p className="text-[11px] text-muted-foreground">Ready to share · {(newFile!.size / 1024).toFixed(0)} KB</p>
-                      </div>
-                    </div>
-                  )}
-                  {!fileUrl && trimmedLink && linkLooksImage && (
-                    <img src={trimmedLink} alt="link preview" className="w-full max-h-72 object-contain bg-background" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                  )}
-                  {!fileUrl && ytMatch && (
-                    <div className="aspect-video bg-background">
-                      <iframe
-                        src={`https://www.youtube.com/embed/${ytMatch[1]}`}
-                        title="YouTube preview"
-                        className="w-full h-full"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
-                    </div>
-                  )}
-                  {!fileUrl && !ytMatch && vimeoMatch && (
-                    <div className="aspect-video bg-background">
-                      <iframe
-                        src={`https://player.vimeo.com/video/${vimeoMatch[1]}`}
-                        title="Vimeo preview"
-                        className="w-full h-full"
-                        allow="autoplay; fullscreen; picture-in-picture"
-                        allowFullScreen
-                      />
-                    </div>
-                  )}
-                  {!fileUrl && trimmedLink && !linkLooksImage && !ytMatch && !vimeoMatch && (
-                    <a
-                      href={trimmedLink}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="flex items-center gap-3 p-4 bg-background hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                        <ChevronRight className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs text-muted-foreground font-body uppercase tracking-wider">External link</p>
-                        <p className="text-sm font-medium text-foreground truncate">{trimmedLink}</p>
-                      </div>
-                    </a>
+                    )}
+
+                  {/* LINK PREVIEW (only when no file) */}
+                  {!hasFilePreview && hasLinkPreview && linkMeta && !linkMeta.invalid && (
+                    <>
+                      {linkMeta.ytId && (
+                        <div className="aspect-video bg-background">
+                          <iframe
+                            src={`https://www.youtube.com/embed/${linkMeta.ytId}`}
+                            title="YouTube preview"
+                            className="w-full h-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        </div>
+                      )}
+                      {!linkMeta.ytId && linkMeta.vimeoId && (
+                        <div className="aspect-video bg-background">
+                          <iframe
+                            src={`https://player.vimeo.com/video/${linkMeta.vimeoId}`}
+                            title="Vimeo preview"
+                            className="w-full h-full"
+                            allow="autoplay; fullscreen; picture-in-picture"
+                            allowFullScreen
+                          />
+                        </div>
+                      )}
+                      {!linkMeta.ytId && !linkMeta.vimeoId && linkMeta.looksImage && (
+                        <img
+                          src={linkMeta.url}
+                          alt="link preview"
+                          className="w-full max-h-72 object-contain bg-background"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = "none";
+                          }}
+                        />
+                      )}
+                      {!linkMeta.ytId && !linkMeta.vimeoId && !linkMeta.looksImage && (
+                        <div
+                          className="flex items-center gap-3 p-4 bg-background border-l-4"
+                          style={{
+                            borderLeftColor: linkMeta.platform?.accent ?? "hsl(var(--primary))",
+                          }}
+                        >
+                          <div
+                            className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
+                            style={{
+                              background: `${linkMeta.platform?.accent ?? "hsl(var(--primary))"}1a`,
+                              color: linkMeta.platform?.accent ?? "hsl(var(--primary))",
+                            }}
+                          >
+                            {linkMeta.platform ? (
+                              <linkMeta.platform.icon className="h-5 w-5" />
+                            ) : (
+                              <img
+                                src={linkMeta.favicon}
+                                alt=""
+                                className="h-5 w-5"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = "none";
+                                }}
+                              />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p
+                              className="text-[10px] font-body uppercase tracking-wider font-semibold"
+                              style={{ color: linkMeta.platform?.accent ?? "hsl(var(--muted-foreground))" }}
+                            >
+                              {linkMeta.platform?.label ?? linkMeta.host}
+                            </p>
+                            <p className="text-sm font-medium text-foreground truncate">{linkMeta.host}</p>
+                            <p className="text-[11px] text-muted-foreground truncate">{linkMeta.url}</p>
+                          </div>
+                          <a
+                            href={linkMeta.url}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="text-muted-foreground hover:text-foreground shrink-0"
+                            aria-label="Open link in new tab"
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </a>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               );
             })()}
 
+            {/* Invalid link warning */}
+            {linkMeta?.invalid && newLink.trim() && (
+              <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-2.5 text-xs text-destructive">
+                <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <span>That doesn't look like a valid URL. Try including https://</span>
+              </div>
+            )}
+
             <Input placeholder="Title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
             <Input placeholder="Creator / Artist name (optional)" value={newCreatorName} onChange={(e) => setNewCreatorName(e.target.value)} />
             <Textarea placeholder="Description (optional)" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={2} />
-            <Select value={newCategory} onValueChange={(val) => { setNewCategory(val); setNewFile(null); }}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select
+              value={newCategory}
+              onValueChange={(val) => {
+                setNewCategory(val);
+                handleFileSelect(null);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat} className="capitalize">{cat}</SelectItem>
+                  <SelectItem key={cat} value={cat} className="capitalize">
+                    {cat}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -1025,20 +1104,30 @@ const FlowModePage = () => {
                 type="file"
                 accept={CATEGORY_UPLOAD_HINTS[newCategory]?.accept || "*/*"}
                 className="hidden"
-                onChange={(e) => setNewFile(e.target.files?.[0] || null)}
+                onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
               />
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full border-2 border-dashed border-border rounded-xl p-4 text-center hover:border-primary/30 transition-colors"
+                className={`w-full border-2 border-dashed rounded-xl p-4 text-center transition-colors ${
+                  fileError
+                    ? "border-destructive/40 hover:border-destructive/60"
+                    : "border-border hover:border-primary/30"
+                }`}
               >
                 {newFile ? (
                   <div className="flex items-center justify-center gap-2">
                     <Check className="h-4 w-4 text-primary" />
                     <span className="text-sm text-foreground truncate max-w-[200px]">{newFile.name}</span>
+                    <span className="text-[11px] text-muted-foreground">
+                      · {(newFile.size / (1024 * 1024)).toFixed(2)} MB
+                    </span>
                     <span
                       role="button"
-                      onClick={(e) => { e.stopPropagation(); setNewFile(null); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleFileSelect(null);
+                      }}
                       className="text-muted-foreground hover:text-destructive cursor-pointer"
                     >
                       <X className="h-3.5 w-3.5" />
@@ -1047,19 +1136,82 @@ const FlowModePage = () => {
                 ) : (
                   <>
                     <Upload className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
-                    <p className="text-sm text-muted-foreground">{CATEGORY_UPLOAD_HINTS[newCategory]?.hint || "Upload a file"}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {CATEGORY_UPLOAD_HINTS[newCategory]?.hint || "Upload a file"}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                      Max {MAX_FILE_MB[newCategory] ?? 25} MB
+                    </p>
                   </>
                 )}
               </button>
             </div>
+
+            {/* File error */}
+            {fileError && (
+              <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-2.5 text-xs text-destructive">
+                <FileWarning className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <span>{fileError}</span>
+              </div>
+            )}
 
             <Input
               placeholder={CATEGORY_UPLOAD_HINTS[newCategory]?.linkHint || "Link URL (optional)"}
               value={newLink}
               onChange={(e) => setNewLink(e.target.value)}
             />
-            <Button type="submit" className="w-full rounded-full" disabled={!newTitle.trim() || createFlowItem.isPending}>
-              {createFlowItem.isPending ? "Sharing..." : "Share to Flow"}
+
+            {/* Upload progress / status */}
+            {(uploadStage === "uploading" || uploadStage === "saving") && (
+              <div className="rounded-xl border border-border bg-muted/30 p-3 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-1.5 text-foreground font-medium">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    {uploadStage === "uploading" ? "Uploading file…" : "Publishing to Flow…"}
+                  </span>
+                  <span className="tabular-nums text-muted-foreground">
+                    {uploadStage === "uploading" ? `${Math.round(uploadProgress)}%` : "—"}
+                  </span>
+                </div>
+                <Progress value={uploadStage === "uploading" ? uploadProgress : 100} className="h-1.5" />
+              </div>
+            )}
+
+            {/* Upload error */}
+            {uploadStage === "error" && uploadError && (
+              <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-3 space-y-1.5">
+                <div className="flex items-start gap-2 text-xs text-destructive">
+                  <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-semibold">Couldn't share</p>
+                    <p className="text-[11px] opacity-90">{uploadError}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => createFlowItem.mutate()}
+                  className="text-[11px] underline text-destructive hover:text-destructive/80"
+                >
+                  Try again
+                </button>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full rounded-full"
+              disabled={
+                !newTitle.trim() ||
+                !!fileError ||
+                linkMeta?.invalid === true ||
+                createFlowItem.isPending
+              }
+            >
+              {uploadStage === "uploading"
+                ? `Uploading ${Math.round(uploadProgress)}%`
+                : uploadStage === "saving"
+                  ? "Publishing…"
+                  : "Share to Flow"}
             </Button>
           </form>
         </DialogContent>
