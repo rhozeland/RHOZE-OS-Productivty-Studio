@@ -539,176 +539,266 @@ const ListingDetailPage = () => {
 
         {/* Right: Info sidebar */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="surface-card p-5 space-y-4 sticky top-4">
-            {/* Type + Category */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="secondary" className="gap-1 text-xs">
-                <TypeIcon className="h-3 w-3" />
-                {typeMeta.label}
-              </Badge>
-              <Badge variant="outline" className="gap-1 text-xs">
-                <CatIcon className="h-3 w-3" style={{ color: catMeta.color }} />
-                {catMeta.label}
-              </Badge>
-            </div>
-
-            {/* Title */}
-            <h1 className="font-display text-xl font-bold text-foreground leading-tight">
-              {listing.title}
-            </h1>
-
-            {/* Rating summary */}
-            {avgRating && (
-              <div className="flex items-center gap-2">
-                <StarRating rating={avgRating} />
-                <span className="text-sm font-bold text-foreground">{avgRating}</span>
-                <span className="text-xs text-muted-foreground">({reviews?.length} review{reviews?.length !== 1 ? "s" : ""})</span>
-              </div>
-            )}
-
-            {/* Price */}
-            {listing.credits_price != null && (
-              <div className="flex items-center gap-2 text-2xl font-display font-bold text-foreground">
-                <Coins className="h-6 w-6 text-primary" />
-                {listing.credits_price} credits
-              </div>
-            )}
-
-            {/* Details */}
-            <div className="space-y-2 text-sm">
-              {listing.delivery_days && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  <span>{listing.delivery_days} day delivery</span>
+          <div className="surface-card overflow-hidden sticky top-4">
+            {/* Type hero band — sets clear context for what this listing IS */}
+            <div
+              className="px-5 pt-5 pb-4 border-b border-border/60"
+              style={{
+                background: `linear-gradient(135deg, ${typeMeta.accent}1f 0%, ${typeMeta.accent}08 100%)`,
+              }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <div
+                  className="h-8 w-8 rounded-full flex items-center justify-center"
+                  style={{ background: `${typeMeta.accent}26`, color: typeMeta.accent }}
+                >
+                  <TypeIcon className="h-4 w-4" />
                 </div>
-              )}
-              {listing.revisions != null && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <RefreshCw className="h-4 w-4" />
-                  <span>{listing.revisions} revision{listing.revisions !== 1 ? "s" : ""}</span>
-                </div>
-              )}
-              {listing.shipping_info && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Package className="h-4 w-4" />
-                  <span>{listing.shipping_info}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Tags */}
-            {listing.tags && listing.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {listing.tags.map((tag: string) => (
-                  <span key={tag} className="text-xs bg-muted px-2.5 py-1 rounded-full text-muted-foreground">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* CTA */}
-            {!isOwner && (
-              <div className="space-y-2 pt-2">
-                {/* Instant buy for digital products */}
-                {canBuyInstantly && !alreadyPurchased && (
-                  <Button
-                    className="w-full rounded-full"
-                    onClick={() => purchaseMutation.mutate()}
-                    disabled={purchaseMutation.isPending || !hasEnoughCredits}
+                <div className="flex-1 min-w-0">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider"
+                    style={{ color: typeMeta.accent }}
                   >
-                    {purchaseMutation.isPending ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
-                    ) : !hasEnoughCredits ? (
-                      <><Coins className="mr-2 h-4 w-4" />Not enough credits</>
-                    ) : (
-                      <><ShoppingCart className="mr-2 h-4 w-4" />Buy Now — {listing.credits_price} credits</>
-                    )}
-                  </Button>
-                )}
+                    {typeMeta.label}
+                  </p>
+                  <p className="text-xs font-semibold text-foreground truncate">
+                    {typeMeta.headline}
+                  </p>
+                </div>
+                <Badge variant="outline" className="gap-1 text-[10px] shrink-0">
+                  <CatIcon className="h-3 w-3" style={{ color: catMeta.color }} />
+                  {catMeta.label}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {typeMeta.subline}
+              </p>
+            </div>
 
-                {/* Already purchased */}
-                {canBuyInstantly && alreadyPurchased && (
-                  <div className="space-y-2">
-                    <Button variant="outline" className="w-full rounded-full pointer-events-none" disabled>
-                      <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-                      Purchased
-                    </Button>
-                    {/* Download links for purchased media */}
-                    {media && media.length > 0 && (
-                      <div className="space-y-1.5">
-                        {media.map((m) => (
-                          <a
-                            key={m.id}
-                            href={m.file_url}
-                            download={m.file_name}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm text-primary hover:bg-muted transition-colors"
-                          >
-                            <Download className="h-3.5 w-3.5" />
-                            {m.file_name}
-                          </a>
-                        ))}
+            <div className="p-5 space-y-4">
+              {/* Title */}
+              <h1 className="font-display text-xl font-bold text-foreground leading-tight">
+                {listing.title}
+              </h1>
+
+              {/* Rating summary */}
+              {avgRating && (
+                <div className="flex items-center gap-2">
+                  <StarRating rating={avgRating} />
+                  <span className="text-sm font-bold text-foreground">{avgRating}</span>
+                  <span className="text-xs text-muted-foreground">({reviews?.length} review{reviews?.length !== 1 ? "s" : ""})</span>
+                </div>
+              )}
+
+              {/* Price / Budget — context-aware label */}
+              {(listing.credits_price != null || listing.price != null) && (
+                <div className="rounded-xl bg-muted/40 p-3 space-y-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {listing.listing_type === "project_request"
+                      ? "Budget"
+                      : listing.listing_type === "collaboration"
+                        ? "Contribution"
+                        : "Price"}
+                  </p>
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    {listing.credits_price != null && (
+                      <div className="flex items-center gap-1.5 text-2xl font-display font-bold text-foreground">
+                        <Coins className="h-5 w-5 text-primary" />
+                        {listing.credits_price}
+                        <span className="text-xs font-medium text-muted-foreground">$RHOZE</span>
                       </div>
                     )}
-                  </div>
-                )}
-
-                {/* Credit balance hint */}
-                {canBuyInstantly && !alreadyPurchased && !hasEnoughCredits && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full text-xs text-muted-foreground"
-                    onClick={() => navigate("/credits")}
-                  >
-                    You have {userCredits?.balance ?? 0} credits — Get more →
-                  </Button>
-                )}
-
-                {/* Inquiry for non-digital or always available */}
-                <Button
-                  variant={canBuyInstantly ? "outline" : "default"}
-                  className="w-full rounded-full"
-                  onClick={() => setInquiryOpen(true)}
-                >
-                  <MessageCircle className="mr-2 h-4 w-4" />
-                  Send Inquiry
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full rounded-full"
-                  onClick={() => setDmOpen(true)}
-                >
-                  Direct Message
-                </Button>
-              </div>
-            )}
-
-            {/* Seller info */}
-            {sellerProfile && (
-              <div className="border-t border-border pt-4">
-                <Link
-                  to={`/profiles/${sellerProfile.user_id}`}
-                  className="flex items-center gap-3 hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors"
-                >
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-                    {(sellerProfile.display_name || "?")[0].toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm text-foreground">
-                      {sellerProfile.display_name}
-                    </p>
-                    {sellerProfile.headline && (
-                      <p className="text-xs text-muted-foreground truncate max-w-[180px]">
-                        {sellerProfile.headline}
-                      </p>
+                    {listing.price != null && (
+                      <span className="text-sm text-muted-foreground">
+                        {listing.credits_price != null ? "or " : ""}${listing.price} {listing.currency || "USD"}
+                      </span>
                     )}
                   </div>
-                </Link>
-              </div>
-            )}
+                </div>
+              )}
+
+              {/* Details */}
+              {(listing.delivery_days || listing.revisions != null || listing.shipping_info) && (
+                <div className="space-y-2 text-sm">
+                  {listing.delivery_days && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      <span>{listing.delivery_days} day {listing.listing_type === "project_request" ? "deadline" : "delivery"}</span>
+                    </div>
+                  )}
+                  {listing.revisions != null && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <RefreshCw className="h-4 w-4" />
+                      <span>{listing.revisions} revision{listing.revisions !== 1 ? "s" : ""}</span>
+                    </div>
+                  )}
+                  {listing.shipping_info && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Package className="h-4 w-4" />
+                      <span>{listing.shipping_info}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Tags */}
+              {listing.tags && listing.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {listing.tags.map((tag: string) => (
+                    <span key={tag} className="text-xs bg-muted px-2.5 py-1 rounded-full text-muted-foreground">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* CTA — type-specific */}
+              {!isOwner && (
+                <div className="space-y-2 pt-2">
+                  {/* Instant buy for digital products */}
+                  {canBuyInstantly && !alreadyPurchased && (
+                    <Button
+                      className="w-full rounded-full h-11"
+                      onClick={() => purchaseMutation.mutate()}
+                      disabled={purchaseMutation.isPending || !hasEnoughCredits}
+                    >
+                      {purchaseMutation.isPending ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
+                      ) : !hasEnoughCredits ? (
+                        <><Coins className="mr-2 h-4 w-4" />Not enough $RHOZE</>
+                      ) : (
+                        <><ShoppingCart className="mr-2 h-4 w-4" />{typeMeta.primaryCta} — {listing.credits_price} $RHOZE</>
+                      )}
+                    </Button>
+                  )}
+
+                  {/* Already purchased */}
+                  {canBuyInstantly && alreadyPurchased && (
+                    <div className="space-y-2">
+                      <Button variant="outline" className="w-full rounded-full pointer-events-none h-11" disabled>
+                        <CheckCircle className="mr-2 h-4 w-4 text-primary" />
+                        Purchased — files unlocked
+                      </Button>
+                      {/* Download links for purchased media */}
+                      {media && media.length > 0 && (
+                        <div className="space-y-1.5">
+                          {media.map((m) => (
+                            <a
+                              key={m.id}
+                              href={m.file_url}
+                              download={m.file_name}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm text-primary hover:bg-muted transition-colors"
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                              {m.file_name}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Credit balance hint */}
+                  {canBuyInstantly && !alreadyPurchased && !hasEnoughCredits && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-xs text-muted-foreground"
+                      onClick={() => navigate("/credits")}
+                    >
+                      You have {userCredits?.balance ?? 0} $RHOZE — Get more →
+                    </Button>
+                  )}
+
+                  {/* Primary type-specific CTA (for non-instant-buy listings) */}
+                  {!canBuyInstantly && (
+                    <Button
+                      className="w-full rounded-full h-11"
+                      onClick={() => setInquiryOpen(true)}
+                      style={{
+                        background: typeMeta.accent,
+                        color: "white",
+                      }}
+                    >
+                      {listing.listing_type === "project_request" ? (
+                        <Send className="mr-2 h-4 w-4" />
+                      ) : listing.listing_type === "collaboration" ? (
+                        <HandshakeIcon className="mr-2 h-4 w-4" />
+                      ) : (
+                        <Zap className="mr-2 h-4 w-4" />
+                      )}
+                      {typeMeta.primaryCta}
+                    </Button>
+                  )}
+
+                  {/* Secondary inquiry button for digital products */}
+                  {canBuyInstantly && (
+                    <Button
+                      variant="outline"
+                      className="w-full rounded-full"
+                      onClick={() => setInquiryOpen(true)}
+                    >
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      Ask a Question
+                    </Button>
+                  )}
+
+                  {/* Direct message — always available */}
+                  <Button
+                    variant="ghost"
+                    className="w-full rounded-full"
+                    onClick={() => setDmOpen(true)}
+                  >
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    {typeMeta.secondaryCta}
+                  </Button>
+                </div>
+              )}
+
+              {/* Owner view */}
+              {isOwner && (
+                <div className="rounded-lg bg-muted/40 border border-dashed border-border p-3 text-xs text-muted-foreground text-center">
+                  This is your listing. <Link to="/seller" className="text-primary hover:underline">Manage in Seller Dashboard</Link>
+                </div>
+              )}
+
+              {/* Seller info */}
+              {sellerProfile && (
+                <div className="border-t border-border pt-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                    {listing.listing_type === "project_request" ? "Posted by" : "Creator"}
+                  </p>
+                  <Link
+                    to={`/profiles/${sellerProfile.user_id}`}
+                    className="flex items-center gap-3 hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors"
+                  >
+                    {sellerProfile.avatar_url ? (
+                      <img
+                        src={sellerProfile.avatar_url}
+                        alt={sellerProfile.display_name || ""}
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                        {(sellerProfile.display_name || "?")[0].toUpperCase()}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm text-foreground truncate">
+                        {sellerProfile.display_name}
+                      </p>
+                      {sellerProfile.headline && (
+                        <p className="text-xs text-muted-foreground truncate">
+                          {sellerProfile.headline}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
