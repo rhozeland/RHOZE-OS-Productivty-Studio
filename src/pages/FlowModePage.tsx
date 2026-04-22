@@ -1128,7 +1128,7 @@ const FlowModePage = () => {
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2 text-foreground font-medium">
                     {uploadStage === "stalled" ? (
-                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                      <AlertTriangle className="h-3.5 w-3.5 text-foreground/70" />
                     ) : (
                       <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
                     )}
