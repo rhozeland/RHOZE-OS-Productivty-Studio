@@ -80,7 +80,7 @@ const RhozeClaimHistory = ({ className }: { className?: string }) => {
                     <p className="text-sm font-body font-semibold text-foreground">
                       {amount.toLocaleString()} $RHOZE
                     </p>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-body font-medium">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-body font-medium">
                       Claimed
                     </span>
                   </div>
