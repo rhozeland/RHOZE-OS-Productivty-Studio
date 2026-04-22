@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +16,16 @@ import {
   Upload,
   Settings2,
   Sparkles,
+  AlertCircle,
+  Link2,
+  FileWarning,
+  Youtube,
+  Music as MusicIcon,
+  Image as ImageIcon,
+  FileText as FileTextIcon,
+  Loader2,
 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
