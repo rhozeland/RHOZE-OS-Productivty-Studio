@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { Save } from "lucide-react";
+import { Save, AlertTriangle, HelpCircle } from "lucide-react";
 import {
   NAV_ITEMS,
   NAV_ITEMS_BY_ID,
@@ -40,6 +40,19 @@ const DockCustomizer = ({ dockConfig, onSave }: DockCustomizerProps) => {
   const initial = sanitizeDockConfig(dockConfig);
   const [selected, setSelected] = useState<string[]>(initial.ids);
   const [saving, setSaving] = useState(false);
+
+  // Re-derive the dropped/unknown ids whenever the saved config changes so
+  // the inline cleanup preview stays accurate (e.g. after a reload that
+  // pulls a fresh dockConfig from the server). Memoized to avoid churn.
+  const { unknownIds, cleanedIds } = useMemo(() => {
+    if (!dockConfig) return { unknownIds: [] as string[], cleanedIds: DEFAULT_DOCK_IDS };
+    const { valid, unknown } = partitionDockIds(dockConfig);
+    return {
+      unknownIds: unknown,
+      cleanedIds: valid.length > 0 ? valid : DEFAULT_DOCK_IDS,
+    };
+  }, [dockConfig]);
+  const hasUnknownItems = unknownIds.length > 0;
 
   // Notify the user once if their saved config contained stale ids that we
   // had to drop. Keeps customizer state honest without silently mutating.
@@ -103,6 +116,98 @@ const DockCustomizer = ({ dockConfig, onSave }: DockCustomizerProps) => {
 
   return (
     <div className="space-y-5">
+      {/* Cleanup preview — only shown when the saved config has unknown ids.
+          Renders a real-time before/after so the user sees exactly which
+          items will disappear and what their dock will look like once the
+          stale entries are pruned. The "After" mirror reuses the same
+          markup as the live dock preview below for visual parity. */}
+      {hasUnknownItems && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 space-y-3">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium text-foreground">
+                {unknownIds.length} unknown item{unknownIds.length === 1 ? "" : "s"} detected
+              </p>
+              <p className="text-xs text-muted-foreground">
+                These entries no longer exist and will be removed when you save. Preview the result below.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {/* Before — saved layout with placeholders for the missing ids */}
+            <div className="space-y-1.5">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+                Saved (before)
+              </p>
+              <div className="flex items-center gap-1 p-2 bg-card/60 backdrop-blur-xl border border-border rounded-lg overflow-x-auto">
+                {(dockConfig ?? []).map((id, i) => {
+                  const item = NAV_ITEMS_BY_ID[id];
+                  if (!item) {
+                    // Unknown item — render a clearly broken placeholder so
+                    // the user can map "this slot will go away" to a tile.
+                    return (
+                      <div
+                        key={`unknown-${id}-${i}`}
+                        className="flex flex-col items-center justify-center w-12 h-12 rounded-md border border-dashed border-destructive/50 bg-destructive/10 text-destructive gap-0.5 shrink-0"
+                        title={`Unknown id: ${id}`}
+                      >
+                        <HelpCircle className="h-4 w-4" />
+                        <span className="text-[9px] font-medium leading-none truncate max-w-[3rem]">
+                          {id}
+                        </span>
+                      </div>
+                    );
+                  }
+                  const Icon = item.icon;
+                  return (
+                    <div
+                      key={`${id}-${i}`}
+                      className="flex flex-col items-center justify-center w-12 h-12 rounded-md bg-muted/40 text-foreground gap-0.5 shrink-0"
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="text-[9px] font-medium leading-none">
+                        {item.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* After — same render path, but driven by the cleaned id list */}
+            <div className="space-y-1.5">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+                Cleaned (after)
+              </p>
+              <div className="flex items-center gap-1 p-2 bg-card/60 backdrop-blur-xl border border-border rounded-lg overflow-x-auto">
+                {cleanedIds.map((id, i) => {
+                  const item = NAV_ITEMS_BY_ID[id];
+                  if (!item) return null;
+                  const Icon = item.icon;
+                  return (
+                    <div
+                      key={`${id}-${i}`}
+                      className="flex flex-col items-center justify-center w-12 h-12 rounded-md bg-muted/40 text-foreground gap-0.5 shrink-0"
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="text-[9px] font-medium leading-none">
+                        {item.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <p className="text-[11px] text-muted-foreground">
+            Removing: <span className="font-mono text-destructive">{unknownIds.join(", ")}</span>
+          </p>
+        </div>
+      )}
+
       {/* Current dock preview */}
       <div>
         <p className="text-sm font-medium text-foreground mb-2">
