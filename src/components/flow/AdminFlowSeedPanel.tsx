@@ -42,12 +42,21 @@ type FailedItem = {
   link_url_probe?: { ok: boolean; status?: number; error?: string; fallback?: string };
 };
 
+type SeedPreviewItem = {
+  title: string;
+  category: string;
+  content_type: string;
+  usedFallback?: boolean;
+  action?: "insert" | "update";
+};
+
 type SeedPreview = {
   total: number;
   alreadyPresent: number;
   willInsert: number;
+  willUpdate?: number;
   fallbackCount?: number;
-  items: { title: string; category: string; content_type: string; usedFallback?: boolean }[];
+  items: SeedPreviewItem[];
   failedItems?: FailedItem[];
 };
 
@@ -65,13 +74,25 @@ type AttributionReport = {
 
 const callSeed = async (
   dryRun: boolean,
-): Promise<SeedPreview & { inserted?: number; fallbackCount?: number; failedItems?: FailedItem[] }> => {
+): Promise<
+  SeedPreview & {
+    inserted?: number;
+    updated?: number;
+    fallbackCount?: number;
+    failedItems?: FailedItem[];
+  }
+> => {
   const { data, error } = await supabase.functions.invoke("seed-flow-items", {
     body: { dryRun },
   });
   if (error) throw new Error(error.message);
   if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
-  return data as SeedPreview & { inserted?: number; fallbackCount?: number; failedItems?: FailedItem[] };
+  return data as SeedPreview & {
+    inserted?: number;
+    updated?: number;
+    fallbackCount?: number;
+    failedItems?: FailedItem[];
+  };
 };
 
 /**
@@ -168,11 +189,16 @@ const AdminFlowSeedPanel = () => {
   const runMutation = useMutation({
     mutationFn: () => callSeed(false),
     onSuccess: (data) => {
-      const insertedMsg =
-        data.inserted && data.inserted > 0
-          ? `Seeded ${data.inserted} new Flow post${data.inserted === 1 ? "" : "s"}`
-          : "Nothing to seed — all items already present.";
-      toast.success(insertedMsg);
+      const inserted = data.inserted ?? 0;
+      const updated = data.updated ?? 0;
+      const parts: string[] = [];
+      if (inserted > 0) parts.push(`${inserted} new`);
+      if (updated > 0) parts.push(`${updated} updated`);
+      const msg =
+        parts.length > 0
+          ? `Seed complete — ${parts.join(", ")}.`
+          : "Nothing to do — seed is already in sync.";
+      toast.success(msg);
       // Surface fallback info as a separate warning toast so it's not buried.
       if (data.fallbackCount && data.fallbackCount > 0) {
         const titles = (data.failedItems ?? [])
@@ -245,7 +271,7 @@ const AdminFlowSeedPanel = () => {
             <div>
               <h3 className="text-sm font-semibold">Seed Flow posts</h3>
               <p className="text-[11px] text-muted-foreground">
-                Admin-only · dedupes by title
+                Admin-only · idempotent (updates by title)
               </p>
             </div>
             <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
@@ -264,7 +290,11 @@ const AdminFlowSeedPanel = () => {
             <>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <Stat label="Total" value={preview.total} />
-                <Stat label="Existing" value={preview.alreadyPresent} muted />
+                <Stat
+                  label="Update"
+                  value={preview.willUpdate ?? preview.alreadyPresent}
+                  muted={(preview.willUpdate ?? preview.alreadyPresent) === 0}
+                />
                 <Stat
                   label="New"
                   value={preview.willInsert}
@@ -301,8 +331,25 @@ const AdminFlowSeedPanel = () => {
                             ) : null}
                             {it.title}
                           </span>
-                          <span className="text-[10px] text-muted-foreground uppercase tracking-wide shrink-0">
-                            {it.category}
+                          <span className="flex items-center gap-1.5 shrink-0">
+                            {it.action === "update" ? (
+                              <Badge
+                                variant="outline"
+                                className="text-[9px] uppercase tracking-wide px-1 py-0 h-4 border-muted-foreground/40 text-muted-foreground"
+                              >
+                                update
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="text-[9px] uppercase tracking-wide px-1 py-0 h-4 border-primary/40 text-primary"
+                              >
+                                new
+                              </Badge>
+                            )}
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                              {it.category}
+                            </span>
                           </span>
                         </li>
                       ))}
@@ -408,7 +455,7 @@ const AdminFlowSeedPanel = () => {
             onClick={() => runMutation.mutate()}
             disabled={
               !preview ||
-              preview.willInsert === 0 ||
+              (preview.willInsert === 0 && (preview.willUpdate ?? 0) === 0) ||
               runMutation.isPending ||
               previewMutation.isPending
             }
@@ -417,8 +464,11 @@ const AdminFlowSeedPanel = () => {
             {runMutation.isPending ? (
               <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
             ) : null}
-            Run seed
-            {preview && preview.willInsert > 0 ? ` (${preview.willInsert})` : ""}
+            {preview && preview.willInsert === 0 && (preview.willUpdate ?? 0) > 0
+              ? `Sync (${preview.willUpdate})`
+              : `Run seed${
+                  preview && preview.willInsert > 0 ? ` (${preview.willInsert})` : ""
+                }`}
           </Button>
         </div>
       </PopoverContent>
