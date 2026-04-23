@@ -59,6 +59,7 @@ const BackgroundCustomizer = ({
   const [uploading, setUploading] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingPath, setPendingPath] = useState<string>("");
+  const [uploadOk, setUploadOk] = useState<boolean | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const save = async () => {
