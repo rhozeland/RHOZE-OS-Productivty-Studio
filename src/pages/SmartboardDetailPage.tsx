@@ -417,7 +417,7 @@ const SmartboardDetailPage = () => {
                     variant={itemType === type ? "default" : "outline"}
                     size="sm"
                     className="rounded-full capitalize"
-                    onClick={() => { setItemType(type); setImageFile(null); setItemLink(""); }}
+                    onClick={() => { setItemType(type); setImageFile(null); setUploadOk(null); setItemLink(""); }}
                   >
                     {type === "note" && <StickyNote className="mr-1 h-4 w-4" />}
                     {type === "link" && <Link2 className="mr-1 h-4 w-4" />}
