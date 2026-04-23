@@ -1241,8 +1241,11 @@ const FlowModePage = () => {
                 {currentItem ? (
                   <motion.div
                     key={`${currentItem.id}-${currentIndex}`}
-                    className="w-full max-w-xs md:max-w-sm cursor-grab active:cursor-grabbing will-change-transform"
-                    drag
+                    className={cn(
+                      "w-full max-w-xs md:max-w-sm will-change-transform",
+                      swipeLocked ? "cursor-default" : "cursor-grab active:cursor-grabbing",
+                    )}
+                    drag={!swipeLocked}
                     dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
                     dragElastic={0.5}
                     dragTransition={{ bounceStiffness: 400, bounceDamping: 30 }}
