@@ -290,7 +290,11 @@ const AdminFlowSeedPanel = () => {
             <>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <Stat label="Total" value={preview.total} />
-                <Stat label="Existing" value={preview.alreadyPresent} muted />
+                <Stat
+                  label="Update"
+                  value={preview.willUpdate ?? preview.alreadyPresent}
+                  muted={(preview.willUpdate ?? preview.alreadyPresent) === 0}
+                />
                 <Stat
                   label="New"
                   value={preview.willInsert}
