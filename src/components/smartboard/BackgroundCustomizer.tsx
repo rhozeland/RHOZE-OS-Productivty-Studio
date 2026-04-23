@@ -80,34 +80,27 @@ const BackgroundCustomizer = ({
 
   const handleUpload = async (file: File) => {
     if (!user) return;
-    // Snapshot the live preview state BEFORE we mutate anything so we can
-    // roll back cleanly if the network call fails or throws.
     const previousImageUrl = imageUrl;
-    // Pre-flight allowlist check before we touch the network. UploadFileMeta will
-    // re-render the same verdict for the user; we just refuse to send.
-    const verdict = validateUpload(file, IMAGE_ALLOWLIST);
-    setPendingFile(file);
-    const path = buildSmartboardFilePath(boardId, user.id, file, { kind: "bg" });
-    setPendingPath(path);
-    if (!verdict.ok) {
-      setUploadOk(false);
-      toast.error(verdict.reason || "This file isn't allowed");
-      return;
-    }
-    setUploadOk(true);
     setUploading(true);
     try {
-      const { url, error: uploadErrMsg } = await uploadAndGetUrl(SMARTBOARD_BUCKET, path, file);
-      if (uploadErrMsg) throw new Error(uploadErrMsg);
-      setImageUrl(url);
-    } catch (err: any) {
-      // Roll back: drop the failed pending preview + restore whatever was showing.
-      setPendingFile(null);
-      setPendingPath("");
-      setUploadOk(null);
-      setImageUrl(previousImageUrl);
-      if (fileRef.current) fileRef.current.value = "";
-      toast.error(err?.message || "Upload failed — previous background restored");
+      await runUploadWithRollback({
+        file,
+        previousImageUrl,
+        buildPath: (f) => buildSmartboardFilePath(boardId, user.id, f, { kind: "bg" }),
+        validate: (f) => validateUpload(f, IMAGE_ALLOWLIST),
+        upload: async (path, f) => {
+          const { url, error } = await uploadAndGetUrl(SMARTBOARD_BUCKET, path, f);
+          return { url, error };
+        },
+        setPendingFile,
+        setPendingPath,
+        setUploadOk,
+        setImageUrl,
+        resetFileInput: () => {
+          if (fileRef.current) fileRef.current.value = "";
+        },
+        notifyError: (msg) => toast.error(msg),
+      });
     } finally {
       setUploading(false);
     }
