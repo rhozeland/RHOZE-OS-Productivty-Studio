@@ -29,6 +29,8 @@ import {
   Network,
 } from "lucide-react";
 import RhozeClaimCelebration from "@/components/RhozeClaimCelebration";
+import { useClaimLimits, validateClaim } from "@/lib/claim-limits";
+import { Link } from "react-router-dom";
 
 const SOLANA_RPC = "https://api.mainnet-beta.solana.com";
 const LAMPORTS_PER_SOL = 1_000_000_000;
