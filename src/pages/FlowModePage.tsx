@@ -965,7 +965,37 @@ const FlowModePage = () => {
       {viewMode === "swipe" && (
         <div className="relative z-10 flex flex-1 items-center justify-center px-4 pb-36 pt-2 md:pb-40">
           <AnimatePresence mode="wait">
-            {currentItem ? (
+            {feedScope === "preferred" && preferredCategories.length === 0 ? (
+              <motion.div
+                key="for-you-empty-prefs"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center px-4 max-w-sm"
+              >
+                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 backdrop-blur-sm">
+                  <Sparkles className="h-8 w-8 text-primary" />
+                </div>
+                <h2 className="mb-2 font-display text-xl font-bold text-foreground">
+                  Personalize your For You feed
+                </h2>
+                <p className="mx-auto mb-6 max-w-xs text-sm text-muted-foreground leading-relaxed">
+                  You haven't picked any categories yet. Choose what inspires you and we'll surface
+                  matching work from across Rhozeland.
+                </p>
+                <div className="flex flex-col items-center gap-2">
+                  <Button onClick={() => setSettingsOpen(true)} className="rounded-full px-6">
+                    <Settings2 className="mr-2 h-4 w-4" />
+                    Choose categories
+                  </Button>
+                  <button
+                    onClick={() => setScope("all")}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Or browse the All feed
+                  </button>
+                </div>
+              </motion.div>
+            ) : currentItem ? (
               <motion.div
                 key={`${currentItem.id}-${currentIndex}`}
                 className="w-full max-w-xs md:max-w-sm cursor-grab active:cursor-grabbing will-change-transform"
@@ -990,6 +1020,7 @@ const FlowModePage = () => {
                   onDelete={() => deleteFlowItem.mutate(currentItem.id)}
                   isOwner={currentItem.user_id === user?.id}
                   isAdmin={isAdmin}
+                  feedScope={feedScope}
                 />
               </motion.div>
             ) : (
