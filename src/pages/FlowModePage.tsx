@@ -237,48 +237,56 @@ const FlowModePage = () => {
     ["0 8px 30px -8px hsl(var(--foreground) / 0.15)", "0 20px 40px -12px hsl(var(--foreground) / 0.08)", "0 8px 30px -8px hsl(var(--foreground) / 0.15)"]
   );
 
-  // Load calibration & check if tutorial was seen
+  // Load calibration & check if tutorial was seen.
+  // Use a stable key for guests so the global feed renders without a user.id.
+  const calibrationKey = user?.id ?? "guest";
   useEffect(() => {
-    const saved = localStorage.getItem(`flow-calibrated-${user?.id}`);
+    const saved = localStorage.getItem(`flow-calibrated-${calibrationKey}`);
     if (saved) {
       setCalibrated(true);
-      setSelectedCategories(JSON.parse(saved));
+      try { setSelectedCategories(JSON.parse(saved)); } catch { setSelectedCategories(CATEGORIES); }
 
-      // Show tutorial overlay for first-time users
-      const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${user?.id}`);
+      const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${calibrationKey}`);
       if (!tutorialSeen) {
         setShowTutorialOverlay(true);
         tutorialTimerRef.current = setTimeout(() => {
           setShowTutorialOverlay(false);
-          localStorage.setItem(`flow-tutorial-seen-${user?.id}`, "true");
+          localStorage.setItem(`flow-tutorial-seen-${calibrationKey}`, "true");
         }, 8000);
       }
+    } else if (!user) {
+      // Guests skip calibration entirely — show the full global feed immediately.
+      setSelectedCategories(CATEGORIES);
+      setCalibrated(true);
     }
     return () => {
       if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
     };
-  }, [user]);
+  }, [user, calibrationKey]);
 
   const { data: flowItems } = useQuery({
     queryKey: ["flow-items", selectedCategories],
     queryFn: async () => {
-      let items: any[] = [];
+      // Flow Mode is a global feed — ALWAYS fetch every public flow_item from
+      // every user. selectedCategories is treated as a soft preference: matching
+      // categories are surfaced first, but nothing is hidden. This prevents the
+      // "I only see my own music" problem when a user calibrated to a single
+      // category.
+      const { data, error } = await supabase
+        .from("flow_items")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      let items = data ?? [];
 
-      // First try with selected categories
+      // Soft sort: preferred categories first, then everything else, each group
+      // already sorted by created_at desc.
       if (selectedCategories.length > 0 && selectedCategories.length < CATEGORIES.length) {
-        const { data, error } = await supabase.from("flow_items").select("*")
-          .in("category", selectedCategories)
-          .order("created_at", { ascending: false }).limit(100);
-        if (error) throw error;
-        if (data && data.length > 0) items = data;
-      }
-
-      // Fallback: fetch all items
-      if (items.length === 0) {
-        const { data, error } = await supabase.from("flow_items").select("*")
-          .order("created_at", { ascending: false }).limit(100);
-        if (error) throw error;
-        items = data ?? [];
+        const prefSet = new Set(selectedCategories);
+        const preferred = items.filter((i) => prefSet.has(i.category));
+        const rest = items.filter((i) => !prefSet.has(i.category));
+        items = [...preferred, ...rest];
       }
 
       // Batch-fetch uploader profiles
@@ -295,12 +303,13 @@ const FlowModePage = () => {
   });
 
   const { data: smartboards } = useQuery({
-    queryKey: ["smartboards-for-flow"],
+    queryKey: ["smartboards-for-flow", user?.id ?? "guest"],
     queryFn: async () => {
-      const { data } = await supabase.from("smartboards").select("id, title, cover_color").eq("user_id", user!.id);
+      if (!user) return [];
+      const { data } = await supabase.from("smartboards").select("id, title, cover_color").eq("user_id", user.id);
       return data ?? [];
     },
-    enabled: calibrated,
+    enabled: calibrated && !!user,
   });
 
   const interact = useMutation({
@@ -576,16 +585,16 @@ const FlowModePage = () => {
   const finishCalibration = () => {
     const cats = selectedCategories.length > 0 ? selectedCategories : CATEGORIES;
     setSelectedCategories(cats);
-    localStorage.setItem(`flow-calibrated-${user?.id}`, JSON.stringify(cats));
+    localStorage.setItem(`flow-calibrated-${calibrationKey}`, JSON.stringify(cats));
     setCalibrated(true);
 
     // Show tutorial for first-time users after calibration
-    const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${user?.id}`);
+    const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${calibrationKey}`);
     if (!tutorialSeen) {
       setShowTutorialOverlay(true);
       tutorialTimerRef.current = setTimeout(() => {
         setShowTutorialOverlay(false);
-        localStorage.setItem(`flow-tutorial-seen-${user?.id}`, "true");
+        localStorage.setItem(`flow-tutorial-seen-${calibrationKey}`, "true");
       }, 8000);
     }
   };
@@ -774,7 +783,7 @@ const FlowModePage = () => {
                               : selectedCategories.filter((c) => c !== cat);
                             const final = updated.length === 0 ? CATEGORIES : updated;
                             setSelectedCategories(final);
-                            localStorage.setItem(`flow-calibrated-${user?.id}`, JSON.stringify(final));
+                            localStorage.setItem(`flow-calibrated-${calibrationKey}`, JSON.stringify(final));
                           }}
                         />
                       </div>
@@ -943,7 +952,7 @@ const FlowModePage = () => {
             className="absolute inset-0 z-50 flex items-center justify-center pointer-events-auto"
             onClick={() => {
               setShowTutorialOverlay(false);
-              localStorage.setItem(`flow-tutorial-seen-${user?.id}`, "true");
+              localStorage.setItem(`flow-tutorial-seen-${calibrationKey}`, "true");
               if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
             }}
           >
