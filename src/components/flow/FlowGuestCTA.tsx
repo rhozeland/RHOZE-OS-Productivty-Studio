@@ -81,12 +81,15 @@ const FlowGuestCTA = ({ variant = "card", className }: FlowGuestCTAProps) => {
         Browsing as guest
       </p>
       <p className="mb-3 text-sm leading-relaxed text-foreground/90">
-        Explore the global feed freely — swipe, browse, and discover work from
-        creators across Rhozeland.
+        You can browse the full global feed — swipe, scroll, and discover work
+        from creators across Rhozeland — no account needed.
       </p>
       <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
-        Want to post your own music, art, or designs? You'll need a free
-        account to share, save, and earn $RHOZE.
+        To <span className="font-medium text-foreground/80">post</span> your
+        own work, <span className="font-medium text-foreground/80">save</span>{" "}
+        what you love, and{" "}
+        <span className="font-medium text-foreground/80">earn $RHOZE</span> for
+        contributing, you'll need a free account.
       </p>
       <Button
         size="sm"
@@ -94,7 +97,7 @@ const FlowGuestCTA = ({ variant = "card", className }: FlowGuestCTAProps) => {
         onClick={() => navigate("/auth")}
         className="w-full rounded-full"
       >
-        Create free account
+        Sign up free
       </Button>
     </div>
   );
