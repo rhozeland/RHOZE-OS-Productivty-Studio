@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { safeFileExt, safeContentType } from "@/lib/file-ext";
-import { FileType2 } from "lucide-react";
+import { FileType2, Copy, Check } from "lucide-react";
+import { toast } from "sonner";
 
 interface UploadFileMetaProps {
   file: File | null | undefined;
