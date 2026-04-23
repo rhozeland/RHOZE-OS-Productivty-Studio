@@ -34,9 +34,9 @@ export type OrchestratorResult =
   | { ok: true; url: string }
   | { ok: false; stage: "validation" | "upload"; reason: string };
 
-export async function runUploadWithRollback<
-  TFile extends { name?: string; type?: string; size?: number },
->(deps: UploadOrchestratorDeps<TFile>): Promise<OrchestratorResult> {
+export async function runUploadWithRollback<TFile>(
+  deps: UploadOrchestratorDeps<TFile>,
+): Promise<OrchestratorResult> {
   const {
     file,
     previousImageUrl,
