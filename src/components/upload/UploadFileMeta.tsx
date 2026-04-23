@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { safeFileExt, safeContentType } from "@/lib/file-ext";
-import { FileType2, Copy, Check, AlertTriangle, ShieldCheck } from "lucide-react";
+import { FileType2, Copy, Check, AlertTriangle, ShieldCheck, Server } from "lucide-react";
 import { toast } from "sonner";
 import { validateUpload, type UploadAllowlist } from "@/lib/upload-allowlist";
 
