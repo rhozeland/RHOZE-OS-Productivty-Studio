@@ -153,6 +153,10 @@ const SmartboardDetailPage = () => {
 
       // Upload file if provided
       if (uploadTypes.includes(itemType) && imageFile) {
+        // Belt-and-suspenders: refuse to send anything the allowlist already rejected.
+        if (uploadOk === false) {
+          throw new Error("This file type isn't allowed by upload policy.");
+        }
         // Path layout enforced by buildSmartboardFilePath so RLS stays happy.
         const path = buildSmartboardFilePath(id!, user!.id, imageFile, { kind: "item" });
         const { url, error: uploadErrMsg } = await uploadAndGetUrl(SMARTBOARD_BUCKET, path, imageFile);
