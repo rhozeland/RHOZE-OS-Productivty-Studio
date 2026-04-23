@@ -518,7 +518,13 @@ const SmartboardDetailPage = () => {
                     Also share to Flow Mode
                   </Label>
                 </div>
-                <Button type="submit" className="w-full rounded-full">Add to Board</Button>
+                <Button
+                  type="submit"
+                  className="w-full rounded-full"
+                  disabled={!!imageFile && uploadOk === false}
+                >
+                  Add to Board
+                </Button>
               </form>
             </DialogContent>
           </Dialog>
