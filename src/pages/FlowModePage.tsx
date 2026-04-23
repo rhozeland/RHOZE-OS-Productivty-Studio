@@ -54,6 +54,7 @@ import FlowCardBackground from "@/components/flow/FlowCardBackground";
 import FlowShareDialog from "@/components/flow/FlowShareDialog";
 import LinkPreviewCard from "@/components/flow/LinkPreviewCard";
 import { cn } from "@/lib/utils";
+import { loadFlowFeed } from "@/lib/flow-feed";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
