@@ -96,6 +96,20 @@ const FlowModePage = () => {
   const SCOPE_TRANSITION_MS = 500;
   const [scopeSwitching, setScopeSwitching] = useState(false);
   const scopeSwitchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Per-scope browse scroll memory. Keyed by scope so toggling back to a
+  // previously-visited scope returns the user to where they were, while a
+  // fresh scope (no saved entry) starts at the top of the new feed.
+  const browseScrollByScopeRef = useRef<Record<"all" | "preferred", number>>({
+    all: 0,
+    preferred: 0,
+  });
+  // Track whether each scope has been visited at least once. Without this
+  // we couldn't distinguish "saved 0 because user was at the top" from
+  // "never visited yet" — both would be 0 and we'd always restore.
+  const browseScopeVisitedRef = useRef<Record<"all" | "preferred", boolean>>({
+    all: false,
+    preferred: false,
+  });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expandedCard, setExpandedCard] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
