@@ -209,14 +209,14 @@ describe("safeContentType — fuzz properties", () => {
       .toEqual([]);
   });
 
-  it("prefers the browser-provided MIME when it is present and non-empty", () => {
+  it("uses the normalized browser MIME when it normalizes to a valid value", () => {
     const rand = rng(123);
     for (let i = 0; i < 200; i++) {
-      const provided = pick(rand, MIME_POOL).trim();
-      if (!provided) continue; // empty MIMEs are intentionally allowed to fall through
+      const provided = pick(rand, MIME_POOL);
+      const normalized = normalizeMime(provided);
+      if (!normalized) continue; // empty / malformed MIMEs fall through to ext-based resolution
       const input = { name: randomFilename(rand), type: provided };
-      // Implementation lowercases+trims the provided MIME — match that contract.
-      expect(safeContentType(input)).toBe(provided.toLowerCase());
+      expect(safeContentType(input)).toBe(normalized);
     }
   });
 
