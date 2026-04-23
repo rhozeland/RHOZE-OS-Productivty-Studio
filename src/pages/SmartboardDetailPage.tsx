@@ -74,6 +74,8 @@ const SmartboardDetailPage = () => {
   const [itemContent, setItemContent] = useState("");
   const [itemLink, setItemLink] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  // Tracks the allowlist verdict from <UploadFileMeta>; null while no file is selected.
+  const [uploadOk, setUploadOk] = useState<boolean | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [alsoPostToFlow, setAlsoPostToFlow] = useState(false);
