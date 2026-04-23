@@ -44,12 +44,14 @@ const PAGES = [
   { name: "Settings", path: "/settings", icon: SettingsIcon },
 ];
 
-// Persistent top-nav links shown in header for both guests and signed-in users
-const HEADER_NAV = [
+// Persistent top-nav links shown in header for both guests and signed-in users.
+// `matchPaths` lets one nav entry stay active for multiple related routes
+// (e.g. Drops highlights for /drop-rooms and /drop-rooms/:id).
+const HEADER_NAV: Array<{ name: string; path: string; matchPaths?: string[] }> = [
   { name: "Studios", path: "/studios" },
   { name: "Hub", path: "/creators" },
   { name: "Boards", path: "/smartboards" },
-  { name: "Drops", path: "/droprooms" },
+  { name: "Drops", path: "/drop-rooms", matchPaths: ["/drop-rooms", "/droprooms"] },
 ];
 
 const AppLayout = () => {
