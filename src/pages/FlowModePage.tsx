@@ -687,7 +687,7 @@ const FlowModePage = () => {
     (scope: "all" | "preferred") => {
       if (scope === feedScope) return;
       setFeedScope(scope);
-      localStorage.setItem(`flow-scope-${calibrationKey}`, scope);
+      void persistFlowPrefs({ scope });
       const next =
         scope === "all"
           ? CATEGORIES
@@ -705,7 +705,7 @@ const FlowModePage = () => {
       // Browse view: scroll back to the top of the new feed.
       flowContentRef.current?.scrollTo({ top: 0, behavior: "auto" });
     },
-    [calibrationKey, preferredCategories, feedScope, x, y],
+    [persistFlowPrefs, preferredCategories, feedScope, x, y],
   );
 
   const advanceCard = useCallback(() => {
