@@ -746,6 +746,12 @@ const FlowModePage = () => {
       }
       browseScopeVisitedRef.current[feedScope] = true;
 
+      // Snapshot the current swipe cursor for the scope we're leaving so
+      // toggling back returns the user to the same card. Mark visited so a
+      // saved 0 ("user was on the first card") replays correctly.
+      swipeIndexByScopeRef.current[feedScope] = currentIndex;
+      swipeScopeVisitedRef.current[feedScope] = true;
+
       // Engage the transition flag *before* the state flip so the overlay
       // mounts in the same paint as the new query, not a frame later.
       setScopeSwitching(true);
@@ -763,9 +769,10 @@ const FlowModePage = () => {
             ? preferredCategories
             : CATEGORIES;
       setSelectedCategories(next);
-      // Reset feed cursor + any expanded/in-flight card UI so the user
-      // starts the new scope from card #0.
-      setCurrentIndex(0);
+      // Swipe view: restore the saved card index when toggling back to a
+      // previously-visited scope; brand-new scopes start at card #0.
+      const shouldRestoreSwipe = swipeScopeVisitedRef.current[scope];
+      setCurrentIndex(shouldRestoreSwipe ? swipeIndexByScopeRef.current[scope] : 0);
       setExpandedCard(false);
       // Cancel any half-completed swipe animation.
       x.set(0);
@@ -780,7 +787,7 @@ const FlowModePage = () => {
         flowContentRef.current?.scrollTo({ top: targetTop, behavior: "auto" });
       });
     },
-    [persistFlowPrefs, preferredCategories, feedScope, x, y],
+    [persistFlowPrefs, preferredCategories, feedScope, currentIndex, x, y],
   );
 
   // Cleanup the scope-transition timer on unmount so it can't fire after
