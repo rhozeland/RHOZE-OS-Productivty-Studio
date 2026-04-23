@@ -1157,49 +1157,94 @@ const FlowModePage = () => {
               isRetrying={flowItemsFetching}
             />
           ) : (
-          <AnimatePresence mode="wait">
-            {currentItem ? (
-              <motion.div
-                key={`${currentItem.id}-${currentIndex}`}
-                className="w-full max-w-xs md:max-w-sm cursor-grab active:cursor-grabbing will-change-transform"
-                drag
-                dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                dragElastic={0.5}
-                dragTransition={{ bounceStiffness: 400, bounceDamping: 30 }}
-                onDragEnd={handleDragEnd}
-                style={{ x, y, rotateZ, opacity: cardOpacity, scale: cardScale, boxShadow: shadowIntensity }}
-                initial={{ opacity: 0, scale: 0.97, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.12, ease: "easeOut" } }}
-                transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
-                whileTap={{ scale: 0.99 }}
-              >
-                <FlowCard
-                  item={currentItem}
-                  expanded={expandedCard}
-                  onToggleExpand={() => setExpandedCard(!expandedCard)}
-                  onSave={() => performAction("save")}
-                  onShare={() => performAction("share")}
-                  onDelete={() => deleteFlowItem.mutate(currentItem.id)}
-                  isOwner={currentItem.user_id === user?.id}
-                  isAdmin={isAdmin}
-                  profilesLoading={flowItemsFetching}
-                />
-              </motion.div>
-            ) : (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center px-4">
-                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-card/60 backdrop-blur-sm">
-                  <Sparkles className="h-8 w-8 text-primary" />
-                </div>
-                <h2 className="mb-2 font-display text-xl font-bold text-foreground">Nothing here yet</h2>
-                <p className="mx-auto mb-6 max-w-xs text-sm text-muted-foreground">Be the first to share your work.</p>
-                <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Share Your Work
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div className="relative w-full flex items-center justify-center">
+            {/* Card stack — dimmed during a refresh so the loader overlay
+                reads as "this content is updating" rather than "the app
+                hung". `pointer-events-none` while refreshing prevents a
+                stray swipe from queueing a stale-card interaction. */}
+            <motion.div
+              className="w-full flex items-center justify-center"
+              animate={{ opacity: isFeedRefreshing ? 0.35 : 1 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              style={{ pointerEvents: isFeedRefreshing ? "none" : "auto" }}
+            >
+              <AnimatePresence mode="wait">
+                {currentItem ? (
+                  <motion.div
+                    key={`${currentItem.id}-${currentIndex}`}
+                    className="w-full max-w-xs md:max-w-sm cursor-grab active:cursor-grabbing will-change-transform"
+                    drag
+                    dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                    dragElastic={0.5}
+                    dragTransition={{ bounceStiffness: 400, bounceDamping: 30 }}
+                    onDragEnd={handleDragEnd}
+                    style={{ x, y, rotateZ, opacity: cardOpacity, scale: cardScale, boxShadow: shadowIntensity }}
+                    initial={{ opacity: 0, scale: 0.97, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.12, ease: "easeOut" } }}
+                    transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
+                    whileTap={{ scale: 0.99 }}
+                  >
+                    <FlowCard
+                      item={currentItem}
+                      expanded={expandedCard}
+                      onToggleExpand={() => setExpandedCard(!expandedCard)}
+                      onSave={() => performAction("save")}
+                      onShare={() => performAction("share")}
+                      onDelete={() => deleteFlowItem.mutate(currentItem.id)}
+                      isOwner={currentItem.user_id === user?.id}
+                      isAdmin={isAdmin}
+                      profilesLoading={flowItemsFetching}
+                    />
+                  </motion.div>
+                ) : isFeedRefreshing ? (
+                  // Suppress the "Nothing here yet" CTA while a refresh is
+                  // in flight — otherwise users briefly see an empty-state
+                  // pitch that disappears as soon as the new feed lands.
+                  <div className="h-72 w-full max-w-xs md:max-w-sm" aria-hidden="true" />
+                ) : (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center px-4">
+                    <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-card/60 backdrop-blur-sm">
+                      <Sparkles className="h-8 w-8 text-primary" />
+                    </div>
+                    <h2 className="mb-2 font-display text-xl font-bold text-foreground">Nothing here yet</h2>
+                    <p className="mx-auto mb-6 max-w-xs text-sm text-muted-foreground">Be the first to share your work.</p>
+                    <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Share Your Work
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Centered fade loader — appears whenever the feed is mid-
+                refresh (scope flip or active query fetch). Sits above the
+                dimmed cards so users immediately see *why* the stack just
+                stopped responding. */}
+            <AnimatePresence>
+              {isFeedRefreshing && (
+                <motion.div
+                  key="scope-fade-loader"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                  role="status"
+                  aria-live="polite"
+                  aria-label="Refreshing feed"
+                >
+                  <div className="flex items-center gap-2 rounded-full bg-card/80 backdrop-blur-md border border-border/40 px-4 py-2 shadow-md">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    <span className="text-xs font-body font-medium text-foreground">
+                      Refreshing feed…
+                    </span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
           )}
         </div>
       )}
@@ -1218,33 +1263,73 @@ const FlowModePage = () => {
                 isRetrying={flowItemsFetching}
               />
             </div>
-          ) : allItems.length > 0 ? (
-            <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
-              {allItems.map((item) => (
-                <div key={item.id} className="break-inside-avoid">
-                  <FlowCard
-                    item={item}
-                    expanded={false}
-                    onToggleExpand={() => {}}
-                    onSave={() => performAction("save", undefined, item)}
-                    onShare={() => performAction("share", undefined, item)}
-                    onDelete={() => deleteFlowItem.mutate(item.id)}
-                    isOwner={item.user_id === user?.id}
-                    isAdmin={isAdmin}
-                    profilesLoading={flowItemsFetching}
-                  />
-                </div>
-              ))}
-            </div>
           ) : (
-            <div className="flex flex-col items-center justify-center pt-20 text-center">
-              <Sparkles className="h-8 w-8 text-primary mb-4" />
-              <h2 className="mb-2 font-display text-xl font-bold text-foreground">Nothing here yet</h2>
-              <p className="mx-auto mb-6 max-w-xs text-sm text-muted-foreground">Be the first to share your work.</p>
-              <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
-                <Plus className="mr-2 h-4 w-4" />
-                Share Your Work
-              </Button>
+            <div className="relative">
+              {/* Browse grid mirrors the swipe view's transition contract:
+                  dim the existing items, mount a centered loader pill above.
+                  Keeps the layout (column heights) stable across the flip. */}
+              <motion.div
+                animate={{ opacity: isFeedRefreshing ? 0.35 : 1 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                style={{ pointerEvents: isFeedRefreshing ? "none" : "auto" }}
+              >
+                {allItems.length > 0 ? (
+                  <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
+                    {allItems.map((item) => (
+                      <div key={item.id} className="break-inside-avoid">
+                        <FlowCard
+                          item={item}
+                          expanded={false}
+                          onToggleExpand={() => {}}
+                          onSave={() => performAction("save", undefined, item)}
+                          onShare={() => performAction("share", undefined, item)}
+                          onDelete={() => deleteFlowItem.mutate(item.id)}
+                          isOwner={item.user_id === user?.id}
+                          isAdmin={isAdmin}
+                          profilesLoading={flowItemsFetching}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : isFeedRefreshing ? (
+                  // Reserve vertical space so the centered loader has
+                  // something to overlay even before the first item lands.
+                  <div className="h-96" aria-hidden="true" />
+                ) : (
+                  <div className="flex flex-col items-center justify-center pt-20 text-center">
+                    <Sparkles className="h-8 w-8 text-primary mb-4" />
+                    <h2 className="mb-2 font-display text-xl font-bold text-foreground">Nothing here yet</h2>
+                    <p className="mx-auto mb-6 max-w-xs text-sm text-muted-foreground">Be the first to share your work.</p>
+                    <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Share Your Work
+                    </Button>
+                  </div>
+                )}
+              </motion.div>
+
+              <AnimatePresence>
+                {isFeedRefreshing && (
+                  <motion.div
+                    key="browse-fade-loader"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="pointer-events-none absolute inset-x-0 top-24 flex justify-center"
+                    role="status"
+                    aria-live="polite"
+                    aria-label="Refreshing feed"
+                  >
+                    <div className="flex items-center gap-2 rounded-full bg-card/80 backdrop-blur-md border border-border/40 px-4 py-2 shadow-md">
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      <span className="text-xs font-body font-medium text-foreground">
+                        Refreshing feed…
+                      </span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
         </div>
