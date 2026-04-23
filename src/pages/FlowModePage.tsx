@@ -58,6 +58,7 @@ import { loadFlowFeed } from "@/lib/flow-feed";
 import AdminFlowSeedPanel from "@/components/flow/AdminFlowSeedPanel";
 import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
 import SignUpToPostPrompt from "@/components/flow/SignUpToPostPrompt";
+import FlowFeedErrorState from "@/components/flow/FlowFeedErrorState";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
@@ -364,7 +365,13 @@ const FlowModePage = () => {
     };
   }, [user, calibrationKey, persistFlowPrefs]);
 
-  const { data: flowItems, isFetching: flowItemsFetching } = useQuery({
+  const {
+    data: flowItems,
+    isFetching: flowItemsFetching,
+    isError: flowItemsIsError,
+    error: flowItemsError,
+    refetch: refetchFlowItems,
+  } = useQuery({
     queryKey: ["flow-items", feedScope, selectedCategories],
     // Flow Mode is a global feed — see `loadFlowFeed` for the contract
     // (multi-creator visibility, soft-sort, guest-safe attribution).
@@ -376,6 +383,9 @@ const FlowModePage = () => {
     // previous scope while the new feed is loading.
     queryFn: () => loadFlowFeed(supabase, selectedCategories),
     enabled: calibrated,
+    // Keep retries low so a hard failure surfaces the friendly error UI
+    // promptly instead of spinning silently for tens of seconds.
+    retry: 1,
   });
 
   const { data: smartboards } = useQuery({
