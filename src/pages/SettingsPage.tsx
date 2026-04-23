@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import LogoCustomizer from "@/components/onboarding/LogoCustomizer";
 import DockCustomizer from "@/components/settings/DockCustomizer";
+import ClaimLimitsControl from "@/components/settings/ClaimLimitsControl";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
