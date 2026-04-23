@@ -206,6 +206,7 @@ const SmartboardDetailPage = () => {
       setItemContent("");
       setItemLink("");
       setImageFile(null);
+      setUploadOk(null);
       setAlsoPostToFlow(false);
       toast.success(alsoPostToFlow ? "Added to board & Flow Mode!" : "Item added!");
     },
