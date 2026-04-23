@@ -237,27 +237,32 @@ const FlowModePage = () => {
     ["0 8px 30px -8px hsl(var(--foreground) / 0.15)", "0 20px 40px -12px hsl(var(--foreground) / 0.08)", "0 8px 30px -8px hsl(var(--foreground) / 0.15)"]
   );
 
-  // Load calibration & check if tutorial was seen
+  // Load calibration & check if tutorial was seen.
+  // Use a stable key for guests so the global feed renders without a user.id.
+  const calibrationKey = user?.id ?? "guest";
   useEffect(() => {
-    const saved = localStorage.getItem(`flow-calibrated-${user?.id}`);
+    const saved = localStorage.getItem(`flow-calibrated-${calibrationKey}`);
     if (saved) {
       setCalibrated(true);
-      setSelectedCategories(JSON.parse(saved));
+      try { setSelectedCategories(JSON.parse(saved)); } catch { setSelectedCategories(CATEGORIES); }
 
-      // Show tutorial overlay for first-time users
-      const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${user?.id}`);
+      const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${calibrationKey}`);
       if (!tutorialSeen) {
         setShowTutorialOverlay(true);
         tutorialTimerRef.current = setTimeout(() => {
           setShowTutorialOverlay(false);
-          localStorage.setItem(`flow-tutorial-seen-${user?.id}`, "true");
+          localStorage.setItem(`flow-tutorial-seen-${calibrationKey}`, "true");
         }, 8000);
       }
+    } else if (!user) {
+      // Guests skip calibration entirely — show the full global feed immediately.
+      setSelectedCategories(CATEGORIES);
+      setCalibrated(true);
     }
     return () => {
       if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
     };
-  }, [user]);
+  }, [user, calibrationKey]);
 
   const { data: flowItems } = useQuery({
     queryKey: ["flow-items", selectedCategories],
