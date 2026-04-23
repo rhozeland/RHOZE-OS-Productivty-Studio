@@ -32,10 +32,12 @@ export const writeClaimLimits = (limits: ClaimLimits) => {
   window.dispatchEvent(new CustomEvent(EVENT));
 };
 
+export type ClaimValidation = { ok: true } | { ok: false; reason: string };
+
 export const validateClaim = (
   amount: number,
   limits: ClaimLimits = readClaimLimits()
-): { ok: true } | { ok: false; reason: string } => {
+): ClaimValidation => {
   if (limits.min != null && amount < limits.min) {
     return {
       ok: false,
