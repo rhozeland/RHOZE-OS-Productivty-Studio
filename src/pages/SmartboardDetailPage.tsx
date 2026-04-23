@@ -453,7 +453,7 @@ const SmartboardDetailPage = () => {
                         ".pdf"
                       }
                       className="hidden"
-                      onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                      onChange={(e) => { setImageFile(e.target.files?.[0] || null); setUploadOk(null); }}
                     />
                     <div
                       onClick={() => fileInputRef.current?.click()}
