@@ -248,45 +248,129 @@ const FlowModePage = () => {
   // Load calibration & check if tutorial was seen.
   // Use a stable key for guests so the global feed renders without a user.id.
   const calibrationKey = user?.id ?? "guest";
+
+  // Persist Flow preferences to the user profile when signed in. localStorage
+  // is also written so we have a fast cache and a graceful fallback for guests
+  // and offline scenarios. Failures are swallowed — the local copy is the
+  // source of truth at runtime; the DB sync is best-effort.
+  const persistFlowPrefs = useCallback(
+    async (next: { scope?: "all" | "preferred"; preferred?: string[] }) => {
+      if (next.scope !== undefined) {
+        localStorage.setItem(`flow-scope-${calibrationKey}`, next.scope);
+      }
+      if (next.preferred !== undefined) {
+        localStorage.setItem(
+          `flow-calibrated-${calibrationKey}`,
+          JSON.stringify(next.preferred),
+        );
+      }
+      if (!user?.id) return;
+      const patch: Record<string, unknown> = {};
+      if (next.scope !== undefined) patch.flow_feed_scope = next.scope;
+      if (next.preferred !== undefined) patch.flow_preferred_categories = next.preferred;
+      if (Object.keys(patch).length === 0) return;
+      try {
+        await supabase.from("profiles").update(patch).eq("user_id", user.id);
+      } catch {
+        // Silent — local cache already updated.
+      }
+    },
+    [calibrationKey, user?.id],
+  );
+
   useEffect(() => {
-    const saved = localStorage.getItem(`flow-calibrated-${calibrationKey}`);
-    const savedScope = localStorage.getItem(`flow-scope-${calibrationKey}`) as
+    let cancelled = false;
+
+    const applyPrefs = (
+      prefs: string[] | null,
+      scope: "all" | "preferred" | null,
+      hasAnySaved: boolean,
+    ) => {
+      if (cancelled) return;
+      if (hasAnySaved) {
+        const finalPrefs = prefs && prefs.length > 0 ? prefs : CATEGORIES;
+        const finalScope = scope ?? "preferred";
+        setCalibrated(true);
+        setPreferredCategories(finalPrefs);
+        setFeedScope(finalScope);
+        setSelectedCategories(finalScope === "all" ? CATEGORIES : finalPrefs);
+
+        const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${calibrationKey}`);
+        if (!tutorialSeen) {
+          setShowTutorialOverlay(true);
+          tutorialTimerRef.current = setTimeout(() => {
+            setShowTutorialOverlay(false);
+            localStorage.setItem(`flow-tutorial-seen-${calibrationKey}`, "true");
+          }, 8000);
+        }
+      } else if (!user) {
+        // Guests skip calibration entirely — show the full global feed immediately.
+        setPreferredCategories(CATEGORIES);
+        setSelectedCategories(CATEGORIES);
+        setFeedScope("all");
+        setCalibrated(true);
+      }
+    };
+
+    // Read local cache first so the UI hydrates without waiting on the network.
+    const cachedRaw = localStorage.getItem(`flow-calibrated-${calibrationKey}`);
+    const cachedScope = localStorage.getItem(`flow-scope-${calibrationKey}`) as
       | "all"
       | "preferred"
       | null;
-    if (saved) {
-      setCalibrated(true);
-      let prefs: string[] = CATEGORIES;
-      try { prefs = JSON.parse(saved); } catch { prefs = CATEGORIES; }
-      setPreferredCategories(prefs);
-      const scope = savedScope ?? "preferred";
-      setFeedScope(scope);
-      setSelectedCategories(scope === "all" ? CATEGORIES : prefs);
-
-      const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${calibrationKey}`);
-      if (!tutorialSeen) {
-        setShowTutorialOverlay(true);
-        tutorialTimerRef.current = setTimeout(() => {
-          setShowTutorialOverlay(false);
-          localStorage.setItem(`flow-tutorial-seen-${calibrationKey}`, "true");
-        }, 8000);
-      }
-    } else if (!user) {
-      // Guests skip calibration entirely — show the full global feed immediately.
-      setPreferredCategories(CATEGORIES);
-      setSelectedCategories(CATEGORIES);
-      setFeedScope("all");
-      setCalibrated(true);
+    let cachedPrefs: string[] | null = null;
+    if (cachedRaw) {
+      try { cachedPrefs = JSON.parse(cachedRaw); } catch { cachedPrefs = null; }
     }
+    applyPrefs(cachedPrefs, cachedScope, !!cachedRaw);
+
+    // For signed-in users, treat the profile row as the source of truth and
+    // reconcile if it disagrees with the local cache. Also back-fills the
+    // profile from the cache the first time after this feature ships.
+    if (user?.id) {
+      (async () => {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("flow_feed_scope, flow_preferred_categories")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (cancelled || error) return;
+        const dbScope = (data?.flow_feed_scope as "all" | "preferred" | null) ?? null;
+        const dbPrefs = (data?.flow_preferred_categories as string[] | null) ?? null;
+        const hasDbValue = dbScope !== null || (dbPrefs && dbPrefs.length > 0);
+
+        if (hasDbValue) {
+          applyPrefs(dbPrefs, dbScope, true);
+          // Refresh the local cache so it stays consistent with the profile.
+          if (dbPrefs) localStorage.setItem(`flow-calibrated-${calibrationKey}`, JSON.stringify(dbPrefs));
+          if (dbScope) localStorage.setItem(`flow-scope-${calibrationKey}`, dbScope);
+        } else if (cachedPrefs || cachedScope) {
+          // First sign-in after this rolls out — promote the local cache to
+          // the profile so other devices pick it up.
+          await persistFlowPrefs({
+            scope: cachedScope ?? undefined,
+            preferred: cachedPrefs ?? undefined,
+          });
+        }
+      })();
+    }
+
     return () => {
+      cancelled = true;
       if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
     };
-  }, [user, calibrationKey]);
+  }, [user, calibrationKey, persistFlowPrefs]);
 
-  const { data: flowItems } = useQuery({
-    queryKey: ["flow-items", selectedCategories],
+  const { data: flowItems, isFetching: flowItemsFetching } = useQuery({
+    queryKey: ["flow-items", feedScope, selectedCategories],
     // Flow Mode is a global feed — see `loadFlowFeed` for the contract
     // (multi-creator visibility, soft-sort, guest-safe attribution).
+    //
+    // `feedScope` is part of the queryKey so toggling between "all" and
+    // "preferred" produces a *separate* cache entry instead of mutating the
+    // current array in place. Combined with the `placeholderData: undefined`
+    // default, this guarantees the swipe view never shows a card from the
+    // previous scope while the new feed is loading.
     queryFn: () => loadFlowFeed(supabase, selectedCategories),
     enabled: calibrated,
   });
@@ -560,8 +644,11 @@ const FlowModePage = () => {
   }, []);
 
 
-  // All items — loop through them endlessly
-  const allItems = flowItems ?? [];
+  // All items — loop through them endlessly. While the feed is refetching
+  // after a scope toggle, treat the list as empty so the swipe view doesn't
+  // briefly render a card from the previous scope (which would "mix" the
+  // sequence the user sees). The skeleton/empty state below renders instead.
+  const allItems = flowItemsFetching ? [] : flowItems ?? [];
   const currentItem = allItems.length > 0 ? allItems[currentIndex % allItems.length] : null;
 
   const handleCalibrationSelect = (option: string) => {
@@ -576,8 +663,7 @@ const FlowModePage = () => {
     setSelectedCategories(cats);
     setPreferredCategories(cats);
     setFeedScope("preferred");
-    localStorage.setItem(`flow-calibrated-${calibrationKey}`, JSON.stringify(cats));
-    localStorage.setItem(`flow-scope-${calibrationKey}`, "preferred");
+    void persistFlowPrefs({ scope: "preferred", preferred: cats });
     setCalibrated(true);
 
     // Show tutorial for first-time users after calibration
@@ -593,10 +679,15 @@ const FlowModePage = () => {
 
   // Switch the feed between the user's preferred categories and the global "All" view.
   // Preferences stay intact in localStorage; only the active scope flips.
+  //
+  // We reset every piece of feed-position state so swipe never shows a
+  // mid-sequence card from the previous scope and browse always lands at
+  // the top of the new feed.
   const setScope = useCallback(
     (scope: "all" | "preferred") => {
+      if (scope === feedScope) return;
       setFeedScope(scope);
-      localStorage.setItem(`flow-scope-${calibrationKey}`, scope);
+      void persistFlowPrefs({ scope });
       const next =
         scope === "all"
           ? CATEGORIES
@@ -604,9 +695,17 @@ const FlowModePage = () => {
             ? preferredCategories
             : CATEGORIES;
       setSelectedCategories(next);
+      // Reset feed cursor + any expanded/in-flight card UI so the user
+      // starts the new scope from card #0.
       setCurrentIndex(0);
+      setExpandedCard(false);
+      // Cancel any half-completed swipe animation.
+      x.set(0);
+      y.set(0);
+      // Browse view: scroll back to the top of the new feed.
+      flowContentRef.current?.scrollTo({ top: 0, behavior: "auto" });
     },
-    [calibrationKey, preferredCategories],
+    [persistFlowPrefs, preferredCategories, feedScope, x, y],
   );
 
   const advanceCard = useCallback(() => {
@@ -884,7 +983,7 @@ const FlowModePage = () => {
                               const final = updated.length === 0 ? CATEGORIES : updated;
                               setPreferredCategories(final);
                               setSelectedCategories(final);
-                              localStorage.setItem(`flow-calibrated-${calibrationKey}`, JSON.stringify(final));
+                              void persistFlowPrefs({ preferred: final });
                             }}
                           />
                         </div>
@@ -965,37 +1064,7 @@ const FlowModePage = () => {
       {viewMode === "swipe" && (
         <div className="relative z-10 flex flex-1 items-center justify-center px-4 pb-36 pt-2 md:pb-40">
           <AnimatePresence mode="wait">
-            {feedScope === "preferred" && preferredCategories.length === 0 ? (
-              <motion.div
-                key="for-you-empty-prefs"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center px-4 max-w-sm"
-              >
-                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 backdrop-blur-sm">
-                  <Sparkles className="h-8 w-8 text-primary" />
-                </div>
-                <h2 className="mb-2 font-display text-xl font-bold text-foreground">
-                  Personalize your For You feed
-                </h2>
-                <p className="mx-auto mb-6 max-w-xs text-sm text-muted-foreground leading-relaxed">
-                  You haven't picked any categories yet. Choose what inspires you and we'll surface
-                  matching work from across Rhozeland.
-                </p>
-                <div className="flex flex-col items-center gap-2">
-                  <Button onClick={() => setSettingsOpen(true)} className="rounded-full px-6">
-                    <Settings2 className="mr-2 h-4 w-4" />
-                    Choose categories
-                  </Button>
-                  <button
-                    onClick={() => setScope("all")}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Or browse the All feed
-                  </button>
-                </div>
-              </motion.div>
-            ) : currentItem ? (
+            {currentItem ? (
               <motion.div
                 key={`${currentItem.id}-${currentIndex}`}
                 className="w-full max-w-xs md:max-w-sm cursor-grab active:cursor-grabbing will-change-transform"
@@ -1020,7 +1089,6 @@ const FlowModePage = () => {
                   onDelete={() => deleteFlowItem.mutate(currentItem.id)}
                   isOwner={currentItem.user_id === user?.id}
                   isAdmin={isAdmin}
-                  feedScope={feedScope}
                 />
               </motion.div>
             ) : (
@@ -1042,33 +1110,11 @@ const FlowModePage = () => {
 
       {/* ═══ BROWSE VIEW ═══ */}
       {viewMode === "browse" && (
-        <div className="relative z-10 flex-1 overflow-y-auto px-4 pb-28 pt-2 md:px-8">
-          {feedScope === "preferred" && preferredCategories.length === 0 ? (
-            <div className="flex flex-col items-center justify-center pt-20 text-center px-4 max-w-sm mx-auto">
-              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 backdrop-blur-sm">
-                <Sparkles className="h-8 w-8 text-primary" />
-              </div>
-              <h2 className="mb-2 font-display text-xl font-bold text-foreground">
-                Personalize your For You feed
-              </h2>
-              <p className="mx-auto mb-6 max-w-xs text-sm text-muted-foreground leading-relaxed">
-                You haven't picked any categories yet. Choose what inspires you and we'll surface
-                matching work from across Rhozeland.
-              </p>
-              <div className="flex flex-col items-center gap-2">
-                <Button onClick={() => setSettingsOpen(true)} className="rounded-full px-6">
-                  <Settings2 className="mr-2 h-4 w-4" />
-                  Choose categories
-                </Button>
-                <button
-                  onClick={() => setScope("all")}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Or browse the All feed
-                </button>
-              </div>
-            </div>
-          ) : allItems.length > 0 ? (
+        <div
+          ref={flowContentRef}
+          className="relative z-10 flex-1 overflow-y-auto px-4 pb-28 pt-2 md:px-8"
+        >
+          {allItems.length > 0 ? (
             <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
               {allItems.map((item) => (
                 <div key={item.id} className="break-inside-avoid">
@@ -1081,7 +1127,6 @@ const FlowModePage = () => {
                     onDelete={() => deleteFlowItem.mutate(item.id)}
                     isOwner={item.user_id === user?.id}
                     isAdmin={isAdmin}
-                    feedScope={feedScope}
                   />
                 </div>
               ))}

@@ -79,3 +79,80 @@ export const isNavItemActive = (item: NavItem, pathname: string): boolean => {
     (p) => pathname === p || pathname.startsWith(p + "/"),
   );
 };
+
+/**
+ * Returns true if `id` corresponds to a registered nav item.
+ * Use to validate `dock_config` values loaded from the database.
+ */
+export const isValidNavId = (id: unknown): id is string =>
+  typeof id === "string" && id in NAV_ITEMS_BY_ID;
+
+/**
+ * Splits a list of dock ids into `valid` (resolvable in NAV_ITEMS_BY_ID) and
+ * `unknown` (stale ids from old configs or future ids the client hasn't
+ * shipped yet). Pure helper — easy to test and reuse from any consumer.
+ */
+export const partitionDockIds = (
+  ids: readonly unknown[] | null | undefined,
+): { valid: string[]; unknown: string[] } => {
+  const valid: string[] = [];
+  const unknown: string[] = [];
+  for (const id of ids ?? []) {
+    if (isValidNavId(id)) valid.push(id);
+    else if (typeof id === "string") unknown.push(id);
+  }
+  return { valid, unknown };
+};
+
+// ============================================================================
+// Legacy aliases / redirects
+// ============================================================================
+//
+// Centralized map of legacy URL prefixes → canonical paths. Derived
+// automatically from each nav item's `matchPaths`, so adding a new alias
+// is a one-line change in NAV_ITEMS — the router picks it up via
+// LegacyAliasRedirect (see src/components/LegacyAliasRedirect.tsx).
+//
+// Add ad-hoc redirects (paths not tied to a nav item) to EXTRA_ALIASES.
+
+interface NavAlias {
+  /** Legacy prefix (no trailing slash, no wildcard). e.g. `/droprooms` */
+  from: string;
+  /** Canonical replacement prefix. e.g. `/drop-rooms` */
+  to: string;
+}
+
+const EXTRA_ALIASES: NavAlias[] = [
+  // Add cross-cutting aliases here that don't belong to a single nav item.
+];
+
+/**
+ * Full alias table: every NavItem.matchPaths entry rewrites to that item's
+ * canonical `path`, plus any EXTRA_ALIASES. Stable ordering so router
+ * registration is deterministic.
+ */
+export const NAV_ALIASES: NavAlias[] = [
+  ...NAV_ITEMS.flatMap((item) =>
+    (item.matchPaths ?? []).map((from) => ({ from, to: item.path })),
+  ),
+  ...EXTRA_ALIASES,
+];
+
+/**
+ * Rewrites a legacy pathname to its canonical form, preserving any sub-path
+ * suffix. Returns `null` if no alias matches.
+ *
+ * @example
+ *   resolveAlias("/droprooms")          // "/drop-rooms"
+ *   resolveAlias("/droprooms/abc/chat") // "/drop-rooms/abc/chat"
+ *   resolveAlias("/dashboard")          // null
+ */
+export const resolveAlias = (pathname: string): string | null => {
+  for (const { from, to } of NAV_ALIASES) {
+    if (pathname === from) return to;
+    if (pathname.startsWith(from + "/")) {
+      return to + pathname.slice(from.length);
+    }
+  }
+  return null;
+};
