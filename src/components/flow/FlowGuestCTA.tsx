@@ -23,6 +23,7 @@ import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { trackGuestCTAClick } from "@/lib/guest-cta-analytics";
 
 type FlowGuestCTAProps = {
   variant?: "card" | "floating";
@@ -35,6 +36,13 @@ const FlowGuestCTA = ({ variant = "card", className }: FlowGuestCTAProps) => {
 
   // Hide entirely for signed-in users — no placeholder, no spacing.
   if (user) return null;
+
+  // Centralised click handler so analytics fires on both variants without
+  // duplicating the surface/variant payload at each call-site.
+  const handleSignUpClick = () => {
+    trackGuestCTAClick("flow-guest-cta", variant);
+    navigate("/auth");
+  };
 
   if (variant === "floating") {
     return (
@@ -59,7 +67,7 @@ const FlowGuestCTA = ({ variant = "card", className }: FlowGuestCTAProps) => {
           <Button
             size="sm"
             variant="default"
-            onClick={() => navigate("/auth")}
+            onClick={handleSignUpClick}
             className="h-7 rounded-full px-3 text-xs"
           >
             Sign up free
@@ -94,7 +102,7 @@ const FlowGuestCTA = ({ variant = "card", className }: FlowGuestCTAProps) => {
       <Button
         size="sm"
         variant="outline"
-        onClick={() => navigate("/auth")}
+        onClick={handleSignUpClick}
         className="w-full rounded-full"
       >
         Sign up free

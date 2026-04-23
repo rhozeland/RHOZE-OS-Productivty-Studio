@@ -27,6 +27,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { trackGuestCTAClick } from "@/lib/guest-cta-analytics";
 
 type SignUpToPostPromptProps = {
   /** The trigger element (typically a Button). Must support `onClick`. */
@@ -96,6 +97,7 @@ const SignUpToPostPrompt = ({
           <Button
             size="sm"
             onClick={() => {
+              trackGuestCTAClick("flow-signup-prompt", "popover");
               setOpen(false);
               navigate(signUpHref);
             }}

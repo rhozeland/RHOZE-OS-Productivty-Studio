@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { maybeRecordConversion } from "@/lib/guest-cta-analytics";
 
 interface AuthContextType {
   session: Session | null;
@@ -22,12 +23,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  // Track the previously-known user id so we only fire conversion
+  // attribution on the actual guest → authenticated transition (not on
+  // every session refresh or token rotation).
+  const previousUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const syncSession = (nextSession: Session | null) => {
       setSession(nextSession);
-      setUser(nextSession?.user ?? null);
+      const nextUser = nextSession?.user ?? null;
+      setUser(nextUser);
       setLoading(false);
+
+      // Guest → signed-in transition: attribute any pending CTA click.
+      if (nextUser && !previousUserIdRef.current) {
+        maybeRecordConversion(nextUser.id);
+      }
+      previousUserIdRef.current = nextUser?.id ?? null;
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
