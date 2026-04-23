@@ -104,11 +104,51 @@ export function safeFileExt(file: { name?: string; type?: string }): string {
 }
 
 /**
+ * Normalize a raw MIME string from the browser, an HTTP header, or a
+ * copy-pasted value. Strips:
+ *  - Surrounding whitespace
+ *  - Wrapping quotes (e.g. `"image/png"` or `'image/png'`)
+ *  - Parameters after `;` (e.g. `text/html; charset=utf-8` → `text/html`)
+ *  - Internal whitespace around the `/` (e.g. `image / png` → `image/png`)
+ *
+ * Returns "" when the input is empty or cannot be reduced to a `type/subtype`
+ * shape — callers should treat that as "no MIME provided".
+ */
+export function normalizeMime(raw: string | undefined | null): string {
+  if (!raw) return "";
+  let s = String(raw).trim();
+  if (!s) return "";
+
+  // Strip wrapping quotes (single or double), once.
+  if (
+    (s.startsWith('"') && s.endsWith('"')) ||
+    (s.startsWith("'") && s.endsWith("'"))
+  ) {
+    s = s.slice(1, -1).trim();
+  }
+
+  // Drop parameters: "text/html; charset=utf-8" -> "text/html"
+  const semi = s.indexOf(";");
+  if (semi >= 0) s = s.slice(0, semi).trim();
+
+  // Collapse whitespace around the slash and lowercase.
+  s = s.replace(/\s*\/\s*/g, "/").toLowerCase();
+
+  // Reject malformed values that lack a clean `type/subtype` shape.
+  const parts = s.split("/");
+  if (parts.length !== 2 || !parts[0] || !parts[1]) return "";
+
+  // Strip any remaining internal whitespace inside type or subtype.
+  return `${parts[0].replace(/\s+/g, "")}/${parts[1].replace(/\s+/g, "")}`;
+}
+
+/**
  * Resolve the best content-type for an upload.
- * Falls back to extension-based lookup if the browser didn't set `file.type`.
+ * Falls back to extension-based lookup if the browser didn't set `file.type`
+ * or sent a malformed value.
  */
 export function safeContentType(file: { name?: string; type?: string }): string {
-  const mime = (file.type || "").toLowerCase().trim();
+  const mime = normalizeMime(file.type);
   if (mime) return mime;
 
   const ext = safeFileExt(file);

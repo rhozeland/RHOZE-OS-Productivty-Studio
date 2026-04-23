@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { safeFileExt, safeContentType } from "./file-ext";
+import { safeFileExt, safeContentType, normalizeMime } from "./file-ext";
 
 /**
  * Property-based fuzz tests for safeFileExt and safeContentType.
@@ -187,16 +187,13 @@ describe("safeContentType — fuzz properties", () => {
   });
 
   /**
-   * Documented invariant audit: when a real browser sets `file.type`, it is
-   * always of the form `type/subtype`. Our fuzz pool intentionally seeds
-   * malformed MIMEs (`"no-slash"`, `"//"`, `"/missing"`) which the current
-   * implementation passes through verbatim. This test pins the WEAKNESS so
-   * tightening the contract later is a deliberate choice, not a regression.
-   *
-   * Marked `.fails` — it is expected to fail today; flip to `it(...)` once
-   * `safeContentType` rejects malformed MIME strings.
+   * Invariant: when `safeContentType` returns a value, it must be a
+   * well-formed `type/subtype` string. Malformed inputs should fall back to
+   * extension-based resolution or `application/octet-stream`, never pass
+   * through verbatim. (Originally captured as `it.fails` while the bug
+   * existed; promoted to a hard assertion once `normalizeMime` landed.)
    */
-  it.fails("[audit] rejects malformed MIME strings with no slash", () => {
+  it("always returns a well-formed type/subtype string", () => {
     const rand = rng(0xBADBEEF);
     const failures: Array<{ input: unknown; output: string }> = [];
 
@@ -208,17 +205,18 @@ describe("safeContentType — fuzz properties", () => {
       if (!wellFormed) failures.push({ input, output: ct });
     }
 
-    expect(failures).toEqual([]);
+    expect(failures, `Malformed outputs: ${JSON.stringify(failures.slice(0, 5))}`)
+      .toEqual([]);
   });
 
-  it("prefers the browser-provided MIME when it is present and non-empty", () => {
+  it("uses the normalized browser MIME when it normalizes to a valid value", () => {
     const rand = rng(123);
     for (let i = 0; i < 200; i++) {
-      const provided = pick(rand, MIME_POOL).trim();
-      if (!provided) continue; // empty MIMEs are intentionally allowed to fall through
+      const provided = pick(rand, MIME_POOL);
+      const normalized = normalizeMime(provided);
+      if (!normalized) continue; // empty / malformed MIMEs fall through to ext-based resolution
       const input = { name: randomFilename(rand), type: provided };
-      // Implementation lowercases+trims the provided MIME — match that contract.
-      expect(safeContentType(input)).toBe(provided.toLowerCase());
+      expect(safeContentType(input)).toBe(normalized);
     }
   });
 
