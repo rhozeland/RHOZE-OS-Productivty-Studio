@@ -1,48 +1,16 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Save } from "lucide-react";
 import {
-  Home,
-  Building2,
-  FolderKanban,
-  Flame,
-  MessageSquare,
-  LayoutDashboard,
-  ShoppingBag,
-  Calendar,
-  Palette,
-  Radio,
-  Settings,
-  Store,
-  CreditCard,
-  User,
-  Save,
-  GripVertical,
-  Users,
-} from "lucide-react";
+  NAV_ITEMS,
+  NAV_ITEMS_BY_ID,
+  DEFAULT_DOCK_IDS,
+} from "@/config/navigation";
 
-const ALL_DOCK_OPTIONS = [
-  { id: "dashboard", icon: Home, label: "Home", path: "/dashboard" },
-  { id: "studios", icon: Building2, label: "Studios", path: "/studios" },
-  { id: "projects", icon: FolderKanban, label: "Projects", path: "/projects" },
-  { id: "hub", icon: Flame, label: "Hub", path: "/creators" },
-  { id: "messages", icon: MessageSquare, label: "Inbox", path: "/messages" },
-  { id: "boards", icon: Palette, label: "Boards", path: "/smartboards" },
-  { id: "droprooms", icon: Radio, label: "Drops", path: "/drop-rooms" },
-  { id: "marketplace", icon: ShoppingBag, label: "Market", path: "/marketplace" },
-  { id: "calendar", icon: Calendar, label: "Calendar", path: "/calendar" },
-  { id: "bookings", icon: Calendar, label: "Bookings", path: "/bookings" },
-  { id: "credits", icon: CreditCard, label: "Credits", path: "/credits" },
-  { id: "profile", icon: User, label: "Profile", path: "/profiles" },
-  { id: "settings", icon: Settings, label: "Settings", path: "/settings" },
-  { id: "services", icon: Store, label: "Services", path: "/services" },
-];
-
-export const DEFAULT_DOCK_IDS = ["dashboard", "studios", "projects", "hub", "messages"];
+// Re-export so existing imports keep working.
+export { DEFAULT_DOCK_IDS };
 
 interface DockCustomizerProps {
   dockConfig: string[] | null;
@@ -108,14 +76,15 @@ const DockCustomizer = ({ dockConfig, onSave }: DockCustomizerProps) => {
         </p>
         <div className="flex items-center gap-1 p-3 bg-card/90 backdrop-blur-xl border border-border rounded-xl">
           {selected.map((id, i) => {
-            const item = ALL_DOCK_OPTIONS.find((o) => o.id === id);
+            const item = NAV_ITEMS_BY_ID[id];
             if (!item) return null;
+            const Icon = item.icon;
             return (
               <div
                 key={id}
                 className="flex flex-col items-center justify-center w-14 h-14 rounded-lg bg-muted/40 text-foreground gap-0.5 relative group"
               >
-                <item.icon className="h-5 w-5" />
+                <Icon className="h-5 w-5" />
                 <span className="text-[10px] font-medium leading-none">
                   {item.label}
                 </span>
@@ -149,7 +118,8 @@ const DockCustomizer = ({ dockConfig, onSave }: DockCustomizerProps) => {
           Available Items
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {ALL_DOCK_OPTIONS.map((item) => {
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
             const isSelected = selected.includes(item.id);
             return (
               <button
@@ -162,7 +132,7 @@ const DockCustomizer = ({ dockConfig, onSave }: DockCustomizerProps) => {
                     : "border-border bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
                 )}
               >
-                <item.icon className="h-5 w-5 shrink-0" />
+                <Icon className="h-5 w-5 shrink-0" />
                 <span className="text-sm font-medium">{item.label}</span>
               </button>
             );
