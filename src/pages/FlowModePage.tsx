@@ -249,9 +249,18 @@ const FlowModePage = () => {
   const calibrationKey = user?.id ?? "guest";
   useEffect(() => {
     const saved = localStorage.getItem(`flow-calibrated-${calibrationKey}`);
+    const savedScope = localStorage.getItem(`flow-scope-${calibrationKey}`) as
+      | "all"
+      | "preferred"
+      | null;
     if (saved) {
       setCalibrated(true);
-      try { setSelectedCategories(JSON.parse(saved)); } catch { setSelectedCategories(CATEGORIES); }
+      let prefs: string[] = CATEGORIES;
+      try { prefs = JSON.parse(saved); } catch { prefs = CATEGORIES; }
+      setPreferredCategories(prefs);
+      const scope = savedScope ?? "preferred";
+      setFeedScope(scope);
+      setSelectedCategories(scope === "all" ? CATEGORIES : prefs);
 
       const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${calibrationKey}`);
       if (!tutorialSeen) {
@@ -263,7 +272,9 @@ const FlowModePage = () => {
       }
     } else if (!user) {
       // Guests skip calibration entirely — show the full global feed immediately.
+      setPreferredCategories(CATEGORIES);
       setSelectedCategories(CATEGORIES);
+      setFeedScope("all");
       setCalibrated(true);
     }
     return () => {
