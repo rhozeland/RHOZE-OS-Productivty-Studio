@@ -74,8 +74,41 @@ const ClaimRhozeButton = ({
     open: false,
     amount: 0,
   });
+  const [preview, setPreview] = useState<TxPreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
   const walletAddress = publicKey?.toBase58() ?? "";
+
+  const fetchPreview = async () => {
+    setPreviewLoading(true);
+    setPreviewError(null);
+    try {
+      const res = await fetch(SOLANA_RPC, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify([
+          { jsonrpc: "2.0", id: 1, method: "getLatestBlockhash", params: [{ commitment: "finalized" }] },
+          { jsonrpc: "2.0", id: 2, method: "getSlot", params: [{ commitment: "finalized" }] },
+        ]),
+      });
+      const json = await res.json();
+      const bhResult = Array.isArray(json) ? json.find((r) => r.id === 1)?.result?.value : null;
+      const slotResult = Array.isArray(json) ? json.find((r) => r.id === 2)?.result : null;
+      if (!bhResult?.blockhash) throw new Error("No blockhash returned");
+      setPreview({
+        blockhash: bhResult.blockhash,
+        lastValidBlockHeight: bhResult.lastValidBlockHeight,
+        feeLamports: ESTIMATED_FEE_LAMPORTS,
+        slot: typeof slotResult === "number" ? slotResult : 0,
+      });
+    } catch (e: any) {
+      setPreviewError(e?.message || "Couldn't fetch network preview");
+      setPreview(null);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
 
   const openConfirm = () => {
     if (!publicKey || !user) {
@@ -87,8 +120,15 @@ const ClaimRhozeButton = ({
       return;
     }
     setAcknowledged(false);
+    setPreview(null);
+    setPreviewError(null);
     setConfirmOpen(true);
   };
+
+  useEffect(() => {
+    if (!confirmOpen) return;
+    fetchPreview();
+  }, [confirmOpen]);
 
   const copyAddress = async () => {
     if (!walletAddress) return;
