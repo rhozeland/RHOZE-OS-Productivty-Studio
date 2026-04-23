@@ -55,6 +55,7 @@ import FlowShareDialog from "@/components/flow/FlowShareDialog";
 import LinkPreviewCard from "@/components/flow/LinkPreviewCard";
 import { cn } from "@/lib/utils";
 import { loadFlowFeed } from "@/lib/flow-feed";
+import AdminFlowSeedPanel from "@/components/flow/AdminFlowSeedPanel";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
@@ -1058,6 +1059,10 @@ const FlowModePage = () => {
               </div>
             </SheetContent>
           </Sheet>
+
+          {/* Admin-only seed utility — keeps demo content fresh without
+              dropping into Supabase. Hidden for non-admins. */}
+          {isAdmin && <AdminFlowSeedPanel />}
 
           <Button
             variant="ghost"
