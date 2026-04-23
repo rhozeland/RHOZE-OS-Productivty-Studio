@@ -13,10 +13,11 @@ import { Separator } from "@/components/ui/separator";
 import {
   Moon, Sun, Upload, Eye, EyeOff, X, Camera, Lock, MapPin, Bell,
   Trash2, AlertTriangle, Download, User, Box, Wallet, Palette,
-  LayoutDashboard, ChevronRight,
+  LayoutDashboard, ChevronRight, Sparkles,
 } from "lucide-react";
 import LogoCustomizer from "@/components/onboarding/LogoCustomizer";
 import DockCustomizer from "@/components/settings/DockCustomizer";
+import FlowCardCustomizer from "@/components/settings/FlowCardCustomizer";
 import ClaimLimitsControl from "@/components/settings/ClaimLimitsControl";
 import SettingsSubNav, {
   useActiveSettingsSection,
@@ -29,6 +30,7 @@ const SECTIONS = [
   { id: "profile", label: "Profile", icon: User },
   { id: "appearance", label: "Appearance", icon: Palette },
   { id: "dock", label: "Dock Menu", icon: LayoutDashboard },
+  { id: "flow-cards", label: "Flow Cards", icon: Sparkles },
   { id: "avatar", label: "Display Picture", icon: Camera },
   { id: "banner", label: "Banner & Background", icon: Palette },
   { id: "wallet", label: "Wallet", icon: Wallet },
@@ -429,6 +431,8 @@ const SettingsPage = () => {
     </div>
   );
 
+  const renderFlowCards = () => <FlowCardCustomizer />;
+
   const renderAvatar = () => (
     <div className="space-y-4">
       <div className="flex items-center gap-6">
@@ -762,6 +766,7 @@ const SettingsPage = () => {
     profile: renderProfile,
     appearance: renderAppearance,
     dock: renderDock,
+    "flow-cards": renderFlowCards,
     avatar: renderAvatar,
     banner: renderBanner,
     wallet: renderWallet,

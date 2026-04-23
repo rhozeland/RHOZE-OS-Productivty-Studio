@@ -5,6 +5,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Play, FileText, ExternalLink, ChevronDown, Music, Palette, Camera, Video, PenTool, Bookmark, Send, Maximize2, X, Trash2 } from "lucide-react";
 import AudioPreview from "@/components/marketplace/AudioPreview";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
+import { useFlowCardPrefs } from "@/hooks/useFlowCardPrefs";
+import {
+  badgeColorClassFor,
+  badgePlacementClassFor,
+} from "@/lib/flow-card-prefs";
 
 /* ─── Platform detection ─── */
 const detectPlatform = (url?: string | null) => {
@@ -94,13 +100,27 @@ interface FlowCardProps {
 const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner, isAdmin, profilesLoading }: FlowCardProps) => {
   const navigate = useNavigate();
   const [imageEnlarged, setImageEnlarged] = useState(false);
+  const cardPrefs = useFlowCardPrefs();
   const platform = detectPlatform(item.link_url);
   const CatIcon = CATEGORY_ICONS[item.category] || Palette;
   const catColor = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.writing;
+  // Resolve user-customized badge appearance. `catColor` becomes the
+  // fallback when the preset is "category" (the per-category default).
+  const badgeColorClass = badgeColorClassFor(cardPrefs.badgeColor, catColor);
+  const badgePlacementClass = badgePlacementClassFor(cardPrefs.badgePlacement);
   const isImage = item.content_type === "image" || item.category === "photo" || item.category === "design";
   const isAudio = item.content_type === "audio" || item.category === "music";
   const isVideo = item.content_type === "video" || item.category === "video";
   const isWriting = item.content_type === "text" || item.content_type === "link" || item.category === "writing";
+
+  // The category badge node is identical regardless of placement; only its
+  // wrapper changes (absolute over the media vs inline with the action bar).
+  const categoryBadge = cardPrefs.badgeVisible ? (
+    <Badge className={cn(badgeColorClass, "border-0 rounded-full text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 inline-flex items-center gap-1")}>
+      <CatIcon className="h-3 w-3" />
+      {item.category}
+    </Badge>
+  ) : null;
 
   const youtubeId = item.link_url ? getYouTubeId(item.link_url) : null;
   const spotifyEmbed = item.link_url ? getSpotifyEmbed(item.link_url) : null;
@@ -109,6 +129,13 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
   return (
     <>
       <div className="relative rounded-[32px] bg-card/50 backdrop-blur-2xl shadow-2xl shadow-foreground/5 overflow-hidden border border-border/15 select-none">
+        {/* Absolute-positioned category badge for corner placements.
+            Rendered before the media so the badge sits above any
+            embed/image. Inline placement is handled below in the
+            action-bar row. */}
+        {cardPrefs.badgePlacement !== "inline" && categoryBadge && (
+          <div className={badgePlacementClass}>{categoryBadge}</div>
+        )}
 
         {/* ═══ PHOTO / DESIGN — Full image with click to enlarge ═══ */}
         {isImage && item.file_url && (
@@ -305,12 +332,13 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
           </div>
         )}
 
-        {/* ═══ Category badge + ACTION BAR ═══ */}
+        {/* ═══ Category badge (inline variant) + ACTION BAR ═══
+            Inline render keeps the legacy layout with the badge to the
+            left of the action buttons. Corner placements skip this and
+            render the badge as an absolute overlay (see below the
+            outer card div). */}
         <div className="px-5 pt-4 pb-2 flex items-center gap-3">
-          <Badge className={`${catColor} border-0 rounded-full text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 flex items-center gap-1`}>
-            <CatIcon className="h-3 w-3" />
-            {item.category}
-          </Badge>
+          {cardPrefs.badgePlacement === "inline" && categoryBadge}
 
           <div className="ml-auto flex items-center gap-3">
             <button
