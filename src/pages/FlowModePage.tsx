@@ -76,7 +76,14 @@ const FlowModePage = () => {
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tutorialTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flowContentRef = useRef<HTMLDivElement | null>(null);
+  // Categories currently driving the feed sort. When `feedScope === "all"`, this
+  // is the full CATEGORIES list (no preference applied → pure global feed).
+  // When `feedScope === "preferred"`, this reflects the user's saved picks.
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  // Remembers the user's calibrated picks even while they're previewing "All",
+  // so flipping back to "For You" restores their preferences without re-prompting.
+  const [preferredCategories, setPreferredCategories] = useState<string[]>([]);
+  const [feedScope, setFeedScope] = useState<"all" | "preferred">("preferred");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expandedCard, setExpandedCard] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -242,9 +249,18 @@ const FlowModePage = () => {
   const calibrationKey = user?.id ?? "guest";
   useEffect(() => {
     const saved = localStorage.getItem(`flow-calibrated-${calibrationKey}`);
+    const savedScope = localStorage.getItem(`flow-scope-${calibrationKey}`) as
+      | "all"
+      | "preferred"
+      | null;
     if (saved) {
       setCalibrated(true);
-      try { setSelectedCategories(JSON.parse(saved)); } catch { setSelectedCategories(CATEGORIES); }
+      let prefs: string[] = CATEGORIES;
+      try { prefs = JSON.parse(saved); } catch { prefs = CATEGORIES; }
+      setPreferredCategories(prefs);
+      const scope = savedScope ?? "preferred";
+      setFeedScope(scope);
+      setSelectedCategories(scope === "all" ? CATEGORIES : prefs);
 
       const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${calibrationKey}`);
       if (!tutorialSeen) {
@@ -256,7 +272,9 @@ const FlowModePage = () => {
       }
     } else if (!user) {
       // Guests skip calibration entirely — show the full global feed immediately.
+      setPreferredCategories(CATEGORIES);
       setSelectedCategories(CATEGORIES);
+      setFeedScope("all");
       setCalibrated(true);
     }
     return () => {
@@ -585,7 +603,10 @@ const FlowModePage = () => {
   const finishCalibration = () => {
     const cats = selectedCategories.length > 0 ? selectedCategories : CATEGORIES;
     setSelectedCategories(cats);
+    setPreferredCategories(cats);
+    setFeedScope("preferred");
     localStorage.setItem(`flow-calibrated-${calibrationKey}`, JSON.stringify(cats));
+    localStorage.setItem(`flow-scope-${calibrationKey}`, "preferred");
     setCalibrated(true);
 
     // Show tutorial for first-time users after calibration
@@ -598,6 +619,24 @@ const FlowModePage = () => {
       }, 8000);
     }
   };
+
+  // Switch the feed between the user's preferred categories and the global "All" view.
+  // Preferences stay intact in localStorage; only the active scope flips.
+  const setScope = useCallback(
+    (scope: "all" | "preferred") => {
+      setFeedScope(scope);
+      localStorage.setItem(`flow-scope-${calibrationKey}`, scope);
+      const next =
+        scope === "all"
+          ? CATEGORIES
+          : preferredCategories.length > 0
+            ? preferredCategories
+            : CATEGORIES;
+      setSelectedCategories(next);
+      setCurrentIndex(0);
+    },
+    [calibrationKey, preferredCategories],
+  );
 
   const advanceCard = useCallback(() => {
     setTimeout(() => {
@@ -756,6 +795,38 @@ const FlowModePage = () => {
           </button>
         </div>
 
+        {/* Feed scope toggle: All categories ↔ user's preferred picks. Hidden when
+            the user has no saved preferences (preferred would equal All anyway). */}
+        {preferredCategories.length > 0 &&
+          preferredCategories.length < CATEGORIES.length && (
+            <div className="hidden sm:flex items-center gap-0.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/30 p-0.5">
+              <button
+                onClick={() => setScope("preferred")}
+                className={cn(
+                  "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                  feedScope === "preferred"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+                aria-pressed={feedScope === "preferred"}
+              >
+                For You
+              </button>
+              <button
+                onClick={() => setScope("all")}
+                className={cn(
+                  "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                  feedScope === "all"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+                aria-pressed={feedScope === "all"}
+              >
+                All
+              </button>
+            </div>
+          )}
+
         <div className="flex items-center gap-1.5 shrink-0">
           <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
             <SheetTrigger asChild>
@@ -770,24 +841,60 @@ const FlowModePage = () => {
               <div className="flex-1 overflow-y-auto space-y-6 pt-4">
                 <div>
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Content Types</h3>
+
+                  {/* Master toggle: when ON, the feed surfaces every category
+                      (global feed). When OFF, only the user's preferred picks below
+                      drive the sort. Per-category switches are disabled while ON
+                      to make the relationship obvious. */}
+                  <div className="flex items-center justify-between mb-3 pb-3 border-b border-border/50">
+                    <div>
+                      <Label htmlFor="all-categories-toggle" className="text-sm font-medium cursor-pointer">
+                        All categories
+                      </Label>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Show the global feed
+                      </p>
+                    </div>
+                    <Switch
+                      id="all-categories-toggle"
+                      checked={feedScope === "all"}
+                      onCheckedChange={(checked) => setScope(checked ? "all" : "preferred")}
+                    />
+                  </div>
+
                   <div className="space-y-2.5">
-                    {CATEGORIES.map((cat) => (
-                      <div key={cat} className="flex items-center justify-between">
-                        <Label htmlFor={`cat-${cat}`} className="capitalize text-sm cursor-pointer">{cat}</Label>
-                        <Switch
-                          id={`cat-${cat}`}
-                          checked={selectedCategories.includes(cat)}
-                          onCheckedChange={(checked) => {
-                            const updated = checked
-                              ? [...selectedCategories, cat]
-                              : selectedCategories.filter((c) => c !== cat);
-                            const final = updated.length === 0 ? CATEGORIES : updated;
-                            setSelectedCategories(final);
-                            localStorage.setItem(`flow-calibrated-${calibrationKey}`, JSON.stringify(final));
-                          }}
-                        />
-                      </div>
-                    ))}
+                    {CATEGORIES.map((cat) => {
+                      const isOn = feedScope === "all"
+                        ? true
+                        : preferredCategories.includes(cat);
+                      return (
+                        <div key={cat} className="flex items-center justify-between">
+                          <Label
+                            htmlFor={`cat-${cat}`}
+                            className={cn(
+                              "capitalize text-sm cursor-pointer",
+                              feedScope === "all" && "text-muted-foreground",
+                            )}
+                          >
+                            {cat}
+                          </Label>
+                          <Switch
+                            id={`cat-${cat}`}
+                            checked={isOn}
+                            disabled={feedScope === "all"}
+                            onCheckedChange={(checked) => {
+                              const updated = checked
+                                ? [...preferredCategories, cat]
+                                : preferredCategories.filter((c) => c !== cat);
+                              const final = updated.length === 0 ? CATEGORIES : updated;
+                              setPreferredCategories(final);
+                              setSelectedCategories(final);
+                              localStorage.setItem(`flow-calibrated-${calibrationKey}`, JSON.stringify(final));
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
                 <div>
