@@ -51,6 +51,10 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "calendar", label: "Calendar", icon: Calendar, path: "/calendar" },
   { id: "bookings", label: "Bookings", icon: Calendar, path: "/bookings" },
   { id: "credits", label: "Credits", icon: CreditCard, path: "/credits" },
+  // Flow Mode — not in the default dock (reached via header search bar's
+  // Workflow button + keyboard shortcut), but registered here so active-state
+  // resolution and dock customization stay uniform across surfaces.
+  { id: "flow", label: "Flow", icon: Flame, path: "/flow" },
   { id: "profile", label: "Profile", icon: User, path: "/profiles" },
   { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
   { id: "services", label: "Services", icon: Store, path: "/services" },

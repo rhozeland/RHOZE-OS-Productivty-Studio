@@ -36,6 +36,8 @@ import {
   type NavItem,
 } from "@/config/navigation";
 import { resolveNavLink } from "@/hooks/useNavLink";
+import { useNavShortcuts } from "@/hooks/useNavShortcuts";
+import { NAV_SHORTCUTS, formatChord, formatLeader } from "@/lib/nav-shortcuts";
 import { REGISTERED_ROUTE_PATHS } from "@/App";
 
 const PAGES = [
@@ -113,7 +115,12 @@ const AppLayout = () => {
   // Only run reward streak for authenticated users
   useRewardStreak();
 
-  // Keyboard shortcut
+  // Global navigation shortcuts (Alt+1..4 and "g d / p / c / f").
+  // Active state in the dock / header / sidebar already syncs via
+  // `useLocation` + `isNavItemActive`, so navigating is enough.
+  useNavShortcuts();
+
+  // Keyboard shortcut — Cmd/Ctrl+K opens the search palette.
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
@@ -357,12 +364,27 @@ const AppLayout = () => {
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Pages">
-            {PAGES.map((page) => (
-              <CommandItem key={page.path} onSelect={() => goTo(page.path)}>
-                <page.icon className="mr-2 h-4 w-4 text-muted-foreground" />
-                {page.name}
-              </CommandItem>
-            ))}
+            {PAGES.map((page) => {
+              // Surface the global keyboard shortcut next to a page when one
+              // exists, so users discover them without an extra help screen.
+              const shortcut = NAV_SHORTCUTS.find((s) => s.path === page.path);
+              return (
+                <CommandItem key={page.path} onSelect={() => goTo(page.path)}>
+                  <page.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                  {page.name}
+                  {shortcut && (
+                    <span className="ml-auto flex items-center gap-1">
+                      <kbd className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-mono text-muted-foreground">
+                        {formatChord(shortcut.chord)}
+                      </kbd>
+                      <kbd className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-mono text-muted-foreground">
+                        {formatLeader(shortcut.leaderKey)}
+                      </kbd>
+                    </span>
+                  )}
+                </CommandItem>
+              );
+            })}
           </CommandGroup>
           {studios && studios.length > 0 && (
             <CommandGroup heading="Studios">
