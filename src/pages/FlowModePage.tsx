@@ -1149,6 +1149,7 @@ const FlowModePage = () => {
               </motion.div>
             )}
           </AnimatePresence>
+          )}
         </div>
       )}
 
@@ -1158,6 +1159,15 @@ const FlowModePage = () => {
           ref={flowContentRef}
           className="relative z-10 flex-1 overflow-y-auto px-4 pb-28 pt-2 md:px-8"
         >
+          {flowItemsIsError ? (
+            <div className="pt-20">
+              <FlowFeedErrorState
+                error={flowItemsError}
+                onRetry={() => void refetchFlowItems()}
+                isRetrying={flowItemsFetching}
+              />
+            </div>
+          ) : (
           {allItems.length > 0 ? (
             <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
               {allItems.map((item) => (
