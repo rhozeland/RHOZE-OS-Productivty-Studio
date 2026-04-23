@@ -31,6 +31,7 @@ import {
   ShieldCheck,
   AlertTriangle,
   CheckCircle2,
+  LinkIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
