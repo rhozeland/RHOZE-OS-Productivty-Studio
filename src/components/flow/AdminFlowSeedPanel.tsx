@@ -189,11 +189,16 @@ const AdminFlowSeedPanel = () => {
   const runMutation = useMutation({
     mutationFn: () => callSeed(false),
     onSuccess: (data) => {
-      const insertedMsg =
-        data.inserted && data.inserted > 0
-          ? `Seeded ${data.inserted} new Flow post${data.inserted === 1 ? "" : "s"}`
-          : "Nothing to seed — all items already present.";
-      toast.success(insertedMsg);
+      const inserted = data.inserted ?? 0;
+      const updated = data.updated ?? 0;
+      const parts: string[] = [];
+      if (inserted > 0) parts.push(`${inserted} new`);
+      if (updated > 0) parts.push(`${updated} updated`);
+      const msg =
+        parts.length > 0
+          ? `Seed complete — ${parts.join(", ")}.`
+          : "Nothing to do — seed is already in sync.";
+      toast.success(msg);
       // Surface fallback info as a separate warning toast so it's not buried.
       if (data.fallbackCount && data.fallbackCount > 0) {
         const titles = (data.failedItems ?? [])
