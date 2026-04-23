@@ -331,8 +331,25 @@ const AdminFlowSeedPanel = () => {
                             ) : null}
                             {it.title}
                           </span>
-                          <span className="text-[10px] text-muted-foreground uppercase tracking-wide shrink-0">
-                            {it.category}
+                          <span className="flex items-center gap-1.5 shrink-0">
+                            {it.action === "update" ? (
+                              <Badge
+                                variant="outline"
+                                className="text-[9px] uppercase tracking-wide px-1 py-0 h-4 border-muted-foreground/40 text-muted-foreground"
+                              >
+                                update
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="text-[9px] uppercase tracking-wide px-1 py-0 h-4 border-primary/40 text-primary"
+                              >
+                                new
+                              </Badge>
+                            )}
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                              {it.category}
+                            </span>
                           </span>
                         </li>
                       ))}
