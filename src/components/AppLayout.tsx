@@ -37,6 +37,7 @@ import {
 } from "@/config/navigation";
 import { resolveNavLink } from "@/hooks/useNavLink";
 import { useNavShortcuts } from "@/hooks/useNavShortcuts";
+import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 import { NAV_SHORTCUTS, formatChord, formatLeader } from "@/lib/nav-shortcuts";
 import { REGISTERED_ROUTE_PATHS } from "@/App";
 
@@ -119,6 +120,11 @@ const AppLayout = () => {
   // Active state in the dock / header / sidebar already syncs via
   // `useLocation` + `isNavItemActive`, so navigating is enough.
   useNavShortcuts();
+
+  // Per-route scroll restoration: top on fresh PUSH, restore on POP
+  // (back/forward), no-op on REPLACE so hash-only updates (Settings
+  // sub-nav) don't jump the page.
+  useScrollRestoration();
 
   // Keyboard shortcut — Cmd/Ctrl+K opens the search palette.
   useEffect(() => {
