@@ -1052,15 +1052,20 @@ const FlowModePage = () => {
               dropping into Supabase. Hidden for non-admins. */}
           {isAdmin && <AdminFlowSeedPanel />}
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9"
-            onClick={() => setAddOpen(true)}
-            aria-label="Add to Flow"
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
+          {/* Compose entry — guests get an inline "Sign up to post" popover
+              instead of the upload sheet. SignUpToPostPrompt is a no-op for
+              authenticated users so the original onClick fires unchanged. */}
+          <SignUpToPostPrompt>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9"
+              onClick={() => setAddOpen(true)}
+              aria-label="Add to Flow"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </SignUpToPostPrompt>
 
           <Button
             variant="ghost"
