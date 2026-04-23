@@ -115,6 +115,17 @@ const FlowModePage = () => {
     all: false,
     preferred: false,
   });
+  // Per-scope swipe cursor memory. Mirrors the browse scroll memory so a
+  // quick scope toggle returns the user to the exact card they were on
+  // instead of resetting to card #0 and discarding their position.
+  const swipeIndexByScopeRef = useRef<Record<"all" | "preferred", number>>({
+    all: 0,
+    preferred: 0,
+  });
+  const swipeScopeVisitedRef = useRef<Record<"all" | "preferred", boolean>>({
+    all: false,
+    preferred: false,
+  });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expandedCard, setExpandedCard] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
