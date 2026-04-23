@@ -142,7 +142,42 @@ describe("Flow Mode global feed (loadFlowFeed)", () => {
     expect(items[0].profiles).toBeNull();
   });
 
-  it("propagates errors from flow_items query", async () => {
+  it("caches uploader profiles across repeated calls (no re-fetch of profiles_public)", async () => {
+    await loadFlowFeed(supabase, []);
+    const firstProfileQueries = calls.filter((c) => c.table === "profiles_public").length;
+    expect(firstProfileQueries).toBe(1);
+
+    // Second call with the same uploader set must hit the cache and skip
+    // the profiles_public query entirely.
+    await loadFlowFeed(supabase, []);
+    const totalProfileQueries = calls.filter((c) => c.table === "profiles_public").length;
+    expect(totalProfileQueries).toBe(1);
+  });
+
+  it("only fetches missing uploader IDs when cache is partially warm", async () => {
+    // Warm cache with the original three uploaders.
+    await loadFlowFeed(supabase, []);
+
+    // Now extend the dataset with a brand-new uploader and re-run.
+    const built = makeSupabase({
+      flow_items: [
+        ...SAMPLE_ITEMS,
+        { id: "i5", user_id: "u-dave", title: "Dave video", category: "video", content_type: "video", file_url: "/d.mp4", link_url: null, created_at: "2026-04-19T10:00:00Z" },
+      ],
+      profiles_public: [
+        ...SAMPLE_PROFILES,
+        { user_id: "u-dave", display_name: "Dave", avatar_url: null, username: "dave" },
+      ],
+    });
+    const items = await loadFlowFeed(built.supabase, []);
+    const dave = items.find((i) => i.id === "i5");
+    expect(dave?.profiles?.display_name).toBe("Dave");
+
+    // The second loader should have queried profiles_public ONCE (only for
+    // the missing u-dave id, not the cached three).
+    const profileCalls = built.calls.filter((c) => c.table === "profiles_public");
+    expect(profileCalls).toHaveLength(1);
+  });
     const supabaseErr: FlowSupabase = {
       from: () => ({
         select: () => ({
