@@ -38,6 +38,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -992,30 +997,46 @@ const FlowModePage = () => {
         {preferredCategories.length > 0 &&
           preferredCategories.length < CATEGORIES.length && (
             <div className="hidden sm:flex items-center gap-0.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/30 p-0.5">
-              <button
-                onClick={() => setScope("preferred")}
-                className={cn(
-                  "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                  feedScope === "preferred"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-                aria-pressed={feedScope === "preferred"}
-              >
-                For You
-              </button>
-              <button
-                onClick={() => setScope("all")}
-                className={cn(
-                  "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                  feedScope === "all"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-                aria-pressed={feedScope === "all"}
-              >
-                All
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setScope("preferred")}
+                    className={cn(
+                      "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                      feedScope === "preferred"
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                    aria-pressed={feedScope === "preferred"}
+                    aria-label="Show only your preferred categories"
+                  >
+                    For You
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-[220px] text-center">
+                  Curated to the categories you picked during onboarding — a tighter, personalized feed.
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setScope("all")}
+                    className={cn(
+                      "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                      feedScope === "all"
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                    aria-pressed={feedScope === "all"}
+                    aria-label="Show every category"
+                  >
+                    All
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-[220px] text-center">
+                  Every category from across Rhozeland — broader discovery beyond your saved picks.
+                </TooltipContent>
+              </Tooltip>
             </div>
           )}
 
