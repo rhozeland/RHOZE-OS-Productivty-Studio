@@ -123,6 +123,7 @@ const ClaimRhozeButton = ({
     setAcknowledged(false);
     setPreview(null);
     setPreviewError(null);
+    setClaimError(null);
     setConfirmOpen(true);
   };
 
@@ -130,6 +131,18 @@ const ClaimRhozeButton = ({
     if (!confirmOpen) return;
     fetchPreview();
   }, [confirmOpen]);
+
+  // Detect wallet disconnect while the confirm dialog is open
+  useEffect(() => {
+    if (!confirmOpen) return;
+    if (connected && publicKey) return;
+    if (loading) return; // claim in flight — don't yank dialog
+    toast.error("Wallet disconnected", {
+      description: "Reconnect your wallet to continue claiming $RHOZE.",
+    });
+    setConfirmOpen(false);
+    setClaimError(null);
+  }, [connected, publicKey, confirmOpen, loading]);
 
   const copyAddress = async () => {
     if (!walletAddress) return;
