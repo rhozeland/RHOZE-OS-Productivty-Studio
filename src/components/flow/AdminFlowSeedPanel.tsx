@@ -42,12 +42,21 @@ type FailedItem = {
   link_url_probe?: { ok: boolean; status?: number; error?: string; fallback?: string };
 };
 
+type SeedPreviewItem = {
+  title: string;
+  category: string;
+  content_type: string;
+  usedFallback?: boolean;
+  action?: "insert" | "update";
+};
+
 type SeedPreview = {
   total: number;
   alreadyPresent: number;
   willInsert: number;
+  willUpdate?: number;
   fallbackCount?: number;
-  items: { title: string; category: string; content_type: string; usedFallback?: boolean }[];
+  items: SeedPreviewItem[];
   failedItems?: FailedItem[];
 };
 
@@ -65,13 +74,25 @@ type AttributionReport = {
 
 const callSeed = async (
   dryRun: boolean,
-): Promise<SeedPreview & { inserted?: number; fallbackCount?: number; failedItems?: FailedItem[] }> => {
+): Promise<
+  SeedPreview & {
+    inserted?: number;
+    updated?: number;
+    fallbackCount?: number;
+    failedItems?: FailedItem[];
+  }
+> => {
   const { data, error } = await supabase.functions.invoke("seed-flow-items", {
     body: { dryRun },
   });
   if (error) throw new Error(error.message);
   if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
-  return data as SeedPreview & { inserted?: number; fallbackCount?: number; failedItems?: FailedItem[] };
+  return data as SeedPreview & {
+    inserted?: number;
+    updated?: number;
+    fallbackCount?: number;
+    failedItems?: FailedItem[];
+  };
 };
 
 /**
