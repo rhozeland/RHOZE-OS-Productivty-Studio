@@ -248,40 +248,118 @@ const FlowModePage = () => {
   // Load calibration & check if tutorial was seen.
   // Use a stable key for guests so the global feed renders without a user.id.
   const calibrationKey = user?.id ?? "guest";
+
+  // Persist Flow preferences to the user profile when signed in. localStorage
+  // is also written so we have a fast cache and a graceful fallback for guests
+  // and offline scenarios. Failures are swallowed — the local copy is the
+  // source of truth at runtime; the DB sync is best-effort.
+  const persistFlowPrefs = useCallback(
+    async (next: { scope?: "all" | "preferred"; preferred?: string[] }) => {
+      if (next.scope !== undefined) {
+        localStorage.setItem(`flow-scope-${calibrationKey}`, next.scope);
+      }
+      if (next.preferred !== undefined) {
+        localStorage.setItem(
+          `flow-calibrated-${calibrationKey}`,
+          JSON.stringify(next.preferred),
+        );
+      }
+      if (!user?.id) return;
+      const patch: Record<string, unknown> = {};
+      if (next.scope !== undefined) patch.flow_feed_scope = next.scope;
+      if (next.preferred !== undefined) patch.flow_preferred_categories = next.preferred;
+      if (Object.keys(patch).length === 0) return;
+      try {
+        await supabase.from("profiles").update(patch).eq("user_id", user.id);
+      } catch {
+        // Silent — local cache already updated.
+      }
+    },
+    [calibrationKey, user?.id],
+  );
+
   useEffect(() => {
-    const saved = localStorage.getItem(`flow-calibrated-${calibrationKey}`);
-    const savedScope = localStorage.getItem(`flow-scope-${calibrationKey}`) as
+    let cancelled = false;
+
+    const applyPrefs = (
+      prefs: string[] | null,
+      scope: "all" | "preferred" | null,
+      hasAnySaved: boolean,
+    ) => {
+      if (cancelled) return;
+      if (hasAnySaved) {
+        const finalPrefs = prefs && prefs.length > 0 ? prefs : CATEGORIES;
+        const finalScope = scope ?? "preferred";
+        setCalibrated(true);
+        setPreferredCategories(finalPrefs);
+        setFeedScope(finalScope);
+        setSelectedCategories(finalScope === "all" ? CATEGORIES : finalPrefs);
+
+        const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${calibrationKey}`);
+        if (!tutorialSeen) {
+          setShowTutorialOverlay(true);
+          tutorialTimerRef.current = setTimeout(() => {
+            setShowTutorialOverlay(false);
+            localStorage.setItem(`flow-tutorial-seen-${calibrationKey}`, "true");
+          }, 8000);
+        }
+      } else if (!user) {
+        // Guests skip calibration entirely — show the full global feed immediately.
+        setPreferredCategories(CATEGORIES);
+        setSelectedCategories(CATEGORIES);
+        setFeedScope("all");
+        setCalibrated(true);
+      }
+    };
+
+    // Read local cache first so the UI hydrates without waiting on the network.
+    const cachedRaw = localStorage.getItem(`flow-calibrated-${calibrationKey}`);
+    const cachedScope = localStorage.getItem(`flow-scope-${calibrationKey}`) as
       | "all"
       | "preferred"
       | null;
-    if (saved) {
-      setCalibrated(true);
-      let prefs: string[] = CATEGORIES;
-      try { prefs = JSON.parse(saved); } catch { prefs = CATEGORIES; }
-      setPreferredCategories(prefs);
-      const scope = savedScope ?? "preferred";
-      setFeedScope(scope);
-      setSelectedCategories(scope === "all" ? CATEGORIES : prefs);
-
-      const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${calibrationKey}`);
-      if (!tutorialSeen) {
-        setShowTutorialOverlay(true);
-        tutorialTimerRef.current = setTimeout(() => {
-          setShowTutorialOverlay(false);
-          localStorage.setItem(`flow-tutorial-seen-${calibrationKey}`, "true");
-        }, 8000);
-      }
-    } else if (!user) {
-      // Guests skip calibration entirely — show the full global feed immediately.
-      setPreferredCategories(CATEGORIES);
-      setSelectedCategories(CATEGORIES);
-      setFeedScope("all");
-      setCalibrated(true);
+    let cachedPrefs: string[] | null = null;
+    if (cachedRaw) {
+      try { cachedPrefs = JSON.parse(cachedRaw); } catch { cachedPrefs = null; }
     }
+    applyPrefs(cachedPrefs, cachedScope, !!cachedRaw);
+
+    // For signed-in users, treat the profile row as the source of truth and
+    // reconcile if it disagrees with the local cache. Also back-fills the
+    // profile from the cache the first time after this feature ships.
+    if (user?.id) {
+      (async () => {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("flow_feed_scope, flow_preferred_categories")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (cancelled || error) return;
+        const dbScope = (data?.flow_feed_scope as "all" | "preferred" | null) ?? null;
+        const dbPrefs = (data?.flow_preferred_categories as string[] | null) ?? null;
+        const hasDbValue = dbScope !== null || (dbPrefs && dbPrefs.length > 0);
+
+        if (hasDbValue) {
+          applyPrefs(dbPrefs, dbScope, true);
+          // Refresh the local cache so it stays consistent with the profile.
+          if (dbPrefs) localStorage.setItem(`flow-calibrated-${calibrationKey}`, JSON.stringify(dbPrefs));
+          if (dbScope) localStorage.setItem(`flow-scope-${calibrationKey}`, dbScope);
+        } else if (cachedPrefs || cachedScope) {
+          // First sign-in after this rolls out — promote the local cache to
+          // the profile so other devices pick it up.
+          await persistFlowPrefs({
+            scope: cachedScope ?? undefined,
+            preferred: cachedPrefs ?? undefined,
+          });
+        }
+      })();
+    }
+
     return () => {
+      cancelled = true;
       if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
     };
-  }, [user, calibrationKey]);
+  }, [user, calibrationKey, persistFlowPrefs]);
 
   const { data: flowItems, isFetching: flowItemsFetching } = useQuery({
     queryKey: ["flow-items", feedScope, selectedCategories],
