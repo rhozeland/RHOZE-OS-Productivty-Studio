@@ -841,24 +841,60 @@ const FlowModePage = () => {
               <div className="flex-1 overflow-y-auto space-y-6 pt-4">
                 <div>
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Content Types</h3>
+
+                  {/* Master toggle: when ON, the feed surfaces every category
+                      (global feed). When OFF, only the user's preferred picks below
+                      drive the sort. Per-category switches are disabled while ON
+                      to make the relationship obvious. */}
+                  <div className="flex items-center justify-between mb-3 pb-3 border-b border-border/50">
+                    <div>
+                      <Label htmlFor="all-categories-toggle" className="text-sm font-medium cursor-pointer">
+                        All categories
+                      </Label>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Show the global feed
+                      </p>
+                    </div>
+                    <Switch
+                      id="all-categories-toggle"
+                      checked={feedScope === "all"}
+                      onCheckedChange={(checked) => setScope(checked ? "all" : "preferred")}
+                    />
+                  </div>
+
                   <div className="space-y-2.5">
-                    {CATEGORIES.map((cat) => (
-                      <div key={cat} className="flex items-center justify-between">
-                        <Label htmlFor={`cat-${cat}`} className="capitalize text-sm cursor-pointer">{cat}</Label>
-                        <Switch
-                          id={`cat-${cat}`}
-                          checked={selectedCategories.includes(cat)}
-                          onCheckedChange={(checked) => {
-                            const updated = checked
-                              ? [...selectedCategories, cat]
-                              : selectedCategories.filter((c) => c !== cat);
-                            const final = updated.length === 0 ? CATEGORIES : updated;
-                            setSelectedCategories(final);
-                            localStorage.setItem(`flow-calibrated-${calibrationKey}`, JSON.stringify(final));
-                          }}
-                        />
-                      </div>
-                    ))}
+                    {CATEGORIES.map((cat) => {
+                      const isOn = feedScope === "all"
+                        ? true
+                        : preferredCategories.includes(cat);
+                      return (
+                        <div key={cat} className="flex items-center justify-between">
+                          <Label
+                            htmlFor={`cat-${cat}`}
+                            className={cn(
+                              "capitalize text-sm cursor-pointer",
+                              feedScope === "all" && "text-muted-foreground",
+                            )}
+                          >
+                            {cat}
+                          </Label>
+                          <Switch
+                            id={`cat-${cat}`}
+                            checked={isOn}
+                            disabled={feedScope === "all"}
+                            onCheckedChange={(checked) => {
+                              const updated = checked
+                                ? [...preferredCategories, cat]
+                                : preferredCategories.filter((c) => c !== cat);
+                              const final = updated.length === 0 ? CATEGORIES : updated;
+                              setPreferredCategories(final);
+                              setSelectedCategories(final);
+                              localStorage.setItem(`flow-calibrated-${calibrationKey}`, JSON.stringify(final));
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
                 <div>
