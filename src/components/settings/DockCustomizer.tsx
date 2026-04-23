@@ -32,7 +32,7 @@ const ALL_DOCK_OPTIONS = [
   { id: "hub", icon: Flame, label: "Hub", path: "/creators" },
   { id: "messages", icon: MessageSquare, label: "Inbox", path: "/messages" },
   { id: "boards", icon: Palette, label: "Boards", path: "/smartboards" },
-  { id: "droprooms", icon: Radio, label: "Drops", path: "/droprooms" },
+  { id: "droprooms", icon: Radio, label: "Drops", path: "/drop-rooms" },
   { id: "marketplace", icon: ShoppingBag, label: "Market", path: "/marketplace" },
   { id: "calendar", icon: Calendar, label: "Calendar", path: "/calendar" },
   { id: "bookings", icon: Calendar, label: "Bookings", path: "/bookings" },

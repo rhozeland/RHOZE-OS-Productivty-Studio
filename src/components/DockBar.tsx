@@ -66,7 +66,7 @@ const PATH_MAP: Record<string, string> = {
   hub: "/creators",
   messages: "/messages",
   boards: "/smartboards",
-  droprooms: "/droprooms",
+  droprooms: "/drop-rooms",
   marketplace: "/marketplace",
   calendar: "/calendar",
   bookings: "/bookings",
