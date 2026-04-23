@@ -1,0 +1,87 @@
+name: file-ext tests
+
+# Runs the file extension / content-type resolution test suite on every PR
+# and on pushes to main. The "file-ext" job is the required gate that blocks
+# merges; the "full-suite" job runs in parallel as an informational check so
+# collateral regressions are still surfaced without slowing down the gate.
+#
+# To make the gate enforceable:
+#   GitHub → repo Settings → Branches → Branch protection rule for `main`
+#     ✓ Require status checks to pass before merging
+#     ✓ Require branches to be up to date before merging
+#     Required status checks: "file-ext (required gate)"
+
+on:
+  pull_request:
+    branches: [main]
+    # Only run when something that could affect the resolution rules changes.
+    # Removing this `paths:` block would run the workflow on every PR.
+    paths:
+      - "src/lib/file-ext.ts"
+      - "src/lib/file-ext.*.test.ts"
+      - "src/lib/file-ext.test.ts"
+      - "src/lib/upload-allowlist.ts"
+      - "src/lib/upload-allowlist.test.ts"
+      - "package.json"
+      - "package-lock.json"
+      - "bun.lockb"
+      - "vitest.config.ts"
+      - ".github/workflows/file-ext-tests.yml"
+  push:
+    branches: [main]
+
+# Cancel superseded runs on the same PR / branch.
+concurrency:
+  group: file-ext-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  file-ext:
+    name: file-ext (required gate)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit --progress=false
+
+      - name: Run file-ext resolution test suite
+        run: |
+          npx vitest run \
+            src/lib/file-ext.test.ts \
+            src/lib/file-ext.fuzz.test.ts \
+            src/lib/file-ext.normalize.test.ts \
+            src/lib/upload-allowlist.test.ts \
+            --reporter=verbose
+
+  full-suite:
+    name: full vitest suite (informational)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Don't block merges on the broader suite — surface failures as a separate
+    # status check so collateral regressions are visible without holding up
+    # file-ext-only changes.
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit --progress=false
+
+      - name: Run full vitest suite
+        run: npm test
