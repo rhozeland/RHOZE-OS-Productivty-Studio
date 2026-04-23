@@ -18,6 +18,9 @@ import {
 import LogoCustomizer from "@/components/onboarding/LogoCustomizer";
 import DockCustomizer from "@/components/settings/DockCustomizer";
 import ClaimLimitsControl from "@/components/settings/ClaimLimitsControl";
+import SettingsSubNav, {
+  useActiveSettingsSection,
+} from "@/components/settings/SettingsSubNav";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -71,7 +74,15 @@ const SettingsPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bannerFileRef = useRef<HTMLInputElement>(null);
 
-  const [activeSection, setActiveSection] = useState<SectionId>("profile");
+  // Active sub-section is driven by the URL hash (e.g. /settings#wallet) via
+  // a tiny hook that defaults safely when the hash is missing or unknown.
+  // This makes every section deep-linkable and lets the shared nav resolver
+  // decide which link is "active", just like the dock and header do.
+  const SECTION_IDS = SECTIONS.map((s) => s.id) as readonly SectionId[];
+  const activeSection = useActiveSettingsSection<SectionId>(
+    SECTION_IDS,
+    "profile",
+  );
 
   // Profile fields
   const [displayName, setDisplayName] = useState("");
@@ -772,52 +783,10 @@ const SettingsPage = () => {
       </div>
 
       <div className="flex gap-6">
-        {/* Side Nav */}
-        <nav className="hidden md:flex flex-col w-52 shrink-0 sticky top-20 self-start space-y-0.5">
-          {SECTIONS.map((section) => {
-            const Icon = section.icon;
-            const isActive = activeSection === section.id;
-            return (
-              <button
-                key={section.id}
-                onClick={() => setActiveSection(section.id)}
-                className={cn(
-                  "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-body font-medium transition-colors text-left w-full",
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                )}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                {section.label}
-                {isActive && <ChevronRight className="h-3 w-3 ml-auto" />}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Mobile Nav (horizontal scroll) */}
-        <div className="md:hidden fixed top-12 left-0 right-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-2 overflow-x-auto flex gap-1.5 no-scrollbar">
-          {SECTIONS.map((section) => {
-            const Icon = section.icon;
-            const isActive = activeSection === section.id;
-            return (
-              <button
-                key={section.id}
-                onClick={() => setActiveSection(section.id)}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-body font-medium transition-colors whitespace-nowrap shrink-0",
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                )}
-              >
-                <Icon className="h-3 w-3" />
-                {section.label}
-              </button>
-            );
-          })}
-        </div>
+        {/* Sub-nav (desktop sidebar + mobile pills) — uses the shared
+            `resolveNavLink` resolver so active styling matches the dock
+            and header. Active section is read from the URL hash. */}
+        <SettingsSubNav sections={SECTIONS} defaultId="profile" />
 
         {/* Content */}
         <div className="flex-1 min-w-0 md:pt-0 pt-12">
