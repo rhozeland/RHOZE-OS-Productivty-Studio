@@ -198,6 +198,9 @@ const BackgroundCustomizer = ({
                 onChange={(e) => { setImageUrl(e.target.value); setColor(""); }}
               />
             )}
+            {pendingFile && (
+              <UploadFileMeta file={pendingFile} path={pendingPath} />
+            )}
           </div>
 
           {/* Blur & Opacity */}
