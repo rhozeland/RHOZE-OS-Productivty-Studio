@@ -103,3 +103,56 @@ export const partitionDockIds = (
   }
   return { valid, unknown };
 };
+
+// ============================================================================
+// Legacy aliases / redirects
+// ============================================================================
+//
+// Centralized map of legacy URL prefixes → canonical paths. Derived
+// automatically from each nav item's `matchPaths`, so adding a new alias
+// is a one-line change in NAV_ITEMS — the router picks it up via
+// LegacyAliasRedirect (see src/components/LegacyAliasRedirect.tsx).
+//
+// Add ad-hoc redirects (paths not tied to a nav item) to EXTRA_ALIASES.
+
+interface NavAlias {
+  /** Legacy prefix (no trailing slash, no wildcard). e.g. `/droprooms` */
+  from: string;
+  /** Canonical replacement prefix. e.g. `/drop-rooms` */
+  to: string;
+}
+
+const EXTRA_ALIASES: NavAlias[] = [
+  // Add cross-cutting aliases here that don't belong to a single nav item.
+];
+
+/**
+ * Full alias table: every NavItem.matchPaths entry rewrites to that item's
+ * canonical `path`, plus any EXTRA_ALIASES. Stable ordering so router
+ * registration is deterministic.
+ */
+export const NAV_ALIASES: NavAlias[] = [
+  ...NAV_ITEMS.flatMap((item) =>
+    (item.matchPaths ?? []).map((from) => ({ from, to: item.path })),
+  ),
+  ...EXTRA_ALIASES,
+];
+
+/**
+ * Rewrites a legacy pathname to its canonical form, preserving any sub-path
+ * suffix. Returns `null` if no alias matches.
+ *
+ * @example
+ *   resolveAlias("/droprooms")          // "/drop-rooms"
+ *   resolveAlias("/droprooms/abc/chat") // "/drop-rooms/abc/chat"
+ *   resolveAlias("/dashboard")          // null
+ */
+export const resolveAlias = (pathname: string): string | null => {
+  for (const { from, to } of NAV_ALIASES) {
+    if (pathname === from) return to;
+    if (pathname.startsWith(from + "/")) {
+      return to + pathname.slice(from.length);
+    }
+  }
+  return null;
+};
