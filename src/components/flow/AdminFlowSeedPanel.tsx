@@ -167,11 +167,25 @@ const AdminFlowSeedPanel = () => {
   const runMutation = useMutation({
     mutationFn: () => callSeed(false),
     onSuccess: (data) => {
-      toast.success(
+      const insertedMsg =
         data.inserted && data.inserted > 0
           ? `Seeded ${data.inserted} new Flow post${data.inserted === 1 ? "" : "s"}`
-          : "Nothing to seed — all items already present.",
-      );
+          : "Nothing to seed — all items already present.";
+      toast.success(insertedMsg);
+      // Surface fallback info as a separate warning toast so it's not buried.
+      if (data.fallbackCount && data.fallbackCount > 0) {
+        const titles = (data.failedItems ?? [])
+          .slice(0, 3)
+          .map((f) => f.title)
+          .join(", ");
+        const more =
+          (data.failedItems?.length ?? 0) > 3
+            ? ` +${(data.failedItems?.length ?? 0) - 3} more`
+            : "";
+        toast.warning(
+          `${data.fallbackCount} item${data.fallbackCount === 1 ? "" : "s"} used fallback URLs: ${titles}${more}`,
+        );
+      }
       setPreview(null);
       setReport(null);
       setOpen(false);
