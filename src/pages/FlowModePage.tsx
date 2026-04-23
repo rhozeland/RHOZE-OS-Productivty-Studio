@@ -283,10 +283,16 @@ const FlowModePage = () => {
     };
   }, [user, calibrationKey]);
 
-  const { data: flowItems } = useQuery({
-    queryKey: ["flow-items", selectedCategories],
+  const { data: flowItems, isFetching: flowItemsFetching } = useQuery({
+    queryKey: ["flow-items", feedScope, selectedCategories],
     // Flow Mode is a global feed — see `loadFlowFeed` for the contract
     // (multi-creator visibility, soft-sort, guest-safe attribution).
+    //
+    // `feedScope` is part of the queryKey so toggling between "all" and
+    // "preferred" produces a *separate* cache entry instead of mutating the
+    // current array in place. Combined with the `placeholderData: undefined`
+    // default, this guarantees the swipe view never shows a card from the
+    // previous scope while the new feed is loading.
     queryFn: () => loadFlowFeed(supabase, selectedCategories),
     enabled: calibrated,
   });
@@ -560,8 +566,11 @@ const FlowModePage = () => {
   }, []);
 
 
-  // All items — loop through them endlessly
-  const allItems = flowItems ?? [];
+  // All items — loop through them endlessly. While the feed is refetching
+  // after a scope toggle, treat the list as empty so the swipe view doesn't
+  // briefly render a card from the previous scope (which would "mix" the
+  // sequence the user sees). The skeleton/empty state below renders instead.
+  const allItems = flowItemsFetching ? [] : flowItems ?? [];
   const currentItem = allItems.length > 0 ? allItems[currentIndex % allItems.length] : null;
 
   const handleCalibrationSelect = (option: string) => {
@@ -593,8 +602,13 @@ const FlowModePage = () => {
 
   // Switch the feed between the user's preferred categories and the global "All" view.
   // Preferences stay intact in localStorage; only the active scope flips.
+  //
+  // We reset every piece of feed-position state so swipe never shows a
+  // mid-sequence card from the previous scope and browse always lands at
+  // the top of the new feed.
   const setScope = useCallback(
     (scope: "all" | "preferred") => {
+      if (scope === feedScope) return;
       setFeedScope(scope);
       localStorage.setItem(`flow-scope-${calibrationKey}`, scope);
       const next =
@@ -604,9 +618,17 @@ const FlowModePage = () => {
             ? preferredCategories
             : CATEGORIES;
       setSelectedCategories(next);
+      // Reset feed cursor + any expanded/in-flight card UI so the user
+      // starts the new scope from card #0.
       setCurrentIndex(0);
+      setExpandedCard(false);
+      // Cancel any half-completed swipe animation.
+      x.set(0);
+      y.set(0);
+      // Browse view: scroll back to the top of the new feed.
+      flowContentRef.current?.scrollTo({ top: 0, behavior: "auto" });
     },
-    [calibrationKey, preferredCategories],
+    [calibrationKey, preferredCategories, feedScope, x, y],
   );
 
   const advanceCard = useCallback(() => {
