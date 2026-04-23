@@ -80,6 +80,9 @@ const BackgroundCustomizer = ({
 
   const handleUpload = async (file: File) => {
     if (!user) return;
+    // Snapshot the live preview state BEFORE we mutate anything so we can
+    // roll back cleanly if the network call fails or throws.
+    const previousImageUrl = imageUrl;
     // Pre-flight allowlist check before we touch the network. UploadFileMeta will
     // re-render the same verdict for the user; we just refuse to send.
     const verdict = validateUpload(file, IMAGE_ALLOWLIST);
@@ -93,10 +96,21 @@ const BackgroundCustomizer = ({
     }
     setUploadOk(true);
     setUploading(true);
-    const { url, error: uploadErrMsg } = await uploadAndGetUrl(SMARTBOARD_BUCKET, path, file);
-    if (uploadErrMsg) { toast.error(uploadErrMsg); setUploading(false); return; }
-    setImageUrl(url);
-    setUploading(false);
+    try {
+      const { url, error: uploadErrMsg } = await uploadAndGetUrl(SMARTBOARD_BUCKET, path, file);
+      if (uploadErrMsg) throw new Error(uploadErrMsg);
+      setImageUrl(url);
+    } catch (err: any) {
+      // Roll back: drop the failed pending preview + restore whatever was showing.
+      setPendingFile(null);
+      setPendingPath("");
+      setUploadOk(null);
+      setImageUrl(previousImageUrl);
+      if (fileRef.current) fileRef.current.value = "";
+      toast.error(err?.message || "Upload failed — previous background restored");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const clearBackground = async () => {
