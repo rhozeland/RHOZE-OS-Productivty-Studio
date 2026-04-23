@@ -1,80 +1,17 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { motion, useAnimationControls } from "framer-motion";
-import {
-  Home,
-  Building2,
-  FolderKanban,
-  Flame,
-  MessageSquare,
-  Palette,
-  Radio,
-  ShoppingBag,
-  Calendar,
-  CreditCard,
-  User,
-  Settings,
-  Store,
-  Users,
-} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DEFAULT_DOCK_IDS } from "@/components/settings/DockCustomizer";
+import {
+  DEFAULT_DOCK_IDS,
+  NAV_ITEMS_BY_ID,
+  isNavItemActive,
+} from "@/config/navigation";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-const ICON_MAP: Record<string, any> = {
-  dashboard: Home,
-  studios: Building2,
-  projects: FolderKanban,
-  hub: Flame,
-  messages: MessageSquare,
-  boards: Palette,
-  droprooms: Radio,
-  marketplace: ShoppingBag,
-  calendar: Calendar,
-  bookings: Calendar,
-  credits: CreditCard,
-  profile: User,
-  settings: Settings,
-  services: Store,
-};
-
-const LABEL_MAP: Record<string, string> = {
-  dashboard: "Home",
-  studios: "Studios",
-  projects: "Projects",
-  hub: "Hub",
-  messages: "Inbox",
-  boards: "Boards",
-  droprooms: "Drops",
-  marketplace: "Market",
-  calendar: "Calendar",
-  bookings: "Bookings",
-  credits: "Credits",
-  profile: "Profile",
-  settings: "Settings",
-  services: "Services",
-};
-
-const PATH_MAP: Record<string, string> = {
-  dashboard: "/dashboard",
-  studios: "/studios",
-  projects: "/projects",
-  hub: "/creators",
-  messages: "/messages",
-  boards: "/smartboards",
-  droprooms: "/drop-rooms",
-  marketplace: "/marketplace",
-  calendar: "/calendar",
-  bookings: "/bookings",
-  credits: "/credits",
-  profile: "/profiles",
-  settings: "/settings",
-  services: "/services",
-};
 
 const SCROLL_THRESHOLD = 8; // minimum delta to trigger hide/show
 
@@ -106,9 +43,6 @@ const DockBar = () => {
   });
 
   const dockIds = (profile?.dock_config as string[] | null) || DEFAULT_DOCK_IDS;
-
-  const isActive = (path: string) =>
-    location.pathname === path || location.pathname.startsWith(path + "/");
 
   const handleScroll = useCallback(() => {
     if (ticking.current) return;
@@ -151,20 +85,16 @@ const DockBar = () => {
       transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
       className="fixed bottom-4 right-0 z-50 flex justify-center pointer-events-none transition-[left] duration-200 ease-linear"
       style={{ left: sidebarOffset }}
-      onAnimationStart={() => {
-        // Ensure pointer events work during animation
-      }}
     >
       <div className="flex items-center gap-2 sm:gap-1 px-5 sm:px-4 py-3 sm:py-2.5 bg-card/90 backdrop-blur-xl border border-border rounded-xl shadow-lg shadow-foreground/5 pointer-events-auto">
         {dockIds.map((id) => {
-          const Icon = ICON_MAP[id];
-          const label = LABEL_MAP[id];
-          const path = PATH_MAP[id];
-          if (!Icon || !path) return null;
-          const active = isActive(path);
+          const item = NAV_ITEMS_BY_ID[id];
+          if (!item) return null;
+          const Icon = item.icon;
+          const active = isNavItemActive(item, location.pathname);
 
           return (
-            <Link key={id} to={path} className="relative group">
+            <Link key={id} to={item.path} className="relative group">
               <motion.div
                 whileHover={{ scale: 1.08, y: -2 }}
                 whileTap={{ scale: 0.95 }}
@@ -178,7 +108,7 @@ const DockBar = () => {
               >
                 <Icon className="h-5 w-5" />
                 <span className="text-[10px] font-body font-medium leading-none">
-                  {label}
+                  {item.label}
                 </span>
               </motion.div>
             </Link>
