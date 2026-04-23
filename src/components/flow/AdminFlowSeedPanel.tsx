@@ -295,7 +295,7 @@ const AdminFlowSeedPanel = () => {
                           <span className="truncate text-xs flex items-center gap-1.5">
                             {it.usedFallback ? (
                               <LinkIcon
-                                className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0"
+                                className="h-3 w-3 text-destructive shrink-0"
                                 aria-label="Will use fallback URL"
                               />
                             ) : null}
