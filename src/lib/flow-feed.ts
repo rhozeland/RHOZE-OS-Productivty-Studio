@@ -40,6 +40,24 @@ export interface FlowSupabase {
 
 export const ALL_CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
+// In-memory TTL cache for uploader profiles. Flow Mode re-renders cards often
+// (swipe stack, browse grid, scope toggles) and the profile data rarely changes
+// within a session, so we cache `profiles_public` lookups by user_id and only
+// fetch IDs we haven't seen yet (or whose entry has expired).
+const PROFILE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+type CachedProfile = { value: FlowProfile | null; expiresAt: number };
+const profileCache = new Map<string, CachedProfile>();
+
+export function clearFlowProfileCache(): void {
+  profileCache.clear();
+}
+
+// Exposed for tests — lets specs assert cache hits/misses without reaching
+// into module internals.
+export function _getFlowProfileCacheSize(): number {
+  return profileCache.size;
+}
+
 export async function loadFlowFeed(
   supabase: FlowSupabase,
   selectedCategories: string[],
@@ -65,26 +83,42 @@ export async function loadFlowFeed(
   }
 
   const userIds = [...new Set(items.map((i) => i.user_id).filter(Boolean))];
-  let withProfiles: FlowItemWithProfile[] = items.map((i) => ({
-    ...i,
-    profiles: null,
-  }));
+  const now = Date.now();
+  const profileMap = new Map<string, FlowProfile>();
+  const missingIds: string[] = [];
 
-  if (userIds.length > 0) {
+  for (const uid of userIds) {
+    const cached = profileCache.get(uid);
+    if (cached && cached.expiresAt > now) {
+      if (cached.value) profileMap.set(uid, cached.value);
+    } else {
+      missingIds.push(uid);
+    }
+  }
+
+  if (missingIds.length > 0) {
     const { data: profiles } = await supabase
       .from("profiles_public")
       .select("user_id, display_name, avatar_url, username")
-      .in("user_id", userIds);
-    const profileMap = new Map<string, FlowProfile>(
-      ((profiles ?? []) as FlowProfile[])
-        .filter((p) => !!p.user_id)
-        .map((p) => [p.user_id, p]),
-    );
-    withProfiles = items.map((i) => ({
-      ...i,
-      profiles: profileMap.get(i.user_id) ?? null,
-    }));
+      .in("user_id", missingIds);
+    const fetched = ((profiles ?? []) as FlowProfile[]).filter((p) => !!p.user_id);
+    for (const p of fetched) {
+      profileMap.set(p.user_id, p);
+      profileCache.set(p.user_id, { value: p, expiresAt: now + PROFILE_TTL_MS });
+    }
+    // Cache negative lookups too so we don't re-query for ghost/banned users
+    // on every render.
+    const foundIds = new Set(fetched.map((p) => p.user_id));
+    for (const uid of missingIds) {
+      if (!foundIds.has(uid)) {
+        profileCache.set(uid, { value: null, expiresAt: now + PROFILE_TTL_MS });
+      }
+    }
   }
 
-  return withProfiles;
+  return items.map((i) => ({
+    ...i,
+    profiles: profileMap.get(i.user_id) ?? null,
+  }));
 }
+
