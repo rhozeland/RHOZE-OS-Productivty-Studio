@@ -34,11 +34,20 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+type FailedItem = {
+  title: string;
+  category: string;
+  file_url_probe?: { ok: boolean; status?: number; error?: string; fallback?: string };
+  link_url_probe?: { ok: boolean; status?: number; error?: string; fallback?: string };
+};
+
 type SeedPreview = {
   total: number;
   alreadyPresent: number;
   willInsert: number;
-  items: { title: string; category: string; content_type: string }[];
+  fallbackCount?: number;
+  items: { title: string; category: string; content_type: string; usedFallback?: boolean }[];
+  failedItems?: FailedItem[];
 };
 
 type AttributionIssue = {
@@ -53,13 +62,15 @@ type AttributionReport = {
   issues: AttributionIssue[];
 };
 
-const callSeed = async (dryRun: boolean): Promise<SeedPreview & { inserted?: number }> => {
+const callSeed = async (
+  dryRun: boolean,
+): Promise<SeedPreview & { inserted?: number; fallbackCount?: number; failedItems?: FailedItem[] }> => {
   const { data, error } = await supabase.functions.invoke("seed-flow-items", {
     body: { dryRun },
   });
   if (error) throw new Error(error.message);
   if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
-  return data as SeedPreview & { inserted?: number };
+  return data as SeedPreview & { inserted?: number; fallbackCount?: number; failedItems?: FailedItem[] };
 };
 
 /**
