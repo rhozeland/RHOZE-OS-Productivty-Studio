@@ -585,16 +585,16 @@ const FlowModePage = () => {
   const finishCalibration = () => {
     const cats = selectedCategories.length > 0 ? selectedCategories : CATEGORIES;
     setSelectedCategories(cats);
-    localStorage.setItem(`flow-calibrated-${user?.id}`, JSON.stringify(cats));
+    localStorage.setItem(`flow-calibrated-${calibrationKey}`, JSON.stringify(cats));
     setCalibrated(true);
 
     // Show tutorial for first-time users after calibration
-    const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${user?.id}`);
+    const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${calibrationKey}`);
     if (!tutorialSeen) {
       setShowTutorialOverlay(true);
       tutorialTimerRef.current = setTimeout(() => {
         setShowTutorialOverlay(false);
-        localStorage.setItem(`flow-tutorial-seen-${user?.id}`, "true");
+        localStorage.setItem(`flow-tutorial-seen-${calibrationKey}`, "true");
       }, 8000);
     }
   };
@@ -783,7 +783,7 @@ const FlowModePage = () => {
                               : selectedCategories.filter((c) => c !== cat);
                             const final = updated.length === 0 ? CATEGORIES : updated;
                             setSelectedCategories(final);
-                            localStorage.setItem(`flow-calibrated-${user?.id}`, JSON.stringify(final));
+                            localStorage.setItem(`flow-calibrated-${calibrationKey}`, JSON.stringify(final));
                           }}
                         />
                       </div>
@@ -952,7 +952,7 @@ const FlowModePage = () => {
             className="absolute inset-0 z-50 flex items-center justify-center pointer-events-auto"
             onClick={() => {
               setShowTutorialOverlay(false);
-              localStorage.setItem(`flow-tutorial-seen-${user?.id}`, "true");
+              localStorage.setItem(`flow-tutorial-seen-${calibrationKey}`, "true");
               if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
             }}
           >
