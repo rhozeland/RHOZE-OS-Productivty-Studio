@@ -489,6 +489,8 @@ const SmartboardDetailPage = () => {
                       <UploadFileMeta
                         file={imageFile}
                         path={buildSmartboardFilePath(id, user.id, imageFile, { kind: "item" })}
+                        allow={MEDIA_ALLOWLIST}
+                        onValidation={(ok) => setUploadOk(ok)}
                       />
                     )}
                     <div className="mt-3">
