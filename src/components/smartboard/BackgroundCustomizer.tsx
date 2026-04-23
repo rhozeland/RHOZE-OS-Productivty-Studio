@@ -104,6 +104,9 @@ const BackgroundCustomizer = ({
     setImageUrl("");
     setBlur(0);
     setOpacity(100);
+    setPendingFile(null);
+    setPendingPath("");
+    setUploadOk(null);
   };
 
   return (
