@@ -53,6 +53,10 @@ const UploadFileMeta = ({ file, path, className, allow, onValidation, cacheContr
   const sizeKb = (file.size / 1024).toFixed(1);
   const showVerdict = !!allow;
   const blocked = showVerdict && !verdict.ok;
+  // Mirror exactly what the Supabase Storage SDK sends on .upload():
+  //   - Content-Type: our resolved value (overrides browser MIME when missing)
+  //   - Cache-Control: `max-age=<seconds>` (Supabase default is 3600)
+  const cacheControl = `max-age=${cacheControlSeconds}`;
 
   const handleCopy = async () => {
     const lines = [
@@ -61,6 +65,8 @@ const UploadFileMeta = ({ file, path, className, allow, onValidation, cacheContr
       `content-type: ${contentType}`,
       `browser-type: ${browserType}`,
       `size: ${sizeKb} KB`,
+      `header Content-Type: ${contentType}`,
+      `header Cache-Control: ${cacheControl}`,
       ...(path ? [`path: ${path}`] : []),
       ...(showVerdict ? [`allowlist: ${verdict.ok ? "pass" : `BLOCKED — ${verdict.reason}`}`] : []),
     ];
