@@ -178,6 +178,8 @@ describe("Flow Mode global feed (loadFlowFeed)", () => {
     const profileCalls = built.calls.filter((c) => c.table === "profiles_public");
     expect(profileCalls).toHaveLength(1);
   });
+
+  it("propagates errors from flow_items query", async () => {
     const supabaseErr: FlowSupabase = {
       from: () => ({
         select: () => ({
