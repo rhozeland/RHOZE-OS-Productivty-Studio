@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadAndGetUrl } from "@/lib/storage-utils";
-import { safeFileExt } from "@/lib/file-ext";
+import { buildSmartboardFilePath, SMARTBOARD_BUCKET } from "@/lib/smartboard-paths";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Paintbrush, ImageIcon, Upload, X } from "lucide-react";
@@ -76,10 +76,9 @@ const BackgroundCustomizer = ({
   const handleUpload = async (file: File) => {
     if (!user) return;
     setUploading(true);
-    const ext = safeFileExt(file);
-    // board id must be the FIRST path segment so RLS can authorize reads
-    const path = `${boardId}/${user.id}/bg-${Date.now()}.${ext}`;
-    const { url, error: uploadErrMsg } = await uploadAndGetUrl("smartboard-files", path, file);
+    // Path layout enforced by buildSmartboardFilePath so RLS stays happy.
+    const path = buildSmartboardFilePath(boardId, user.id, file, { kind: "bg" });
+    const { url, error: uploadErrMsg } = await uploadAndGetUrl(SMARTBOARD_BUCKET, path, file);
     if (uploadErrMsg) { toast.error(uploadErrMsg); setUploading(false); return; }
     setImageUrl(url);
     setUploading(false);
