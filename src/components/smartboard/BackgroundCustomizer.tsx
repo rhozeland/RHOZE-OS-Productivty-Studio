@@ -75,8 +75,10 @@ const BackgroundCustomizer = ({
   const handleUpload = async (file: File) => {
     if (!user) return;
     setUploading(true);
-    const ext = file.name.split(".").pop();
-    const path = `${user.id}/bg-${boardId}-${Date.now()}.${ext}`;
+    const rawExt = file.name.includes(".") ? file.name.split(".").pop() : "";
+    const ext = (rawExt || file.type.split("/")[1] || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+    // board id must be the FIRST path segment so RLS can authorize reads
+    const path = `${boardId}/${user.id}/bg-${Date.now()}.${ext}`;
     const { url, error: uploadErrMsg } = await uploadAndGetUrl("smartboard-files", path, file);
     if (uploadErrMsg) { toast.error(uploadErrMsg); setUploading(false); return; }
     setImageUrl(url);
