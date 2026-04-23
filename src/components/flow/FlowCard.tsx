@@ -83,9 +83,15 @@ interface FlowCardProps {
   onDelete?: () => void;
   isOwner?: boolean;
   isAdmin?: boolean;
+  /**
+   * True while uploader profile attribution (`profiles_public`) is being
+   * fetched. When true and no profile is attached yet, the card renders a
+   * skeleton placeholder instead of the "Anonymous contributor" fallback.
+   */
+  profilesLoading?: boolean;
 }
 
-const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner, isAdmin }: FlowCardProps) => {
+const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner, isAdmin, profilesLoading }: FlowCardProps) => {
   const navigate = useNavigate();
   const [imageEnlarged, setImageEnlarged] = useState(false);
   const platform = detectPlatform(item.link_url);
@@ -354,7 +360,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
         </div>
 
         {/* ═══ POSTER INFO ═══ */}
-        <div className="px-5 pb-1.5 flex items-center gap-2">
+        <div className="px-5 pb-1.5 flex items-center gap-2 min-h-[20px]">
           {(item as any).profiles ? (
             <button
               onClick={(e) => { e.stopPropagation(); navigate(`/profiles/${item.user_id}`); }}
@@ -370,7 +376,35 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
                 {(item as any).profiles?.display_name || "Unknown"}
               </span>
             </button>
-          ) : null}
+          ) : profilesLoading ? (
+            // Skeleton placeholder while `profiles_public` is being fetched.
+            <div
+              className="flex items-center gap-2"
+              aria-hidden="true"
+              data-testid="flow-card-uploader-skeleton"
+            >
+              <div className="h-5 w-5 rounded-full bg-muted animate-pulse" />
+              <div className="h-3 w-20 rounded-full bg-muted animate-pulse" />
+            </div>
+          ) : (
+            // Visible fallback for uploaders missing from `profiles_public`
+            // (banned, deleted, or private). Keeps attribution honest instead
+            // of silently dropping the row.
+            <div
+              className="flex items-center gap-2"
+              data-testid="flow-card-uploader-fallback"
+              title="This contributor has no public profile"
+            >
+              <Avatar className="h-5 w-5">
+                <AvatarFallback className="text-[8px] bg-muted text-muted-foreground">
+                  ?
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-[11px] italic text-muted-foreground/80">
+                Anonymous contributor
+              </span>
+            </div>
+          )}
           {item.creator_name && (
             <span className="text-[11px] text-muted-foreground">
               {(item as any).profiles ? "·" : ""} by <span className="font-medium text-foreground/80">{item.creator_name}</span>
