@@ -26,8 +26,7 @@ import SettingsPage from "@/pages/SettingsPage";
 import ServicesPage from "@/pages/ServicesPage";
 import CreditShopPage from "@/pages/CreditShopPage";
 import DropRoomsPage from "@/pages/DropRoomsPage";
-import { LegacyAliasRedirect } from "@/components/LegacyAliasRedirect";
-import { NAV_ALIASES } from "@/config/navigation";
+import { LegacyDropRoomsRedirect } from "@/components/LegacyDropRoomsRedirect";
 import DropRoomDetailPage from "@/pages/DropRoomDetailPage";
 import AdminPage from "@/pages/AdminPage";
 import StudiosPage from "@/pages/StudiosPage";
@@ -84,15 +83,12 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/profiles/:id",
   "/drop-rooms",
   "/drop-rooms/:id",
-  // Legacy alias wildcards are appended dynamically from NAV_ALIASES below.
+  "/droprooms/*",
   "/messages",
   "/network",
   "/settings",
   "/admin",
   "/boards/:id",
-  // Auto-register every legacy alias as `<from>/*` so the dev-only nav
-  // sanity check sees them and the array stays the source of truth.
-  ...NAV_ALIASES.map(({ from }) => `${from}/*`),
 ];
 
 /** Routes that strictly require authentication */
@@ -171,17 +167,7 @@ const App = () => (
                 <Route path="/profiles/:id" element={<ProfileDetailPage />} />
                 <Route path="/drop-rooms" element={<DropRoomsPage />} />
                 <Route path="/drop-rooms/:id" element={<DropRoomDetailPage />} />
-                {/* Centralized legacy aliases — generated from NAV_ALIASES.
-                    Add a new redirect by adding a `matchPaths` entry to a
-                    NavItem in src/config/navigation.ts (no route edit needed
-                    here unless you want a brand-new prefix). */}
-                {NAV_ALIASES.map(({ from }) => (
-                  <Route
-                    key={from}
-                    path={`${from}/*`}
-                    element={<LegacyAliasRedirect />}
-                  />
-                ))}
+                <Route path="/droprooms/*" element={<LegacyDropRoomsRedirect />} />
                 <Route path="/messages" element={<MessagesPage />} />
                 <Route path="/network" element={<Navigate to="/messages" replace />} />
                 <Route path="/settings" element={<SettingsPage />} />
