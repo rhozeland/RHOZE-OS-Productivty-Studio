@@ -56,6 +56,7 @@ import LinkPreviewCard from "@/components/flow/LinkPreviewCard";
 import { cn } from "@/lib/utils";
 import { loadFlowFeed } from "@/lib/flow-feed";
 import AdminFlowSeedPanel from "@/components/flow/AdminFlowSeedPanel";
+import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
@@ -830,29 +831,10 @@ const FlowModePage = () => {
             Enter Flow
           </Button>
 
-          {!user && (
-            <div className="mt-8 rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-4 text-left">
-              <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1.5">
-                Browsing as guest
-              </p>
-              <p className="text-sm text-foreground/90 leading-relaxed mb-3">
-                Explore the global feed freely — swipe, browse, and discover
-                work from creators across Rhozeland.
-              </p>
-              <p className="text-xs text-muted-foreground leading-relaxed mb-3">
-                Want to post your own music, art, or designs? You'll need a
-                free account to share, save, and earn $RHOZE.
-              </p>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => navigate("/auth")}
-                className="rounded-full w-full"
-              >
-                Create free account
-              </Button>
-            </div>
-          )}
+          {/* Guest CTA — shared component, also rendered as a floating pill
+              on the main swipe/browse view so the prompt is consistent across
+              every Flow Mode entry point. */}
+          <FlowGuestCTA variant="card" className="mt-8" />
         </motion.div>
       </div>
     );
@@ -866,6 +848,11 @@ const FlowModePage = () => {
         fileUrl={currentItem?.file_url}
         category={currentItem?.category || "design"}
       />
+
+      {/* Shared guest CTA — floats above swipe + browse views so the prompt
+          is identical regardless of which Flow Mode entry path the visitor
+          arrived through. Renders nothing for signed-in users. */}
+      <FlowGuestCTA variant="floating" />
 
       {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between gap-3 px-4 py-3 md:px-6">
