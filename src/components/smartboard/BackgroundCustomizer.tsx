@@ -84,7 +84,7 @@ const BackgroundCustomizer = ({
     const previousImageUrl = imageUrl;
     setUploading(true);
     try {
-      await runUploadWithRollback({
+      await runUploadWithRollback<File>({
         file,
         previousImageUrl,
         buildPath: (f) => buildSmartboardFilePath(boardId, user.id, f, { kind: "bg" }),
