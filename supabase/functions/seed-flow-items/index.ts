@@ -349,52 +349,78 @@ Deno.serve(async (req) => {
       return json({
         dryRun: true,
         total: SEED_ITEMS.length,
-        alreadyPresent: SEED_ITEMS.length - resolved.length,
-        willInsert: resolved.length,
+        alreadyPresent: toUpdate.length,
+        willInsert: toInsert.length,
+        willUpdate: toUpdate.length,
         fallbackCount: failedItems.length,
         items: resolved.map((s) => ({
           title: s.title,
           category: s.category,
           content_type: s.content_type,
           usedFallback: s.usedFallback,
+          action: existingByTitle.has(s.title) ? "update" : "insert",
         })),
         failedItems,
       });
     }
 
-    if (resolved.length === 0) {
-      return json({
-        dryRun: false,
-        inserted: 0,
-        fallbackCount: 0,
-        failedItems: [],
-        message: "All seed items already present.",
-      });
+    // ── Apply inserts + updates ───────────────────────────────────────────
+    let insertedCount = 0;
+    let updatedCount = 0;
+
+    if (toInsert.length > 0) {
+      const insertRows = toInsert.map((s) => ({
+        title: s.title,
+        description: s.description,
+        category: s.category,
+        content_type: s.content_type,
+        file_url: s.file_url,
+        link_url: s.link_url,
+        creator_name: s.creator_name,
+        tags: s.tags,
+        user_id: userId,
+      }));
+      const { error: insertErr } = await admin.from("flow_items").insert(insertRows);
+      if (insertErr) {
+        return json({ error: insertErr.message }, 500);
+      }
+      insertedCount = insertRows.length;
     }
 
-    const rows = resolved.map((s) => ({
-      title: s.title,
-      description: s.description,
-      category: s.category,
-      content_type: s.content_type,
-      file_url: s.file_url,
-      link_url: s.link_url,
-      creator_name: s.creator_name,
-      tags: s.tags,
-      user_id: userId,
-    }));
-
-    const { error: insertErr } = await admin.from("flow_items").insert(rows);
-    if (insertErr) {
-      return json({ error: insertErr.message }, 500);
+    // Updates run one-by-one keyed on the existing row id (matched by title).
+    // Volume is small (<= seed list size) so a parallel Promise.all is fine.
+    if (toUpdate.length > 0) {
+      const results = await Promise.all(
+        toUpdate.map((s) => {
+          const id = existingByTitle.get(s.title)!;
+          return admin
+            .from("flow_items")
+            .update({
+              description: s.description,
+              category: s.category,
+              content_type: s.content_type,
+              file_url: s.file_url,
+              link_url: s.link_url,
+              creator_name: s.creator_name,
+              tags: s.tags,
+            })
+            .eq("id", id);
+        }),
+      );
+      const firstErr = results.find((r) => r.error);
+      if (firstErr?.error) {
+        return json({ error: firstErr.error.message }, 500);
+      }
+      updatedCount = toUpdate.length;
     }
 
     return json({
       dryRun: false,
-      inserted: rows.length,
+      inserted: insertedCount,
+      updated: updatedCount,
       fallbackCount: failedItems.length,
       failedItems,
-      titles: rows.map((r) => r.title),
+      titles: resolved.map((r) => r.title),
     });
   } catch (err) {
     return json({ error: (err as Error).message }, 500);
