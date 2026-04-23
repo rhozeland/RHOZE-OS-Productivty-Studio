@@ -90,6 +90,9 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/settings",
   "/admin",
   "/boards/:id",
+  // Auto-register every legacy alias as `<from>/*` so the dev-only nav
+  // sanity check sees them and the array stays the source of truth.
+  ...NAV_ALIASES.map(({ from }) => `${from}/*`),
 ];
 
 /** Routes that strictly require authentication */
