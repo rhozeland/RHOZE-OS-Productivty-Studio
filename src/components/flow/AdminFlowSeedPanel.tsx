@@ -271,7 +271,7 @@ const AdminFlowSeedPanel = () => {
             <div>
               <h3 className="text-sm font-semibold">Seed Flow posts</h3>
               <p className="text-[11px] text-muted-foreground">
-                Admin-only · dedupes by title
+                Admin-only · idempotent (updates by title)
               </p>
             </div>
             <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
