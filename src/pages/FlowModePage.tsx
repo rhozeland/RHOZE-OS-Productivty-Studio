@@ -1021,6 +1021,28 @@ const FlowModePage = () => {
                     size="sm"
                     className="w-full rounded-lg text-xs mt-2"
                     onClick={() => {
+                      setPreferredCategories(CATEGORIES);
+                      setSelectedCategories(CATEGORIES);
+                      setFeedScope("all");
+                      void persistFlowPrefs({ scope: "all", preferred: CATEGORIES });
+                      setCurrentIndex(0);
+                      x.set(0);
+                      y.set(0);
+                      flowContentRef.current?.scrollTo({ top: 0, behavior: "auto" });
+                      setSettingsOpen(false);
+                      toast.success("Flow preferences reset", {
+                        description: "Showing all categories.",
+                      });
+                    }}
+                  >
+                    <RotateCcw className="h-3.5 w-3.5 mr-2" />
+                    Reset Flow preferences
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full rounded-lg text-xs mt-2"
+                    onClick={() => {
                       setSettingsOpen(false);
                       setShowTutorialOverlay(true);
                       if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
