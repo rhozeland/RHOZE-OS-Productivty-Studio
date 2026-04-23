@@ -29,6 +29,8 @@ import {
   Network,
 } from "lucide-react";
 import RhozeClaimCelebration from "@/components/RhozeClaimCelebration";
+import { useClaimLimits, validateClaim } from "@/lib/claim-limits";
+import { Link } from "react-router-dom";
 
 const SOLANA_RPC = "https://api.mainnet-beta.solana.com";
 const LAMPORTS_PER_SOL = 1_000_000_000;
@@ -80,6 +82,10 @@ const ClaimRhozeButton = ({
   const [claimError, setClaimError] = useState<string | null>(null);
 
   const walletAddress = publicKey?.toBase58() ?? "";
+  const claimLimits = useClaimLimits();
+  const limitsCheck = validateClaim(creditsToClaim, claimLimits);
+  const limitsReason = limitsCheck.ok ? "" : limitsCheck.reason;
+  const blockedByLimits = creditsToClaim > 0 && !limitsCheck.ok;
 
   const fetchPreview = async () => {
     setPreviewLoading(true);
@@ -118,6 +124,13 @@ const ClaimRhozeButton = ({
     }
     if (creditsToClaim <= 0) {
       toast.error("Enter an amount to claim");
+      return;
+    }
+    const check = validateClaim(creditsToClaim, claimLimits);
+    if (check.ok === false) {
+      toast.error("Claim outside your safety limits", {
+        description: `${check.reason} Update your limits in Settings → Wallet.`,
+      });
       return;
     }
     setAcknowledged(false);
@@ -252,7 +265,8 @@ const ClaimRhozeButton = ({
         variant="outline"
         className={className}
         onClick={openConfirm}
-        disabled={loading || disabled || creditsToClaim <= 0}
+        disabled={loading || disabled || creditsToClaim <= 0 || blockedByLimits}
+        title={blockedByLimits && !limitsCheck.ok ? limitsCheck.reason : undefined}
       >
         {loading ? (
           <>
@@ -266,6 +280,14 @@ const ClaimRhozeButton = ({
           </>
         )}
       </Button>
+      {blockedByLimits && !limitsCheck.ok && (
+        <p className="mt-2 text-[11px] text-destructive font-body">
+          {limitsCheck.reason}{" "}
+          <Link to="/settings" className="underline hover:no-underline">
+            Adjust limits
+          </Link>
+        </p>
+      )}
 
       <Dialog
         open={confirmOpen}

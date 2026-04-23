@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import LogoCustomizer from "@/components/onboarding/LogoCustomizer";
 import DockCustomizer from "@/components/settings/DockCustomizer";
+import ClaimLimitsControl from "@/components/settings/ClaimLimitsControl";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -614,22 +615,28 @@ const SettingsPage = () => {
   );
 
   const renderWallet = () => (
-    <div className="space-y-4">
-      <p className="text-xs text-muted-foreground">Your connected Solana wallet address is stored here for on-chain features.</p>
-      {(profile as any)?.wallet_address ? (
-        <div className="flex items-center gap-3">
-          <code className="text-sm font-mono bg-muted px-3 py-2 rounded-lg flex-1 truncate">
-            {(profile as any).wallet_address}
-          </code>
-          <Button variant="outline" size="sm" onClick={async () => {
-            await supabase.from("profiles").update({ wallet_address: null } as any).eq("user_id", user!.id);
-            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
-            toast.success("Wallet disconnected");
-          }}>Disconnect</Button>
-        </div>
-      ) : (
-        <p className="text-sm text-muted-foreground">No wallet connected. Connect your wallet using the button in the header to link it to your profile.</p>
-      )}
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <p className="text-xs text-muted-foreground">Your connected Solana wallet address is stored here for on-chain features.</p>
+        {(profile as any)?.wallet_address ? (
+          <div className="flex items-center gap-3">
+            <code className="text-sm font-mono bg-muted px-3 py-2 rounded-lg flex-1 truncate">
+              {(profile as any).wallet_address}
+            </code>
+            <Button variant="outline" size="sm" onClick={async () => {
+              await supabase.from("profiles").update({ wallet_address: null } as any).eq("user_id", user!.id);
+              queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+              toast.success("Wallet disconnected");
+            }}>Disconnect</Button>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">No wallet connected. Connect your wallet using the button in the header to link it to your profile.</p>
+        )}
+      </div>
+
+      <Separator />
+
+      <ClaimLimitsControl />
     </div>
   );
 
