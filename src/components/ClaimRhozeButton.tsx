@@ -156,16 +156,21 @@ const ClaimRhozeButton = ({
   };
 
   const handleClaim = async () => {
-    if (!publicKey || !user) {
-      toast.error("Connect your wallet and sign in first");
+    if (!publicKey || !connected || !user) {
+      const msg = "Wallet disconnected — reconnect to claim.";
+      setClaimError(msg);
+      toast.error(msg);
       return;
     }
 
     if (creditsToClaim <= 0) {
-      toast.error("Enter an amount to claim");
+      const msg = "Enter an amount to claim.";
+      setClaimError(msg);
+      toast.error(msg);
       return;
     }
 
+    setClaimError(null);
     setLoading(true);
     try {
       setStatus("Sending tokens...");
@@ -178,17 +183,29 @@ const ClaimRhozeButton = ({
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      if (!data?.signature) throw new Error("Transaction did not return a signature.");
 
       setConfirmOpen(false);
       setCelebration({ open: true, amount: creditsToClaim, signature: data.signature });
-      toast.success(`Claimed ${creditsToClaim} $RHOZE! Tx: ${data.signature?.slice(0, 8)}...`);
+      toast.success(`Claimed ${creditsToClaim} $RHOZE!`, {
+        description: `Tx: ${data.signature.slice(0, 8)}…${data.signature.slice(-6)}`,
+      });
       queryClient.invalidateQueries({ queryKey: ["user-credits"] });
       queryClient.invalidateQueries({ queryKey: ["rhoze-balance"] });
       queryClient.invalidateQueries({ queryKey: ["reward-history"] });
       queryClient.invalidateQueries({ queryKey: ["rhoze-claim-history"] });
       onSuccess?.();
     } catch (error: any) {
-      toast.error(error?.message || "Claim failed");
+      const raw = error?.message || "Claim failed unexpectedly.";
+      const friendly = /network|fetch|failed to fetch|timeout/i.test(raw)
+        ? "Network error reaching the claim service. Check your connection and try again."
+        : /insufficient|balance/i.test(raw)
+        ? raw
+        : /wallet/i.test(raw)
+        ? raw
+        : raw;
+      setClaimError(friendly);
+      toast.error("Claim failed", { description: friendly });
     } finally {
       setLoading(false);
       setStatus("");
