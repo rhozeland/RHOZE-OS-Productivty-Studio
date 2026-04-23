@@ -1196,6 +1196,8 @@ const FlowModePage = () => {
               </Button>
             </div>
           )}
+        </div>
+      )}
 
       {/* ═══ FULL SWIPE TUTORIAL OVERLAY — first-time or on-demand ═══ */}
       <AnimatePresence>
