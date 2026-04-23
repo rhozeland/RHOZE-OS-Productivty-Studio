@@ -79,8 +79,10 @@ const BackgroundCustomizer = ({
   const handleUpload = async (file: File) => {
     if (!user) return;
     setUploading(true);
+    setPendingFile(file);
     // Path layout enforced by buildSmartboardFilePath so RLS stays happy.
     const path = buildSmartboardFilePath(boardId, user.id, file, { kind: "bg" });
+    setPendingPath(path);
     const { url, error: uploadErrMsg } = await uploadAndGetUrl(SMARTBOARD_BUCKET, path, file);
     if (uploadErrMsg) { toast.error(uploadErrMsg); setUploading(false); return; }
     setImageUrl(url);
