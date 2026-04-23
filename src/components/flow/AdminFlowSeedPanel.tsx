@@ -272,6 +272,17 @@ const AdminFlowSeedPanel = () => {
                 />
               </div>
 
+              {preview.fallbackCount && preview.fallbackCount > 0 ? (
+                <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2.5 py-1.5">
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                  <p className="text-[11px] text-foreground leading-snug">
+                    <span className="font-semibold">{preview.fallbackCount}</span>{" "}
+                    item{preview.fallbackCount === 1 ? "" : "s"} will use fallback
+                    media URLs (originals unreachable).
+                  </p>
+                </div>
+              ) : null}
+
               {preview.items.length > 0 ? (
                 <div className="rounded-md border border-border/60 bg-muted/30">
                   <ScrollArea className="h-32">
@@ -281,7 +292,15 @@ const AdminFlowSeedPanel = () => {
                           key={it.title}
                           className="flex items-center justify-between gap-2 px-3 py-1.5"
                         >
-                          <span className="truncate text-xs">{it.title}</span>
+                          <span className="truncate text-xs flex items-center gap-1.5">
+                            {it.usedFallback ? (
+                              <LinkIcon
+                                className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0"
+                                aria-label="Will use fallback URL"
+                              />
+                            ) : null}
+                            {it.title}
+                          </span>
                           <span className="text-[10px] text-muted-foreground uppercase tracking-wide shrink-0">
                             {it.category}
                           </span>
