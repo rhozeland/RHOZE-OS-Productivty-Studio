@@ -83,9 +83,15 @@ interface FlowCardProps {
   onDelete?: () => void;
   isOwner?: boolean;
   isAdmin?: boolean;
+  /**
+   * True while uploader profile attribution (`profiles_public`) is being
+   * fetched. When true and no profile is attached yet, the card renders a
+   * skeleton placeholder instead of the "Anonymous contributor" fallback.
+   */
+  profilesLoading?: boolean;
 }
 
-const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner, isAdmin }: FlowCardProps) => {
+const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner, isAdmin, profilesLoading }: FlowCardProps) => {
   const navigate = useNavigate();
   const [imageEnlarged, setImageEnlarged] = useState(false);
   const platform = detectPlatform(item.link_url);
