@@ -5,6 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadAndGetUrl } from "@/lib/storage-utils";
 import { buildSmartboardFilePath, SMARTBOARD_BUCKET } from "@/lib/smartboard-paths";
+import UploadFileMeta from "@/components/upload/UploadFileMeta";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Paintbrush, ImageIcon, Upload, X } from "lucide-react";
@@ -55,6 +56,8 @@ const BackgroundCustomizer = ({
   const [blur, setBlur] = useState(currentBlur);
   const [opacity, setOpacity] = useState(currentOpacity);
   const [uploading, setUploading] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingPath, setPendingPath] = useState<string>("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const save = async () => {
@@ -76,8 +79,10 @@ const BackgroundCustomizer = ({
   const handleUpload = async (file: File) => {
     if (!user) return;
     setUploading(true);
+    setPendingFile(file);
     // Path layout enforced by buildSmartboardFilePath so RLS stays happy.
     const path = buildSmartboardFilePath(boardId, user.id, file, { kind: "bg" });
+    setPendingPath(path);
     const { url, error: uploadErrMsg } = await uploadAndGetUrl(SMARTBOARD_BUCKET, path, file);
     if (uploadErrMsg) { toast.error(uploadErrMsg); setUploading(false); return; }
     setImageUrl(url);
@@ -192,6 +197,9 @@ const BackgroundCustomizer = ({
                 className="mt-2"
                 onChange={(e) => { setImageUrl(e.target.value); setColor(""); }}
               />
+            )}
+            {pendingFile && (
+              <UploadFileMeta file={pendingFile} path={pendingPath} />
             )}
           </div>
 
