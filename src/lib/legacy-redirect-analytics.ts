@@ -27,10 +27,13 @@ const MAX_EVENTS = 200;
 export type LegacyRedirectEvent = {
   /** Original full pathname the user landed on (e.g. `/droprooms/abc/chat`). */
   from: string;
-  /** Canonical pathname they were redirected to (e.g. `/drop-rooms/abc/chat`). */
-  to: string;
-  /** Alias root prefix that matched (e.g. `/droprooms`). */
-  prefix: string;
+  /** Canonical pathname they were redirected to (e.g. `/drop-rooms/abc/chat`).
+   *  `null` when no alias resolved — the user saw the legacy fallback page
+   *  instead of being redirected. */
+  to: string | null;
+  /** Alias root prefix that matched (e.g. `/droprooms`). `null` when the
+   *  legacy fallback page rendered with no matching alias. */
+  prefix: string | null;
   /** Epoch ms when the redirect happened. */
   ts: number;
   /** document.referrer at redirect time, when available. */
