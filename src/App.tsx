@@ -41,6 +41,56 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+/**
+ * Registry of all top-level route path patterns (as passed to <Route path=...>).
+ * Used by the dev-only nav-link sanity check in AppLayout to warn when a
+ * configured header link has no matching route.
+ *
+ * Keep this list in sync with the <Route> elements below. Dynamic segments
+ * use the standard `:param` syntax.
+ */
+export const REGISTERED_ROUTE_PATHS: string[] = [
+  "/auth",
+  "/onboarding",
+  "/landing",
+  "/explore/studios",
+  "/explore/studios/:id",
+  "/explore/creators",
+  "/explore/creators/:id",
+  "/",
+  "/dashboard",
+  "/studios",
+  "/studios/:id",
+  "/studios/apply",
+  "/studios/:id/manage",
+  "/services",
+  "/projects",
+  "/projects/:id",
+  "/calendar",
+  "/bookings",
+  "/credits",
+  "/purchases",
+  "/flow",
+  "/smartboards",
+  "/smartboards/:id",
+  "/creators",
+  "/creators/:id",
+  "/marketplace",
+  "/marketplace/:id",
+  "/seller",
+  "/inquiries",
+  "/profiles",
+  "/profiles/:id",
+  "/drop-rooms",
+  "/drop-rooms/:id",
+  "/droprooms/*",
+  "/messages",
+  "/network",
+  "/settings",
+  "/admin",
+  "/boards/:id",
+];
+
 /** Routes that strictly require authentication */
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();

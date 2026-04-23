@@ -36,6 +36,7 @@ import {
   isNavItemActive,
   type NavItem,
 } from "@/config/navigation";
+import { REGISTERED_ROUTE_PATHS } from "@/App";
 
 const PAGES = [
   { name: "Home", path: "/dashboard", icon: FolderKanban },
@@ -65,6 +66,42 @@ const HEADER_LABELS: Record<string, string> = {
   boards: "Boards",
   droprooms: "Drops",
 };
+
+/**
+ * Returns true if `navPath` matches one of the registered <Route> path
+ * patterns. Handles dynamic segments (`:id`) and wildcards (`*`).
+ */
+const matchesRegisteredRoute = (navPath: string, routes: string[]): boolean => {
+  return routes.some((route) => {
+    // Strip wildcard suffix — `/droprooms/*` should match `/droprooms`.
+    const base = route.replace(/\/\*$/, "");
+    if (base === navPath) return true;
+    // Compare segment-by-segment so `:id` matches anything non-empty.
+    const navSegs = navPath.split("/").filter(Boolean);
+    const routeSegs = base.split("/").filter(Boolean);
+    if (navSegs.length !== routeSegs.length) return false;
+    return routeSegs.every(
+      (seg, i) => seg.startsWith(":") || seg === navSegs[i],
+    );
+  });
+};
+
+// Dev-only sanity check: warn once if any header nav item points to a path
+// that has no matching <Route> in App.tsx. Catches future broken links when
+// routes are renamed or removed without updating navigation config.
+if (import.meta.env.DEV) {
+  const broken = HEADER_NAV.filter(
+    (item) => !matchesRegisteredRoute(item.path, REGISTERED_ROUTE_PATHS),
+  );
+  if (broken.length > 0) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      "[AppLayout] Header nav items reference paths with no matching route:",
+      broken.map((b) => ({ id: b.id, path: b.path })),
+      "\nUpdate REGISTERED_ROUTE_PATHS in src/App.tsx or the nav config in src/config/navigation.ts.",
+    );
+  }
+}
 
 const AppLayout = () => {
   const navigate = useNavigate();
