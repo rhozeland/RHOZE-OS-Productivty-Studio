@@ -620,7 +620,23 @@ const FlowModePage = () => {
     }
   };
 
-  const advanceCard = useCallback(() => {
+  // Switch the feed between the user's preferred categories and the global "All" view.
+  // Preferences stay intact in localStorage; only the active scope flips.
+  const setScope = useCallback(
+    (scope: "all" | "preferred") => {
+      setFeedScope(scope);
+      localStorage.setItem(`flow-scope-${calibrationKey}`, scope);
+      const next =
+        scope === "all"
+          ? CATEGORIES
+          : preferredCategories.length > 0
+            ? preferredCategories
+            : CATEGORIES;
+      setSelectedCategories(next);
+      setCurrentIndex(0);
+    },
+    [calibrationKey, preferredCategories],
+  );
     setTimeout(() => {
       setCurrentIndex((i) => i + 1); // No cap — modulo handles looping
       setExpandedCard(false);
