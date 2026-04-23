@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,8 +14,36 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2, Download, Wallet, Copy, Check, ShieldCheck, AlertTriangle } from "lucide-react";
+import {
+  Loader2,
+  Download,
+  Wallet,
+  Copy,
+  Check,
+  ShieldCheck,
+  AlertTriangle,
+  ExternalLink,
+  RefreshCw,
+  Fuel,
+  Hash,
+  Network,
+} from "lucide-react";
 import RhozeClaimCelebration from "@/components/RhozeClaimCelebration";
+
+const SOLANA_RPC = "https://api.mainnet-beta.solana.com";
+const LAMPORTS_PER_SOL = 1_000_000_000;
+// Base sig fee (5000 lamports) + small priority buffer; ATA creation adds ~0.00203928 SOL rent (paid by payout wallet, not user)
+const ESTIMATED_FEE_LAMPORTS = 5000;
+
+interface TxPreview {
+  blockhash: string;
+  lastValidBlockHeight: number;
+  feeLamports: number;
+  slot: number;
+}
+
+const formatSol = (lamports: number) =>
+  (lamports / LAMPORTS_PER_SOL).toFixed(9).replace(/0+$/, "").replace(/\.$/, "");
 
 interface ClaimRhozeButtonProps {
   creditsToClaim: number;
