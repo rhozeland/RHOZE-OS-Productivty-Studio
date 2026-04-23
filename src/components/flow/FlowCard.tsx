@@ -83,9 +83,15 @@ interface FlowCardProps {
   onDelete?: () => void;
   isOwner?: boolean;
   isAdmin?: boolean;
+  /**
+   * True while uploader profile attribution (`profiles_public`) is still
+   * being resolved. When true and no profile is attached yet, the card
+   * renders a skeleton placeholder instead of a flash of "Unknown".
+   */
+  profilesLoading?: boolean;
 }
 
-const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner, isAdmin }: FlowCardProps) => {
+const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner, isAdmin, profilesLoading }: FlowCardProps) => {
   const navigate = useNavigate();
   const [imageEnlarged, setImageEnlarged] = useState(false);
   const platform = detectPlatform(item.link_url);
@@ -354,7 +360,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
         </div>
 
         {/* ═══ POSTER INFO ═══ */}
-        <div className="px-5 pb-1.5 flex items-center gap-2">
+        <div className="px-5 pb-1.5 flex items-center gap-2 min-h-[20px]">
           {(item as any).profiles ? (
             <button
               onClick={(e) => { e.stopPropagation(); navigate(`/profiles/${item.user_id}`); }}
@@ -370,6 +376,18 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
                 {(item as any).profiles?.display_name || "Unknown"}
               </span>
             </button>
+          ) : profilesLoading ? (
+            // Skeleton placeholder while `profiles_public` is being fetched.
+            // Prevents a flash of "Unknown" / blank space before attribution
+            // resolves on the next render.
+            <div
+              className="flex items-center gap-2"
+              aria-hidden="true"
+              data-testid="flow-card-uploader-skeleton"
+            >
+              <div className="h-5 w-5 rounded-full bg-muted animate-pulse" />
+              <div className="h-3 w-20 rounded-full bg-muted animate-pulse" />
+            </div>
           ) : null}
           {item.creator_name && (
             <span className="text-[11px] text-muted-foreground">
