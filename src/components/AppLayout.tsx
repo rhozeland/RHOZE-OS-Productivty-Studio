@@ -36,6 +36,7 @@ import {
   isNavItemActive,
   type NavItem,
 } from "@/config/navigation";
+import { REGISTERED_ROUTE_PATHS } from "@/App";
 
 const PAGES = [
   { name: "Home", path: "/dashboard", icon: FolderKanban },
