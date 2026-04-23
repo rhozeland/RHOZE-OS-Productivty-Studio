@@ -72,6 +72,8 @@ describe("Flow Mode global feed (loadFlowFeed)", () => {
   let calls: { table: string; columns?: string }[];
 
   beforeEach(() => {
+    // Reset module-level profile cache so tests don't leak hits between cases.
+    clearFlowProfileCache();
     const built = makeSupabase({
       flow_items: SAMPLE_ITEMS,
       profiles_public: SAMPLE_PROFILES,
