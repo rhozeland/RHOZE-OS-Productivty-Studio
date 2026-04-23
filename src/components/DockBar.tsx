@@ -45,7 +45,33 @@ const DockBar = () => {
     staleTime: 60000,
   });
 
-  const dockIds = (profile?.dock_config as string[] | null) || DEFAULT_DOCK_IDS;
+  const rawDockIds = (profile?.dock_config as string[] | null) || DEFAULT_DOCK_IDS;
+
+  // Validate every saved id against the live nav config. Stale ids (e.g.
+  // a renamed/removed nav item from a previous deploy) are surfaced as a
+  // visible "unknown" placeholder so users notice and can re-customize,
+  // rather than silently disappearing from the dock.
+  const { validIds, unknownIds } = useMemo(() => {
+    const { valid, unknown } = partitionDockIds(rawDockIds);
+    // Guarantee a non-empty dock — fall back to defaults if the saved
+    // config has zero recognizable ids (e.g. corrupted row).
+    return {
+      validIds: valid.length > 0 ? valid : DEFAULT_DOCK_IDS,
+      unknownIds: unknown,
+    };
+  }, [rawDockIds]);
+
+  // Dev-only warning so we catch drift between config and saved data early.
+  useEffect(() => {
+    if (import.meta.env.DEV && unknownIds.length > 0) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        "[DockBar] Saved dock_config contains unknown nav ids:",
+        unknownIds,
+        "\nUpdate src/config/navigation.ts or remove these from the user's saved config.",
+      );
+    }
+  }, [unknownIds]);
 
   const handleScroll = useCallback(() => {
     if (ticking.current) return;
