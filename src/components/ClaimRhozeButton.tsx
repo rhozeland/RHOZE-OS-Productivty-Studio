@@ -82,6 +82,9 @@ const ClaimRhozeButton = ({
   const [claimError, setClaimError] = useState<string | null>(null);
 
   const walletAddress = publicKey?.toBase58() ?? "";
+  const claimLimits = useClaimLimits();
+  const limitsCheck = validateClaim(creditsToClaim, claimLimits);
+  const blockedByLimits = creditsToClaim > 0 && !limitsCheck.ok;
 
   const fetchPreview = async () => {
     setPreviewLoading(true);
