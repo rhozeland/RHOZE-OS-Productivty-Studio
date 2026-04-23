@@ -983,7 +983,7 @@ const FlowModePage = () => {
                               const final = updated.length === 0 ? CATEGORIES : updated;
                               setPreferredCategories(final);
                               setSelectedCategories(final);
-                              localStorage.setItem(`flow-calibrated-${calibrationKey}`, JSON.stringify(final));
+                              void persistFlowPrefs({ preferred: final });
                             }}
                           />
                         </div>
