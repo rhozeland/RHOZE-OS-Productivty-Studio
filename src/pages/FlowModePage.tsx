@@ -782,11 +782,31 @@ const FlowModePage = () => {
   // stack mid-refresh.
   const isFeedRefreshing = scopeSwitching || flowItemsFetching;
 
+  // True from the moment a swipe action commits until the next card has
+  // mounted. Combined with `expandedCard`, this is what gates further
+  // gestures so a fast user can't fling card N's content into card N+1's
+  // mutation queue. The 200ms here matches the `advanceCard` settle delay
+  // — long enough for the exit animation to finish, short enough that the
+  // next card feels immediately interactive.
+  const [isAdvancing, setIsAdvancing] = useState(false);
+  const advancingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const advanceCard = useCallback(() => {
-    setTimeout(() => {
+    setIsAdvancing(true);
+    if (advancingTimerRef.current) clearTimeout(advancingTimerRef.current);
+    advancingTimerRef.current = setTimeout(() => {
       setCurrentIndex((i) => i + 1); // No cap — modulo handles looping
       setExpandedCard(false);
+      setIsAdvancing(false);
     }, 200);
+  }, []);
+
+  // Clean up the advancing timer on unmount so it can't fire after the
+  // component is gone.
+  useEffect(() => {
+    return () => {
+      if (advancingTimerRef.current) clearTimeout(advancingTimerRef.current);
+    };
   }, []);
 
   const performAction = useCallback((action: string, smartboardId?: string, item?: any) => {
@@ -816,7 +836,25 @@ const FlowModePage = () => {
     }
   }, [currentItem, interact, advanceCard, soundEnabled]);
 
+  // Lock all swipe gestures while:
+  //   • a card is expanded (taps inside the detail view should never
+  //     bleed into a swipe), or
+  //   • a previous swipe is still mid-transition (the card stack is
+  //     between cards — accepting input here would mix gestures across
+  //     two cards), or
+  //   • the feed is refreshing (the visible card may not match what the
+  //     user thinks they're acting on).
+  const swipeLocked = expandedCard || isAdvancing || isFeedRefreshing;
+
   const handleDragEnd = useCallback((_: any, info: PanInfo) => {
+    // Defensive: framer's `drag={false}` already prevents the drag from
+    // starting, but this guards against races where the lock engages
+    // mid-gesture (e.g. a refresh kicks in while the user is dragging).
+    if (swipeLocked) {
+      x.set(0);
+      y.set(0);
+      return;
+    }
     const { offset } = info;
     const threshold = 80;
 
@@ -827,7 +865,7 @@ const FlowModePage = () => {
       if (offset.y < -threshold) performAction(swipeMap.up);
       else if (offset.y > threshold) performAction(swipeMap.down);
     }
-  }, [performAction, swipeMap]);
+  }, [performAction, swipeMap, swipeLocked, x, y]);
 
   // Idle hint timer — show corner hints after 4s of no interaction, hide on any activity
   const resetIdleTimer = useCallback(() => {
