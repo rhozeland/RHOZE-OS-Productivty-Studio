@@ -19,6 +19,7 @@ interface UploadFileMetaProps {
  * Helps verify uploads for files with weird/missing extensions before they hit the bucket.
  */
 const UploadFileMeta = ({ file, path, className }: UploadFileMetaProps) => {
+  const [copied, setCopied] = useState(false);
   if (!file) return null;
 
   const ext = safeFileExt(file);
@@ -26,14 +27,54 @@ const UploadFileMeta = ({ file, path, className }: UploadFileMetaProps) => {
   const browserType = file.type || "—";
   const sizeKb = (file.size / 1024).toFixed(1);
 
+  const handleCopy = async () => {
+    const lines = [
+      `file: ${file.name || "(unnamed)"}`,
+      `ext: .${ext}`,
+      `content-type: ${contentType}`,
+      `browser-type: ${browserType}`,
+      `size: ${sizeKb} KB`,
+      ...(path ? [`path: ${path}`] : []),
+    ];
+    const payload = lines.join("\n");
+    try {
+      await navigator.clipboard.writeText(payload);
+      setCopied(true);
+      toast.success("Upload metadata copied");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Couldn't copy to clipboard");
+    }
+  };
+
   return (
     <div
       className={`mt-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground space-y-1 ${className || ""}`}
       aria-label="Resolved upload metadata"
     >
-      <div className="flex items-center gap-1.5 text-foreground/80 font-medium">
-        <FileType2 className="h-3 w-3" aria-hidden="true" />
-        <span>Will upload as</span>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 text-foreground/80 font-medium">
+          <FileType2 className="h-3 w-3" aria-hidden="true" />
+          <span>Will upload as</span>
+        </div>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="flex items-center gap-1 rounded-md border border-border bg-background/60 px-1.5 py-0.5 text-[10px] font-medium text-foreground/80 hover:bg-background hover:text-foreground transition-colors"
+          aria-label="Copy resolved upload metadata to clipboard"
+        >
+          {copied ? (
+            <>
+              <Check className="h-3 w-3" aria-hidden="true" />
+              <span>Copied</span>
+            </>
+          ) : (
+            <>
+              <Copy className="h-3 w-3" aria-hidden="true" />
+              <span>Copy metadata</span>
+            </>
+          )}
+        </button>
       </div>
       <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 font-mono">
         <span className="text-muted-foreground/70">ext</span>
