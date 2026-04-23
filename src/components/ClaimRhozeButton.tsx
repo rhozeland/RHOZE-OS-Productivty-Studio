@@ -431,6 +431,32 @@ const ClaimRhozeButton = ({
                 </p>
               </div>
             </button>
+
+            {/* Inline claim error */}
+            {claimError && (
+              <div
+                role="alert"
+                className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 flex items-start gap-2"
+              >
+                <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                <div className="flex-1 space-y-1">
+                  <p className="text-xs font-body font-medium text-destructive">
+                    Claim failed
+                  </p>
+                  <p className="text-[11px] text-destructive/90 font-body leading-relaxed break-words">
+                    {claimError}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setClaimError(null)}
+                  className="text-[10px] font-body text-destructive/80 hover:text-destructive shrink-0"
+                  aria-label="Dismiss error"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
           </div>
 
           <DialogFooter className="gap-2 sm:gap-2">
@@ -440,17 +466,22 @@ const ClaimRhozeButton = ({
               onClick={() => setConfirmOpen(false)}
               disabled={loading}
             >
-              Cancel
+              {claimError ? "Close" : "Cancel"}
             </Button>
             <Button
               type="button"
               onClick={handleClaim}
-              disabled={loading || !acknowledged || creditsToClaim <= 0}
+              disabled={loading || !acknowledged || creditsToClaim <= 0 || !connected}
             >
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {status || "Sending..."}
+                </>
+              ) : claimError ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Retry claim
                 </>
               ) : (
                 <>
