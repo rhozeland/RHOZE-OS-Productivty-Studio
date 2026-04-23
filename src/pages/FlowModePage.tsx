@@ -37,11 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { FlowScopeToggle } from "@/components/flow/FlowScopeToggle";
 import {
   Sheet,
   SheetContent,
