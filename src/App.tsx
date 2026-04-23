@@ -26,6 +26,7 @@ import SettingsPage from "@/pages/SettingsPage";
 import ServicesPage from "@/pages/ServicesPage";
 import CreditShopPage from "@/pages/CreditShopPage";
 import DropRoomsPage from "@/pages/DropRoomsPage";
+import { LegacyDropRoomsRedirect } from "@/components/LegacyDropRoomsRedirect";
 import DropRoomDetailPage from "@/pages/DropRoomDetailPage";
 import AdminPage from "@/pages/AdminPage";
 import StudiosPage from "@/pages/StudiosPage";
@@ -116,8 +117,7 @@ const App = () => (
                 <Route path="/profiles/:id" element={<ProfileDetailPage />} />
                 <Route path="/drop-rooms" element={<DropRoomsPage />} />
                 <Route path="/drop-rooms/:id" element={<DropRoomDetailPage />} />
-                <Route path="/droprooms" element={<Navigate to="/drop-rooms" replace />} />
-                <Route path="/droprooms/:id" element={<Navigate to="/drop-rooms" replace />} />
+                <Route path="/droprooms/*" element={<LegacyDropRoomsRedirect />} />
                 <Route path="/messages" element={<MessagesPage />} />
                 <Route path="/network" element={<Navigate to="/messages" replace />} />
                 <Route path="/settings" element={<SettingsPage />} />
