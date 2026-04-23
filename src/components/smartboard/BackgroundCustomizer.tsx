@@ -245,7 +245,11 @@ const BackgroundCustomizer = ({
             <Button variant="outline" className="flex-1 rounded-full" onClick={clearBackground}>
               Clear
             </Button>
-            <Button className="flex-1 rounded-full" onClick={save}>
+            <Button
+              className="flex-1 rounded-full"
+              onClick={save}
+              disabled={!!pendingFile && uploadOk === false}
+            >
               Apply
             </Button>
           </div>
