@@ -80,11 +80,19 @@ const BackgroundCustomizer = ({
 
   const handleUpload = async (file: File) => {
     if (!user) return;
-    setUploading(true);
+    // Pre-flight allowlist check before we touch the network. UploadFileMeta will
+    // re-render the same verdict for the user; we just refuse to send.
+    const verdict = validateUpload(file, IMAGE_ALLOWLIST);
     setPendingFile(file);
-    // Path layout enforced by buildSmartboardFilePath so RLS stays happy.
     const path = buildSmartboardFilePath(boardId, user.id, file, { kind: "bg" });
     setPendingPath(path);
+    if (!verdict.ok) {
+      setUploadOk(false);
+      toast.error(verdict.reason || "This file isn't allowed");
+      return;
+    }
+    setUploadOk(true);
+    setUploading(true);
     const { url, error: uploadErrMsg } = await uploadAndGetUrl(SMARTBOARD_BUCKET, path, file);
     if (uploadErrMsg) { toast.error(uploadErrMsg); setUploading(false); return; }
     setImageUrl(url);
