@@ -283,6 +283,91 @@ const ClaimRhozeButton = ({
               </p>
             </div>
 
+            {/* Transaction preview */}
+            <div className="rounded-xl border border-border bg-card/60 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-body flex items-center gap-1.5">
+                  <Network className="h-3 w-3" />
+                  Transaction preview
+                </p>
+                <button
+                  type="button"
+                  onClick={fetchPreview}
+                  disabled={previewLoading}
+                  className="text-[10px] font-body text-muted-foreground hover:text-foreground inline-flex items-center gap-1 disabled:opacity-50"
+                  title="Refresh preview"
+                >
+                  <RefreshCw className={`h-3 w-3 ${previewLoading ? "animate-spin" : ""}`} />
+                  Refresh
+                </button>
+              </div>
+
+              {previewLoading && !preview ? (
+                <div className="space-y-2">
+                  <div className="h-3 w-2/3 rounded bg-muted/50 animate-pulse" />
+                  <div className="h-3 w-1/2 rounded bg-muted/50 animate-pulse" />
+                  <div className="h-3 w-3/4 rounded bg-muted/50 animate-pulse" />
+                </div>
+              ) : previewError ? (
+                <p className="text-[11px] text-destructive font-body">
+                  {previewError}. You can still claim — preview is informational only.
+                </p>
+              ) : preview ? (
+                <div className="space-y-2 text-[11px] font-body">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground inline-flex items-center gap-1.5">
+                      <Network className="h-3 w-3" /> Network
+                    </span>
+                    <span className="font-mono text-foreground">Solana mainnet-beta</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground inline-flex items-center gap-1.5">
+                      <Fuel className="h-3 w-3" /> Est. network fee
+                    </span>
+                    <span className="font-mono text-foreground tabular-nums">
+                      ~{formatSol(preview.feeLamports)} SOL
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground">Fees paid by</span>
+                    <span className="font-mono text-foreground">Rhozeland payout wallet</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground inline-flex items-center gap-1.5">
+                      <Hash className="h-3 w-3" /> Recent blockhash
+                    </span>
+                    <span className="font-mono text-foreground" title={preview.blockhash}>
+                      {preview.blockhash.slice(0, 6)}…{preview.blockhash.slice(-6)}
+                    </span>
+                  </div>
+                  {preview.slot > 0 && (
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">Current slot</span>
+                      <span className="font-mono text-foreground tabular-nums">
+                        {preview.slot.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground">Valid until block</span>
+                    <span className="font-mono text-foreground tabular-nums">
+                      {preview.lastValidBlockHeight.toLocaleString()}
+                    </span>
+                  </div>
+
+                  <a
+                    href={`https://explorer.solana.com/address/${walletAddress}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-primary hover:underline font-body"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Preview destination on Solana Explorer
+                  </a>
+                </div>
+              ) : null}
+            </div>
+
             {/* Warning + acknowledgment */}
             <button
               type="button"
