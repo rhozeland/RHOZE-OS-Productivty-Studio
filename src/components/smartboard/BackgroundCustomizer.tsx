@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { uploadAndGetUrl } from "@/lib/storage-utils";
 import { buildSmartboardFilePath, SMARTBOARD_BUCKET } from "@/lib/smartboard-paths";
 import UploadFileMeta from "@/components/upload/UploadFileMeta";
+import { IMAGE_ALLOWLIST, validateUpload } from "@/lib/upload-allowlist";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Paintbrush, ImageIcon, Upload, X } from "lucide-react";
