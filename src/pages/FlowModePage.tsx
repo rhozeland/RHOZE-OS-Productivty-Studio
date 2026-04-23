@@ -849,6 +849,11 @@ const FlowModePage = () => {
         category={currentItem?.category || "design"}
       />
 
+      {/* Shared guest CTA — floats above swipe + browse views so the prompt
+          is identical regardless of which Flow Mode entry path the visitor
+          arrived through. Renders nothing for signed-in users. */}
+      <FlowGuestCTA variant="floating" />
+
       {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between gap-3 px-4 py-3 md:px-6">
         <div className="flex items-center gap-0.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/30 p-0.5">
