@@ -116,6 +116,8 @@ const App = () => (
                 <Route path="/profiles/:id" element={<ProfileDetailPage />} />
                 <Route path="/drop-rooms" element={<DropRoomsPage />} />
                 <Route path="/drop-rooms/:id" element={<DropRoomDetailPage />} />
+                <Route path="/droprooms" element={<Navigate to="/drop-rooms" replace />} />
+                <Route path="/droprooms/:id" element={<Navigate to="/drop-rooms" replace />} />
                 <Route path="/messages" element={<MessagesPage />} />
                 <Route path="/network" element={<Navigate to="/messages" replace />} />
                 <Route path="/settings" element={<SettingsPage />} />
