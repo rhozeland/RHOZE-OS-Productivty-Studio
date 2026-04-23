@@ -185,15 +185,40 @@ const ClaimRhozeButton = ({
       if (data?.error) throw new Error(data.error);
       if (!data?.signature) throw new Error("Transaction did not return a signature.");
 
+      const signature: string = data.signature;
+      const solscanUrl = `https://solscan.io/tx/${signature}`;
+      const shortSig = `${signature.slice(0, 8)}…${signature.slice(-6)}`;
+
       setConfirmOpen(false);
-      setCelebration({ open: true, amount: creditsToClaim, signature: data.signature });
-      toast.success(`Claimed ${creditsToClaim} $RHOZE!`, {
-        description: `Tx: ${data.signature.slice(0, 8)}…${data.signature.slice(-6)}`,
+      setCelebration({ open: true, amount: creditsToClaim, signature });
+
+      // In-app receipt — persistent notification with Solscan link
+      try {
+        await supabase.from("notifications").insert({
+          user_id: user.id,
+          type: "rhoze_claim",
+          title: `Claimed ${creditsToClaim.toLocaleString()} $RHOZE`,
+          body: `Sent to ${shortenAddress(publicKey.toBase58())} • Tx ${shortSig} • View on Solscan`,
+          link: solscanUrl,
+        });
+      } catch (notifErr) {
+        console.error("Failed to write claim notification:", notifErr);
+      }
+
+      toast.success(`Claimed ${creditsToClaim.toLocaleString()} $RHOZE!`, {
+        description: `Tx ${shortSig}`,
+        action: {
+          label: "View on Solscan",
+          onClick: () => window.open(solscanUrl, "_blank", "noopener,noreferrer"),
+        },
+        duration: 8000,
       });
+
       queryClient.invalidateQueries({ queryKey: ["user-credits"] });
       queryClient.invalidateQueries({ queryKey: ["rhoze-balance"] });
       queryClient.invalidateQueries({ queryKey: ["reward-history"] });
       queryClient.invalidateQueries({ queryKey: ["rhoze-claim-history"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
       onSuccess?.();
     } catch (error: any) {
       const raw = error?.message || "Claim failed unexpectedly.";
