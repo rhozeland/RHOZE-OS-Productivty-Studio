@@ -51,7 +51,10 @@ const FlowGuestCTA = ({ variant = "card", className }: FlowGuestCTAProps) => {
         <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-border/50 bg-card/80 px-3 py-1.5 shadow-lg backdrop-blur-md">
           <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
           <span className="text-xs text-foreground/90">
-            Browsing as guest
+            <span className="font-medium">Browsing the global feed</span>
+            <span className="hidden sm:inline text-muted-foreground">
+              {" "}· sign up to post, save & earn $RHOZE
+            </span>
           </span>
           <Button
             size="sm"
@@ -59,7 +62,7 @@ const FlowGuestCTA = ({ variant = "card", className }: FlowGuestCTAProps) => {
             onClick={() => navigate("/auth")}
             className="h-7 rounded-full px-3 text-xs"
           >
-            Create free account
+            Sign up free
           </Button>
         </div>
       </div>
