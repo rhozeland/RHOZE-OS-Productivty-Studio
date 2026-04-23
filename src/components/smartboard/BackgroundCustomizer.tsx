@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { uploadAndGetUrl } from "@/lib/storage-utils";
 import { buildSmartboardFilePath, SMARTBOARD_BUCKET } from "@/lib/smartboard-paths";
 import UploadFileMeta from "@/components/upload/UploadFileMeta";
+import { IMAGE_ALLOWLIST, validateUpload } from "@/lib/upload-allowlist";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Paintbrush, ImageIcon, Upload, X } from "lucide-react";
@@ -58,6 +59,7 @@ const BackgroundCustomizer = ({
   const [uploading, setUploading] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingPath, setPendingPath] = useState<string>("");
+  const [uploadOk, setUploadOk] = useState<boolean | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const save = async () => {
@@ -78,11 +80,19 @@ const BackgroundCustomizer = ({
 
   const handleUpload = async (file: File) => {
     if (!user) return;
-    setUploading(true);
+    // Pre-flight allowlist check before we touch the network. UploadFileMeta will
+    // re-render the same verdict for the user; we just refuse to send.
+    const verdict = validateUpload(file, IMAGE_ALLOWLIST);
     setPendingFile(file);
-    // Path layout enforced by buildSmartboardFilePath so RLS stays happy.
     const path = buildSmartboardFilePath(boardId, user.id, file, { kind: "bg" });
     setPendingPath(path);
+    if (!verdict.ok) {
+      setUploadOk(false);
+      toast.error(verdict.reason || "This file isn't allowed");
+      return;
+    }
+    setUploadOk(true);
+    setUploading(true);
     const { url, error: uploadErrMsg } = await uploadAndGetUrl(SMARTBOARD_BUCKET, path, file);
     if (uploadErrMsg) { toast.error(uploadErrMsg); setUploading(false); return; }
     setImageUrl(url);
@@ -94,6 +104,9 @@ const BackgroundCustomizer = ({
     setImageUrl("");
     setBlur(0);
     setOpacity(100);
+    setPendingFile(null);
+    setPendingPath("");
+    setUploadOk(null);
   };
 
   return (
@@ -199,7 +212,12 @@ const BackgroundCustomizer = ({
               />
             )}
             {pendingFile && (
-              <UploadFileMeta file={pendingFile} path={pendingPath} />
+              <UploadFileMeta
+                file={pendingFile}
+                path={pendingPath}
+                allow={IMAGE_ALLOWLIST}
+                onValidation={(ok) => setUploadOk(ok)}
+              />
             )}
           </div>
 
@@ -227,7 +245,11 @@ const BackgroundCustomizer = ({
             <Button variant="outline" className="flex-1 rounded-full" onClick={clearBackground}>
               Clear
             </Button>
-            <Button className="flex-1 rounded-full" onClick={save}>
+            <Button
+              className="flex-1 rounded-full"
+              onClick={save}
+              disabled={!!pendingFile && uploadOk === false}
+            >
               Apply
             </Button>
           </div>

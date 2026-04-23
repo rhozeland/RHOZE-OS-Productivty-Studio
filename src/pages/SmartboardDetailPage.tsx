@@ -8,6 +8,7 @@ import { uploadAndGetUrl } from "@/lib/storage-utils";
 import { safeFileExt } from "@/lib/file-ext";
 import { buildSmartboardFilePath, SMARTBOARD_BUCKET } from "@/lib/smartboard-paths";
 import UploadFileMeta from "@/components/upload/UploadFileMeta";
+import { MEDIA_ALLOWLIST } from "@/lib/upload-allowlist";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,6 +74,8 @@ const SmartboardDetailPage = () => {
   const [itemContent, setItemContent] = useState("");
   const [itemLink, setItemLink] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  // Tracks the allowlist verdict from <UploadFileMeta>; null while no file is selected.
+  const [uploadOk, setUploadOk] = useState<boolean | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [alsoPostToFlow, setAlsoPostToFlow] = useState(false);
@@ -150,6 +153,10 @@ const SmartboardDetailPage = () => {
 
       // Upload file if provided
       if (uploadTypes.includes(itemType) && imageFile) {
+        // Belt-and-suspenders: refuse to send anything the allowlist already rejected.
+        if (uploadOk === false) {
+          throw new Error("This file type isn't allowed by upload policy.");
+        }
         // Path layout enforced by buildSmartboardFilePath so RLS stays happy.
         const path = buildSmartboardFilePath(id!, user!.id, imageFile, { kind: "item" });
         const { url, error: uploadErrMsg } = await uploadAndGetUrl(SMARTBOARD_BUCKET, path, imageFile);
@@ -199,6 +206,7 @@ const SmartboardDetailPage = () => {
       setItemContent("");
       setItemLink("");
       setImageFile(null);
+      setUploadOk(null);
       setAlsoPostToFlow(false);
       toast.success(alsoPostToFlow ? "Added to board & Flow Mode!" : "Item added!");
     },
@@ -409,7 +417,7 @@ const SmartboardDetailPage = () => {
                     variant={itemType === type ? "default" : "outline"}
                     size="sm"
                     className="rounded-full capitalize"
-                    onClick={() => { setItemType(type); setImageFile(null); setItemLink(""); }}
+                    onClick={() => { setItemType(type); setImageFile(null); setUploadOk(null); setItemLink(""); }}
                   >
                     {type === "note" && <StickyNote className="mr-1 h-4 w-4" />}
                     {type === "link" && <Link2 className="mr-1 h-4 w-4" />}
@@ -445,7 +453,7 @@ const SmartboardDetailPage = () => {
                         ".pdf"
                       }
                       className="hidden"
-                      onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                      onChange={(e) => { setImageFile(e.target.files?.[0] || null); setUploadOk(null); }}
                     />
                     <div
                       onClick={() => fileInputRef.current?.click()}
@@ -481,6 +489,8 @@ const SmartboardDetailPage = () => {
                       <UploadFileMeta
                         file={imageFile}
                         path={buildSmartboardFilePath(id, user.id, imageFile, { kind: "item" })}
+                        allow={MEDIA_ALLOWLIST}
+                        onValidation={(ok) => setUploadOk(ok)}
                       />
                     )}
                     <div className="mt-3">
@@ -508,7 +518,13 @@ const SmartboardDetailPage = () => {
                     Also share to Flow Mode
                   </Label>
                 </div>
-                <Button type="submit" className="w-full rounded-full">Add to Board</Button>
+                <Button
+                  type="submit"
+                  className="w-full rounded-full"
+                  disabled={!!imageFile && uploadOk === false}
+                >
+                  Add to Board
+                </Button>
               </form>
             </DialogContent>
           </Dialog>
