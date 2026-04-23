@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate, NavLink, Link, useLocation } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import AppSidebar from "@/components/AppSidebar";
 import DockBar from "@/components/DockBar";
@@ -44,12 +44,14 @@ const PAGES = [
   { name: "Settings", path: "/settings", icon: SettingsIcon },
 ];
 
-// Persistent top-nav links shown in header for both guests and signed-in users
-const HEADER_NAV = [
+// Persistent top-nav links shown in header for both guests and signed-in users.
+// `matchPaths` lets one nav entry stay active for multiple related routes
+// (e.g. Drops highlights for /drop-rooms and /drop-rooms/:id).
+const HEADER_NAV: Array<{ name: string; path: string; matchPaths?: string[] }> = [
   { name: "Studios", path: "/studios" },
   { name: "Hub", path: "/creators" },
   { name: "Boards", path: "/smartboards" },
-  { name: "Drops", path: "/droprooms" },
+  { name: "Drops", path: "/drop-rooms", matchPaths: ["/drop-rooms", "/droprooms"] },
 ];
 
 const AppLayout = () => {
@@ -149,24 +151,33 @@ const AppLayout = () => {
           <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/90 backdrop-blur-sm px-4 md:px-6 gap-4">
             <div className="flex items-center gap-3 shrink-0">
               <SidebarTrigger className="shrink-0" />
-              {/* Persistent top-nav links — visible on desktop for guests + signed-in */}
+              {/* Persistent top-nav links — visible on desktop for guests + signed-in.
+                  Active state matches the entry's `path` plus any `matchPaths` and their
+                  nested routes (e.g. /drop-rooms/:id), so deep-linked pages stay highlighted. */}
               <nav className="hidden lg:flex items-center gap-1">
-                {HEADER_NAV.map((item) => (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    className={({ isActive }) =>
-                      cn(
+                {HEADER_NAV.map((item) => {
+                  const candidates = item.matchPaths ?? [item.path];
+                  const isActive = candidates.some(
+                    (p) =>
+                      location.pathname === p ||
+                      location.pathname.startsWith(p + "/"),
+                  );
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      aria-current={isActive ? "page" : undefined}
+                      className={cn(
                         "px-3 py-1.5 rounded-lg text-sm font-body font-medium transition-colors",
                         isActive
                           ? "bg-muted text-foreground"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                      )
-                    }
-                  >
-                    {item.name}
-                  </NavLink>
-                ))}
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+                      )}
+                    >
+                      {item.name}
+                    </Link>
+                  );
+                })}
               </nav>
             </div>
 
