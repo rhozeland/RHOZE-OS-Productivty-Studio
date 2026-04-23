@@ -303,12 +303,13 @@ const FlowModePage = () => {
   });
 
   const { data: smartboards } = useQuery({
-    queryKey: ["smartboards-for-flow"],
+    queryKey: ["smartboards-for-flow", user?.id ?? "guest"],
     queryFn: async () => {
-      const { data } = await supabase.from("smartboards").select("id, title, cover_color").eq("user_id", user!.id);
+      if (!user) return [];
+      const { data } = await supabase.from("smartboards").select("id, title, cover_color").eq("user_id", user.id);
       return data ?? [];
     },
-    enabled: calibrated,
+    enabled: calibrated && !!user,
   });
 
   const interact = useMutation({
