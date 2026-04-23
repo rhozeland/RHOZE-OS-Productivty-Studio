@@ -468,6 +468,16 @@ const ClaimRhozeButton = ({
             {/* Warning + acknowledgment */}
             <button
               type="button"
+              role="checkbox"
+              aria-checked={acknowledged}
+              aria-labelledby="claim-ack-label"
+              aria-describedby="claim-ack-desc"
+              onKeyDown={(e) => {
+                if (e.key === " " || e.key === "Enter") {
+                  e.preventDefault();
+                  setAcknowledged((a) => !a);
+                }
+              }}
               onClick={() => setAcknowledged((a) => !a)}
               className={`w-full text-left flex items-start gap-3 rounded-xl border p-3 transition-colors ${
                 acknowledged
@@ -476,6 +486,7 @@ const ClaimRhozeButton = ({
               }`}
             >
               <div
+                aria-hidden="true"
                 className={`mt-0.5 h-4 w-4 rounded border flex items-center justify-center shrink-0 ${
                   acknowledged
                     ? "bg-primary border-primary"
@@ -487,11 +498,17 @@ const ClaimRhozeButton = ({
                 )}
               </div>
               <div className="flex-1 space-y-1">
-                <p className="text-xs font-body font-medium text-foreground flex items-center gap-1.5">
-                  <AlertTriangle className="h-3 w-3 text-primary" />
+                <p
+                  id="claim-ack-label"
+                  className="text-xs font-body font-medium text-foreground flex items-center gap-1.5"
+                >
+                  <AlertTriangle className="h-3 w-3 text-primary" aria-hidden="true" />
                   I confirm this is my wallet
                 </p>
-                <p className="text-[11px] text-muted-foreground font-body leading-relaxed">
+                <p
+                  id="claim-ack-desc"
+                  className="text-[11px] text-muted-foreground font-body leading-relaxed"
+                >
                   Tokens sent to the wrong address cannot be recovered. Your
                   account will be permanently bound to this wallet.
                 </p>
