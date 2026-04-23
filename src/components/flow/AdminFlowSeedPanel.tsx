@@ -455,7 +455,7 @@ const AdminFlowSeedPanel = () => {
             onClick={() => runMutation.mutate()}
             disabled={
               !preview ||
-              preview.willInsert === 0 ||
+              (preview.willInsert === 0 && (preview.willUpdate ?? 0) === 0) ||
               runMutation.isPending ||
               previewMutation.isPending
             }
@@ -464,8 +464,11 @@ const AdminFlowSeedPanel = () => {
             {runMutation.isPending ? (
               <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
             ) : null}
-            Run seed
-            {preview && preview.willInsert > 0 ? ` (${preview.willInsert})` : ""}
+            {preview && preview.willInsert === 0 && (preview.willUpdate ?? 0) > 0
+              ? `Sync (${preview.willUpdate})`
+              : `Run seed${
+                  preview && preview.willInsert > 0 ? ` (${preview.willInsert})` : ""
+                }`}
           </Button>
         </div>
       </PopoverContent>
