@@ -139,6 +139,20 @@ const UploadFileMeta = ({ file, path, className, allow, onValidation, cacheContr
         )}
       </div>
 
+      {/* Exact request headers Supabase Storage will receive on .upload() */}
+      <div className="mt-1.5 rounded-md border border-border/60 bg-background/40 px-2 py-1.5">
+        <div className="flex items-center gap-1.5 text-foreground/80 font-medium mb-1">
+          <Server className="h-3 w-3" aria-hidden="true" />
+          <span>Headers to Supabase</span>
+        </div>
+        <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 font-mono text-foreground/90">
+          <span className="text-muted-foreground/70">Content-Type</span>
+          <span className="truncate" title={contentType}>{contentType}</span>
+          <span className="text-muted-foreground/70">Cache-Control</span>
+          <span className="truncate" title={cacheControl}>{cacheControl}</span>
+        </div>
+      </div>
+
       {showVerdict && (
         <div
           className={`mt-1.5 flex items-start gap-1.5 rounded-md px-2 py-1 ${
