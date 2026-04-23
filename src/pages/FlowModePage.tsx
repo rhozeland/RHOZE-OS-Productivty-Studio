@@ -37,11 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { FlowScopeToggle } from "@/components/flow/FlowScopeToggle";
 import {
   Sheet,
   SheetContent,
@@ -1011,52 +1007,16 @@ const FlowModePage = () => {
         </div>
 
         {/* Feed scope toggle: All categories ↔ user's preferred picks. Hidden when
-            the user has no saved preferences (preferred would equal All anyway). */}
-        {preferredCategories.length > 0 &&
-          preferredCategories.length < CATEGORIES.length && (
-            <div className="hidden sm:flex items-center gap-0.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/30 p-0.5">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setScope("preferred")}
-                    className={cn(
-                      "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                      feedScope === "preferred"
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                    aria-pressed={feedScope === "preferred"}
-                    aria-label="Show only your preferred categories"
-                  >
-                    For You
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-[220px] text-center">
-                  Curated to the categories you picked during onboarding — a tighter, personalized feed.
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setScope("all")}
-                    className={cn(
-                      "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                      feedScope === "all"
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                    aria-pressed={feedScope === "all"}
-                    aria-label="Show every category"
-                  >
-                    All
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-[220px] text-center">
-                  Every category from across Rhozeland — broader discovery beyond your saved picks.
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          )}
+            the user has no saved preferences (preferred would equal All anyway).
+            Extracted into <FlowScopeToggle /> so it can be unit-tested in isolation. */}
+        <FlowScopeToggle
+          scope={feedScope}
+          onScopeChange={setScope}
+          visible={
+            preferredCategories.length > 0 &&
+            preferredCategories.length < CATEGORIES.length
+          }
+        />
 
         {/* Inline scope-refresh pill — sits next to the scope toggle so the
             user sees a localized "feed is updating" affordance the moment
