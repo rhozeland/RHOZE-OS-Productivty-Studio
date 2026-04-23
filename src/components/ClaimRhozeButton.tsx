@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,8 +14,36 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2, Download, Wallet, Copy, Check, ShieldCheck, AlertTriangle } from "lucide-react";
+import {
+  Loader2,
+  Download,
+  Wallet,
+  Copy,
+  Check,
+  ShieldCheck,
+  AlertTriangle,
+  ExternalLink,
+  RefreshCw,
+  Fuel,
+  Hash,
+  Network,
+} from "lucide-react";
 import RhozeClaimCelebration from "@/components/RhozeClaimCelebration";
+
+const SOLANA_RPC = "https://api.mainnet-beta.solana.com";
+const LAMPORTS_PER_SOL = 1_000_000_000;
+// Base sig fee (5000 lamports) + small priority buffer; ATA creation adds ~0.00203928 SOL rent (paid by payout wallet, not user)
+const ESTIMATED_FEE_LAMPORTS = 5000;
+
+interface TxPreview {
+  blockhash: string;
+  lastValidBlockHeight: number;
+  feeLamports: number;
+  slot: number;
+}
+
+const formatSol = (lamports: number) =>
+  (lamports / LAMPORTS_PER_SOL).toFixed(9).replace(/0+$/, "").replace(/\.$/, "");
 
 interface ClaimRhozeButtonProps {
   creditsToClaim: number;
@@ -46,8 +74,41 @@ const ClaimRhozeButton = ({
     open: false,
     amount: 0,
   });
+  const [preview, setPreview] = useState<TxPreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
   const walletAddress = publicKey?.toBase58() ?? "";
+
+  const fetchPreview = async () => {
+    setPreviewLoading(true);
+    setPreviewError(null);
+    try {
+      const res = await fetch(SOLANA_RPC, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify([
+          { jsonrpc: "2.0", id: 1, method: "getLatestBlockhash", params: [{ commitment: "finalized" }] },
+          { jsonrpc: "2.0", id: 2, method: "getSlot", params: [{ commitment: "finalized" }] },
+        ]),
+      });
+      const json = await res.json();
+      const bhResult = Array.isArray(json) ? json.find((r) => r.id === 1)?.result?.value : null;
+      const slotResult = Array.isArray(json) ? json.find((r) => r.id === 2)?.result : null;
+      if (!bhResult?.blockhash) throw new Error("No blockhash returned");
+      setPreview({
+        blockhash: bhResult.blockhash,
+        lastValidBlockHeight: bhResult.lastValidBlockHeight,
+        feeLamports: ESTIMATED_FEE_LAMPORTS,
+        slot: typeof slotResult === "number" ? slotResult : 0,
+      });
+    } catch (e: any) {
+      setPreviewError(e?.message || "Couldn't fetch network preview");
+      setPreview(null);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
 
   const openConfirm = () => {
     if (!publicKey || !user) {
@@ -59,8 +120,15 @@ const ClaimRhozeButton = ({
       return;
     }
     setAcknowledged(false);
+    setPreview(null);
+    setPreviewError(null);
     setConfirmOpen(true);
   };
+
+  useEffect(() => {
+    if (!confirmOpen) return;
+    fetchPreview();
+  }, [confirmOpen]);
 
   const copyAddress = async () => {
     if (!walletAddress) return;
@@ -213,6 +281,91 @@ const ClaimRhozeButton = ({
               <p className="text-[10px] font-mono text-muted-foreground break-all">
                 {walletAddress}
               </p>
+            </div>
+
+            {/* Transaction preview */}
+            <div className="rounded-xl border border-border bg-card/60 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-body flex items-center gap-1.5">
+                  <Network className="h-3 w-3" />
+                  Transaction preview
+                </p>
+                <button
+                  type="button"
+                  onClick={fetchPreview}
+                  disabled={previewLoading}
+                  className="text-[10px] font-body text-muted-foreground hover:text-foreground inline-flex items-center gap-1 disabled:opacity-50"
+                  title="Refresh preview"
+                >
+                  <RefreshCw className={`h-3 w-3 ${previewLoading ? "animate-spin" : ""}`} />
+                  Refresh
+                </button>
+              </div>
+
+              {previewLoading && !preview ? (
+                <div className="space-y-2">
+                  <div className="h-3 w-2/3 rounded bg-muted/50 animate-pulse" />
+                  <div className="h-3 w-1/2 rounded bg-muted/50 animate-pulse" />
+                  <div className="h-3 w-3/4 rounded bg-muted/50 animate-pulse" />
+                </div>
+              ) : previewError ? (
+                <p className="text-[11px] text-destructive font-body">
+                  {previewError}. You can still claim — preview is informational only.
+                </p>
+              ) : preview ? (
+                <div className="space-y-2 text-[11px] font-body">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground inline-flex items-center gap-1.5">
+                      <Network className="h-3 w-3" /> Network
+                    </span>
+                    <span className="font-mono text-foreground">Solana mainnet-beta</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground inline-flex items-center gap-1.5">
+                      <Fuel className="h-3 w-3" /> Est. network fee
+                    </span>
+                    <span className="font-mono text-foreground tabular-nums">
+                      ~{formatSol(preview.feeLamports)} SOL
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground">Fees paid by</span>
+                    <span className="font-mono text-foreground">Rhozeland payout wallet</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground inline-flex items-center gap-1.5">
+                      <Hash className="h-3 w-3" /> Recent blockhash
+                    </span>
+                    <span className="font-mono text-foreground" title={preview.blockhash}>
+                      {preview.blockhash.slice(0, 6)}…{preview.blockhash.slice(-6)}
+                    </span>
+                  </div>
+                  {preview.slot > 0 && (
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">Current slot</span>
+                      <span className="font-mono text-foreground tabular-nums">
+                        {preview.slot.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground">Valid until block</span>
+                    <span className="font-mono text-foreground tabular-nums">
+                      {preview.lastValidBlockHeight.toLocaleString()}
+                    </span>
+                  </div>
+
+                  <a
+                    href={`https://explorer.solana.com/address/${walletAddress}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-primary hover:underline font-body"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Preview destination on Solana Explorer
+                  </a>
+                </div>
+              ) : null}
             </div>
 
             {/* Warning + acknowledgment */}
