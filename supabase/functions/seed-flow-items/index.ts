@@ -303,23 +303,28 @@ Deno.serve(async (req) => {
       // empty body → treat as dry run
     }
 
-    // ── Compute net-new vs existing (dedupe by title) ─────────────────────
+    // ── Match seeds against existing rows by title (idempotent) ──────────
+    // Rerunning the seed UPDATES existing rows in place rather than skipping
+    // them, so edits to descriptions, tags, categories, or media URLs in the
+    // SEED_ITEMS array propagate on the next run without duplicating posts.
     const titles = SEED_ITEMS.map((s) => s.title);
     const { data: existing, error: existingErr } = await admin
       .from("flow_items")
-      .select("title")
+      .select("id, title")
       .in("title", titles);
     if (existingErr) {
       return json({ error: existingErr.message }, 500);
     }
 
-    const existingTitles = new Set((existing ?? []).map((r) => r.title));
-    const toInsertRaw = SEED_ITEMS.filter((s) => !existingTitles.has(s.title));
+    const existingByTitle = new Map(
+      (existing ?? []).map((r) => [r.title, r.id] as const),
+    );
 
-    // Probe every candidate's media in parallel and swap in fallbacks if any
-    // external URL failed. This runs for both dry-run and real inserts so the
-    // admin always sees the same accurate fallback report.
-    const resolved = await resolveSeedMedia(toInsertRaw);
+    // Probe ALL seed items (both new and existing) so updates also benefit
+    // from fallback URL substitution if originals have since broken.
+    const resolved = await resolveSeedMedia(SEED_ITEMS);
+    const toInsert = resolved.filter((r) => !existingByTitle.has(r.title));
+    const toUpdate = resolved.filter((r) => existingByTitle.has(r.title));
 
     // Build the failure log (only items that needed a fallback).
     const failedItems = resolved
