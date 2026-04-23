@@ -74,7 +74,15 @@ const SettingsPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bannerFileRef = useRef<HTMLInputElement>(null);
 
-  const [activeSection, setActiveSection] = useState<SectionId>("profile");
+  // Active sub-section is driven by the URL hash (e.g. /settings#wallet) via
+  // a tiny hook that defaults safely when the hash is missing or unknown.
+  // This makes every section deep-linkable and lets the shared nav resolver
+  // decide which link is "active", just like the dock and header do.
+  const SECTION_IDS = SECTIONS.map((s) => s.id) as readonly SectionId[];
+  const activeSection = useActiveSettingsSection<SectionId>(
+    SECTION_IDS,
+    "profile",
+  );
 
   // Profile fields
   const [displayName, setDisplayName] = useState("");
