@@ -273,8 +273,8 @@ const AdminFlowSeedPanel = () => {
               </div>
 
               {preview.fallbackCount && preview.fallbackCount > 0 ? (
-                <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2.5 py-1.5">
-                  <AlertTriangle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-2.5 py-1.5">
+                  <AlertTriangle className="h-3.5 w-3.5 text-destructive mt-0.5 shrink-0" />
                   <p className="text-[11px] text-foreground leading-snug">
                     <span className="font-semibold">{preview.fallbackCount}</span>{" "}
                     item{preview.fallbackCount === 1 ? "" : "s"} will use fallback
