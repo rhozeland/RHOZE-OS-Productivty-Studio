@@ -5,6 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadAndGetUrl } from "@/lib/storage-utils";
 import { buildSmartboardFilePath, SMARTBOARD_BUCKET } from "@/lib/smartboard-paths";
+import UploadFileMeta from "@/components/upload/UploadFileMeta";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Paintbrush, ImageIcon, Upload, X } from "lucide-react";
@@ -55,6 +56,8 @@ const BackgroundCustomizer = ({
   const [blur, setBlur] = useState(currentBlur);
   const [opacity, setOpacity] = useState(currentOpacity);
   const [uploading, setUploading] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingPath, setPendingPath] = useState<string>("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const save = async () => {

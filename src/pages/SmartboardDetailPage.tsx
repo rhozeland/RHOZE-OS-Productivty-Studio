@@ -477,6 +477,12 @@ const SmartboardDetailPage = () => {
                         </>
                       )}
                     </div>
+                    {imageFile && id && user && (
+                      <UploadFileMeta
+                        file={imageFile}
+                        path={buildSmartboardFilePath(id, user.id, imageFile, { kind: "item" })}
+                      />
+                    )}
                     <div className="mt-3">
                       <Input
                         placeholder={
