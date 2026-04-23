@@ -74,11 +74,16 @@ const AppSidebar = () => {
     if (isMobile) setOpenMobile(false);
   };
 
+  // Use the shared resolver so the sidebar's "active" rules match the
+  // header nav and DockBar exactly (including legacy aliases + sub-routes).
   const isActive = (path: string) =>
-    location.pathname === path || location.pathname.startsWith(path + "/");
+    resolveNavLink({ path }, location.pathname).isActive;
 
   const renderNavItem = (item: any) => {
-    const active = isActive(item.path);
+    const { to, isActive: active, ariaCurrent } = resolveNavLink(
+      { path: item.path },
+      location.pathname,
+    );
 
     return (
       <SidebarMenuItem key={item.path + item.label} className={cn(collapsed && "flex justify-center")}>
@@ -89,7 +94,8 @@ const AppSidebar = () => {
           className={cn(collapsed && "mx-auto")}
         >
           <Link
-            to={item.path}
+            to={to}
+            aria-current={ariaCurrent}
             onClick={handleNavClick}
             className={cn(
               "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-250",
