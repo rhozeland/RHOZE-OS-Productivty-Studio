@@ -13,6 +13,11 @@ interface UploadFileMetaProps {
   allow?: UploadAllowlist;
   /** Called whenever validation re-runs so parents can disable submit buttons. */
   onValidation?: (ok: boolean, reason?: string) => void;
+  /**
+   * Cache-Control max-age (seconds) the upload site will pass to Supabase.
+   * Defaults to 3600 — Supabase Storage's own default when none is supplied.
+   */
+  cacheControlSeconds?: number;
 }
 
 /**
