@@ -32,6 +32,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   LinkIcon,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 
