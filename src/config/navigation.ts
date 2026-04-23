@@ -212,10 +212,23 @@ validateAliases(NAV_ALIASES);
  *   resolveAlias("/dashboard")          // null
  */
 export const resolveAlias = (pathname: string): string | null => {
-  for (const { from, to } of NAV_ALIASES) {
-    if (pathname === from) return to;
+  const match = matchAlias(pathname);
+  return match ? match.to : null;
+};
+
+/**
+ * Like `resolveAlias` but also returns which alias entry matched, so
+ * callers (e.g. analytics) can attribute the redirect to a specific
+ * legacy prefix.
+ */
+export const matchAlias = (
+  pathname: string,
+): { from: string; to: string; alias: NavAlias } | null => {
+  for (const alias of NAV_ALIASES) {
+    const { from, to } = alias;
+    if (pathname === from) return { from: pathname, to, alias };
     if (pathname.startsWith(from + "/")) {
-      return to + pathname.slice(from.length);
+      return { from: pathname, to: to + pathname.slice(from.length), alias };
     }
   }
   return null;
