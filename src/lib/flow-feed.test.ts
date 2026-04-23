@@ -9,7 +9,7 @@
  * the chained query-builder API the loader uses.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { loadFlowFeed, ALL_CATEGORIES, type FlowSupabase } from "./flow-feed";
+import { loadFlowFeed, ALL_CATEGORIES, clearFlowProfileCache, type FlowSupabase } from "./flow-feed";
 
 type Row = Record<string, unknown>;
 
