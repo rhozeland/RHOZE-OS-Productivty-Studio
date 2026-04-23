@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { safeFileExt, safeContentType } from "@/lib/file-ext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -174,9 +175,9 @@ const SettingsPage = () => {
     if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop();
+      const ext = safeFileExt(file);
       const path = `${user.id}/avatar.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("avatar-uploads").upload(path, file, { upsert: true });
+      const { error: uploadError } = await supabase.storage.from("avatar-uploads").upload(path, file, { upsert: true, contentType: safeContentType(file) });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from("avatar-uploads").getPublicUrl(path);
       const url = `${urlData.publicUrl}?t=${Date.now()}`;
@@ -194,9 +195,9 @@ const SettingsPage = () => {
     if (file.size > 10 * 1024 * 1024) { toast.error("Banner image must be under 10MB"); return; }
     setUploadingBanner(true);
     try {
-      const ext = file.name.split(".").pop();
+      const ext = safeFileExt(file);
       const path = `${user.id}/banner.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("avatar-uploads").upload(path, file, { upsert: true });
+      const { error: uploadError } = await supabase.storage.from("avatar-uploads").upload(path, file, { upsert: true, contentType: safeContentType(file) });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from("avatar-uploads").getPublicUrl(path);
       const url = `${urlData.publicUrl}?t=${Date.now()}`;

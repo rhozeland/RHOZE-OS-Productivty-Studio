@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { safeFileExt, safeContentType } from "@/lib/file-ext";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -48,9 +49,9 @@ const StudioApplicationPage = () => {
   const uploadPhotos = async (): Promise<string[]> => {
     const urls: string[] = [];
     for (const photo of photos) {
-      const ext = photo.file.name.split(".").pop();
+      const ext = safeFileExt(photo.file);
       const path = `studio-applications/${user!.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error } = await supabase.storage.from("listing-media").upload(path, photo.file);
+      const { error } = await supabase.storage.from("listing-media").upload(path, photo.file, { contentType: safeContentType(photo.file) });
       if (!error) {
         const { data } = supabase.storage.from("listing-media").getPublicUrl(path);
         urls.push(data.publicUrl);

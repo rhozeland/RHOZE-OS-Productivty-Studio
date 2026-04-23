@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadAndGetUrl } from "@/lib/storage-utils";
+import { safeFileExt } from "@/lib/file-ext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,7 +101,7 @@ const ChatAttachmentMenu = ({ onSendMessage, onSendQuote, disabled }: ChatAttach
           toast.error(`${file.name} is too large (max 20MB)`);
           continue;
         }
-        const fileExt = file.name.split(".").pop();
+        const fileExt = safeFileExt(file);
         const filePath = `chat/${user.id}/${crypto.randomUUID()}.${fileExt}`;
         const { url: signedUrl, error: uploadErrMsg } = await uploadAndGetUrl("smartboard-files", filePath, file);
         if (uploadErrMsg) {

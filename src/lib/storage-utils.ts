@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { safeContentType } from "@/lib/file-ext";
 
 const PRIVATE_BUCKETS = ["smartboard-files", "moodboard"];
 const SIGNED_URL_EXPIRY = 3600; // 1 hour
@@ -6,13 +7,26 @@ const SIGNED_URL_EXPIRY = 3600; // 1 hour
 /**
  * For private buckets, uploads a file and returns a signed URL.
  * For public buckets, returns the public URL as before.
+ *
+ * Always passes an explicit content-type so files without a clear extension
+ * (or where the browser omitted `file.type`) are still served correctly.
  */
 export async function uploadAndGetUrl(
   bucket: string,
   path: string,
-  file: File
+  file: File | Blob,
+  options?: { upsert?: boolean; contentType?: string }
 ): Promise<{ url: string; error: string | null }> {
-  const { error } = await supabase.storage.from(bucket).upload(path, file);
+  const contentType =
+    options?.contentType ||
+    safeContentType({
+      name: (file as File).name,
+      type: (file as Blob).type,
+    });
+  const { error } = await supabase.storage.from(bucket).upload(path, file, {
+    upsert: options?.upsert,
+    contentType,
+  });
   if (error) return { url: "", error: error.message };
 
   if (PRIVATE_BUCKETS.includes(bucket)) {

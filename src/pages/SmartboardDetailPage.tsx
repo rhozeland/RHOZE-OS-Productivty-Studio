@@ -5,6 +5,7 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadAndGetUrl } from "@/lib/storage-utils";
+import { safeFileExt } from "@/lib/file-ext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -147,8 +148,7 @@ const SmartboardDetailPage = () => {
 
       // Upload file if provided
       if (uploadTypes.includes(itemType) && imageFile) {
-        const rawExt = imageFile.name.includes(".") ? imageFile.name.split(".").pop() : "";
-        const ext = (rawExt || imageFile.type.split("/")[1] || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const ext = safeFileExt(imageFile);
         // IMPORTANT: board id must be the FIRST path segment so RLS (can_read_smartboard_file) can authorize reads
         const path = `${id}/${user!.id}/${Date.now()}.${ext}`;
         const { url, error: uploadErrMsg } = await uploadAndGetUrl("smartboard-files", path, imageFile);

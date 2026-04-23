@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { safeFileExt, safeContentType } from "@/lib/file-ext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -125,9 +126,9 @@ const CreateListingDialog = ({ open, onOpenChange, prefill }: CreateListingDialo
       // Upload media files
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const ext = file.name.split(".").pop();
+        const ext = safeFileExt(file);
         const path = `${user.id}/${listing.id}/${Date.now()}-${i}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("listing-media").upload(path, file);
+        const { error: upErr } = await supabase.storage.from("listing-media").upload(path, file, { contentType: safeContentType(file) });
         if (upErr) { toast.error(`Failed to upload ${file.name}`); continue; }
         const { data: urlData } = supabase.storage.from("listing-media").getPublicUrl(path);
 
