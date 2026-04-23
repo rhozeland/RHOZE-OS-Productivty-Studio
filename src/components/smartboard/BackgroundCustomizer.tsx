@@ -209,7 +209,12 @@ const BackgroundCustomizer = ({
               />
             )}
             {pendingFile && (
-              <UploadFileMeta file={pendingFile} path={pendingPath} />
+              <UploadFileMeta
+                file={pendingFile}
+                path={pendingPath}
+                allow={IMAGE_ALLOWLIST}
+                onValidation={(ok) => setUploadOk(ok)}
+              />
             )}
           </div>
 
