@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useNavigate, Link, NavLink, useLocation } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import AppSidebar from "@/components/AppSidebar";
 import DockBar from "@/components/DockBar";
@@ -169,22 +169,31 @@ const AppLayout = () => {
                   navigation.ts are picked up automatically). */}
               <nav className="hidden lg:flex items-center gap-1">
                 {HEADER_NAV.map((item) => {
-                  const isActive = isNavItemActive(item, location.pathname);
                   const label = HEADER_LABELS[item.id] ?? item.label;
+                  // Use NavLink so React Router manages aria-current="page".
+                  // We also call our shared `isNavItemActive` to cover legacy
+                  // matchPaths (e.g. /droprooms → Drops) that NavLink's own
+                  // matcher won't know about.
                   return (
-                    <Link
+                    <NavLink
                       key={item.id}
                       to={item.path}
-                      aria-current={isActive ? "page" : undefined}
-                      className={cn(
-                        "px-3 py-1.5 rounded-lg text-sm font-body font-medium transition-colors",
-                        isActive
-                          ? "bg-muted text-foreground"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
-                      )}
+                      end={item.path === "/"}
+                      className={({ isActive }) => {
+                        const active =
+                          isActive || isNavItemActive(item, location.pathname);
+                        return cn(
+                          "px-3 py-1.5 rounded-lg text-sm font-body font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                          active
+                            ? // Active styles win over hover/focus by repeating
+                              // bg + text in hover/focus variants.
+                              "bg-muted text-foreground hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:text-foreground"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/60 focus-visible:text-foreground focus-visible:bg-muted/60",
+                        );
+                      }}
                     >
                       {label}
-                    </Link>
+                    </NavLink>
                   );
                 })}
               </nav>
