@@ -950,6 +950,27 @@ const FlowModePage = () => {
             </div>
           )}
 
+        {/* Inline scope-refresh pill — sits next to the scope toggle so the
+            user sees a localized "feed is updating" affordance the moment
+            they flip scopes, without waiting on the full-card overlay. */}
+        <AnimatePresence>
+          {isFeedRefreshing && (
+            <motion.div
+              key="scope-refresh-pill"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-card/70 backdrop-blur-sm border border-border/40 px-2.5 py-1 text-[11px] font-body text-muted-foreground"
+              role="status"
+              aria-live="polite"
+            >
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Refreshing feed…
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="flex items-center gap-1.5 shrink-0">
           <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
             <SheetTrigger asChild>
