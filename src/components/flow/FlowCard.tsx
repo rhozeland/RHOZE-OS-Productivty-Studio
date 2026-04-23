@@ -83,9 +83,10 @@ interface FlowCardProps {
   onDelete?: () => void;
   isOwner?: boolean;
   isAdmin?: boolean;
+  feedScope?: "all" | "preferred";
 }
 
-const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner, isAdmin }: FlowCardProps) => {
+const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner, isAdmin, feedScope }: FlowCardProps) => {
   const navigate = useNavigate();
   const [imageEnlarged, setImageEnlarged] = useState(false);
   const platform = detectPlatform(item.link_url);
