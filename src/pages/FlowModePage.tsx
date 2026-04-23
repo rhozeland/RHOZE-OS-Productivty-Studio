@@ -637,6 +637,8 @@ const FlowModePage = () => {
     },
     [calibrationKey, preferredCategories],
   );
+
+  const advanceCard = useCallback(() => {
     setTimeout(() => {
       setCurrentIndex((i) => i + 1); // No cap — modulo handles looping
       setExpandedCard(false);
