@@ -30,6 +30,7 @@ const SECTIONS = [
   { id: "profile", label: "Profile", icon: User },
   { id: "appearance", label: "Appearance", icon: Palette },
   { id: "dock", label: "Dock Menu", icon: LayoutDashboard },
+  { id: "flow-cards", label: "Flow Cards", icon: Sparkles },
   { id: "avatar", label: "Display Picture", icon: Camera },
   { id: "banner", label: "Banner & Background", icon: Palette },
   { id: "wallet", label: "Wallet", icon: Wallet },
