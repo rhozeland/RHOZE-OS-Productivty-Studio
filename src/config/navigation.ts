@@ -105,25 +105,54 @@ export const partitionDockIds = (
 };
 
 // ============================================================================
-// Legacy aliases / redirects
+// Legacy aliases / redirects — central registry
 // ============================================================================
 //
-// Centralized map of legacy URL prefixes → canonical paths. Derived
-// automatically from each nav item's `matchPaths`, so adding a new alias
-// is a one-line change in NAV_ITEMS — the router picks it up via
-// LegacyAliasRedirect (see src/components/LegacyAliasRedirect.tsx).
+// ONE place to register a legacy URL → canonical URL rewrite. Two sources
+// feed the final table, both routed through `LegacyAliasRedirect` which
+// preserves suffix, search, and hash:
 //
-// Add ad-hoc redirects (paths not tied to a nav item) to EXTRA_ALIASES.
+//   1. NavItem.matchPaths   — for legacy URLs tied to a primary nav
+//                             destination. Adding the entry to NAV_ITEMS
+//                             also keeps the link "active" in the dock.
+//   2. EXTRA_ALIASES        — for ad-hoc / cross-cutting redirects that
+//                             don't belong to a single nav item (renamed
+//                             marketing pages, feature relocations, etc.).
+//
+// To add a NEW legacy redirect:
+//
+//   • If the canonical destination is already a NavItem:
+//       Add `matchPaths: ["/old-path"]` to that NavItem above.
+//
+//   • Otherwise (any other rewrite):
+//       Add `{ from: "/legacy", to: "/new-canonical" }` to EXTRA_ALIASES.
+//
+// That's it. The router (App.tsx) auto-mounts `<from>/*` for every entry,
+// REGISTERED_ROUTE_PATHS picks them up for the nav-link sanity check, and
+// `resolveAlias` handles suffix preservation. `LegacyAliasRedirect`
+// re-attaches the original `?search` and `#hash` so deep links survive.
 
-interface NavAlias {
+export interface NavAlias {
   /** Legacy prefix (no trailing slash, no wildcard). e.g. `/droprooms` */
   from: string;
   /** Canonical replacement prefix. e.g. `/drop-rooms` */
   to: string;
 }
 
-const EXTRA_ALIASES: NavAlias[] = [
-  // Add cross-cutting aliases here that don't belong to a single nav item.
+/**
+ * Ad-hoc redirects not bound to a NavItem. Edit this array to add a new
+ * legacy → canonical mapping; everything else (route registration, suffix
+ * preservation, search/hash carry-over) is automatic.
+ *
+ * Rules enforced at module load (see `validateAliases`):
+ *   - `from` and `to` must start with `/` and have no trailing slash
+ *   - `from` must not equal `to` (would loop)
+ *   - `to` must not be a sub-path of `from` (would loop on the suffix)
+ *   - no duplicate `from` entries across NAV_ITEMS.matchPaths + EXTRA_ALIASES
+ */
+export const EXTRA_ALIASES: NavAlias[] = [
+  // Example (uncomment + edit when you need one):
+  // { from: "/old-marketing-page", to: "/landing" },
 ];
 
 /**
@@ -139,8 +168,43 @@ export const NAV_ALIASES: NavAlias[] = [
 ];
 
 /**
+ * Sanity-check the alias table. Exported so tests can lock in the
+ * invariants and fail loudly if someone adds a bad entry. Throws on the
+ * first violation with a precise message naming the offending entry.
+ */
+export const validateAliases = (aliases: readonly NavAlias[]): void => {
+  const seen = new Set<string>();
+  for (const { from, to } of aliases) {
+    if (!from.startsWith("/") || !to.startsWith("/")) {
+      throw new Error(`Alias paths must start with "/": ${from} → ${to}`);
+    }
+    if (from.length > 1 && from.endsWith("/")) {
+      throw new Error(`Alias 'from' must not end with "/": ${from}`);
+    }
+    if (to.length > 1 && to.endsWith("/")) {
+      throw new Error(`Alias 'to' must not end with "/": ${to}`);
+    }
+    if (from === to) {
+      throw new Error(`Alias would loop (from === to): ${from}`);
+    }
+    if (to.startsWith(from + "/")) {
+      throw new Error(`Alias would loop on suffix: ${from} → ${to}`);
+    }
+    if (seen.has(from)) {
+      throw new Error(`Duplicate alias 'from' entry: ${from}`);
+    }
+    seen.add(from);
+  }
+};
+
+// Run once at module load so misconfigurations surface during dev/build,
+// not silently at runtime when a user hits the legacy URL.
+validateAliases(NAV_ALIASES);
+
+/**
  * Rewrites a legacy pathname to its canonical form, preserving any sub-path
- * suffix. Returns `null` if no alias matches.
+ * suffix. Returns `null` if no alias matches. Search and hash are preserved
+ * by `LegacyAliasRedirect`, not here.
  *
  * @example
  *   resolveAlias("/droprooms")          // "/drop-rooms"
