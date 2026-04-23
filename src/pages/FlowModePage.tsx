@@ -56,6 +56,7 @@ import LinkPreviewCard from "@/components/flow/LinkPreviewCard";
 import { cn } from "@/lib/utils";
 import { loadFlowFeed } from "@/lib/flow-feed";
 import AdminFlowSeedPanel from "@/components/flow/AdminFlowSeedPanel";
+import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
