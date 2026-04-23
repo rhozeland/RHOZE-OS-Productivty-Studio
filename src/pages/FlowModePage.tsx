@@ -285,50 +285,9 @@ const FlowModePage = () => {
 
   const { data: flowItems } = useQuery({
     queryKey: ["flow-items", selectedCategories],
-    queryFn: async () => {
-      // Flow Mode is a global feed — ALWAYS fetch every public flow_item from
-      // every user. selectedCategories is treated as a soft preference: matching
-      // categories are surfaced first, but nothing is hidden. This prevents the
-      // "I only see my own music" problem when a user calibrated to a single
-      // category.
-      const { data, error } = await supabase
-        .from("flow_items")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(200);
-      if (error) throw error;
-      let items = data ?? [];
-
-      // Soft sort: preferred categories first, then everything else, each group
-      // already sorted by created_at desc.
-      if (selectedCategories.length > 0 && selectedCategories.length < CATEGORIES.length) {
-        const prefSet = new Set(selectedCategories);
-        const preferred = items.filter((i) => prefSet.has(i.category));
-        const rest = items.filter((i) => !prefSet.has(i.category));
-        items = [...preferred, ...rest];
-      }
-
-      // Batch-fetch uploader profiles via the guest-safe `profiles_public` view.
-      // The base `profiles` table blocks anonymous reads on private profiles,
-      // which made other creators' artwork show up as "Unknown" for guests
-      // (and even for logged-in users browsing strangers). The view exposes
-      // only the safe attribution fields for public, non-banned accounts.
-      const userIds = [...new Set(items.map((i) => i.user_id).filter(Boolean))];
-      if (userIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from("profiles_public")
-          .select("user_id, display_name, avatar_url, username")
-          .in("user_id", userIds);
-        const profileMap = new Map(
-          (profiles ?? [])
-            .filter((p): p is { user_id: string; display_name: string | null; avatar_url: string | null; username: string | null } => !!p.user_id)
-            .map((p) => [p.user_id, p]),
-        );
-        items = items.map((i) => ({ ...i, profiles: profileMap.get(i.user_id) || null }));
-      }
-
-      return items;
-    },
+    // Flow Mode is a global feed — see `loadFlowFeed` for the contract
+    // (multi-creator visibility, soft-sort, guest-safe attribution).
+    queryFn: () => loadFlowFeed(supabase, selectedCategories),
     enabled: calibrated,
   });
 
