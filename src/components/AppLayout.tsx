@@ -33,9 +33,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRewardStreak } from "@/hooks/useRewardStreak";
 import {
   NAV_ITEMS_BY_ID,
-  isNavItemActive,
   type NavItem,
 } from "@/config/navigation";
+import { resolveNavLink } from "@/hooks/useNavLink";
 import { REGISTERED_ROUTE_PATHS } from "@/App";
 
 const PAGES = [
