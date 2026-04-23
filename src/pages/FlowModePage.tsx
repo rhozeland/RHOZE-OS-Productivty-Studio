@@ -1093,6 +1093,19 @@ const FlowModePage = () => {
       {/* ═══ SWIPE VIEW ═══ */}
       {viewMode === "swipe" && (
         <div className="relative z-10 flex flex-1 items-center justify-center px-4 pb-36 pt-2 md:pb-40">
+          {/*
+            Hard failure of the feed loader (or its profiles_public lookup)
+            takes precedence over the empty state — otherwise the user sees
+            a misleading "Nothing here yet" CTA when the real problem is a
+            network/RLS error they could resolve by retrying.
+          */}
+          {flowItemsIsError ? (
+            <FlowFeedErrorState
+              error={flowItemsError}
+              onRetry={() => void refetchFlowItems()}
+              isRetrying={flowItemsFetching}
+            />
+          ) : (
           <AnimatePresence mode="wait">
             {currentItem ? (
               <motion.div
