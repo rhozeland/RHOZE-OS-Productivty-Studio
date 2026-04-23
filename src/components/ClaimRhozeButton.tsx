@@ -77,6 +77,7 @@ const ClaimRhozeButton = ({
   const [preview, setPreview] = useState<TxPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [claimError, setClaimError] = useState<string | null>(null);
 
   const walletAddress = publicKey?.toBase58() ?? "";
 
