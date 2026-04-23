@@ -362,17 +362,26 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
         {/* ═══ POSTER INFO ═══ */}
         <div className="px-5 pb-1.5 flex items-center gap-2 min-h-[20px]">
           {(item as any).profiles ? (
+            // Clickable uploader attribution. Routes BOTH guests and signed-in
+            // users to the public profile page (`/profiles/:id` is mounted
+            // outside ProtectedRoute, so guests don't get bounced to /auth).
             <button
-              onClick={(e) => { e.stopPropagation(); navigate(`/profiles/${item.user_id}`); }}
-              className="flex items-center gap-2 group"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/profiles/${item.user_id}`);
+              }}
+              className="flex items-center gap-2 group rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 cursor-pointer"
+              aria-label={`View ${(item as any).profiles?.display_name || "uploader"}'s profile`}
+              data-testid="flow-card-uploader-link"
             >
-              <Avatar className="h-5 w-5">
+              <Avatar className="h-5 w-5 ring-1 ring-transparent group-hover:ring-primary/40 transition-all">
                 <AvatarImage src={(item as any).profiles?.avatar_url || ""} />
                 <AvatarFallback className="text-[8px] bg-muted">
                   {((item as any).profiles?.display_name || "?").charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-[11px] text-muted-foreground group-hover:text-foreground transition-colors">
+              <span className="text-[11px] text-muted-foreground group-hover:text-foreground group-hover:underline underline-offset-2 transition-colors">
                 {(item as any).profiles?.display_name || "Unknown"}
               </span>
             </button>
