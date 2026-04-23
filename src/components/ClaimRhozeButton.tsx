@@ -296,13 +296,26 @@ const ClaimRhozeButton = ({
           setConfirmOpen(o);
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent
+          className="sm:max-w-md"
+          aria-labelledby="claim-rhoze-title"
+          aria-describedby="claim-rhoze-desc"
+          onEscapeKeyDown={(e) => {
+            if (loading) e.preventDefault();
+          }}
+          onPointerDownOutside={(e) => {
+            if (loading) e.preventDefault();
+          }}
+          onInteractOutside={(e) => {
+            if (loading) e.preventDefault();
+          }}
+        >
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 font-display">
+            <DialogTitle id="claim-rhoze-title" className="flex items-center gap-2 font-display">
               <ShieldCheck className="h-5 w-5 text-primary" />
               Confirm $RHOZE claim
             </DialogTitle>
-            <DialogDescription className="font-body">
+            <DialogDescription id="claim-rhoze-desc" className="font-body">
               Review the destination wallet and amount carefully — claims are
               final and recorded on Solana.
             </DialogDescription>
