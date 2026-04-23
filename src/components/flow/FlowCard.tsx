@@ -100,13 +100,27 @@ interface FlowCardProps {
 const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner, isAdmin, profilesLoading }: FlowCardProps) => {
   const navigate = useNavigate();
   const [imageEnlarged, setImageEnlarged] = useState(false);
+  const cardPrefs = useFlowCardPrefs();
   const platform = detectPlatform(item.link_url);
   const CatIcon = CATEGORY_ICONS[item.category] || Palette;
   const catColor = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.writing;
+  // Resolve user-customized badge appearance. `catColor` becomes the
+  // fallback when the preset is "category" (the per-category default).
+  const badgeColorClass = badgeColorClassFor(cardPrefs.badgeColor, catColor);
+  const badgePlacementClass = badgePlacementClassFor(cardPrefs.badgePlacement);
   const isImage = item.content_type === "image" || item.category === "photo" || item.category === "design";
   const isAudio = item.content_type === "audio" || item.category === "music";
   const isVideo = item.content_type === "video" || item.category === "video";
   const isWriting = item.content_type === "text" || item.content_type === "link" || item.category === "writing";
+
+  // The category badge node is identical regardless of placement; only its
+  // wrapper changes (absolute over the media vs inline with the action bar).
+  const categoryBadge = cardPrefs.badgeVisible ? (
+    <Badge className={cn(badgeColorClass, "border-0 rounded-full text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 inline-flex items-center gap-1")}>
+      <CatIcon className="h-3 w-3" />
+      {item.category}
+    </Badge>
+  ) : null;
 
   const youtubeId = item.link_url ? getYouTubeId(item.link_url) : null;
   const spotifyEmbed = item.link_url ? getSpotifyEmbed(item.link_url) : null;
