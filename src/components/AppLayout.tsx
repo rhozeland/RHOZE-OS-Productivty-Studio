@@ -36,6 +36,8 @@ import {
   type NavItem,
 } from "@/config/navigation";
 import { resolveNavLink } from "@/hooks/useNavLink";
+import { useNavShortcuts } from "@/hooks/useNavShortcuts";
+import { NAV_SHORTCUTS, formatChord, formatLeader } from "@/lib/nav-shortcuts";
 import { REGISTERED_ROUTE_PATHS } from "@/App";
 
 const PAGES = [
@@ -113,7 +115,12 @@ const AppLayout = () => {
   // Only run reward streak for authenticated users
   useRewardStreak();
 
-  // Keyboard shortcut
+  // Global navigation shortcuts (Alt+1..4 and "g d / p / c / f").
+  // Active state in the dock / header / sidebar already syncs via
+  // `useLocation` + `isNavItemActive`, so navigating is enough.
+  useNavShortcuts();
+
+  // Keyboard shortcut — Cmd/Ctrl+K opens the search palette.
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
