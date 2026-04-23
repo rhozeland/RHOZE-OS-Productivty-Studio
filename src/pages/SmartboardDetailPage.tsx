@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { uploadAndGetUrl } from "@/lib/storage-utils";
+import { uploadAndGetUrl, resolveStorageUrl } from "@/lib/storage-utils";
 import { safeFileExt } from "@/lib/file-ext";
 import { buildSmartboardFilePath, SMARTBOARD_BUCKET } from "@/lib/smartboard-paths";
 import UploadFileMeta from "@/components/upload/UploadFileMeta";
@@ -98,8 +98,23 @@ const SmartboardDetailPage = () => {
         .eq("smartboard_id", id!)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      // Signed URLs in `file_url` expire after 1 hour. Re-sign them in
+      // parallel at fetch time so cards never render broken images. Items
+      // without a file_url (notes, links) pass through untouched.
+      const rows = data ?? [];
+      const resolved = await Promise.all(
+        rows.map(async (item) => {
+          if (!item.file_url) return item;
+          const fresh = await resolveStorageUrl(item.file_url);
+          return fresh === item.file_url ? item : { ...item, file_url: fresh };
+        }),
+      );
+      return resolved;
     },
+    // Signed URLs live for 1 hour; refetch every 30 minutes so we always
+    // have a fresh URL well before expiry.
+    staleTime: 30 * 60 * 1000,
+    refetchInterval: 30 * 60 * 1000,
   });
 
   const { data: members } = useQuery({

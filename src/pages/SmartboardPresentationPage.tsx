@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveStorageUrl } from "@/lib/storage-utils";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   StickyNote,
@@ -47,9 +48,21 @@ const SmartboardPresentationPage = () => {
         .eq("smartboard_id", id!)
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data ?? [];
+      // Signed URLs expire after 1 hour — re-sign in parallel so the
+      // slideshow never shows broken media.
+      const rows = data ?? [];
+      const resolved = await Promise.all(
+        rows.map(async (item) => {
+          if (!item.file_url) return item;
+          const fresh = await resolveStorageUrl(item.file_url);
+          return fresh === item.file_url ? item : { ...item, file_url: fresh };
+        }),
+      );
+      return resolved;
     },
     enabled: !!board,
+    staleTime: 30 * 60 * 1000,
+    refetchInterval: 30 * 60 * 1000,
   });
 
   // Keyboard navigation for slideshow
