@@ -76,7 +76,14 @@ const FlowModePage = () => {
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tutorialTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flowContentRef = useRef<HTMLDivElement | null>(null);
+  // Categories currently driving the feed sort. When `feedScope === "all"`, this
+  // is the full CATEGORIES list (no preference applied → pure global feed).
+  // When `feedScope === "preferred"`, this reflects the user's saved picks.
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  // Remembers the user's calibrated picks even while they're previewing "All",
+  // so flipping back to "For You" restores their preferences without re-prompting.
+  const [preferredCategories, setPreferredCategories] = useState<string[]>([]);
+  const [feedScope, setFeedScope] = useState<"all" | "preferred">("preferred");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expandedCard, setExpandedCard] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
