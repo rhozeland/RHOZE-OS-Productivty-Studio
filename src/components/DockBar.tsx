@@ -112,9 +112,33 @@ const DockBar = () => {
       initial={{ y: 80, opacity: 0 }}
       animate={controls}
       transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
-      className="fixed bottom-4 right-0 z-50 flex justify-center pointer-events-none transition-[left] duration-200 ease-linear"
+      className="fixed bottom-4 right-0 z-50 flex flex-col items-center gap-2 pointer-events-none transition-[left] duration-200 ease-linear"
       style={{ left: sidebarOffset }}
     >
+      {/* Inline status pill — appears whenever the saved dock_config has
+          unknown ids. Sits directly above the dock so it's discoverable
+          without nagging users whose dock is clean. Clicking jumps to the
+          dock customizer in Settings (deep-linked via hash) where the user
+          can prune the missing ids in one click. */}
+      {unknownIds.length > 0 && (
+        <Link
+          to="/settings#dock"
+          className="pointer-events-auto group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-destructive/10 border border-destructive/30 text-destructive text-[11px] font-body font-medium shadow-sm backdrop-blur-md hover:bg-destructive/15 transition-colors"
+          aria-label={`Dock needs updating — ${unknownIds.length} unknown item${unknownIds.length === 1 ? "" : "s"}. Open settings.`}
+        >
+          <AlertTriangle className="h-3 w-3" />
+          <span>
+            Dock needs updating
+            <span className="ml-1 text-[10px] opacity-80">
+              ({unknownIds.length} unknown)
+            </span>
+          </span>
+          <span className="text-[10px] opacity-70 group-hover:opacity-100 transition-opacity">
+            Fix →
+          </span>
+        </Link>
+      )}
+
       <div className="flex items-center gap-2 sm:gap-1 px-5 sm:px-4 py-3 sm:py-2.5 bg-card/90 backdrop-blur-xl border border-border rounded-xl shadow-lg shadow-foreground/5 pointer-events-auto">
         {validIds.map((id) => {
           const item = NAV_ITEMS_BY_ID[id];
