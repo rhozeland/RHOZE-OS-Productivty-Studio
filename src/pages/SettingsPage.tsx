@@ -18,6 +18,9 @@ import {
 import LogoCustomizer from "@/components/onboarding/LogoCustomizer";
 import DockCustomizer from "@/components/settings/DockCustomizer";
 import ClaimLimitsControl from "@/components/settings/ClaimLimitsControl";
+import SettingsSubNav, {
+  useActiveSettingsSection,
+} from "@/components/settings/SettingsSubNav";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
