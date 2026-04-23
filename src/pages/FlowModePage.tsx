@@ -89,6 +89,13 @@ const FlowModePage = () => {
   // so flipping back to "For You" restores their preferences without re-prompting.
   const [preferredCategories, setPreferredCategories] = useState<string[]>([]);
   const [feedScope, setFeedScope] = useState<"all" | "preferred">("preferred");
+  // Locked `true` for ~SCOPE_TRANSITION_MS after a scope flip so the fade
+  // overlay shows even when React Query resolves from cache instantly.
+  // Without this, switching to a previously-loaded scope would just snap
+  // and users wouldn't see that anything refreshed.
+  const SCOPE_TRANSITION_MS = 500;
+  const [scopeSwitching, setScopeSwitching] = useState(false);
+  const scopeSwitchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expandedCard, setExpandedCard] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -699,6 +706,14 @@ const FlowModePage = () => {
   const setScope = useCallback(
     (scope: "all" | "preferred") => {
       if (scope === feedScope) return;
+      // Engage the transition flag *before* the state flip so the overlay
+      // mounts in the same paint as the new query, not a frame later.
+      setScopeSwitching(true);
+      if (scopeSwitchTimerRef.current) clearTimeout(scopeSwitchTimerRef.current);
+      scopeSwitchTimerRef.current = setTimeout(() => {
+        setScopeSwitching(false);
+      }, SCOPE_TRANSITION_MS);
+
       setFeedScope(scope);
       void persistFlowPrefs({ scope });
       const next =
@@ -720,6 +735,21 @@ const FlowModePage = () => {
     },
     [persistFlowPrefs, preferredCategories, feedScope, x, y],
   );
+
+  // Cleanup the scope-transition timer on unmount so it can't fire after
+  // the component is gone (avoids React's "set state on unmounted" warning).
+  useEffect(() => {
+    return () => {
+      if (scopeSwitchTimerRef.current) clearTimeout(scopeSwitchTimerRef.current);
+    };
+  }, []);
+
+  // Composite signal used by the swipe + browse views to render a fade
+  // loader. True while the user is mid-scope-flip OR while React Query is
+  // actively re-fetching the feed (covers slow networks). Card content is
+  // dimmed and a centered loader fades in so users never see an empty
+  // stack mid-refresh.
+  const isFeedRefreshing = scopeSwitching || flowItemsFetching;
 
   const advanceCard = useCallback(() => {
     setTimeout(() => {
