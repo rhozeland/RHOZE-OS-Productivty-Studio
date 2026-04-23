@@ -67,7 +67,7 @@ const FlowGuestCTA = ({ variant = "card", className }: FlowGuestCTAProps) => {
           <Button
             size="sm"
             variant="default"
-            onClick={() => navigate("/auth")}
+            onClick={handleSignUpClick}
             className="h-7 rounded-full px-3 text-xs"
           >
             Sign up free
