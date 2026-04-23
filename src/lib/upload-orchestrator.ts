@@ -16,7 +16,7 @@
  *     return { ok: true, url }.
  */
 
-export interface UploadOrchestratorDeps<TFile extends { name?: string; type?: string; size?: number }> {
+export interface UploadOrchestratorDeps<TFile> {
   file: TFile;
   previousImageUrl: string;
   buildPath: (file: TFile) => string;
