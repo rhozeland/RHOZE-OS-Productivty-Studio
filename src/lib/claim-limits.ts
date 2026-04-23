@@ -32,7 +32,10 @@ export const writeClaimLimits = (limits: ClaimLimits) => {
   window.dispatchEvent(new CustomEvent(EVENT));
 };
 
-export type ClaimValidation = { ok: true } | { ok: false; reason: string };
+export interface ClaimValidation {
+  ok: boolean;
+  reason: string;
+}
 
 export const validateClaim = (
   amount: number,
@@ -50,7 +53,7 @@ export const validateClaim = (
       reason: `Amount exceeds your maximum claim of ${limits.max.toLocaleString()} $RHOZE.`,
     };
   }
-  return { ok: true };
+  return { ok: true, reason: "" };
 };
 
 export const useClaimLimits = (): ClaimLimits => {
