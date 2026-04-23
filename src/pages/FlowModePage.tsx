@@ -720,6 +720,16 @@ const FlowModePage = () => {
   const setScope = useCallback(
     (scope: "all" | "preferred") => {
       if (scope === feedScope) return;
+      // Snapshot the current browse scroll for the scope we're leaving so
+      // toggling back to it later restores the same view. We mark it as
+      // visited so even a saved 0 ("user was at top") replays correctly
+      // and isn't mistaken for "never visited".
+      const leavingEl = flowContentRef.current;
+      if (leavingEl) {
+        browseScrollByScopeRef.current[feedScope] = leavingEl.scrollTop;
+      }
+      browseScopeVisitedRef.current[feedScope] = true;
+
       // Engage the transition flag *before* the state flip so the overlay
       // mounts in the same paint as the new query, not a frame later.
       setScopeSwitching(true);
@@ -744,8 +754,15 @@ const FlowModePage = () => {
       // Cancel any half-completed swipe animation.
       x.set(0);
       y.set(0);
-      // Browse view: scroll back to the top of the new feed.
-      flowContentRef.current?.scrollTo({ top: 0, behavior: "auto" });
+      // Browse view: restore the saved scroll only when toggling back to a
+      // scope the user has already visited. A brand-new scope starts at the
+      // top so the user sees the freshest content first. Defer one frame
+      // so the new feed has a chance to render its rows before we scroll.
+      const shouldRestore = browseScopeVisitedRef.current[scope];
+      const targetTop = shouldRestore ? browseScrollByScopeRef.current[scope] : 0;
+      requestAnimationFrame(() => {
+        flowContentRef.current?.scrollTo({ top: targetTop, behavior: "auto" });
+      });
     },
     [persistFlowPrefs, preferredCategories, feedScope, x, y],
   );
