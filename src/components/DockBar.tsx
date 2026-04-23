@@ -1,17 +1,20 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useMemo, useRef, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { motion, useAnimationControls } from "framer-motion";
+import { AlertTriangle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DEFAULT_DOCK_IDS,
   NAV_ITEMS_BY_ID,
+  partitionDockIds,
 } from "@/config/navigation";
 import { resolveNavLink } from "@/hooks/useNavLink";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const SCROLL_THRESHOLD = 8; // minimum delta to trigger hide/show
 
