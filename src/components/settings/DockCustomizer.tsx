@@ -7,6 +7,7 @@ import {
   NAV_ITEMS,
   NAV_ITEMS_BY_ID,
   DEFAULT_DOCK_IDS,
+  partitionDockIds,
 } from "@/config/navigation";
 
 // Re-export so existing imports keep working.
@@ -17,14 +18,47 @@ interface DockCustomizerProps {
   onSave: (config: string[]) => Promise<void>;
 }
 
+/**
+ * Sanitize a saved dock_config array — drop any ids that no longer exist
+ * in NAV_ITEMS, fall back to DEFAULT_DOCK_IDS if nothing remains.
+ * Surfaces a one-time toast so the user knows their saved layout was
+ * partially recovered.
+ */
+const sanitizeDockConfig = (config: string[] | null): {
+  ids: string[];
+  dropped: string[];
+} => {
+  if (!config) return { ids: DEFAULT_DOCK_IDS, dropped: [] };
+  const { valid, unknown } = partitionDockIds(config);
+  return {
+    ids: valid.length > 0 ? valid : DEFAULT_DOCK_IDS,
+    dropped: unknown,
+  };
+};
+
 const DockCustomizer = ({ dockConfig, onSave }: DockCustomizerProps) => {
-  const [selected, setSelected] = useState<string[]>(
-    dockConfig || DEFAULT_DOCK_IDS
-  );
+  const initial = sanitizeDockConfig(dockConfig);
+  const [selected, setSelected] = useState<string[]>(initial.ids);
   const [saving, setSaving] = useState(false);
 
+  // Notify the user once if their saved config contained stale ids that we
+  // had to drop. Keeps customizer state honest without silently mutating.
   useEffect(() => {
-    if (dockConfig) setSelected(dockConfig);
+    if (initial.dropped.length > 0) {
+      toast.warning(
+        `Removed ${initial.dropped.length} unknown dock item${
+          initial.dropped.length === 1 ? "" : "s"
+        }: ${initial.dropped.join(", ")}`,
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (dockConfig) {
+      const { ids } = sanitizeDockConfig(dockConfig);
+      setSelected(ids);
+    }
   }, [dockConfig]);
 
   const toggleItem = (id: string) => {
