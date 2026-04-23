@@ -1167,8 +1167,7 @@ const FlowModePage = () => {
                 isRetrying={flowItemsFetching}
               />
             </div>
-          ) : (
-          {allItems.length > 0 ? (
+          ) : allItems.length > 0 ? (
             <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
               {allItems.map((item) => (
                 <div key={item.id} className="break-inside-avoid">
@@ -1197,8 +1196,6 @@ const FlowModePage = () => {
               </Button>
             </div>
           )}
-        </div>
-      )}
 
       {/* ═══ FULL SWIPE TUTORIAL OVERLAY — first-time or on-demand ═══ */}
       <AnimatePresence>
