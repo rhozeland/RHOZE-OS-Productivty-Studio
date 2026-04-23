@@ -262,23 +262,26 @@ const FlowModePage = () => {
   const { data: flowItems } = useQuery({
     queryKey: ["flow-items", selectedCategories],
     queryFn: async () => {
-      let items: any[] = [];
+      // Flow Mode is a global feed — ALWAYS fetch every public flow_item from
+      // every user. selectedCategories is treated as a soft preference: matching
+      // categories are surfaced first, but nothing is hidden. This prevents the
+      // "I only see my own music" problem when a user calibrated to a single
+      // category.
+      const { data, error } = await supabase
+        .from("flow_items")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      let items = data ?? [];
 
-      // First try with selected categories
+      // Soft sort: preferred categories first, then everything else, each group
+      // already sorted by created_at desc.
       if (selectedCategories.length > 0 && selectedCategories.length < CATEGORIES.length) {
-        const { data, error } = await supabase.from("flow_items").select("*")
-          .in("category", selectedCategories)
-          .order("created_at", { ascending: false }).limit(100);
-        if (error) throw error;
-        if (data && data.length > 0) items = data;
-      }
-
-      // Fallback: fetch all items
-      if (items.length === 0) {
-        const { data, error } = await supabase.from("flow_items").select("*")
-          .order("created_at", { ascending: false }).limit(100);
-        if (error) throw error;
-        items = data ?? [];
+        const prefSet = new Set(selectedCategories);
+        const preferred = items.filter((i) => prefSet.has(i.category));
+        const rest = items.filter((i) => !prefSet.has(i.category));
+        items = [...preferred, ...rest];
       }
 
       // Batch-fetch uploader profiles
