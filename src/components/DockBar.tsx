@@ -8,8 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   DEFAULT_DOCK_IDS,
   NAV_ITEMS_BY_ID,
-  isNavItemActive,
 } from "@/config/navigation";
+import { resolveNavLink } from "@/hooks/useNavLink";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 
