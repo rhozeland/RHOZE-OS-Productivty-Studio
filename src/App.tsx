@@ -84,7 +84,7 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/profiles/:id",
   "/drop-rooms",
   "/drop-rooms/:id",
-  "/droprooms/*",
+  // Legacy alias wildcards are appended dynamically from NAV_ALIASES below.
   "/messages",
   "/network",
   "/settings",
