@@ -1111,6 +1111,7 @@ const FlowModePage = () => {
                   onDelete={() => deleteFlowItem.mutate(currentItem.id)}
                   isOwner={currentItem.user_id === user?.id}
                   isAdmin={isAdmin}
+                  profilesLoading={flowItemsFetching}
                 />
               </motion.div>
             ) : (
@@ -1149,6 +1150,7 @@ const FlowModePage = () => {
                     onDelete={() => deleteFlowItem.mutate(item.id)}
                     isOwner={item.user_id === user?.id}
                     isAdmin={isAdmin}
+                    profilesLoading={flowItemsFetching}
                   />
                 </div>
               ))}
