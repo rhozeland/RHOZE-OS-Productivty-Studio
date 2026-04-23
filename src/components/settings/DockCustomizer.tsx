@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { Save } from "lucide-react";
+import { Save, AlertTriangle, X } from "lucide-react";
 import {
   NAV_ITEMS,
   NAV_ITEMS_BY_ID,
@@ -40,6 +40,23 @@ const DockCustomizer = ({ dockConfig, onSave }: DockCustomizerProps) => {
   const initial = sanitizeDockConfig(dockConfig);
   const [selected, setSelected] = useState<string[]>(initial.ids);
   const [saving, setSaving] = useState(false);
+  // Tracks the per-id "Remove" button that's currently in flight, so we can
+  // disable it without blocking the rest of the panel. `"all"` covers the
+  // bulk-cleanup action.
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
+  // Re-derive the dropped/unknown ids from the *saved* config (not the
+  // local `selected` state) — this is what the "Missing items" panel acts
+  // on, and what gets pruned from `dockConfig` when the user clicks Remove.
+  const { unknownIds, cleanedIds } = useMemo(() => {
+    if (!dockConfig) return { unknownIds: [] as string[], cleanedIds: DEFAULT_DOCK_IDS };
+    const { valid, unknown } = partitionDockIds(dockConfig);
+    return {
+      unknownIds: unknown,
+      cleanedIds: valid.length > 0 ? valid : DEFAULT_DOCK_IDS,
+    };
+  }, [dockConfig]);
+  const hasUnknownItems = unknownIds.length > 0;
 
   // Notify the user once if their saved config contained stale ids that we
   // had to drop. Keeps customizer state honest without silently mutating.
@@ -98,11 +115,106 @@ const DockCustomizer = ({ dockConfig, onSave }: DockCustomizerProps) => {
     }
   };
 
+  /**
+   * Persist a cleaned dockConfig that strips one or more unknown ids. We
+   * write only valid ids known to NAV_ITEMS_BY_ID so a corrupt save can't
+   * round-trip back into storage. The bulk variant (`removeId === null`)
+   * drops every unknown id at once.
+   */
+  const removeUnknown = async (removeId: string | null) => {
+    if (!dockConfig || unknownIds.length === 0) return;
+    const next = dockConfig.filter((id) => {
+      if (!NAV_ITEMS_BY_ID[id]) {
+        // It's an unknown id — keep only if we're targeting a different one.
+        return removeId !== null && id !== removeId;
+      }
+      return true;
+    });
+    // Safety net: if the prune leaves us below the minimum, top up with
+    // defaults so the dock never enters an invalid state on disk.
+    const safe = next.length >= 3 ? next : DEFAULT_DOCK_IDS;
+    setRemovingId(removeId ?? "all");
+    try {
+      await onSave(safe);
+      toast.success(
+        removeId === null
+          ? `Removed ${unknownIds.length} missing item${unknownIds.length === 1 ? "" : "s"}`
+          : `Removed "${removeId}" from saved layout`,
+      );
+    } catch {
+      toast.error("Couldn't update saved layout");
+    } finally {
+      setRemovingId(null);
+    }
+  };
+
   const hasChanges =
     JSON.stringify(selected) !== JSON.stringify(dockConfig || DEFAULT_DOCK_IDS);
 
   return (
     <div className="space-y-5">
+      {/* Missing items — only shown when the saved config still references
+          ids that no longer exist. Each row offers an explicit Remove so
+          the user can act on the warning without having to manually re-save
+          the full dock. The bulk action covers the common case. */}
+      {hasUnknownItems && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 space-y-3">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+            <div className="flex-1 min-w-0 space-y-0.5">
+              <p className="text-sm font-medium text-foreground">
+                Missing items ({unknownIds.length})
+              </p>
+              <p className="text-xs text-muted-foreground">
+                These ids are saved on your dock but no longer exist in the app. Remove them to keep your layout clean.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => removeUnknown(null)}
+              disabled={removingId !== null}
+              className="shrink-0 h-7 text-xs gap-1 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            >
+              {removingId === "all" ? "Removing…" : "Remove all"}
+            </Button>
+          </div>
+
+          <ul className="space-y-1.5">
+            {unknownIds.map((id) => (
+              <li
+                key={id}
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-background/50 border border-destructive/20"
+              >
+                <code className="flex-1 min-w-0 truncate text-xs font-mono text-destructive">
+                  {id}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeUnknown(id)}
+                  disabled={removingId !== null}
+                  className="h-6 px-2 text-[11px] gap-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  aria-label={`Remove ${id} from saved dock layout`}
+                >
+                  <X className="h-3 w-3" />
+                  {removingId === id ? "Removing…" : "Remove"}
+                </Button>
+              </li>
+            ))}
+          </ul>
+
+          <p className="text-[11px] text-muted-foreground">
+            Your live dock will look like:{" "}
+            <span className="text-foreground">
+              {cleanedIds
+                .map((id) => NAV_ITEMS_BY_ID[id]?.label ?? id)
+                .join(" · ")}
+            </span>
+          </p>
+        </div>
+      )}
+
       {/* Current dock preview */}
       <div>
         <p className="text-sm font-medium text-foreground mb-2">
