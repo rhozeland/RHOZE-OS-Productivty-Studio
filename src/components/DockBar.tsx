@@ -8,8 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   DEFAULT_DOCK_IDS,
   NAV_ITEMS_BY_ID,
-  isNavItemActive,
 } from "@/config/navigation";
+import { resolveNavLink } from "@/hooks/useNavLink";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -91,10 +91,15 @@ const DockBar = () => {
           const item = NAV_ITEMS_BY_ID[id];
           if (!item) return null;
           const Icon = item.icon;
-          const active = isNavItemActive(item, location.pathname);
+          // Use the shared resolver so DockBar, the header nav, and the
+          // sidebar all compute `isActive` and `to` identically.
+          const { to, isActive: active, ariaCurrent } = resolveNavLink(
+            item,
+            location.pathname,
+          );
 
           return (
-            <Link key={id} to={item.path} className="relative group">
+            <Link key={id} to={to} aria-current={ariaCurrent} className="relative group">
               <motion.div
                 whileHover={{ scale: 1.08, y: -2 }}
                 whileTap={{ scale: 0.95 }}
@@ -102,7 +107,7 @@ const DockBar = () => {
                 className={cn(
                   "flex flex-col items-center justify-center w-13 h-13 sm:w-14 sm:h-14 rounded-lg transition-colors duration-150 gap-0.5",
                   active
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                 )}
               >

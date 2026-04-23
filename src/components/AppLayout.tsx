@@ -33,9 +33,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRewardStreak } from "@/hooks/useRewardStreak";
 import {
   NAV_ITEMS_BY_ID,
-  isNavItemActive,
   type NavItem,
 } from "@/config/navigation";
+import { resolveNavLink } from "@/hooks/useNavLink";
 import { REGISTERED_ROUTE_PATHS } from "@/App";
 
 const PAGES = [
@@ -207,18 +207,17 @@ const AppLayout = () => {
               <nav className="hidden lg:flex items-center gap-1">
                 {HEADER_NAV.map((item) => {
                   const label = HEADER_LABELS[item.id] ?? item.label;
-                  // Use NavLink so React Router manages aria-current="page".
-                  // We also call our shared `isNavItemActive` to cover legacy
-                  // matchPaths (e.g. /droprooms → Drops) that NavLink's own
-                  // matcher won't know about.
+                  // Use NavLink so React Router manages aria-current="page",
+                  // but combine with our shared resolver so legacy matchPaths
+                  // (e.g. /droprooms → Drops) also activate.
+                  const shared = resolveNavLink(item, location.pathname);
                   return (
                     <NavLink
                       key={item.id}
-                      to={item.path}
-                      end={item.path === "/"}
+                      to={shared.to}
+                      end={shared.to === "/"}
                       className={({ isActive }) => {
-                        const active =
-                          isActive || isNavItemActive(item, location.pathname);
+                        const active = isActive || shared.isActive;
                         return cn(
                           "px-3 py-1.5 rounded-lg text-sm font-body font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                           active
