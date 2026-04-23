@@ -264,7 +264,8 @@ const ClaimRhozeButton = ({
         variant="outline"
         className={className}
         onClick={openConfirm}
-        disabled={loading || disabled || creditsToClaim <= 0}
+        disabled={loading || disabled || creditsToClaim <= 0 || blockedByLimits}
+        title={blockedByLimits && !limitsCheck.ok ? limitsCheck.reason : undefined}
       >
         {loading ? (
           <>
@@ -278,6 +279,14 @@ const ClaimRhozeButton = ({
           </>
         )}
       </Button>
+      {blockedByLimits && !limitsCheck.ok && (
+        <p className="mt-2 text-[11px] text-destructive font-body">
+          {limitsCheck.reason}{" "}
+          <Link to="/settings" className="underline hover:no-underline">
+            Adjust limits
+          </Link>
+        </p>
+      )}
 
       <Dialog
         open={confirmOpen}
