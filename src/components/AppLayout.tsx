@@ -364,12 +364,27 @@ const AppLayout = () => {
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Pages">
-            {PAGES.map((page) => (
-              <CommandItem key={page.path} onSelect={() => goTo(page.path)}>
-                <page.icon className="mr-2 h-4 w-4 text-muted-foreground" />
-                {page.name}
-              </CommandItem>
-            ))}
+            {PAGES.map((page) => {
+              // Surface the global keyboard shortcut next to a page when one
+              // exists, so users discover them without an extra help screen.
+              const shortcut = NAV_SHORTCUTS.find((s) => s.path === page.path);
+              return (
+                <CommandItem key={page.path} onSelect={() => goTo(page.path)}>
+                  <page.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                  {page.name}
+                  {shortcut && (
+                    <span className="ml-auto flex items-center gap-1">
+                      <kbd className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-mono text-muted-foreground">
+                        {formatChord(shortcut.chord)}
+                      </kbd>
+                      <kbd className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-mono text-muted-foreground">
+                        {formatLeader(shortcut.leaderKey)}
+                      </kbd>
+                    </span>
+                  )}
+                </CommandItem>
+              );
+            })}
           </CommandGroup>
           {studios && studios.length > 0 && (
             <CommandGroup heading="Studios">
