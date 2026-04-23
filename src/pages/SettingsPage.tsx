@@ -13,10 +13,11 @@ import { Separator } from "@/components/ui/separator";
 import {
   Moon, Sun, Upload, Eye, EyeOff, X, Camera, Lock, MapPin, Bell,
   Trash2, AlertTriangle, Download, User, Box, Wallet, Palette,
-  LayoutDashboard, ChevronRight,
+  LayoutDashboard, ChevronRight, Sparkles,
 } from "lucide-react";
 import LogoCustomizer from "@/components/onboarding/LogoCustomizer";
 import DockCustomizer from "@/components/settings/DockCustomizer";
+import FlowCardCustomizer from "@/components/settings/FlowCardCustomizer";
 import ClaimLimitsControl from "@/components/settings/ClaimLimitsControl";
 import SettingsSubNav, {
   useActiveSettingsSection,
