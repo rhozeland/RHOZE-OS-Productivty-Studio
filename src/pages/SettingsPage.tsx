@@ -766,6 +766,7 @@ const SettingsPage = () => {
     profile: renderProfile,
     appearance: renderAppearance,
     dock: renderDock,
+    "flow-cards": renderFlowCards,
     avatar: renderAvatar,
     banner: renderBanner,
     wallet: renderWallet,
