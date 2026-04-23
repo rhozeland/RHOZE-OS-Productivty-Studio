@@ -32,6 +32,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   LinkIcon,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -377,9 +378,49 @@ const AdminFlowSeedPanel = () => {
                 <ShieldCheck className="h-3.5 w-3.5" />
                 Attribution report
               </h4>
-              <span className="text-[10px] text-muted-foreground">
-                {report.ok}/{report.checked} OK
-              </span>
+              <div className="flex items-center gap-2">
+                {report.issues.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-[10px] gap-1"
+                    data-testid="flow-admin-copy-affected-ids"
+                    onClick={async () => {
+                      // Dedupe — the same creator can own multiple flagged
+                      // posts; the admin only needs each user_id once for
+                      // a profile-fields investigation pass.
+                      const uniqueIds = Array.from(
+                        new Set(report.issues.map((i) => i.user_id)),
+                      );
+                      const payload = uniqueIds.join("\n");
+                      try {
+                        await navigator.clipboard.writeText(payload);
+                        toast.success(
+                          `Copied ${uniqueIds.length} user ID${uniqueIds.length === 1 ? "" : "s"} to clipboard`,
+                          {
+                            description:
+                              "Open each creator's profile and check display_name, avatar_url, and username for missing fields.",
+                            duration: 8000,
+                          },
+                        );
+                      } catch {
+                        toast.error(
+                          "Clipboard blocked — copy these IDs manually:",
+                          { description: payload, duration: 12000 },
+                        );
+                      }
+                    }}
+                    title="Copy affected user IDs and investigate their profile fields"
+                  >
+                    <Copy className="h-3 w-3" />
+                    Copy IDs
+                  </Button>
+                )}
+                <span className="text-[10px] text-muted-foreground">
+                  {report.ok}/{report.checked} OK
+                </span>
+              </div>
             </div>
 
             {report.checked === 0 ? (
