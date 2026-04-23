@@ -29,7 +29,7 @@ interface UploadFileMetaProps {
  *
  * Helps verify uploads for files with weird/missing extensions before they hit the bucket.
  */
-const UploadFileMeta = ({ file, path, className, allow, onValidation }: UploadFileMetaProps) => {
+const UploadFileMeta = ({ file, path, className, allow, onValidation, cacheControlSeconds = 3600 }: UploadFileMetaProps) => {
   const [copied, setCopied] = useState(false);
   // Track last-reported state so we don't fire onValidation on every render.
   const lastReported = useRef<{ ok: boolean; reason?: string } | null>(null);
