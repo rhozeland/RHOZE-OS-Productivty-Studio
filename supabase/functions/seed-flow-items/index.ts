@@ -5,9 +5,12 @@
  *
  *  • POST { dryRun: true }  → returns the seed list and how many would be
  *                              inserted (skips titles already present in
- *                              flow_items).
+ *                              flow_items). Each item also reports whether
+ *                              its external media URL is reachable, and
+ *                              which fallback would be substituted if not.
  *  • POST { dryRun: false } → inserts the missing items as the calling
- *                              admin's user_id.
+ *                              admin's user_id, swapping in fallback URLs
+ *                              for any external media that failed validation.
  *
  * Auth: requires a JWT for an account that has the `admin` role in
  *       public.user_roles. We validate in-code (verify_jwt is off by default
@@ -26,6 +29,19 @@ type SeedItem = {
   creator_name: string;
   tags: string[];
 };
+
+// ── Fallback media ──────────────────────────────────────────────────────────
+// Used when an external image/link fails a HEAD probe. Picked to be:
+//   • permissive of CORS / hotlinking,
+//   • thematically close to the seed post (image vs. audio/link),
+//   • hosted on infra we already trust elsewhere in the seed list.
+//
+// Keep these dead-simple — if THESE fall over the seed should still insert
+// rows (with the broken URL) rather than 500. We log the failure either way.
+const FALLBACK_IMAGE_URL =
+  "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1200"; // safe Unsplash perennial
+const FALLBACK_LINK_URL = "https://en.wikipedia.org/wiki/Creative_work";
+const FALLBACK_AUDIO_LINK_URL = "https://en.wikipedia.org/wiki/Field_recording";
 
 // Curated seed list. Titles are unique and used as the dedupe key in dry-run.
 const SEED_ITEMS: SeedItem[] = [
@@ -151,6 +167,95 @@ const SEED_ITEMS: SeedItem[] = [
   },
 ];
 
+// ── URL probing ─────────────────────────────────────────────────────────────
+type ProbeResult = { ok: boolean; status?: number; error?: string };
+
+/**
+ * Quick HEAD probe with a short timeout. We accept any 2xx/3xx response as
+ * "reachable" — some CDNs (Unsplash, Wikipedia) return redirects on HEAD that
+ * still resolve to a usable resource.
+ */
+async function probeUrl(url: string, timeoutMs = 4000): Promise<ProbeResult> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    let res = await fetch(url, {
+      method: "HEAD",
+      redirect: "follow",
+      signal: controller.signal,
+    });
+    // Some hosts (notably freesound.org) reject HEAD with 405. Retry GET with
+    // a tiny range so we don't pull the whole asset.
+    if (res.status === 405 || res.status === 403) {
+      res = await fetch(url, {
+        method: "GET",
+        redirect: "follow",
+        headers: { Range: "bytes=0-0" },
+        signal: controller.signal,
+      });
+    }
+    return { ok: res.status >= 200 && res.status < 400, status: res.status };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+type ResolvedItem = SeedItem & {
+  /** True if any media URL on this item failed probing and was swapped. */
+  usedFallback: boolean;
+  /** Diagnostic info per probed slot (omitted when nothing was probed). */
+  probe?: {
+    file_url?: ProbeResult & { fallback?: string };
+    link_url?: ProbeResult & { fallback?: string };
+  };
+};
+
+/**
+ * Probes every external media URL in parallel and returns each seed item with
+ * fallbacks applied where necessary. Always returns a usable record — broken
+ * URLs are swapped with safe defaults rather than dropped from the seed.
+ */
+async function resolveSeedMedia(items: SeedItem[]): Promise<ResolvedItem[]> {
+  return await Promise.all(
+    items.map(async (item) => {
+      const probe: ResolvedItem["probe"] = {};
+      let usedFallback = false;
+      let file_url = item.file_url;
+      let link_url = item.link_url;
+
+      if (item.file_url) {
+        const r = await probeUrl(item.file_url);
+        if (!r.ok) {
+          file_url = FALLBACK_IMAGE_URL;
+          usedFallback = true;
+          probe.file_url = { ...r, fallback: FALLBACK_IMAGE_URL };
+        } else {
+          probe.file_url = r;
+        }
+      }
+
+      if (item.link_url) {
+        const r = await probeUrl(item.link_url);
+        if (!r.ok) {
+          // Music-tagged links get the audio-themed fallback so the swap stays
+          // contextually relevant on a Flow card.
+          const fallback =
+            item.category === "music" ? FALLBACK_AUDIO_LINK_URL : FALLBACK_LINK_URL;
+          link_url = fallback;
+          usedFallback = true;
+          probe.link_url = { ...r, fallback };
+        } else {
+          probe.link_url = r;
+        }
+      }
+
+      return { ...item, file_url, link_url, usedFallback, probe };
+    }),
+  );
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -209,31 +314,71 @@ Deno.serve(async (req) => {
     }
 
     const existingTitles = new Set((existing ?? []).map((r) => r.title));
-    const toInsert = SEED_ITEMS.filter((s) => !existingTitles.has(s.title));
+    const toInsertRaw = SEED_ITEMS.filter((s) => !existingTitles.has(s.title));
+
+    // Probe every candidate's media in parallel and swap in fallbacks if any
+    // external URL failed. This runs for both dry-run and real inserts so the
+    // admin always sees the same accurate fallback report.
+    const resolved = await resolveSeedMedia(toInsertRaw);
+
+    // Build the failure log (only items that needed a fallback).
+    const failedItems = resolved
+      .filter((r) => r.usedFallback)
+      .map((r) => ({
+        title: r.title,
+        category: r.category,
+        file_url_probe: r.probe?.file_url,
+        link_url_probe: r.probe?.link_url,
+      }));
+
+    // Server-side log so failures show up in edge function logs even when the
+    // admin closes the panel before reading the response.
+    if (failedItems.length > 0) {
+      console.warn(
+        `[seed-flow-items] ${failedItems.length} seed item(s) needed fallback URLs:`,
+        JSON.stringify(failedItems, null, 2),
+      );
+    }
 
     if (dryRun) {
       return json({
         dryRun: true,
         total: SEED_ITEMS.length,
-        alreadyPresent: SEED_ITEMS.length - toInsert.length,
-        willInsert: toInsert.length,
-        items: toInsert.map((s) => ({
+        alreadyPresent: SEED_ITEMS.length - resolved.length,
+        willInsert: resolved.length,
+        fallbackCount: failedItems.length,
+        items: resolved.map((s) => ({
           title: s.title,
           category: s.category,
           content_type: s.content_type,
+          usedFallback: s.usedFallback,
         })),
+        failedItems,
       });
     }
 
-    if (toInsert.length === 0) {
+    if (resolved.length === 0) {
       return json({
         dryRun: false,
         inserted: 0,
+        fallbackCount: 0,
+        failedItems: [],
         message: "All seed items already present.",
       });
     }
 
-    const rows = toInsert.map((s) => ({ ...s, user_id: userId }));
+    const rows = resolved.map((s) => ({
+      title: s.title,
+      description: s.description,
+      category: s.category,
+      content_type: s.content_type,
+      file_url: s.file_url,
+      link_url: s.link_url,
+      creator_name: s.creator_name,
+      tags: s.tags,
+      user_id: userId,
+    }));
+
     const { error: insertErr } = await admin.from("flow_items").insert(rows);
     if (insertErr) {
       return json({ error: insertErr.message }, 500);
@@ -242,6 +387,8 @@ Deno.serve(async (req) => {
     return json({
       dryRun: false,
       inserted: rows.length,
+      fallbackCount: failedItems.length,
+      failedItems,
       titles: rows.map((r) => r.title),
     });
   } catch (err) {

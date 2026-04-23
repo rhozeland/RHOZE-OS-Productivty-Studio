@@ -31,14 +31,24 @@ import {
   ShieldCheck,
   AlertTriangle,
   CheckCircle2,
+  LinkIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+
+type FailedItem = {
+  title: string;
+  category: string;
+  file_url_probe?: { ok: boolean; status?: number; error?: string; fallback?: string };
+  link_url_probe?: { ok: boolean; status?: number; error?: string; fallback?: string };
+};
 
 type SeedPreview = {
   total: number;
   alreadyPresent: number;
   willInsert: number;
-  items: { title: string; category: string; content_type: string }[];
+  fallbackCount?: number;
+  items: { title: string; category: string; content_type: string; usedFallback?: boolean }[];
+  failedItems?: FailedItem[];
 };
 
 type AttributionIssue = {
@@ -53,13 +63,15 @@ type AttributionReport = {
   issues: AttributionIssue[];
 };
 
-const callSeed = async (dryRun: boolean): Promise<SeedPreview & { inserted?: number }> => {
+const callSeed = async (
+  dryRun: boolean,
+): Promise<SeedPreview & { inserted?: number; fallbackCount?: number; failedItems?: FailedItem[] }> => {
   const { data, error } = await supabase.functions.invoke("seed-flow-items", {
     body: { dryRun },
   });
   if (error) throw new Error(error.message);
   if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
-  return data as SeedPreview & { inserted?: number };
+  return data as SeedPreview & { inserted?: number; fallbackCount?: number; failedItems?: FailedItem[] };
 };
 
 /**
@@ -156,11 +168,25 @@ const AdminFlowSeedPanel = () => {
   const runMutation = useMutation({
     mutationFn: () => callSeed(false),
     onSuccess: (data) => {
-      toast.success(
+      const insertedMsg =
         data.inserted && data.inserted > 0
           ? `Seeded ${data.inserted} new Flow post${data.inserted === 1 ? "" : "s"}`
-          : "Nothing to seed — all items already present.",
-      );
+          : "Nothing to seed — all items already present.";
+      toast.success(insertedMsg);
+      // Surface fallback info as a separate warning toast so it's not buried.
+      if (data.fallbackCount && data.fallbackCount > 0) {
+        const titles = (data.failedItems ?? [])
+          .slice(0, 3)
+          .map((f) => f.title)
+          .join(", ");
+        const more =
+          (data.failedItems?.length ?? 0) > 3
+            ? ` +${(data.failedItems?.length ?? 0) - 3} more`
+            : "";
+        toast.warning(
+          `${data.fallbackCount} item${data.fallbackCount === 1 ? "" : "s"} used fallback URLs: ${titles}${more}`,
+        );
+      }
       setPreview(null);
       setReport(null);
       setOpen(false);
@@ -246,6 +272,17 @@ const AdminFlowSeedPanel = () => {
                 />
               </div>
 
+              {preview.fallbackCount && preview.fallbackCount > 0 ? (
+                <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-2.5 py-1.5">
+                  <AlertTriangle className="h-3.5 w-3.5 text-destructive mt-0.5 shrink-0" />
+                  <p className="text-[11px] text-foreground leading-snug">
+                    <span className="font-semibold">{preview.fallbackCount}</span>{" "}
+                    item{preview.fallbackCount === 1 ? "" : "s"} will use fallback
+                    media URLs (originals unreachable).
+                  </p>
+                </div>
+              ) : null}
+
               {preview.items.length > 0 ? (
                 <div className="rounded-md border border-border/60 bg-muted/30">
                   <ScrollArea className="h-32">
@@ -255,7 +292,15 @@ const AdminFlowSeedPanel = () => {
                           key={it.title}
                           className="flex items-center justify-between gap-2 px-3 py-1.5"
                         >
-                          <span className="truncate text-xs">{it.title}</span>
+                          <span className="truncate text-xs flex items-center gap-1.5">
+                            {it.usedFallback ? (
+                              <LinkIcon
+                                className="h-3 w-3 text-destructive shrink-0"
+                                aria-label="Will use fallback URL"
+                              />
+                            ) : null}
+                            {it.title}
+                          </span>
                           <span className="text-[10px] text-muted-foreground uppercase tracking-wide shrink-0">
                             {it.category}
                           </span>
