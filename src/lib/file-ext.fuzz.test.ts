@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { safeFileExt, safeContentType } from "./file-ext";
+import { safeFileExt, safeContentType, normalizeMime } from "./file-ext";
 
 /**
  * Property-based fuzz tests for safeFileExt and safeContentType.
