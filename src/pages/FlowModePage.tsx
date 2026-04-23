@@ -1012,6 +1012,7 @@ const FlowModePage = () => {
                   onDelete={() => deleteFlowItem.mutate(currentItem.id)}
                   isOwner={currentItem.user_id === user?.id}
                   isAdmin={isAdmin}
+                  feedScope={feedScope}
                 />
               </motion.div>
             ) : (
