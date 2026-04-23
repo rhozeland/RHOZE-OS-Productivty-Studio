@@ -31,6 +31,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRewardStreak } from "@/hooks/useRewardStreak";
+import {
+  NAV_ITEMS_BY_ID,
+  isNavItemActive,
+  type NavItem,
+} from "@/config/navigation";
 
 const PAGES = [
   { name: "Home", path: "/dashboard", icon: FolderKanban },
@@ -45,14 +50,21 @@ const PAGES = [
 ];
 
 // Persistent top-nav links shown in header for both guests and signed-in users.
-// `matchPaths` lets one nav entry stay active for multiple related routes
-// (e.g. Drops highlights for /drop-rooms and /drop-rooms/:id).
-const HEADER_NAV: Array<{ name: string; path: string; matchPaths?: string[] }> = [
-  { name: "Studios", path: "/studios" },
-  { name: "Hub", path: "/creators" },
-  { name: "Boards", path: "/smartboards" },
-  { name: "Drops", path: "/drop-rooms", matchPaths: ["/drop-rooms", "/droprooms"] },
-];
+// Sourced from the central NAV_ITEMS config — the matchPaths there (e.g. Drops →
+// `/droprooms` legacy alias) and the shared `isNavItemActive` helper guarantee
+// consistent active styling across header, dock, and any future nav surfaces.
+const HEADER_NAV_IDS = ["studios", "hub", "boards", "droprooms"] as const;
+const HEADER_NAV: NavItem[] = HEADER_NAV_IDS
+  .map((id) => NAV_ITEMS_BY_ID[id])
+  .filter(Boolean);
+
+// Header label overrides (kept short for the top bar even if the dock uses
+// a different label). Maps NavItem.id → header label.
+const HEADER_LABELS: Record<string, string> = {
+  hub: "Hub",
+  boards: "Boards",
+  droprooms: "Drops",
+};
 
 const AppLayout = () => {
   const navigate = useNavigate();
@@ -152,19 +164,16 @@ const AppLayout = () => {
             <div className="flex items-center gap-3 shrink-0">
               <SidebarTrigger className="shrink-0" />
               {/* Persistent top-nav links — visible on desktop for guests + signed-in.
-                  Active state matches the entry's `path` plus any `matchPaths` and their
-                  nested routes (e.g. /drop-rooms/:id), so deep-linked pages stay highlighted. */}
+                  Uses shared `isNavItemActive` helper so deep links like
+                  /drop-rooms/:id stay highlighted (and any new matchPaths in
+                  navigation.ts are picked up automatically). */}
               <nav className="hidden lg:flex items-center gap-1">
                 {HEADER_NAV.map((item) => {
-                  const candidates = item.matchPaths ?? [item.path];
-                  const isActive = candidates.some(
-                    (p) =>
-                      location.pathname === p ||
-                      location.pathname.startsWith(p + "/"),
-                  );
+                  const isActive = isNavItemActive(item, location.pathname);
+                  const label = HEADER_LABELS[item.id] ?? item.label;
                   return (
                     <Link
-                      key={item.path}
+                      key={item.id}
                       to={item.path}
                       aria-current={isActive ? "page" : undefined}
                       className={cn(
@@ -174,7 +183,7 @@ const AppLayout = () => {
                           : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
                       )}
                     >
-                      {item.name}
+                      {label}
                     </Link>
                   );
                 })}
