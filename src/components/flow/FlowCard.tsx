@@ -5,6 +5,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Play, FileText, ExternalLink, ChevronDown, Music, Palette, Camera, Video, PenTool, Bookmark, Send, Maximize2, X, Trash2 } from "lucide-react";
 import AudioPreview from "@/components/marketplace/AudioPreview";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
+import { useFlowCardPrefs } from "@/hooks/useFlowCardPrefs";
+import {
+  badgeColorClassFor,
+  badgePlacementClassFor,
+} from "@/lib/flow-card-prefs";
 
 /* ─── Platform detection ─── */
 const detectPlatform = (url?: string | null) => {
