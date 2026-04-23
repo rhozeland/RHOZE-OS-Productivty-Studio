@@ -191,4 +191,56 @@ describe("Flow Mode global feed (loadFlowFeed)", () => {
     };
     await expect(loadFlowFeed(supabaseErr, [])).rejects.toMatchObject({ message: "boom" });
   });
+
+  it("tolerates profiles_public lookup errors — items still returned with null profiles", async () => {
+    // Mirrors the production failure mode where flow_items succeeds but the
+    // downstream profiles_public lookup fails (e.g. transient RLS / network
+    // hiccup). We must NOT throw — losing attribution is acceptable, losing
+    // the entire feed is not.
+    const supabasePartial: FlowSupabase = {
+      from: (table: string) => {
+        if (table === "flow_items") {
+          return {
+            select: () => ({
+              order: () => ({
+                limit: () =>
+                  Promise.resolve({
+                    data: [
+                      {
+                        id: "i1",
+                        user_id: "u-alice",
+                        title: "x",
+                        category: "design",
+                        content_type: "image",
+                        file_url: "/x.jpg",
+                        link_url: null,
+                        created_at: "2026-04-23T10:00:00Z",
+                      },
+                    ],
+                    error: null,
+                  }),
+              }),
+            }),
+          };
+        }
+        // profiles_public — simulate the failure mode.
+        return {
+          select: () => ({
+            in: () =>
+              Promise.resolve({
+                data: null,
+                error: { message: "profiles_public temporarily unavailable" },
+              }),
+          }),
+        };
+      },
+    };
+
+    const items = await loadFlowFeed(supabasePartial, []);
+    expect(items).toHaveLength(1);
+    expect(items[0].id).toBe("i1");
+    // Attribution is null because the lookup failed — caller (FlowCard) is
+    // responsible for showing a graceful "Anonymous"-style fallback.
+    expect(items[0].profiles).toBeNull();
+  });
 });

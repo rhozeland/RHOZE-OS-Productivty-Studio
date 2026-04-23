@@ -58,6 +58,7 @@ import { loadFlowFeed } from "@/lib/flow-feed";
 import AdminFlowSeedPanel from "@/components/flow/AdminFlowSeedPanel";
 import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
 import SignUpToPostPrompt from "@/components/flow/SignUpToPostPrompt";
+import FlowFeedErrorState from "@/components/flow/FlowFeedErrorState";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
@@ -364,7 +365,13 @@ const FlowModePage = () => {
     };
   }, [user, calibrationKey, persistFlowPrefs]);
 
-  const { data: flowItems, isFetching: flowItemsFetching } = useQuery({
+  const {
+    data: flowItems,
+    isFetching: flowItemsFetching,
+    isError: flowItemsIsError,
+    error: flowItemsError,
+    refetch: refetchFlowItems,
+  } = useQuery({
     queryKey: ["flow-items", feedScope, selectedCategories],
     // Flow Mode is a global feed — see `loadFlowFeed` for the contract
     // (multi-creator visibility, soft-sort, guest-safe attribution).
@@ -376,6 +383,9 @@ const FlowModePage = () => {
     // previous scope while the new feed is loading.
     queryFn: () => loadFlowFeed(supabase, selectedCategories),
     enabled: calibrated,
+    // Keep retries low so a hard failure surfaces the friendly error UI
+    // promptly instead of spinning silently for tens of seconds.
+    retry: 1,
   });
 
   const { data: smartboards } = useQuery({
@@ -1083,6 +1093,19 @@ const FlowModePage = () => {
       {/* ═══ SWIPE VIEW ═══ */}
       {viewMode === "swipe" && (
         <div className="relative z-10 flex flex-1 items-center justify-center px-4 pb-36 pt-2 md:pb-40">
+          {/*
+            Hard failure of the feed loader (or its profiles_public lookup)
+            takes precedence over the empty state — otherwise the user sees
+            a misleading "Nothing here yet" CTA when the real problem is a
+            network/RLS error they could resolve by retrying.
+          */}
+          {flowItemsIsError ? (
+            <FlowFeedErrorState
+              error={flowItemsError}
+              onRetry={() => void refetchFlowItems()}
+              isRetrying={flowItemsFetching}
+            />
+          ) : (
           <AnimatePresence mode="wait">
             {currentItem ? (
               <motion.div
@@ -1126,6 +1149,7 @@ const FlowModePage = () => {
               </motion.div>
             )}
           </AnimatePresence>
+          )}
         </div>
       )}
 
@@ -1135,7 +1159,15 @@ const FlowModePage = () => {
           ref={flowContentRef}
           className="relative z-10 flex-1 overflow-y-auto px-4 pb-28 pt-2 md:px-8"
         >
-          {allItems.length > 0 ? (
+          {flowItemsIsError ? (
+            <div className="pt-20">
+              <FlowFeedErrorState
+                error={flowItemsError}
+                onRetry={() => void refetchFlowItems()}
+                isRetrying={flowItemsFetching}
+              />
+            </div>
+          ) : allItems.length > 0 ? (
             <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
               {allItems.map((item) => (
                 <div key={item.id} className="break-inside-avoid">
