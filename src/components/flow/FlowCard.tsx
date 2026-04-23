@@ -325,12 +325,13 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
           </div>
         )}
 
-        {/* ═══ Category badge + ACTION BAR ═══ */}
+        {/* ═══ Category badge (inline variant) + ACTION BAR ═══
+            Inline render keeps the legacy layout with the badge to the
+            left of the action buttons. Corner placements skip this and
+            render the badge as an absolute overlay (see below the
+            outer card div). */}
         <div className="px-5 pt-4 pb-2 flex items-center gap-3">
-          <Badge className={`${catColor} border-0 rounded-full text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 flex items-center gap-1`}>
-            <CatIcon className="h-3 w-3" />
-            {item.category}
-          </Badge>
+          {cardPrefs.badgePlacement === "inline" && categoryBadge}
 
           <div className="ml-auto flex items-center gap-3">
             <button
