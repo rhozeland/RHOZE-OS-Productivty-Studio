@@ -307,11 +307,22 @@ const FlowModePage = () => {
         items = [...preferred, ...rest];
       }
 
-      // Batch-fetch uploader profiles
+      // Batch-fetch uploader profiles via the guest-safe `profiles_public` view.
+      // The base `profiles` table blocks anonymous reads on private profiles,
+      // which made other creators' artwork show up as "Unknown" for guests
+      // (and even for logged-in users browsing strangers). The view exposes
+      // only the safe attribution fields for public, non-banned accounts.
       const userIds = [...new Set(items.map((i) => i.user_id).filter(Boolean))];
       if (userIds.length > 0) {
-        const { data: profiles } = await supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", userIds);
-        const profileMap = new Map((profiles ?? []).map((p) => [p.user_id, p]));
+        const { data: profiles } = await supabase
+          .from("profiles_public")
+          .select("user_id, display_name, avatar_url, username")
+          .in("user_id", userIds);
+        const profileMap = new Map(
+          (profiles ?? [])
+            .filter((p): p is { user_id: string; display_name: string | null; avatar_url: string | null; username: string | null } => !!p.user_id)
+            .map((p) => [p.user_id, p]),
+        );
         items = items.map((i) => ({ ...i, profiles: profileMap.get(i.user_id) || null }));
       }
 
