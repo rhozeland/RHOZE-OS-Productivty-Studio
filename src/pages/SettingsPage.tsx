@@ -431,6 +431,8 @@ const SettingsPage = () => {
     </div>
   );
 
+  const renderFlowCards = () => <FlowCardCustomizer />;
+
   const renderAvatar = () => (
     <div className="space-y-4">
       <div className="flex items-center gap-6">
