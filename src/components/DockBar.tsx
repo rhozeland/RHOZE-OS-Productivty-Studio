@@ -116,7 +116,7 @@ const DockBar = () => {
       style={{ left: sidebarOffset }}
     >
       <div className="flex items-center gap-2 sm:gap-1 px-5 sm:px-4 py-3 sm:py-2.5 bg-card/90 backdrop-blur-xl border border-border rounded-xl shadow-lg shadow-foreground/5 pointer-events-auto">
-        {dockIds.map((id) => {
+        {validIds.map((id) => {
           const item = NAV_ITEMS_BY_ID[id];
           if (!item) return null;
           const Icon = item.icon;
@@ -148,6 +148,33 @@ const DockBar = () => {
             </Link>
           );
         })}
+
+        {/* Visible fallback for unknown saved ids — keeps the dock layout
+            stable and signals to the user that something needs attention.
+            Clicking opens Settings so they can re-pick valid items. */}
+        {unknownIds.map((id) => (
+          <Tooltip key={`unknown-${id}`}>
+            <TooltipTrigger asChild>
+              <Link
+                to="/settings"
+                aria-label={`Unknown dock item "${id}". Open settings to fix.`}
+                className="relative group"
+              >
+                <div className="flex flex-col items-center justify-center w-13 h-13 sm:w-14 sm:h-14 rounded-lg gap-0.5 border border-dashed border-destructive/40 bg-destructive/5 text-destructive hover:bg-destructive/10 transition-colors">
+                  <AlertTriangle className="h-5 w-5" />
+                  <span className="text-[10px] font-body font-medium leading-none">
+                    Missing
+                  </span>
+                </div>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs font-body">
+              Unknown dock item: <span className="font-mono">{id}</span>
+              <br />
+              Click to update your dock in Settings.
+            </TooltipContent>
+          </Tooltip>
+        ))}
       </div>
     </motion.div>
   );
