@@ -663,8 +663,7 @@ const FlowModePage = () => {
     setSelectedCategories(cats);
     setPreferredCategories(cats);
     setFeedScope("preferred");
-    localStorage.setItem(`flow-calibrated-${calibrationKey}`, JSON.stringify(cats));
-    localStorage.setItem(`flow-scope-${calibrationKey}`, "preferred");
+    void persistFlowPrefs({ scope: "preferred", preferred: cats });
     setCalibrated(true);
 
     // Show tutorial for first-time users after calibration
