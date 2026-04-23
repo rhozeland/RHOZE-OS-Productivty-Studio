@@ -77,6 +77,7 @@ const ClaimRhozeButton = ({
   const [preview, setPreview] = useState<TxPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [claimError, setClaimError] = useState<string | null>(null);
 
   const walletAddress = publicKey?.toBase58() ?? "";
 
@@ -122,6 +123,7 @@ const ClaimRhozeButton = ({
     setAcknowledged(false);
     setPreview(null);
     setPreviewError(null);
+    setClaimError(null);
     setConfirmOpen(true);
   };
 
@@ -129,6 +131,18 @@ const ClaimRhozeButton = ({
     if (!confirmOpen) return;
     fetchPreview();
   }, [confirmOpen]);
+
+  // Detect wallet disconnect while the confirm dialog is open
+  useEffect(() => {
+    if (!confirmOpen) return;
+    if (connected && publicKey) return;
+    if (loading) return; // claim in flight — don't yank dialog
+    toast.error("Wallet disconnected", {
+      description: "Reconnect your wallet to continue claiming $RHOZE.",
+    });
+    setConfirmOpen(false);
+    setClaimError(null);
+  }, [connected, publicKey, confirmOpen, loading]);
 
   const copyAddress = async () => {
     if (!walletAddress) return;
@@ -142,16 +156,21 @@ const ClaimRhozeButton = ({
   };
 
   const handleClaim = async () => {
-    if (!publicKey || !user) {
-      toast.error("Connect your wallet and sign in first");
+    if (!publicKey || !connected || !user) {
+      const msg = "Wallet disconnected — reconnect to claim.";
+      setClaimError(msg);
+      toast.error(msg);
       return;
     }
 
     if (creditsToClaim <= 0) {
-      toast.error("Enter an amount to claim");
+      const msg = "Enter an amount to claim.";
+      setClaimError(msg);
+      toast.error(msg);
       return;
     }
 
+    setClaimError(null);
     setLoading(true);
     try {
       setStatus("Sending tokens...");
@@ -164,17 +183,29 @@ const ClaimRhozeButton = ({
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      if (!data?.signature) throw new Error("Transaction did not return a signature.");
 
       setConfirmOpen(false);
       setCelebration({ open: true, amount: creditsToClaim, signature: data.signature });
-      toast.success(`Claimed ${creditsToClaim} $RHOZE! Tx: ${data.signature?.slice(0, 8)}...`);
+      toast.success(`Claimed ${creditsToClaim} $RHOZE!`, {
+        description: `Tx: ${data.signature.slice(0, 8)}…${data.signature.slice(-6)}`,
+      });
       queryClient.invalidateQueries({ queryKey: ["user-credits"] });
       queryClient.invalidateQueries({ queryKey: ["rhoze-balance"] });
       queryClient.invalidateQueries({ queryKey: ["reward-history"] });
       queryClient.invalidateQueries({ queryKey: ["rhoze-claim-history"] });
       onSuccess?.();
     } catch (error: any) {
-      toast.error(error?.message || "Claim failed");
+      const raw = error?.message || "Claim failed unexpectedly.";
+      const friendly = /network|fetch|failed to fetch|timeout/i.test(raw)
+        ? "Network error reaching the claim service. Check your connection and try again."
+        : /insufficient|balance/i.test(raw)
+        ? raw
+        : /wallet/i.test(raw)
+        ? raw
+        : raw;
+      setClaimError(friendly);
+      toast.error("Claim failed", { description: friendly });
     } finally {
       setLoading(false);
       setStatus("");
@@ -400,6 +431,32 @@ const ClaimRhozeButton = ({
                 </p>
               </div>
             </button>
+
+            {/* Inline claim error */}
+            {claimError && (
+              <div
+                role="alert"
+                className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 flex items-start gap-2"
+              >
+                <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                <div className="flex-1 space-y-1">
+                  <p className="text-xs font-body font-medium text-destructive">
+                    Claim failed
+                  </p>
+                  <p className="text-[11px] text-destructive/90 font-body leading-relaxed break-words">
+                    {claimError}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setClaimError(null)}
+                  className="text-[10px] font-body text-destructive/80 hover:text-destructive shrink-0"
+                  aria-label="Dismiss error"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
           </div>
 
           <DialogFooter className="gap-2 sm:gap-2">
@@ -409,17 +466,22 @@ const ClaimRhozeButton = ({
               onClick={() => setConfirmOpen(false)}
               disabled={loading}
             >
-              Cancel
+              {claimError ? "Close" : "Cancel"}
             </Button>
             <Button
               type="button"
               onClick={handleClaim}
-              disabled={loading || !acknowledged || creditsToClaim <= 0}
+              disabled={loading || !acknowledged || creditsToClaim <= 0 || !connected}
             >
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {status || "Sending..."}
+                </>
+              ) : claimError ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Retry claim
                 </>
               ) : (
                 <>
