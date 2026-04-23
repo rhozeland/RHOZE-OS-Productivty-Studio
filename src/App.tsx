@@ -168,7 +168,17 @@ const App = () => (
                 <Route path="/profiles/:id" element={<ProfileDetailPage />} />
                 <Route path="/drop-rooms" element={<DropRoomsPage />} />
                 <Route path="/drop-rooms/:id" element={<DropRoomDetailPage />} />
-                <Route path="/droprooms/*" element={<LegacyDropRoomsRedirect />} />
+                {/* Centralized legacy aliases — generated from NAV_ALIASES.
+                    Add a new redirect by adding a `matchPaths` entry to a
+                    NavItem in src/config/navigation.ts (no route edit needed
+                    here unless you want a brand-new prefix). */}
+                {NAV_ALIASES.map(({ from }) => (
+                  <Route
+                    key={from}
+                    path={`${from}/*`}
+                    element={<LegacyAliasRedirect />}
+                  />
+                ))}
                 <Route path="/messages" element={<MessagesPage />} />
                 <Route path="/network" element={<Navigate to="/messages" replace />} />
                 <Route path="/settings" element={<SettingsPage />} />
