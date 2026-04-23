@@ -125,6 +125,13 @@ const ClaimRhozeButton = ({
       toast.error("Enter an amount to claim");
       return;
     }
+    const check = validateClaim(creditsToClaim, claimLimits);
+    if (!check.ok) {
+      toast.error("Claim outside your safety limits", {
+        description: `${check.reason} Update your limits in Settings → Wallet.`,
+      });
+      return;
+    }
     setAcknowledged(false);
     setPreview(null);
     setPreviewError(null);
