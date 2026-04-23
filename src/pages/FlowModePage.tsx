@@ -769,6 +769,30 @@ const FlowModePage = () => {
           <Button onClick={finishCalibration} className="rounded-full px-8">
             Enter Flow
           </Button>
+
+          {!user && (
+            <div className="mt-8 rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-4 text-left">
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1.5">
+                Browsing as guest
+              </p>
+              <p className="text-sm text-foreground/90 leading-relaxed mb-3">
+                Explore the global feed freely — swipe, browse, and discover
+                work from creators across Rhozeland.
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+                Want to post your own music, art, or designs? You'll need a
+                free account to share, save, and earn $RHOZE.
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => navigate("/auth")}
+                className="rounded-full w-full"
+              >
+                Create free account
+              </Button>
+            </div>
+          )}
         </motion.div>
       </div>
     );
