@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Play, FileText, ExternalLink, ChevronDown, Music, Palette, Camera, Video, PenTool, Bookmark, Send, Maximize2, X, Trash2 } from "lucide-react";
+import { Play, FileText, ExternalLink, ChevronDown, Music, Palette, Camera, Video, PenTool, Bookmark, Send, Maximize2, X, Trash2, Sparkles, Globe } from "lucide-react";
 import AudioPreview from "@/components/marketplace/AudioPreview";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
@@ -83,9 +83,10 @@ interface FlowCardProps {
   onDelete?: () => void;
   isOwner?: boolean;
   isAdmin?: boolean;
+  feedScope?: "all" | "preferred";
 }
 
-const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner, isAdmin }: FlowCardProps) => {
+const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner, isAdmin, feedScope }: FlowCardProps) => {
   const navigate = useNavigate();
   const [imageEnlarged, setImageEnlarged] = useState(false);
   const platform = detectPlatform(item.link_url);
@@ -103,6 +104,29 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
   return (
     <>
       <div className="relative rounded-[32px] bg-card/50 backdrop-blur-2xl shadow-2xl shadow-foreground/5 overflow-hidden border border-border/15 select-none">
+
+        {/* ═══ Scope badge — indicates current feed source ═══ */}
+        {feedScope && (
+          <div
+            className="absolute top-3 left-3 z-20 pointer-events-none"
+            aria-label={feedScope === "preferred" ? "From your For You feed" : "From the All feed"}
+          >
+            <span
+              className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider backdrop-blur-md border ${
+                feedScope === "preferred"
+                  ? "bg-primary/85 text-primary-foreground border-primary/30"
+                  : "bg-card/75 text-foreground border-border/30"
+              }`}
+            >
+              {feedScope === "preferred" ? (
+                <Sparkles className="h-2.5 w-2.5" />
+              ) : (
+                <Globe className="h-2.5 w-2.5" />
+              )}
+              {feedScope === "preferred" ? "For You" : "All"}
+            </span>
+          </div>
+        )}
 
         {/* ═══ PHOTO / DESIGN — Full image with click to enlarge ═══ */}
         {isImage && item.file_url && (
