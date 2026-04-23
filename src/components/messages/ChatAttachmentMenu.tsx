@@ -100,7 +100,7 @@ const ChatAttachmentMenu = ({ onSendMessage, onSendQuote, disabled }: ChatAttach
           toast.error(`${file.name} is too large (max 20MB)`);
           continue;
         }
-        const fileExt = file.name.split(".").pop();
+        const fileExt = safeFileExt(file);
         const filePath = `chat/${user.id}/${crypto.randomUUID()}.${fileExt}`;
         const { url: signedUrl, error: uploadErrMsg } = await uploadAndGetUrl("smartboard-files", filePath, file);
         if (uploadErrMsg) {

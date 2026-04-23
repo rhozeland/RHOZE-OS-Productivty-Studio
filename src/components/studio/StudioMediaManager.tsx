@@ -96,7 +96,8 @@ const StudioMediaManager = ({
 
   const handleCroppedBlob = async (blob: Blob) => {
     if (!user || !cropFile) return;
-    const ext = (cropFile.name.split(".").pop() || "jpg").toLowerCase();
+    // Cropper outputs a Blob (typically image/jpeg); derive ext from that.
+    const ext = safeFileExt({ name: cropFile.name, type: blob.type || cropFile.type });
 
     if (cropMode === "cover") {
       setUploadingCover(true);
