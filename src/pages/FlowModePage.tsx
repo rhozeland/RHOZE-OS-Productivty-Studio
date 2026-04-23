@@ -57,6 +57,7 @@ import { cn } from "@/lib/utils";
 import { loadFlowFeed } from "@/lib/flow-feed";
 import AdminFlowSeedPanel from "@/components/flow/AdminFlowSeedPanel";
 import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
+import SignUpToPostPrompt from "@/components/flow/SignUpToPostPrompt";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
