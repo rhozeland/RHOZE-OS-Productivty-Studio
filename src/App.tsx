@@ -120,6 +120,24 @@ const AuthGateWrapper = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+/**
+ * Root entry — `/`
+ * Guests see the public HomePage (clean, no sidebar/dock).
+ * Authed users redirect to /dashboard inside AppLayout.
+ */
+const RootEntry = () => {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+  if (user) return <Navigate to="/dashboard" replace />;
+  return <HomePage />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
