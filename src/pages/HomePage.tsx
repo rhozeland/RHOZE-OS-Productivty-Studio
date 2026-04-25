@@ -28,23 +28,24 @@ import {
   FolderKanban,
   Sparkles,
   Eye,
-  Heart,
-  MessageSquare,
   Zap,
   CheckCircle2,
+  ShoppingBag,
 } from "lucide-react";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-type LiveStats = { creators: number; posts: number; studios: number };
-type LiveFlowItem = {
+type LiveStats = { creators: number; studios: number };
+type LiveStudio = {
   id: string;
-  title: string;
-  category: string;
-  content_type: string;
-  file_url: string | null;
+  name: string | null;
+  cover_image_url: string | null;
+  city: string | null;
+};
+type LiveCreator = {
   user_id: string;
   display_name: string | null;
   avatar_url: string | null;
+  username: string | null;
 };
 
 const VALUE_PROPS = [
@@ -72,54 +73,57 @@ const TRUST_BULLETS = [
 ];
 
 const HomePage = () => {
-  const flowRef = useRef<HTMLDivElement>(null);
-  const flowInView = useInView(flowRef, { once: true, amount: 0.2 });
+  const showcaseRef = useRef<HTMLDivElement>(null);
+  const showcaseInView = useInView(showcaseRef, { once: true, amount: 0.2 });
 
   // Live platform stats — drives the "real, active community" feeling.
   const { data: stats } = useQuery<LiveStats>({
     queryKey: ["home-live-stats"],
     queryFn: async () => {
-      const [c, p, s] = await Promise.all([
+      const [c, s] = await Promise.all([
         supabase.from("profiles_public").select("*", { count: "exact", head: true }),
-        supabase.from("flow_items").select("*", { count: "exact", head: true }),
-        supabase.from("studios").select("*", { count: "exact", head: true }),
+        supabase
+          .from("studios")
+          .select("*", { count: "exact", head: true })
+          .eq("is_active", true)
+          .eq("status", "approved"),
       ]);
       return {
         creators: c.count ?? 0,
-        posts: p.count ?? 0,
         studios: s.count ?? 0,
       };
     },
     staleTime: 60_000,
   });
 
-  // Live recent Flow items — proof the platform is alive. Falls back gracefully
-  // if there are no posts yet.
-  const { data: flowItems } = useQuery<LiveFlowItem[]>({
-    queryKey: ["home-live-flow"],
+  // Featured studios — proof the platform is alive.
+  const { data: studios } = useQuery<LiveStudio[]>({
+    queryKey: ["home-live-studios"],
     queryFn: async () => {
-      const { data: items } = await supabase
-        .from("flow_items")
-        .select("id, title, category, content_type, file_url, user_id")
-        .order("created_at", { ascending: false })
+      const { data } = await supabase
+        .from("studios")
+        .select("id, name, cover_image_url, city")
+        .eq("is_active", true)
+        .eq("status", "approved")
+        .order("rating_avg", { ascending: false })
         .limit(6);
-      const userIds = Array.from(new Set((items ?? []).map((i) => i.user_id)));
-      const { data: profs } = userIds.length
-        ? await supabase
-            .from("profiles_public")
-            .select("user_id, display_name, avatar_url")
-            .in("user_id", userIds)
-        : { data: [] };
-      const profMap = new Map(
-        (profs ?? []).map((p: any) => [p.user_id, p]),
-      );
-      return (items ?? []).map((i: any) => ({
-        ...i,
-        display_name: profMap.get(i.user_id)?.display_name ?? null,
-        avatar_url: profMap.get(i.user_id)?.avatar_url ?? null,
-      }));
+      return (data ?? []) as LiveStudio[];
     },
-    staleTime: 30_000,
+    staleTime: 60_000,
+  });
+
+  // Featured creators
+  const { data: creators } = useQuery<LiveCreator[]>({
+    queryKey: ["home-live-creators"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles_public")
+        .select("user_id, display_name, avatar_url, username")
+        .not("display_name", "is", null)
+        .limit(8);
+      return (data ?? []) as LiveCreator[];
+    },
+    staleTime: 60_000,
   });
 
   const creatorCount = stats?.creators ?? 0;
@@ -136,7 +140,7 @@ const HomePage = () => {
             </span>
           </Link>
           <div className="flex items-center gap-2">
-            <Link to="/flow">
+            <Link to="/explore/studios">
               <Button size="sm" variant="ghost" className="text-xs">
                 Explore
               </Button>
@@ -233,7 +237,7 @@ const HomePage = () => {
                 Sign up free <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <Link to="/flow">
+            <Link to="/explore/studios">
               <Button
                 variant="outline"
                 className="rounded-full h-12 px-6 gap-2 text-sm font-medium"
@@ -252,20 +256,16 @@ const HomePage = () => {
             className="flex items-center gap-2 flex-wrap justify-center mb-5 text-xs"
           >
             <span className="text-muted-foreground/60">Browse:</span>
-            <Link to="/studios" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
+            <Link to="/explore/studios" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
               Studios
             </Link>
             <span className="text-muted-foreground/30">·</span>
-            <Link to="/creators" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
+            <Link to="/explore/creators" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
               Creators
             </Link>
             <span className="text-muted-foreground/30">·</span>
             <Link to="/marketplace" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
               Marketplace
-            </Link>
-            <span className="text-muted-foreground/30">·</span>
-            <Link to="/flow" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
-              Flow
             </Link>
           </motion.div>
 
@@ -286,20 +286,20 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* ─── Live Flow strip — proof, not marketing ────────────────────── */}
-      {flowItems && flowItems.length > 0 && (
-        <section ref={flowRef} className="border-t border-border/60 px-4 sm:px-6 py-12 bg-card/30">
+      {/* ─── Featured studios — real spaces guests can browse ──────────── */}
+      {studios && studios.length > 0 && (
+        <section ref={showcaseRef} className="border-t border-border/60 px-4 sm:px-6 py-12 bg-card/30">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-end justify-between mb-6 flex-wrap gap-3">
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-1.5">
-                  Live now
+                  Featured studios
                 </p>
                 <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground">
-                  Recently shared by the community
+                  Spaces you can book today
                 </h2>
               </div>
-              <Link to="/flow">
+              <Link to="/explore/studios">
                 <Button variant="ghost" size="sm" className="gap-1.5 text-xs">
                   See all <ArrowRight className="h-3 w-3" />
                 </Button>
@@ -307,44 +307,89 @@ const HomePage = () => {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-              {flowItems.slice(0, 6).map((item, i) => (
+              {studios.slice(0, 6).map((s, i) => (
                 <motion.div
-                  key={item.id}
+                  key={s.id}
                   initial={{ opacity: 0, y: 12 }}
-                  animate={flowInView ? { opacity: 1, y: 0 } : {}}
+                  animate={showcaseInView ? { opacity: 1, y: 0 } : {}}
                   transition={{ delay: i * 0.06 }}
                 >
                   <Link
-                    to="/flow"
-                    className="group block aspect-square rounded-xl overflow-hidden border border-border/50 bg-muted relative"
+                    to={`/explore/studios/${s.id}`}
+                    className="group block aspect-[4/3] rounded-xl overflow-hidden border border-border/50 bg-muted relative"
                   >
-                    {item.file_url ? (
+                    {s.cover_image_url ? (
                       <img
-                        src={item.file_url}
-                        alt={item.title}
+                        src={s.cover_image_url}
+                        alt={s.name ?? "Studio"}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         loading="lazy"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/20">
-                        <Sparkles className="h-8 w-8 text-muted-foreground" />
+                        <Building2 className="h-8 w-8 text-muted-foreground" />
                       </div>
                     )}
-                    {/* Overlay */}
-                    <div className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-                      <div className="flex items-center gap-1.5">
-                        <Avatar className="h-5 w-5 border border-white/20">
-                          <AvatarImage src={item.avatar_url ?? undefined} />
-                          <AvatarFallback className="text-[8px]">
-                            {item.display_name?.[0]?.toUpperCase() ?? "?"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-[10px] text-white/90 font-medium truncate">
-                          {item.display_name ?? "Creator"}
-                        </span>
-                      </div>
+                    <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent">
+                      <p className="text-sm font-semibold text-white truncate">
+                        {s.name ?? "Studio"}
+                      </p>
+                      {s.city && (
+                        <p className="text-[10px] text-white/70 truncate">{s.city}</p>
+                      )}
                     </div>
                   </Link>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ─── Featured creators ─────────────────────────────────────────── */}
+      {creators && creators.length > 0 && (
+        <section className="border-t border-border/60 px-4 sm:px-6 py-12">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-end justify-between mb-6 flex-wrap gap-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-1.5">
+                  Featured creators
+                </p>
+                <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground">
+                  People building here
+                </h2>
+              </div>
+              <Link to="/explore/creators">
+                <Button variant="ghost" size="sm" className="gap-1.5 text-xs">
+                  See all <ArrowRight className="h-3 w-3" />
+                </Button>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {creators.slice(0, 8).map((c, i) => (
+                <motion.div
+                  key={c.user_id}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05 }}
+                  className="rounded-xl border border-border/50 bg-card/60 p-4 flex flex-col items-center text-center hover:border-border transition-all"
+                >
+                  <Avatar className="h-14 w-14 border border-border/40 mb-3">
+                    <AvatarImage src={c.avatar_url ?? undefined} />
+                    <AvatarFallback className="text-sm">
+                      {c.display_name?.[0]?.toUpperCase() ?? "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="text-sm font-semibold text-foreground truncate w-full">
+                    {c.display_name ?? "Creator"}
+                  </p>
+                  {c.username && (
+                    <p className="text-[11px] text-muted-foreground truncate w-full">
+                      @{c.username}
+                    </p>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -403,19 +448,19 @@ const HomePage = () => {
             Get paid for showing up.
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed max-w-xl mx-auto mb-6">
-            Every post, comment, and project earns <strong className="text-foreground">$RHOZE</strong> — credits you can
+            Every booking, sale, and project earns <strong className="text-foreground">$RHOZE</strong> — credits you can
             spend on studio time, creator services, or cash out. Think of it as
             airline miles for creative work. <span className="text-muted-foreground/70">No wallet to set up. No fees to start.</span>
           </p>
           <div className="flex items-center gap-2 flex-wrap justify-center text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background border border-border/60">
-              <Heart className="h-3 w-3" /> Like a post → earn
+              <Building2 className="h-3 w-3" /> Book a studio → earn
             </span>
             <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background border border-border/60">
-              <MessageSquare className="h-3 w-3" /> Comment → earn
+              <ShoppingBag className="h-3 w-3" /> Sell your work → earn
             </span>
             <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background border border-border/60">
-              <Sparkles className="h-3 w-3" /> Post your work → earn
+              <FolderKanban className="h-3 w-3" /> Ship a project → earn
             </span>
           </div>
         </div>
@@ -437,7 +482,7 @@ const HomePage = () => {
                 Sign up free <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <Link to="/flow">
+            <Link to="/explore/studios">
               <Button
                 variant="outline"
                 className="rounded-full h-12 px-6 gap-2 text-sm"
@@ -459,7 +504,7 @@ const HomePage = () => {
             <Link to="/auth" className="hover:text-foreground transition-colors">
               Sign in
             </Link>
-            <Link to="/flow" className="hover:text-foreground transition-colors">
+            <Link to="/explore/studios" className="hover:text-foreground transition-colors">
               Explore
             </Link>
           </div>
