@@ -380,6 +380,21 @@ const CreatorAvailabilityCalendar = ({
 
     setSaving(true);
     try {
+      // Final-pass overlap check against the live database — guards against races
+      // where another tab/device added a block while we were dragging.
+      const { data: clashes, error: checkErr } = await supabase
+        .from("creator_availability")
+        .select("id")
+        .eq("user_id", user.id)
+        .lt("start_time", end.toISOString())
+        .gt("end_time", start.toISOString())
+        .limit(1);
+      if (checkErr) throw checkErr;
+      if (clashes && clashes.length > 0) {
+        toast.error("That time overlaps an existing availability block");
+        return;
+      }
+
       const { error } = await supabase.from("creator_availability").insert({
         user_id: user.id,
         start_time: start.toISOString(),
