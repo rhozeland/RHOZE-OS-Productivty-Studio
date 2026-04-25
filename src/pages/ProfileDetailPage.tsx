@@ -15,6 +15,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import ProfileBadges from "@/components/profile/ProfileBadges";
+import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import { cn } from "@/lib/utils";
 
 const ProfileDetailPage = () => {
@@ -440,6 +441,18 @@ const ProfileDetailPage = () => {
             )}
           </motion.div>
         )}
+
+        {/* ─── Availability Calendar ─── */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.18, duration: 0.4 }}
+        >
+          <CreatorAvailabilityCalendar
+            creatorId={id!}
+            creatorName={p.display_name || p.username}
+          />
+        </motion.div>
 
         {/* ─── Offerings ─── */}
         {hasSellerContent && (
