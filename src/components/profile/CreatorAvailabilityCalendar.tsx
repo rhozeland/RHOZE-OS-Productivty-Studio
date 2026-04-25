@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useAuthGate } from "@/hooks/useAuthGate";
+import { useAuthGate } from "@/components/AuthGateDialog";
 
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 8); // 8am – 10pm
 
@@ -66,7 +66,7 @@ const CreatorAvailabilityCalendar = ({
 }: CreatorAvailabilityCalendarProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { requireAuth, AuthGateDialog } = useAuthGate();
+  const { requireAuth } = useAuthGate();
 
   const isOwner = user?.id === creatorId;
 
@@ -593,7 +593,6 @@ const CreatorAvailabilityCalendar = ({
         </DialogContent>
       </Dialog>
 
-      <AuthGateDialog />
     </div>
   );
 };
