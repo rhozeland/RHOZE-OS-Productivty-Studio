@@ -125,6 +125,20 @@ const CreatorAvailabilityCalendar = ({
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingNotes, setBookingNotes] = useState("");
 
+  // Resize state for owner editing of existing availability blocks
+  const [resizing, setResizing] = useState<{
+    id: string;
+    dayIdx: number;
+    edge: "top" | "bottom";
+    originalStart: number;
+    originalEnd: number;
+    currentStart: number;
+    currentEnd: number;
+  } | null>(null);
+
+  // Click-to-edit popover for an existing block
+  const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
+
   const dayColumnRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
