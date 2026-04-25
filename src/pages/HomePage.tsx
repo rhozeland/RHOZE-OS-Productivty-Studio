@@ -45,7 +45,7 @@ type LiveCreator = {
   user_id: string;
   display_name: string | null;
   avatar_url: string | null;
-  headline: string | null;
+  username: string | null;
 };
 
 const VALUE_PROPS = [
