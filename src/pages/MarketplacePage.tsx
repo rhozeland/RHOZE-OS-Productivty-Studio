@@ -428,9 +428,10 @@ const MarketplacePage = () => {
                 reviewStats={getReviewStatsForListing(listing.id)}
                 index={i}
                 isOwner={listing.user_id === user?.id}
-                onInquire={() =>
-                  navigate(`/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`)
-                }
+                onInquire={() => {
+                  if (!requireAuth("Sign up to message creators and send inquiries.")) return;
+                  navigate(`/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`);
+                }}
                 onClick={() => navigate(`/marketplace/${listing.id}`)}
                 onDelete={() => deleteListing.mutate(listing.id)}
               />
