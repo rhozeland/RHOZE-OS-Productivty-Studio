@@ -237,7 +237,7 @@ const HomePage = () => {
                 Sign up free <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <Link to="/flow">
+            <Link to="/explore/studios">
               <Button
                 variant="outline"
                 className="rounded-full h-12 px-6 gap-2 text-sm font-medium"
@@ -256,20 +256,16 @@ const HomePage = () => {
             className="flex items-center gap-2 flex-wrap justify-center mb-5 text-xs"
           >
             <span className="text-muted-foreground/60">Browse:</span>
-            <Link to="/studios" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
+            <Link to="/explore/studios" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
               Studios
             </Link>
             <span className="text-muted-foreground/30">·</span>
-            <Link to="/creators" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
+            <Link to="/explore/creators" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
               Creators
             </Link>
             <span className="text-muted-foreground/30">·</span>
             <Link to="/marketplace" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
               Marketplace
-            </Link>
-            <span className="text-muted-foreground/30">·</span>
-            <Link to="/flow" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
-              Flow
             </Link>
           </motion.div>
 
@@ -290,20 +286,20 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* ─── Live Flow strip — proof, not marketing ────────────────────── */}
-      {flowItems && flowItems.length > 0 && (
-        <section ref={flowRef} className="border-t border-border/60 px-4 sm:px-6 py-12 bg-card/30">
+      {/* ─── Featured studios — real spaces guests can browse ──────────── */}
+      {studios && studios.length > 0 && (
+        <section ref={showcaseRef} className="border-t border-border/60 px-4 sm:px-6 py-12 bg-card/30">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-end justify-between mb-6 flex-wrap gap-3">
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-1.5">
-                  Live now
+                  Featured studios
                 </p>
                 <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground">
-                  Recently shared by the community
+                  Spaces you can book today
                 </h2>
               </div>
-              <Link to="/flow">
+              <Link to="/explore/studios">
                 <Button variant="ghost" size="sm" className="gap-1.5 text-xs">
                   See all <ArrowRight className="h-3 w-3" />
                 </Button>
@@ -311,44 +307,89 @@ const HomePage = () => {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-              {flowItems.slice(0, 6).map((item, i) => (
+              {studios.slice(0, 6).map((s, i) => (
                 <motion.div
-                  key={item.id}
+                  key={s.id}
                   initial={{ opacity: 0, y: 12 }}
-                  animate={flowInView ? { opacity: 1, y: 0 } : {}}
+                  animate={showcaseInView ? { opacity: 1, y: 0 } : {}}
                   transition={{ delay: i * 0.06 }}
                 >
                   <Link
-                    to="/flow"
-                    className="group block aspect-square rounded-xl overflow-hidden border border-border/50 bg-muted relative"
+                    to={`/explore/studios/${s.id}`}
+                    className="group block aspect-[4/3] rounded-xl overflow-hidden border border-border/50 bg-muted relative"
                   >
-                    {item.file_url ? (
+                    {s.cover_image_url ? (
                       <img
-                        src={item.file_url}
-                        alt={item.title}
+                        src={s.cover_image_url}
+                        alt={s.name ?? "Studio"}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         loading="lazy"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/20">
-                        <Sparkles className="h-8 w-8 text-muted-foreground" />
+                        <Building2 className="h-8 w-8 text-muted-foreground" />
                       </div>
                     )}
-                    {/* Overlay */}
-                    <div className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-                      <div className="flex items-center gap-1.5">
-                        <Avatar className="h-5 w-5 border border-white/20">
-                          <AvatarImage src={item.avatar_url ?? undefined} />
-                          <AvatarFallback className="text-[8px]">
-                            {item.display_name?.[0]?.toUpperCase() ?? "?"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-[10px] text-white/90 font-medium truncate">
-                          {item.display_name ?? "Creator"}
-                        </span>
-                      </div>
+                    <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent">
+                      <p className="text-sm font-semibold text-white truncate">
+                        {s.name ?? "Studio"}
+                      </p>
+                      {s.city && (
+                        <p className="text-[10px] text-white/70 truncate">{s.city}</p>
+                      )}
                     </div>
                   </Link>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ─── Featured creators ─────────────────────────────────────────── */}
+      {creators && creators.length > 0 && (
+        <section className="border-t border-border/60 px-4 sm:px-6 py-12">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-end justify-between mb-6 flex-wrap gap-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-1.5">
+                  Featured creators
+                </p>
+                <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground">
+                  People building here
+                </h2>
+              </div>
+              <Link to="/explore/creators">
+                <Button variant="ghost" size="sm" className="gap-1.5 text-xs">
+                  See all <ArrowRight className="h-3 w-3" />
+                </Button>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {creators.slice(0, 8).map((c, i) => (
+                <motion.div
+                  key={c.user_id}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05 }}
+                  className="rounded-xl border border-border/50 bg-card/60 p-4 flex flex-col items-center text-center hover:border-border transition-all"
+                >
+                  <Avatar className="h-14 w-14 border border-border/40 mb-3">
+                    <AvatarImage src={c.avatar_url ?? undefined} />
+                    <AvatarFallback className="text-sm">
+                      {c.display_name?.[0]?.toUpperCase() ?? "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="text-sm font-semibold text-foreground truncate w-full">
+                    {c.display_name ?? "Creator"}
+                  </p>
+                  {c.username && (
+                    <p className="text-[11px] text-muted-foreground truncate w-full">
+                      @{c.username}
+                    </p>
+                  )}
                 </motion.div>
               ))}
             </div>
