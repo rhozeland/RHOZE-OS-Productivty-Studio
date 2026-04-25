@@ -654,6 +654,20 @@ const CreatorAvailabilityCalendar = ({
   const liveDuration =
     liveStartMin !== null && liveEndMin !== null ? liveEndMin - liveStartMin : 0;
 
+  // Conflict detection for the in-progress drag (owner edit mode only)
+  const liveConflict =
+    mode === "edit" &&
+    isDragging &&
+    dragDayIdx !== null &&
+    liveStartMin !== null &&
+    liveEndMin !== null
+      ? rangeOverlapsBooking(dragDayIdx, liveStartMin, liveEndMin)
+        ? "booking"
+        : rangeOverlapsAvailability(dragDayIdx, liveStartMin, liveEndMin)
+        ? "availability"
+        : null
+      : null;
+
   // ─── Render ───
   return (
     <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
