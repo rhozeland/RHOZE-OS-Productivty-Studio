@@ -385,7 +385,161 @@ const CreatorAvailabilityCalendar = ({
     }
   };
 
-  // ─── Booking modal: nudge duration ±15 min ───
+  // ─── Update an existing availability block (resize / nudge) ───
+  const updateAvailabilityWindow = async (
+    id: string,
+    day: Date,
+    startMin: number,
+    endMin: number
+  ) => {
+    if (!user || !isOwner) return;
+    const start = addMinutes(startOfDay(day), startMin);
+    const end = addMinutes(startOfDay(day), endMin);
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("creator_availability")
+        .update({ start_time: start.toISOString(), end_time: end.toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ["creator-availability", creatorId] });
+    } catch (err: any) {
+      toast.error(err.message || "Could not update");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Bounds: don't let a resize cross a booking or another availability block
+  const computeResizeBounds = (
+    dayIdx: number,
+    blockId: string,
+    edge: "top" | "bottom",
+    originalStart: number,
+    originalEnd: number
+  ) => {
+    const others = (availabilityByDay[dayIdx] ?? []).filter((iv) => iv.id !== blockId);
+    const bks = bookingsByDay[dayIdx] ?? [];
+
+    if (edge === "top") {
+      // Lower bound: after the latest "other end" before originalStart, and after any booking inside this block
+      let lower = DAY_START_MIN;
+      others.forEach((iv) => {
+        if (iv.endMin <= originalStart && iv.endMin > lower) lower = iv.endMin;
+      });
+      bks.forEach((b) => {
+        if (b.endMin <= originalEnd && b.endMin > lower) lower = b.endMin;
+      });
+      return { min: lower, max: originalEnd - SNAP_MIN };
+    } else {
+      let upper = DAY_END_MIN;
+      others.forEach((iv) => {
+        if (iv.startMin >= originalEnd && iv.startMin < upper) upper = iv.startMin;
+      });
+      bks.forEach((b) => {
+        if (b.startMin >= originalStart && b.startMin < upper) upper = b.startMin;
+      });
+      return { min: originalStart + SNAP_MIN, max: upper };
+    }
+  };
+
+  // ─── Resize pointer handlers ───
+  const handleResizeStart = (
+    iv: { id: string; startMin: number; endMin: number },
+    dayIdx: number,
+    edge: "top" | "bottom",
+    e: React.PointerEvent
+  ) => {
+    e.stopPropagation();
+    e.preventDefault();
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    setEditingBlockId(null);
+    setResizing({
+      id: iv.id,
+      dayIdx,
+      edge,
+      originalStart: iv.startMin,
+      originalEnd: iv.endMin,
+      currentStart: iv.startMin,
+      currentEnd: iv.endMin,
+    });
+  };
+
+  const handleResizeMove = useCallback(
+    (e: PointerEvent) => {
+      if (!resizing) return;
+      const m = minutesFromPointer(resizing.dayIdx, e.clientY);
+      if (m === null) return;
+      const bounds = computeResizeBounds(
+        resizing.dayIdx,
+        resizing.id,
+        resizing.edge,
+        resizing.originalStart,
+        resizing.originalEnd
+      );
+      const clamped = Math.max(bounds.min, Math.min(bounds.max, m));
+      if (resizing.edge === "top") {
+        setResizing({ ...resizing, currentStart: clamped });
+      } else {
+        setResizing({ ...resizing, currentEnd: clamped });
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [resizing, minutesFromPointer]
+  );
+
+  const handleResizeEnd = useCallback(() => {
+    if (!resizing) return;
+    const { id, dayIdx, currentStart, currentEnd, originalStart, originalEnd } = resizing;
+    setResizing(null);
+    if (currentStart === originalStart && currentEnd === originalEnd) return;
+    const day = weekDays[dayIdx];
+    void updateAvailabilityWindow(id, day, currentStart, currentEnd);
+  }, [resizing, weekDays]);
+
+  useEffect(() => {
+    if (!resizing) return;
+    window.addEventListener("pointermove", handleResizeMove);
+    window.addEventListener("pointerup", handleResizeEnd);
+    return () => {
+      window.removeEventListener("pointermove", handleResizeMove);
+      window.removeEventListener("pointerup", handleResizeEnd);
+    };
+  }, [resizing, handleResizeMove, handleResizeEnd]);
+
+  // ─── Click-popover nudge: adjust an existing block's start/end by ±15 ───
+  const nudgeBlock = (
+    iv: { id: string; startMin: number; endMin: number },
+    dayIdx: number,
+    edge: "start" | "end",
+    deltaMin: number
+  ) => {
+    const bounds = computeResizeBounds(
+      dayIdx,
+      iv.id,
+      edge === "start" ? "top" : "bottom",
+      iv.startMin,
+      iv.endMin
+    );
+    let nextStart = iv.startMin;
+    let nextEnd = iv.endMin;
+    if (edge === "start") {
+      nextStart = Math.max(bounds.min, Math.min(bounds.max, iv.startMin + deltaMin));
+      if (nextStart === iv.startMin) {
+        toast.error("Can't move further");
+        return;
+      }
+    } else {
+      nextEnd = Math.max(bounds.min, Math.min(bounds.max, iv.endMin + deltaMin));
+      if (nextEnd === iv.endMin) {
+        toast.error("Can't move further");
+        return;
+      }
+    }
+    void updateAvailabilityWindow(iv.id, weekDays[dayIdx], nextStart, nextEnd);
+  };
+
+
   const adjustEnd = (deltaMin: number) => {
     if (!pendingSelection) return;
     const next = pendingSelection.endMin + deltaMin;
