@@ -58,12 +58,19 @@ import ResizableItem from "@/components/smartboard/ResizableItem";
 const SmartboardDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-  // When opened from a project's Scope tab, return to that project on exit
-  // instead of dumping the user on the global Smartboards index. The link
-  // origin is encoded as `?from=project:<id>` (see ProjectVision linked board).
+  const location = useLocation();
+  // Resolve back navigation in priority order:
+  //   1. router history state (set by callers like ProjectVision) — most reliable
+  //      across SPA navigations and survives the back button.
+  //   2. `?from=project:<id>` query param — fallback for direct links / shares.
+  //   3. global Smartboards index — final default.
+  const navState = (location.state ?? null) as { backTo?: string; backLabel?: string } | null;
   const fromParam = searchParams.get("from") ?? "";
   const projectFromMatch = /^project:([0-9a-fA-F-]{8,})$/.exec(fromParam);
-  const backHref = projectFromMatch ? `/projects/${projectFromMatch[1]}` : "/smartboards";
+  const backHref =
+    navState?.backTo ??
+    (projectFromMatch ? `/projects/${projectFromMatch[1]}` : "/smartboards");
+  const backLabel = navState?.backLabel ?? (projectFromMatch ? "Back to project" : "Back to Smartboards");
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [chatOpen, setChatOpen] = useState(false);
