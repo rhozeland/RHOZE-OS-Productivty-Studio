@@ -140,7 +140,7 @@ const HomePage = () => {
             </span>
           </Link>
           <div className="flex items-center gap-2">
-            <Link to="/flow">
+            <Link to="/explore/studios">
               <Button size="sm" variant="ghost" className="text-xs">
                 Explore
               </Button>
