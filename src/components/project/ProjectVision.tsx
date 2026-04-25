@@ -581,7 +581,11 @@ const ProjectVision = ({ project, projectId, smartboardDetails, linkedIds, onLin
                 transition={{ delay: i * 0.04 }}
                 className="group relative overflow-hidden rounded-xl border border-border bg-card hover:shadow-md transition-all"
               >
-                <Link to={`/smartboards/${board.id}?from=project:${projectId}`} className="block p-4">
+                <Link
+                  to={`/smartboards/${board.id}?from=project:${projectId}`}
+                  state={{ backTo: `/projects/${projectId}`, backLabel: "Back to project" }}
+                  className="block p-4"
+                >
                   <div
                     className="mb-3 h-16 rounded-lg"
                     style={{ background: board.cover_color || "hsl(var(--muted))" }}
