@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadAndGetUrl, resolveStorageUrl } from "@/lib/storage-utils";
@@ -57,6 +57,13 @@ import ResizableItem from "@/components/smartboard/ResizableItem";
 
 const SmartboardDetailPage = () => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  // When opened from a project's Scope tab, return to that project on exit
+  // instead of dumping the user on the global Smartboards index. The link
+  // origin is encoded as `?from=project:<id>` (see ProjectVision linked board).
+  const fromParam = searchParams.get("from") ?? "";
+  const projectFromMatch = /^project:([0-9a-fA-F-]{8,})$/.exec(fromParam);
+  const backHref = projectFromMatch ? `/projects/${projectFromMatch[1]}` : "/smartboards";
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [chatOpen, setChatOpen] = useState(false);
@@ -313,7 +320,7 @@ const SmartboardDetailPage = () => {
       <div className="surface-card rounded-2xl overflow-hidden">
         <div className="p-4 md:p-6">
           <div className="flex items-center gap-3 mb-3">
-            <Link to="/smartboards">
+            <Link to={backHref}>
               <Button variant="outline" size="icon" className="rounded-full h-9 w-9">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
