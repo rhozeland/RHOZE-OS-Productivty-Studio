@@ -162,9 +162,11 @@ const App = () => (
               <Route path="/explore/creators" element={<ExploreCreatorsPage />} />
               <Route path="/explore/creators/:id" element={<ExploreCreatorsPage />} />
 
+              {/* Public root — guests see HomePage, authed users redirect to /dashboard */}
+              <Route path="/" element={<RootEntry />} />
+
               {/* Main app — browsable by everyone, auth-gated actions inside */}
               <Route element={<AppLayout />}>
-                <Route path="/" element={<DashboardPage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/studios" element={<StudiosPage />} />
                 <Route path="/studios/:id" element={<StudioDetailPage />} />
