@@ -482,7 +482,7 @@ const HomePage = () => {
                 Sign up free <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <Link to="/flow">
+            <Link to="/explore/studios">
               <Button
                 variant="outline"
                 className="rounded-full h-12 px-6 gap-2 text-sm"
