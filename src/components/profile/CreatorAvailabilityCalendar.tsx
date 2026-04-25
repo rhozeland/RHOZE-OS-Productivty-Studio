@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -7,11 +7,13 @@ import {
   setHours,
   setMinutes,
   startOfWeek,
+  startOfDay,
   addDays,
   addWeeks,
   subWeeks,
   isSameDay,
-  addHours,
+  addMinutes,
+  differenceInMinutes,
 } from "date-fns";
 import {
   ChevronLeft,
@@ -22,6 +24,8 @@ import {
   X,
   Loader2,
   Trash2,
+  Minus,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,7 +40,15 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuthGate } from "@/components/AuthGateDialog";
 
-const HOURS = Array.from({ length: 15 }, (_, i) => i + 8); // 8am – 10pm
+// ─── Time grid configuration ───
+const HOUR_START = 8;       // 8am
+const HOUR_END = 23;        // 11pm (exclusive)
+const HOUR_PX = 48;         // pixel height per hour cell
+const SNAP_MIN = 15;        // minute snap granularity
+const HOURS = Array.from({ length: HOUR_END - HOUR_START }, (_, i) => HOUR_START + i);
+const DAY_START_MIN = HOUR_START * 60;
+const DAY_END_MIN = HOUR_END * 60;
+const PX_PER_MIN = HOUR_PX / 60;
 
 type Mode = "view" | "edit";
 
@@ -60,6 +72,24 @@ interface BookingRow {
   status: string;
 }
 
+const snap = (m: number) => Math.round(m / SNAP_MIN) * SNAP_MIN;
+const clamp = (m: number) => Math.max(DAY_START_MIN, Math.min(DAY_END_MIN, m));
+
+const minutesToTime = (day: Date, mins: number) =>
+  addMinutes(startOfDay(day), mins);
+
+const formatTime = (day: Date, mins: number) =>
+  format(minutesToTime(day, mins), "h:mm a");
+
+const formatDuration = (mins: number) => {
+  if (mins <= 0) return "0m";
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h && m) return `${h}h ${m}m`;
+  if (h) return `${h}h`;
+  return `${m}m`;
+};
+
 const CreatorAvailabilityCalendar = ({
   creatorId,
   creatorName,
@@ -74,24 +104,32 @@ const CreatorAvailabilityCalendar = ({
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [saving, setSaving] = useState(false);
 
-  // Drag selection state (for edit mode = mark available; for view mode = book a slot)
+  // Minute-precision drag state
   const [isDragging, setIsDragging] = useState(false);
-  const [dragDay, setDragDay] = useState<number | null>(null);
-  const [dragStartHour, setDragStartHour] = useState<number | null>(null);
-  const [dragEndHour, setDragEndHour] = useState<number | null>(null);
-  const [dragDate, setDragDate] = useState<Date | null>(null);
+  const [dragDayIdx, setDragDayIdx] = useState<number | null>(null);
+  const [dragAnchorMin, setDragAnchorMin] = useState<number | null>(null); // pointer-down position
+  const [dragCurrentMin, setDragCurrentMin] = useState<number | null>(null); // pointer-current position
 
-  // Booking confirmation dialog (visitor flow)
+  // Final selection committed for the booking modal
+  const [pendingSelection, setPendingSelection] = useState<{
+    day: Date;
+    startMin: number;
+    endMin: number;
+  } | null>(null);
+
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingNotes, setBookingNotes] = useState("");
 
-  const gridRef = useRef<HTMLDivElement>(null);
+  const dayColumnRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const weekDays = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
+    [weekStart]
+  );
   const weekEnd = addDays(weekStart, 7);
 
-  // Availability windows for this creator
+  // ─── Data ───
   const { data: availability, isLoading: loadingAvail } = useQuery({
     queryKey: ["creator-availability", creatorId, weekStart.toISOString()],
     queryFn: async () => {
@@ -106,7 +144,6 @@ const CreatorAvailabilityCalendar = ({
     },
   });
 
-  // Existing bookings against this creator (so we can grey out booked slots)
   const { data: bookings } = useQuery({
     queryKey: ["creator-bookings", creatorId, weekStart.toISOString()],
     queryFn: async () => {
@@ -121,134 +158,184 @@ const CreatorAvailabilityCalendar = ({
     },
   });
 
-  useEffect(() => {
-    const handler = () => isDragging && setIsDragging(false);
-    window.addEventListener("mouseup", handler);
-    return () => window.removeEventListener("mouseup", handler);
-  }, [isDragging]);
+  // Per-day intervals (minutes-from-midnight) for fast hit-testing
+  const availabilityByDay = useMemo(() => {
+    const map: Record<number, Array<{ id: string; startMin: number; endMin: number }>> = {};
+    weekDays.forEach((d, i) => (map[i] = []));
+    availability?.forEach((a) => {
+      const s = new Date(a.start_time);
+      const e = new Date(a.end_time);
+      const idx = weekDays.findIndex((d) => isSameDay(d, s));
+      if (idx === -1) return;
+      map[idx].push({
+        id: a.id,
+        startMin: s.getHours() * 60 + s.getMinutes(),
+        endMin: e.getHours() * 60 + e.getMinutes(),
+      });
+    });
+    return map;
+  }, [availability, weekDays]);
 
-  const resetDrag = () => {
-    setIsDragging(false);
-    setDragDay(null);
-    setDragStartHour(null);
-    setDragEndHour(null);
-    setDragDate(null);
+  const bookingsByDay = useMemo(() => {
+    const map: Record<number, Array<{ startMin: number; endMin: number }>> = {};
+    weekDays.forEach((d, i) => (map[i] = []));
+    bookings?.forEach((b) => {
+      const s = new Date(b.start_time);
+      const e = new Date(b.end_time);
+      const idx = weekDays.findIndex((d) => isSameDay(d, s));
+      if (idx === -1) return;
+      map[idx].push({
+        startMin: s.getHours() * 60 + s.getMinutes(),
+        endMin: e.getHours() * 60 + e.getMinutes(),
+      });
+    });
+    return map;
+  }, [bookings, weekDays]);
+
+  // Hit-test helpers
+  const minIsAvailable = (dayIdx: number, m: number) =>
+    availabilityByDay[dayIdx]?.some((iv) => m >= iv.startMin && m < iv.endMin) ?? false;
+  const minIsBooked = (dayIdx: number, m: number) =>
+    bookingsByDay[dayIdx]?.some((iv) => m >= iv.startMin && m < iv.endMin) ?? false;
+  const rangeIsBookable = (dayIdx: number, startMin: number, endMin: number) => {
+    if (endMin - startMin < SNAP_MIN) return false;
+    // Every snap-step must be available and not booked
+    for (let m = startMin; m < endMin; m += SNAP_MIN) {
+      if (!minIsAvailable(dayIdx, m)) return false;
+      if (minIsBooked(dayIdx, m)) return false;
+    }
+    return true;
+  };
+  const rangeIsBookableForOwnerEdit = (dayIdx: number, startMin: number, endMin: number) => {
+    if (endMin - startMin < SNAP_MIN) return false;
+    for (let m = startMin; m < endMin; m += SNAP_MIN) {
+      if (minIsBooked(dayIdx, m)) return false;
+    }
+    return true;
   };
 
-  const isSlotAvailable = (dayIndex: number, hour: number) => {
-    const day = weekDays[dayIndex];
-    return (
-      availability?.some((a) => {
-        const s = new Date(a.start_time);
-        const e = new Date(a.end_time);
-        if (!isSameDay(s, day)) return false;
-        return hour >= s.getHours() && hour < e.getHours();
-      }) ?? false
-    );
-  };
+  // ─── Pointer → minute resolution ───
+  const minutesFromPointer = useCallback(
+    (dayIdx: number, clientY: number) => {
+      const col = dayColumnRefs.current[dayIdx];
+      if (!col) return null;
+      const rect = col.getBoundingClientRect();
+      const relY = clientY - rect.top;
+      const rawMin = DAY_START_MIN + relY / PX_PER_MIN;
+      return clamp(snap(rawMin));
+    },
+    []
+  );
 
-  const isSlotBooked = (dayIndex: number, hour: number) => {
-    const day = weekDays[dayIndex];
-    return (
-      bookings?.some((b) => {
-        const s = new Date(b.start_time);
-        const e = new Date(b.end_time);
-        if (!isSameDay(s, day)) return false;
-        return hour >= s.getHours() && hour < e.getHours();
-      }) ?? false
-    );
-  };
+  const dayIdxFromPointer = useCallback((clientX: number, clientY: number) => {
+    for (let i = 0; i < dayColumnRefs.current.length; i++) {
+      const col = dayColumnRefs.current[i];
+      if (!col) continue;
+      const r = col.getBoundingClientRect();
+      if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+        return i;
+      }
+    }
+    return null;
+  }, []);
 
-  const isSlotInDrag = (dayIndex: number, hour: number) => {
-    if (dragDay !== dayIndex || dragStartHour === null || dragEndHour === null) return false;
-    const minH = Math.min(dragStartHour, dragEndHour);
-    const maxH = Math.max(dragStartHour, dragEndHour);
-    return hour >= minH && hour <= maxH;
-  };
+  // ─── Pointer handlers ───
+  const handlePointerDown = (dayIdx: number, e: React.PointerEvent) => {
+    if (mode === "view" && isOwner) return; // owner must enter edit mode
 
-  const slotIsPast = (day: Date, hour: number) => {
-    const d = setMinutes(setHours(day, hour), 0);
-    return d < new Date();
-  };
+    const day = weekDays[dayIdx];
+    const m = minutesFromPointer(dayIdx, e.clientY);
+    if (m === null) return;
 
-  // ─── Drag handlers ───
-  const handleSlotDown = (dayIndex: number, hour: number) => {
-    const day = weekDays[dayIndex];
-    if (slotIsPast(day, hour)) return;
+    // Past-time guard
+    const candidate = minutesToTime(day, m);
+    if (candidate < new Date()) return;
+
     if (mode === "view") {
-      // visitors can only start drag on AVAILABLE slots
-      if (!isOwner && (!isSlotAvailable(dayIndex, hour) || isSlotBooked(dayIndex, hour))) return;
-      if (!isOwner && !user) {
+      if (!user) {
         requireAuth(`Sign up to book time with ${creatorName ?? "this creator"}.`);
         return;
       }
-      if (isOwner) return; // owner needs to enter edit mode
+      if (!minIsAvailable(dayIdx, m) || minIsBooked(dayIdx, m)) return;
     } else {
-      if (isSlotBooked(dayIndex, hour)) return;
+      if (minIsBooked(dayIdx, m)) return;
     }
+
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
     setIsDragging(true);
-    setDragDay(dayIndex);
-    setDragStartHour(hour);
-    setDragEndHour(hour);
-    setDragDate(day);
+    setDragDayIdx(dayIdx);
+    setDragAnchorMin(m);
+    setDragCurrentMin(m + SNAP_MIN); // initial 15-min selection
   };
 
-  const handleSlotEnter = (dayIndex: number, hour: number) => {
-    if (!isDragging || dayIndex !== dragDay) return;
-    if (mode === "view" && !isOwner) {
-      // can only extend within available + non-booked slots
-      if (!isSlotAvailable(dayIndex, hour) || isSlotBooked(dayIndex, hour)) return;
-    } else if (mode === "edit") {
-      if (isSlotBooked(dayIndex, hour)) return;
-    }
-    setDragEndHour(hour);
-  };
-
-  const handleSlotUp = () => {
-    if (!isDragging) return;
-    setIsDragging(false);
-    if (dragStartHour === null || dragEndHour === null || !dragDate) return;
-
-    if (mode === "edit") {
-      void persistAvailability();
-    } else if (!isOwner) {
-      // Open booking confirmation
-      setBookingOpen(true);
-    }
-  };
-
-  // Touch resolver
-  const resolveTouchSlot = useCallback((touch: { clientX: number; clientY: number }) => {
-    const el = document.elementFromPoint(touch.clientX, touch.clientY);
-    if (!el) return null;
-    const slotEl = el.closest("[data-cslot]") as HTMLElement | null;
-    if (!slotEl) return null;
-    const dayIndex = Number(slotEl.dataset.cday);
-    const hour = Number(slotEl.dataset.chour);
-    if (isNaN(dayIndex) || isNaN(hour)) return null;
-    return { dayIndex, hour };
-  }, []);
-
-  const handleTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      if (!isDragging) return;
-      e.preventDefault();
-      const slot = resolveTouchSlot(e.touches[0]);
-      if (slot && slot.dayIndex === dragDay) handleSlotEnter(slot.dayIndex, slot.hour);
+  const handlePointerMove = useCallback(
+    (e: PointerEvent) => {
+      if (!isDragging || dragDayIdx === null) return;
+      const m = minutesFromPointer(dragDayIdx, e.clientY);
+      if (m === null) return;
+      setDragCurrentMin(m);
     },
-    [isDragging, dragDay, resolveTouchSlot]
+    [isDragging, dragDayIdx, minutesFromPointer]
   );
 
-  // ─── Edit mode persistence ───
-  const persistAvailability = async () => {
-    if (!user || !isOwner || !dragDate || dragStartHour === null || dragEndHour === null) {
-      resetDrag();
+  const handlePointerUp = useCallback(() => {
+    if (!isDragging || dragDayIdx === null || dragAnchorMin === null || dragCurrentMin === null) {
+      setIsDragging(false);
       return;
     }
-    const startH = Math.min(dragStartHour, dragEndHour);
-    const endH = Math.max(dragStartHour, dragEndHour) + 1;
-    const start = setMinutes(setHours(dragDate, startH), 0);
-    const end = setMinutes(setHours(dragDate, endH), 0);
+    setIsDragging(false);
+
+    const a = Math.min(dragAnchorMin, dragCurrentMin);
+    const b = Math.max(dragAnchorMin, dragCurrentMin);
+    const startMin = a;
+    const endMin = Math.max(a + SNAP_MIN, b); // ensure at least one snap
+    const day = weekDays[dragDayIdx];
+
+    if (mode === "edit") {
+      if (rangeIsBookableForOwnerEdit(dragDayIdx, startMin, endMin)) {
+        void persistAvailability(day, startMin, endMin);
+      } else {
+        toast.error("That range overlaps a booking");
+      }
+      setDragAnchorMin(null);
+      setDragCurrentMin(null);
+      setDragDayIdx(null);
+    } else {
+      if (rangeIsBookable(dragDayIdx, startMin, endMin)) {
+        setPendingSelection({ day, startMin, endMin });
+        setBookingOpen(true);
+      } else {
+        toast.error("Selection extends outside available time");
+        setDragAnchorMin(null);
+        setDragCurrentMin(null);
+        setDragDayIdx(null);
+      }
+    }
+  }, [
+    isDragging,
+    dragDayIdx,
+    dragAnchorMin,
+    dragCurrentMin,
+    weekDays,
+    mode,
+  ]);
+
+  // Global pointer listeners while dragging
+  useEffect(() => {
+    if (!isDragging) return;
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [isDragging, handlePointerMove, handlePointerUp]);
+
+  // ─── Persist availability ───
+  const persistAvailability = async (day: Date, startMin: number, endMin: number) => {
+    if (!user || !isOwner) return;
+    const start = addMinutes(startOfDay(day), startMin);
+    const end = addMinutes(startOfDay(day), endMin);
 
     setSaving(true);
     try {
@@ -259,12 +346,11 @@ const CreatorAvailabilityCalendar = ({
       });
       if (error) throw error;
       await queryClient.invalidateQueries({ queryKey: ["creator-availability", creatorId] });
-      toast.success("Availability added");
+      toast.success(`Added ${formatTime(day, startMin)} – ${formatTime(day, endMin)}`);
     } catch (err: any) {
       toast.error(err.message || "Could not save availability");
     } finally {
       setSaving(false);
-      resetDrag();
     }
   };
 
@@ -279,13 +365,35 @@ const CreatorAvailabilityCalendar = ({
     }
   };
 
-  // ─── Booking confirm (visitor) ───
+  // ─── Booking modal: nudge duration ±15 min ───
+  const adjustEnd = (deltaMin: number) => {
+    if (!pendingSelection) return;
+    const next = pendingSelection.endMin + deltaMin;
+    if (next - pendingSelection.startMin < SNAP_MIN) return;
+    if (next > DAY_END_MIN) return;
+    if (!rangeIsBookable(weekDays.findIndex((d) => isSameDay(d, pendingSelection.day)), pendingSelection.startMin, next)) {
+      toast.error("Cannot extend — outside available time");
+      return;
+    }
+    setPendingSelection({ ...pendingSelection, endMin: next });
+  };
+  const adjustStart = (deltaMin: number) => {
+    if (!pendingSelection) return;
+    const next = pendingSelection.startMin + deltaMin;
+    if (pendingSelection.endMin - next < SNAP_MIN) return;
+    if (next < DAY_START_MIN) return;
+    if (!rangeIsBookable(weekDays.findIndex((d) => isSameDay(d, pendingSelection.day)), next, pendingSelection.endMin)) {
+      toast.error("Cannot extend — outside available time");
+      return;
+    }
+    setPendingSelection({ ...pendingSelection, startMin: next });
+  };
+
   const confirmBooking = async () => {
-    if (!user || !dragDate || dragStartHour === null || dragEndHour === null) return;
-    const startH = Math.min(dragStartHour, dragEndHour);
-    const endH = Math.max(dragStartHour, dragEndHour) + 1;
-    const start = setMinutes(setHours(dragDate, startH), 0);
-    const end = setMinutes(setHours(dragDate, endH), 0);
+    if (!user || !pendingSelection) return;
+    const { day, startMin, endMin } = pendingSelection;
+    const start = addMinutes(startOfDay(day), startMin);
+    const end = addMinutes(startOfDay(day), endMin);
 
     setSaving(true);
     try {
@@ -295,13 +403,12 @@ const CreatorAvailabilityCalendar = ({
         title: `Session with ${creatorName ?? "creator"}`,
         start_time: start.toISOString(),
         end_time: end.toISOString(),
-        duration_hours: endH - startH,
+        duration_hours: +(differenceInMinutes(end, start) / 60).toFixed(2),
         status: "upcoming",
         notes: bookingNotes || null,
       });
       if (error) throw error;
 
-      // Personal calendar entry
       await supabase.from("calendar_events").insert({
         user_id: user.id,
         title: `📅 ${creatorName ?? "Creator"} session`,
@@ -312,10 +419,12 @@ const CreatorAvailabilityCalendar = ({
       });
 
       await queryClient.invalidateQueries({ queryKey: ["creator-bookings", creatorId] });
-      toast.success("Booking requested!");
+      toast.success(
+        `Booked ${format(day, "MMM d")} · ${formatTime(day, startMin)}–${formatTime(day, endMin)}`
+      );
       setBookingOpen(false);
       setBookingNotes("");
-      resetDrag();
+      setPendingSelection(null);
     } catch (err: any) {
       toast.error(err.message || "Could not book");
     } finally {
@@ -323,10 +432,17 @@ const CreatorAvailabilityCalendar = ({
     }
   };
 
-  const dragDuration =
-    dragStartHour !== null && dragEndHour !== null
-      ? Math.abs(dragEndHour - dragStartHour) + 1
-      : 0;
+  // ─── Live drag derived values ───
+  const liveStartMin =
+    dragAnchorMin !== null && dragCurrentMin !== null
+      ? Math.min(dragAnchorMin, dragCurrentMin)
+      : null;
+  const liveEndMin =
+    dragAnchorMin !== null && dragCurrentMin !== null
+      ? Math.max(dragAnchorMin + SNAP_MIN, dragCurrentMin)
+      : null;
+  const liveDuration =
+    liveStartMin !== null && liveEndMin !== null ? liveEndMin - liveStartMin : 0;
 
   // ─── Render ───
   return (
@@ -352,7 +468,6 @@ const CreatorAvailabilityCalendar = ({
               className="h-8 gap-1.5 text-xs"
               onClick={() => {
                 setMode("view");
-                resetDrag();
               }}
             >
               <Check className="h-3.5 w-3.5" /> Done
@@ -361,14 +476,31 @@ const CreatorAvailabilityCalendar = ({
         </div>
       </div>
 
-      {/* Mode hint */}
       <p className="text-xs text-muted-foreground mb-3">
         {isOwner && mode === "edit"
-          ? "Drag across hours to mark times you're available. Click an existing block to remove it."
+          ? "Drag vertically inside any day to mark availability. Snaps to 15-minute increments."
           : isOwner
           ? "Switch to Edit to add available times so visitors can book you."
-          : "Drag across the green slots to request a booking."}
+          : "Drag inside the green area to pick an exact time. Snaps to 15-minute increments."}
       </p>
+
+      {/* Live selection bar */}
+      {isDragging && liveStartMin !== null && liveEndMin !== null && dragDayIdx !== null && (
+        <div className="mb-3 flex items-center justify-between rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
+          <div>
+            <p className="font-semibold text-foreground">
+              {format(weekDays[dragDayIdx], "EEE, MMM d")}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {formatTime(weekDays[dragDayIdx], liveStartMin)} –{" "}
+              {formatTime(weekDays[dragDayIdx], liveEndMin)}
+            </p>
+          </div>
+          <span className="text-base font-bold text-primary">
+            {formatDuration(liveDuration)}
+          </span>
+        </div>
+      )}
 
       {/* Week nav */}
       <div className="flex items-center justify-between mb-3">
@@ -399,10 +531,8 @@ const CreatorAvailabilityCalendar = ({
         </div>
       ) : (
         <div
-          ref={gridRef}
-          className="grid border border-border rounded-lg overflow-hidden select-none max-h-[420px] overflow-y-auto"
+          className="grid border border-border rounded-lg overflow-hidden select-none max-h-[480px] overflow-y-auto"
           style={{ gridTemplateColumns: "48px repeat(7, 1fr)" }}
-          onMouseLeave={() => isDragging && handleSlotUp()}
         >
           {/* Header row */}
           <div className="bg-muted/30 border-b border-r border-border" />
@@ -426,76 +556,154 @@ const CreatorAvailabilityCalendar = ({
             </div>
           ))}
 
-          {/* Time slots */}
-          {HOURS.map((hour) => (
-            <div key={`row-${hour}`} className="contents">
-              <div
-                className="flex items-start justify-end pr-1 pt-0.5 text-[10px] text-muted-foreground border-r border-b border-border bg-muted/10"
-                style={{ height: 40 }}
-              >
-                {format(setHours(new Date(), hour), "ha").toLowerCase()}
-              </div>
-              {weekDays.map((day, dayIndex) => {
-                const available = isSlotAvailable(dayIndex, hour);
-                const booked = isSlotBooked(dayIndex, hour);
-                const inDrag = isSlotInDrag(dayIndex, hour);
-                const past = slotIsPast(day, hour);
+          {/* Body — left hour gutter + 7 day columns spanning all hours */}
+          <div className="contents">
+            {/* Hour gutter */}
+            <div className="border-r border-border bg-muted/10">
+              {HOURS.map((hour) => (
+                <div
+                  key={hour}
+                  className="flex items-start justify-end pr-1 pt-0.5 text-[10px] text-muted-foreground border-b border-border"
+                  style={{ height: HOUR_PX }}
+                >
+                  {format(setHours(new Date(), hour), "ha").toLowerCase()}
+                </div>
+              ))}
+            </div>
 
-                let cls = "hover:bg-muted/20 cursor-pointer";
-                if (past) cls = "bg-muted/20 cursor-not-allowed";
-                else if (booked) cls = "bg-destructive/15 cursor-not-allowed";
-                else if (available) cls = "bg-emerald-500/20 hover:bg-emerald-500/30 cursor-pointer";
-                if (inDrag) cls = "bg-primary/40";
-                if (mode === "view" && !isOwner && !available && !inDrag && !booked && !past) {
-                  cls = "bg-background cursor-not-allowed";
-                }
+            {/* 7 day columns */}
+            {weekDays.map((day, dayIdx) => {
+              const isToday = isSameDay(day, new Date());
+              const dayHeight = HOURS.length * HOUR_PX;
+              const now = new Date();
+              const pastEndMin = isSameDay(day, now)
+                ? clamp(now.getHours() * 60 + now.getMinutes())
+                : day < startOfDay(now)
+                ? DAY_END_MIN
+                : DAY_START_MIN;
+              const pastTopPx = 0;
+              const pastHeightPx = (pastEndMin - DAY_START_MIN) * PX_PER_MIN;
 
-                return (
-                  <div
-                    key={`${dayIndex}-${hour}`}
-                    data-cslot
-                    data-cday={dayIndex}
-                    data-chour={hour}
-                    className={cn(
-                      "border-r border-b border-border relative transition-colors touch-none",
-                      cls
-                    )}
-                    style={{ height: 40 }}
-                    onMouseDown={() => handleSlotDown(dayIndex, hour)}
-                    onMouseEnter={() => handleSlotEnter(dayIndex, hour)}
-                    onMouseUp={handleSlotUp}
-                    onTouchStart={(e) => {
-                      e.preventDefault();
-                      handleSlotDown(dayIndex, hour);
-                    }}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={handleSlotUp}
-                    onClick={() => {
-                      // Owner edit-mode click on existing window → remove it
-                      if (mode === "edit" && available) {
-                        const win = availability?.find((a) => {
-                          const s = new Date(a.start_time);
-                          const e = new Date(a.end_time);
-                          return (
-                            isSameDay(s, day) &&
-                            hour >= s.getHours() &&
-                            hour < e.getHours()
-                          );
-                        });
-                        if (win) void removeAvailabilityWindow(win.id);
-                      }
-                    }}
-                  >
-                    {mode === "edit" && available && !inDrag && (
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                        <Trash2 className="h-3 w-3 text-destructive" />
+              const dayAvail = availabilityByDay[dayIdx] ?? [];
+              const dayBookings = bookingsByDay[dayIdx] ?? [];
+
+              return (
+                <div
+                  key={dayIdx}
+                  ref={(el) => (dayColumnRefs.current[dayIdx] = el)}
+                  className={cn(
+                    "relative border-r border-border touch-none",
+                    isToday && "bg-primary/[0.02]"
+                  )}
+                  style={{ height: dayHeight }}
+                  onPointerDown={(e) => handlePointerDown(dayIdx, e)}
+                >
+                  {/* Hour grid lines */}
+                  {HOURS.map((_, i) => (
+                    <div
+                      key={i}
+                      className="absolute left-0 right-0 border-b border-border/60"
+                      style={{ top: i * HOUR_PX, height: HOUR_PX }}
+                    />
+                  ))}
+                  {/* 30-min subtle line */}
+                  {HOURS.map((_, i) => (
+                    <div
+                      key={`half-${i}`}
+                      className="absolute left-0 right-0 border-b border-dashed border-border/30"
+                      style={{ top: i * HOUR_PX + HOUR_PX / 2, height: 0 }}
+                    />
+                  ))}
+
+                  {/* Past overlay */}
+                  {pastHeightPx > 0 && (
+                    <div
+                      className="absolute left-0 right-0 bg-muted/30 pointer-events-none"
+                      style={{ top: pastTopPx, height: pastHeightPx }}
+                    />
+                  )}
+
+                  {/* Availability windows (green) */}
+                  {dayAvail.map((iv) => {
+                    const top = (iv.startMin - DAY_START_MIN) * PX_PER_MIN;
+                    const height = (iv.endMin - iv.startMin) * PX_PER_MIN;
+                    return (
+                      <div
+                        key={iv.id}
+                        className={cn(
+                          "absolute left-0.5 right-0.5 rounded-md bg-emerald-500/25 border border-emerald-500/40 pointer-events-none",
+                          mode === "edit" && "pointer-events-auto cursor-pointer hover:bg-emerald-500/35 group"
+                        )}
+                        style={{ top, height }}
+                        onClick={(e) => {
+                          if (mode !== "edit") return;
+                          e.stopPropagation();
+                          void removeAvailabilityWindow(iv.id);
+                        }}
+                      >
+                        {mode === "edit" && (
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="rounded-full bg-card/95 p-1 shadow">
+                              <Trash2 className="h-3 w-3 text-destructive" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {/* Booked windows (red) */}
+                  {dayBookings.map((iv, i) => {
+                    const top = (iv.startMin - DAY_START_MIN) * PX_PER_MIN;
+                    const height = (iv.endMin - iv.startMin) * PX_PER_MIN;
+                    return (
+                      <div
+                        key={`b-${i}`}
+                        className="absolute left-0.5 right-0.5 rounded-md bg-destructive/20 border border-destructive/40 pointer-events-none"
+                        style={{ top, height }}
+                      >
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <p className="text-[9px] font-medium text-destructive/80 px-1">
+                            Booked
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Live drag overlay */}
+                  {isDragging &&
+                    dragDayIdx === dayIdx &&
+                    liveStartMin !== null &&
+                    liveEndMin !== null && (
+                      <div
+                        className="absolute left-1 right-1 rounded-md bg-primary/40 border-2 border-primary pointer-events-none z-10 shadow-lg"
+                        style={{
+                          top: (liveStartMin - DAY_START_MIN) * PX_PER_MIN,
+                          height: (liveEndMin - liveStartMin) * PX_PER_MIN,
+                        }}
+                      >
+                        <div className="absolute inset-x-0 -top-5 text-center">
+                          <span className="inline-block px-1.5 py-0.5 text-[9px] font-bold bg-primary text-primary-foreground rounded">
+                            {formatTime(weekDays[dayIdx], liveStartMin)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-center h-full">
+                          <span className="text-[10px] font-bold text-primary-foreground bg-primary/80 px-1.5 py-0.5 rounded">
+                            {formatDuration(liveEndMin - liveStartMin)}
+                          </span>
+                        </div>
+                        <div className="absolute inset-x-0 -bottom-5 text-center">
+                          <span className="inline-block px-1.5 py-0.5 text-[9px] font-bold bg-primary text-primary-foreground rounded">
+                            {formatTime(weekDays[dayIdx], liveEndMin)}
+                          </span>
+                        </div>
                       </div>
                     )}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -512,6 +720,7 @@ const CreatorAvailabilityCalendar = ({
             <span className="inline-block h-3 w-3 rounded bg-primary/40" /> Selecting
           </span>
         )}
+        <span className="ml-auto opacity-60">Snaps to 15 min</span>
       </div>
 
       {saving && mode === "edit" && (
@@ -527,7 +736,7 @@ const CreatorAvailabilityCalendar = ({
           setBookingOpen(o);
           if (!o) {
             setBookingNotes("");
-            resetDrag();
+            setPendingSelection(null);
           }
         }}
       >
@@ -537,26 +746,88 @@ const CreatorAvailabilityCalendar = ({
               Book {creatorName ?? "creator"}
             </DialogTitle>
           </DialogHeader>
-          {dragDate && dragStartHour !== null && dragEndHour !== null && (
-            <div className="space-y-3">
-              <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
-                <p className="font-medium text-foreground">{format(dragDate, "EEEE, MMM d")}</p>
-                <p className="text-muted-foreground text-xs mt-0.5">
-                  {format(
-                    setHours(dragDate, Math.min(dragStartHour, dragEndHour)),
-                    "h:mm a"
-                  )}{" "}
-                  –{" "}
-                  {format(
-                    addHours(
-                      setHours(dragDate, Math.min(dragStartHour, dragEndHour)),
-                      dragDuration
-                    ),
-                    "h:mm a"
-                  )}{" "}
-                  · {dragDuration}h
+
+          {pendingSelection && (
+            <div className="space-y-4">
+              {/* Big time summary */}
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
+                  {format(pendingSelection.day, "EEEE, MMMM d")}
+                </p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-2xl font-bold text-foreground tabular-nums">
+                    {formatTime(pendingSelection.day, pendingSelection.startMin)}
+                  </p>
+                  <span className="text-muted-foreground">→</span>
+                  <p className="text-2xl font-bold text-foreground tabular-nums">
+                    {formatTime(pendingSelection.day, pendingSelection.endMin)}
+                  </p>
+                </div>
+                <p className="text-sm text-primary font-semibold mt-1">
+                  {formatDuration(pendingSelection.endMin - pendingSelection.startMin)} session
                 </p>
               </div>
+
+              {/* Fine-tune controls */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+                    Start time
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => adjustStart(-SNAP_MIN)}
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </Button>
+                    <span className="text-sm font-semibold tabular-nums">
+                      {formatTime(pendingSelection.day, pendingSelection.startMin)}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => adjustStart(SNAP_MIN)}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+                    End time
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => adjustEnd(-SNAP_MIN)}
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </Button>
+                    <span className="text-sm font-semibold tabular-nums">
+                      {formatTime(pendingSelection.day, pendingSelection.endMin)}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => adjustEnd(SNAP_MIN)}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label className="text-xs font-medium text-muted-foreground">
                   Message (optional)
@@ -571,17 +842,18 @@ const CreatorAvailabilityCalendar = ({
               </div>
             </div>
           )}
+
           <DialogFooter className="gap-2">
             <Button
               variant="outline"
               onClick={() => {
                 setBookingOpen(false);
-                resetDrag();
+                setPendingSelection(null);
               }}
             >
               <X className="mr-1.5 h-4 w-4" /> Cancel
             </Button>
-            <Button onClick={confirmBooking} disabled={saving}>
+            <Button onClick={confirmBooking} disabled={saving || !pendingSelection}>
               {saving ? (
                 <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
               ) : (
@@ -592,7 +864,6 @@ const CreatorAvailabilityCalendar = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
     </div>
   );
 };
