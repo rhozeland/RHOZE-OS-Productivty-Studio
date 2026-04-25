@@ -1058,24 +1058,46 @@ const CreatorAvailabilityCalendar = ({
                     liveStartMin !== null &&
                     liveEndMin !== null && (
                       <div
-                        className="absolute left-1 right-1 rounded-md bg-primary/40 border-2 border-primary pointer-events-none z-10 shadow-lg"
+                        className={cn(
+                          "absolute left-1 right-1 rounded-md border-2 pointer-events-none z-10 shadow-lg transition-colors",
+                          liveConflict
+                            ? "bg-destructive/40 border-destructive"
+                            : "bg-primary/40 border-primary"
+                        )}
                         style={{
                           top: (liveStartMin - DAY_START_MIN) * PX_PER_MIN,
                           height: (liveEndMin - liveStartMin) * PX_PER_MIN,
                         }}
                       >
                         <div className="absolute inset-x-0 -top-5 text-center">
-                          <span className="inline-block px-1.5 py-0.5 text-[9px] font-bold bg-primary text-primary-foreground rounded">
+                          <span
+                            className={cn(
+                              "inline-block px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground rounded",
+                              liveConflict ? "bg-destructive" : "bg-primary"
+                            )}
+                          >
                             {formatTime(weekDays[dayIdx], liveStartMin)}
                           </span>
                         </div>
                         <div className="flex items-center justify-center h-full">
-                          <span className="text-[10px] font-bold text-primary-foreground bg-primary/80 px-1.5 py-0.5 rounded">
-                            {formatDuration(liveEndMin - liveStartMin)}
+                          <span
+                            className={cn(
+                              "text-[10px] font-bold text-primary-foreground px-1.5 py-0.5 rounded",
+                              liveConflict ? "bg-destructive/90" : "bg-primary/80"
+                            )}
+                          >
+                            {liveConflict
+                              ? "Conflict"
+                              : formatDuration(liveEndMin - liveStartMin)}
                           </span>
                         </div>
                         <div className="absolute inset-x-0 -bottom-5 text-center">
-                          <span className="inline-block px-1.5 py-0.5 text-[9px] font-bold bg-primary text-primary-foreground rounded">
+                          <span
+                            className={cn(
+                              "inline-block px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground rounded",
+                              liveConflict ? "bg-destructive" : "bg-primary"
+                            )}
+                          >
                             {formatTime(weekDays[dayIdx], liveEndMin)}
                           </span>
                         </div>
