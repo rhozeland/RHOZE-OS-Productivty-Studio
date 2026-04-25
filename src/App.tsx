@@ -38,6 +38,7 @@ import ExploreStudiosPage from "@/pages/ExploreStudiosPage";
 import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import OnboardingPage from "@/pages/OnboardingPage";
 import MarketplacePage from "@/pages/MarketplacePage";
+import HomePage from "@/pages/HomePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
