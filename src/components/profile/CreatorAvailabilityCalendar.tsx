@@ -225,11 +225,28 @@ const CreatorAvailabilityCalendar = ({
     }
     return true;
   };
+  // True if the half-open range [startMin, endMin) intersects any existing availability block.
+  const rangeOverlapsAvailability = (
+    dayIdx: number,
+    startMin: number,
+    endMin: number,
+    excludeId?: string
+  ) => {
+    return (availabilityByDay[dayIdx] ?? []).some(
+      (iv) =>
+        iv.id !== excludeId && startMin < iv.endMin && endMin > iv.startMin
+    );
+  };
+  const rangeOverlapsBooking = (dayIdx: number, startMin: number, endMin: number) =>
+    (bookingsByDay[dayIdx] ?? []).some(
+      (b) => startMin < b.endMin && endMin > b.startMin
+    );
+
+  // Owner-edit validity: must not overlap a booking OR an existing availability block.
   const rangeIsBookableForOwnerEdit = (dayIdx: number, startMin: number, endMin: number) => {
     if (endMin - startMin < SNAP_MIN) return false;
-    for (let m = startMin; m < endMin; m += SNAP_MIN) {
-      if (minIsBooked(dayIdx, m)) return false;
-    }
+    if (rangeOverlapsBooking(dayIdx, startMin, endMin)) return false;
+    if (rangeOverlapsAvailability(dayIdx, startMin, endMin)) return false;
     return true;
   };
 
@@ -314,8 +331,12 @@ const CreatorAvailabilityCalendar = ({
     if (mode === "edit") {
       if (rangeIsBookableForOwnerEdit(dragDayIdx, startMin, endMin)) {
         void persistAvailability(day, startMin, endMin);
+      } else if (rangeOverlapsBooking(dragDayIdx, startMin, endMin)) {
+        toast.error("That range overlaps an existing booking");
+      } else if (rangeOverlapsAvailability(dragDayIdx, startMin, endMin)) {
+        toast.error("That range overlaps an existing availability block");
       } else {
-        toast.error("That range overlaps a booking");
+        toast.error("Selection is too short");
       }
       setDragAnchorMin(null);
       setDragCurrentMin(null);
@@ -359,6 +380,21 @@ const CreatorAvailabilityCalendar = ({
 
     setSaving(true);
     try {
+      // Final-pass overlap check against the live database — guards against races
+      // where another tab/device added a block while we were dragging.
+      const { data: clashes, error: checkErr } = await supabase
+        .from("creator_availability")
+        .select("id")
+        .eq("user_id", user.id)
+        .lt("start_time", end.toISOString())
+        .gt("end_time", start.toISOString())
+        .limit(1);
+      if (checkErr) throw checkErr;
+      if (clashes && clashes.length > 0) {
+        toast.error("That time overlaps an existing availability block");
+        return;
+      }
+
       const { error } = await supabase.from("creator_availability").insert({
         user_id: user.id,
         start_time: start.toISOString(),
@@ -618,6 +654,20 @@ const CreatorAvailabilityCalendar = ({
   const liveDuration =
     liveStartMin !== null && liveEndMin !== null ? liveEndMin - liveStartMin : 0;
 
+  // Conflict detection for the in-progress drag (owner edit mode only)
+  const liveConflict =
+    mode === "edit" &&
+    isDragging &&
+    dragDayIdx !== null &&
+    liveStartMin !== null &&
+    liveEndMin !== null
+      ? rangeOverlapsBooking(dragDayIdx, liveStartMin, liveEndMin)
+        ? "booking"
+        : rangeOverlapsAvailability(dragDayIdx, liveStartMin, liveEndMin)
+        ? "availability"
+        : null
+      : null;
+
   // ─── Render ───
   return (
     <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
@@ -660,7 +710,14 @@ const CreatorAvailabilityCalendar = ({
 
       {/* Live selection bar */}
       {isDragging && liveStartMin !== null && liveEndMin !== null && dragDayIdx !== null && (
-        <div className="mb-3 flex items-center justify-between rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
+        <div
+          className={cn(
+            "mb-3 flex items-center justify-between rounded-lg border px-3 py-2 text-sm transition-colors",
+            liveConflict
+              ? "border-destructive/50 bg-destructive/10"
+              : "border-primary/40 bg-primary/10"
+          )}
+        >
           <div>
             <p className="font-semibold text-foreground">
               {format(weekDays[dragDayIdx], "EEE, MMM d")}
@@ -669,8 +726,20 @@ const CreatorAvailabilityCalendar = ({
               {formatTime(weekDays[dragDayIdx], liveStartMin)} –{" "}
               {formatTime(weekDays[dragDayIdx], liveEndMin)}
             </p>
+            {liveConflict && (
+              <p className="text-[11px] font-semibold text-destructive mt-0.5">
+                {liveConflict === "booking"
+                  ? "Overlaps an existing booking"
+                  : "Overlaps an existing availability block"}
+              </p>
+            )}
           </div>
-          <span className="text-base font-bold text-primary">
+          <span
+            className={cn(
+              "text-base font-bold",
+              liveConflict ? "text-destructive" : "text-primary"
+            )}
+          >
             {formatDuration(liveDuration)}
           </span>
         </div>
@@ -989,24 +1058,46 @@ const CreatorAvailabilityCalendar = ({
                     liveStartMin !== null &&
                     liveEndMin !== null && (
                       <div
-                        className="absolute left-1 right-1 rounded-md bg-primary/40 border-2 border-primary pointer-events-none z-10 shadow-lg"
+                        className={cn(
+                          "absolute left-1 right-1 rounded-md border-2 pointer-events-none z-10 shadow-lg transition-colors",
+                          liveConflict
+                            ? "bg-destructive/40 border-destructive"
+                            : "bg-primary/40 border-primary"
+                        )}
                         style={{
                           top: (liveStartMin - DAY_START_MIN) * PX_PER_MIN,
                           height: (liveEndMin - liveStartMin) * PX_PER_MIN,
                         }}
                       >
                         <div className="absolute inset-x-0 -top-5 text-center">
-                          <span className="inline-block px-1.5 py-0.5 text-[9px] font-bold bg-primary text-primary-foreground rounded">
+                          <span
+                            className={cn(
+                              "inline-block px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground rounded",
+                              liveConflict ? "bg-destructive" : "bg-primary"
+                            )}
+                          >
                             {formatTime(weekDays[dayIdx], liveStartMin)}
                           </span>
                         </div>
                         <div className="flex items-center justify-center h-full">
-                          <span className="text-[10px] font-bold text-primary-foreground bg-primary/80 px-1.5 py-0.5 rounded">
-                            {formatDuration(liveEndMin - liveStartMin)}
+                          <span
+                            className={cn(
+                              "text-[10px] font-bold text-primary-foreground px-1.5 py-0.5 rounded",
+                              liveConflict ? "bg-destructive/90" : "bg-primary/80"
+                            )}
+                          >
+                            {liveConflict
+                              ? "Conflict"
+                              : formatDuration(liveEndMin - liveStartMin)}
                           </span>
                         </div>
                         <div className="absolute inset-x-0 -bottom-5 text-center">
-                          <span className="inline-block px-1.5 py-0.5 text-[9px] font-bold bg-primary text-primary-foreground rounded">
+                          <span
+                            className={cn(
+                              "inline-block px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground rounded",
+                              liveConflict ? "bg-destructive" : "bg-primary"
+                            )}
+                          >
                             {formatTime(weekDays[dayIdx], liveEndMin)}
                           </span>
                         </div>
