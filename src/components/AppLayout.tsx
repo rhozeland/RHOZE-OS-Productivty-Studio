@@ -57,7 +57,9 @@ const PAGES = [
 // Sourced from the central NAV_ITEMS config — the matchPaths there (e.g. Drops →
 // `/droprooms` legacy alias) and the shared `isNavItemActive` helper guarantee
 // consistent active styling across header, dock, and any future nav surfaces.
-const HEADER_NAV_IDS = ["studios", "hub", "boards", "droprooms"] as const;
+// Header chips removed — these surfaces are reachable via the sidebar / dock.
+// Keeping the structure in place so re-enabling specific links is a one-line change.
+const HEADER_NAV_IDS = [] as const;
 const HEADER_NAV: NavItem[] = HEADER_NAV_IDS
   .map((id) => NAV_ITEMS_BY_ID[id])
   .filter(Boolean);
