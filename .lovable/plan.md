@@ -1,54 +1,102 @@
 
+# Why people aren't signing up (and what to do about it)
 
-# Investor Deck — Rhozeland (Solana Incubator Cohort 5)
+This is the most common growth problem for creator/social platforms — and the good news is your codebase is already 80% set up to fix it. You have:
 
-A 12-slide PDF deck tailored for the Solana Labs team, in the editorial B&W + aurora aesthetic that matches `rhozeland.app`. Pre-launch placeholders for traction/revenue/raise so you can edit before submitting.
+- Public routes for `/`, `/flow`, `/marketplace`, `/studios`, `/creators`, `/projects`, `/profiles/:id`
+- An `AuthGateDialog` system that prompts on action (not on entry)
+- A `GuestDashboardPreview`, `FlowGuestCTA`, `GuestMessagesPreview`
 
-## Deck structure (12 slides)
+The problem: **guests still land on `/` (Dashboard) which is built for logged-in users**, and the home/landing experience doesn't sell the "you can try it without an account" story. The signup ask comes too early, with too little proof.
 
-```text
-01  Cover               — Rhozeland wordmark, aurora bloom, tagline
-02  Problem             — Creative work is invisible; reputation lives in screenshots
-03  Solution            — Decentralized productivity studio anchored on Solana
-04  Product             — Flow Mode · Smartboards · Drop Rooms · Creator Pass
-05  How it uses Solana  — Anchor memos, gas-sponsored contributions, $RHOZE utility
-06  $RHOZE Economy      — 75/15/10 split, Admin Reward Gate, Creator Pass tiers
-07  Market              — Creator economy + on-chain reputation TAM
-08  Founder–Market Fit  — 2016 collective → 2020 Inc. → 2025 decentralized studio
-09  Traction            — Live in production, pre-revenue [placeholders]
-10  Competition         — vs. Patreon / Behance / Farcaster / Drip
-11  Path to $10M ARR    — Creator Pass subs + 10% platform fee on paid projects
-12  Ask & Vision        — Why Solana Labs, NYC relocation, what we need
-```
+This plan is a 3-layer fix: rework the **front door**, harden **guest browsing depth**, and time the **signup ask** to a moment of intent.
 
-## Visual system
+---
 
-- Background: deep black `#0A0A0A` with a soft animated-feel aurora gradient (purple → rose → cyan) baked as a static radial blur on each slide corner.
-- Typography: Inter Bold for wordmark + slide titles (44–60pt), Inter Regular for body (16–18pt). Tight tracking on the wordmark per brand memory.
-- Accent: rose gradient hairline rules and a single rose bloom motif on cover + closing slides.
-- Layout: generous negative space, left-aligned body, 0.6" margins. One visual element per slide (stat callout, two-column, or icon row).
-- Footer: small "Rhozeland · Solana Incubator Cohort 5 · 2026" right-aligned, page number left.
+## Layer 1 — Rework the front door (biggest lever)
 
-## Content sourcing
+**Current state:** Visiting `rhozeland.app` sends a guest straight to `DashboardPage`, which then shows `<GuestDashboardPreview />`. It's a "your dashboard but empty" feel — not "look what's happening here."
 
-I'll pull verified facts from project memory: $RHOZE 75/15/10 split, Admin Reward Gate, Anchor contribution memos, Creator Pass Bloom/Glow/Play tiers, Flow Mode / Smartboards / Drop Rooms (LiveKit, 24h max), Supabase + Square + Solana JSON-RPC stack, founder timeline (2016 → 2020 → 2025).
+**Change:**
 
-Placeholders (clearly bracketed `[TBD]` so you can find and edit):
-- Slide 9: active users, 6-mo growth, MRR
-- Slide 11: pricing assumptions for the $10M math (I'll model two scenarios you can adjust)
-- Slide 12: amount/terms of any raise to date
+1. Make `/` route guests to a redesigned **public home** (could be `LandingPage` upgraded, or a new `HomePage` that authed users skip). Authed users continue straight to `/dashboard`.
+2. The new home leads with **live social proof from the platform itself**, not stock copy:
+   - Live Flow feed strip (5–6 most recent public posts, swipeable)
+   - "Creators online now" / recent signups counter (real number from `profiles`)
+   - Featured studios + recent project ships (real data)
+   - Top earners this week ($RHOZE leaderboard slice)
+3. Two CTAs side-by-side, equal weight:
+   - **"Explore as guest"** → `/flow` (no account needed)
+   - **"Sign up free"** → `/auth`
+4. Frame the value prop around **what you get for signing up**, not what the app does:
+   - "Earn $RHOZE for posting, swiping, and commenting"
+   - "Save creators and posts you love"
+   - "Get DMs from collaborators"
+   - "Free — no credit card, sign up with Google in 10 seconds"
 
-## Technical approach
+The current `/landing` route already exists and can be repurposed/upgraded for this — no new route needed.
 
-1. Generate the PDF with **ReportLab** (Platypus) using a custom canvas for the aurora background and rose hairlines — gives precise control over the editorial layout and runs in the sandbox without browser dependencies.
-2. Embed Inter (already used on-site) via Google Fonts TTF download.
-3. Write to `/mnt/documents/rhozeland-investor-deck.pdf`.
-4. Mandatory QA pass: render every page to JPG with `pdftoppm -r 150`, inspect each one for overflow / overlap / contrast / placeholder leftovers, fix and re-render until a full clean pass. Summarize QA findings in the final reply.
-5. Deliver via `<lov-artifact>` so you can preview/download in one click.
+## Layer 2 — Make guest browsing actually feel like the product
 
-## What you'll get back
+Right now guest mode is technically open but feels like a paywall preview. Tighten it so guests get the real thing:
 
-- `rhozeland-investor-deck.pdf` — 12 pages, landscape 16:9, ready to attach to the Solana Incubator application URL field.
-- A short summary of which slides contain `[TBD]` placeholders so you know exactly what to edit before submitting.
-- Offer to also generate a matching 1-slide "teaser" cover image (PNG) for the application's intro video thumbnail, if useful.
+1. **`/flow` for guests** — already works. Verify the floating CTA isn't dismissable forever (currently `localStorage` persists indefinitely — consider re-showing after 24h or after N swipes).
+2. **`/creators` and `/profiles/:id`** — guests should see full profiles, including portfolios and badges. Today there's no `GuestCreatorsPreview` blocker — confirm and lean into it.
+3. **`/studios` and `/marketplace`** — guests should see full listings + prices. Auth gate fires only on "Book" / "Buy" / "Message seller."
+4. **Add a persistent, low-key guest banner** at the top of public pages: *"You're browsing as a guest. Sign up to save, post, and earn → "* (dismissable, but reappears on a different surface).
 
+## Layer 3 — Move the signup ask to the moment of intent
+
+The `AuthGateDialog` already does this for some actions. Audit and expand:
+
+- Posting to Flow → gate (already there via `SignUpToPostPrompt`)
+- Saving a creator/post → gate
+- Sending a DM / inquiry → gate
+- Booking a studio → gate
+- Buying a listing → gate
+- Liking/commenting → gate
+
+Each gate dialog should be **contextual** — instead of "Sign in to unlock this feature," say "Sign up to save this post" or "Sign up to message {creatorName}." This is a 5-minute copy change with outsized impact.
+
+## Layer 4 — Reduce signup itself to ~10 seconds
+
+Verify on `/auth`:
+
+- Google sign-in is the **primary, top button** (one click, no email verification)
+- Email signup is below it as a fallback
+- Don't require email confirmation before letting them in (already configurable — confirm current setting)
+- After signup, drop them back where they were (the existing `?redirect=` param in `AuthGateDialog` already does this — confirm it's used everywhere)
+
+---
+
+## Optional — if friction is *still* high after the above
+
+- **Anonymous "watch-only" account**: auto-create a session-scoped guest profile so swipes/saves/views persist for 7 days. If they sign up, merge. (Heavier lift — only if Layer 1–4 don't move the needle.)
+- **Invite-only beta framing** with a waitlist + referral code. Sometimes scarcity flips the script from "why should I sign up" to "I want in." Works well in crypto-adjacent communities.
+
+---
+
+## What I'd do this round (recommended scope)
+
+The cheapest, highest-impact slice — ship this first, then measure:
+
+1. Rework the home page (`LandingPage` or new `HomePage`) with live platform data + dual CTA
+2. Route guests at `/` to the new home; keep authed users on `/dashboard`
+3. Rewrite all `requireAuth()` messages to be contextual ("Sign up to save this post", etc.)
+4. Make Google sign-in the dominant button on `/auth`
+5. Add one persistent, dismissable guest banner across public pages
+
+That's roughly 4–6 file changes and one new component. Skips the heavy lifts (anonymous accounts, waitlist) until you have data showing they're needed.
+
+---
+
+## Questions before I build
+
+I want to make sure we ship the version that matches your gut, not just my best guess:
+
+- Do you want to **keep `/` going to Dashboard for everyone** and just upgrade `/landing`, or **send guests to the new home and authed users to `/dashboard`**? (I'd recommend the latter.)
+- Do you want the **live Flow strip on the home page** (real posts) or **curated/static highlights** for now? (Live = stronger proof, takes a bit more work.)
+- Should I include the **"Creators online / recent signups" counter** as a real number, or skip the live stat for v1?
+- Any **specific feedback verbatim** from the people who said they wouldn't sign up? Their exact words usually point to the real objection (privacy? "yet another app"? crypto skepticism? unclear value?). If you can paste 1–2 quotes I'll tune the copy to those objections.
+
+If you want to skip the questions and just ship the recommended scope above, say "go" and I'll start.
