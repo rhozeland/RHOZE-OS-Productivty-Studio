@@ -448,19 +448,19 @@ const HomePage = () => {
             Get paid for showing up.
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed max-w-xl mx-auto mb-6">
-            Every post, comment, and project earns <strong className="text-foreground">$RHOZE</strong> — credits you can
+            Every booking, sale, and project earns <strong className="text-foreground">$RHOZE</strong> — credits you can
             spend on studio time, creator services, or cash out. Think of it as
             airline miles for creative work. <span className="text-muted-foreground/70">No wallet to set up. No fees to start.</span>
           </p>
           <div className="flex items-center gap-2 flex-wrap justify-center text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background border border-border/60">
-              <Heart className="h-3 w-3" /> Like a post → earn
+              <Building2 className="h-3 w-3" /> Book a studio → earn
             </span>
             <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background border border-border/60">
-              <MessageSquare className="h-3 w-3" /> Comment → earn
+              <ShoppingBag className="h-3 w-3" /> Sell your work → earn
             </span>
             <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background border border-border/60">
-              <Sparkles className="h-3 w-3" /> Post your work → earn
+              <FolderKanban className="h-3 w-3" /> Ship a project → earn
             </span>
           </div>
         </div>
