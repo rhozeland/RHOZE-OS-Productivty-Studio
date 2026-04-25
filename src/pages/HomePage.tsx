@@ -504,7 +504,7 @@ const HomePage = () => {
             <Link to="/auth" className="hover:text-foreground transition-colors">
               Sign in
             </Link>
-            <Link to="/flow" className="hover:text-foreground transition-colors">
+            <Link to="/explore/studios" className="hover:text-foreground transition-colors">
               Explore
             </Link>
           </div>
