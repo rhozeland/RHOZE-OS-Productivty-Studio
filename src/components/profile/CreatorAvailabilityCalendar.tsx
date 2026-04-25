@@ -225,11 +225,28 @@ const CreatorAvailabilityCalendar = ({
     }
     return true;
   };
+  // True if the half-open range [startMin, endMin) intersects any existing availability block.
+  const rangeOverlapsAvailability = (
+    dayIdx: number,
+    startMin: number,
+    endMin: number,
+    excludeId?: string
+  ) => {
+    return (availabilityByDay[dayIdx] ?? []).some(
+      (iv) =>
+        iv.id !== excludeId && startMin < iv.endMin && endMin > iv.startMin
+    );
+  };
+  const rangeOverlapsBooking = (dayIdx: number, startMin: number, endMin: number) =>
+    (bookingsByDay[dayIdx] ?? []).some(
+      (b) => startMin < b.endMin && endMin > b.startMin
+    );
+
+  // Owner-edit validity: must not overlap a booking OR an existing availability block.
   const rangeIsBookableForOwnerEdit = (dayIdx: number, startMin: number, endMin: number) => {
     if (endMin - startMin < SNAP_MIN) return false;
-    for (let m = startMin; m < endMin; m += SNAP_MIN) {
-      if (minIsBooked(dayIdx, m)) return false;
-    }
+    if (rangeOverlapsBooking(dayIdx, startMin, endMin)) return false;
+    if (rangeOverlapsAvailability(dayIdx, startMin, endMin)) return false;
     return true;
   };
 
