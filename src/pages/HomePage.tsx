@@ -221,12 +221,12 @@ const HomePage = () => {
             contribution — no crypto knowledge required.
           </motion.p>
 
-          {/* Dual equal-weight CTAs */}
+          {/* Dual primary CTAs */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex items-center gap-3 flex-wrap justify-center mb-5"
+            className="flex items-center gap-3 flex-wrap justify-center mb-4"
           >
             <Link to="/auth">
               <Button className="rounded-full h-12 px-6 gap-2 text-sm font-semibold">
@@ -240,6 +240,32 @@ const HomePage = () => {
               >
                 <Eye className="h-4 w-4" /> Look around first
               </Button>
+            </Link>
+          </motion.div>
+
+          {/* Quick browse links — let guests pick exactly what to explore.
+              Each route is fully public; auth only kicks in on actions. */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="flex items-center gap-2 flex-wrap justify-center mb-5 text-xs"
+          >
+            <span className="text-muted-foreground/60">Browse:</span>
+            <Link to="/studios" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
+              Studios
+            </Link>
+            <span className="text-muted-foreground/30">·</span>
+            <Link to="/creators" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
+              Creators
+            </Link>
+            <span className="text-muted-foreground/30">·</span>
+            <Link to="/marketplace" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
+              Marketplace
+            </Link>
+            <span className="text-muted-foreground/30">·</span>
+            <Link to="/flow" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
+              Flow
             </Link>
           </motion.div>
 

@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAuthGate } from "@/components/AuthGateDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -88,6 +89,7 @@ const PRODUCT_TYPES: {
 
 const MarketplacePage = () => {
   const { user } = useAuth();
+  const { requireAuth } = useAuthGate();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [activeIntent, setActiveIntent] = useState<IntentKey>("all");
@@ -426,9 +428,10 @@ const MarketplacePage = () => {
                 reviewStats={getReviewStatsForListing(listing.id)}
                 index={i}
                 isOwner={listing.user_id === user?.id}
-                onInquire={() =>
-                  navigate(`/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`)
-                }
+                onInquire={() => {
+                  if (!requireAuth("Sign up to message creators and send inquiries.")) return;
+                  navigate(`/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`);
+                }}
                 onClick={() => navigate(`/marketplace/${listing.id}`)}
                 onDelete={() => deleteListing.mutate(listing.id)}
               />
