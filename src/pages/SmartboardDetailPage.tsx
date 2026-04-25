@@ -327,7 +327,7 @@ const SmartboardDetailPage = () => {
       <div className="surface-card rounded-2xl overflow-hidden">
         <div className="p-4 md:p-6">
           <div className="flex items-center gap-3 mb-3">
-            <Link to={backHref}>
+            <Link to={backHref} aria-label={backLabel} title={backLabel}>
               <Button variant="outline" size="icon" className="rounded-full h-9 w-9">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
