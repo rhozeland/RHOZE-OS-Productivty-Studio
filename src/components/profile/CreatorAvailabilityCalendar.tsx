@@ -260,6 +260,7 @@ const CreatorAvailabilityCalendar = ({
 
   // ─── Pointer handlers ───
   const handlePointerDown = (dayIdx: number, e: React.PointerEvent) => {
+    if (resizing) return; // resize takes precedence
     if (mode === "view" && isOwner) return; // owner must enter edit mode
 
     const day = weekDays[dayIdx];
