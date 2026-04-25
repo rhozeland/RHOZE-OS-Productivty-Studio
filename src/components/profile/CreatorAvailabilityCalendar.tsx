@@ -331,8 +331,12 @@ const CreatorAvailabilityCalendar = ({
     if (mode === "edit") {
       if (rangeIsBookableForOwnerEdit(dragDayIdx, startMin, endMin)) {
         void persistAvailability(day, startMin, endMin);
+      } else if (rangeOverlapsBooking(dragDayIdx, startMin, endMin)) {
+        toast.error("That range overlaps an existing booking");
+      } else if (rangeOverlapsAvailability(dragDayIdx, startMin, endMin)) {
+        toast.error("That range overlaps an existing availability block");
       } else {
-        toast.error("That range overlaps a booking");
+        toast.error("Selection is too short");
       }
       setDragAnchorMin(null);
       setDragCurrentMin(null);
