@@ -652,7 +652,7 @@ const CreatorAvailabilityCalendar = ({
 
       <p className="text-xs text-muted-foreground mb-3">
         {isOwner && mode === "edit"
-          ? "Drag vertically inside any day to mark availability. Snaps to 15-minute increments."
+          ? "Drag in an empty area to add. Drag the top/bottom edge of a block to resize, or click it to fine-tune."
           : isOwner
           ? "Switch to Edit to add available times so visitors can book you."
           : "Drag inside the green area to pick an exact time. Snaps to 15-minute increments."}
