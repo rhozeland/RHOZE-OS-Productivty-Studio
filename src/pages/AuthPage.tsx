@@ -1,17 +1,19 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import { ArrowUpRight, Sparkles, Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
 const AuthPage = () => {
   const [isSignUp, setIsSignUp] = useState(false);
+  // Email path is hidden by default — Google is dominant. User opens it via "Use email instead".
+  const [showEmail, setShowEmail] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
