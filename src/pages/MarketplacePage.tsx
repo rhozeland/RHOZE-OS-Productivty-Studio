@@ -89,6 +89,7 @@ const PRODUCT_TYPES: {
 
 const MarketplacePage = () => {
   const { user } = useAuth();
+  const { requireAuth } = useAuthGate();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [activeIntent, setActiveIntent] = useState<IntentKey>("all");
