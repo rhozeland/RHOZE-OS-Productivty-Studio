@@ -28,23 +28,24 @@ import {
   FolderKanban,
   Sparkles,
   Eye,
-  Heart,
-  MessageSquare,
   Zap,
   CheckCircle2,
+  ShoppingBag,
 } from "lucide-react";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-type LiveStats = { creators: number; posts: number; studios: number };
-type LiveFlowItem = {
+type LiveStats = { creators: number; studios: number };
+type LiveStudio = {
   id: string;
-  title: string;
-  category: string;
-  content_type: string;
-  file_url: string | null;
+  name: string | null;
+  cover_image_url: string | null;
+  city: string | null;
+};
+type LiveCreator = {
   user_id: string;
   display_name: string | null;
   avatar_url: string | null;
+  headline: string | null;
 };
 
 const VALUE_PROPS = [
