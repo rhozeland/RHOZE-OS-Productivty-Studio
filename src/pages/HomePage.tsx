@@ -73,54 +73,57 @@ const TRUST_BULLETS = [
 ];
 
 const HomePage = () => {
-  const flowRef = useRef<HTMLDivElement>(null);
-  const flowInView = useInView(flowRef, { once: true, amount: 0.2 });
+  const showcaseRef = useRef<HTMLDivElement>(null);
+  const showcaseInView = useInView(showcaseRef, { once: true, amount: 0.2 });
 
   // Live platform stats — drives the "real, active community" feeling.
   const { data: stats } = useQuery<LiveStats>({
     queryKey: ["home-live-stats"],
     queryFn: async () => {
-      const [c, p, s] = await Promise.all([
+      const [c, s] = await Promise.all([
         supabase.from("profiles_public").select("*", { count: "exact", head: true }),
-        supabase.from("flow_items").select("*", { count: "exact", head: true }),
-        supabase.from("studios").select("*", { count: "exact", head: true }),
+        supabase
+          .from("studios")
+          .select("*", { count: "exact", head: true })
+          .eq("is_active", true)
+          .eq("status", "approved"),
       ]);
       return {
         creators: c.count ?? 0,
-        posts: p.count ?? 0,
         studios: s.count ?? 0,
       };
     },
     staleTime: 60_000,
   });
 
-  // Live recent Flow items — proof the platform is alive. Falls back gracefully
-  // if there are no posts yet.
-  const { data: flowItems } = useQuery<LiveFlowItem[]>({
-    queryKey: ["home-live-flow"],
+  // Featured studios — proof the platform is alive.
+  const { data: studios } = useQuery<LiveStudio[]>({
+    queryKey: ["home-live-studios"],
     queryFn: async () => {
-      const { data: items } = await supabase
-        .from("flow_items")
-        .select("id, title, category, content_type, file_url, user_id")
-        .order("created_at", { ascending: false })
+      const { data } = await supabase
+        .from("studios")
+        .select("id, name, cover_image_url, city")
+        .eq("is_active", true)
+        .eq("status", "approved")
+        .order("rating_avg", { ascending: false })
         .limit(6);
-      const userIds = Array.from(new Set((items ?? []).map((i) => i.user_id)));
-      const { data: profs } = userIds.length
-        ? await supabase
-            .from("profiles_public")
-            .select("user_id, display_name, avatar_url")
-            .in("user_id", userIds)
-        : { data: [] };
-      const profMap = new Map(
-        (profs ?? []).map((p: any) => [p.user_id, p]),
-      );
-      return (items ?? []).map((i: any) => ({
-        ...i,
-        display_name: profMap.get(i.user_id)?.display_name ?? null,
-        avatar_url: profMap.get(i.user_id)?.avatar_url ?? null,
-      }));
+      return (data ?? []) as LiveStudio[];
     },
-    staleTime: 30_000,
+    staleTime: 60_000,
+  });
+
+  // Featured creators
+  const { data: creators } = useQuery<LiveCreator[]>({
+    queryKey: ["home-live-creators"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles_public")
+        .select("user_id, display_name, avatar_url, headline")
+        .not("display_name", "is", null)
+        .limit(8);
+      return (data ?? []) as LiveCreator[];
+    },
+    staleTime: 60_000,
   });
 
   const creatorCount = stats?.creators ?? 0;
