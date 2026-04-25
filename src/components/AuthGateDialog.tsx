@@ -40,7 +40,9 @@ export const AuthGateProvider = ({
   const requireAuth = useCallback(
     (msg?: string) => {
       if (isAuthenticated) return true;
-      setMessage(msg || "Sign in to unlock this feature");
+      // Default copy speaks to outcomes (joining a community of creators),
+      // not to tokens or wallets — addresses the most common signup objection.
+      setMessage(msg || "Create a free account to use this — takes 10 seconds with Google.");
       setOpen(true);
       return false;
     },
@@ -60,18 +62,21 @@ export const AuthGateProvider = ({
             >
               <LogIn className="h-7 w-7 text-primary" />
             </motion.div>
-            <DialogTitle className="text-lg">Join Rhozeland</DialogTitle>
+            <DialogTitle className="text-lg">Quick — sign up first</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
               {message}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2 mt-2">
             <Button onClick={goToAuth} className="w-full gap-2">
-              <UserPlus className="h-4 w-4" /> Sign Up Free
+              <UserPlus className="h-4 w-4" /> Sign up free
             </Button>
             <Button variant="outline" onClick={goToAuth} className="w-full gap-2">
-              <LogIn className="h-4 w-4" /> I Already Have an Account
+              <LogIn className="h-4 w-4" /> I already have an account
             </Button>
+            <p className="text-[11px] text-muted-foreground/70 mt-1">
+              Free forever · No credit card · No spam
+            </p>
           </div>
         </DialogContent>
       </Dialog>

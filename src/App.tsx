@@ -38,6 +38,7 @@ import ExploreStudiosPage from "@/pages/ExploreStudiosPage";
 import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import OnboardingPage from "@/pages/OnboardingPage";
 import MarketplacePage from "@/pages/MarketplacePage";
+import HomePage from "@/pages/HomePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -119,6 +120,24 @@ const AuthGateWrapper = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+/**
+ * Root entry — `/`
+ * Guests see the public HomePage (clean, no sidebar/dock).
+ * Authed users redirect to /dashboard inside AppLayout.
+ */
+const RootEntry = () => {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+  if (user) return <Navigate to="/dashboard" replace />;
+  return <HomePage />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
@@ -143,9 +162,11 @@ const App = () => (
               <Route path="/explore/creators" element={<ExploreCreatorsPage />} />
               <Route path="/explore/creators/:id" element={<ExploreCreatorsPage />} />
 
+              {/* Public root — guests see HomePage, authed users redirect to /dashboard */}
+              <Route path="/" element={<RootEntry />} />
+
               {/* Main app — browsable by everyone, auth-gated actions inside */}
               <Route element={<AppLayout />}>
-                <Route path="/" element={<DashboardPage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/studios" element={<StudiosPage />} />
                 <Route path="/studios/:id" element={<StudioDetailPage />} />
