@@ -799,30 +799,168 @@ const CreatorAvailabilityCalendar = ({
 
                   {/* Availability windows (green) */}
                   {dayAvail.map((iv) => {
-                    const top = (iv.startMin - DAY_START_MIN) * PX_PER_MIN;
-                    const height = (iv.endMin - iv.startMin) * PX_PER_MIN;
-                    return (
+                    const isBeingResized = resizing?.id === iv.id;
+                    const liveStart = isBeingResized ? resizing!.currentStart : iv.startMin;
+                    const liveEnd = isBeingResized ? resizing!.currentEnd : iv.endMin;
+                    const top = (liveStart - DAY_START_MIN) * PX_PER_MIN;
+                    const height = (liveEnd - liveStart) * PX_PER_MIN;
+                    const editable = mode === "edit";
+
+                    const blockEl = (
                       <div
-                        key={iv.id}
                         className={cn(
-                          "absolute left-0.5 right-0.5 rounded-md bg-emerald-500/25 border border-emerald-500/40 pointer-events-none",
-                          mode === "edit" && "pointer-events-auto cursor-pointer hover:bg-emerald-500/35 group"
+                          "absolute left-0.5 right-0.5 rounded-md bg-emerald-500/25 border border-emerald-500/40",
+                          !editable && "pointer-events-none",
+                          editable && "cursor-pointer hover:bg-emerald-500/35 group",
+                          isBeingResized && "bg-emerald-500/40 border-emerald-500 shadow-lg z-20"
                         )}
                         style={{ top, height }}
-                        onClick={(e) => {
-                          if (mode !== "edit") return;
-                          e.stopPropagation();
-                          void removeAvailabilityWindow(iv.id);
-                        }}
                       >
-                        {mode === "edit" && (
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div className="rounded-full bg-card/95 p-1 shadow">
-                              <Trash2 className="h-3 w-3 text-destructive" />
+                        {editable && (
+                          <>
+                            <div
+                              role="button"
+                              aria-label="Resize start"
+                              onPointerDown={(e) => handleResizeStart(iv, dayIdx, "top", e)}
+                              className="absolute -top-1 left-0 right-0 h-2 cursor-ns-resize flex items-center justify-center z-30"
+                            >
+                              <div className="h-0.5 w-8 rounded-full bg-emerald-600/70 hover:bg-emerald-600 transition" />
                             </div>
+                            <div
+                              role="button"
+                              aria-label="Resize end"
+                              onPointerDown={(e) => handleResizeStart(iv, dayIdx, "bottom", e)}
+                              className="absolute -bottom-1 left-0 right-0 h-2 cursor-ns-resize flex items-center justify-center z-30"
+                            >
+                              <div className="h-0.5 w-8 rounded-full bg-emerald-600/70 hover:bg-emerald-600 transition" />
+                            </div>
+                          </>
+                        )}
+
+                        {isBeingResized && (
+                          <>
+                            <div className="absolute inset-x-0 -top-5 text-center pointer-events-none">
+                              <span className="inline-block px-1.5 py-0.5 text-[9px] font-bold bg-emerald-600 text-white rounded">
+                                {formatTime(weekDays[dayIdx], liveStart)}
+                              </span>
+                            </div>
+                            <div className="absolute inset-x-0 -bottom-5 text-center pointer-events-none">
+                              <span className="inline-block px-1.5 py-0.5 text-[9px] font-bold bg-emerald-600 text-white rounded">
+                                {formatTime(weekDays[dayIdx], liveEnd)}
+                              </span>
+                            </div>
+                          </>
+                        )}
+
+                        {editable && !isBeingResized && height >= 28 && (
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                            <span className="text-[9px] font-semibold bg-card/80 text-foreground px-1.5 py-0.5 rounded">
+                              Click to edit
+                            </span>
                           </div>
                         )}
                       </div>
+                    );
+
+                    if (!editable) {
+                      return <div key={iv.id}>{blockEl}</div>;
+                    }
+
+                    return (
+                      <Popover
+                        key={iv.id}
+                        open={editingBlockId === iv.id && !isBeingResized}
+                        onOpenChange={(open) => {
+                          if (resizing) return;
+                          setEditingBlockId(open ? iv.id : null);
+                        }}
+                      >
+                        <PopoverTrigger asChild>
+                          <div
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {blockEl}
+                          </div>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          side="right"
+                          align="start"
+                          className="w-64 p-3"
+                          onOpenAutoFocus={(e) => e.preventDefault()}
+                        >
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                                {format(weekDays[dayIdx], "EEE, MMM d")}
+                              </p>
+                              <p className="text-sm font-semibold text-foreground tabular-nums">
+                                {formatTime(weekDays[dayIdx], iv.startMin)} –{" "}
+                                {formatTime(weekDays[dayIdx], iv.endMin)}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDuration(iv.endMin - iv.startMin)}
+                              </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="rounded-md border border-border p-2">
+                                <p className="text-[9px] uppercase tracking-wider text-muted-foreground mb-1.5">
+                                  Start
+                                </p>
+                                <div className="flex items-center justify-between">
+                                  <Button type="button" variant="outline" size="icon" className="h-6 w-6"
+                                    onClick={() => nudgeBlock(iv, dayIdx, "start", -SNAP_MIN)}>
+                                    <Minus className="h-3 w-3" />
+                                  </Button>
+                                  <span className="text-xs font-semibold tabular-nums">
+                                    {formatTime(weekDays[dayIdx], iv.startMin)}
+                                  </span>
+                                  <Button type="button" variant="outline" size="icon" className="h-6 w-6"
+                                    onClick={() => nudgeBlock(iv, dayIdx, "start", SNAP_MIN)}>
+                                    <Plus className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="rounded-md border border-border p-2">
+                                <p className="text-[9px] uppercase tracking-wider text-muted-foreground mb-1.5">
+                                  End
+                                </p>
+                                <div className="flex items-center justify-between">
+                                  <Button type="button" variant="outline" size="icon" className="h-6 w-6"
+                                    onClick={() => nudgeBlock(iv, dayIdx, "end", -SNAP_MIN)}>
+                                    <Minus className="h-3 w-3" />
+                                  </Button>
+                                  <span className="text-xs font-semibold tabular-nums">
+                                    {formatTime(weekDays[dayIdx], iv.endMin)}
+                                  </span>
+                                  <Button type="button" variant="outline" size="icon" className="h-6 w-6"
+                                    onClick={() => nudgeBlock(iv, dayIdx, "end", SNAP_MIN)}>
+                                    <Plus className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+
+                            <p className="text-[10px] text-muted-foreground">
+                              Tip: drag the top or bottom edge of the block to resize.
+                            </p>
+
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              className="w-full h-8 text-xs"
+                              onClick={() => {
+                                setEditingBlockId(null);
+                                void removeAvailabilityWindow(iv.id);
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete block
+                            </Button>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                     );
                   })}
 
