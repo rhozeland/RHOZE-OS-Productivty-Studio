@@ -710,7 +710,14 @@ const CreatorAvailabilityCalendar = ({
 
       {/* Live selection bar */}
       {isDragging && liveStartMin !== null && liveEndMin !== null && dragDayIdx !== null && (
-        <div className="mb-3 flex items-center justify-between rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
+        <div
+          className={cn(
+            "mb-3 flex items-center justify-between rounded-lg border px-3 py-2 text-sm transition-colors",
+            liveConflict
+              ? "border-destructive/50 bg-destructive/10"
+              : "border-primary/40 bg-primary/10"
+          )}
+        >
           <div>
             <p className="font-semibold text-foreground">
               {format(weekDays[dragDayIdx], "EEE, MMM d")}
@@ -719,8 +726,20 @@ const CreatorAvailabilityCalendar = ({
               {formatTime(weekDays[dragDayIdx], liveStartMin)} –{" "}
               {formatTime(weekDays[dragDayIdx], liveEndMin)}
             </p>
+            {liveConflict && (
+              <p className="text-[11px] font-semibold text-destructive mt-0.5">
+                {liveConflict === "booking"
+                  ? "Overlaps an existing booking"
+                  : "Overlaps an existing availability block"}
+              </p>
+            )}
           </div>
-          <span className="text-base font-bold text-primary">
+          <span
+            className={cn(
+              "text-base font-bold",
+              liveConflict ? "text-destructive" : "text-primary"
+            )}
+          >
             {formatDuration(liveDuration)}
           </span>
         </div>
