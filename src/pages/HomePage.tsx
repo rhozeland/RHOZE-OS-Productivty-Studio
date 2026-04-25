@@ -118,7 +118,7 @@ const HomePage = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles_public")
-        .select("user_id, display_name, avatar_url, headline")
+        .select("user_id, display_name, avatar_url, username")
         .not("display_name", "is", null)
         .limit(8);
       return (data ?? []) as LiveCreator[];
