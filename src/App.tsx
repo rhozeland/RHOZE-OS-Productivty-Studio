@@ -39,6 +39,7 @@ import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import OnboardingPage from "@/pages/OnboardingPage";
 import MarketplacePage from "@/pages/MarketplacePage";
 import HomePage from "@/pages/HomePage";
+import { FlowAuthGuard } from "@/components/FlowAuthGuard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -179,7 +180,7 @@ const App = () => (
                 <Route path="/bookings" element={<CalendarPage />} />
                 <Route path="/credits" element={<CreditShopPage />} />
                 <Route path="/purchases" element={<Navigate to="/credits?tab=purchases" replace />} />
-                <Route path="/flow" element={<FlowModePage />} />
+                <Route path="/flow" element={<FlowAuthGuard><FlowModePage /></FlowAuthGuard>} />
                 <Route path="/smartboards" element={<SmartboardsPage />} />
                 <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
                 <Route path="/creators" element={<CreatorsHubPage />} />
