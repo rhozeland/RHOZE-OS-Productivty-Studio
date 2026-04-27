@@ -10,14 +10,14 @@ const FEATURES = [
     icon: Building2,
     title: "Studios",
     description: "Book creative spaces — recording, photo, design studios — by the hour.",
-    path: "/studios",
+    path: "/explore/studios",
     color: "hsl(280, 60%, 60%)",
   },
   {
     icon: Flame,
     title: "Creators Hub",
     description: "Browse services, discover talent, and post your own creative offerings.",
-    path: "/creators",
+    path: "/explore/creators",
     color: "hsl(30, 90%, 60%)",
   },
   {
