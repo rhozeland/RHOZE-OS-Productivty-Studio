@@ -256,14 +256,15 @@ const AppLayout = () => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={() => navigate("/flow")}
+                      onClick={() => navigate("/explore/studios")}
+                      aria-label="Explore studios"
                       className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center transition-opacity hover:opacity-80 active:opacity-70 z-10"
                     >
-                      <Workflow className="h-3.5 w-3.5" />
+                      <Building2 className="h-3.5 w-3.5" />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="text-xs font-body">
-                    Discover in Flow Mode
+                    Explore studios
                   </TooltipContent>
                 </Tooltip>
                 <button
