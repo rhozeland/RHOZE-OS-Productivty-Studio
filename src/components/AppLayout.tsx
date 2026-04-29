@@ -43,12 +43,11 @@ import { REGISTERED_ROUTE_PATHS } from "@/App";
 
 const PAGES = [
   { name: "Home", path: "/dashboard", icon: FolderKanban },
-  { name: "Studios", path: "/studios", icon: Building2 },
-  { name: "Creators Hub", path: "/creators", icon: Flame },
-  { name: "Smartboards", path: "/smartboards", icon: Palette },
-  { name: "Drop Rooms", path: "/droprooms", icon: Radio },
-  { name: "Messages", path: "/messages", icon: User },
+  { name: "Spaces", path: "/spaces", icon: Building2 },
+  { name: "People", path: "/people", icon: User },
   { name: "Projects", path: "/projects", icon: FolderKanban },
+  { name: "Marketplace", path: "/marketplace", icon: ShoppingBag },
+  { name: "Messages", path: "/messages", icon: User },
   { name: "Credits", path: "/credits", icon: ShoppingBag },
   { name: "Settings", path: "/settings", icon: SettingsIcon },
 ];
@@ -256,15 +255,15 @@ const AppLayout = () => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={() => navigate("/explore/studios")}
-                      aria-label="Explore studios"
+                      onClick={() => navigate("/spaces")}
+                      aria-label="Browse spaces"
                       className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center transition-opacity hover:opacity-80 active:opacity-70 z-10"
                     >
                       <Building2 className="h-3.5 w-3.5" />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="text-xs font-body">
-                    Explore studios
+                    Browse spaces
                   </TooltipContent>
                 </Tooltip>
                 <button
