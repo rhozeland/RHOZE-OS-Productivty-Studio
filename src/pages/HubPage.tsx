@@ -261,7 +261,62 @@ const HubPage = () => {
         )}
       </section>
 
-      {/* ─── Storefronts ─────────────────────────────────────────────── */}
+      {/* ─── Trending creators rail ──────────────────────────────────── */}
+      {trendingCreators && trendingCreators.length > 0 && (
+        <section>
+          <div className="flex items-end justify-between mb-4">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 mb-1">
+                Most active · Last 30 days
+              </p>
+              <h2 className="font-display text-2xl font-bold text-foreground tracking-tight flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                Trending creators
+              </h2>
+            </div>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory scrollbar-hide">
+            {trendingCreators.map((c: any, i: number) => (
+              <motion.div
+                key={c.user_id}
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.04 }}
+                className="snap-start shrink-0 w-44"
+              >
+                <Link
+                  to={`/profiles/${c.user_id}`}
+                  className="block rounded-2xl border border-border bg-card hover:bg-muted/30 hover:-translate-y-0.5 transition-all p-4 text-center group"
+                >
+                  {c.avatar_url ? (
+                    <img
+                      src={c.avatar_url}
+                      alt={c.display_name || c.username || ""}
+                      className="h-16 w-16 rounded-full object-cover mx-auto mb-3 ring-2 ring-border group-hover:ring-primary/40 transition-all"
+                    />
+                  ) : (
+                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mx-auto mb-3 text-lg font-bold text-foreground">
+                      {(c.display_name || c.username || "?")[0].toUpperCase()}
+                    </div>
+                  )}
+                  <p className="text-sm font-display font-semibold text-foreground line-clamp-1">
+                    {c.display_name || c.username || "Anon"}
+                  </p>
+                  {c.headline && (
+                    <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
+                      {c.headline}
+                    </p>
+                  )}
+                  <p className="text-[10px] text-primary font-medium mt-2">
+                    {c.listing_count} new {c.listing_count === 1 ? "listing" : "listings"}
+                  </p>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section>
         <div className="flex items-end justify-between mb-4 flex-wrap gap-3">
           <div>
