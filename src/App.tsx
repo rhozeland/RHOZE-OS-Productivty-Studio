@@ -39,6 +39,8 @@ import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import OnboardingPage from "@/pages/OnboardingPage";
 import MarketplacePage from "@/pages/MarketplacePage";
 import HomePage from "@/pages/HomePage";
+import SpacesPage from "@/pages/SpacesPage";
+import PeoplePage from "@/pages/PeoplePage";
 import { FlowAuthGuard } from "@/components/FlowAuthGuard";
 import NotFound from "./pages/NotFound";
 
@@ -62,6 +64,8 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/explore/creators/:id",
   "/",
   "/dashboard",
+  "/spaces",
+  "/people",
   "/studios",
   "/studios/:id",
   "/studios/apply",
