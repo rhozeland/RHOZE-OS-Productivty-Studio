@@ -1,3 +1,21 @@
+# Integration tests
+
+This folder holds end-to-end suites that exercise the **real** Supabase
+backend (the same one this project is connected to in Lovable Cloud).
+Each suite is gated by its own `RUN_*` env flag and skipped by default.
+
+| Suite | Opt-in flag |
+|---|---|
+| `flow-rls.integration.test.ts` | `RUN_FLOW_RLS_INTEGRATION=1` |
+| `curator-invite.integration.test.ts` | `RUN_CURATOR_INVITE_INTEGRATION=1` |
+
+The curator-invite suite runs the full handshake (create split config →
+send invite → accept as invitee → assert `revenue_split_configs.curator_id`
+populated → assert notifications fired) plus a negative-control check
+that a third party cannot read the invite via RLS.
+
+---
+
 # Flow Mode RLS integration tests
 
 End-to-end tests that exercise the **real** Supabase backend (the same one
