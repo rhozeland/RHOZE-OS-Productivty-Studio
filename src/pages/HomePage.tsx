@@ -51,18 +51,24 @@ type LiveCreator = {
 const VALUE_PROPS = [
   {
     icon: Building2,
-    title: "Book studios by the hour",
-    desc: "Recording, photo, and video spaces — reserve, pay, done.",
+    title: "Find a space",
+    desc: "Vetted physical studios + live digital rooms — book or jump in.",
+    cta: "Browse Spaces",
+    to: "/spaces",
   },
   {
     icon: Users,
-    title: "Hire creators directly",
-    desc: "Real portfolios, real reviews, real deliverables. No middlemen.",
+    title: "Find a person",
+    desc: "Browse the directory, submit a brief, or have us broker the intro.",
+    cta: "Browse People",
+    to: "/people",
   },
   {
     icon: FolderKanban,
-    title: "Ship work with collaborators",
-    desc: "Roadmaps, milestones, and budgets in one shared space.",
+    title: "Open a project",
+    desc: "Roadmaps, milestones, and budgets — collaborate end-to-end.",
+    cta: "Start a Project",
+    to: "/projects",
   },
 ];
 
