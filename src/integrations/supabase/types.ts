@@ -387,6 +387,50 @@ export type Database = {
         }
         Relationships: []
       }
+      curator_invites: {
+        Row: {
+          created_at: string
+          id: string
+          invitee_id: string
+          inviter_id: string
+          message: string | null
+          responded_at: string | null
+          split_config_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invitee_id: string
+          inviter_id: string
+          message?: string | null
+          responded_at?: string | null
+          split_config_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invitee_id?: string
+          inviter_id?: string
+          message?: string | null
+          responded_at?: string | null
+          split_config_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curator_invites_split_config_id_fkey"
+            columns: ["split_config_id"]
+            isOneToOne: false
+            referencedRelation: "revenue_split_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drop_room_members: {
         Row: {
           id: string
