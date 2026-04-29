@@ -105,8 +105,7 @@ const MilestoneTracker = ({ contractId }: MilestoneTrackerProps) => {
       if (error) throw error;
 
       // After successful release, fire revenue split if a config exists for this contract.
-      // Best-effort: failures here don't undo the release (specialist already got the full payment),
-      // but they redistribute according to the configured creator/curator/buyback shares.
+      let splitResult: { creator: number; curator: number; buyback: number; solana_signature: string | null } | null = null;
       try {
         const { data: splitConfig } = await supabase
           .from("revenue_split_configs")
@@ -116,24 +115,40 @@ const MilestoneTracker = ({ contractId }: MilestoneTrackerProps) => {
           .maybeSingle();
 
         if (splitConfig?.id && milestone?.credit_amount) {
-          await supabase.functions.invoke("split-revenue", {
+          const { data } = await supabase.functions.invoke("split-revenue", {
             body: {
               config_id: splitConfig.id,
               total_amount: Number(milestone.credit_amount),
               purchase_id: milestoneId,
             },
           });
+          if (data?.splits) {
+            splitResult = { ...data.splits, solana_signature: data.solana_signature ?? null };
+          }
         }
       } catch (splitErr) {
         console.warn("Split distribution failed (non-fatal):", splitErr);
       }
+      return { splitResult, amount: Number(milestone?.credit_amount ?? 0) };
     },
-    onSuccess: () => {
+    onSuccess: ({ splitResult, amount }) => {
       queryClient.invalidateQueries({ queryKey: ["milestones", contractId] });
       queryClient.invalidateQueries({ queryKey: ["contract", contractId] });
       queryClient.invalidateQueries({ queryKey: ["user-credits"] });
-      toast.success("Milestone approved! Credits released to specialist.");
       setActiveDialog(null);
+
+      if (splitResult) {
+        const lines: string[] = [];
+        if (splitResult.creator > 0) lines.push(`Creator +${splitResult.creator}`);
+        if (splitResult.curator > 0) lines.push(`Curator +${splitResult.curator}`);
+        if (splitResult.buyback > 0) lines.push(`Buyback +${splitResult.buyback}`);
+        toast.success(`💸 ${amount} credits released & split`, {
+          description: lines.join(" · ") + (splitResult.solana_signature ? "  ·  on-chain ✓" : ""),
+          duration: 6000,
+        });
+      } else {
+        toast.success(`💸 ${amount} credits released to specialist`);
+      }
     },
     onError: (e: any) => toast.error(e.message),
   });
