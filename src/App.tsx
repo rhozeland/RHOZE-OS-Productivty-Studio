@@ -37,7 +37,7 @@ import StudioManagePage from "@/pages/StudioManagePage";
 import ExploreStudiosPage from "@/pages/ExploreStudiosPage";
 import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import OnboardingPage from "@/pages/OnboardingPage";
-import MarketplacePage from "@/pages/MarketplacePage";
+// MarketplacePage retained as a file but no longer routed — /marketplace redirects to /hub.
 import HomePage from "@/pages/HomePage";
 import SpacesPage from "@/pages/SpacesPage";
 import PeoplePage from "@/pages/PeoplePage";
