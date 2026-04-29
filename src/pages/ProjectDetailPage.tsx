@@ -33,6 +33,8 @@ import Collaborators from "@/components/project/Collaborators";
 import RoadmapLockFlow from "@/components/project/RoadmapLockFlow";
 import ProjectDisputes from "@/components/project/ProjectDisputes";
 import ProjectControls from "@/components/project/ProjectControls";
+import RevenueSplitConfig from "@/components/revenue/RevenueSplitConfig";
+import RevenueSplitLog from "@/components/revenue/RevenueSplitLog";
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
