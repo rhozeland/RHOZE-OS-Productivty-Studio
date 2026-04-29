@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import ListingCard from "@/components/marketplace/ListingCard";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
+import FlowThumbnail from "@/components/flow/FlowThumbnail";
 
 type IntentKey = "all" | "service" | "project_request" | "collaboration" | "digital_product" | "physical_product";
 
@@ -233,20 +234,13 @@ const HubPage = () => {
                 className="group relative aspect-[3/4] rounded-2xl overflow-hidden bg-card border border-border cursor-pointer hover:-translate-y-0.5 transition-transform"
                 onClick={() => navigate("/flow")}
               >
-                {item.file_url ? (
-                  <img
-                    src={item.file_url}
-                    alt={item.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-primary/15 to-accent/10 flex items-center justify-center p-4">
-                    <p className="text-xs text-center text-muted-foreground line-clamp-6 font-body">
-                      {item.description || item.title}
-                    </p>
-                  </div>
-                )}
+                <FlowThumbnail
+                  fileUrl={item.file_url}
+                  linkUrl={item.link_url}
+                  title={item.title}
+                  description={item.description}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
                 <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
                   <p className="text-[11px] uppercase tracking-wider text-white/70 mb-0.5">
                     {item.category}
