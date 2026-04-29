@@ -190,7 +190,8 @@ const App = () => (
                 <Route path="/flow" element={<FlowAuthGuard><FlowModePage /></FlowAuthGuard>} />
                 <Route path="/smartboards" element={<SmartboardsPage />} />
                 <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
-                <Route path="/creators" element={<CreatorsHubPage />} />
+                {/* Legacy Creators Hub → People hub */}
+                <Route path="/creators" element={<Navigate to="/people" replace />} />
                 <Route path="/creators/:id" element={<ListingDetailPage />} />
                 <Route path="/marketplace" element={<MarketplacePage />} />
                 <Route path="/marketplace/:id" element={<ListingDetailPage />} />
