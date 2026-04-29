@@ -85,12 +85,13 @@ export const NAV_ITEMS_BY_ID: Record<string, NavItem> = NAV_ITEMS.reduce(
   {} as Record<string, NavItem>,
 );
 
+// New 4-pillar dock: Home · Spaces · Hub · Profile.
+// Inbox + Projects live in the side-nav (AppSidebar), not the dock.
 export const DEFAULT_DOCK_IDS = [
   "dashboard",
   "spaces",
-  "people",
-  "projects",
-  "messages",
+  "hub",
+  "profile",
 ];
 
 /** Returns true if the current pathname should mark this nav item active. */
