@@ -159,7 +159,86 @@ const SpacesPage = () => {
         />
       </div>
 
-      {/* ─── Physical: Studio cards ──────────────────────────────────── */}
+      {/* ─── Live counters ───────────────────────────────────────────── */}
+      <div className="flex flex-wrap gap-3 text-xs">
+        {mode === "physical" && studios && (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-card border border-border px-3 py-1.5 text-muted-foreground">
+            <Building2 className="h-3 w-3" />
+            <strong className="text-foreground">{studios.length}</strong> approved studios
+          </span>
+        )}
+        {mode === "digital" && rooms && (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-card border border-border px-3 py-1.5 text-muted-foreground">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+            </span>
+            <strong className="text-foreground">
+              {rooms.filter((r: any) => new Date(r.expires_at) > new Date()).length}
+            </strong>{" "}
+            rooms live now
+          </span>
+        )}
+      </div>
+
+      {/* ─── Featured studios rail (top-rated) ──────────────────────── */}
+      {mode === "physical" && !loadingStudios && (studios?.filter((s: any) => (s.review_count ?? 0) > 0).length ?? 0) > 0 && (
+        <section>
+          <div className="flex items-end justify-between mb-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 mb-0.5">
+                Top rated
+              </p>
+              <h2 className="font-display text-lg font-bold text-foreground tracking-tight flex items-center gap-2">
+                <Star className="h-4 w-4 text-warm fill-warm" />
+                Featured studios
+              </h2>
+            </div>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory scrollbar-hide">
+            {(studios ?? [])
+              .filter((s: any) => (s.review_count ?? 0) > 0)
+              .slice(0, 6)
+              .map((studio: any, i: number) => (
+                <motion.div
+                  key={studio.id}
+                  initial={{ opacity: 0, x: 12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                  className="snap-start shrink-0 w-64"
+                >
+                  <Link
+                    to={`/studios/${studio.id}`}
+                    className="block rounded-2xl bg-card border border-border overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all"
+                  >
+                    <div className="aspect-[16/10] bg-muted relative overflow-hidden">
+                      {studio.cover_image_url ? (
+                        <img src={studio.cover_image_url} alt={studio.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                          <Building2 className="h-8 w-8 text-muted-foreground/30" />
+                        </div>
+                      )}
+                      <div className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-background/95 backdrop-blur-sm px-2.5 py-1 text-xs font-bold text-foreground shadow-sm">
+                        <Star className="h-3 w-3 text-warm fill-warm" />
+                        {Number(studio.rating_avg).toFixed(1)}
+                      </div>
+                    </div>
+                    <div className="p-3">
+                      <p className="font-display font-semibold text-sm text-foreground line-clamp-1">
+                        {studio.name}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
+                        {studio.city || studio.location || studio.category}
+                      </p>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+          </div>
+        </section>
+      )}
+
       {mode === "physical" && (
         <>
           {loadingStudios && (

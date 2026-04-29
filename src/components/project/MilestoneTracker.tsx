@@ -97,11 +97,36 @@ const MilestoneTracker = ({ contractId }: MilestoneTrackerProps) => {
 
   const approveMilestone = useMutation({
     mutationFn: async (milestoneId: string) => {
+      const milestone = milestones.find((m) => m.id === milestoneId);
       const { error } = await supabase.rpc("release_milestone_credits", {
         _milestone_id: milestoneId,
         _approver_id: user!.id,
       });
       if (error) throw error;
+
+      // After successful release, fire revenue split if a config exists for this contract.
+      // Best-effort: failures here don't undo the release (specialist already got the full payment),
+      // but they redistribute according to the configured creator/curator/buyback shares.
+      try {
+        const { data: splitConfig } = await supabase
+          .from("revenue_split_configs")
+          .select("id")
+          .eq("contract_id", contractId)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (splitConfig?.id && milestone?.credit_amount) {
+          await supabase.functions.invoke("split-revenue", {
+            body: {
+              config_id: splitConfig.id,
+              total_amount: Number(milestone.credit_amount),
+              purchase_id: milestoneId,
+            },
+          });
+        }
+      } catch (splitErr) {
+        console.warn("Split distribution failed (non-fatal):", splitErr);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["milestones", contractId] });
