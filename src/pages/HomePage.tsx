@@ -262,12 +262,12 @@ const HomePage = () => {
             className="flex items-center gap-2 flex-wrap justify-center mb-5 text-xs"
           >
             <span className="text-muted-foreground/60">Browse:</span>
-            <Link to="/explore/studios" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
-              Studios
+            <Link to="/spaces" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
+              Spaces
             </Link>
             <span className="text-muted-foreground/30">·</span>
-            <Link to="/explore/creators" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
-              Creators
+            <Link to="/people" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
+              People
             </Link>
             <span className="text-muted-foreground/30">·</span>
             <Link to="/marketplace" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
@@ -427,17 +427,24 @@ const HomePage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-5 hover:border-border transition-all"
               >
-                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                  <p.icon className="h-5 w-5 text-primary" />
-                </div>
-                <h3 className="text-sm font-bold text-foreground mb-1.5">
-                  {p.title}
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {p.desc}
-                </p>
+                <Link
+                  to={p.to}
+                  className="group block h-full rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-5 hover:border-foreground/30 hover:shadow-lg transition-all"
+                >
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <p.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="text-sm font-bold text-foreground mb-1.5">
+                    {p.title}
+                  </h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+                    {p.desc}
+                  </p>
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-foreground group-hover:gap-2 transition-all">
+                    {p.cta} <ArrowRight className="h-3 w-3" />
+                  </span>
+                </Link>
               </motion.div>
             ))}
           </div>
