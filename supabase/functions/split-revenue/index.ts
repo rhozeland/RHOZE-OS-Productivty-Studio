@@ -183,6 +183,30 @@ Deno.serve(async (req) => {
       solana_signature: solanaSignature,
     });
 
+    // Notify recipients so the money "moves" visibly in the UI
+    const notifications: Array<Record<string, unknown>> = [];
+    if (creatorAmount > 0) {
+      notifications.push({
+        user_id: config.creator_id,
+        type: "purchase",
+        title: `+${creatorAmount} $RHOZE released`,
+        body: `Your ${config.creator_pct}% creator share from a ${total_amount}-credit milestone just landed.`,
+        link: "/seller-dashboard",
+      });
+    }
+    if (config.curator_id && curatorAmount > 0) {
+      notifications.push({
+        user_id: config.curator_id,
+        type: "purchase",
+        title: `+${curatorAmount} $RHOZE curation reward`,
+        body: `You earned ${config.curator_pct}% on a project you helped surface.`,
+        link: "/seller-dashboard",
+      });
+    }
+    if (notifications.length) {
+      await adminClient.from("notifications").insert(notifications);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
