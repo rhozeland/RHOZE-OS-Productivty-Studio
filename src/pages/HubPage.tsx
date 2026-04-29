@@ -32,6 +32,7 @@ import {
   Briefcase,
   Handshake,
   Flame,
+  TrendingUp,
 } from "lucide-react";
 import ListingCard from "@/components/marketplace/ListingCard";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
@@ -110,6 +111,34 @@ const HubPage = () => {
 
   const getMediaForListing = (id: string) =>
     allMedia?.filter((m: any) => m.listing_id === id) ?? [];
+
+  // ─── Trending creators rail (most active sellers in last 30 days) ─────
+  const { data: trendingCreators } = useQuery({
+    queryKey: ["hub-trending-creators"],
+    queryFn: async () => {
+      const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: recent } = await supabase
+        .from("marketplace_listings")
+        .select("user_id")
+        .eq("is_active", true)
+        .gte("created_at", since)
+        .limit(200);
+      const counts = new Map<string, number>();
+      (recent ?? []).forEach((r: any) => counts.set(r.user_id, (counts.get(r.user_id) ?? 0) + 1));
+      const topIds = [...counts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 8)
+        .map(([id]) => id);
+      if (topIds.length === 0) return [];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, username, avatar_url, headline")
+        .in("user_id", topIds);
+      return (profiles ?? [])
+        .map((p: any) => ({ ...p, listing_count: counts.get(p.user_id) ?? 0 }))
+        .sort((a: any, b: any) => b.listing_count - a.listing_count);
+    },
+  });
 
   return (
     <div className="space-y-12 max-w-6xl mx-auto pb-12">
