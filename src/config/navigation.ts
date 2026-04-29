@@ -13,6 +13,7 @@ import {
   Settings,
   Store,
   Users,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 
