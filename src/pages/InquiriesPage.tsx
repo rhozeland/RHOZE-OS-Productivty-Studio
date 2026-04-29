@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import CuratorInvitesInbox from "@/components/revenue/CuratorInvitesInbox";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pending", color: "bg-amber-500/15 text-amber-600", icon: Clock },
@@ -214,6 +215,8 @@ const InquiriesPage = () => {
         <h1 className="font-display text-3xl font-bold text-foreground">Inquiries</h1>
         <p className="text-muted-foreground">Manage marketplace inquiries and convert to projects</p>
       </div>
+
+      <CuratorInvitesInbox />
 
       {isLoading ? (
         <div className="flex justify-center py-12">
