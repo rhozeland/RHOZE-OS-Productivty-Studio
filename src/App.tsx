@@ -41,6 +41,8 @@ import MarketplacePage from "@/pages/MarketplacePage";
 import HomePage from "@/pages/HomePage";
 import SpacesPage from "@/pages/SpacesPage";
 import PeoplePage from "@/pages/PeoplePage";
+import HubPage from "@/pages/HubPage";
+import { ProfileRedirect } from "@/components/ProfileRedirect";
 import { FlowAuthGuard } from "@/components/FlowAuthGuard";
 import NotFound from "./pages/NotFound";
 
