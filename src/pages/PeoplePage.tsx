@@ -66,7 +66,7 @@ const PeoplePage = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles_public")
-        .select("user_id, display_name, avatar_url, username, bio")
+        .select("user_id, display_name, avatar_url, username")
         .not("display_name", "is", null)
         .limit(60);
       return data ?? [];
@@ -79,8 +79,7 @@ const PeoplePage = () => {
         (c: any) =>
           !search ||
           c.display_name?.toLowerCase().includes(search.toLowerCase()) ||
-          c.username?.toLowerCase().includes(search.toLowerCase()) ||
-          c.bio?.toLowerCase().includes(search.toLowerCase()),
+          c.username?.toLowerCase().includes(search.toLowerCase()),
       ),
     [creators, search],
   );
@@ -192,11 +191,6 @@ const PeoplePage = () => {
                   {c.username && (
                     <p className="text-[11px] text-muted-foreground text-center truncate">
                       @{c.username}
-                    </p>
-                  )}
-                  {c.bio && (
-                    <p className="text-[11px] text-muted-foreground text-center line-clamp-2 mt-2">
-                      {c.bio}
                     </p>
                   )}
                 </Link>
