@@ -168,8 +168,9 @@ const AppSidebar = () => {
         )}
       </Link>
 
-      <SidebarContent className="px-2 pt-3">
-        {renderGroup("Navigation", mainItems)}
+      <SidebarContent className="px-2 pt-3 space-y-2">
+        {renderGroup("Pillars", pillarItems)}
+        {renderGroup("Work", workItems)}
       </SidebarContent>
 
       <SidebarFooter className="px-2 pb-4 mt-auto">
