@@ -156,6 +156,15 @@ const RoadmapLockFlow = ({ projectId, project, goals, contract, collaborators }:
           .from("projects")
           .update({ status: "active", is_estimate: false } as any)
           .eq("id", projectId);
+
+        // Anchor on-chain (best-effort — don't block lock if Solana RPC hiccups).
+        try {
+          await supabase.functions.invoke("anchor-roadmap", {
+            body: { contract_id: newContract.id },
+          });
+        } catch (anchorErr) {
+          console.warn("On-chain anchor failed (non-fatal):", anchorErr);
+        }
       }
     },
     onSuccess: () => {
