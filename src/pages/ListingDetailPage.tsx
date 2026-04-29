@@ -48,6 +48,7 @@ import { format } from "date-fns";
 import AudioPreview from "@/components/marketplace/AudioPreview";
 import StarRating from "@/components/marketplace/StarRating";
 import QuickMessageDialog from "@/components/messages/QuickMessageDialog";
+import RevenueSplitConfig from "@/components/revenue/RevenueSplitConfig";
 
 const CATEGORIES: Record<string, { label: string; icon: any; color: string }> = {
   music: { label: "Music", icon: Music, color: "hsl(280, 60%, 55%)" },
