@@ -760,8 +760,11 @@ const ListingDetailPage = () => {
 
               {/* Owner view */}
               {isOwner && (
-                <div className="rounded-lg bg-muted/40 border border-dashed border-border p-3 text-xs text-muted-foreground text-center">
-                  This is your listing. <Link to="/seller" className="text-primary hover:underline">Manage in Seller Dashboard</Link>
+                <div className="space-y-4">
+                  <div className="rounded-lg bg-muted/40 border border-dashed border-border p-3 text-xs text-muted-foreground text-center">
+                    This is your listing. <Link to="/seller" className="text-primary hover:underline">Manage in Seller Dashboard</Link>
+                  </div>
+                  <RevenueSplitConfig listingId={listing.id} />
                 </div>
               )}
 
