@@ -417,7 +417,6 @@ const ProjectDetailPage = () => {
             {contract && user?.id === contract.specialist_id && (
               <RevenueSplitConfig contractId={contract.id} />
             )}
-            {contract && <RevenueSplitLog contractId={contract.id} />}
           </TabsContent>
         )}
 
