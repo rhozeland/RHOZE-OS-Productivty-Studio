@@ -173,6 +173,9 @@ const App = () => (
               {/* Main app — browsable by everyone, auth-gated actions inside */}
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
+                {/* New primary pillars — Spaces (physical+digital) & People */}
+                <Route path="/spaces" element={<SpacesPage />} />
+                <Route path="/people" element={<PeoplePage />} />
                 <Route path="/studios" element={<StudiosPage />} />
                 <Route path="/studios/:id" element={<StudioDetailPage />} />
                 <Route path="/studios/apply" element={<StudioApplicationPage />} />
