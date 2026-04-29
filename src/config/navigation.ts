@@ -13,6 +13,7 @@ import {
   Settings,
   Store,
   Users,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 
@@ -36,20 +37,28 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Home", icon: Home, path: "/dashboard" },
-  // Spaces & People — the new primary pillars (Phase 1 of Rhozeland 2.0).
-  // We do NOT alias /studios or /drop-rooms here because those routes still
-  // host detail pages and apply/manage flows; instead `extraActivePaths`
-  // (added below) is used purely for active-highlighting in nav surfaces.
+  // Spaces — Physical (studios) + Digital (drop rooms + projects collab).
   { id: "spaces", label: "Spaces", icon: Building2, path: "/spaces" },
+  // Hub — editorial discovery feed (Flow merged) + storefronts grid.
+  // Replaces /marketplace, /creators, /flow as a top-level destination.
+  {
+    id: "hub",
+    label: "Hub",
+    icon: Sparkles,
+    path: "/hub",
+    matchPaths: ["/marketplace", "/flow", "/creators"],
+  },
+  // Profile — user's own profile is the 4th dock pillar.
+  { id: "profile", label: "Profile", icon: User, path: "/profile" },
+  // Side-nav / secondary destinations
   { id: "people", label: "People", icon: Users, path: "/people" },
   { id: "projects", label: "Projects", icon: FolderKanban, path: "/projects" },
   { id: "messages", label: "Inbox", icon: MessageSquare, path: "/messages" },
-  { id: "marketplace", label: "Market", icon: ShoppingBag, path: "/marketplace" },
   // Legacy / utility entries — kept registered so dock customization,
   // active-state, and deep-link pages still work, but no longer the
   // primary navigation surfaces.
+  { id: "marketplace", label: "Market", icon: ShoppingBag, path: "/marketplace" },
   { id: "studios", label: "Studios", icon: Building2, path: "/studios" },
-  { id: "hub", label: "Hub", icon: Flame, path: "/creators" },
   { id: "boards", label: "Boards", icon: Palette, path: "/smartboards" },
   {
     id: "droprooms",
@@ -61,9 +70,9 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "calendar", label: "Calendar", icon: Calendar, path: "/calendar" },
   { id: "bookings", label: "Bookings", icon: Calendar, path: "/bookings" },
   { id: "credits", label: "Credits", icon: CreditCard, path: "/credits" },
-  // Flow Mode — demoted from top nav (lives inside Projects in Phase 2).
+  // Flow Mode — merged into Hub. Route still mounted as legacy; nav id retained
+  // so saved dock_config entries remain valid until users re-customize.
   { id: "flow", label: "Flow", icon: Flame, path: "/flow" },
-  { id: "profile", label: "Profile", icon: User, path: "/profiles" },
   { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
   { id: "services", label: "Services", icon: Store, path: "/services" },
 ];
@@ -76,12 +85,13 @@ export const NAV_ITEMS_BY_ID: Record<string, NavItem> = NAV_ITEMS.reduce(
   {} as Record<string, NavItem>,
 );
 
+// New 4-pillar dock: Home · Spaces · Hub · Profile.
+// Inbox + Projects live in the side-nav (AppSidebar), not the dock.
 export const DEFAULT_DOCK_IDS = [
   "dashboard",
   "spaces",
-  "people",
-  "projects",
-  "messages",
+  "hub",
+  "profile",
 ];
 
 /** Returns true if the current pathname should mark this nav item active. */

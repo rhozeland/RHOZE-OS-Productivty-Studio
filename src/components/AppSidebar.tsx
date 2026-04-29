@@ -2,7 +2,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   Home,
-  Calendar,
   Settings,
   LogOut,
   LogIn,
@@ -13,6 +12,8 @@ import {
   Building2,
   Users,
   FolderKanban,
+  Sparkles,
+  User,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -35,9 +36,16 @@ import {
 } from "@/components/ui/sidebar";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-const mainItems = [
+// Pillars (mirror the dock + extra side-nav-only entries)
+const pillarItems = [
   { icon: Home, label: "Home", path: "/dashboard" },
   { icon: Building2, label: "Spaces", path: "/spaces" },
+  { icon: Sparkles, label: "Hub", path: "/hub" },
+  { icon: User, label: "Profile", path: "/profile" },
+];
+
+// Side-nav-only destinations — kept off the dock per IA v3.
+const workItems = [
   { icon: Users, label: "People", path: "/people" },
   { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: MessageSquare, label: "Inbox", path: "/messages" },
@@ -160,8 +168,9 @@ const AppSidebar = () => {
         )}
       </Link>
 
-      <SidebarContent className="px-2 pt-3">
-        {renderGroup("Navigation", mainItems)}
+      <SidebarContent className="px-2 pt-3 space-y-2">
+        {renderGroup("Pillars", pillarItems)}
+        {renderGroup("Work", workItems)}
       </SidebarContent>
 
       <SidebarFooter className="px-2 pb-4 mt-auto">
