@@ -1,102 +1,115 @@
 
-# Why people aren't signing up (and what to do about it)
+# Rhozeland 2.0 — Spaces & People
 
-This is the most common growth problem for creator/social platforms — and the good news is your codebase is already 80% set up to fix it. You have:
-
-- Public routes for `/`, `/flow`, `/marketplace`, `/studios`, `/creators`, `/projects`, `/profiles/:id`
-- An `AuthGateDialog` system that prompts on action (not on entry)
-- A `GuestDashboardPreview`, `FlowGuestCTA`, `GuestMessagesPreview`
-
-The problem: **guests still land on `/` (Dashboard) which is built for logged-in users**, and the home/landing experience doesn't sell the "you can try it without an account" story. The signup ask comes too early, with too little proof.
-
-This plan is a 3-layer fix: rework the **front door**, harden **guest browsing depth**, and time the **signup ask** to a moment of intent.
+A strategic restructure. The app stops being a "social productivity feed" and becomes a **discovery + matchmaking marketplace** where every interaction starts with either *finding a space* or *finding a person*. Tools like Flow, Drop Rooms, and Smartboards stop competing for attention in the nav — they live inside Projects as collaboration utilities.
 
 ---
 
-## Layer 1 — Rework the front door (biggest lever)
+## The new mental model
 
-**Current state:** Visiting `rhozeland.app` sends a guest straight to `DashboardPage`, which then shows `<GuestDashboardPreview />`. It's a "your dashboard but empty" feel — not "look what's happening here."
+```text
+                       RHOZELAND APP
+                             │
+        ┌────────────────────┼────────────────────┐
+        │                    │                    │
+     SPACES               PEOPLE              PROJECTS
+   (Physical /         (Talent +           (where work
+    Digital toggle)     Matchmaking)        actually happens)
+        │                    │                    │
+   ┌────┴────┐          ┌────┴────┐         ┌─────┴─────┐
+   Studios   Digital    Browse    Brand     Flow  Drop   Smart
+  (vetted)   Rooms      directory briefs   Mode  Rooms  boards
+                                  (broker            (now utilities)
+                                   + algo)
+```
 
-**Change:**
-
-1. Make `/` route guests to a redesigned **public home** (could be `LandingPage` upgraded, or a new `HomePage` that authed users skip). Authed users continue straight to `/dashboard`.
-2. The new home leads with **live social proof from the platform itself**, not stock copy:
-   - Live Flow feed strip (5–6 most recent public posts, swipeable)
-   - "Creators online now" / recent signups counter (real number from `profiles`)
-   - Featured studios + recent project ships (real data)
-   - Top earners this week ($RHOZE leaderboard slice)
-3. Two CTAs side-by-side, equal weight:
-   - **"Explore as guest"** → `/flow` (no account needed)
-   - **"Sign up free"** → `/auth`
-4. Frame the value prop around **what you get for signing up**, not what the app does:
-   - "Earn $RHOZE for posting, swiping, and commenting"
-   - "Save creators and posts you love"
-   - "Get DMs from collaborators"
-   - "Free — no credit card, sign up with Google in 10 seconds"
-
-The current `/landing` route already exists and can be repurposed/upgraded for this — no new route needed.
-
-## Layer 2 — Make guest browsing actually feel like the product
-
-Right now guest mode is technically open but feels like a paywall preview. Tighten it so guests get the real thing:
-
-1. **`/flow` for guests** — already works. Verify the floating CTA isn't dismissable forever (currently `localStorage` persists indefinitely — consider re-showing after 24h or after N swipes).
-2. **`/creators` and `/profiles/:id`** — guests should see full profiles, including portfolios and badges. Today there's no `GuestCreatorsPreview` blocker — confirm and lean into it.
-3. **`/studios` and `/marketplace`** — guests should see full listings + prices. Auth gate fires only on "Book" / "Buy" / "Message seller."
-4. **Add a persistent, low-key guest banner** at the top of public pages: *"You're browsing as a guest. Sign up to save, post, and earn → "* (dismissable, but reappears on a different surface).
-
-## Layer 3 — Move the signup ask to the moment of intent
-
-The `AuthGateDialog` already does this for some actions. Audit and expand:
-
-- Posting to Flow → gate (already there via `SignUpToPostPrompt`)
-- Saving a creator/post → gate
-- Sending a DM / inquiry → gate
-- Booking a studio → gate
-- Buying a listing → gate
-- Liking/commenting → gate
-
-Each gate dialog should be **contextual** — instead of "Sign in to unlock this feature," say "Sign up to save this post" or "Sign up to message {creatorName}." This is a 5-minute copy change with outsized impact.
-
-## Layer 4 — Reduce signup itself to ~10 seconds
-
-Verify on `/auth`:
-
-- Google sign-in is the **primary, top button** (one click, no email verification)
-- Email signup is below it as a fallback
-- Don't require email confirmation before letting them in (already configurable — confirm current setting)
-- After signup, drop them back where they were (the existing `?redirect=` param in `AuthGateDialog` already does this — confirm it's used everywhere)
+**Spaces** = where creation happens (a studio you book, or a digital room you join).
+**People** = who you create with (browse, get matched, or brief Rhozeland to broker).
+**Projects** = the container where collaboration tools live, after a match or booking turns into actual work.
 
 ---
 
-## Optional — if friction is *still* high after the above
+## Pillar 1 — Spaces (Physical / Digital toggle)
 
-- **Anonymous "watch-only" account**: auto-create a session-scoped guest profile so swipes/saves/views persist for 7 days. If they sign up, merge. (Heavier lift — only if Layer 1–4 don't move the needle.)
-- **Invite-only beta framing** with a waitlist + referral code. Sometimes scarcity flips the script from "why should I sign up" to "I want in." Works well in crypto-adjacent communities.
+A single `/spaces` hub with a prominent toggle:
 
----
+- **Physical** — the existing Studios catalog, repositioned as Rhozeland-vetted partner venues (recording, photo, video, beauty bars, etc.). This is the "creative agency" surface investors saw.
+- **Digital** — Drop Rooms reframed as bookable digital spaces (live A/V rooms, async collab rooms, brand activation rooms). Same primitive, marketing flips from "ephemeral hangout" to "your digital studio."
 
-## What I'd do this round (recommended scope)
-
-The cheapest, highest-impact slice — ship this first, then measure:
-
-1. Rework the home page (`LandingPage` or new `HomePage`) with live platform data + dual CTA
-2. Route guests at `/` to the new home; keep authed users on `/dashboard`
-3. Rewrite all `requireAuth()` messages to be contextual ("Sign up to save this post", etc.)
-4. Make Google sign-in the dominant button on `/auth`
-5. Add one persistent, dismissable guest banner across public pages
-
-That's roughly 4–6 file changes and one new component. Skips the heavy lifts (anonymous accounts, waitlist) until you have data showing they're needed.
+Filters apply to both: vertical (Beauty / Fashion / Music / Marketing / Other), region, capacity, price.
 
 ---
 
-## Questions before I build
+## Pillar 2 — People (with all three matchmaking modes)
 
-I want to make sure we ship the version that matches your gut, not just my best guess:
+A `/people` hub that does all three matchmaking depths in parallel:
 
-- Do you want to **keep `/` going to Dashboard for everyone** and just upgrade `/landing`, or **send guests to the new home and authed users to `/dashboard`**? (I'd recommend the latter.)
-- Do you want the **live Flow strip on the home page** (real posts) or **curated/static highlights** for now? (Live = stronger proof, takes a bit more work.)
-- Should I include the **"Creators online / recent signups" counter** as a real number, or skip the live stat for v1?
-- Any **specific feedback verbatim** from the people who said they wouldn't sign up? Their exact words usually point to the real objection (privacy? "yet another app"? crypto skepticism? unclear value?). If you can paste 1–2 quotes I'll tune the copy to those objections.
+1. **Browse directory** — searchable profiles by vertical, region, language, rate. Free, DM-based. (Fast path.)
+2. **Submit a brief** — brand fills a structured brief (goal, budget, region, deliverables). Two outcomes:
+   - **Algorithmic matches** surface immediately (ranked profiles based on tags + reputation).
+   - **Rhozeland Concierge** option on the same brief — flag it for our team to broker manually for a fee. East↔West bridge plays go through this lane.
+3. **Get listed** — creators opt into the directory, set bridge interests (e.g. "open to Eastern beauty brands"), pricing, and availability.
 
-If you want to skip the questions and just ship the recommended scope above, say "go" and I'll start.
+This is where the East↔West bridging thesis lives explicitly: a region toggle + "open to cross-market collabs" flag on every profile.
+
+---
+
+## Pillar 3 — Projects (now the home for collab tools)
+
+Flow Mode, Drop Rooms, and Smartboards are demoted from top-nav destinations and re-homed inside a Project workspace:
+
+- A Project is created when a booking, brief, or hire turns into real work.
+- Inside a project: **Smartboard** (the canvas), **Drop Room** (live session), **Flow** (project-scoped feed of updates/inspo), milestones, files, payments.
+- Standalone `/flow`, `/drop-rooms`, `/smartboards` routes stay alive as legacy redirects → push users into "open inside a project."
+
+For power users (creators who want a public Flow feed) we keep a "Creator Workspace" view under their profile — same components, just exposed publicly.
+
+---
+
+## Navigation & home changes
+
+**New top nav (logged-in):** Home · Spaces · People · Projects · Marketplace · Messages
+
+**New homepage (logged-in):** three big cards — *Find a Space*, *Find a Person*, *Open a Project* — plus continued-activity rail (your active projects, upcoming bookings, new matches).
+
+**New homepage (guest):** same three cards with auth-gated CTAs. No more Flow Mode preview.
+
+**Removed from top nav:** Flow, Drop Rooms, Smartboards, Creators Hub. (Routes preserved as redirects → Projects or People.)
+
+---
+
+## Phased rollout
+
+Since you didn't pick a rollout pace, I'm proposing **three phases** so we can ship value early and adjust:
+
+**Phase 1 — IA + Shell (this session, if approved)**
+- New `/spaces` page with Physical/Digital toggle (Physical = existing Studios query, Digital = existing Drop Rooms query).
+- New `/people` page with Browse tab + Brief tab (algo matches) + Concierge upgrade flag.
+- Rebuild homepage around the three big cards.
+- Top-nav restructure + redirects from `/flow`, `/drop-rooms`, `/smartboards`, `/creators` → new homes.
+- Old Creators Hub gamification (leaderboard, journey, $RHOZE earn grid) moved into a `/people/creator-pulse` sub-tab so we don't lose it.
+
+**Phase 2 — Projects as collab container**
+- New Project workspace shell with tabs: Overview · Smartboard · Drop Room · Flow · Files · Payments.
+- Migrate existing Smartboards/DropRooms/Flow posts to be project-scoped (with a "Personal" default project for backfill).
+
+**Phase 3 — Matchmaking depth**
+- Brief schema + algorithmic matching (tag overlap + reputation score).
+- Concierge intake flow + admin queue for brokered intros.
+- East↔West region toggle and cross-market flags on profiles + briefs.
+
+---
+
+## Technical notes
+
+- **No destructive DB changes in Phase 1.** Spaces page reuses `studios` and `drop_rooms` tables. People page reuses `profiles`. Old routes stay mounted as components but render redirects.
+- **Phase 2** adds a `projects` ↔ `smartboards` / `drop_rooms` / `flow_posts` relationship (nullable `project_id` columns; existing rows keep working).
+- **Phase 3** adds `briefs`, `brief_matches`, `concierge_requests` tables + RLS.
+- **Memory updates:** new entries for `arch/pillars-v2`, `features/spaces-hub`, `features/people-hub`, `features/projects-workspace`. Mark `creators-hub` and `flow-mode` memories as superseded (kept for reference).
+- **No business-logic changes to payments, $RHOZE economy, or auth** in Phase 1 — purely a navigation/IA reshape.
+
+---
+
+## What I need from you to start Phase 1
+
+Just a thumbs-up on this plan. Once approved I'll execute Phase 1 in one pass: new `/spaces`, new `/people`, new homepage, top-nav restructure, legacy redirects. Phases 2 and 3 we'd schedule as separate work blocks.

@@ -10,6 +10,9 @@ import {
   CreditCard,
   MessageSquare,
   UserPlus,
+  Building2,
+  Users,
+  FolderKanban,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -34,6 +37,9 @@ import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
 const mainItems = [
   { icon: Home, label: "Home", path: "/dashboard" },
+  { icon: Building2, label: "Spaces", path: "/spaces" },
+  { icon: Users, label: "People", path: "/people" },
+  { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: MessageSquare, label: "Inbox", path: "/messages" },
   { icon: CreditCard, label: "Creator Pass", path: "/credits" },
 ];

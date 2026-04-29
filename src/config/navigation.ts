@@ -12,6 +12,7 @@ import {
   User,
   Settings,
   Store,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 
@@ -35,10 +36,20 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Home", icon: Home, path: "/dashboard" },
-  { id: "studios", label: "Studios", icon: Building2, path: "/studios" },
+  // Spaces & People — the new primary pillars (Phase 1 of Rhozeland 2.0).
+  // We do NOT alias /studios or /drop-rooms here because those routes still
+  // host detail pages and apply/manage flows; instead `extraActivePaths`
+  // (added below) is used purely for active-highlighting in nav surfaces.
+  { id: "spaces", label: "Spaces", icon: Building2, path: "/spaces" },
+  { id: "people", label: "People", icon: Users, path: "/people" },
   { id: "projects", label: "Projects", icon: FolderKanban, path: "/projects" },
-  { id: "hub", label: "Hub", icon: Flame, path: "/creators" },
   { id: "messages", label: "Inbox", icon: MessageSquare, path: "/messages" },
+  { id: "marketplace", label: "Market", icon: ShoppingBag, path: "/marketplace" },
+  // Legacy / utility entries — kept registered so dock customization,
+  // active-state, and deep-link pages still work, but no longer the
+  // primary navigation surfaces.
+  { id: "studios", label: "Studios", icon: Building2, path: "/studios" },
+  { id: "hub", label: "Hub", icon: Flame, path: "/creators" },
   { id: "boards", label: "Boards", icon: Palette, path: "/smartboards" },
   {
     id: "droprooms",
@@ -47,13 +58,10 @@ export const NAV_ITEMS: NavItem[] = [
     path: "/drop-rooms",
     matchPaths: ["/droprooms"],
   },
-  { id: "marketplace", label: "Market", icon: ShoppingBag, path: "/marketplace" },
   { id: "calendar", label: "Calendar", icon: Calendar, path: "/calendar" },
   { id: "bookings", label: "Bookings", icon: Calendar, path: "/bookings" },
   { id: "credits", label: "Credits", icon: CreditCard, path: "/credits" },
-  // Flow Mode — not in the default dock (reached via header search bar's
-  // Workflow button + keyboard shortcut), but registered here so active-state
-  // resolution and dock customization stay uniform across surfaces.
+  // Flow Mode — demoted from top nav (lives inside Projects in Phase 2).
   { id: "flow", label: "Flow", icon: Flame, path: "/flow" },
   { id: "profile", label: "Profile", icon: User, path: "/profiles" },
   { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
@@ -70,9 +78,9 @@ export const NAV_ITEMS_BY_ID: Record<string, NavItem> = NAV_ITEMS.reduce(
 
 export const DEFAULT_DOCK_IDS = [
   "dashboard",
-  "studios",
+  "spaces",
+  "people",
   "projects",
-  "hub",
   "messages",
 ];
 

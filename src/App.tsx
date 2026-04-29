@@ -39,6 +39,8 @@ import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import OnboardingPage from "@/pages/OnboardingPage";
 import MarketplacePage from "@/pages/MarketplacePage";
 import HomePage from "@/pages/HomePage";
+import SpacesPage from "@/pages/SpacesPage";
+import PeoplePage from "@/pages/PeoplePage";
 import { FlowAuthGuard } from "@/components/FlowAuthGuard";
 import NotFound from "./pages/NotFound";
 
@@ -62,6 +64,8 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/explore/creators/:id",
   "/",
   "/dashboard",
+  "/spaces",
+  "/people",
   "/studios",
   "/studios/:id",
   "/studios/apply",
@@ -169,6 +173,9 @@ const App = () => (
               {/* Main app — browsable by everyone, auth-gated actions inside */}
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
+                {/* New primary pillars — Spaces (physical+digital) & People */}
+                <Route path="/spaces" element={<SpacesPage />} />
+                <Route path="/people" element={<PeoplePage />} />
                 <Route path="/studios" element={<StudiosPage />} />
                 <Route path="/studios/:id" element={<StudioDetailPage />} />
                 <Route path="/studios/apply" element={<StudioApplicationPage />} />
@@ -183,7 +190,8 @@ const App = () => (
                 <Route path="/flow" element={<FlowAuthGuard><FlowModePage /></FlowAuthGuard>} />
                 <Route path="/smartboards" element={<SmartboardsPage />} />
                 <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
-                <Route path="/creators" element={<CreatorsHubPage />} />
+                {/* Legacy Creators Hub → People hub */}
+                <Route path="/creators" element={<Navigate to="/people" replace />} />
                 <Route path="/creators/:id" element={<ListingDetailPage />} />
                 <Route path="/marketplace" element={<MarketplacePage />} />
                 <Route path="/marketplace/:id" element={<ListingDetailPage />} />
