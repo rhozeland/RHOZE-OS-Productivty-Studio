@@ -412,8 +412,12 @@ const ProjectDetailPage = () => {
         </TabsContent>
 
         {isPaid && (
-          <TabsContent value="budget">
+          <TabsContent value="budget" className="space-y-6">
             <ProjectBudget project={project} goals={goals} milestones={milestones} />
+            {contract && user?.id === contract.specialist_id && (
+              <RevenueSplitConfig contractId={contract.id} />
+            )}
+            {contract && <RevenueSplitLog contractId={contract.id} />}
           </TabsContent>
         )}
 
