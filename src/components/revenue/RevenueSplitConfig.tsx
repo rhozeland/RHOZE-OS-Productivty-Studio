@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, PieChart, Wallet } from "lucide-react";
+import CuratorInviteSection from "./CuratorInviteSection";
 
 interface RevenueSplitConfigProps {
   listingId?: string;
@@ -178,6 +179,13 @@ const RevenueSplitConfig = ({ listingId, contractId }: RevenueSplitConfigProps) 
         {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {existingConfig ? "Update Split" : "Set Split"}
       </Button>
+
+      {existingConfig && curatorPct > 0 && (
+        <CuratorInviteSection
+          splitConfigId={existingConfig.id}
+          curatorId={existingConfig.curator_id ?? null}
+        />
+      )}
     </div>
   );
 };
