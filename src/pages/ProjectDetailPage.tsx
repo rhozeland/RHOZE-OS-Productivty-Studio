@@ -33,6 +33,7 @@ import Collaborators from "@/components/project/Collaborators";
 import RoadmapLockFlow from "@/components/project/RoadmapLockFlow";
 import ProjectDisputes from "@/components/project/ProjectDisputes";
 import ProjectControls from "@/components/project/ProjectControls";
+import RevenueSplitConfig from "@/components/revenue/RevenueSplitConfig";
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -410,8 +411,11 @@ const ProjectDetailPage = () => {
         </TabsContent>
 
         {isPaid && (
-          <TabsContent value="budget">
+          <TabsContent value="budget" className="space-y-6">
             <ProjectBudget project={project} goals={goals} milestones={milestones} />
+            {contract && user?.id === contract.specialist_id && (
+              <RevenueSplitConfig contractId={contract.id} />
+            )}
           </TabsContent>
         )}
 
