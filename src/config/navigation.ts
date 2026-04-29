@@ -37,22 +37,11 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Home", icon: Home, path: "/dashboard" },
   // Spaces & People — the new primary pillars (Phase 1 of Rhozeland 2.0).
-  // Studios + Drop Rooms now live inside /spaces. /studios stays as a deep
-  // link so existing direct URLs keep working.
-  {
-    id: "spaces",
-    label: "Spaces",
-    icon: Building2,
-    path: "/spaces",
-    matchPaths: ["/studios", "/drop-rooms", "/droprooms"],
-  },
-  {
-    id: "people",
-    label: "People",
-    icon: Users,
-    path: "/people",
-    matchPaths: ["/creators", "/profiles"],
-  },
+  // We do NOT alias /studios or /drop-rooms here because those routes still
+  // host detail pages and apply/manage flows; instead `extraActivePaths`
+  // (added below) is used purely for active-highlighting in nav surfaces.
+  { id: "spaces", label: "Spaces", icon: Building2, path: "/spaces" },
+  { id: "people", label: "People", icon: Users, path: "/people" },
   { id: "projects", label: "Projects", icon: FolderKanban, path: "/projects" },
   { id: "messages", label: "Inbox", icon: MessageSquare, path: "/messages" },
   { id: "marketplace", label: "Market", icon: ShoppingBag, path: "/marketplace" },
