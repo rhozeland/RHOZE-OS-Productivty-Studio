@@ -272,7 +272,57 @@ const ProjectTools = ({ projectId, projectTitle }: Props) => {
         </Link>
       </div>
 
-      {/* ─── Link smartboard dialog ──────────────────────────────────── */}
+      {/* ─── Drop Rooms (project-scoped) ─────────────────────────────── */}
+      <section className="rounded-2xl border border-border bg-card p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Radio className="h-4 w-4 text-primary" />
+            <h4 className="font-display text-base font-semibold">Drop Rooms</h4>
+          </div>
+          <Button size="sm" variant="outline" className="rounded-full h-8" onClick={() => setRoomOpen(true)}>
+            <Plus className="h-3.5 w-3.5 mr-1" /> New room
+          </Button>
+        </div>
+        {rooms && rooms.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {rooms.map((r: any, i: number) => (
+              <motion.button
+                key={r.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.03 }}
+                onClick={() => navigate(`/drop-rooms/${r.id}`)}
+                className="group text-left rounded-xl border border-border overflow-hidden hover:-translate-y-0.5 transition-all"
+              >
+                <div className="h-1.5" style={{ background: r.cover_color || "hsl(var(--primary))" }} />
+                <div className="p-3 space-y-1.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-display font-semibold text-foreground line-clamp-1">
+                      {r.title}
+                    </p>
+                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                  </div>
+                  {r.description && (
+                    <p className="text-[11px] text-muted-foreground line-clamp-1">
+                      {r.description}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-1 text-[11px] text-destructive/80 font-medium pt-0.5">
+                    <Clock className="h-3 w-3" />
+                    {formatDistanceToNow(new Date(r.expires_at), { addSuffix: false })} left
+                  </div>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No active rooms for {projectTitle ? `"${projectTitle}"` : "this project"} yet.
+            Launch one to collaborate live.
+          </p>
+        )}
+      </section>
+
       <Dialog open={linkOpen} onOpenChange={setLinkOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
