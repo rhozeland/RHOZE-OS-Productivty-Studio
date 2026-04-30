@@ -50,8 +50,14 @@ interface Props {
 
 const ProjectTools = ({ projectId, projectTitle }: Props) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const [linkOpen, setLinkOpen] = useState(false);
+  const [roomOpen, setRoomOpen] = useState(false);
+  const [roomTitle, setRoomTitle] = useState("");
+  const [roomDescription, setRoomDescription] = useState("");
+  const [roomHours, setRoomHours] = useState(24);
+  const [creatingRoom, setCreatingRoom] = useState(false);
 
   // Smartboards already linked to this project.
   const { data: linked } = useQuery({
