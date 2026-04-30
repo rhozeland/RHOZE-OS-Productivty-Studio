@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import WithdrawalPanel from "@/components/seller/WithdrawalPanel";
 import WorkSettlements from "@/components/works/WorkSettlements";
+import CapitalAdvancePanel from "@/components/works/CapitalAdvancePanel";
 import { format, subDays, startOfMonth } from "date-fns";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar,
@@ -290,6 +291,8 @@ const SellerDashboardPage = () => {
       </div>
 
       <WithdrawalPanel />
+
+      {user && <CapitalAdvancePanel userId={user.id} />}
 
       {user && <WorkSettlements userId={user.id} />}
 
