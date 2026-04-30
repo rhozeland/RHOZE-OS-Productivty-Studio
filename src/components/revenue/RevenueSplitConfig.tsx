@@ -2,14 +2,23 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, PieChart, Wallet, Fingerprint } from "lucide-react";
+import { Loader2, PieChart, Wallet, Fingerprint, ShieldCheck } from "lucide-react";
 import CuratorInviteSection from "./CuratorInviteSection";
+import { shortHash } from "@/lib/content-hash";
 
 /**
  * Compute a SHA-256 fingerprint of the canonical split table.
@@ -48,6 +57,9 @@ const RevenueSplitConfig = ({ listingId, contractId }: RevenueSplitConfigProps) 
   const [curatorPct, setCuratorPct] = useState(10);
   const [buybackWallet, setBuybackWallet] = useState("");
   const [splitsHash, setSplitsHash] = useState<string>("");
+  // Phase 3: bind the split to a specific Work (the IP being monetized).
+  // The work's content_hash + this splits hash form the full provenance chain.
+  const [workId, setWorkId] = useState<string>("");
 
   const buybackPct = 100 - creatorPct - curatorPct;
 
@@ -80,11 +92,30 @@ const RevenueSplitConfig = ({ listingId, contractId }: RevenueSplitConfigProps) 
         setCreatorPct(data.creator_pct);
         setCuratorPct(data.curator_pct);
         setBuybackWallet(data.buyback_wallet || "");
+        setWorkId((data as { work_id?: string | null }).work_id ?? "");
       }
       return data;
     },
     enabled: !!(listingId || contractId),
   });
+
+  // The creator's own works, for the Linked Work picker.
+  const { data: myWorks = [] } = useQuery({
+    queryKey: ["works-for-split", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("works")
+        .select("id, title, kind, content_hash, solana_signature")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  const linkedWork = myWorks.find((w) => w.id === workId);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -98,6 +129,7 @@ const RevenueSplitConfig = ({ listingId, contractId }: RevenueSplitConfigProps) 
         curator_pct: curatorPct,
         buyback_pct: buybackPct,
         buyback_wallet: buybackWallet || null,
+        work_id: workId || null,
         is_active: true,
       };
 
@@ -216,6 +248,64 @@ const RevenueSplitConfig = ({ listingId, contractId }: RevenueSplitConfigProps) 
             {buybackPct}% of revenue goes to the buyback pool.
             {!buybackWallet && " Set a wallet to enable on-chain buyback transfers."}
           </p>
+        </div>
+
+        {/* Phase 3: Bind to a registered Work so the IP's content_hash
+            travels with the split. Optional but recommended. */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-1.5">
+            <Fingerprint className="h-3.5 w-3.5" />
+            Linked work (optional)
+          </Label>
+          <Select
+            value={workId || "__none__"}
+            onValueChange={(v) => setWorkId(v === "__none__" ? "" : v)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Pick a registered work…" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">No work linked</SelectItem>
+              {myWorks.map((w) => (
+                <SelectItem key={w.id} value={w.id}>
+                  <span className="flex items-center gap-2">
+                    {w.title}
+                    {w.solana_signature && (
+                      <ShieldCheck className="h-3 w-3 text-primary" />
+                    )}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {linkedWork ? (
+            <div
+              className="text-[11px] font-mono text-muted-foreground truncate"
+              title={linkedWork.content_hash}
+            >
+              sha256:{shortHash(linkedWork.content_hash)}
+              {linkedWork.solana_signature && (
+                <>
+                  {" · "}
+                  <a
+                    href={`https://solscan.io/tx/${linkedWork.solana_signature}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline-offset-4 hover:underline"
+                  >
+                    Solscan ↗
+                  </a>
+                </>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Bind a Work so its content hash flows into this split.{" "}
+              <Link to="/works" className="text-primary hover:underline">
+                Register a work →
+              </Link>
+            </p>
+          )}
         </div>
       </div>
 
