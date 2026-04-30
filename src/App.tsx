@@ -40,6 +40,7 @@ import OnboardingPage from "@/pages/OnboardingPage";
 // MarketplacePage retained as a file but no longer routed — /marketplace redirects to /hub.
 import HomePage from "@/pages/HomePage";
 import InfrastructurePage from "@/pages/InfrastructurePage";
+import WorksPage from "@/pages/WorksPage";
 // SpacesPage / PeoplePage retained as files but no longer routed —
 // /spaces and /people redirect to /hub (unified feed).
 import HubPage from "@/pages/HubPage";
@@ -62,6 +63,7 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/onboarding",
   "/landing",
   "/infrastructure",
+  "/works",
   "/explore/studios",
   "/explore/studios/:id",
   "/explore/creators",
@@ -192,6 +194,7 @@ const App = () => (
                 <Route path="/services" element={<ServicesPage />} />
                 <Route path="/projects" element={<ProjectsPage />} />
                 <Route path="/projects/:id" element={<ProjectDetailPage />} />
+                <Route path="/works" element={<WorksPage />} />
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/bookings" element={<CalendarPage />} />
                 <Route path="/credits" element={<CreditShopPage />} />
