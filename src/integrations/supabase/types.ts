@@ -170,6 +170,113 @@ export type Database = {
           },
         ]
       }
+      capital_advance_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          event_type: string
+          from_status:
+            | Database["public"]["Enums"]["capital_advance_status"]
+            | null
+          id: string
+          metadata: Json
+          note: string | null
+          request_id: string
+          to_status:
+            | Database["public"]["Enums"]["capital_advance_status"]
+            | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          event_type: string
+          from_status?:
+            | Database["public"]["Enums"]["capital_advance_status"]
+            | null
+          id?: string
+          metadata?: Json
+          note?: string | null
+          request_id: string
+          to_status?:
+            | Database["public"]["Enums"]["capital_advance_status"]
+            | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          event_type?: string
+          from_status?:
+            | Database["public"]["Enums"]["capital_advance_status"]
+            | null
+          id?: string
+          metadata?: Json
+          note?: string | null
+          request_id?: string
+          to_status?:
+            | Database["public"]["Enums"]["capital_advance_status"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capital_advance_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "capital_advance_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      capital_advance_requests: {
+        Row: {
+          admin_note: string | null
+          applicant_note: string | null
+          collateral_score: number | null
+          created_at: string
+          funded_amount: number | null
+          funded_at: string | null
+          id: string
+          requested_amount: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          signal_snapshot: Json
+          status: Database["public"]["Enums"]["capital_advance_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          applicant_note?: string | null
+          collateral_score?: number | null
+          created_at?: string
+          funded_amount?: number | null
+          funded_at?: string | null
+          id?: string
+          requested_amount: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          signal_snapshot?: Json
+          status?: Database["public"]["Enums"]["capital_advance_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          applicant_note?: string | null
+          collateral_score?: number | null
+          created_at?: string
+          funded_amount?: number | null
+          funded_at?: string | null
+          id?: string
+          requested_amount?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          signal_snapshot?: Json
+          status?: Database["public"]["Enums"]["capital_advance_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_group_members: {
         Row: {
           group_id: string
@@ -3144,6 +3251,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      capital_advance_status:
+        | "submitted"
+        | "under_review"
+        | "approved"
+        | "funded"
+        | "rejected"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3272,6 +3386,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      capital_advance_status: [
+        "submitted",
+        "under_review",
+        "approved",
+        "funded",
+        "rejected",
+        "cancelled",
+      ],
     },
   },
 } as const
