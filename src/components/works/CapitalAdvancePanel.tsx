@@ -172,19 +172,34 @@ const CapitalAdvancePanel = ({ userId }: Props) => {
     if (!signal || !result || !result.eligible) return;
     setRequesting(true);
     try {
-      const { error } = await supabase.from("notifications").insert({
-        user_id: userId,
-        type: "general",
-        title: "Capital advance request received",
-        body: `We've logged your interest in a $${result.advance.toLocaleString("en-US", { maximumFractionDigits: 0 })} advance against your settlement history. Our team will review your collateral signal and reach out within 3 business days.`,
-        link: "/seller",
-      });
+      const { error } = await (supabase as any)
+        .from("capital_advance_requests")
+        .insert({
+          user_id: userId,
+          requested_amount: Math.round(result.advance),
+          collateral_score: result.score,
+          status: "submitted",
+          signal_snapshot: {
+            gross_90d: signal.gross90d,
+            gross_lifetime: signal.grossLifetime,
+            events: signal.events,
+            on_chain_events: signal.onChainEvents,
+            months_active: signal.monthsActive,
+            anchored_works: signal.anchoredWorks,
+            total_works: signal.totalWorks,
+            on_chain_ratio: result.onChainRatio,
+            tenure_mult: result.tenureMult,
+            provenance_mult: result.provenanceMult,
+          },
+        });
       if (error) throw error;
-      toast.success("Advance request logged", {
-        description: "Check your notifications — we'll be in touch shortly.",
+      toast.success("Advance request submitted", {
+        description: "Track its status below — we'll review within 3 business days.",
       });
+      // Trigger status panel refetch via global event.
+      window.dispatchEvent(new CustomEvent("capital-advance:created"));
     } catch (e: any) {
-      toast.error(e.message || "Could not log request");
+      toast.error(e.message || "Could not submit request");
     } finally {
       setRequesting(false);
     }
