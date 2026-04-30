@@ -9,8 +9,6 @@ import {
   CreditCard,
   MessageSquare,
   UserPlus,
-  Building2,
-  Users,
   FolderKanban,
   Sparkles,
   User,
