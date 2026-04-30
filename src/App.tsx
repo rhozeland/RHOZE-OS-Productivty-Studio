@@ -212,7 +212,7 @@ const App = () => (
                 <Route path="/marketplace/:id" element={<ListingDetailPage />} />
                 <Route path="/seller" element={<Navigate to="/settings" replace />} />
                 <Route path="/inquiries" element={<Navigate to="/messages?tab=inquiries" replace />} />
-                <Route path="/profiles" element={<Navigate to="/people" replace />} />
+                <Route path="/profiles" element={<Navigate to="/hub" replace />} />
                 <Route path="/profiles/:id" element={<ProfileDetailPage />} />
                 {/* Centralized legacy aliases — generated from NAV_ALIASES.
                     Add a new redirect by adding a `matchPaths` entry to a
