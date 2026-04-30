@@ -37,22 +37,21 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Home", icon: Home, path: "/dashboard" },
-  // Spaces — Physical (studios) + Digital (drop rooms + projects collab).
-  { id: "spaces", label: "Spaces", icon: Building2, path: "/spaces" },
-  // Hub — editorial discovery feed (Flow merged) + storefronts grid.
-  // Replaces /marketplace, /creators, /flow as a top-level destination.
+  // Hub — unified discovery: feed + people + spaces + storefronts.
+  // Replaces /marketplace, /creators, /flow, /people, /spaces.
   {
     id: "hub",
     label: "Hub",
     icon: Sparkles,
     path: "/hub",
-    matchPaths: ["/marketplace", "/flow", "/creators"],
+    matchPaths: ["/marketplace", "/flow", "/creators", "/people", "/spaces"],
   },
+  // Projects — promoted to the dock. Hosts Flow / Smartboards / Drop Rooms
+  // as in-context tools (see ProjectDetailPage Tools tab).
+  { id: "projects", label: "Projects", icon: FolderKanban, path: "/projects" },
   // Profile — user's own profile is the 4th dock pillar.
   { id: "profile", label: "Profile", icon: User, path: "/profile" },
   // Side-nav / secondary destinations
-  { id: "people", label: "People", icon: Users, path: "/people" },
-  { id: "projects", label: "Projects", icon: FolderKanban, path: "/projects" },
   { id: "messages", label: "Inbox", icon: MessageSquare, path: "/messages" },
   // Legacy / utility entries — kept registered so dock customization,
   // active-state, and deep-link pages still work, but no longer the
@@ -85,12 +84,13 @@ export const NAV_ITEMS_BY_ID: Record<string, NavItem> = NAV_ITEMS.reduce(
   {} as Record<string, NavItem>,
 );
 
-// New 4-pillar dock: Home · Spaces · Hub · Profile.
-// Inbox + Projects live in the side-nav (AppSidebar), not the dock.
+// 4-pillar dock: Home · Hub · Projects · Profile.
+// People + Spaces are absorbed into Hub. Flow/Smartboards/Drop Rooms
+// live inside Projects as in-context tools. Inbox lives in the side-nav.
 export const DEFAULT_DOCK_IDS = [
   "dashboard",
-  "spaces",
   "hub",
+  "projects",
   "profile",
 ];
 
