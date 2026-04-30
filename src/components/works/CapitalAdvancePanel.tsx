@@ -57,37 +57,43 @@ interface Signal {
   lastEventAt: string | null;
 }
 
-const computeAdvance = (s: Signal) => {
-  // Base: up to 60% of trailing-90-day gross.
-  const base = s.gross90d * 0.6;
+const computeAdvance = (s: Signal, r: UnderwritingRules) => {
+  // Base: configurable % of trailing-90-day gross.
+  const base = s.gross90d * r.base_advance_ratio;
 
-  // Provenance multiplier: 1.0 with no anchored cashflows, up to 1.25 if
-  // every settlement is on-chain.
+  // Provenance multiplier: 1.0 with no anchored cashflows, up to 1+bonus
+  // when every settlement is on-chain.
   const onChainRatio = s.events === 0 ? 0 : s.onChainEvents / s.events;
-  const provenanceMult = 1 + onChainRatio * 0.25;
+  const provenanceMult = 1 + onChainRatio * r.provenance_bonus_max;
 
-  // Tenure multiplier: 0.5 for brand-new sellers, scales to 1.0 at 6+ months.
-  const tenureMult = Math.min(1, 0.5 + (s.monthsActive / 6) * 0.5);
+  // Tenure multiplier: floor for brand-new sellers, scales to 1.0 at the
+  // configured "full tenure" months.
+  const tenureMult = Math.min(
+    1,
+    r.tenure_floor_mult +
+      (s.monthsActive / Math.max(1, r.tenure_full_months)) *
+        (1 - r.tenure_floor_mult),
+  );
 
-  // Diversification floor: each anchored work adds a tiny floor so creators
-  // with consistent IP have a non-zero advance even with thin recent revenue.
-  const diversificationFloor = s.anchoredWorks * 25;
+  // Diversification floor: each anchored work adds a tiny floor.
+  const diversificationFloor = s.anchoredWorks * r.diversification_floor_per_work;
 
   const raw = Math.max(base * provenanceMult * tenureMult, diversificationFloor);
 
-  // Hard cap so the UI never overpromises.
-  const cap = 25_000;
-  const advance = Math.min(raw, cap);
+  const advance = Math.min(raw, r.advance_cap);
 
-  // Eligibility: at least 1 settled event AND at least 1 anchored work.
-  const eligible = s.events >= 1 && s.anchoredWorks >= 1 && advance >= 50;
+  // Eligibility from configured thresholds.
+  const eligible =
+    s.events >= r.min_settled_events &&
+    s.anchoredWorks >= r.min_anchored_works &&
+    advance >= r.min_advance_amount;
 
-  // 0-100 collateral score for the visual meter.
+  // 0-100 collateral score with configurable weights + targets.
   const scoreParts = [
-    Math.min(40, (s.gross90d / 5_000) * 40),       // up to 40 from 90d revenue
-    Math.min(25, onChainRatio * 25),               // up to 25 from provenance
-    Math.min(20, (s.monthsActive / 6) * 20),       // up to 20 from tenure
-    Math.min(15, s.anchoredWorks * 5),             // up to 15 from anchored breadth
+    Math.min(r.score_weight_revenue, (s.gross90d / Math.max(1, r.revenue_score_target)) * r.score_weight_revenue),
+    Math.min(r.score_weight_provenance, onChainRatio * r.score_weight_provenance),
+    Math.min(r.score_weight_tenure, (s.monthsActive / Math.max(1, r.tenure_full_months)) * r.score_weight_tenure),
+    Math.min(r.score_weight_anchored, s.anchoredWorks * r.anchored_score_per_work),
   ];
   const score = Math.round(scoreParts.reduce((a, b) => a + b, 0));
 
