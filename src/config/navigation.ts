@@ -6,7 +6,7 @@ import {
   MessageSquare,
   Palette,
   Radio,
-  ShoppingBag,
+  
   Calendar,
   CreditCard,
   User,
