@@ -344,7 +344,57 @@ const ProjectTools = ({ projectId, projectTitle }: Props) => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* ─── Create Drop Room dialog ─────────────────────────────────── */}
+      <Dialog open={roomOpen} onOpenChange={setRoomOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display">New Drop Room</DialogTitle>
+            <DialogDescription>
+              A pop-up collaboration space scoped to {projectTitle ? `"${projectTitle}"` : "this project"}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div>
+              <Label>Room name</Label>
+              <Input
+                value={roomTitle}
+                onChange={(e) => setRoomTitle(e.target.value)}
+                placeholder="Final mix review"
+              />
+            </div>
+            <div>
+              <Label>Description</Label>
+              <Textarea
+                value={roomDescription}
+                onChange={(e) => setRoomDescription(e.target.value)}
+                placeholder="What are we working on?"
+                rows={3}
+              />
+            </div>
+            <div>
+              <Label>Duration</Label>
+              <Select value={String(roomHours)} onValueChange={(v) => setRoomHours(Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ROOM_DURATIONS.map((d) => (
+                    <SelectItem key={d.hours} value={String(d.hours)}>{d.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              onClick={() => createRoom.mutate()}
+              disabled={creatingRoom || !roomTitle.trim()}
+              className="w-full"
+            >
+              {creatingRoom ? "Launching…" : "Launch room"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 };
 
