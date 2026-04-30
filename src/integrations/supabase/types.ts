@@ -1770,6 +1770,7 @@ export type Database = {
           is_active: boolean
           listing_id: string | null
           updated_at: string
+          work_id: string | null
         }
         Insert: {
           buyback_pct?: number
@@ -1784,6 +1785,7 @@ export type Database = {
           is_active?: boolean
           listing_id?: string | null
           updated_at?: string
+          work_id?: string | null
         }
         Update: {
           buyback_pct?: number
@@ -1798,6 +1800,7 @@ export type Database = {
           is_active?: boolean
           listing_id?: string | null
           updated_at?: string
+          work_id?: string | null
         }
         Relationships: [
           {
@@ -1812,6 +1815,13 @@ export type Database = {
             columns: ["listing_id"]
             isOneToOne: false
             referencedRelation: "marketplace_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revenue_split_configs_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "works"
             referencedColumns: ["id"]
           },
         ]
@@ -2813,6 +2823,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      work_attachments: {
+        Row: {
+          attached_by: string
+          created_at: string
+          id: string
+          note: string | null
+          role: string
+          target_id: string
+          target_type: string
+          work_id: string
+        }
+        Insert: {
+          attached_by: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          role?: string
+          target_id: string
+          target_type: string
+          work_id: string
+        }
+        Update: {
+          attached_by?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          role?: string
+          target_id?: string
+          target_type?: string
+          work_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_attachments_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "works"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       works: {
         Row: {
