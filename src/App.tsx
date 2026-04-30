@@ -14,8 +14,8 @@ import DashboardPage from "@/pages/DashboardPage";
 import ProjectsPage from "@/pages/ProjectsPage";
 import ProjectDetailPage from "@/pages/ProjectDetailPage";
 import CalendarPage from "@/pages/CalendarPage";
-import FlowModePage from "@/pages/FlowModePage";
-import SmartboardsPage from "@/pages/SmartboardsPage";
+// FlowModePage / SmartboardsPage retained as files but no longer routed —
+// /flow and /smartboards index routes redirect to /projects.
 import CreatorsHubPage from "@/pages/CreatorsHubPage";
 import ListingDetailPage from "@/pages/ListingDetailPage";
 import SmartboardDetailPage from "@/pages/SmartboardDetailPage";
@@ -25,7 +25,7 @@ import MessagesPage from "@/pages/MessagesPage";
 import SettingsPage from "@/pages/SettingsPage";
 import ServicesPage from "@/pages/ServicesPage";
 import CreditShopPage from "@/pages/CreditShopPage";
-import DropRoomsPage from "@/pages/DropRoomsPage";
+// DropRoomsPage retained as a file but no longer routed at /drop-rooms (redirects to /projects).
 import { LegacyAliasRedirect } from "@/components/LegacyAliasRedirect";
 import { NAV_ALIASES } from "@/config/navigation";
 import DropRoomDetailPage from "@/pages/DropRoomDetailPage";
@@ -40,11 +40,11 @@ import OnboardingPage from "@/pages/OnboardingPage";
 // MarketplacePage retained as a file but no longer routed — /marketplace redirects to /hub.
 import HomePage from "@/pages/HomePage";
 import InfrastructurePage from "@/pages/InfrastructurePage";
-import SpacesPage from "@/pages/SpacesPage";
-import PeoplePage from "@/pages/PeoplePage";
+// SpacesPage / PeoplePage retained as files but no longer routed —
+// /spaces and /people redirect to /hub (unified feed).
 import HubPage from "@/pages/HubPage";
 import { ProfileRedirect } from "@/components/ProfileRedirect";
-import { FlowAuthGuard } from "@/components/FlowAuthGuard";
+// FlowAuthGuard retained — no longer needed at top-level since /flow redirects.
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
