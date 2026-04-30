@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,8 +8,33 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, PieChart, Wallet } from "lucide-react";
+import { Loader2, PieChart, Wallet, Fingerprint } from "lucide-react";
 import CuratorInviteSection from "./CuratorInviteSection";
+
+/**
+ * Compute a SHA-256 fingerprint of the canonical split table.
+ * Mirrors the `splits_hash` field defined in the future Anchor program
+ * spec — surfacing it now primes users for the eventual on-chain freeze
+ * at lock time, without changing any DB shape.
+ */
+async function computeSplitsHash(parts: {
+  creator_pct: number;
+  curator_pct: number;
+  buyback_pct: number;
+  buyback_wallet: string | null;
+}): Promise<string> {
+  const canonical = JSON.stringify({
+    creator: parts.creator_pct,
+    curator: parts.curator_pct,
+    buyback: parts.buyback_pct,
+    wallet: parts.buyback_wallet ?? "",
+  });
+  const buf = new TextEncoder().encode(canonical);
+  const hashBuf = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(hashBuf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
 
 interface RevenueSplitConfigProps {
   listingId?: string;
