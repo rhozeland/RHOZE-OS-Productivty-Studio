@@ -121,14 +121,14 @@ const ProjectTools = ({ projectId, projectTitle }: Props) => {
   const { data: rooms } = useQuery({
     queryKey: ["project-drop-rooms", projectId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("drop_rooms")
         .select("id, title, description, category, cover_color, expires_at, is_active, enable_video")
-        .eq("project_id" as any, projectId)
+        .eq("project_id", projectId)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).filter((r: any) => !isPast(new Date(r.expires_at)));
+      return ((data ?? []) as any[]).filter((r) => !isPast(new Date(r.expires_at)));
     },
   });
 
