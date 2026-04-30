@@ -292,6 +292,8 @@ const SellerDashboardPage = () => {
 
       <WithdrawalPanel />
 
+      {user && <CapitalAdvancePanel userId={user.id} />}
+
       {user && <WorkSettlements userId={user.id} />}
 
       <Card>
