@@ -173,7 +173,13 @@ const CapitalAdvancePanel = ({ userId }: Props) => {
     enabled: !!userId,
   });
 
-  const result = useMemo(() => (signal ? computeAdvance(signal) : null), [signal]);
+  const { data: rules } = useUnderwritingRules();
+  const activeRules = rules ?? DEFAULT_RULES;
+
+  const result = useMemo(
+    () => (signal ? computeAdvance(signal, activeRules) : null),
+    [signal, activeRules],
+  );
 
   const handleRequest = async () => {
     if (!signal || !result || !result.eligible) return;
