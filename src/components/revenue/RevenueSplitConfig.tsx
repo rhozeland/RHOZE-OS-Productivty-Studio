@@ -228,6 +228,25 @@ const RevenueSplitConfig = ({ listingId, contractId }: RevenueSplitConfigProps) 
         {existingConfig ? "Update Split" : "Set Split"}
       </Button>
 
+      {/* Splits fingerprint — SHA-256 of the canonical split table.
+          Same field the future Anchor program freezes at lock time. */}
+      {splitsHash && (
+        <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-xs">
+          <Fingerprint className="h-3.5 w-3.5 text-accent shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="font-mono uppercase tracking-wider text-[10px] text-muted-foreground">
+              Splits fingerprint · SHA-256
+            </div>
+            <div
+              className="font-mono text-[11px] text-foreground/80 truncate"
+              title={splitsHash}
+            >
+              {splitsHash.slice(0, 24)}…{splitsHash.slice(-8)}
+            </div>
+          </div>
+        </div>
+      )}
+
       {existingConfig && curatorPct > 0 && (
         <CuratorInviteSection
           splitConfigId={existingConfig.id}
