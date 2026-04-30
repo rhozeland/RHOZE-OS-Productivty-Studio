@@ -249,6 +249,64 @@ const RevenueSplitConfig = ({ listingId, contractId }: RevenueSplitConfigProps) 
             {!buybackWallet && " Set a wallet to enable on-chain buyback transfers."}
           </p>
         </div>
+
+        {/* Phase 3: Bind to a registered Work so the IP's content_hash
+            travels with the split. Optional but recommended. */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-1.5">
+            <Fingerprint className="h-3.5 w-3.5" />
+            Linked work (optional)
+          </Label>
+          <Select
+            value={workId || "__none__"}
+            onValueChange={(v) => setWorkId(v === "__none__" ? "" : v)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Pick a registered work…" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">No work linked</SelectItem>
+              {myWorks.map((w) => (
+                <SelectItem key={w.id} value={w.id}>
+                  <span className="flex items-center gap-2">
+                    {w.title}
+                    {w.solana_signature && (
+                      <ShieldCheck className="h-3 w-3 text-primary" />
+                    )}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {linkedWork ? (
+            <div
+              className="text-[11px] font-mono text-muted-foreground truncate"
+              title={linkedWork.content_hash}
+            >
+              sha256:{shortHash(linkedWork.content_hash)}
+              {linkedWork.solana_signature && (
+                <>
+                  {" · "}
+                  <a
+                    href={`https://solscan.io/tx/${linkedWork.solana_signature}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline-offset-4 hover:underline"
+                  >
+                    Solscan ↗
+                  </a>
+                </>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Bind a Work so its content hash flows into this split.{" "}
+              <Link to="/works" className="text-primary hover:underline">
+                Register a work →
+              </Link>
+            </p>
+          )}
+        </div>
       </div>
 
       <Button
