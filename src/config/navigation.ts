@@ -173,8 +173,10 @@ export interface NavAlias {
  *   - no duplicate `from` entries across NAV_ITEMS.matchPaths + EXTRA_ALIASES
  */
 export const EXTRA_ALIASES: NavAlias[] = [
-  // Example (uncomment + edit when you need one):
-  // { from: "/old-marketing-page", to: "/landing" },
+  // Flow / Smartboards / Drop Rooms index routes are absorbed by Projects.
+  // Detail routes (/smartboards/:id, /drop-rooms/:id) remain mounted in
+  // App.tsx for direct access from the project Tools panel.
+  { from: "/flow", to: "/projects" },
 ];
 
 /**
