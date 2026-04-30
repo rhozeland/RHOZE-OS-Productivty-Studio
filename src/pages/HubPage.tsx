@@ -506,7 +506,11 @@ const HubPage = () => {
         </section>
       )}
 
-
+      <section>
+        <div className="flex items-end justify-between mb-4 flex-wrap gap-3">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 mb-1">
+              For sale · For hire · For collab
             </p>
             <h2 className="font-display text-2xl font-bold text-foreground tracking-tight">
               Storefronts
