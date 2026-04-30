@@ -9,8 +9,6 @@ import {
   CreditCard,
   MessageSquare,
   UserPlus,
-  Building2,
-  Users,
   FolderKanban,
   Sparkles,
   User,
@@ -36,18 +34,16 @@ import {
 } from "@/components/ui/sidebar";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-// Pillars (mirror the dock + extra side-nav-only entries)
+// Pillars (mirror the dock)
 const pillarItems = [
   { icon: Home, label: "Home", path: "/dashboard" },
-  { icon: Building2, label: "Spaces", path: "/spaces" },
   { icon: Sparkles, label: "Hub", path: "/hub" },
+  { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: User, label: "Profile", path: "/profile" },
 ];
 
-// Side-nav-only destinations — kept off the dock per IA v3.
+// Side-nav-only destinations.
 const workItems = [
-  { icon: Users, label: "People", path: "/people" },
-  { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: MessageSquare, label: "Inbox", path: "/messages" },
   { icon: CreditCard, label: "Creator Pass", path: "/credits" },
 ];

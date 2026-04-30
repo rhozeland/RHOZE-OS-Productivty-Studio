@@ -33,6 +33,10 @@ import {
   Handshake,
   Flame,
   TrendingUp,
+  Building2,
+  Radio,
+  Users,
+  MapPin,
 } from "lucide-react";
 import ListingCard from "@/components/marketplace/ListingCard";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
@@ -141,6 +145,47 @@ const HubPage = () => {
     },
   });
 
+  // ─── People directory (browse creators) ───────────────────────────────
+  const { data: people } = useQuery({
+    queryKey: ["hub-people"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles_public")
+        .select("user_id, display_name, avatar_url, username, headline")
+        .not("display_name", "is", null)
+        .limit(12);
+      return data ?? [];
+    },
+  });
+
+  // ─── Spaces — physical studios + digital drop rooms ───────────────────
+  const { data: studios } = useQuery({
+    queryKey: ["hub-studios"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("studios")
+        .select("id, name, slug, city, country, hero_image_url, rating_avg")
+        .eq("is_active", true)
+        .eq("status", "approved")
+        .order("rating_avg", { ascending: false })
+        .limit(6);
+      return data ?? [];
+    },
+  });
+
+  const { data: rooms } = useQuery({
+    queryKey: ["hub-rooms"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("drop_rooms")
+        .select("id, title, description, cover_url, created_at")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(6);
+      return data ?? [];
+    },
+  });
+
   return (
     <div className="space-y-12 max-w-6xl mx-auto pb-12">
       {/* ─── Hero ────────────────────────────────────────────────────── */}
@@ -186,10 +231,10 @@ const HubPage = () => {
             </h2>
           </div>
           <Link
-            to="/flow"
+            to="/projects"
             className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
           >
-            Open Flow Mode <ExternalLink className="h-3 w-3" />
+            Capture in a project <ExternalLink className="h-3 w-3" />
           </Link>
         </div>
 
@@ -212,12 +257,12 @@ const HubPage = () => {
             </p>
             {user && (
               <Button
-                onClick={() => navigate("/flow")}
+                onClick={() => navigate("/projects")}
                 variant="outline"
                 size="sm"
                 className="mt-4 rounded-full"
               >
-                Open Flow Mode
+                Open a project
               </Button>
             )}
           </div>
@@ -232,7 +277,7 @@ const HubPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03 }}
                 className="group relative aspect-[3/4] rounded-2xl overflow-hidden bg-card border border-border cursor-pointer hover:-translate-y-0.5 transition-transform"
-                onClick={() => navigate("/flow")}
+                onClick={() => navigate("/projects")}
               >
                 <FlowThumbnail
                   fileUrl={item.file_url}
@@ -304,6 +349,156 @@ const HubPage = () => {
                   <p className="text-[10px] text-primary font-medium mt-2">
                     {c.listing_count} new {c.listing_count === 1 ? "listing" : "listings"}
                   </p>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ─── People — browse creators ───────────────────────────────── */}
+      {people && people.length > 0 && (
+        <section>
+          <div className="flex items-end justify-between mb-4">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 mb-1">
+                Find your people
+              </p>
+              <h2 className="font-display text-2xl font-bold text-foreground tracking-tight flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                People
+              </h2>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {people.map((p: any, i: number) => (
+              <motion.div
+                key={p.user_id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.02 }}
+              >
+                <Link
+                  to={`/profiles/${p.user_id}`}
+                  className="block rounded-2xl border border-border bg-card hover:bg-muted/30 hover:-translate-y-0.5 transition-all p-4 text-center group"
+                >
+                  {p.avatar_url ? (
+                    <img
+                      src={p.avatar_url}
+                      alt={p.display_name || ""}
+                      className="h-14 w-14 rounded-full object-cover mx-auto mb-2 ring-2 ring-border group-hover:ring-primary/40 transition-all"
+                    />
+                  ) : (
+                    <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mx-auto mb-2 text-base font-bold text-foreground">
+                      {(p.display_name || p.username || "?")[0].toUpperCase()}
+                    </div>
+                  )}
+                  <p className="text-xs font-display font-semibold text-foreground line-clamp-1">
+                    {p.display_name || p.username || "Anon"}
+                  </p>
+                  {p.headline && (
+                    <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
+                      {p.headline}
+                    </p>
+                  )}
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ─── Spaces — physical studios + digital drop rooms ─────────── */}
+      {((studios && studios.length > 0) || (rooms && rooms.length > 0)) && (
+        <section>
+          <div className="flex items-end justify-between mb-4">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 mb-1">
+                Where the work happens
+              </p>
+              <h2 className="font-display text-2xl font-bold text-foreground tracking-tight flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-primary" />
+                Spaces
+              </h2>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {(studios ?? []).map((s: any, i: number) => (
+              <motion.div
+                key={`studio-${s.id}`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.03 }}
+              >
+                <Link
+                  to={`/studios/${s.id}`}
+                  className="group block rounded-2xl overflow-hidden border border-border bg-card hover:-translate-y-0.5 transition-all"
+                >
+                  <div className="aspect-[16/9] bg-muted relative overflow-hidden">
+                    {s.hero_image_url ? (
+                      <img
+                        src={s.hero_image_url}
+                        alt={s.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Building2 className="h-10 w-10 text-muted-foreground/40" />
+                      </div>
+                    )}
+                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-background/90 backdrop-blur text-[10px] font-medium uppercase tracking-wider">
+                      Physical
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm font-display font-semibold text-foreground line-clamp-1">
+                      {s.name}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                      <MapPin className="h-3 w-3" />
+                      {[s.city, s.country].filter(Boolean).join(", ") || "—"}
+                    </p>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+            {(rooms ?? []).map((r: any, i: number) => (
+              <motion.div
+                key={`room-${r.id}`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: ((studios?.length ?? 0) + i) * 0.03 }}
+              >
+                <Link
+                  to={`/drop-rooms/${r.id}`}
+                  className="group block rounded-2xl overflow-hidden border border-border bg-card hover:-translate-y-0.5 transition-all"
+                >
+                  <div className="aspect-[16/9] bg-muted relative overflow-hidden">
+                    {r.cover_url ? (
+                      <img
+                        src={r.cover_url}
+                        alt={r.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
+                        <Radio className="h-10 w-10 text-muted-foreground/40" />
+                      </div>
+                    )}
+                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-background/90 backdrop-blur text-[10px] font-medium uppercase tracking-wider">
+                      Digital
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm font-display font-semibold text-foreground line-clamp-1">
+                      {r.title}
+                    </p>
+                    {r.description && (
+                      <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
+                        {r.description}
+                      </p>
+                    )}
+                  </div>
                 </Link>
               </motion.div>
             ))}

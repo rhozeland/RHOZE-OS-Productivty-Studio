@@ -34,6 +34,7 @@ import RoadmapLockFlow from "@/components/project/RoadmapLockFlow";
 import ProjectDisputes from "@/components/project/ProjectDisputes";
 import ProjectControls from "@/components/project/ProjectControls";
 import RevenueSplitConfig from "@/components/revenue/RevenueSplitConfig";
+import ProjectTools from "@/components/project/ProjectTools";
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -327,6 +328,7 @@ const ProjectDetailPage = () => {
           <TabsTrigger value="vision" className="shrink-0">Scope</TabsTrigger>
           {isPaid && <TabsTrigger value="budget" className="shrink-0">Budget</TabsTrigger>}
           <TabsTrigger value="team" className="shrink-0">Team</TabsTrigger>
+          <TabsTrigger value="tools" className="shrink-0">Tools</TabsTrigger>
         </TabsList>
 
         <TabsContent value="roadmap" className="space-y-4">
@@ -421,6 +423,10 @@ const ProjectDetailPage = () => {
 
         <TabsContent value="team">
           <Collaborators projectId={id!} isCollaborative={project.project_type === "collaborative"} />
+        </TabsContent>
+
+        <TabsContent value="tools">
+          <ProjectTools projectId={id!} projectTitle={project.title} />
         </TabsContent>
       </Tabs>
 

@@ -2,11 +2,11 @@ import {
   Home,
   Building2,
   FolderKanban,
-  Flame,
+  
   MessageSquare,
   Palette,
   Radio,
-  ShoppingBag,
+  
   Calendar,
   CreditCard,
   User,
@@ -37,27 +37,26 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Home", icon: Home, path: "/dashboard" },
-  // Spaces — Physical (studios) + Digital (drop rooms + projects collab).
-  { id: "spaces", label: "Spaces", icon: Building2, path: "/spaces" },
-  // Hub — editorial discovery feed (Flow merged) + storefronts grid.
-  // Replaces /marketplace, /creators, /flow as a top-level destination.
+  // Hub — unified discovery: feed + people + spaces + storefronts.
+  // Replaces /marketplace, /creators, /flow, /people, /spaces.
   {
     id: "hub",
     label: "Hub",
     icon: Sparkles,
     path: "/hub",
-    matchPaths: ["/marketplace", "/flow", "/creators"],
+    matchPaths: ["/marketplace", "/creators", "/people", "/spaces"],
   },
+  // Projects — promoted to the dock. Hosts Flow / Smartboards / Drop Rooms
+  // as in-context tools (see ProjectDetailPage Tools tab).
+  { id: "projects", label: "Projects", icon: FolderKanban, path: "/projects" },
   // Profile — user's own profile is the 4th dock pillar.
   { id: "profile", label: "Profile", icon: User, path: "/profile" },
   // Side-nav / secondary destinations
-  { id: "people", label: "People", icon: Users, path: "/people" },
-  { id: "projects", label: "Projects", icon: FolderKanban, path: "/projects" },
   { id: "messages", label: "Inbox", icon: MessageSquare, path: "/messages" },
   // Legacy / utility entries — kept registered so dock customization,
   // active-state, and deep-link pages still work, but no longer the
-  // primary navigation surfaces.
-  { id: "marketplace", label: "Market", icon: ShoppingBag, path: "/marketplace" },
+  // primary navigation surfaces. (`marketplace` and `flow` ids removed —
+  // both fully absorbed by Hub / Projects respectively.)
   { id: "studios", label: "Studios", icon: Building2, path: "/studios" },
   { id: "boards", label: "Boards", icon: Palette, path: "/smartboards" },
   {
@@ -70,9 +69,9 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "calendar", label: "Calendar", icon: Calendar, path: "/calendar" },
   { id: "bookings", label: "Bookings", icon: Calendar, path: "/bookings" },
   { id: "credits", label: "Credits", icon: CreditCard, path: "/credits" },
-  // Flow Mode — merged into Hub. Route still mounted as legacy; nav id retained
-  // so saved dock_config entries remain valid until users re-customize.
-  { id: "flow", label: "Flow", icon: Flame, path: "/flow" },
+  // Flow Mode — fully merged into Projects. Nav id removed; saved
+  // dock_config entries with id "flow" will surface as "Missing" in
+  // the dock customizer until users re-pick.
   { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
   { id: "services", label: "Services", icon: Store, path: "/services" },
 ];
@@ -85,12 +84,13 @@ export const NAV_ITEMS_BY_ID: Record<string, NavItem> = NAV_ITEMS.reduce(
   {} as Record<string, NavItem>,
 );
 
-// New 4-pillar dock: Home · Spaces · Hub · Profile.
-// Inbox + Projects live in the side-nav (AppSidebar), not the dock.
+// 4-pillar dock: Home · Hub · Projects · Profile.
+// People + Spaces are absorbed into Hub. Flow/Smartboards/Drop Rooms
+// live inside Projects as in-context tools. Inbox lives in the side-nav.
 export const DEFAULT_DOCK_IDS = [
   "dashboard",
-  "spaces",
   "hub",
+  "projects",
   "profile",
 ];
 
@@ -173,8 +173,10 @@ export interface NavAlias {
  *   - no duplicate `from` entries across NAV_ITEMS.matchPaths + EXTRA_ALIASES
  */
 export const EXTRA_ALIASES: NavAlias[] = [
-  // Example (uncomment + edit when you need one):
-  // { from: "/old-marketing-page", to: "/landing" },
+  // Flow / Smartboards / Drop Rooms index routes are absorbed by Projects.
+  // Detail routes (/smartboards/:id, /drop-rooms/:id) remain mounted in
+  // App.tsx for direct access from the project Tools panel.
+  { from: "/flow", to: "/projects" },
 ];
 
 /**
