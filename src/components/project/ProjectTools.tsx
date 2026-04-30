@@ -117,6 +117,54 @@ const ProjectTools = ({ projectId, projectTitle }: Props) => {
   const linkedSet = new Set(linked ?? []);
   const available = (mySmartboards ?? []).filter((b: any) => !linkedSet.has(b.id));
 
+  // ─── Drop Rooms scoped to this project ───────────────────────────────
+  const { data: rooms } = useQuery({
+    queryKey: ["project-drop-rooms", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("drop_rooms")
+        .select("id, title, description, category, cover_color, expires_at, is_active, enable_video")
+        .eq("project_id" as any, projectId)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).filter((r: any) => !isPast(new Date(r.expires_at)));
+    },
+  });
+
+  const createRoom = useMutation({
+    mutationFn: async () => {
+      if (!user || !roomTitle.trim()) throw new Error("Title required");
+      const expiresAt = new Date(Date.now() + roomHours * 60 * 60 * 1000).toISOString();
+      const { data, error } = await supabase
+        .from("drop_rooms")
+        .insert({
+          title: roomTitle.trim(),
+          description: roomDescription.trim() || null,
+          category: "general",
+          created_by: user.id,
+          expires_at: expiresAt,
+          project_id: projectId,
+        } as any)
+        .select("id")
+        .single();
+      if (error) throw error;
+      return data.id as string;
+    },
+    onMutate: () => setCreatingRoom(true),
+    onSettled: () => setCreatingRoom(false),
+    onSuccess: (roomId) => {
+      qc.invalidateQueries({ queryKey: ["project-drop-rooms", projectId] });
+      setRoomOpen(false);
+      setRoomTitle("");
+      setRoomDescription("");
+      setRoomHours(24);
+      toast.success("Drop Room launched");
+      navigate(`/drop-rooms/${roomId}`);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   return (
     <div className="space-y-6">
       <div>
