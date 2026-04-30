@@ -60,6 +60,9 @@ const AdminPage = () => {
           <TabsTrigger value="moderation" className="gap-1.5 text-xs shrink-0">
             <Eye className="h-3.5 w-3.5" /> Content
           </TabsTrigger>
+          <TabsTrigger value="capital" className="gap-1.5 text-xs shrink-0">
+            <Sliders className="h-3.5 w-3.5" /> Capital
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview"><AdminOverview /></TabsContent>
@@ -70,6 +73,7 @@ const AdminPage = () => {
         <TabsContent value="disputes"><AdminDisputes /></TabsContent>
         <TabsContent value="withdrawals"><AdminWithdrawals /></TabsContent>
         <TabsContent value="moderation"><AdminContentModeration /></TabsContent>
+        <TabsContent value="capital"><AdminUnderwritingRules /></TabsContent>
       </Tabs>
     </div>
   );
