@@ -33,6 +33,10 @@ import {
   Handshake,
   Flame,
   TrendingUp,
+  Building2,
+  Radio,
+  Users,
+  MapPin,
 } from "lucide-react";
 import ListingCard from "@/components/marketplace/ListingCard";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
