@@ -2,14 +2,23 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, PieChart, Wallet, Fingerprint } from "lucide-react";
+import { Loader2, PieChart, Wallet, Fingerprint, ShieldCheck } from "lucide-react";
 import CuratorInviteSection from "./CuratorInviteSection";
+import { shortHash } from "@/lib/content-hash";
 
 /**
  * Compute a SHA-256 fingerprint of the canonical split table.
