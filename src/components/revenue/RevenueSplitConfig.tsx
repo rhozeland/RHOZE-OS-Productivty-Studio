@@ -88,11 +88,16 @@ const RevenueSplitConfig = ({ listingId, contractId }: RevenueSplitConfigProps) 
 
   return (
     <div className="surface-card p-6 space-y-5">
-      <div className="flex items-center gap-2">
-        <PieChart className="h-5 w-5 text-accent" />
-        <h3 className="font-display text-lg font-semibold text-foreground">
-          Revenue Split
-        </h3>
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <PieChart className="h-5 w-5 text-accent" />
+          <h3 className="font-display text-lg font-semibold text-foreground">
+            Programmable Split
+          </h3>
+        </div>
+        <p className="text-xs text-muted-foreground italic pl-7">
+          Executable code, not a contract clause.
+        </p>
       </div>
 
       {/* Visual split */}

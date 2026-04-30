@@ -39,6 +39,7 @@ import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import OnboardingPage from "@/pages/OnboardingPage";
 // MarketplacePage retained as a file but no longer routed — /marketplace redirects to /hub.
 import HomePage from "@/pages/HomePage";
+import InfrastructurePage from "@/pages/InfrastructurePage";
 import SpacesPage from "@/pages/SpacesPage";
 import PeoplePage from "@/pages/PeoplePage";
 import HubPage from "@/pages/HubPage";
@@ -60,6 +61,7 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/auth",
   "/onboarding",
   "/landing",
+  "/infrastructure",
   "/explore/studios",
   "/explore/studios/:id",
   "/explore/creators",
@@ -164,6 +166,9 @@ const App = () => (
 
               {/* Legacy landing — redirect to dashboard */}
               <Route path="/landing" element={<LandingPage />} />
+
+              {/* Public infrastructure thesis page (S33R-aligned framing) */}
+              <Route path="/infrastructure" element={<InfrastructurePage />} />
 
               {/* Explore pages — fully public */}
               <Route path="/explore/studios" element={<ExploreStudiosPage />} />
