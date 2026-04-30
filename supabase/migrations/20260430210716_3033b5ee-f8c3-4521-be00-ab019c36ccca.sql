@@ -1,0 +1,2 @@
+ALTER TABLE public.drop_rooms ADD COLUMN IF NOT EXISTS project_id UUID REFERENCES public.projects(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS drop_rooms_project_id_idx ON public.drop_rooms(project_id) WHERE project_id IS NOT NULL;
