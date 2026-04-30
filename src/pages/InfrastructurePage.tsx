@@ -50,9 +50,9 @@ const LAYERS: Layer[] = [
     body:
       "Authorship and contribution disputes get resolved by contracts and lawyers today. Rhozeland writes a Solana memo every time a milestone is signed, a contribution is logged, or a roadmap locks — creating a verifiable, public record that doesn't depend on us.",
     liveToday:
-      "Anchor Contributions: every signed action emits a Solana memo transaction with a public explorer link.",
+      "Anchor Contributions and Works: every signed action and registered work emits a Solana memo with a public Solscan link.",
     comingSoon:
-      "Content-hash registration for uploaded works (audio, designs, writing) at upload time.",
+      "Royalty-on-resale and split-derivation tied to a work's content hash.",
     status: "live",
   },
   {

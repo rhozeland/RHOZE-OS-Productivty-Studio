@@ -2814,6 +2814,60 @@ export type Database = {
         }
         Relationships: []
       }
+      works: {
+        Row: {
+          anchored_at: string | null
+          content_hash: string
+          created_at: string
+          description: string | null
+          file_name: string | null
+          file_size: number | null
+          file_url: string | null
+          id: string
+          kind: string
+          mime_type: string | null
+          solana_signature: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          visibility: string
+        }
+        Insert: {
+          anchored_at?: string | null
+          content_hash: string
+          created_at?: string
+          description?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          kind?: string
+          mime_type?: string | null
+          solana_signature?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          visibility?: string
+        }
+        Update: {
+          anchored_at?: string | null
+          content_hash?: string
+          created_at?: string
+          description?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          kind?: string
+          mime_type?: string | null
+          solana_signature?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          visibility?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       profiles_public: {
