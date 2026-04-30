@@ -8,20 +8,40 @@
  * boards to a project; that list is shown directly here.
  */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { toast } from "sonner";
+import { formatDistanceToNow, isPast } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
-import { Palette, Flame, Radio, Plus, Link2, ExternalLink } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Palette, Flame, Radio, Plus, Link2, ExternalLink, Clock, Users } from "lucide-react";
+
+const ROOM_DURATIONS = [
+  { label: "1 hour", hours: 1 },
+  { label: "3 hours", hours: 3 },
+  { label: "6 hours", hours: 6 },
+  { label: "24 hours", hours: 24 },
+  { label: "7 days", hours: 24 * 7 },
+];
 
 interface Props {
   projectId: string;
