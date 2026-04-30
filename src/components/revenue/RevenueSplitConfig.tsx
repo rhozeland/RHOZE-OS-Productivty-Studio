@@ -57,6 +57,9 @@ const RevenueSplitConfig = ({ listingId, contractId }: RevenueSplitConfigProps) 
   const [curatorPct, setCuratorPct] = useState(10);
   const [buybackWallet, setBuybackWallet] = useState("");
   const [splitsHash, setSplitsHash] = useState<string>("");
+  // Phase 3: bind the split to a specific Work (the IP being monetized).
+  // The work's content_hash + this splits hash form the full provenance chain.
+  const [workId, setWorkId] = useState<string>("");
 
   const buybackPct = 100 - creatorPct - curatorPct;
 
@@ -89,11 +92,30 @@ const RevenueSplitConfig = ({ listingId, contractId }: RevenueSplitConfigProps) 
         setCreatorPct(data.creator_pct);
         setCuratorPct(data.curator_pct);
         setBuybackWallet(data.buyback_wallet || "");
+        setWorkId((data as { work_id?: string | null }).work_id ?? "");
       }
       return data;
     },
     enabled: !!(listingId || contractId),
   });
+
+  // The creator's own works, for the Linked Work picker.
+  const { data: myWorks = [] } = useQuery({
+    queryKey: ["works-for-split", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("works")
+        .select("id, title, kind, content_hash, solana_signature")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  const linkedWork = myWorks.find((w) => w.id === workId);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -107,6 +129,7 @@ const RevenueSplitConfig = ({ listingId, contractId }: RevenueSplitConfigProps) 
         curator_pct: curatorPct,
         buyback_pct: buybackPct,
         buyback_wallet: buybackWallet || null,
+        work_id: workId || null,
         is_active: true,
       };
 
