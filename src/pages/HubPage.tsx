@@ -231,10 +231,10 @@ const HubPage = () => {
             </h2>
           </div>
           <Link
-            to="/flow"
+            to="/projects"
             className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
           >
-            Open Flow Mode <ExternalLink className="h-3 w-3" />
+            Capture in a project <ExternalLink className="h-3 w-3" />
           </Link>
         </div>
 
@@ -257,12 +257,12 @@ const HubPage = () => {
             </p>
             {user && (
               <Button
-                onClick={() => navigate("/flow")}
+                onClick={() => navigate("/projects")}
                 variant="outline"
                 size="sm"
                 className="mt-4 rounded-full"
               >
-                Open Flow Mode
+                Open a project
               </Button>
             )}
           </div>
@@ -277,7 +277,7 @@ const HubPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03 }}
                 className="group relative aspect-[3/4] rounded-2xl overflow-hidden bg-card border border-border cursor-pointer hover:-translate-y-0.5 transition-transform"
-                onClick={() => navigate("/flow")}
+                onClick={() => navigate("/projects")}
               >
                 <FlowThumbnail
                   fileUrl={item.file_url}
