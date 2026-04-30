@@ -76,10 +76,10 @@ const LAYERS: Layer[] = [
     body:
       "Industry royalties take 3–6 months to reach independent artists. Once data is normalized, settlement can move to stablecoin rails — reducing payment latency to seconds and turning earnings into auditable, real-time cash flows.",
     liveToday:
-      "Square fiat payouts with USD wallet tracking and a dedicated Withdrawal Panel.",
+      "Square fiat payouts with USD wallet tracking, dedicated Withdrawal Panel, and per-Work settlement view in the Seller Dashboard — auditable cashflows indexed by anchored content hash.",
     comingSoon:
       "USDC-on-Solana opt-in per recipient — sub-minute settlement, public transaction proof.",
-    status: "soon",
+    status: "live",
   },
   {
     index: "IV",
