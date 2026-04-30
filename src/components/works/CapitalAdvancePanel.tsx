@@ -351,9 +351,10 @@ const CapitalAdvancePanel = ({ userId }: Props) => {
             <TrendingUp className="h-3 w-3" /> How we compute this
           </p>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
-            Up to 60% of your trailing-90-day gross, multiplied by a provenance bonus
-            (+25% at 100% on-chain) and a tenure factor (full at 6+ months). Capped at
-            $25,000 per request. All inputs are auditable in your{" "}
+            Up to {Math.round(activeRules.base_advance_ratio * 100)}% of your trailing-90-day gross,
+            multiplied by a provenance bonus (+{Math.round(activeRules.provenance_bonus_max * 100)}% at
+            100% on-chain) and a tenure factor (full at {activeRules.tenure_full_months}+ months).
+            Capped at {fmt(activeRules.advance_cap)} per request. All inputs are auditable in your{" "}
             <span className="font-medium text-foreground">Per-Work Settlements</span> table
             below. Final terms are confirmed by the platform after review.
           </p>
