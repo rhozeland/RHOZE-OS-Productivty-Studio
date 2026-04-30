@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,8 +8,33 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, PieChart, Wallet } from "lucide-react";
+import { Loader2, PieChart, Wallet, Fingerprint } from "lucide-react";
 import CuratorInviteSection from "./CuratorInviteSection";
+
+/**
+ * Compute a SHA-256 fingerprint of the canonical split table.
+ * Mirrors the `splits_hash` field defined in the future Anchor program
+ * spec — surfacing it now primes users for the eventual on-chain freeze
+ * at lock time, without changing any DB shape.
+ */
+async function computeSplitsHash(parts: {
+  creator_pct: number;
+  curator_pct: number;
+  buyback_pct: number;
+  buyback_wallet: string | null;
+}): Promise<string> {
+  const canonical = JSON.stringify({
+    creator: parts.creator_pct,
+    curator: parts.curator_pct,
+    buyback: parts.buyback_pct,
+    wallet: parts.buyback_wallet ?? "",
+  });
+  const buf = new TextEncoder().encode(canonical);
+  const hashBuf = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(hashBuf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
 
 interface RevenueSplitConfigProps {
   listingId?: string;
@@ -22,8 +47,26 @@ const RevenueSplitConfig = ({ listingId, contractId }: RevenueSplitConfigProps) 
   const [creatorPct, setCreatorPct] = useState(80);
   const [curatorPct, setCuratorPct] = useState(10);
   const [buybackWallet, setBuybackWallet] = useState("");
+  const [splitsHash, setSplitsHash] = useState<string>("");
 
   const buybackPct = 100 - creatorPct - curatorPct;
+
+  // Recompute the canonical SHA-256 fingerprint whenever any split input
+  // changes. Mirrors the future on-chain `splits_hash` in the Anchor spec.
+  useEffect(() => {
+    let cancelled = false;
+    computeSplitsHash({
+      creator_pct: creatorPct,
+      curator_pct: curatorPct,
+      buyback_pct: buybackPct,
+      buyback_wallet: buybackWallet || null,
+    }).then((h) => {
+      if (!cancelled) setSplitsHash(h);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [creatorPct, curatorPct, buybackPct, buybackWallet]);
 
   const { data: existingConfig, isLoading } = useQuery({
     queryKey: ["split-config", listingId, contractId],
@@ -88,11 +131,16 @@ const RevenueSplitConfig = ({ listingId, contractId }: RevenueSplitConfigProps) 
 
   return (
     <div className="surface-card p-6 space-y-5">
-      <div className="flex items-center gap-2">
-        <PieChart className="h-5 w-5 text-accent" />
-        <h3 className="font-display text-lg font-semibold text-foreground">
-          Revenue Split
-        </h3>
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <PieChart className="h-5 w-5 text-accent" />
+          <h3 className="font-display text-lg font-semibold text-foreground">
+            Programmable Split
+          </h3>
+        </div>
+        <p className="text-xs text-muted-foreground italic pl-7">
+          Executable code, not a contract clause.
+        </p>
       </div>
 
       {/* Visual split */}
@@ -179,6 +227,25 @@ const RevenueSplitConfig = ({ listingId, contractId }: RevenueSplitConfigProps) 
         {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {existingConfig ? "Update Split" : "Set Split"}
       </Button>
+
+      {/* Splits fingerprint — SHA-256 of the canonical split table.
+          Same field the future Anchor program freezes at lock time. */}
+      {splitsHash && (
+        <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-xs">
+          <Fingerprint className="h-3.5 w-3.5 text-accent shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="font-mono uppercase tracking-wider text-[10px] text-muted-foreground">
+              Splits fingerprint · SHA-256
+            </div>
+            <div
+              className="font-mono text-[11px] text-foreground/80 truncate"
+              title={splitsHash}
+            >
+              {splitsHash.slice(0, 24)}…{splitsHash.slice(-8)}
+            </div>
+          </div>
+        </div>
+      )}
 
       {existingConfig && curatorPct > 0 && (
         <CuratorInviteSection

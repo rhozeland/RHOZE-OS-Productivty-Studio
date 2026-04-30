@@ -520,6 +520,9 @@ const HomePage = () => {
             <Link to="/explore/studios" className="hover:text-foreground transition-colors">
               Explore
             </Link>
+            <Link to="/infrastructure" className="hover:text-foreground transition-colors">
+              Infrastructure
+            </Link>
           </div>
         </div>
       </footer>
