@@ -12,6 +12,7 @@ import {
   FolderKanban,
   Sparkles,
   User,
+  Fingerprint,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -44,6 +45,7 @@ const pillarItems = [
 
 // Side-nav-only destinations.
 const workItems = [
+  { icon: Fingerprint, label: "Works", path: "/works" },
   { icon: MessageSquare, label: "Inbox", path: "/messages" },
   { icon: CreditCard, label: "Creator Pass", path: "/credits" },
 ];
