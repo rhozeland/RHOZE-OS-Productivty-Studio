@@ -145,6 +145,47 @@ const HubPage = () => {
     },
   });
 
+  // ─── People directory (browse creators) ───────────────────────────────
+  const { data: people } = useQuery({
+    queryKey: ["hub-people"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles_public")
+        .select("user_id, display_name, avatar_url, username, headline")
+        .not("display_name", "is", null)
+        .limit(12);
+      return data ?? [];
+    },
+  });
+
+  // ─── Spaces — physical studios + digital drop rooms ───────────────────
+  const { data: studios } = useQuery({
+    queryKey: ["hub-studios"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("studios")
+        .select("id, name, slug, city, country, hero_image_url, rating_avg")
+        .eq("is_active", true)
+        .eq("status", "approved")
+        .order("rating_avg", { ascending: false })
+        .limit(6);
+      return data ?? [];
+    },
+  });
+
+  const { data: rooms } = useQuery({
+    queryKey: ["hub-rooms"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("drop_rooms")
+        .select("id, title, description, cover_url, created_at")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(6);
+      return data ?? [];
+    },
+  });
+
   return (
     <div className="space-y-12 max-w-6xl mx-auto pb-12">
       {/* ─── Hero ────────────────────────────────────────────────────── */}
