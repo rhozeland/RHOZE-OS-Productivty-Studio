@@ -2,7 +2,7 @@ import {
   Home,
   Building2,
   FolderKanban,
-  Flame,
+  
   MessageSquare,
   Palette,
   Radio,
