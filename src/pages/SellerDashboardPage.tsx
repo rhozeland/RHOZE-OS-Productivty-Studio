@@ -298,6 +298,8 @@ const SellerDashboardPage = () => {
 
       {user && <CapitalAdvanceStatus userId={user.id} />}
 
+      {user && <AdvanceRepaymentSchedule userId={user.id} />}
+
       {user && <WorkSettlements userId={user.id} />}
 
       <Card>
