@@ -47,8 +47,26 @@ const RevenueSplitConfig = ({ listingId, contractId }: RevenueSplitConfigProps) 
   const [creatorPct, setCreatorPct] = useState(80);
   const [curatorPct, setCuratorPct] = useState(10);
   const [buybackWallet, setBuybackWallet] = useState("");
+  const [splitsHash, setSplitsHash] = useState<string>("");
 
   const buybackPct = 100 - creatorPct - curatorPct;
+
+  // Recompute the canonical SHA-256 fingerprint whenever any split input
+  // changes. Mirrors the future on-chain `splits_hash` in the Anchor spec.
+  useEffect(() => {
+    let cancelled = false;
+    computeSplitsHash({
+      creator_pct: creatorPct,
+      curator_pct: curatorPct,
+      buyback_pct: buybackPct,
+      buyback_wallet: buybackWallet || null,
+    }).then((h) => {
+      if (!cancelled) setSplitsHash(h);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [creatorPct, curatorPct, buybackPct, buybackWallet]);
 
   const { data: existingConfig, isLoading } = useQuery({
     queryKey: ["split-config", listingId, contractId],
