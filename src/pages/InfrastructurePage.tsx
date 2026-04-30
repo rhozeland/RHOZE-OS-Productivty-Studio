@@ -89,10 +89,10 @@ const LAYERS: Layer[] = [
     body:
       "When royalty streams become programmable financial primitives, they unlock something the music industry has gated for decades: capital access without label advances. Transparent earnings can collateralize lending, smooth cash flow, and shift financial power back to creators.",
     liveToday:
-      "Per-creator USD wallet, $10 minimum withdrawal, Seller Dashboard with transaction history.",
+      "Per-creator USD wallet with $10 minimum withdrawal, Seller Dashboard transaction history, and a Capital advance estimator that scores trailing-90-day settlement gross, on-chain provenance ratio, tenure, and anchored-IP breadth into a one-click advance request.",
     comingSoon:
-      "Stream-as-collateral lending — advances priced against on-chain settlement history, not gut feel.",
-    status: "soon",
+      "Underwriter automation + Anchor-program escrowed advances priced against on-chain settlement history, not gut feel.",
+    status: "live",
   },
 ];
 
