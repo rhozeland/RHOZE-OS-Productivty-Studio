@@ -49,6 +49,7 @@ import AudioPreview from "@/components/marketplace/AudioPreview";
 import StarRating from "@/components/marketplace/StarRating";
 import QuickMessageDialog from "@/components/messages/QuickMessageDialog";
 import RevenueSplitConfig from "@/components/revenue/RevenueSplitConfig";
+import AttachedWorks from "@/components/works/AttachedWorks";
 
 const CATEGORIES: Record<string, { label: string; icon: any; color: string }> = {
   music: { label: "Music", icon: Music, color: "hsl(280, 60%, 55%)" },
@@ -767,6 +768,15 @@ const ListingDetailPage = () => {
                   <RevenueSplitConfig listingId={listing.id} />
                 </div>
               )}
+
+              {/* Linked Works — visible to everyone, owner can manage.
+                  Carries the IP's content hash + Solana anchor into the
+                  listing surface (Phase 3 of the infra stack). */}
+              <AttachedWorks
+                targetType="listing"
+                targetId={listing.id}
+                canManage={isOwner}
+              />
 
               {/* Seller info */}
               {sellerProfile && (

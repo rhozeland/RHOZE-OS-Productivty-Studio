@@ -34,6 +34,7 @@ import RoadmapLockFlow from "@/components/project/RoadmapLockFlow";
 import ProjectDisputes from "@/components/project/ProjectDisputes";
 import ProjectControls from "@/components/project/ProjectControls";
 import RevenueSplitConfig from "@/components/revenue/RevenueSplitConfig";
+import AttachedWorks from "@/components/works/AttachedWorks";
 import ProjectTools from "@/components/project/ProjectTools";
 
 const ProjectDetailPage = () => {
@@ -423,6 +424,16 @@ const ProjectDetailPage = () => {
 
         <TabsContent value="team">
           <Collaborators projectId={id!} isCollaborative={project.project_type === "collaborative"} />
+          {/* Linked Works — Phase 3 bridge so registered IP assets follow
+              the project across the infra stack. Owner manages, all
+              project viewers see. */}
+          <div className="mt-6">
+            <AttachedWorks
+              targetType="project"
+              targetId={id!}
+              canManage={project.user_id === user?.id}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="tools">
