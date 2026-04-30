@@ -277,6 +277,69 @@ export type Database = {
         }
         Relationships: []
       }
+      capital_underwriting_rules: {
+        Row: {
+          advance_cap: number
+          anchored_score_per_work: number
+          base_advance_ratio: number
+          diversification_floor_per_work: number
+          id: number
+          min_advance_amount: number
+          min_anchored_works: number
+          min_settled_events: number
+          provenance_bonus_max: number
+          revenue_score_target: number
+          score_weight_anchored: number
+          score_weight_provenance: number
+          score_weight_revenue: number
+          score_weight_tenure: number
+          tenure_floor_mult: number
+          tenure_full_months: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          advance_cap?: number
+          anchored_score_per_work?: number
+          base_advance_ratio?: number
+          diversification_floor_per_work?: number
+          id?: number
+          min_advance_amount?: number
+          min_anchored_works?: number
+          min_settled_events?: number
+          provenance_bonus_max?: number
+          revenue_score_target?: number
+          score_weight_anchored?: number
+          score_weight_provenance?: number
+          score_weight_revenue?: number
+          score_weight_tenure?: number
+          tenure_floor_mult?: number
+          tenure_full_months?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          advance_cap?: number
+          anchored_score_per_work?: number
+          base_advance_ratio?: number
+          diversification_floor_per_work?: number
+          id?: number
+          min_advance_amount?: number
+          min_anchored_works?: number
+          min_settled_events?: number
+          provenance_bonus_max?: number
+          revenue_score_target?: number
+          score_weight_anchored?: number
+          score_weight_provenance?: number
+          score_weight_revenue?: number
+          score_weight_tenure?: number
+          tenure_floor_mult?: number
+          tenure_full_months?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       chat_group_members: {
         Row: {
           group_id: string

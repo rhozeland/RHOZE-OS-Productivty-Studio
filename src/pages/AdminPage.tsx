@@ -1,7 +1,7 @@
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Navigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Users, Award, Building2, Coins, AlertTriangle, Wallet, Eye } from "lucide-react";
+import { BarChart3, Users, Award, Building2, Coins, AlertTriangle, Wallet, Eye, Sliders } from "lucide-react";
 import AdminOverview from "@/components/admin/AdminOverview";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminBadges from "@/components/admin/AdminBadges";
@@ -10,6 +10,7 @@ import AdminPendingRewards from "@/components/admin/AdminPendingRewards";
 import AdminDisputes from "@/components/admin/AdminDisputes";
 import AdminWithdrawals from "@/components/admin/AdminWithdrawals";
 import AdminContentModeration from "@/components/admin/AdminContentModeration";
+import AdminUnderwritingRules from "@/components/admin/AdminUnderwritingRules";
 
 const AdminPage = () => {
   const { isAdmin, loading } = useAdminCheck();
@@ -59,6 +60,9 @@ const AdminPage = () => {
           <TabsTrigger value="moderation" className="gap-1.5 text-xs shrink-0">
             <Eye className="h-3.5 w-3.5" /> Content
           </TabsTrigger>
+          <TabsTrigger value="capital" className="gap-1.5 text-xs shrink-0">
+            <Sliders className="h-3.5 w-3.5" /> Capital
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview"><AdminOverview /></TabsContent>
@@ -69,6 +73,7 @@ const AdminPage = () => {
         <TabsContent value="disputes"><AdminDisputes /></TabsContent>
         <TabsContent value="withdrawals"><AdminWithdrawals /></TabsContent>
         <TabsContent value="moderation"><AdminContentModeration /></TabsContent>
+        <TabsContent value="capital"><AdminUnderwritingRules /></TabsContent>
       </Tabs>
     </div>
   );
