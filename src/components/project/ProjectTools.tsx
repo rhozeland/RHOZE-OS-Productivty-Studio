@@ -229,48 +229,29 @@ const ProjectTools = ({ projectId, projectTitle }: Props) => {
         )}
       </section>
 
-      {/* ─── Flow + Drop Rooms launchers ─────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <a
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            toast.message("Flow inside Projects is coming next", {
-              description: "For now, capture inspiration from the Hub feed.",
-            });
-          }}
-          className="group rounded-2xl border border-border bg-card p-5 hover:-translate-y-0.5 transition-all"
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-2 mb-2">
-              <Flame className="h-4 w-4 text-primary" />
-              <h4 className="font-display text-base font-semibold">Flow</h4>
-            </div>
-            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+      {/* ─── Flow launcher (Drop Rooms have their own section below) ─── */}
+      <a
+        href="#"
+        onClick={(e) => {
+          e.preventDefault();
+          toast.message("Flow inside Projects is coming next", {
+            description: "For now, capture inspiration from the Hub feed.",
+          });
+        }}
+        className="group block rounded-2xl border border-border bg-card p-5 hover:-translate-y-0.5 transition-all"
+      >
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2 mb-2">
+            <Flame className="h-4 w-4 text-primary" />
+            <h4 className="font-display text-base font-semibold">Flow</h4>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Capture references, notes, and quick drops inside the project's
-            scope. Coming online soon.
-          </p>
-        </a>
-
-        <Link
-          to="/drop-rooms"
-          className="group rounded-2xl border border-border bg-card p-5 hover:-translate-y-0.5 transition-all"
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-2 mb-2">
-              <Radio className="h-4 w-4 text-primary" />
-              <h4 className="font-display text-base font-semibold">Drop Room</h4>
-            </div>
-            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Open a real-time room for {projectTitle ? `"${projectTitle}"` : "this project"} —
-            review files, chat, and broadcast progress live.
-          </p>
-        </Link>
-      </div>
+          <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Capture references, notes, and quick drops inside the project's
+          scope. Coming online soon.
+        </p>
+      </a>
 
       {/* ─── Drop Rooms (project-scoped) ─────────────────────────────── */}
       <section className="rounded-2xl border border-border bg-card p-5">
