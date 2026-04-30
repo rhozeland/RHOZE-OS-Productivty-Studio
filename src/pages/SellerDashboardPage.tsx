@@ -10,6 +10,7 @@ import WithdrawalPanel from "@/components/seller/WithdrawalPanel";
 import WorkSettlements from "@/components/works/WorkSettlements";
 import CapitalAdvancePanel from "@/components/works/CapitalAdvancePanel";
 import CapitalAdvanceStatus from "@/components/works/CapitalAdvanceStatus";
+import AdvanceRepaymentSchedule from "@/components/works/AdvanceRepaymentSchedule";
 import { format, subDays, startOfMonth } from "date-fns";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar,
