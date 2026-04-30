@@ -68,8 +68,6 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/explore/creators/:id",
   "/",
   "/dashboard",
-  "/spaces",
-  "/people",
   "/hub",
   "/profile",
   "/studios",
@@ -83,7 +81,6 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/bookings",
   "/credits",
   "/purchases",
-  "/flow",
   "/smartboards",
   "/smartboards/:id",
   "/creators",
@@ -182,10 +179,10 @@ const App = () => (
               {/* Main app — browsable by everyone, auth-gated actions inside */}
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
-                {/* New primary pillars: Spaces · Hub · Profile.
-                    People + Projects live in the side-nav. */}
-                <Route path="/spaces" element={<SpacesPage />} />
-                <Route path="/people" element={<PeoplePage />} />
+                {/* Primary pillars: Home · Hub · Projects · Profile.
+                    People + Spaces are absorbed into Hub (unified feed). */}
+                <Route path="/spaces" element={<Navigate to="/hub" replace />} />
+                <Route path="/people" element={<Navigate to="/hub" replace />} />
                 <Route path="/hub" element={<HubPage />} />
                 <Route path="/profile" element={<ProfileRedirect />} />
                 <Route path="/studios" element={<StudiosPage />} />
@@ -199,11 +196,14 @@ const App = () => (
                 <Route path="/bookings" element={<CalendarPage />} />
                 <Route path="/credits" element={<CreditShopPage />} />
                 <Route path="/purchases" element={<Navigate to="/credits?tab=purchases" replace />} />
-                {/* Flow Mode — kept mounted for power-users / direct links,
-                    but Hub is the primary surface now. */}
-                <Route path="/flow" element={<FlowAuthGuard><FlowModePage /></FlowAuthGuard>} />
-                <Route path="/smartboards" element={<SmartboardsPage />} />
+                {/* Flow / Smartboards / Drop Rooms — index routes redirect
+                    into Projects (their new home as in-context tools).
+                    Detail routes stay live so the Tools panel can deep-link
+                    individual smartboards and drop rooms. */}
+                <Route path="/smartboards" element={<Navigate to="/projects" replace />} />
                 <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
+                <Route path="/drop-rooms" element={<Navigate to="/projects" replace />} />
+                <Route path="/drop-rooms/:id" element={<DropRoomDetailPage />} />
                 {/* Legacy Creators Hub → Hub */}
                 <Route path="/creators" element={<Navigate to="/hub" replace />} />
                 <Route path="/creators/:id" element={<ListingDetailPage />} />
@@ -214,8 +214,6 @@ const App = () => (
                 <Route path="/inquiries" element={<Navigate to="/messages?tab=inquiries" replace />} />
                 <Route path="/profiles" element={<Navigate to="/people" replace />} />
                 <Route path="/profiles/:id" element={<ProfileDetailPage />} />
-                <Route path="/drop-rooms" element={<DropRoomsPage />} />
-                <Route path="/drop-rooms/:id" element={<DropRoomDetailPage />} />
                 {/* Centralized legacy aliases — generated from NAV_ALIASES.
                     Add a new redirect by adding a `matchPaths` entry to a
                     NavItem in src/config/navigation.ts (no route edit needed
