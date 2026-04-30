@@ -1,115 +1,92 @@
+## Applying the S33R Thesis to Rhozeland
 
-# Rhozeland 2.0 — Spaces & People
+The S33R piece argues the real blockchain shift in music is **infrastructure** (rights, royalties, settlement, provenance) — not NFTs. Rhozeland already has the bones for the *creator-services* version of that stack. To "apply" the thesis we (a) reframe what we have using S33R's vocabulary, and (b) extend the model from one-off projects → ongoing IP/royalty streams (music being the launch vertical).
 
-A strategic restructure. The app stops being a "social productivity feed" and becomes a **discovery + matchmaking marketplace** where every interaction starts with either *finding a space* or *finding a person*. Tools like Flow, Drop Rooms, and Smartboards stop competing for attention in the nav — they live inside Projects as collaboration utilities.
-
----
-
-## The new mental model
-
-```text
-                       RHOZELAND APP
-                             │
-        ┌────────────────────┼────────────────────┐
-        │                    │                    │
-     SPACES               PEOPLE              PROJECTS
-   (Physical /         (Talent +           (where work
-    Digital toggle)     Matchmaking)        actually happens)
-        │                    │                    │
-   ┌────┴────┐          ┌────┴────┐         ┌─────┴─────┐
-   Studios   Digital    Browse    Brand     Flow  Drop   Smart
-  (vetted)   Rooms      directory briefs   Mode  Rooms  boards
-                                  (broker            (now utilities)
-                                   + algo)
-```
-
-**Spaces** = where creation happens (a studio you book, or a digital room you join).
-**People** = who you create with (browse, get matched, or brief Rhozeland to broker).
-**Projects** = the container where collaboration tools live, after a match or booking turns into actual work.
+This plan is a phased build. We can start with Phase 1 alone if you want a quick win.
 
 ---
 
-## Pillar 1 — Spaces (Physical / Digital toggle)
+### How Rhozeland already maps to the S33R stack
 
-A single `/spaces` hub with a prominent toggle:
+| S33R layer | Rhozeland today | Gap |
+|---|---|---|
+| **Provenance** | `anchor_contribution` edge fn writes Solana memos at milestone events | Not extended to audio files / IP works |
+| **Data normalization** | Internal — every payment is one Square charge → one `credit_transactions` row | No external DSP ingestion |
+| **Programmable IP / splits** | `revenue_split_configs` (creator/curator/buyback %) + curator invite handshake | No multi-recipient splits, no royalty-on-resale |
+| **Settlement** | Square fiat payouts (5–8 day manual) + $RHOZE off-chain credits | No stablecoin rails; Anchor escrow still spec only (`.lovable/anchor-program-spec.md`) |
+| **Capital** | Withdrawal panel ($10 min, manual) | No advances / streams as collateral |
+| **Applications** | Hub, Spaces, Projects | — |
 
-- **Physical** — the existing Studios catalog, repositioned as Rhozeland-vetted partner venues (recording, photo, video, beauty bars, etc.). This is the "creative agency" surface investors saw.
-- **Digital** — Drop Rooms reframed as bookable digital spaces (live A/V rooms, async collab rooms, brand activation rooms). Same primitive, marketing flips from "ephemeral hangout" to "your digital studio."
-
-Filters apply to both: vertical (Beauty / Fashion / Music / Marketing / Other), region, capacity, price.
-
----
-
-## Pillar 2 — People (with all three matchmaking modes)
-
-A `/people` hub that does all three matchmaking depths in parallel:
-
-1. **Browse directory** — searchable profiles by vertical, region, language, rate. Free, DM-based. (Fast path.)
-2. **Submit a brief** — brand fills a structured brief (goal, budget, region, deliverables). Two outcomes:
-   - **Algorithmic matches** surface immediately (ranked profiles based on tags + reputation).
-   - **Rhozeland Concierge** option on the same brief — flag it for our team to broker manually for a fee. East↔West bridge plays go through this lane.
-3. **Get listed** — creators opt into the directory, set bridge interests (e.g. "open to Eastern beauty brands"), pricing, and availability.
-
-This is where the East↔West bridging thesis lives explicitly: a region toggle + "open to cross-market collabs" flag on every profile.
+So we already own **Provenance + Splits + Applications**. The S33R-aligned roadmap is: harden splits → add a **Work** primitive (the IP asset) → add **stablecoin (USDC) settlement** → expose **royalty streams** as objects you can point earnings at.
 
 ---
 
-## Pillar 3 — Projects (now the home for collab tools)
+### Phase 1 — Rename & reframe (1 session, no schema changes)
 
-Flow Mode, Drop Rooms, and Smartboards are demoted from top-nav destinations and re-homed inside a Project workspace:
+Pure framing work. Lets us pitch the existing product in S33R's language.
 
-- A Project is created when a booking, brief, or hire turns into real work.
-- Inside a project: **Smartboard** (the canvas), **Drop Room** (live session), **Flow** (project-scoped feed of updates/inspo), milestones, files, payments.
-- Standalone `/flow`, `/drop-rooms`, `/smartboards` routes stay alive as legacy redirects → push users into "open inside a project."
+- Add a new public page `/infrastructure` (linked from landing nav) that walks through the four-layer stack with our own component names: *Provenance · Splits · Settlement · Capital*. Each layer shows a real Rhozeland screenshot + one sentence on what's live vs. coming.
+- Update landing page hero subtitle from "decentralized productivity studio" to something like *"Programmable revenue infrastructure for independent creators."*
+- Rename `RevenueSplitConfig` UI label "Revenue Split" → "Programmable Split" and add a one-line caption: *"Executable code, not a contract clause."*
+- Add a `splits_hash` column display (we already store splits; show their SHA-256 hash in the UI as a "fingerprint" — this is the same field the Anchor spec freezes on lock, so we're priming users for it).
 
-For power users (creators who want a public Flow feed) we keep a "Creator Workspace" view under their profile — same components, just exposed publicly.
+### Phase 2 — Works (the IP asset primitive) (1 session)
 
----
+The piece's strongest claim is that *rights become programmable financial assets*. Right now in our DB the asset is implicit — a `listing` or a `contract`. Make it explicit.
 
-## Navigation & home changes
+New table `works`:
+- `id`, `owner_id`, `title`, `kind` (`song`, `design`, `writing`, `service`, `other`)
+- `iswc/isrc` (nullable, for music)
+- `created_at`, `provenance_signature` (Solana memo tx hash from anchor-contribution at registration)
+- `file_url` (storage), `sha256` (content hash)
 
-**New top nav (logged-in):** Home · Spaces · People · Projects · Marketplace · Messages
+A `revenue_split_configs` row gets an optional `work_id` FK. So one Work can have many splits over time, and earnings from any listing/contract attached to a Work flow through that Work's active split.
 
-**New homepage (logged-in):** three big cards — *Find a Space*, *Find a Person*, *Open a Project* — plus continued-activity rail (your active projects, upcoming bookings, new matches).
+UI: a `/works` page (new side-nav entry, music vertical first) where a creator drops an audio file, we hash + register it via the existing `anchor-contribution` function (one memo tx = timestamped registration), and the Work appears with its on-chain proof link.
 
-**New homepage (guest):** same three cards with auth-gated CTAs. No more Flow Mode preview.
+This is the **Provenance + IP-asset** combo from the article in one shipped feature.
 
-**Removed from top nav:** Flow, Drop Rooms, Smartboards, Creators Hub. (Routes preserved as redirects → Projects or People.)
+### Phase 3 — Multi-recipient splits + royalty-on-resale (1 session)
 
----
+Today `revenue_split_configs` is a single row with `creator_pct / curator_pct / buyback_pct`. To represent real music splits (producer 20%, vocalist 30%, label 25%, writer 25%) we need an array.
 
-## Phased rollout
+- New table `split_recipients(id, split_config_id, recipient_user_id, wallet_address, basis_points)`
+- Constraint: sum of `basis_points` per config = 10000
+- Update `split-revenue` edge function to fan out to N recipients instead of 3 fixed buckets
+- Update `RevenueSplitConfig` UI to add/remove rows with sliders, mirrors the Anchor spec's `Split` PDA so we can swap to on-chain later with zero data migration
+- Add optional `royalty_basis_points` on `works` (resale royalty) — used when a listing is re-sold
 
-Since you didn't pick a rollout pace, I'm proposing **three phases** so we can ship value early and adjust:
+### Phase 4 — Stablecoin (USDC) settlement opt-in (1 session)
 
-**Phase 1 — IA + Shell (this session, if approved)**
-- New `/spaces` page with Physical/Digital toggle (Physical = existing Studios query, Digital = existing Drop Rooms query).
-- New `/people` page with Browse tab + Brief tab (algo matches) + Concierge upgrade flag.
-- Rebuild homepage around the three big cards.
-- Top-nav restructure + redirects from `/flow`, `/drop-rooms`, `/smartboards`, `/creators` → new homes.
-- Old Creators Hub gamification (leaderboard, journey, $RHOZE earn grid) moved into a `/people/creator-pulse` sub-tab so we don't lose it.
+The article's biggest unlock: months → minutes. We already have the Solana plumbing.
 
-**Phase 2 — Projects as collab container**
-- New Project workspace shell with tabs: Overview · Smartboard · Drop Room · Flow · Files · Payments.
-- Migrate existing Smartboards/DropRooms/Flow posts to be project-scoped (with a "Personal" default project for backfill).
+- Add `payout_currency` (`fiat_usd` | `usdc_solana`) preference per recipient on `split_recipients`
+- New edge function `payout-usdc` — given a payout amount + wallet, build & submit an SPL transfer of USDC (devnet first, mainnet after audit)
+- `split-revenue` reads each recipient's preference and routes accordingly (Square for fiat recipients, USDC tx for crypto recipients) — all in the same atomic milestone approval
+- Show a "Settled in 12s · [tx link]" badge on `RevenueSplitLog` rows paid via USDC vs the existing "Manual payout in 5–8 days" line for fiat
 
-**Phase 3 — Matchmaking depth**
-- Brief schema + algorithmic matching (tag overlap + reputation score).
-- Concierge intake flow + admin queue for brokered intros.
-- East↔West region toggle and cross-market flags on profiles + briefs.
+### Phase 5 — Pitch this as the music vertical
 
----
+Once 1–4 ship, we have a credible "music infrastructure" angle to take to S33R-type partners and to the hackathon judges:
 
-## Technical notes
-
-- **No destructive DB changes in Phase 1.** Spaces page reuses `studios` and `drop_rooms` tables. People page reuses `profiles`. Old routes stay mounted as components but render redirects.
-- **Phase 2** adds a `projects` ↔ `smartboards` / `drop_rooms` / `flow_posts` relationship (nullable `project_id` columns; existing rows keep working).
-- **Phase 3** adds `briefs`, `brief_matches`, `concierge_requests` tables + RLS.
-- **Memory updates:** new entries for `arch/pillars-v2`, `features/spaces-hub`, `features/people-hub`, `features/projects-workspace`. Mark `creators-hub` and `flow-mode` memories as superseded (kept for reference).
-- **No business-logic changes to payments, $RHOZE economy, or auth** in Phase 1 — purely a navigation/IA reshape.
+- Landing variant `/for-music` showing the same product with music-specific copy (ISRC fields, royalty splits, sub-minute USDC payouts to collaborators)
+- Case study / demo project: one Work, three collaborators, one paid milestone, three USDC transfers visible on Solana explorer, all in <2 minutes
 
 ---
 
-## What I need from you to start Phase 1
+### Technical notes
 
-Just a thumbs-up on this plan. Once approved I'll execute Phase 1 in one pass: new `/spaces`, new `/people`, new homepage, top-nav restructure, legacy redirects. Phases 2 and 3 we'd schedule as separate work blocks.
+- Phase 2's content hash + memo registration reuses the existing `anchor-contribution` edge function — no new on-chain code needed.
+- Phase 3 keeps the schema shape compatible with the `Split` PDA in `.lovable/anchor-program-spec.md`, so when we eventually deploy the Anchor program (out of scope here — needs Rust toolchain) we can mirror DB rows → PDAs 1:1.
+- Phase 4 USDC: use the existing lightweight Solana JSON-RPC pattern (per our edge-function memory rule) — `@solana/web3.js` + `@solana/spl-token` via dynamic import only inside the function. Devnet USDC mint: `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`.
+- No changes to auth, RLS posture stays strict (recipients can only see their own splits/payouts).
+
+---
+
+### What to decide
+
+Three orthogonal choices — I'd like your call before building:
+
+1. **Scope to start with**: Phase 1 only (framing, ~30 min) · Phase 1+2 (framing + Works, ~2 sessions) · Full 1→4 (full stack, ~4 sessions).
+2. **Music-first or generic**: Do we put music vocabulary (ISRC, royalty, DSP) front-and-center, or keep "Works" generic and let music be one `kind` among many?
+3. **USDC network**: Devnet only for the demo (safe, free, instant) or wire mainnet behind a feature flag (real, but needs treasury USDC + audit caveats)?
