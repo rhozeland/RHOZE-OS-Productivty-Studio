@@ -69,9 +69,9 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "calendar", label: "Calendar", icon: Calendar, path: "/calendar" },
   { id: "bookings", label: "Bookings", icon: Calendar, path: "/bookings" },
   { id: "credits", label: "Credits", icon: CreditCard, path: "/credits" },
-  // Flow Mode — merged into Hub. Route still mounted as legacy; nav id retained
-  // so saved dock_config entries remain valid until users re-customize.
-  { id: "flow", label: "Flow", icon: Flame, path: "/flow" },
+  // Flow Mode — fully merged into Projects. Nav id removed; saved
+  // dock_config entries with id "flow" will surface as "Missing" in
+  // the dock customizer until users re-pick.
   { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
   { id: "services", label: "Services", icon: Store, path: "/services" },
 ];
