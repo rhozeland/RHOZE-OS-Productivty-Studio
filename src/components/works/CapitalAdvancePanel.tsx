@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { differenceInCalendarDays, differenceInCalendarMonths, subDays } from "date-fns";
+import { useUnderwritingRules, DEFAULT_RULES, type UnderwritingRules } from "@/hooks/useUnderwritingRules";
 
 interface Props {
   userId: string;
