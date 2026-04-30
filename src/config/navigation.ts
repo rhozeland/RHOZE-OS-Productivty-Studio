@@ -55,8 +55,8 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "messages", label: "Inbox", icon: MessageSquare, path: "/messages" },
   // Legacy / utility entries — kept registered so dock customization,
   // active-state, and deep-link pages still work, but no longer the
-  // primary navigation surfaces.
-  { id: "marketplace", label: "Market", icon: ShoppingBag, path: "/marketplace" },
+  // primary navigation surfaces. (`marketplace` and `flow` ids removed —
+  // both fully absorbed by Hub / Projects respectively.)
   { id: "studios", label: "Studios", icon: Building2, path: "/studios" },
   { id: "boards", label: "Boards", icon: Palette, path: "/smartboards" },
   {
