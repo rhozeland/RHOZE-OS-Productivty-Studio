@@ -31,6 +31,7 @@ import {
   onChainBuy,
   onChainSell,
 } from "@/lib/launchpad-onchain";
+import { decodeTradeError, type DecodedTradeError } from "@/lib/launchpad-error-decoder";
 
 interface Props {
   launchId: string;
@@ -48,26 +49,7 @@ type TxPhase =
   | { kind: "sent"; signature: string }
   | { kind: "confirmed"; signature: string }
   | { kind: "finalized"; signature: string }
-  | { kind: "error"; message: string; signature?: string; logs?: string[] };
-
-// Map common Anchor / SPL errors to friendlier copy. Extend as the program
-// evolves; the spec in `.lovable/launchpad-program-spec.md` is the source.
-const ERROR_HINTS: Array<{ test: RegExp; hint: string }> = [
-  { test: /slippage/i, hint: "Price moved past your slippage. Try a smaller size or refresh quote." },
-  { test: /insufficient.*lamports|insufficient funds/i, hint: "Wallet doesn't have enough SOL for this trade + fees." },
-  { test: /custom program error: 0x1\b/i, hint: "Program rejected the trade (custom error 0x1) — likely curve full or paused." },
-  { test: /custom program error: 0x6/i, hint: "Math overflow / underflow in the curve. Reduce size." },
-  { test: /blockhash not found|expired/i, hint: "Network was congested and the blockhash expired. Retry." },
-  { test: /User rejected|wallet.*rejected/i, hint: "You rejected the transaction in your wallet." },
-  { test: /AccountNotFound|could not find account/i, hint: "An on-chain account is missing — the launch may not be initialized yet." },
-];
-
-const decodeError = (raw: string, logs?: string[]): string => {
-  for (const { test, hint } of ERROR_HINTS) {
-    if (test.test(raw) || logs?.some((l) => test.test(l))) return hint;
-  }
-  return raw;
-};
+  | { kind: "error"; decoded: DecodedTradeError; signature?: string; logs?: string[] };
 
 const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTraded }: Props) => {
   const { user } = useAuth();
