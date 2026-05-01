@@ -173,6 +173,13 @@ const LaunchDetailPage = () => {
             raydiumPool={launch.raydium_pool}
           />
 
+          {/* Live vault balances */}
+          <OnChainBalancesCard
+            workId={launch.id}
+            ticker={launch.ticker}
+            mint={launch.mint_address}
+          />
+
           {/* Recent trades */}
           <Card className="bg-card/40 backdrop-blur">
             <CardContent className="p-4">
