@@ -15,7 +15,7 @@ import { useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { format, isSameDay, isToday, isTomorrow } from "date-fns";
+import { format, isToday, isTomorrow } from "date-fns";
 import {
   CalendarDays,
   Building2,
