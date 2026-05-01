@@ -24,6 +24,7 @@ import SettingsSubNav, {
 } from "@/components/settings/SettingsSubNav";
 import WorksPage from "@/pages/WorksPage";
 import MyVerificationRequests from "@/components/works/MyVerificationRequests";
+import LaunchpadIdlSettings from "@/components/launchpad/LaunchpadIdlSettings";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
