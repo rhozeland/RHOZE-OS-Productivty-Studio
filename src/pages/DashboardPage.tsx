@@ -718,8 +718,9 @@ const DashboardPage = () => {
               {/* Oversized editorial glyph — art, not decoration */}
               <Building2
                 aria-hidden
-                strokeWidth={0.6}
-                className="absolute -right-6 -top-6 h-56 w-56 text-blue-500/15 group-hover:text-blue-500/25 transition-colors duration-500 pointer-events-none"
+                strokeWidth={0.5}
+                style={{ color: "hsl(220 70% 50% / 0.12)" }}
+                className="absolute -right-8 -top-8 h-64 w-64 group-hover:opacity-150 transition-opacity duration-500 pointer-events-none"
               />
 
               {/* Content */}
