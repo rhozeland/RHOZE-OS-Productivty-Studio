@@ -128,11 +128,12 @@ const LaunchCoinDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Coins className="h-4 w-4 text-emerald-500" />
-            Launch a coin for this work
+            {isProfileCoin ? "Launch your profile coin" : "Launch a coin for this work"}
           </DialogTitle>
           <DialogDescription>
-            Mint a fan coin tied to your Verified IP. Trades flow through a bonding
-            curve until graduation, then migrate to Raydium with locked LP.
+            {isProfileCoin
+              ? "Mint a coin tied to your profile so collectors can back you. Trades flow through a bonding curve until graduation, then migrate to Raydium with locked LP."
+              : "Mint a fan coin tied to your Verified IP. Trades flow through a bonding curve until graduation, then migrate to Raydium with locked LP."}
           </DialogDescription>
         </DialogHeader>
 
