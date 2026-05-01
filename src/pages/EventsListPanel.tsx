@@ -22,7 +22,7 @@ const EventsListPanel = () => {
       const { data, error } = await supabase
         .from("events")
         .select("*")
-        .in("status", ["published", "live", "ended"])
+        .in("status", ["published", "completed"])
         .order("starts_at", { ascending: true });
       if (error) throw error;
       return data ?? [];

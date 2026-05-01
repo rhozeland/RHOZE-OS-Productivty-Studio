@@ -83,20 +83,20 @@ const EventDetailPage = () => {
       const qr_token = `tk_${crypto.randomUUID().replace(/-/g, "")}`;
       const { data, error } = await supabase
         .from("event_tickets")
-        .insert({
-          event_id: id!,
-          holder_id: user.id,
-          tier_id: tierId,
-          qr_token,
-          purchase_currency: "rsvp",
-          amount_paid: 0,
-          status: "issued",
-        })
+        .insert([
+          {
+            event_id: id!,
+            holder_id: user.id,
+            tier_id: tierId,
+            qr_token,
+            purchase_currency: "rsvp",
+            amount_paid: 0,
+            status: "issued",
+          },
+        ])
         .select()
         .single();
       if (error) throw error;
-      // Bump the tier counter (best-effort)
-      await supabase.rpc("noop").catch(() => {});
       return data;
     },
     onSuccess: (ticket) => {
