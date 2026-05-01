@@ -614,7 +614,7 @@ const DashboardPage = () => {
   const visibleSections = sectionOrder.filter((s) => !hiddenSections.includes(s));
 
   return (
-    <div className="max-w-6xl mx-auto pb-24 space-y-12">
+    <div className="max-w-5xl mx-auto pb-24 space-y-12">
       {/* ─── Greeting strip ─────────────────────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0 }}
