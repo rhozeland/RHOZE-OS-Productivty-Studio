@@ -163,7 +163,7 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
       setPhase({ kind: "error", message: "On-chain mode unexpectedly disabled." });
       return;
     }
-    if (!result.ok) {
+    if (result.ok === false) {
       setBusy(false);
       setPhase({ kind: "error", message: decodeError(result.error) });
       toast({ title: "Trade failed", description: decodeError(result.error), variant: "destructive" });
