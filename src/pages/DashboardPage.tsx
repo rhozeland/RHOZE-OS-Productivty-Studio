@@ -893,7 +893,12 @@ const DashboardPage = () => {
         );
       })()}
 
-      {(hubListings ?? []).length > 0 && (
+      {(() => {
+        const listingsWithImages = (hubListings ?? []).filter(
+          (l: any) => l.cover_url || l.image_url,
+        );
+        if (listingsWithImages.length === 0) return null;
+        return (
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -916,7 +921,7 @@ const DashboardPage = () => {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {(hubListings ?? []).slice(0, 6).map((l: any, i: number) => (
+            {listingsWithImages.slice(0, 6).map((l: any, i: number) => (
               <motion.div
                 key={l.id}
                 initial={{ opacity: 0, y: 16 }}
@@ -928,18 +933,12 @@ const DashboardPage = () => {
                   to={`/marketplace/${l.id}`}
                   className="group block aspect-[4/3] rounded-2xl overflow-hidden border border-border/50 bg-muted relative"
                 >
-                  {l.cover_url || l.image_url ? (
-                    <img
-                      src={l.cover_url ?? l.image_url}
-                      alt={l.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-500/10 to-amber-500/10">
-                      <Sparkles className="h-10 w-10 text-muted-foreground/40" />
-                    </div>
-                  )}
+                  <img
+                    src={l.cover_url ?? l.image_url}
+                    alt={l.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    loading="lazy"
+                  />
                   <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
                     <p className="text-[10px] uppercase tracking-wider text-white/70 mb-0.5">
                       {l.category}
@@ -951,7 +950,8 @@ const DashboardPage = () => {
             ))}
           </div>
         </motion.section>
-      )}
+        );
+      })()}
 
       {/* ════════════════════════════════════════════════════════════════
           ACT 3 — Unified pulse feed (toggle: All / Studios / Hub)
