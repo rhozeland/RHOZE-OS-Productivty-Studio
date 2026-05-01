@@ -250,26 +250,31 @@ const AppLayout = () => {
               </nav>
             </div>
 
-            {/* Search trigger with Flow mode button */}
+            {/* Search trigger with Flow mode launcher (replaces "browse spaces") */}
             <div className="hidden md:flex flex-1 max-w-lg justify-center">
               <div className="relative w-full max-w-md">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => navigate("/spaces")}
-                      aria-label="Browse spaces"
-                      className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center transition-opacity hover:opacity-80 active:opacity-70 z-10"
-                    >
-                      <Building2 className="h-3.5 w-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="text-xs font-body">
-                    Browse spaces
-                  </TooltipContent>
-                </Tooltip>
+                {user && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => navigate("/flow")}
+                        aria-label="Enter Flow"
+                        className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-foreground text-background flex items-center justify-center transition-opacity hover:opacity-80 active:opacity-70 z-10"
+                      >
+                        <Flame className="h-3.5 w-3.5 fill-amber-400/40 text-amber-400" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs font-body">
+                      Enter Flow
+                    </TooltipContent>
+                  </Tooltip>
+                )}
                 <button
                   onClick={() => setSearchOpen(true)}
-                  className="w-full pl-11 h-9 rounded-full bg-card border border-border text-sm font-body text-muted-foreground text-left px-11 hover:bg-muted/50 transition-colors flex items-center"
+                  className={cn(
+                    "w-full h-9 rounded-full bg-card border border-border text-sm font-body text-muted-foreground text-left hover:bg-muted/50 transition-colors flex items-center pr-3",
+                    user ? "pl-11" : "pl-4",
+                  )}
                 >
                   Search Rhozeland...
                   <kbd className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded font-mono text-muted-foreground">⌘K</kbd>
