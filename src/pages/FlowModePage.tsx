@@ -724,6 +724,12 @@ const FlowModePage = () => {
   const allItems = flowItemsFetching ? [] : flowItems ?? [];
   const currentItem = allItems.length > 0 ? allItems[currentIndex % allItems.length] : null;
 
+  // Batched coin lookup for every Flow item that points at a Verified IP
+  // work. Used by FlowCard to render the "$TICKER → speculate" pill.
+  const { data: coinByWork } = useFlowCoinsByWork(
+    allItems.map((i: any) => i.work_id),
+  );
+
   const handleCalibrationSelect = (option: string) => {
     const updated = selectedCategories.includes(option)
       ? selectedCategories.filter((c) => c !== option)
