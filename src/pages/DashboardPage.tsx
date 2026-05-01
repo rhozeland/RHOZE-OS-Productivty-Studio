@@ -624,25 +624,32 @@ const DashboardPage = () => {
         <p className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-2">
           {user ? "Your Spaces" : "Welcome to Rhozeland"}
         </p>
-        <h1 className="font-display text-3xl sm:text-4xl md:text-5xl leading-[1.1]">
+        <h1 className="font-display text-3xl sm:text-4xl md:text-5xl leading-[1.1] text-foreground">
           {user ? (
-            <span
-              className="inline-block bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text"
-              style={{
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                color: "transparent",
-              }}
-            >
-              {greeting()}, {firstName}.
-            </span>
+            <>
+              {greeting()},{" "}
+              <span
+                className="inline-block"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(to right, hsl(330 81% 60%), hsl(292 84% 61%), hsl(38 92% 50%))",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  color: "transparent",
+                }}
+              >
+                {firstName}.
+              </span>
+            </>
           ) : (
             <>
-              <span className="text-foreground">Two networks. </span>
+              Two networks.{" "}
               <span
-                className="inline-block bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text"
+                className="inline-block"
                 style={{
+                  backgroundImage:
+                    "linear-gradient(to right, hsl(330 81% 60%), hsl(292 84% 61%), hsl(38 92% 50%))",
                   WebkitBackgroundClip: "text",
                   backgroundClip: "text",
                   WebkitTextFillColor: "transparent",
@@ -708,22 +715,30 @@ const DashboardPage = () => {
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/30 to-transparent" />
 
+              {/* Oversized editorial glyph — art, not decoration */}
+              <Building2
+                aria-hidden
+                strokeWidth={0.5}
+                style={{ color: "hsl(220 70% 50% / 0.12)" }}
+                className="absolute -right-8 -top-8 h-64 w-64 group-hover:opacity-150 transition-opacity duration-500 pointer-events-none"
+              />
+
               {/* Content */}
               <div className="relative h-full flex flex-col p-6 sm:p-8">
                 <div className="flex-1">
                   <div className="inline-flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur px-2.5 py-1 mb-4">
                     <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
                     <span className="text-[10px] uppercase tracking-widest text-foreground font-medium">
-                      Physical Network
+                      Physical
                     </span>
                   </div>
-                  <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-none mb-2">
+                  <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-none mb-3">
                     Studio
                     <br />
                     Spaces
                   </h2>
-                  <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
-                    Step in. Real rooms, real gear, vetted hosts. Book by the hour or the day.
+                  <p className="text-sm text-muted-foreground leading-snug">
+                    Real rooms. Real gear.
                   </p>
                 </div>
 
@@ -756,7 +771,7 @@ const DashboardPage = () => {
 
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
-                    {studios?.length ?? 0} space{(studios?.length ?? 0) === 1 ? "" : "s"} bookable
+                    {studios?.length ?? 0} bookable
                   </span>
                   <span className="inline-flex items-center gap-1 text-sm font-semibold text-foreground group-hover:gap-2 transition-all">
                     Step in <ArrowRight className="h-4 w-4" />
@@ -789,22 +804,29 @@ const DashboardPage = () => {
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/30 to-transparent" />
 
+              {/* Oversized editorial glyph — art, not decoration */}
+              <Sparkles
+                aria-hidden
+                strokeWidth={0.5}
+                style={{ color: "hsl(320 80% 60% / 0.14)" }}
+                className="absolute -right-8 -top-8 h-64 w-64 transition-opacity duration-500 pointer-events-none"
+              />
+
               <div className="relative h-full flex flex-col p-6 sm:p-8">
                 <div className="flex-1">
                   <div className="inline-flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur px-2.5 py-1 mb-4">
                     <span className="h-1.5 w-1.5 rounded-full bg-pink-500 animate-pulse" />
                     <span className="text-[10px] uppercase tracking-widest text-foreground font-medium">
-                      Digital Network
+                      Digital
                     </span>
                   </div>
-                  <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-none mb-2">
+                  <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-none mb-3">
                     The
                     <br />
                     Hub
                   </h2>
-                  <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
-                    Tune in. Conversations, offerings, opportunities, and verified Works — the
-                    pulse of the community.
+                  <p className="text-sm text-muted-foreground leading-snug">
+                    The pulse of the community.
                   </p>
                 </div>
 
@@ -832,7 +854,7 @@ const DashboardPage = () => {
 
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
-                    {people?.length ?? 0} creator{(people?.length ?? 0) === 1 ? "" : "s"} active
+                    {people?.length ?? 0} active
                   </span>
                   <span className="inline-flex items-center gap-1 text-sm font-semibold text-foreground group-hover:gap-2 transition-all">
                     Tune in <ArrowRight className="h-4 w-4" />
@@ -844,12 +866,12 @@ const DashboardPage = () => {
         </div>
 
         {/* Caption: how Spaces lead into Projects */}
-        <p className="text-center text-xs text-muted-foreground/70 mt-4 italic">
-          Both networks lead to{" "}
-          <Link to="/projects" className="text-foreground hover:underline not-italic font-medium">
+        <p className="text-center text-[11px] text-muted-foreground/70 mt-4 tracking-wide">
+          Both lead to{" "}
+          <Link to="/projects" className="text-foreground hover:underline font-medium">
             Projects
-          </Link>{" "}
-          — the work that happens once you're inside a space.
+          </Link>
+          .
         </p>
       </section>
 
