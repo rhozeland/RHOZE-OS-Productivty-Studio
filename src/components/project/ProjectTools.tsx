@@ -196,17 +196,27 @@ const ProjectTools = ({ projectId, projectTitle, smartboardDetails, onLinkSmartb
         )}
       </section>
 
-      {/* ─── Smartboards (read-only mini list) ────────────────────────── */}
+      {/* ─── Smartboards (full management lives here) ─────────────────── */}
       <section className="rounded-2xl border border-border bg-card p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Palette className="h-4 w-4 text-primary" />
             <h4 className="font-display text-base font-semibold">Smartboards</h4>
           </div>
-          <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-            Manage in Scope
-          </span>
+          {onLinkSmartboard && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="rounded-full h-8 gap-1.5"
+              onClick={onLinkSmartboard}
+            >
+              <Link2 className="h-3.5 w-3.5" /> Link smartboard
+            </Button>
+          )}
         </div>
+        <p className="text-xs text-muted-foreground mb-3">
+          Visual reference boards pinned to this project. Link existing ones or create new from the Smartboards page.
+        </p>
         {boards && boards.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
             {boards.map((b: any, i: number) => (
@@ -215,10 +225,12 @@ const ProjectTools = ({ projectId, projectTitle, smartboardDetails, onLinkSmartb
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03 }}
+                className="group relative"
               >
                 <Link
-                  to={`/smartboards/${b.id}`}
-                  className="group block rounded-xl overflow-hidden border border-border hover:-translate-y-0.5 transition-all"
+                  to={`/smartboards/${b.id}?from=project:${projectId}`}
+                  state={{ backTo: `/projects/${projectId}`, backLabel: "Back to project" }}
+                  className="block rounded-xl overflow-hidden border border-border hover:-translate-y-0.5 transition-all"
                 >
                   <div
                     className="aspect-[16/10]"
@@ -230,13 +242,26 @@ const ProjectTools = ({ projectId, projectTitle, smartboardDetails, onLinkSmartb
                     </p>
                   </div>
                 </Link>
+                {onUnlinkSmartboard && (
+                  <button
+                    onClick={() => onUnlinkSmartboard(b.id)}
+                    className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-background/80 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground"
+                    aria-label="Unlink smartboard"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
               </motion.div>
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            No smartboards linked yet — open the <span className="font-medium text-foreground">Scope</span> tab to link one.
-          </p>
+          <button
+            onClick={onLinkSmartboard}
+            className="w-full flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border py-8 hover:border-primary/40 transition-colors"
+          >
+            <Palette className="mb-2 h-7 w-7 text-muted-foreground/40" />
+            <p className="text-xs text-muted-foreground">No smartboards linked yet — click to link one</p>
+          </button>
         )}
       </section>
 
