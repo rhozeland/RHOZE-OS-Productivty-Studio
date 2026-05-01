@@ -165,6 +165,13 @@ const LaunchDetailPage = () => {
             </CardContent>
           </Card>
 
+          {/* On-chain addresses */}
+          <OnChainAddressesCard
+            mint={launch.mint_address}
+            launchPda={deriveLaunchPda(launch.id)?.toBase58() ?? null}
+            raydiumPool={launch.raydium_pool}
+          />
+
           {/* Recent trades */}
           <Card className="bg-card/40 backdrop-blur">
             <CardContent className="p-4">
