@@ -147,7 +147,7 @@ export const onChainCreateLaunch = async (args: {
 }): Promise<OnChainResult<{ signature: string; launchPda: string }>> => {
   if (!resolveProgramId()) return { enabled: false };
   const built = await buildProgram();
-  if (!built.ok) return { enabled: true, ok: false, error: built.error };
+  if (built.ok === false) return { enabled: true, ok: false, error: built.error };
   const { program } = built;
 
   const ixName = findIxName(program.idl, ["create_launch", "createLaunch", "initialize_launch"]);
@@ -173,7 +173,7 @@ export const onChainBuy = async (args: {
 }): Promise<OnChainResult<{ signature: string }>> => {
   if (!resolveProgramId()) return { enabled: false };
   const built = await buildProgram();
-  if (!built.ok) return { enabled: true, ok: false, error: built.error };
+  if (built.ok === false) return { enabled: true, ok: false, error: built.error };
   const { program } = built;
 
   const ixName = findIxName(program.idl, ["buy", "buy_tokens", "swap_in"]);
@@ -198,7 +198,7 @@ export const onChainSell = async (args: {
 }): Promise<OnChainResult<{ signature: string }>> => {
   if (!resolveProgramId()) return { enabled: false };
   const built = await buildProgram();
-  if (!built.ok) return { enabled: true, ok: false, error: built.error };
+  if (built.ok === false) return { enabled: true, ok: false, error: built.error };
   const { program } = built;
 
   const ixName = findIxName(program.idl, ["sell", "sell_tokens", "swap_out"]);
