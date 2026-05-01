@@ -68,6 +68,8 @@ const ProjectScopeDeliverables = ({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [newDeliverable, setNewDeliverable] = useState("");
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const fileInputsRef = useRef<Record<string, HTMLInputElement | null>>({});
 
   // Fetch deliverables
   const { data: deliverables = [] } = useQuery({
