@@ -18,6 +18,8 @@ import {
   Loader2,
   ExternalLink,
   X,
+  ShieldCheck,
+  Anchor,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -52,6 +54,8 @@ interface Deliverable {
   file_size: number | null;
   content_hash: string | null;
   file_uploaded_at: string | null;
+  solana_signature: string | null;
+  anchored_at: string | null;
 }
 
 interface ProjectScopeDeliverablesProps {
@@ -194,6 +198,8 @@ const ProjectScopeDeliverables = ({
           file_size: null,
           content_hash: null,
           file_uploaded_at: null,
+          solana_signature: null,
+          anchored_at: null,
           updated_at: new Date().toISOString(),
         } as any)
         .eq("id", id);
@@ -202,6 +208,77 @@ const ProjectScopeDeliverables = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project-deliverables", projectId] });
     },
+  });
+
+  /**
+   * Anchor a deliverable's SHA-256 fingerprint on Solana.
+   * Reuses the `anchor-contribution` edge function: we create a
+   * `contribution_proofs` row referencing the deliverable, the function
+   * signs a memo transaction containing the hash + metadata, and we mirror
+   * the resulting signature back onto the deliverable row.
+   */
+  const [anchoringId, setAnchoringId] = useState<string | null>(null);
+  const anchorDeliverable = useMutation({
+    mutationFn: async (deliverable: Deliverable) => {
+      if (!user) throw new Error("Not signed in");
+      if (!deliverable.content_hash) throw new Error("No fingerprint to anchor");
+
+      // 1) Create a contribution proof row pointing at this deliverable.
+      const { data: proof, error: proofErr } = await supabase
+        .from("contribution_proofs")
+        .insert({
+          user_id: user.id,
+          action_type: "deliverable_anchor",
+          reference_id: deliverable.id,
+          metadata: {
+            project_id: deliverable.project_id,
+            deliverable_id: deliverable.id,
+            title: deliverable.title,
+            content_hash: deliverable.content_hash,
+            file_name: deliverable.file_name,
+            mime_type: deliverable.mime_type,
+            file_size: deliverable.file_size,
+          },
+        })
+        .select()
+        .single();
+      if (proofErr) throw proofErr;
+
+      // 2) Ask the edge function to sign + send a Solana memo.
+      const { data, error } = await supabase.functions.invoke(
+        "anchor-contribution",
+        { body: { proof_id: proof.id } },
+      );
+      if (error) throw error;
+
+      const signature = (data as { signature?: string })?.signature;
+      if (!signature) throw new Error("No signature returned");
+
+      // 3) Mirror the signature back onto the deliverable for quick display.
+      const { error: updErr } = await supabase
+        .from("project_deliverables" as any)
+        .update({
+          solana_signature: signature,
+          anchored_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } as any)
+        .eq("id", deliverable.id);
+      if (updErr) throw updErr;
+
+      return signature;
+    },
+    onMutate: (d) => setAnchoringId(d.id),
+    onSuccess: (signature) => {
+      toast.success("Anchored on Solana", {
+        description: `tx ${signature.slice(0, 8)}…${signature.slice(-6)}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["project-deliverables", projectId] });
+    },
+    onError: (err: any) =>
+      toast.error("Could not anchor file", {
+        description: err?.message ?? "Unknown error",
+      }),
+    onSettled: () => setAnchoringId(null),
   });
 
   const completedCount = deliverables.filter((d) => d.completed).length;
@@ -361,6 +438,45 @@ const ProjectScopeDeliverables = ({
                           sha256:{shortHash(d.content_hash)}
                         </span>
                       )}
+
+                      {/* Anchor on Solana — only when fingerprinted and not yet anchored */}
+                      {d.content_hash && !d.solana_signature && (
+                        <button
+                          type="button"
+                          onClick={() => anchorDeliverable.mutate(d)}
+                          disabled={anchoringId === d.id}
+                          className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-2 py-0.5 text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
+                          title="Sign a Solana memo containing this fingerprint"
+                        >
+                          {anchoringId === d.id ? (
+                            <>
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              Anchoring…
+                            </>
+                          ) : (
+                            <>
+                              <Anchor className="h-3 w-3" />
+                              Anchor on Solana
+                            </>
+                          )}
+                        </button>
+                      )}
+
+                      {/* Anchored badge + Solscan link */}
+                      {d.solana_signature && (
+                        <a
+                          href={`https://solscan.io/tx/${d.solana_signature}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-primary hover:bg-primary/20 transition-colors"
+                          title={`Solana tx ${d.solana_signature}`}
+                        >
+                          <ShieldCheck className="h-3 w-3" />
+                          Anchored · {d.solana_signature.slice(0, 6)}…
+                          <ExternalLink className="h-2.5 w-2.5" />
+                        </a>
+                      )}
+
                       <button
                         type="button"
                         onClick={() => clearFile.mutate(d.id)}
