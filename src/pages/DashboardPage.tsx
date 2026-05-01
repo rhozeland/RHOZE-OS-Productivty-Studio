@@ -1,4 +1,26 @@
-import { useState, useEffect } from "react";
+/**
+ * DashboardPage — the authed Home surface.
+ *
+ * Pivot v5 ("Spaces"):
+ *   Rhozeland is a network of *spaces*. Home presents two parallel networks
+ *   as equal peers — Studio Spaces (physical) and the Hub (digital) — and
+ *   shows that everything funnels into Projects (the work that happens
+ *   inside a space).
+ *
+ * Layout, top-to-bottom:
+ *   ACT 1 — Split-screen duo hero ........ Studios | Hub, shared search bar
+ *   ACT 2 — Cinematic stacked previews ... full-width "Nearby studios" + "Hub pulse"
+ *   ACT 3 — Unified pulse feed ........... toggle: All / Studios / Hub activity
+ *   ACT 4 — Map meets grid ............... studios on a city list, people on a grid
+ *
+ * Personal sections (Recent Projects, Schedule, Messages, etc.) live BELOW
+ * the network surface so the dual-network framing leads. Customizer is kept
+ * for power users to reorder personal sections only.
+ *
+ * Guests: see GuestDashboardPreview in place of personal sections, but
+ * still see Acts 1–4 so the network feel hits before sign-up.
+ */
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,22 +35,24 @@ import {
   Zap,
   Settings2,
   GripVertical,
-  CalendarDays,
-  List,
-  Flame,
   Eye,
   EyeOff,
-  ChevronLeft,
-  ChevronRight,
+  Flame,
   User,
-  ShoppingBag,
+  Search,
+  MapPin,
+  Sparkles,
+  Users,
+  Radio,
+  Briefcase,
+  Megaphone,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import GuestDashboardPreview from "@/components/guest/GuestDashboardPreview";
-import { Switch } from "@/components/ui/switch";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, startOfWeek, endOfWeek } from "date-fns";
+import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
+import { format } from "date-fns";
 
 type DashboardLayout = {
   sections: string[];
@@ -36,26 +60,29 @@ type DashboardLayout = {
   showCalendar: boolean;
 };
 
-const ALL_SECTIONS = ["projects", "events", "hub", "messages"];
+const ALL_SECTIONS = ["projects", "events", "messages"];
 
 const SECTION_META: Record<string, { label: string; icon: any }> = {
   projects: { label: "Projects", icon: FolderKanban },
   events: { label: "Schedule", icon: Calendar },
-  hub: { label: "Hub Feed", icon: Flame },
   messages: { label: "Messages", icon: MessageSquare },
 };
 
 const DEFAULT_LAYOUT: DashboardLayout = {
-  sections: ["projects", "events", "hub", "messages"],
+  sections: ["projects", "events", "messages"],
   hiddenSections: [],
   showCalendar: false,
 };
 
 const DashboardPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showCustomizer, setShowCustomizer] = useState(false);
+  const [networkSearch, setNetworkSearch] = useState("");
+  const [pulseScope, setPulseScope] = useState<"all" | "studios" | "hub">("all");
 
+  // ── Profile & layout (personal sections only) ──
   const { data: profile } = useQuery({
     queryKey: ["my-profile", user?.id],
     queryFn: async () => {
@@ -70,33 +97,30 @@ const DashboardPage = () => {
   });
 
   const rawLayout = (profile as any)?.dashboard_layout;
-  const layout: DashboardLayout = rawLayout
-    ? { ...DEFAULT_LAYOUT, ...(typeof rawLayout === "string" ? JSON.parse(rawLayout) : rawLayout) }
-    : DEFAULT_LAYOUT;
+  const parsedLayout: DashboardLayout = useMemo(() => {
+    if (!rawLayout) return DEFAULT_LAYOUT;
+    const parsed = typeof rawLayout === "string" ? JSON.parse(rawLayout) : rawLayout;
+    const sections = (parsed.sections ?? DEFAULT_LAYOUT.sections).filter((s: string) =>
+      ALL_SECTIONS.includes(s),
+    );
+    const ensured = [
+      ...sections,
+      ...ALL_SECTIONS.filter((s) => !sections.includes(s)),
+    ];
+    return {
+      sections: ensured,
+      hiddenSections: parsed.hiddenSections ?? [],
+      showCalendar: parsed.showCalendar ?? false,
+    };
+  }, [rawLayout]);
 
-  // Ensure all sections exist in order (for newly added sections)
-  const ensuredSections = [
-    ...layout.sections.filter((s) => ALL_SECTIONS.includes(s)),
-    ...ALL_SECTIONS.filter((s) => !layout.sections.includes(s)),
-  ];
-
-  const [sectionOrder, setSectionOrder] = useState<string[]>(ensuredSections);
-  const [hiddenSections, setHiddenSections] = useState<string[]>(layout.hiddenSections ?? []);
-  const [showCalendar, setShowCalendar] = useState(layout.showCalendar);
+  const [sectionOrder, setSectionOrder] = useState<string[]>(parsedLayout.sections);
+  const [hiddenSections, setHiddenSections] = useState<string[]>(parsedLayout.hiddenSections);
 
   useEffect(() => {
-    if (rawLayout) {
-      const parsed = typeof rawLayout === "string" ? JSON.parse(rawLayout) : rawLayout;
-      const sections = parsed.sections ?? DEFAULT_LAYOUT.sections;
-      const ensured = [
-        ...sections.filter((s: string) => ALL_SECTIONS.includes(s)),
-        ...ALL_SECTIONS.filter((s) => !sections.includes(s)),
-      ];
-      setSectionOrder(ensured);
-      setHiddenSections(parsed.hiddenSections ?? []);
-      setShowCalendar(parsed.showCalendar ?? false);
-    }
-  }, [rawLayout]);
+    setSectionOrder(parsedLayout.sections);
+    setHiddenSections(parsedLayout.hiddenSections);
+  }, [parsedLayout]);
 
   const saveLayout = useMutation({
     mutationFn: async (newLayout: DashboardLayout) => {
@@ -109,14 +133,14 @@ const DashboardPage = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["my-profile"] }),
   });
 
-  const persistLayout = (order: string[], hidden: string[], cal: boolean) => {
+  const persistLayout = (order: string[], hidden: string[]) => {
     if (!user) return;
-    saveLayout.mutate({ sections: order, hiddenSections: hidden, showCalendar: cal });
+    saveLayout.mutate({ sections: order, hiddenSections: hidden, showCalendar: false });
   };
 
   const handleReorder = (newOrder: string[]) => {
     setSectionOrder(newOrder);
-    persistLayout(newOrder, hiddenSections, showCalendar);
+    persistLayout(newOrder, hiddenSections);
   };
 
   const toggleSection = (key: string) => {
@@ -124,23 +148,20 @@ const DashboardPage = () => {
       ? hiddenSections.filter((s) => s !== key)
       : [...hiddenSections, key];
     setHiddenSections(newHidden);
-    persistLayout(sectionOrder, newHidden, showCalendar);
+    persistLayout(sectionOrder, newHidden);
   };
 
-  const handleCalendarToggle = (val: boolean) => {
-    setShowCalendar(val);
-    persistLayout(sectionOrder, hiddenSections, val);
-  };
-
-  // ── Data queries ──
+  // ── Personal data (below the network surface) ──
   const { data: projects } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
-      const { data } = await supabase.from("projects").select("*").order("updated_at", { ascending: false });
+      const { data } = await supabase
+        .from("projects")
+        .select("*")
+        .order("updated_at", { ascending: false });
       return data ?? [];
     },
   });
-
   const { data: tasks } = useQuery({
     queryKey: ["tasks"],
     queryFn: async () => {
@@ -148,38 +169,30 @@ const DashboardPage = () => {
       return data ?? [];
     },
   });
-
   const { data: events } = useQuery({
     queryKey: ["events"],
     queryFn: async () => {
-      const { data } = await supabase.from("calendar_events").select("*").gte("start_time", new Date().toISOString()).order("start_time").limit(5);
-      return data ?? [];
-    },
-  });
-
-  const { data: allEvents } = useQuery({
-    queryKey: ["all-month-events"],
-    queryFn: async () => {
-      const now = new Date();
       const { data } = await supabase
         .from("calendar_events")
         .select("*")
-        .gte("start_time", startOfMonth(now).toISOString())
-        .lte("start_time", endOfMonth(now).toISOString())
-        .order("start_time");
+        .gte("start_time", new Date().toISOString())
+        .order("start_time")
+        .limit(5);
       return data ?? [];
     },
   });
-
   const { data: unreadCount } = useQuery({
     queryKey: ["unread-messages-count", user?.id],
     queryFn: async () => {
-      const { count } = await supabase.from("messages").select("id", { count: "exact", head: true }).eq("receiver_id", user!.id).eq("read", false);
+      const { count } = await supabase
+        .from("messages")
+        .select("id", { count: "exact", head: true })
+        .eq("receiver_id", user!.id)
+        .eq("read", false);
       return count ?? 0;
     },
     enabled: !!user,
   });
-
   const { data: recentMessages } = useQuery({
     queryKey: ["recent-messages-dashboard", user?.id],
     queryFn: async () => {
@@ -194,20 +207,83 @@ const DashboardPage = () => {
     },
     enabled: !!user,
   });
-
   const { data: messageSenders } = useQuery({
     queryKey: ["message-sender-profiles", recentMessages?.map((m) => m.sender_id)],
     queryFn: async () => {
       const ids = [...new Set(recentMessages!.map((m) => m.sender_id))];
       if (ids.length === 0) return [];
-      const { data } = await supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", ids);
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, avatar_url")
+        .in("user_id", ids);
       return data ?? [];
     },
     enabled: !!recentMessages && recentMessages.length > 0,
   });
-
   const senderMap = new Map(messageSenders?.map((p) => [p.user_id, p]) ?? []);
+  const { data: collaborators } = useQuery({
+    queryKey: ["project-collaborator-counts"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("project_collaborators")
+        .select("project_id");
+      return data ?? [];
+    },
+  });
+  const collabCounts = new Map<string, number>();
+  collaborators?.forEach((c) => {
+    collabCounts.set(c.project_id, (collabCounts.get(c.project_id) || 0) + 1);
+  });
 
+  // ── Network data (Acts 1–4) ──
+  const { data: studios } = useQuery({
+    queryKey: ["home-studios"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("studios")
+        .select("id, name, slug, city, country, hero_image_url, cover_image_url, rating_avg, category")
+        .eq("is_active", true)
+        .eq("status", "approved")
+        .order("rating_avg", { ascending: false })
+        .limit(8);
+      return data ?? [];
+    },
+  });
+  const { data: rooms } = useQuery({
+    queryKey: ["home-rooms"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("drop_rooms")
+        .select("id, title, description, cover_color, created_at, created_by, category")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(6);
+      return data ?? [];
+    },
+  });
+  const { data: people } = useQuery({
+    queryKey: ["home-people"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles_public")
+        .select("user_id, display_name, avatar_url, username, headline, location")
+        .not("display_name", "is", null)
+        .limit(12);
+      return data ?? [];
+    },
+  });
+  const { data: hubListings } = useQuery({
+    queryKey: ["home-hub-listings"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("marketplace_listings")
+        .select("id, title, description, category, listing_type, cover_url, image_url, user_id, created_at")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(6);
+      return data ?? [];
+    },
+  });
   const { data: studioBookings } = useQuery({
     queryKey: ["my-studio-bookings", user?.id],
     queryFn: async () => {
@@ -223,55 +299,12 @@ const DashboardPage = () => {
     enabled: !!user,
   });
 
-  const { data: hubListings } = useQuery({
-    queryKey: ["hub-feed-dashboard"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("marketplace_listings")
-        .select("id, title, description, category, listing_type, credits_price, price, currency, cover_url, image_url, user_id")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(8);
-      return data ?? [];
-    },
-  });
-
-  const { data: hubProfiles } = useQuery({
-    queryKey: ["hub-feed-profiles", hubListings?.map((l) => l.user_id)],
-    queryFn: async () => {
-      const ids = [...new Set(hubListings!.map((l) => l.user_id))];
-      if (ids.length === 0) return [];
-      const { data } = await supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", ids);
-      return data ?? [];
-    },
-    enabled: !!hubListings && hubListings.length > 0,
-  });
-
-  const hubProfileMap = new Map(hubProfiles?.map((p) => [p.user_id, p]) ?? []);
-
-  const { data: collaborators } = useQuery({
-    queryKey: ["project-collaborator-counts"],
-    queryFn: async () => {
-      const { data } = await supabase.from("project_collaborators").select("project_id");
-      return data ?? [];
-    },
-  });
-
-  const collabCounts = new Map<string, number>();
-  collaborators?.forEach((c) => {
-    collabCounts.set(c.project_id, (collabCounts.get(c.project_id) || 0) + 1);
-  });
-
+  // ── Computed ──
   const completedTasks = tasks?.filter((t) => t.completed).length ?? 0;
   const totalTasks = tasks?.length ?? 0;
   const activeProjects = projects?.filter((p) => p.status === "active").length ?? 0;
-  const firstName = profile?.display_name?.split(" ")[0] || (user ? user.email?.split("@")[0] : "") || "";
-
-  const getProjectProgress = (projectId: string) => {
-    const projectTasks = tasks?.filter((t) => t.project_id === projectId) ?? [];
-    if (projectTasks.length === 0) return 0;
-    return Math.round((projectTasks.filter((t) => t.completed).length / projectTasks.length) * 100);
-  };
+  const firstName =
+    profile?.display_name?.split(" ")[0] || (user ? user.email?.split("@")[0] : "") || "";
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -280,36 +313,74 @@ const DashboardPage = () => {
     return "Good evening";
   };
 
-  // Mini calendar
-  const now = new Date();
-  const monthStart = startOfMonth(now);
-  const monthEnd = endOfMonth(now);
-  const calStart = startOfWeek(monthStart);
-  const calEnd = endOfWeek(monthEnd);
-  const calDays = eachDayOfInterval({ start: calStart, end: calEnd });
+  const getProjectProgress = (projectId: string) => {
+    const projectTasks = tasks?.filter((t) => t.project_id === projectId) ?? [];
+    if (projectTasks.length === 0) return 0;
+    return Math.round(
+      (projectTasks.filter((t) => t.completed).length / projectTasks.length) * 100,
+    );
+  };
 
-  // Hub slideshow
-  const [hubSlide, setHubSlide] = useState(0);
-  const hubCount = hubListings?.length ?? 0;
-  const nextSlide = () => setHubSlide((s) => (s + 1) % Math.max(1, hubCount));
-  const prevSlide = () => setHubSlide((s) => (s - 1 + Math.max(1, hubCount)) % Math.max(1, hubCount));
+  // Unified pulse: merge studio + hub items, sorted by recency
+  type PulseItem = {
+    kind: "studio" | "hub";
+    id: string;
+    title: string;
+    subtitle: string | null;
+    image: string | null;
+    href: string;
+    timestamp: string;
+    icon: any;
+  };
+  const pulseItems = useMemo<PulseItem[]>(() => {
+    const items: PulseItem[] = [];
+    (studios ?? []).forEach((s: any) => {
+      items.push({
+        kind: "studio",
+        id: `s-${s.id}`,
+        title: s.name,
+        subtitle: [s.city, s.country].filter(Boolean).join(", ") || "Studio Space",
+        image: s.cover_image_url ?? s.hero_image_url ?? null,
+        href: `/studios/${s.id}`,
+        timestamp: s.created_at ?? new Date().toISOString(),
+        icon: Building2,
+      });
+    });
+    (hubListings ?? []).forEach((l: any) => {
+      items.push({
+        kind: "hub",
+        id: `h-${l.id}`,
+        title: l.title,
+        subtitle: l.category ?? "Offering",
+        image: l.cover_url ?? l.image_url ?? null,
+        href: `/marketplace/${l.id}`,
+        timestamp: l.created_at,
+        icon: Sparkles,
+      });
+    });
+    return items
+      .filter((i) => pulseScope === "all" || (pulseScope === "studios" ? i.kind === "studio" : i.kind === "hub"))
+      .sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp))
+      .slice(0, 8);
+  }, [studios, hubListings, pulseScope]);
 
-  // Auto-advance slideshow
-  useEffect(() => {
-    if (hubCount <= 1) return;
-    const timer = setInterval(nextSlide, 5000);
-    return () => clearInterval(timer);
-  }, [hubCount]);
+  const handleNetworkSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = networkSearch.trim();
+    if (!q) return;
+    // Send searches into Hub by default — Hub owns discovery copy.
+    navigate(`/hub?q=${encodeURIComponent(q)}`);
+  };
 
-  const visibleSections = sectionOrder.filter((s) => !hiddenSections.includes(s));
-
-  // ── Section renderers ──
-
+  // ── Personal section renderers ──
   const renderProjectsSection = () => (
     <motion.section key="projects" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-display text-xl text-foreground">Recent Projects</h2>
-        <Link to="/projects" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-body transition-colors">
+        <Link
+          to="/projects"
+          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-body transition-colors"
+        >
           View all <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
@@ -320,13 +391,18 @@ const DashboardPage = () => {
               <FolderKanban className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground font-body mb-1">Manage creative work</p>
+              <p className="text-sm font-semibold text-foreground font-body mb-1">
+                Projects = the work that happens inside a Space
+              </p>
               <p className="text-xs text-muted-foreground font-body leading-relaxed">
-                Projects let you track milestones, set budgets, and collaborate with your team. Each completed milestone earns $RHOZE credits.
+                Step into a studio or jump into the Hub — every collaboration ends up
+                here as a project with milestones, budgets, and anchored deliverables.
               </p>
             </div>
           </div>
-          <Link to="/projects" className="btn-editorial text-xs">Start a Project <ArrowRight className="h-3 w-3" /></Link>
+          <Link to="/projects" className="btn-editorial text-xs">
+            Start a Project <ArrowRight className="h-3 w-3" />
+          </Link>
         </div>
       ) : (
         <div className="border border-border rounded-lg overflow-hidden divide-y divide-border">
@@ -334,19 +410,34 @@ const DashboardPage = () => {
             const progress = getProjectProgress(project.id);
             const teamCount = (collabCounts.get(project.id) || 0) + 1;
             return (
-              <Link key={project.id} to={`/projects/${project.id}`} className="flex items-center gap-4 bg-card p-4 hover:bg-muted/50 transition-colors group">
-                <div className="h-10 w-10 rounded-md shrink-0 flex items-center justify-center" style={{ background: project.cover_color ?? "hsl(var(--muted))" }}>
+              <Link
+                key={project.id}
+                to={`/projects/${project.id}`}
+                className="flex items-center gap-4 bg-card p-4 hover:bg-muted/50 transition-colors group"
+              >
+                <div
+                  className="h-10 w-10 rounded-md shrink-0 flex items-center justify-center"
+                  style={{ background: project.cover_color ?? "hsl(var(--muted))" }}
+                >
                   <FolderKanban className="h-4 w-4 text-primary-foreground/70" />
                 </div>
                 <div className="flex-1 min-w-0 space-y-1.5">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium text-foreground truncate group-hover:text-accent transition-colors font-body">{project.title}</p>
-                    <span className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-wider shrink-0">{project.status}</span>
+                    <p className="text-sm font-medium text-foreground truncate group-hover:text-accent transition-colors font-body">
+                      {project.title}
+                    </p>
+                    <span className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-wider shrink-0">
+                      {project.status}
+                    </span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Progress value={progress} className="h-1 flex-1" />
-                    <span className="text-[10px] text-muted-foreground shrink-0 font-body">{progress}%</span>
-                    <span className="text-[10px] text-muted-foreground shrink-0 font-body">{teamCount} {teamCount === 1 ? "member" : "members"}</span>
+                    <span className="text-[10px] text-muted-foreground shrink-0 font-body">
+                      {progress}%
+                    </span>
+                    <span className="text-[10px] text-muted-foreground shrink-0 font-body">
+                      {teamCount} {teamCount === 1 ? "member" : "members"}
+                    </span>
                   </div>
                 </div>
               </Link>
@@ -360,61 +451,48 @@ const DashboardPage = () => {
   const renderEventsSection = () => (
     <motion.section key="events" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display text-xl text-foreground">{showCalendar ? "Calendar" : "Upcoming Events"}</h2>
-        <div className="flex items-center gap-2">
-          <button onClick={() => handleCalendarToggle(!showCalendar)} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-body transition-colors">
-            {showCalendar ? <List className="h-3 w-3" /> : <CalendarDays className="h-3 w-3" />}
-            {showCalendar ? "List" : "Calendar"}
-          </button>
-          <Link to="/calendar" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-body transition-colors">
-            View all <ArrowRight className="h-3 w-3" />
-          </Link>
-        </div>
+        <h2 className="font-display text-xl text-foreground">Upcoming Events</h2>
+        <Link
+          to="/calendar"
+          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-body transition-colors"
+        >
+          View all <ArrowRight className="h-3 w-3" />
+        </Link>
       </div>
-      {showCalendar ? (
-        <div className="border border-border rounded-lg bg-card p-4">
-          <p className="text-sm font-medium text-foreground mb-3 font-body">{format(now, "MMMM yyyy")}</p>
-          <div className="grid grid-cols-7 gap-0">
-            {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
-              <div key={d} className="text-[10px] text-muted-foreground text-center py-1 font-body font-medium">{d}</div>
-            ))}
-            {calDays.map((day) => {
-              const isToday = isSameDay(day, now);
-              const dayEvents = allEvents?.filter((e) => isSameDay(new Date(e.start_time), day)) ?? [];
-              const isCurrentMonth = day.getMonth() === now.getMonth();
-              return (
-                <div key={day.toISOString()} className={`relative text-center py-1.5 text-xs font-body cursor-default ${isCurrentMonth ? "text-foreground" : "text-muted-foreground/40"} ${isToday ? "font-bold" : ""}`}>
-                  <span className={isToday ? "bg-primary text-primary-foreground rounded-full px-1.5 py-0.5" : ""}>{format(day, "d")}</span>
-                  {dayEvents.length > 0 && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-accent" />}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ) : events?.length === 0 ? (
+      {events?.length === 0 ? (
         <div className="border border-dashed border-primary/20 rounded-lg p-6 bg-primary/[0.02]">
           <div className="flex items-start gap-3 mb-4">
             <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <Calendar className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground font-body mb-1">Book studio time & schedule sessions</p>
+              <p className="text-sm font-semibold text-foreground font-body mb-1">
+                Schedule sessions with collaborators
+              </p>
               <p className="text-xs text-muted-foreground font-body leading-relaxed">
-                Use credits to book studios, schedule sessions with collaborators, and manage your creative calendar all in one place.
+                Book studio time, schedule sessions, and manage your creative calendar
+                all in one place.
               </p>
             </div>
           </div>
-          <Link to="/calendar" className="btn-editorial text-xs">Create Event <ArrowRight className="h-3 w-3" /></Link>
+          <Link to="/calendar" className="btn-editorial text-xs">
+            Create Event <ArrowRight className="h-3 w-3" />
+          </Link>
         </div>
       ) : (
         <div className="border border-border rounded-lg overflow-hidden divide-y divide-border">
           {events?.slice(0, 4).map((event) => (
             <div key={event.id} className="flex items-center gap-4 bg-card p-4">
-              <div className="h-10 w-10 rounded-md flex items-center justify-center text-primary-foreground font-display text-sm shrink-0" style={{ backgroundColor: event.color ?? "hsl(var(--primary))" }}>
+              <div
+                className="h-10 w-10 rounded-md flex items-center justify-center text-primary-foreground font-display text-sm shrink-0"
+                style={{ backgroundColor: event.color ?? "hsl(var(--primary))" }}
+              >
                 {format(new Date(event.start_time), "dd")}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate font-body">{event.title}</p>
+                <p className="text-sm font-medium text-foreground truncate font-body">
+                  {event.title}
+                </p>
                 <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5 font-body">
                   <Clock className="h-3 w-3" />
                   {format(new Date(event.start_time), "EEEE, MMM d · h:mm a")}
@@ -427,179 +505,6 @@ const DashboardPage = () => {
     </motion.section>
   );
 
-  // Deterministic gradient seeded from a string id
-  const gradientFor = (id: string) => {
-    let hash = 0;
-    for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
-    const h1 = Math.abs(hash) % 360;
-    const h2 = (h1 + 40) % 360;
-    return `linear-gradient(135deg, hsl(${h1} 70% 22% / 0.85), hsl(${h2} 65% 12% / 0.95))`;
-  };
-
-  const renderHubSection = () => {
-    const currentListing = hubListings?.[hubSlide];
-    const creatorProfile = currentListing ? hubProfileMap.get(currentListing.user_id) : null;
-    const isOwnListing = currentListing && user?.id === currentListing.user_id;
-    const allMissingCovers = hubListings?.every((l) => !l.cover_url && !l.image_url) ?? false;
-    const priceLabel = currentListing?.credits_price
-      ? `${currentListing.credits_price} ◊ $RHOZE`
-      : currentListing?.price
-      ? `$${Number(currentListing.price).toFixed(2)} ${currentListing.currency || "USD"}`
-      : null;
-    const excerpt = currentListing?.description?.trim() || null;
-    const categoryGlyph = (currentListing?.category || "R").charAt(0).toUpperCase();
-
-    return (
-      <motion.section key="hub" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-xl text-foreground">Hub Feed</h2>
-          <Link to="/creators" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-body transition-colors">
-            Explore <ArrowRight className="h-3 w-3" />
-          </Link>
-        </div>
-        {!hubListings || hubListings.length === 0 ? (
-          <div className="border border-dashed border-primary/20 rounded-lg p-6 bg-primary/[0.02]">
-            <div className="flex items-start gap-3 mb-4">
-              <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <Flame className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground font-body mb-1">Discover & earn in the Hub</p>
-                <p className="text-xs text-muted-foreground font-body leading-relaxed">
-                  The Creators Hub is where you post services, find talent, and browse listings. Every interaction — posting, reviewing, curating — earns $RHOZE.
-                </p>
-              </div>
-            </div>
-            <Link to="/creators" className="btn-editorial text-xs">Visit Hub <ArrowRight className="h-3 w-3" /></Link>
-          </div>
-        ) : (
-          <div className="relative border border-border rounded-lg bg-card overflow-hidden">
-            {/* Slideshow */}
-            <div className="relative h-44 sm:h-52 overflow-hidden">
-              <AnimatePresence mode="wait">
-                {currentListing && (
-                  <motion.div
-                    key={currentListing.id}
-                    initial={{ opacity: 0, x: 40 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -40 }}
-                    transition={{ duration: 0.3 }}
-                    className="absolute inset-0"
-                  >
-                    <Link
-                      to={`/marketplace/${currentListing.id}`}
-                      aria-label={`Open listing: ${currentListing.title}`}
-                      className="absolute inset-0 block group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
-                    >
-                      {(currentListing.cover_url || currentListing.image_url) ? (
-                        <img
-                          src={currentListing.cover_url || currentListing.image_url || ""}
-                          alt={currentListing.title}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                        />
-                      ) : (
-                        <div
-                          className="relative w-full h-full overflow-hidden transition-transform duration-500 group-hover:scale-[1.03]"
-                          style={{ background: gradientFor(currentListing.id) }}
-                        >
-                          <span
-                            className="absolute -right-4 -bottom-10 font-display font-bold text-foreground/[0.08] select-none leading-none"
-                            style={{ fontSize: "14rem" }}
-                          >
-                            {categoryGlyph}
-                          </span>
-                          <div
-                            className="absolute inset-0 opacity-[0.15] mix-blend-overlay pointer-events-none"
-                            style={{
-                              backgroundImage:
-                                "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
-                            }}
-                          />
-                        </div>
-                      )}
-                      {/* Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-5">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-wider bg-background/80 backdrop-blur-sm rounded-full px-2.5 py-0.5">
-                            {currentListing.category}
-                          </span>
-                          {priceLabel && (
-                            <span className="text-[10px] font-body font-bold text-primary bg-primary/10 rounded-full px-2.5 py-0.5">
-                              {priceLabel}
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="font-display text-lg font-bold text-foreground leading-snug line-clamp-1 group-hover:text-primary transition-colors">
-                          {currentListing.title}
-                        </h3>
-                        {excerpt && (
-                          <p className="text-xs text-muted-foreground font-body mt-1 line-clamp-1">{excerpt}</p>
-                        )}
-                        <div className="flex items-center justify-between gap-2 mt-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <div className="h-5 w-5 rounded-full bg-muted overflow-hidden shrink-0">
-                              {creatorProfile?.avatar_url ? (
-                                <img src={creatorProfile.avatar_url} alt="" className="h-full w-full object-cover" />
-                              ) : (
-                                <div className="h-full w-full flex items-center justify-center"><User className="h-3 w-3 text-muted-foreground" /></div>
-                              )}
-                            </div>
-                            <span className="text-xs text-muted-foreground font-body truncate">
-                              {creatorProfile?.display_name || "Rhozeland Creator"}
-                            </span>
-                          </div>
-                          {isOwnListing && !currentListing.cover_url && !currentListing.image_url && allMissingCovers && (
-                            <span className="text-[10px] font-body text-muted-foreground/70 italic shrink-0">Add a cover image</span>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Nav arrows — sit above the link to intercept clicks */}
-              {hubCount > 1 && (
-                <>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); prevSlide(); }}
-                    aria-label="Previous listing"
-                    className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background transition-colors z-20"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); nextSlide(); }}
-                    aria-label="Next listing"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background transition-colors z-20"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* Dots */}
-            {hubCount > 1 && (
-              <div className="flex items-center justify-center gap-1.5 py-3">
-                {hubListings?.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setHubSlide(i)}
-                    className={`h-1.5 rounded-full transition-all ${i === hubSlide ? "w-5 bg-primary" : "w-1.5 bg-muted-foreground/30"}`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </motion.section>
-    );
-  };
-
   const renderMessagesSection = () => (
     <motion.section key="messages" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
       <div className="flex items-center justify-between mb-4">
@@ -611,7 +516,10 @@ const DashboardPage = () => {
             </span>
           )}
         </h2>
-        <Link to="/messages" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-body transition-colors">
+        <Link
+          to="/messages"
+          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-body transition-colors"
+        >
           View all <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
@@ -622,13 +530,17 @@ const DashboardPage = () => {
               <MessageSquare className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground font-body mb-1">Connect with creators</p>
+              <p className="text-sm font-semibold text-foreground font-body mb-1">
+                Connect with creators
+              </p>
               <p className="text-xs text-muted-foreground font-body leading-relaxed">
-                Message collaborators, send quotes, and manage inquiries. Use the Network tab to discover new connections.
+                Message collaborators, send quotes, and manage inquiries.
               </p>
             </div>
           </div>
-          <Link to="/messages" className="btn-editorial text-xs">Open Inbox <ArrowRight className="h-3 w-3" /></Link>
+          <Link to="/messages" className="btn-editorial text-xs">
+            Open Inbox <ArrowRight className="h-3 w-3" />
+          </Link>
         </div>
       ) : (
         <div className="border border-border rounded-lg overflow-hidden divide-y divide-border">
@@ -642,19 +554,27 @@ const DashboardPage = () => {
               >
                 <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
                   {sender?.avatar_url ? (
-                    <img src={sender.avatar_url} alt="" className="h-full w-full object-cover rounded-full" />
+                    <img
+                      src={sender.avatar_url}
+                      alt=""
+                      className="h-full w-full object-cover rounded-full"
+                    />
                   ) : (
                     <User className="h-4 w-4 text-primary" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium text-foreground truncate font-body">{sender?.display_name || "Creator"}</span>
+                    <span className="text-sm font-medium text-foreground truncate font-body">
+                      {sender?.display_name || "Creator"}
+                    </span>
                     <span className="text-[10px] text-muted-foreground shrink-0 font-body">
                       {format(new Date(msg.created_at), "MMM d")}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground truncate font-body mt-0.5">{msg.content}</p>
+                  <p className="text-xs text-muted-foreground truncate font-body mt-0.5">
+                    {msg.content}
+                  </p>
                 </div>
                 <div className="h-2 w-2 rounded-full bg-primary shrink-0" />
               </Link>
@@ -668,167 +588,700 @@ const DashboardPage = () => {
   const sectionMap: Record<string, () => JSX.Element> = {
     projects: renderProjectsSection,
     events: renderEventsSection,
-    hub: renderHubSection,
     messages: renderMessagesSection,
   };
 
+  const visibleSections = sectionOrder.filter((s) => !hiddenSections.includes(s));
+
   return (
-    <div className="max-w-6xl mx-auto pb-24">
-      {/* Hero section */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative overflow-hidden rounded-lg mb-8">
-        <div className="absolute inset-0 grid-overlay pointer-events-none" />
-        <div className="absolute inset-0 overflow-hidden">
-          <div
-            className="iridescent-blob absolute -top-20 -right-20 w-[600px] h-[400px] rounded-full opacity-70"
-            style={{
-              background: "linear-gradient(135deg, hsl(280, 80%, 70%), hsl(320, 80%, 60%), hsl(30, 90%, 60%), hsl(175, 70%, 50%))",
-              filter: "blur(60px)",
-            }}
-          />
-        </div>
-        <div className="relative z-10 px-8 py-14 md:px-12 md:py-20">
-          <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-xs font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-4">
-            {user ? "Your Workspace" : "Welcome to Rhozeland"}
-          </motion.p>
-          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="font-display text-4xl md:text-5xl lg:text-6xl text-foreground leading-[1.1] mb-4">
-            {user ? (
-              <>{greeting()}{firstName ? "," : ""}<br />{firstName || "Creator"}</>
-            ) : (
-              <>Create. Earn.<br />Build Reputation.</>
-            )}
-          </motion.h1>
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="text-sm text-muted-foreground max-w-md mb-8 leading-relaxed">
-            {user ? (
-              <>
-                {activeProjects > 0
-                  ? `You have ${activeProjects} active project${activeProjects > 1 ? "s" : ""}`
-                  : "Start by creating a project or booking a studio"}
-                {(unreadCount ?? 0) > 0 && ` · ${unreadCount} unread message${(unreadCount ?? 0) > 1 ? "s" : ""}`}
-              </>
-            ) : (
-              "Explore studios, browse creative services, and discover talent. Sign up to unlock your full workspace."
-            )}
-          </motion.p>
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex items-center gap-3 flex-wrap">
-            {user ? (
-              <>
-                <Link to="/projects" className="btn-editorial">New Project <ArrowRight className="h-4 w-4" /></Link>
-                <Link to="/studios" className="inline-flex items-center gap-3 px-6 py-3 border border-dashed border-foreground/30 text-sm font-medium text-foreground hover:border-foreground transition-colors">
-                  Book a Studio <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link to="/creators" className="inline-flex items-center gap-3 px-6 py-3 border border-dashed border-foreground/30 text-sm font-medium text-foreground hover:border-foreground transition-colors">
-                  Creators Hub <ArrowRight className="h-4 w-4" />
-                </Link>
-              </>
-            ) : (
-              <Link to="/auth" className="btn-editorial">Get Started <ArrowRight className="h-4 w-4" /></Link>
-            )}
-          </motion.div>
-        </div>
+    <div className="max-w-6xl mx-auto pb-24 space-y-12">
+      {/* ─── Greeting strip ─────────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="pt-2"
+      >
+        <p className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-2">
+          {user ? "Your Spaces" : "Welcome to Rhozeland"}
+        </p>
+        <h1 className="font-display text-3xl sm:text-4xl md:text-5xl text-foreground leading-[1.1]">
+          {user ? (
+            <>
+              {greeting()}
+              {firstName ? ", " : " "}
+              <span className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                {firstName || "Creator"}
+              </span>
+            </>
+          ) : (
+            <>
+              Two networks.
+              <br />
+              <span className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                One creative space.
+              </span>
+            </>
+          )}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-3 max-w-xl">
+          {user
+            ? activeProjects > 0
+              ? `You have ${activeProjects} active project${activeProjects > 1 ? "s" : ""}${
+                  (unreadCount ?? 0) > 0
+                    ? ` · ${unreadCount} unread message${(unreadCount ?? 0) > 1 ? "s" : ""}`
+                    : ""
+                }.`
+              : "Step into a studio space, tune into the Hub — or open a new project."
+            : "Step into physical studios or tune into the digital Hub. Two doors into the same world."}
+        </p>
       </motion.div>
 
-      {/* Guest users see a platform overview instead of empty sections */}
-      {!user && <GuestDashboardPreview />}
+      {/* ════════════════════════════════════════════════════════════════
+          ACT 1 — Split-screen duo + shared search
+          Studios on the left (physical), Hub on the right (digital).
+          Equal weight. Mirrored language. Shared search above.
+          ════════════════════════════════════════════════════════════════ */}
+      <section>
+        <form onSubmit={handleNetworkSearch} className="relative max-w-2xl mx-auto mb-6">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={networkSearch}
+            onChange={(e) => setNetworkSearch(e.target.value)}
+            placeholder="Search Spaces — studios, people, offerings, works…"
+            className="pl-11 h-12 rounded-full bg-card/60 backdrop-blur border-border/60"
+          />
+        </form>
 
-      {user && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-[1px] bg-border mb-8 rounded-lg overflow-hidden">
-          {[
-            { icon: FolderKanban, label: "Active Projects", value: activeProjects, path: "/projects" },
-            { icon: MessageSquare, label: "Unread Messages", value: unreadCount ?? 0, path: "/messages" },
-            { icon: Calendar, label: "Upcoming Events", value: events?.length ?? 0, path: "/calendar" },
-            { icon: Zap, label: "Tasks Completed", value: `${completedTasks}/${totalTasks}`, path: "/projects" },
-          ].map((stat, i) => (
-            <Link key={stat.label} to={stat.path}>
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.05 }} className="bg-card p-6 hover:bg-muted/50 transition-colors cursor-pointer group">
-                <stat.icon className="h-5 w-5 text-muted-foreground mb-4 group-hover:text-foreground transition-colors" />
-                <p className="font-display text-3xl text-foreground">{stat.value}</p>
-                <p className="text-xs text-muted-foreground mt-1 font-body">{stat.label}</p>
-              </motion.div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* STUDIO SPACES — physical */}
+          <motion.div
+            initial={{ opacity: 0, x: -16 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Link
+              to="/studios"
+              className="group block relative overflow-hidden rounded-3xl border border-border/60 bg-card aspect-[4/5] sm:aspect-[5/4] md:aspect-[4/5]"
+            >
+              {/* Iridescent backdrop */}
+              <div className="absolute inset-0 opacity-80">
+                <div
+                  className="absolute -top-1/2 -left-1/4 w-[150%] h-[150%]"
+                  style={{
+                    background: `
+                      radial-gradient(ellipse 50% 40% at 30% 30%, hsl(220 70% 50% / 0.35) 0%, transparent 70%),
+                      radial-gradient(ellipse 40% 50% at 70% 70%, hsl(180 60% 45% / 0.3) 0%, transparent 70%)
+                    `,
+                  }}
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/30 to-transparent" />
+
+              {/* Content */}
+              <div className="relative h-full flex flex-col p-6 sm:p-8">
+                <div className="flex-1">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur px-2.5 py-1 mb-4">
+                    <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                    <span className="text-[10px] uppercase tracking-widest text-foreground font-medium">
+                      Physical Network
+                    </span>
+                  </div>
+                  <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-none mb-2">
+                    Studio
+                    <br />
+                    Spaces
+                  </h2>
+                  <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
+                    Step in. Real rooms, real gear, vetted hosts. Book by the hour or the day.
+                  </p>
+                </div>
+
+                {/* Live previews — first 3 studio thumbnails */}
+                <div className="flex -space-x-3 mb-4">
+                  {(studios ?? []).slice(0, 4).map((s: any) => (
+                    <div
+                      key={s.id}
+                      className="h-12 w-12 rounded-2xl border-2 border-background overflow-hidden bg-muted"
+                    >
+                      {s.cover_image_url || s.hero_image_url ? (
+                        <img
+                          src={s.cover_image_url ?? s.hero_image_url}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {(studios?.length ?? 0) > 4 && (
+                    <div className="h-12 w-12 rounded-2xl border-2 border-background bg-card flex items-center justify-center text-xs font-semibold">
+                      +{(studios?.length ?? 0) - 4}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {studios?.length ?? 0} space{(studios?.length ?? 0) === 1 ? "" : "s"} bookable
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-foreground group-hover:gap-2 transition-all">
+                    Step in <ArrowRight className="h-4 w-4" />
+                  </span>
+                </div>
+              </div>
             </Link>
-          ))}
-        </div>
-      )}
+          </motion.div>
 
-      {/* Studio sessions */}
-      {studioBookings && studioBookings.length > 0 && (
-        <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display text-xl text-foreground">Upcoming Sessions</h2>
-            <Link to="/studios" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-body transition-colors">
-              View all <ArrowRight className="h-3 w-3" />
+          {/* HUB — digital */}
+          <motion.div
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <Link
+              to="/hub"
+              className="group block relative overflow-hidden rounded-3xl border border-border/60 bg-card aspect-[4/5] sm:aspect-[5/4] md:aspect-[4/5]"
+            >
+              <div className="absolute inset-0 opacity-80">
+                <div
+                  className="absolute -top-1/2 -left-1/4 w-[150%] h-[150%]"
+                  style={{
+                    background: `
+                      radial-gradient(ellipse 50% 40% at 70% 30%, hsl(320 80% 60% / 0.35) 0%, transparent 70%),
+                      radial-gradient(ellipse 40% 50% at 30% 70%, hsl(30 90% 55% / 0.3) 0%, transparent 70%)
+                    `,
+                  }}
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/30 to-transparent" />
+
+              <div className="relative h-full flex flex-col p-6 sm:p-8">
+                <div className="flex-1">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur px-2.5 py-1 mb-4">
+                    <span className="h-1.5 w-1.5 rounded-full bg-pink-500 animate-pulse" />
+                    <span className="text-[10px] uppercase tracking-widest text-foreground font-medium">
+                      Digital Network
+                    </span>
+                  </div>
+                  <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-none mb-2">
+                    The
+                    <br />
+                    Hub
+                  </h2>
+                  <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
+                    Tune in. Conversations, offerings, opportunities, and verified Works — the
+                    pulse of the community.
+                  </p>
+                </div>
+
+                <div className="flex -space-x-3 mb-4">
+                  {(people ?? []).slice(0, 4).map((p: any) => (
+                    <div
+                      key={p.user_id}
+                      className="h-12 w-12 rounded-full border-2 border-background overflow-hidden bg-muted"
+                    >
+                      {p.avatar_url ? (
+                        <img src={p.avatar_url} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-xs font-bold">
+                          {(p.display_name || p.username || "?")[0].toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {(people?.length ?? 0) > 4 && (
+                    <div className="h-12 w-12 rounded-full border-2 border-background bg-card flex items-center justify-center text-xs font-semibold">
+                      +{(people?.length ?? 0) - 4}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {people?.length ?? 0} creator{(people?.length ?? 0) === 1 ? "" : "s"} active
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-foreground group-hover:gap-2 transition-all">
+                    Tune in <ArrowRight className="h-4 w-4" />
+                  </span>
+                </div>
+              </div>
+            </Link>
+          </motion.div>
+        </div>
+
+        {/* Caption: how Spaces lead into Projects */}
+        <p className="text-center text-xs text-muted-foreground/70 mt-4 italic">
+          Both networks lead to{" "}
+          <Link to="/projects" className="text-foreground hover:underline not-italic font-medium">
+            Projects
+          </Link>{" "}
+          — the work that happens once you're inside a space.
+        </p>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════
+          ACT 2 — Cinematic stacked previews
+          Two full-width editorial blocks. One per network.
+          ════════════════════════════════════════════════════════════════ */}
+      {(studios ?? []).length > 0 && (
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+        >
+          <div className="flex items-end justify-between mb-5">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 mb-1.5">
+                Spaces near you
+              </p>
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground">
+                Studios accepting bookings
+              </h2>
+            </div>
+            <Link
+              to="/studios"
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-body transition-colors"
+            >
+              See all <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-[1px] bg-border rounded-lg overflow-hidden">
-            {studioBookings.map((booking: any) => (
-              <Link key={booking.id} to={`/studios/${booking.studio_id}`} className="bg-card p-5 hover:bg-muted/50 transition-colors group">
-                <Building2 className="h-5 w-5 text-muted-foreground mb-3" />
-                <p className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors truncate font-body">{booking.studios?.name || "Studio"}</p>
-                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1 font-body">
-                  <Clock className="h-3 w-3" />
-                  {format(new Date(booking.start_time), "MMM d · h:mm a")}
-                </p>
-              </Link>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {(studios ?? []).slice(0, 4).map((s: any, i: number) => (
+              <motion.div
+                key={s.id}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.06 }}
+              >
+                <Link
+                  to={`/studios/${s.id}`}
+                  className="group block aspect-[4/5] rounded-2xl overflow-hidden border border-border/50 bg-muted relative"
+                >
+                  {s.cover_image_url || s.hero_image_url ? (
+                    <img
+                      src={s.cover_image_url ?? s.hero_image_url}
+                      alt={s.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500/10 to-cyan-500/10">
+                      <Building2 className="h-10 w-10 text-muted-foreground/40" />
+                    </div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+                    <p className="text-sm font-semibold text-white truncate">{s.name}</p>
+                    {s.city && (
+                      <p className="text-[10px] text-white/70 truncate flex items-center gap-1 mt-0.5">
+                        <MapPin className="h-2.5 w-2.5" />
+                        {s.city}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              </motion.div>
             ))}
           </div>
         </motion.section>
       )}
 
-      {/* Customizer toggle — only for logged-in users */}
-      {user && (
-        <div className="flex items-center justify-between mb-4">
-          <div />
-          <button onClick={() => setShowCustomizer(!showCustomizer)} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 font-body transition-colors">
-            <Settings2 className="h-3.5 w-3.5" />
-            Customize
-          </button>
-        </div>
+      {(hubListings ?? []).length > 0 && (
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+        >
+          <div className="flex items-end justify-between mb-5">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 mb-1.5">
+                What's moving in the Hub
+              </p>
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground">
+                Fresh offerings & conversations
+              </h2>
+            </div>
+            <Link
+              to="/hub"
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-body transition-colors"
+            >
+              See all <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {(hubListings ?? []).slice(0, 6).map((l: any, i: number) => (
+              <motion.div
+                key={l.id}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.05 }}
+              >
+                <Link
+                  to={`/marketplace/${l.id}`}
+                  className="group block aspect-[4/3] rounded-2xl overflow-hidden border border-border/50 bg-muted relative"
+                >
+                  {l.cover_url || l.image_url ? (
+                    <img
+                      src={l.cover_url ?? l.image_url}
+                      alt={l.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-500/10 to-amber-500/10">
+                      <Sparkles className="h-10 w-10 text-muted-foreground/40" />
+                    </div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+                    <p className="text-[10px] uppercase tracking-wider text-white/70 mb-0.5">
+                      {l.category}
+                    </p>
+                    <p className="text-sm font-semibold text-white truncate">{l.title}</p>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </motion.section>
       )}
 
-      {/* Customizer panel */}
-      <AnimatePresence>
-        {showCustomizer && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mb-6 p-4 rounded-lg border border-border bg-card overflow-hidden"
-          >
-            <p className="text-sm font-medium text-foreground mb-1 font-body">Customize Dashboard</p>
-            <p className="text-xs text-muted-foreground mb-4 font-body">Drag to reorder · Toggle visibility</p>
-            <Reorder.Group axis="y" values={sectionOrder} onReorder={handleReorder} className="space-y-2">
-              {sectionOrder.map((section) => {
-                const meta = SECTION_META[section];
-                if (!meta) return null;
-                const isHidden = hiddenSections.includes(section);
-                const SectionIcon = meta.icon;
-                return (
-                  <Reorder.Item
-                    key={section}
-                    value={section}
-                    className="flex items-center gap-3 p-3 rounded-md border border-border bg-background cursor-grab active:cursor-grabbing"
-                  >
-                    <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <SectionIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="text-sm font-body font-medium text-foreground flex-1">{meta.label}</span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); toggleSection(section); }}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {isHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </Reorder.Item>
-                );
-              })}
-            </Reorder.Group>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* ════════════════════════════════════════════════════════════════
+          ACT 3 — Unified pulse feed (toggle: All / Studios / Hub)
+          ════════════════════════════════════════════════════════════════ */}
+      {pulseItems.length > 0 && (
+        <section>
+          <div className="flex items-end justify-between mb-5 flex-wrap gap-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 mb-1.5">
+                Live across both networks
+              </p>
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
+                <Flame className="h-6 w-6 text-primary" />
+                The Pulse
+              </h2>
+            </div>
+            <div className="inline-flex items-center gap-1 rounded-full bg-card border border-border/60 p-1">
+              {(["all", "studios", "hub"] as const).map((scope) => (
+                <button
+                  key={scope}
+                  type="button"
+                  onClick={() => setPulseScope(scope)}
+                  className={`px-3 py-1 rounded-full text-[11px] font-medium uppercase tracking-wider transition-all ${
+                    pulseScope === scope
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {scope === "all" ? "All" : scope === "studios" ? "Studios" : "Hub"}
+                </button>
+              ))}
+            </div>
+          </div>
 
-      {/* Dynamic sections — 2-column grid (auth only) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {pulseItems.map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                >
+                  <Link
+                    to={item.href}
+                    className="group block rounded-2xl border border-border/60 bg-card hover:border-foreground/30 transition-all overflow-hidden"
+                  >
+                    <div className="aspect-video bg-muted relative">
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt=""
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Icon className="h-8 w-8 text-muted-foreground/40" />
+                        </div>
+                      )}
+                      <span
+                        className={`absolute top-2 left-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider backdrop-blur ${
+                          item.kind === "studio"
+                            ? "bg-blue-500/90 text-white"
+                            : "bg-pink-500/90 text-white"
+                        }`}
+                      >
+                        <Icon className="h-2.5 w-2.5" />
+                        {item.kind === "studio" ? "Studio" : "Hub"}
+                      </span>
+                    </div>
+                    <div className="p-3">
+                      <p className="text-sm font-semibold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                        {item.title}
+                      </p>
+                      {item.subtitle && (
+                        <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
+                          {item.subtitle}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════
+          ACT 4 — Map-meets-grid: physical locations + digital faces
+          (Lightweight: location list now, real map can be plugged in later
+          via Mapbox/Maplibre without changing this component's contract.)
+          ════════════════════════════════════════════════════════════════ */}
+      {((studios ?? []).length > 0 || (people ?? []).length > 0) && (
+        <section>
+          <div className="mb-5">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 mb-1.5">
+              Where & who
+            </p>
+            <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground">
+              Spaces by city · People in the Hub
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Left: cities list (acts as a stand-in for a map) */}
+            <div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
+              <div className="px-4 py-3 border-b border-border/60 flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-blue-500" />
+                <span className="text-sm font-semibold text-foreground">Cities with studios</span>
+              </div>
+              <div className="divide-y divide-border/60 max-h-80 overflow-y-auto">
+                {Object.entries(
+                  (studios ?? []).reduce<Record<string, any[]>>((acc, s: any) => {
+                    const key = s.city || "Other";
+                    (acc[key] ??= []).push(s);
+                    return acc;
+                  }, {}),
+                ).map(([city, list]) => (
+                  <Link
+                    key={city}
+                    to={`/studios?city=${encodeURIComponent(city)}`}
+                    className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-9 w-9 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                        <Building2 className="h-4 w-4 text-blue-500" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{city}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {list.length} space{list.length === 1 ? "" : "s"}
+                        </p>
+                      </div>
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: people grid */}
+            <div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
+              <div className="px-4 py-3 border-b border-border/60 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-pink-500" />
+                  <span className="text-sm font-semibold text-foreground">In the Hub</span>
+                </div>
+                <Link
+                  to="/hub"
+                  className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1"
+                >
+                  See all <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 p-3">
+                {(people ?? []).slice(0, 8).map((p: any) => (
+                  <Link
+                    key={p.user_id}
+                    to={`/profiles/${p.user_id}`}
+                    className="flex flex-col items-center text-center p-2 rounded-xl hover:bg-muted/50 transition-colors group"
+                  >
+                    <div className="h-12 w-12 rounded-full bg-muted overflow-hidden mb-1.5 group-hover:ring-2 group-hover:ring-pink-500/40 transition-all">
+                      {p.avatar_url ? (
+                        <img src={p.avatar_url} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-xs font-bold">
+                          {(p.display_name || p.username || "?")[0].toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[11px] font-medium text-foreground line-clamp-1 w-full">
+                      {p.display_name || p.username || "Anon"}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Guests stop here (preview shown above already covers the personal view) */}
+      {!user && <GuestDashboardPreview />}
+
+      {/* ─── Personal stat strip + sections (auth only) ─────────────── */}
       {user && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {visibleSections.map((key) => sectionMap[key]?.())}
-        </div>
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-[1px] bg-border rounded-lg overflow-hidden">
+            {[
+              {
+                icon: FolderKanban,
+                label: "Active Projects",
+                value: activeProjects,
+                path: "/projects",
+              },
+              {
+                icon: MessageSquare,
+                label: "Unread Messages",
+                value: unreadCount ?? 0,
+                path: "/messages",
+              },
+              {
+                icon: Calendar,
+                label: "Upcoming Events",
+                value: events?.length ?? 0,
+                path: "/calendar",
+              },
+              {
+                icon: Zap,
+                label: "Tasks Completed",
+                value: `${completedTasks}/${totalTasks}`,
+                path: "/projects",
+              },
+            ].map((stat, i) => (
+              <Link key={stat.label} to={stat.path}>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.05 * i }}
+                  className="bg-card p-6 hover:bg-muted/50 transition-colors cursor-pointer group"
+                >
+                  <stat.icon className="h-5 w-5 text-muted-foreground mb-4 group-hover:text-foreground transition-colors" />
+                  <p className="font-display text-3xl text-foreground">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground mt-1 font-body">{stat.label}</p>
+                </motion.div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Studio sessions */}
+          {studioBookings && studioBookings.length > 0 && (
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-display text-xl text-foreground">Upcoming Sessions</h2>
+                <Link
+                  to="/studios"
+                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-body transition-colors"
+                >
+                  View all <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-[1px] bg-border rounded-lg overflow-hidden">
+                {studioBookings.map((booking: any) => (
+                  <Link
+                    key={booking.id}
+                    to={`/studios/${booking.studio_id}`}
+                    className="bg-card p-5 hover:bg-muted/50 transition-colors group"
+                  >
+                    <Building2 className="h-5 w-5 text-muted-foreground mb-3" />
+                    <p className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors truncate font-body">
+                      {booking.studios?.name || "Studio"}
+                    </p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1 font-body">
+                      <Clock className="h-3 w-3" />
+                      {format(new Date(booking.start_time), "MMM d · h:mm a")}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Customizer toggle */}
+          <div className="flex items-center justify-end">
+            <button
+              onClick={() => setShowCustomizer(!showCustomizer)}
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 font-body transition-colors"
+            >
+              <Settings2 className="h-3.5 w-3.5" />
+              Customize sections
+            </button>
+          </div>
+
+          <AnimatePresence>
+            {showCustomizer && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="p-4 rounded-lg border border-border bg-card overflow-hidden"
+              >
+                <p className="text-sm font-medium text-foreground mb-1 font-body">
+                  Customize personal sections
+                </p>
+                <p className="text-xs text-muted-foreground mb-4 font-body">
+                  Drag to reorder · Toggle visibility
+                </p>
+                <Reorder.Group
+                  axis="y"
+                  values={sectionOrder}
+                  onReorder={handleReorder}
+                  className="space-y-2"
+                >
+                  {sectionOrder.map((section) => {
+                    const meta = SECTION_META[section];
+                    if (!meta) return null;
+                    const isHidden = hiddenSections.includes(section);
+                    const SectionIcon = meta.icon;
+                    return (
+                      <Reorder.Item
+                        key={section}
+                        value={section}
+                        className="flex items-center gap-3 p-3 rounded-md border border-border bg-background cursor-grab active:cursor-grabbing"
+                      >
+                        <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <SectionIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="text-sm font-body font-medium text-foreground flex-1">
+                          {meta.label}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleSection(section);
+                          }}
+                          className="text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {isHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </Reorder.Item>
+                    );
+                  })}
+                </Reorder.Group>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {visibleSections.map((key) => sectionMap[key]?.())}
+          </div>
+        </>
       )}
     </div>
   );
