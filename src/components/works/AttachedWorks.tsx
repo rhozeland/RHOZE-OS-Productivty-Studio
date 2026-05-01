@@ -205,6 +205,93 @@ const AttachedWorks = ({
       }),
   });
 
+  // Inline file → fingerprint → register Work → auto-attach.
+  // Mirrors the WorksPage upload but skips the round-trip to /works.
+  const handleUploadFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setUploadFile(f);
+    setContentHash(null);
+    if (!uploadTitle) setUploadTitle(f.name.replace(/\.[^.]+$/, ""));
+    setHashing(true);
+    try {
+      const hash = await computeContentHash(f);
+      setContentHash(hash);
+    } catch (err) {
+      toast.error("Could not hash file", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    } finally {
+      setHashing(false);
+    }
+  };
+
+  const uploadMutation = useMutation({
+    mutationFn: async () => {
+      if (!user || !uploadFile || !contentHash || !uploadTitle.trim()) {
+        throw new Error("File and title required");
+      }
+      const safeName = uploadFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `${user.id}/works/${Date.now()}_${safeName}`;
+      const { error: upErr } = await supabase.storage
+        .from("flow-uploads")
+        .upload(path, uploadFile, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: uploadFile.type || undefined,
+        });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("flow-uploads").getPublicUrl(path);
+
+      const { data: work, error: workErr } = await supabase
+        .from("works")
+        .insert({
+          user_id: user.id,
+          title: uploadTitle.trim(),
+          kind: inferWorkKind(uploadFile.type),
+          content_hash: contentHash,
+          file_url: pub.publicUrl,
+          file_name: uploadFile.name,
+          mime_type: uploadFile.type || null,
+          file_size: uploadFile.size,
+          visibility: uploadVisibility,
+        })
+        .select("id")
+        .single();
+      if (workErr) throw workErr;
+
+      const { error: attachErr } = await supabase.from("work_attachments").insert({
+        work_id: work.id,
+        target_type: targetType,
+        target_id: targetId,
+        attached_by: user.id,
+        role: uploadRole,
+      });
+      if (attachErr) throw attachErr;
+    },
+    onSuccess: () => {
+      toast.success("Fingerprinted & attached", {
+        description: "Anchor it on Solana from Works when you're ready.",
+      });
+      setUploadOpen(false);
+      setUploadFile(null);
+      setUploadTitle("");
+      setContentHash(null);
+      queryClient.invalidateQueries({
+        queryKey: ["work-attachments", targetType, targetId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["works-for-attach", user?.id] });
+    },
+    onError: (e: unknown) =>
+      toast.error("Could not register file", {
+        description: e instanceof Error ? e.message : "Unknown error",
+      }),
+  });
+
+  const canUpload =
+    !!uploadFile && !!contentHash && !!uploadTitle.trim() && !hashing && !uploadMutation.isPending;
+
+
   return (
     <section className="surface-card p-4 sm:p-5 space-y-3">
       <header className="flex items-center justify-between gap-2">
