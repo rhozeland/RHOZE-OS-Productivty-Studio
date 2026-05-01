@@ -13,7 +13,7 @@
  * Data source: `coin_trades` (publicly readable). Uses recharts
  * (already a dep).
  */
-import { useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useMemo, useState, type KeyboardEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Area,
