@@ -830,7 +830,12 @@ const DashboardPage = () => {
           ACT 2 — Cinematic stacked previews
           Two full-width editorial blocks. One per network.
           ════════════════════════════════════════════════════════════════ */}
-      {(studios ?? []).length > 0 && (
+      {(() => {
+        const studiosWithImages = (studios ?? []).filter(
+          (s: any) => s.cover_image_url || s.hero_image_url,
+        );
+        if (studiosWithImages.length === 0) return null;
+        return (
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -853,7 +858,7 @@ const DashboardPage = () => {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {(studios ?? []).slice(0, 4).map((s: any, i: number) => (
+            {studiosWithImages.slice(0, 4).map((s: any, i: number) => (
               <motion.div
                 key={s.id}
                 initial={{ opacity: 0, y: 16 }}
@@ -865,18 +870,12 @@ const DashboardPage = () => {
                   to={`/studios/${s.id}`}
                   className="group block aspect-[4/5] rounded-2xl overflow-hidden border border-border/50 bg-muted relative"
                 >
-                  {s.cover_image_url || s.hero_image_url ? (
-                    <img
-                      src={s.cover_image_url ?? s.hero_image_url}
-                      alt={s.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500/10 to-cyan-500/10">
-                      <Building2 className="h-10 w-10 text-muted-foreground/40" />
-                    </div>
-                  )}
+                  <img
+                    src={s.cover_image_url ?? s.hero_image_url}
+                    alt={s.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    loading="lazy"
+                  />
                   <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
                     <p className="text-sm font-semibold text-white truncate">{s.name}</p>
                     {s.city && (
@@ -891,7 +890,8 @@ const DashboardPage = () => {
             ))}
           </div>
         </motion.section>
-      )}
+        );
+      })()}
 
       {(hubListings ?? []).length > 0 && (
         <motion.section
