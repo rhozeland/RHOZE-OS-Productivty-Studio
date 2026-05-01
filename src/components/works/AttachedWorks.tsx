@@ -307,12 +307,110 @@ const AttachedWorks = ({
           )}
         </div>
         {canManage && (
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="outline" className="gap-1.5 h-8">
-                <Plus className="h-3.5 w-3.5" /> Link work
-              </Button>
-            </DialogTrigger>
+          <div className="flex items-center gap-2">
+            {/* Quick fingerprint-and-attach: upload a file directly here */}
+            <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="gap-1.5 h-8 rounded-full">
+                  <Upload className="h-3.5 w-3.5" /> Fingerprint a file
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Fingerprint &amp; attach a file</DialogTitle>
+                  <DialogDescription>
+                    Hashed in your browser, registered as a Work, and linked
+                    to this {targetType}. Anchor it on Solana from the Works
+                    page when you're ready.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="att-file">File</Label>
+                    <Input id="att-file" type="file" onChange={handleUploadFileChange} />
+                    {uploadFile && (
+                      <p className="text-xs text-muted-foreground">
+                        {formatFileSize(uploadFile.size)}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="att-title">Title</Label>
+                    <Input
+                      id="att-title"
+                      value={uploadTitle}
+                      onChange={(e) => setUploadTitle(e.target.value)}
+                      placeholder="Untitled"
+                      maxLength={140}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label>Role</Label>
+                      <Select value={uploadRole} onValueChange={setUploadRole}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {ROLES.map((r) => (
+                            <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Visibility</Label>
+                      <Select
+                        value={uploadVisibility}
+                        onValueChange={(v) => setUploadVisibility(v as "public" | "private")}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="private">Private</SelectItem>
+                          <SelectItem value="public">Public</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {(hashing || contentHash) && (
+                    <div className="rounded-md bg-muted/40 px-3 py-2 text-[11px] font-mono text-muted-foreground flex items-center gap-2">
+                      <Fingerprint className="h-3.5 w-3.5 shrink-0" />
+                      {hashing ? (
+                        <span className="flex items-center gap-1.5">
+                          <Loader2 className="h-3 w-3 animate-spin" /> Computing SHA-256…
+                        </span>
+                      ) : (
+                        <span className="truncate">
+                          sha256:{contentHash && shortHash(contentHash, 10, 10)}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <DialogFooter>
+                  <Button variant="ghost" onClick={() => setUploadOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={() => uploadMutation.mutate()} disabled={!canUpload}>
+                    {uploadMutation.isPending && (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    )}
+                    Register &amp; attach
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Existing: link a Work the user already registered */}
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" className="gap-1.5 h-8">
+                  <Plus className="h-3.5 w-3.5" /> Link existing
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-sm">
               <DialogHeader>
                 <DialogTitle>Link a work</DialogTitle>
