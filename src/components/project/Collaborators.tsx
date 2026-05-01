@@ -128,8 +128,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
   const profileMap = new Map(collabProfiles?.map((p: any) => [p.user_id, p]) ?? []);
 
   const roleColors: Record<string, string> = {
-    viewer: "bg-secondary text-secondary-foreground",
-    editor: "bg-primary/10 text-primary",
+    member: "bg-secondary text-secondary-foreground",
     admin: "bg-amber-500/10 text-amber-600",
   };
 
