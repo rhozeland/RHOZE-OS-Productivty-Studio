@@ -97,6 +97,22 @@ const StudioDetailPage = () => {
     enabled: !!id,
   });
 
+  // Coins tied to this space — surfaced only on the space detail page.
+  // Currently scoped to launches by the studio owner (the host's Verified IP coins).
+  const { data: spaceCoins } = useQuery({
+    queryKey: ["studio-detail-coins", studio?.owner_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("coin_launches")
+        .select("id, name, ticker, image_url, status, real_sol_reserves, graduation_sol_target")
+        .eq("creator_id", studio!.owner_id)
+        .order("created_at", { ascending: false })
+        .limit(6);
+      return (data as any[]) ?? [];
+    },
+    enabled: !!studio?.owner_id,
+  });
+
   const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
   if (isLoading) {
