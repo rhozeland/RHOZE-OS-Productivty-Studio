@@ -629,11 +629,14 @@ const DashboardPage = () => {
             <>
               {greeting()},{" "}
               <span
-                className="inline-block bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent"
+                className="inline-block"
                 style={{
+                  backgroundImage:
+                    "linear-gradient(to right, hsl(330 81% 60%), hsl(292 84% 61%), hsl(38 92% 50%))",
                   WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  color: "transparent",
                 }}
               >
                 {firstName}.
@@ -643,11 +646,14 @@ const DashboardPage = () => {
             <>
               Two networks.{" "}
               <span
-                className="inline-block bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent"
+                className="inline-block"
                 style={{
+                  backgroundImage:
+                    "linear-gradient(to right, hsl(330 81% 60%), hsl(292 84% 61%), hsl(38 92% 50%))",
                   WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  color: "transparent",
                 }}
               >
                 One creative space.
