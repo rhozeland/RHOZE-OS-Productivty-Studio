@@ -119,6 +119,8 @@ const LaunchpadPage = () => {
         <LaunchpadModeBanner />
       </header>
 
+      <LaunchpadEarnPanel />
+
       <Tabs defaultValue="live">
         <TabsList>
           <TabsTrigger value="live" className="gap-1.5"><Flame className="h-3.5 w-3.5" /> Live</TabsTrigger>
