@@ -937,9 +937,7 @@ const CalendarPage = () => {
           resetDrag();
           if (!searchParams.get("service")) setSelectedService("");
           setEventType(null);
-          setEventTitle("");
-          setSelectedProject("");
-          setBookingNotes("");
+          resetEventForm();
           setPaymentMethod("credits");
           setSearchParams({}, { replace: true });
         }
@@ -948,7 +946,13 @@ const CalendarPage = () => {
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display">
-              {!eventType ? "What would you like to do?" : eventType === "studio" ? "Book a Studio Session" : eventType === "project" ? "Schedule Project Session" : "Set a Reminder"}
+              {!eventType
+                ? "What would you like to do?"
+                : eventType === "studio"
+                ? "Book a Studio Session"
+                : eventType === "project"
+                ? (editingEventId ? "Edit Project Session" : "Schedule Project Session")
+                : (editingEventId ? "Edit Reminder" : "Set a Reminder")}
             </DialogTitle>
           </DialogHeader>
 
