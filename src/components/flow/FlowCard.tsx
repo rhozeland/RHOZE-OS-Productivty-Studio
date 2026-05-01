@@ -110,9 +110,15 @@ interface FlowCardProps {
    * renders a skeleton placeholder instead of a flash of "Unknown".
    */
   profilesLoading?: boolean;
+  /**
+   * If a coin already exists for this Flow item's underlying Verified IP
+   * work, pass it in to render the "$TICKER → speculate" pill. Lookup is
+   * batched at the page level via `useFlowCoinsByWork` so cards stay cheap.
+   */
+  coin?: { id: string; ticker: string } | null;
 }
 
-const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner, isAdmin, profilesLoading }: FlowCardProps) => {
+const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner, isAdmin, profilesLoading, coin }: FlowCardProps) => {
   const navigate = useNavigate();
   const [imageEnlarged, setImageEnlarged] = useState(false);
   const [verifyOpen, setVerifyOpen] = useState(false);
