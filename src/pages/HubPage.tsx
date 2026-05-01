@@ -1,20 +1,25 @@
 /**
- * HubPage — Rhozeland's editorial discovery surface.
+ * HubPage — the digital network in Rhozeland's "Spaces" model.
  *
- * Replaces /marketplace, /flow, and /creators as a top-level destination.
+ * Rhozeland v5 pivot ("Spaces"):
+ *   Hub = the *digital* space. Studios = the *physical* space.
+ *   Hub no longer contains "storefronts" or a "Physical" rail — that lives
+ *   in /studios. Hub now organizes around four lanes:
  *
- * Layout:
- *   1. Hero — "The Hub" wordmark + intent line.
- *   2. Discovery feed (top) — recent flow_items rendered as an editorial
- *      masonry. Acts as inspiration / brand drops surface.
- *   3. Storefronts grid (below) — marketplace_listings grouped by creator,
- *      rendered as gradient cards. The actual marketplace.
+ *     1. Conversations  — Flow drops + community pulse
+ *     2. Offerings      — services & digital goods (renamed from storefronts)
+ *     3. Opportunities  — open calls, briefs, gigs, collabs
+ *     4. Works          — anchored creative IP browsable as a feed
  *
- * No DB schema changes — this is purely a new page that reuses existing
- * tables. Legacy /marketplace, /flow, /creators routes redirect here.
+ * No DB schema changes — Offerings reuses `marketplace_listings`
+ * (filtered to service/digital/collaboration), Opportunities reuses the
+ * `project_request` listing type, and Works reuses `contribution_proofs`
+ * with a `solana_signature` (anchored).
+ *
+ * URL: ?q=... pre-fills search · ?lane=... pre-selects tab.
  */
-import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,582 +31,534 @@ import {
   Search,
   Sparkles,
   Plus,
-  Store,
-  ShoppingBag,
-  ExternalLink,
   Briefcase,
-  Handshake,
+  Megaphone,
+  MessageCircle,
+  Shield,
   Flame,
-  TrendingUp,
-  Building2,
-  Radio,
-  Users,
-  MapPin,
+  ArrowRight,
 } from "lucide-react";
 import ListingCard from "@/components/marketplace/ListingCard";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
+import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 
-type IntentKey = "all" | "service" | "project_request" | "collaboration" | "digital_product" | "physical_product";
+type Lane = "conversations" | "offerings" | "opportunities" | "works";
 
-const INTENTS: { key: IntentKey; label: string; icon: typeof Briefcase }[] = [
-  { key: "all", label: "Everything", icon: Sparkles },
-  { key: "service", label: "Services", icon: Briefcase },
-  { key: "project_request", label: "Gigs", icon: ShoppingBag },
-  { key: "collaboration", label: "Collabs", icon: Handshake },
-  { key: "digital_product", label: "Digital", icon: Store },
-  { key: "physical_product", label: "Physical", icon: Store },
+const LANES: { key: Lane; label: string; icon: typeof Briefcase; tagline: string }[] = [
+  {
+    key: "conversations",
+    label: "Conversations",
+    icon: MessageCircle,
+    tagline: "What the community is dropping right now.",
+  },
+  {
+    key: "offerings",
+    label: "Offerings",
+    icon: Briefcase,
+    tagline: "Services & digital goods from creators.",
+  },
+  {
+    key: "opportunities",
+    label: "Opportunities",
+    icon: Megaphone,
+    tagline: "Open calls, briefs, paid gigs, and collabs.",
+  },
+  {
+    key: "works",
+    label: "Works",
+    icon: Shield,
+    tagline: "Anchored creative IP — verified on Solana.",
+  },
 ];
 
 const HubPage = () => {
   const { user } = useAuth();
   const { requireAuth } = useAuthGate();
   const navigate = useNavigate();
-  const [intent, setIntent] = useState<IntentKey>("all");
-  const [search, setSearch] = useState("");
+  const [params, setParams] = useSearchParams();
+
+  const initialLane = (params.get("lane") as Lane) || "conversations";
+  const [lane, setLane] = useState<Lane>(initialLane);
+  const [search, setSearch] = useState(params.get("q") ?? "");
   const [createOpen, setCreateOpen] = useState(false);
 
-  // ─── Discovery feed (Flow-style top section) ───────────────────────────
+  // Keep URL in sync (so back-button + sharing land on the same lane)
+  useEffect(() => {
+    const next = new URLSearchParams(params);
+    next.set("lane", lane);
+    if (search.trim()) next.set("q", search.trim());
+    else next.delete("q");
+    setParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lane, search]);
+
+  // ─── Conversations: Flow feed ───────────────────────────────────────
   const { data: flowItems, isLoading: loadingFlow } = useQuery({
-    queryKey: ["hub-flow-feed"],
+    queryKey: ["hub-conversations", search],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("flow_items")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(12);
+        .limit(18);
+      if (search.trim()) {
+        const term = search.trim();
+        q = q.or(`title.ilike.%${term}%,description.ilike.%${term}%,category.ilike.%${term}%`);
+      }
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
+    enabled: lane === "conversations",
   });
 
-  // ─── Storefronts grid ──────────────────────────────────────────────────
-  const { data: listings, isLoading: loadingListings } = useQuery({
-    queryKey: ["hub-listings", intent, search],
+  // ─── Offerings: services + digital goods + collaboration ─────────────
+  const { data: offerings, isLoading: loadingOfferings } = useQuery({
+    queryKey: ["hub-offerings", search],
     queryFn: async () => {
       let q = supabase
         .from("marketplace_listings")
         .select("*")
         .eq("is_active", true)
-        .order("created_at", { ascending: false });
-      if (intent !== "all") q = q.eq("listing_type", intent);
+        .in("listing_type", ["service", "digital_product", "collaboration"])
+        .order("created_at", { ascending: false })
+        .limit(60);
       if (search.trim()) {
         const term = search.trim();
-        q = q.or(
-          `title.ilike.%${term}%,description.ilike.%${term}%,category.ilike.%${term}%`,
-        );
+        q = q.or(`title.ilike.%${term}%,description.ilike.%${term}%,category.ilike.%${term}%`);
       }
-      const { data, error } = await q.limit(60);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
+    enabled: lane === "offerings",
   });
 
-  const listingIds = useMemo(() => listings?.map((l: any) => l.id) ?? [], [listings]);
-
-  const { data: allMedia } = useQuery({
-    queryKey: ["hub-listing-media", listingIds],
+  const offeringIds = useMemo(() => offerings?.map((l: any) => l.id) ?? [], [offerings]);
+  const { data: offeringMedia } = useQuery({
+    queryKey: ["hub-offering-media", offeringIds],
     queryFn: async () => {
-      if (listingIds.length === 0) return [];
-      const { data, error } = await supabase
+      if (offeringIds.length === 0) return [];
+      const { data } = await supabase
         .from("listing_media")
         .select("*")
-        .in("listing_id", listingIds)
+        .in("listing_id", offeringIds)
         .order("sort_order");
+      return data ?? [];
+    },
+    enabled: offeringIds.length > 0,
+  });
+  const getMediaForListing = (id: string) =>
+    offeringMedia?.filter((m: any) => m.listing_id === id) ?? [];
+
+  // ─── Opportunities: project_request listings (open calls / gigs) ─────
+  const { data: opportunities, isLoading: loadingOpps } = useQuery({
+    queryKey: ["hub-opportunities", search],
+    queryFn: async () => {
+      let q = supabase
+        .from("marketplace_listings")
+        .select("*")
+        .eq("is_active", true)
+        .eq("listing_type", "project_request")
+        .order("created_at", { ascending: false })
+        .limit(40);
+      if (search.trim()) {
+        const term = search.trim();
+        q = q.or(`title.ilike.%${term}%,description.ilike.%${term}%,category.ilike.%${term}%`);
+      }
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
-    enabled: listingIds.length > 0,
+    enabled: lane === "opportunities",
   });
 
-  const getMediaForListing = (id: string) =>
-    allMedia?.filter((m: any) => m.listing_id === id) ?? [];
-
-  // ─── Trending creators rail (most active sellers in last 30 days) ─────
-  const { data: trendingCreators } = useQuery({
-    queryKey: ["hub-trending-creators"],
+  // ─── Works: anchored contribution proofs (Verified IP feed) ─────────
+  const { data: works, isLoading: loadingWorks } = useQuery({
+    queryKey: ["hub-works"],
     queryFn: async () => {
-      const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const { data: recent } = await supabase
-        .from("marketplace_listings")
-        .select("user_id")
-        .eq("is_active", true)
-        .gte("created_at", since)
-        .limit(200);
-      const counts = new Map<string, number>();
-      (recent ?? []).forEach((r: any) => counts.set(r.user_id, (counts.get(r.user_id) ?? 0) + 1));
-      const topIds = [...counts.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 8)
-        .map(([id]) => id);
-      if (topIds.length === 0) return [];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, display_name, username, avatar_url, headline")
-        .in("user_id", topIds);
-      return (profiles ?? [])
-        .map((p: any) => ({ ...p, listing_count: counts.get(p.user_id) ?? 0 }))
-        .sort((a: any, b: any) => b.listing_count - a.listing_count);
+      const { data, error } = await supabase
+        .from("contribution_proofs")
+        .select("id, action_type, metadata, solana_signature, anchored_at, created_at, user_id")
+        .not("solana_signature", "is", null)
+        .order("anchored_at", { ascending: false, nullsFirst: false })
+        .limit(40);
+      if (error) throw error;
+      return data ?? [];
     },
+    enabled: lane === "works",
   });
 
-  // ─── People directory (browse creators) ───────────────────────────────
-  const { data: people } = useQuery({
-    queryKey: ["hub-people"],
+  const workOwnerIds = useMemo(
+    () => Array.from(new Set((works ?? []).map((w: any) => w.user_id))),
+    [works],
+  );
+  const { data: workOwners } = useQuery({
+    queryKey: ["hub-work-owners", workOwnerIds],
     queryFn: async () => {
+      if (workOwnerIds.length === 0) return [];
       const { data } = await supabase
         .from("profiles_public")
-        .select("user_id, display_name, avatar_url, username, headline")
-        .not("display_name", "is", null)
-        .limit(12);
+        .select("user_id, display_name, avatar_url, username")
+        .in("user_id", workOwnerIds);
       return data ?? [];
     },
+    enabled: workOwnerIds.length > 0,
   });
+  const workOwnerMap = new Map(workOwners?.map((p: any) => [p.user_id, p]) ?? []);
 
-  // ─── Spaces — physical studios + digital drop rooms ───────────────────
-  const { data: studios } = useQuery({
-    queryKey: ["hub-studios"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("studios")
-        .select("id, name, slug, city, country, hero_image_url, rating_avg")
-        .eq("is_active", true)
-        .eq("status", "approved")
-        .order("rating_avg", { ascending: false })
-        .limit(6);
-      return data ?? [];
-    },
-  });
+  const activeLane = LANES.find((l) => l.key === lane)!;
 
-  const { data: rooms } = useQuery({
-    queryKey: ["hub-rooms"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("drop_rooms")
-        .select("id, title, description, cover_url, created_at")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(6);
-      return data ?? [];
-    },
-  });
+  // ─── Lane-aware "post" CTA ──────────────────────────────────────────
+  const handlePost = () => {
+    if (!requireAuth("Sign up to post to the Hub.")) return;
+    if (lane === "works") {
+      navigate("/works");
+      return;
+    }
+    setCreateOpen(true);
+  };
 
   return (
-    <div className="space-y-12 max-w-6xl mx-auto pb-12">
+    <div className="space-y-10 max-w-6xl mx-auto pb-12">
       {/* ─── Hero ────────────────────────────────────────────────────── */}
-      <header className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/5 via-background to-accent/5 p-8 md:p-12">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.12),transparent_55%)] pointer-events-none" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_85%,hsl(var(--accent)/0.10),transparent_55%)] pointer-events-none" />
+      <header className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-pink-500/5 via-background to-amber-500/5 p-8 md:p-12">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(320_80%_60%/0.15),transparent_55%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_85%,hsl(30_90%_55%/0.12),transparent_55%)] pointer-events-none" />
         <div className="relative flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-2">
-              Discover · Browse · Buy
+              Digital Network · Tune in
             </p>
             <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground tracking-tight">
               The Hub.
             </h1>
             <p className="text-muted-foreground mt-2 text-sm md:text-base max-w-lg">
-              Get inspired by what's dropping, then book the brand, hire the
-              maker, or grab the piece. Marketplace meets mood board.
+              Conversations, offerings, opportunities, and verified Works — the
+              digital pulse of the Rhozeland community. Looking for a physical
+              space?{" "}
+              <Link to="/studios" className="text-foreground hover:underline">
+                Browse studios →
+              </Link>
             </p>
           </div>
           <div className="flex gap-2">
-            <Button
-              onClick={() => {
-                if (!requireAuth("Sign up to post your work to the Hub.")) return;
-                setCreateOpen(true);
-              }}
-              className="rounded-full"
-            >
-              <Plus className="mr-1.5 h-4 w-4" /> Post Listing
+            <Button onClick={handlePost} className="rounded-full">
+              <Plus className="mr-1.5 h-4 w-4" />
+              {lane === "works"
+                ? "Anchor a Work"
+                : lane === "opportunities"
+                ? "Post Opportunity"
+                : lane === "offerings"
+                ? "Post Offering"
+                : "Drop a Post"}
             </Button>
           </div>
         </div>
       </header>
 
-      {/* ─── Discovery feed ──────────────────────────────────────────── */}
-      <section>
-        <div className="flex items-end justify-between mb-4">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 mb-1">
-              In the feed
-            </p>
-            <h2 className="font-display text-2xl font-bold text-foreground tracking-tight">
-              Fresh inspiration
-            </h2>
-          </div>
-          <Link
-            to="/projects"
-            className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-          >
-            Capture in a project <ExternalLink className="h-3 w-3" />
-          </Link>
-        </div>
-
-        {loadingFlow && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div
-                key={i}
-                className="aspect-[3/4] bg-muted animate-pulse rounded-2xl"
-              />
-            ))}
-          </div>
-        )}
-
-        {!loadingFlow && (flowItems?.length ?? 0) === 0 && (
-          <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
-            <Flame className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">
-              The feed is quiet. Be the first to drop something.
-            </p>
-            {user && (
-              <Button
-                onClick={() => navigate("/projects")}
-                variant="outline"
-                size="sm"
-                className="mt-4 rounded-full"
-              >
-                Open a project
-              </Button>
-            )}
-          </div>
-        )}
-
-        {!loadingFlow && (flowItems?.length ?? 0) > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {flowItems!.map((item: any, i: number) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03 }}
-                className="group relative aspect-[3/4] rounded-2xl overflow-hidden bg-card border border-border cursor-pointer hover:-translate-y-0.5 transition-transform"
-                onClick={() => navigate("/projects")}
-              >
-                <FlowThumbnail
-                  fileUrl={item.file_url}
-                  linkUrl={item.link_url}
-                  title={item.title}
-                  description={item.description}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-                  <p className="text-[11px] uppercase tracking-wider text-white/70 mb-0.5">
-                    {item.category}
-                  </p>
-                  <p className="text-sm font-display font-semibold text-white line-clamp-1">
-                    {item.title}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* ─── Trending creators rail ──────────────────────────────────── */}
-      {trendingCreators && trendingCreators.length > 0 && (
-        <section>
-          <div className="flex items-end justify-between mb-4">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 mb-1">
-                Most active · Last 30 days
-              </p>
-              <h2 className="font-display text-2xl font-bold text-foreground tracking-tight flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                Trending creators
-              </h2>
-            </div>
-          </div>
-          <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory scrollbar-hide">
-            {trendingCreators.map((c: any, i: number) => (
-              <motion.div
-                key={c.user_id}
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.04 }}
-                className="snap-start shrink-0 w-44"
-              >
-                <Link
-                  to={`/profiles/${c.user_id}`}
-                  className="block rounded-2xl border border-border bg-card hover:bg-muted/30 hover:-translate-y-0.5 transition-all p-4 text-center group"
-                >
-                  {c.avatar_url ? (
-                    <img
-                      src={c.avatar_url}
-                      alt={c.display_name || c.username || ""}
-                      className="h-16 w-16 rounded-full object-cover mx-auto mb-3 ring-2 ring-border group-hover:ring-primary/40 transition-all"
-                    />
-                  ) : (
-                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mx-auto mb-3 text-lg font-bold text-foreground">
-                      {(c.display_name || c.username || "?")[0].toUpperCase()}
-                    </div>
-                  )}
-                  <p className="text-sm font-display font-semibold text-foreground line-clamp-1">
-                    {c.display_name || c.username || "Anon"}
-                  </p>
-                  {c.headline && (
-                    <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
-                      {c.headline}
-                    </p>
-                  )}
-                  <p className="text-[10px] text-primary font-medium mt-2">
-                    {c.listing_count} new {c.listing_count === 1 ? "listing" : "listings"}
-                  </p>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ─── People — browse creators ───────────────────────────────── */}
-      {people && people.length > 0 && (
-        <section>
-          <div className="flex items-end justify-between mb-4">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 mb-1">
-                Find your people
-              </p>
-              <h2 className="font-display text-2xl font-bold text-foreground tracking-tight flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                People
-              </h2>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {people.map((p: any, i: number) => (
-              <motion.div
-                key={p.user_id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.02 }}
-              >
-                <Link
-                  to={`/profiles/${p.user_id}`}
-                  className="block rounded-2xl border border-border bg-card hover:bg-muted/30 hover:-translate-y-0.5 transition-all p-4 text-center group"
-                >
-                  {p.avatar_url ? (
-                    <img
-                      src={p.avatar_url}
-                      alt={p.display_name || ""}
-                      className="h-14 w-14 rounded-full object-cover mx-auto mb-2 ring-2 ring-border group-hover:ring-primary/40 transition-all"
-                    />
-                  ) : (
-                    <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mx-auto mb-2 text-base font-bold text-foreground">
-                      {(p.display_name || p.username || "?")[0].toUpperCase()}
-                    </div>
-                  )}
-                  <p className="text-xs font-display font-semibold text-foreground line-clamp-1">
-                    {p.display_name || p.username || "Anon"}
-                  </p>
-                  {p.headline && (
-                    <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
-                      {p.headline}
-                    </p>
-                  )}
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ─── Spaces — physical studios + digital drop rooms ─────────── */}
-      {((studios && studios.length > 0) || (rooms && rooms.length > 0)) && (
-        <section>
-          <div className="flex items-end justify-between mb-4">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 mb-1">
-                Where the work happens
-              </p>
-              <h2 className="font-display text-2xl font-bold text-foreground tracking-tight flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-primary" />
-                Spaces
-              </h2>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {(studios ?? []).map((s: any, i: number) => (
-              <motion.div
-                key={`studio-${s.id}`}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03 }}
-              >
-                <Link
-                  to={`/studios/${s.id}`}
-                  className="group block rounded-2xl overflow-hidden border border-border bg-card hover:-translate-y-0.5 transition-all"
-                >
-                  <div className="aspect-[16/9] bg-muted relative overflow-hidden">
-                    {s.hero_image_url ? (
-                      <img
-                        src={s.hero_image_url}
-                        alt={s.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Building2 className="h-10 w-10 text-muted-foreground/40" />
-                      </div>
-                    )}
-                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-background/90 backdrop-blur text-[10px] font-medium uppercase tracking-wider">
-                      Physical
-                    </div>
-                  </div>
-                  <div className="p-3">
-                    <p className="text-sm font-display font-semibold text-foreground line-clamp-1">
-                      {s.name}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                      <MapPin className="h-3 w-3" />
-                      {[s.city, s.country].filter(Boolean).join(", ") || "—"}
-                    </p>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-            {(rooms ?? []).map((r: any, i: number) => (
-              <motion.div
-                key={`room-${r.id}`}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: ((studios?.length ?? 0) + i) * 0.03 }}
-              >
-                <Link
-                  to={`/drop-rooms/${r.id}`}
-                  className="group block rounded-2xl overflow-hidden border border-border bg-card hover:-translate-y-0.5 transition-all"
-                >
-                  <div className="aspect-[16/9] bg-muted relative overflow-hidden">
-                    {r.cover_url ? (
-                      <img
-                        src={r.cover_url}
-                        alt={r.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
-                        <Radio className="h-10 w-10 text-muted-foreground/40" />
-                      </div>
-                    )}
-                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-background/90 backdrop-blur text-[10px] font-medium uppercase tracking-wider">
-                      Digital
-                    </div>
-                  </div>
-                  <div className="p-3">
-                    <p className="text-sm font-display font-semibold text-foreground line-clamp-1">
-                      {r.title}
-                    </p>
-                    {r.description && (
-                      <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
-                        {r.description}
-                      </p>
-                    )}
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section>
-        <div className="flex items-end justify-between mb-4 flex-wrap gap-3">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 mb-1">
-              For sale · For hire · For collab
-            </p>
-            <h2 className="font-display text-2xl font-bold text-foreground tracking-tight">
-              Storefronts
-            </h2>
-          </div>
-        </div>
-
-        {/* Search */}
-        <div className="relative max-w-md mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search the Hub…"
-            className="pl-10 h-11 rounded-full"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-
-        {/* Intent pills */}
-        <div className="flex gap-2 flex-wrap mb-6">
-          {INTENTS.map((it) => {
-            const Icon = it.icon;
-            const active = intent === it.key;
+      {/* ─── Lane tabs ──────────────────────────────────────────────── */}
+      <div className="space-y-4">
+        <div className="flex gap-2 flex-wrap">
+          {LANES.map((l) => {
+            const Icon = l.icon;
+            const active = lane === l.key;
             return (
               <button
-                key={it.key}
-                onClick={() => setIntent(it.key)}
-                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${
+                key={l.key}
+                type="button"
+                onClick={() => setLane(l.key)}
+                className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all ${
                   active
                     ? "bg-foreground text-background shadow-sm"
                     : "bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted/60"
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" />
-                {it.label}
+                {l.label}
               </button>
             );
           })}
         </div>
+        <p className="text-xs text-muted-foreground italic">{activeLane.tagline}</p>
+      </div>
 
-        {/* Listings grid */}
-        {loadingListings ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div
-                key={i}
-                className="h-72 bg-muted animate-pulse rounded-2xl"
-              />
-            ))}
-          </div>
-        ) : !listings || listings.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
-            <Store className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-            <p className="text-sm text-foreground font-medium">
-              {search ? "No listings match your search." : "No listings yet."}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Be the first to open shop.
-            </p>
-            <Button
-              onClick={() => {
-                if (!requireAuth("Sign up to post your work to the Hub.")) return;
-                setCreateOpen(true);
-              }}
-              className="mt-4 rounded-full"
-            >
-              <Plus className="mr-1.5 h-4 w-4" /> Post Listing
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {listings.map((listing: any, i: number) => (
-              <ListingCard
-                key={listing.id}
-                listing={listing}
-                media={getMediaForListing(listing.id)}
-                reviewStats={null}
-                index={i}
-                isOwner={listing.user_id === user?.id}
-                onInquire={() => {
-                  if (!requireAuth("Sign up to message creators and send inquiries.")) return;
-                  navigate(
-                    `/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`,
-                  );
-                }}
-                onClick={() => navigate(`/marketplace/${listing.id}`)}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+      {/* ─── Search ─────────────────────────────────────────────────── */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder={`Search ${activeLane.label.toLowerCase()}…`}
+          className="pl-10 h-11 rounded-full"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
+      {/* ════════════════════════════════════════════════════════════════
+          LANE: Conversations
+          ════════════════════════════════════════════════════════════════ */}
+      {lane === "conversations" && (
+        <section>
+          {loadingFlow && (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <div key={i} className="aspect-[3/4] bg-muted animate-pulse rounded-2xl" />
+              ))}
+            </div>
+          )}
+          {!loadingFlow && (flowItems?.length ?? 0) === 0 && (
+            <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
+              <Flame className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">
+                The feed is quiet. Be the first to drop something.
+              </p>
+              {user && (
+                <Button
+                  onClick={() => navigate("/projects")}
+                  variant="outline"
+                  size="sm"
+                  className="mt-4 rounded-full"
+                >
+                  Open a project
+                </Button>
+              )}
+            </div>
+          )}
+          {!loadingFlow && (flowItems?.length ?? 0) > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {flowItems!.map((item: any, i: number) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                  className="group relative aspect-[3/4] rounded-2xl overflow-hidden bg-card border border-border cursor-pointer hover:-translate-y-0.5 transition-transform"
+                  onClick={() => navigate("/projects")}
+                >
+                  <FlowThumbnail
+                    fileUrl={item.file_url}
+                    linkUrl={item.link_url}
+                    title={item.title}
+                    description={item.description}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+                    <p className="text-[11px] uppercase tracking-wider text-white/70 mb-0.5">
+                      {item.category}
+                    </p>
+                    <p className="text-sm font-display font-semibold text-white line-clamp-1">
+                      {item.title}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════
+          LANE: Offerings (was "storefronts" — same data, new framing)
+          ════════════════════════════════════════════════════════════════ */}
+      {lane === "offerings" && (
+        <section>
+          {loadingOfferings ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-72 bg-muted animate-pulse rounded-2xl" />
+              ))}
+            </div>
+          ) : !offerings || offerings.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
+              <Briefcase className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+              <p className="text-sm text-foreground font-medium">
+                {search ? "No offerings match your search." : "No offerings yet."}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Post a service, a digital good, or open a collab.
+              </p>
+              <Button onClick={handlePost} className="mt-4 rounded-full">
+                <Plus className="mr-1.5 h-4 w-4" /> Post Offering
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {offerings.map((listing: any, i: number) => (
+                <ListingCard
+                  key={listing.id}
+                  listing={listing}
+                  media={getMediaForListing(listing.id)}
+                  reviewStats={null}
+                  index={i}
+                  isOwner={listing.user_id === user?.id}
+                  onInquire={() => {
+                    if (!requireAuth("Sign up to message creators and send inquiries.")) return;
+                    navigate(
+                      `/messages?to=${listing.user_id}&listing=${encodeURIComponent(listing.title)}`,
+                    );
+                  }}
+                  onClick={() => navigate(`/marketplace/${listing.id}`)}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════
+          LANE: Opportunities (open calls / gigs)
+          ════════════════════════════════════════════════════════════════ */}
+      {lane === "opportunities" && (
+        <section>
+          {loadingOpps ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-40 bg-muted animate-pulse rounded-2xl" />
+              ))}
+            </div>
+          ) : !opportunities || opportunities.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
+              <Megaphone className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+              <p className="text-sm text-foreground font-medium">
+                {search ? "No opportunities match." : "No open calls right now."}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Got a brief? Post it — creators will reach out.
+              </p>
+              <Button onClick={handlePost} className="mt-4 rounded-full">
+                <Plus className="mr-1.5 h-4 w-4" /> Post Opportunity
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {opportunities.map((opp: any, i: number) => (
+                <motion.div
+                  key={opp.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                >
+                  <Link
+                    to={`/marketplace/${opp.id}`}
+                    className="group block rounded-2xl border border-border bg-card hover:border-foreground/30 hover:-translate-y-0.5 transition-all p-5"
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="min-w-0">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1">
+                          {opp.category} · Open Call
+                        </p>
+                        <h3 className="font-display font-semibold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                          {opp.title}
+                        </h3>
+                      </div>
+                      {(opp.price || opp.credits_price) && (
+                        <span className="text-xs font-bold text-primary bg-primary/10 rounded-full px-2.5 py-1 shrink-0">
+                          {opp.credits_price
+                            ? `${opp.credits_price} ◊`
+                            : `$${Number(opp.price).toFixed(0)}`}
+                        </span>
+                      )}
+                    </div>
+                    {opp.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                        {opp.description}
+                      </p>
+                    )}
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-foreground mt-3 group-hover:gap-2 transition-all">
+                      Apply <ArrowRight className="h-3 w-3" />
+                    </span>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════
+          LANE: Works (anchored creative IP)
+          ════════════════════════════════════════════════════════════════ */}
+      {lane === "works" && (
+        <section>
+          {loadingWorks ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-44 bg-muted animate-pulse rounded-2xl" />
+              ))}
+            </div>
+          ) : !works || works.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
+              <Shield className="h-10 w-10 text-emerald-500/40 mx-auto mb-3" />
+              <p className="text-sm text-foreground font-medium">No anchored Works yet.</p>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                Anchor a contribution to Solana and it shows up here as Verified IP — the
+                community can see the proof and explore the receipt.
+              </p>
+              <Button
+                onClick={() => navigate("/works")}
+                className="mt-4 rounded-full"
+                variant="outline"
+              >
+                Open my Works vault
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {works.map((w: any, i: number) => {
+                const owner = workOwnerMap.get(w.user_id);
+                const desc =
+                  (w.metadata as Record<string, unknown>)?.description as string | undefined;
+                return (
+                  <motion.div
+                    key={w.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.04 }}
+                    className="rounded-2xl border border-border bg-card p-4 hover:border-emerald-500/30 transition-all"
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
+                        {w.action_type}
+                      </span>
+                      <VerifiedIPBadge signature={w.solana_signature} size="xs" />
+                    </div>
+                    {desc && (
+                      <p className="text-sm text-foreground line-clamp-2 leading-relaxed mb-3">
+                        {desc}
+                      </p>
+                    )}
+                    <Link
+                      to={owner ? `/profiles/${owner.user_id}` : "#"}
+                      className="flex items-center gap-2 mt-2 group"
+                    >
+                      {owner?.avatar_url ? (
+                        <img
+                          src={owner.avatar_url}
+                          alt=""
+                          className="h-6 w-6 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">
+                          {(owner?.display_name || owner?.username || "?")[0]?.toUpperCase()}
+                        </div>
+                      )}
+                      <span className="text-xs text-muted-foreground group-hover:text-foreground truncate">
+                        {owner?.display_name || owner?.username || "Anonymous"}
+                      </span>
+                      <span className="ml-auto text-[10px] text-muted-foreground/60">
+                        {w.anchored_at
+                          ? new Date(w.anchored_at).toLocaleDateString()
+                          : new Date(w.created_at).toLocaleDateString()}
+                      </span>
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
 
       <CreateListingDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
