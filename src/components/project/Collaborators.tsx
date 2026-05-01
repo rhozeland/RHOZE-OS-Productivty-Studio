@@ -175,6 +175,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
             </PopoverContent>
           </Popover>
         </div>
+        {canManage && (
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setSearch(""); setSelectedUser(null); } }}>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm"><Plus className="mr-1 h-4 w-4" />Invite</Button>
