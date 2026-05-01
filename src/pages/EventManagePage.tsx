@@ -83,6 +83,30 @@ const EventManagePage = () => {
   const [tierUsd, setTierUsd] = useState("");
   const [tierRhoze, setTierRhoze] = useState("");
   const [tierQty, setTierQty] = useState("");
+  const [scannerOpen, setScannerOpen] = useState(false);
+
+  // Live attendee list — reflect check-ins from any device instantly.
+  useEffect(() => {
+    if (!id) return;
+    const channel = supabase
+      .channel(`event-tickets-${id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "event_tickets",
+          filter: `event_id=eq.${id}`,
+        },
+        () => {
+          qc.invalidateQueries({ queryKey: ["event-tickets-manage", id] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, qc]);
 
   const addTier = useMutation({
     mutationFn: async () => {
