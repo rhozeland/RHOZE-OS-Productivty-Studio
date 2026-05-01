@@ -40,6 +40,47 @@ const RANGE_MS: Record<Range, number | null> = {
   ALL: null,
 };
 
+const RANGE_LABELS: Record<Range, string> = {
+  "1H": "Last 1 hour",
+  "6H": "Last 6 hours",
+  "1D": "Last 24 hours",
+  ALL: "All time",
+};
+
+function handleRovingKeyDown<T extends string>(
+  e: KeyboardEvent<HTMLDivElement>,
+  options: T[],
+  current: T,
+  setValue: (v: T) => void,
+) {
+  const idx = options.indexOf(current);
+  if (idx < 0) return;
+  let nextIdx = idx;
+  switch (e.key) {
+    case "ArrowRight":
+    case "ArrowDown":
+      nextIdx = (idx + 1) % options.length;
+      break;
+    case "ArrowLeft":
+    case "ArrowUp":
+      nextIdx = (idx - 1 + options.length) % options.length;
+      break;
+    case "Home":
+      nextIdx = 0;
+      break;
+    case "End":
+      nextIdx = options.length - 1;
+      break;
+    default:
+      return;
+  }
+  e.preventDefault();
+  setValue(options[nextIdx]);
+  // Move focus to the newly-selected control
+  const target = e.currentTarget.querySelectorAll<HTMLButtonElement>("button[role]")[nextIdx];
+  target?.focus();
+}
+
 interface Props {
   launchId: string;
   ticker: string;
