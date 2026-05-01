@@ -7,7 +7,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import WalletButton from "@/components/WalletButton";
 import NotificationBell from "@/components/NotificationBell";
 import UsernamePrompt from "@/components/UsernamePrompt";
-import FlowLauncher from "@/components/FlowLauncher";
+// FlowLauncher (floating FAB) retired — Flow is now reachable from the top search bar.
 import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Sun, Moon, Settings as SettingsIcon, LogOut, Flame } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -114,6 +114,17 @@ const AppLayout = () => {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Reset query when the palette closes so the next open starts clean.
+  useEffect(() => {
+    if (!searchOpen) setSearchQuery("");
+  }, [searchOpen]);
+
+  // Only run remote search after the user actually types something — avoids
+  // dumping every studio/creator/listing into the palette by default.
+  const trimmedQuery = searchQuery.trim();
+  const queryEnabled = searchOpen && trimmedQuery.length >= 2;
 
   // Only run reward streak for authenticated users
   useRewardStreak();
@@ -140,48 +151,51 @@ const AppLayout = () => {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  // Search studios
+  // Query-driven search — only fires once the user has typed ≥2 characters.
+  // Keeps the palette quiet by default (Pages only) and prevents an
+  // ever-growing dump of every studio/creator/listing in the system.
   const { data: studios } = useQuery({
-    queryKey: ["search-studios"],
+    queryKey: ["search-studios", trimmedQuery],
     queryFn: async () => {
       const { data } = await supabase
         .from("studios")
         .select("id, name, city, category")
         .eq("is_active", true)
         .eq("status", "approved")
-        .limit(50);
+        .ilike("name", `%${trimmedQuery}%`)
+        .limit(5);
       return data ?? [];
     },
-    enabled: searchOpen,
+    enabled: queryEnabled,
   });
 
-  // Search listings
   const { data: listings } = useQuery({
-    queryKey: ["search-listings"],
+    queryKey: ["search-listings", trimmedQuery],
     queryFn: async () => {
       const { data } = await supabase
         .from("marketplace_listings")
         .select("id, title, category")
         .eq("is_active", true)
-        .limit(50);
+        .ilike("title", `%${trimmedQuery}%`)
+        .limit(5);
       return data ?? [];
     },
-    enabled: searchOpen,
+    enabled: queryEnabled,
   });
 
-  // Search profiles
   const { data: profiles } = useQuery({
-    queryKey: ["search-profiles"],
+    queryKey: ["search-profiles", trimmedQuery],
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
         .select("user_id, display_name")
         .eq("is_public", true)
         .not("display_name", "is", null)
-        .limit(50);
+        .ilike("display_name", `%${trimmedQuery}%`)
+        .limit(5);
       return data ?? [];
     },
-    enabled: searchOpen,
+    enabled: queryEnabled,
   });
 
   // Header avatar
@@ -250,26 +264,31 @@ const AppLayout = () => {
               </nav>
             </div>
 
-            {/* Search trigger with Flow mode button */}
+            {/* Search trigger with Flow mode launcher (replaces "browse spaces") */}
             <div className="hidden md:flex flex-1 max-w-lg justify-center">
               <div className="relative w-full max-w-md">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => navigate("/spaces")}
-                      aria-label="Browse spaces"
-                      className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center transition-opacity hover:opacity-80 active:opacity-70 z-10"
-                    >
-                      <Building2 className="h-3.5 w-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="text-xs font-body">
-                    Browse spaces
-                  </TooltipContent>
-                </Tooltip>
+                {user && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => navigate("/flow")}
+                        aria-label="Enter Flow"
+                        className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-foreground text-background flex items-center justify-center transition-opacity hover:opacity-80 active:opacity-70 z-10"
+                      >
+                        <Flame className="h-3.5 w-3.5 fill-amber-400/40 text-amber-400" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs font-body">
+                      Enter Flow
+                    </TooltipContent>
+                  </Tooltip>
+                )}
                 <button
                   onClick={() => setSearchOpen(true)}
-                  className="w-full pl-11 h-9 rounded-full bg-card border border-border text-sm font-body text-muted-foreground text-left px-11 hover:bg-muted/50 transition-colors flex items-center"
+                  className={cn(
+                    "w-full h-9 rounded-full bg-card border border-border text-sm font-body text-muted-foreground text-left hover:bg-muted/50 transition-colors flex items-center pr-3",
+                    user ? "pl-11" : "pl-4",
+                  )}
                 >
                   Search Rhozeland...
                   <kbd className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded font-mono text-muted-foreground">⌘K</kbd>
@@ -364,19 +383,26 @@ const AppLayout = () => {
             <Outlet />
           </main>
           {user && !location.pathname.startsWith("/flow") && <DockBar />}
-          {user && <FlowLauncher />}
+          {/* Flow launcher now lives in the top search bar (replaces "browse spaces") */}
+
         </div>
       </div>
 
       {/* Command palette search */}
+      {/* Command palette search — Pages always visible; studios/listings/creators
+          only surface once the user has typed (>=2 chars). */}
       <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <CommandInput placeholder="Search pages, studios, listings, creators..." />
+        <CommandInput
+          placeholder="Search pages, studios, listings, creators..."
+          value={searchQuery}
+          onValueChange={setSearchQuery}
+        />
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
+          <CommandEmpty>
+            {queryEnabled ? "No results found." : "Type to search the network."}
+          </CommandEmpty>
           <CommandGroup heading="Pages">
             {PAGES.map((page) => {
-              // Surface the global keyboard shortcut next to a page when one
-              // exists, so users discover them without an extra help screen.
               const shortcut = NAV_SHORTCUTS.find((s) => s.path === page.path);
               return (
                 <CommandItem key={page.path} onSelect={() => goTo(page.path)}>
@@ -396,7 +422,7 @@ const AppLayout = () => {
               );
             })}
           </CommandGroup>
-          {studios && studios.length > 0 && (
+          {queryEnabled && studios && studios.length > 0 && (
             <CommandGroup heading="Studios">
               {studios.map((s) => (
                 <CommandItem key={s.id} onSelect={() => goTo(`/studios/${s.id}`)}>
@@ -407,7 +433,7 @@ const AppLayout = () => {
               ))}
             </CommandGroup>
           )}
-          {listings && listings.length > 0 && (
+          {queryEnabled && listings && listings.length > 0 && (
             <CommandGroup heading="Marketplace">
               {listings.map((l) => (
                 <CommandItem key={l.id} onSelect={() => goTo(`/creators/${l.id}`)}>
@@ -418,7 +444,7 @@ const AppLayout = () => {
               ))}
             </CommandGroup>
           )}
-          {profiles && profiles.length > 0 && (
+          {queryEnabled && profiles && profiles.length > 0 && (
             <CommandGroup heading="Creators">
               {profiles.map((p) => (
                 <CommandItem key={p.user_id} onSelect={() => goTo(`/profiles/${p.user_id}`)}>

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Play, FileText, ExternalLink, ChevronDown, Music, Palette, Camera, Video, PenTool, Bookmark, Send, Maximize2, X, Trash2 } from "lucide-react";
+import { Play, FileText, ExternalLink, ChevronDown, Music, Palette, Camera, Video, PenTool, Bookmark, Send, Maximize2, X, Trash2, Coins, ArrowRight } from "lucide-react";
 import AudioPreview from "@/components/marketplace/AudioPreview";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -110,9 +110,15 @@ interface FlowCardProps {
    * renders a skeleton placeholder instead of a flash of "Unknown".
    */
   profilesLoading?: boolean;
+  /**
+   * If a coin already exists for this Flow item's underlying Verified IP
+   * work, pass it in to render the "$TICKER → speculate" pill. Lookup is
+   * batched at the page level via `useFlowCoinsByWork` so cards stay cheap.
+   */
+  coin?: { id: string; ticker: string } | null;
 }
 
-const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner, isAdmin, profilesLoading }: FlowCardProps) => {
+const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner, isAdmin, profilesLoading, coin }: FlowCardProps) => {
   const navigate = useNavigate();
   const [imageEnlarged, setImageEnlarged] = useState(false);
   const [verifyOpen, setVerifyOpen] = useState(false);
@@ -363,12 +369,47 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
           {/* Verified-IP status — fingerprint, pending review, or anchored.
               Sits next to the category so the provenance signal travels with
               every card without competing with the action bar. */}
-          <FlowProvenanceChip
-            status={item.verification_status}
-            contentHash={item.content_hash}
-            solanaSignature={item.solana_signature}
-            isOwner={isOwner}
-          />
+          {/* Provenance: clickable when we have a work_id so viewers can dig
+              into the IP page. Falls back to a static chip otherwise. */}
+          {item.work_id ? (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); navigate(`/works/${item.work_id}`); }}
+              className="inline-flex items-center gap-1 rounded-full transition-opacity hover:opacity-80"
+              title="See the IP this work is anchored to"
+            >
+              <FlowProvenanceChip
+                status={item.verification_status}
+                contentHash={item.content_hash}
+                solanaSignature={item.solana_signature}
+                isOwner={isOwner}
+              />
+            </button>
+          ) : (
+            <FlowProvenanceChip
+              status={item.verification_status}
+              contentHash={item.content_hash}
+              solanaSignature={item.solana_signature}
+              isOwner={isOwner}
+            />
+          )}
+
+          {/* Speculate pill — only when a coin already exists for the
+              underlying Verified IP. We deliberately do NOT auto-launch
+              coins on upload; creators opt in from the Works page. */}
+          {coin && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); navigate(`/launchpad/${coin.id}`); }}
+              className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-500/15 transition-colors"
+              title="Speculate on this work — view the bonding curve"
+            >
+              <Coins className="h-3 w-3" />
+              <span>${coin.ticker}</span>
+              <ArrowRight className="h-3 w-3" />
+            </button>
+          )}
+
           {canApplyForVerification && (
             <button
               onClick={(e) => { e.stopPropagation(); setVerifyOpen(true); }}

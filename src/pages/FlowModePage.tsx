@@ -61,6 +61,7 @@ import AdminFlowSeedPanel from "@/components/flow/AdminFlowSeedPanel";
 import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
 import SignUpToPostPrompt from "@/components/flow/SignUpToPostPrompt";
 import FlowFeedErrorState from "@/components/flow/FlowFeedErrorState";
+import { useFlowCoinsByWork } from "@/hooks/useFlowCoinsByWork";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
@@ -723,6 +724,12 @@ const FlowModePage = () => {
   const allItems = flowItemsFetching ? [] : flowItems ?? [];
   const currentItem = allItems.length > 0 ? allItems[currentIndex % allItems.length] : null;
 
+  // Batched coin lookup for every Flow item that points at a Verified IP
+  // work. Used by FlowCard to render the "$TICKER → speculate" pill.
+  const { data: coinByWork } = useFlowCoinsByWork(
+    allItems.map((i: any) => i.work_id),
+  );
+
   const handleCalibrationSelect = (option: string) => {
     const updated = selectedCategories.includes(option)
       ? selectedCategories.filter((c) => c !== option)
@@ -1292,6 +1299,7 @@ const FlowModePage = () => {
                       isOwner={currentItem.user_id === user?.id}
                       isAdmin={isAdmin}
                       profilesLoading={flowItemsFetching}
+                      coin={(currentItem as any).work_id ? coinByWork?.get((currentItem as any).work_id) ?? null : null}
                     />
                   </motion.div>
                 ) : isFeedRefreshing ? (
@@ -1384,6 +1392,7 @@ const FlowModePage = () => {
                           isOwner={item.user_id === user?.id}
                           isAdmin={isAdmin}
                           profilesLoading={flowItemsFetching}
+                          coin={(item as any).work_id ? coinByWork?.get((item as any).work_id) ?? null : null}
                         />
                       </div>
                     ))}
