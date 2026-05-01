@@ -72,30 +72,7 @@ const ProjectTools = ({ projectId, projectTitle, smartboardDetails, onLinkSmartb
     },
   });
 
-  // Smartboards already linked to this project (read-only here; manage in Scope).
-  const { data: linked } = useQuery({
-    queryKey: ["project-smartboards", projectId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("project_smartboards" as any)
-        .select("smartboard_id")
-        .eq("project_id", projectId);
-      return (data ?? []).map((r: any) => r.smartboard_id);
-    },
-  });
-
-  const { data: boards } = useQuery({
-    queryKey: ["project-smartboard-details", linked],
-    queryFn: async () => {
-      if (!linked || linked.length === 0) return [];
-      const { data } = await supabase
-        .from("smartboards")
-        .select("id, title, description, cover_color")
-        .in("id", linked);
-      return data ?? [];
-    },
-    enabled: !!linked && linked.length > 0,
-  });
+  const boards = smartboardDetails ?? [];
 
   // ─── Drop Rooms scoped to this project ───────────────────────────────
   const { data: rooms } = useQuery({
