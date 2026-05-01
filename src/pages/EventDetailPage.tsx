@@ -314,8 +314,13 @@ const EventDetailPage = () => {
                     {!user ? "Sign in to RSVP" : "RSVP"}
                   </Button>
                 ) : (
-                  <Button size="sm" variant="outline" className="rounded-full" disabled>
-                    Checkout coming
+                  <Button
+                    size="sm"
+                    className="rounded-full"
+                    disabled={!user}
+                    onClick={() => setCheckoutTier(t)}
+                  >
+                    {!user ? "Sign in to buy" : "Buy ticket"}
                   </Button>
                 )}
               </div>
