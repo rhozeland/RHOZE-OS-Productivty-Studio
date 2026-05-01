@@ -36,6 +36,8 @@ import ProjectControls from "@/components/project/ProjectControls";
 import RevenueSplitConfig from "@/components/revenue/RevenueSplitConfig";
 import AttachedWorks from "@/components/works/AttachedWorks";
 import ProjectTools from "@/components/project/ProjectTools";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Vault, ShieldCheck, Fingerprint } from "lucide-react";
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
