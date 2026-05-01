@@ -1299,6 +1299,7 @@ const FlowModePage = () => {
                       isOwner={currentItem.user_id === user?.id}
                       isAdmin={isAdmin}
                       profilesLoading={flowItemsFetching}
+                      coin={(currentItem as any).work_id ? coinByWork?.get((currentItem as any).work_id) ?? null : null}
                     />
                   </motion.div>
                 ) : isFeedRefreshing ? (
