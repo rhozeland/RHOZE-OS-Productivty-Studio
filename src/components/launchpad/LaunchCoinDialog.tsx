@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Coins, Lock } from "lucide-react";
+import { Loader2, Coins, Lock, Upload, X } from "lucide-react";
 
 interface Props {
   open: boolean;
