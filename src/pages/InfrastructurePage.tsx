@@ -45,7 +45,7 @@ const LAYERS: Layer[] = [
   {
     index: "I",
     icon: ShieldCheck,
-    title: "Provenance",
+    title: "Verified IP",
     tagline: "Timestamped, on-chain proof at the point of creation.",
     body:
       "Authorship and contribution disputes get resolved by contracts and lawyers today. Rhozeland writes a Solana memo every time a milestone is signed, a contribution is logged, or a roadmap locks — creating a verifiable, public record that doesn't depend on us.",
