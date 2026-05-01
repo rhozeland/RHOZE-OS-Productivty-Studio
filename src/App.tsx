@@ -133,7 +133,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) return <Navigate to="/discover" replace />;
   return <>{children}</>;
 };
 
@@ -148,11 +148,11 @@ const AuthGateWrapper = ({ children }: { children: React.ReactNode }) => {
 
 /**
  * Root entry — `/`
- * Guests see the public HomePage (clean, no sidebar/dock).
- * Authed users redirect to /dashboard inside AppLayout.
+ * v6: Discover is the front door for everyone. Guests see it (with the
+ * landing-style hero copy), authed users see it personalized.
  */
 const RootEntry = () => {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -160,8 +160,7 @@ const RootEntry = () => {
       </div>
     );
   }
-  if (user) return <Navigate to="/dashboard" replace />;
-  return <HomePage />;
+  return <Navigate to="/discover" replace />;
 };
 
 const App = () => (
