@@ -126,7 +126,7 @@ const DockSurface = ({ pathname, isMobile }: SurfaceProps) => (
 /** Mirrors AppSidebar — same resolver call, with optional collapsed state. */
 const SidebarSurface = ({ pathname, collapsed, isMobile }: SurfaceProps) => {
   // AppSidebar's "Navigation" group renders these primary items.
-  const ids = ["dashboard", "messages", "credits"] as const;
+  const ids = ["discover", "messages", "credits"] as const;
   return (
     <nav
       aria-label="sidebar-nav"
@@ -183,7 +183,9 @@ const activeIdIn = (el: HTMLElement): string | null => {
  *   - legacy aliases (matchPaths)
  * ──────────────────────────────────────────────────────────────────────── */
 const ROUTE_MATRIX: Array<{ pathname: string; expectedId: string }> = [
-  { pathname: "/dashboard", expectedId: "dashboard" },
+  { pathname: "/discover", expectedId: "discover" },
+  // Legacy /dashboard route still lights up Discover (matchPath alias).
+  { pathname: "/dashboard", expectedId: "discover" },
   { pathname: "/studios", expectedId: "studios" },
   { pathname: "/studios/abc-123", expectedId: "studios" },
   { pathname: "/messages", expectedId: "messages" },
@@ -291,14 +293,14 @@ describe("Header / Dock / Sidebar active-state parity (rendered)", () => {
         // contract — a collapsed sidebar shows icons only, but assistive tech
         // and any tooling that scans aria-current must still find the active
         // entry.
-        renderAllSurfaces("/dashboard", {
+        renderAllSurfaces("/discover", {
           collapsed: scenario.collapsed,
           isMobile: scenario.isMobile,
         });
         const sidebar = screen.getByTestId("surface-sidebar");
         const activeLinks = within(sidebar).getAllByRole("link", { current: "page" });
         expect(activeLinks.length).toBe(1);
-        expect(activeLinks[0]?.getAttribute("data-nav-id")).toBe("dashboard");
+        expect(activeLinks[0]?.getAttribute("data-nav-id")).toBe("discover");
       });
     });
   }

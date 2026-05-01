@@ -31,7 +31,7 @@ const ev = (overrides: Partial<ShortcutEvent>): ShortcutEvent => ({
 describe("NAV_SHORTCUTS table", () => {
   it("registers exactly the four primary destinations", () => {
     expect(NAV_SHORTCUTS.map((s) => s.id)).toEqual([
-      "dashboard",
+      "discover",
       "projects",
       "calendar",
       "flow",
@@ -53,7 +53,7 @@ describe("NAV_SHORTCUTS table", () => {
 
 describe("decideShortcut — Alt chords", () => {
   it.each([
-    ["1", "/dashboard"],
+    ["1", "/discover"],
     ["2", "/projects"],
     ["3", "/calendar"],
     ["4", "/flow"],
@@ -89,7 +89,7 @@ describe("decideShortcut — leader sequence", () => {
   });
 
   it.each([
-    ["d", "/dashboard"],
+    ["d", "/discover"],
     ["p", "/projects"],
     ["c", "/calendar"],
     ["f", "/flow"],

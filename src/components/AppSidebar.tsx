@@ -12,6 +12,7 @@ import {
   FolderKanban,
   Sparkles,
   Building2,
+  Compass,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -34,21 +35,22 @@ import {
 } from "@/components/ui/sidebar";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-// Pillars (mirror the dock). Two networks (Hub + Studios) sit side-by-side
-// so the digital and physical spaces feel equal. Profile is reachable via
-// the avatar in the sidebar footer, so it isn't duplicated here.
+// v6 dock pillars (Discover · Hub · Spaces · Inbox). Discover is the
+// feed-led front door; Inbox replaces Projects in the dock. Projects
+// is still routable and surfaced as a tab on the user's profile.
 const pillarItems = [
-  { icon: Home, label: "Home", path: "/dashboard" },
+  { icon: Compass, label: "Discover", path: "/discover" },
   { icon: Sparkles, label: "Hub", path: "/hub" },
   { icon: Building2, label: "Spaces", path: "/spaces" },
-  { icon: FolderKanban, label: "Projects", path: "/projects" },
+  { icon: MessageSquare, label: "Inbox", path: "/messages" },
 ];
 
 // Side-nav-only destinations. Works is intentionally absent — it's
 // surfaced ambiently via <VerifiedIPBadge /> wherever a creation lives,
-// and the personal vault now lives at /settings#provenance (Pillars v5).
+// and the personal vault now lives at /settings#provenance.
 const secondaryItems = [
-  { icon: MessageSquare, label: "Inbox", path: "/messages" },
+  { icon: Home, label: "Studio", path: "/dashboard" },
+  { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: CreditCard, label: "Creator Pass", path: "/credits" },
 ];
 

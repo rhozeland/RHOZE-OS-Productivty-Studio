@@ -19,7 +19,7 @@
  * can be unit-tested without DOM/React.
  */
 
-export type NavShortcutId = "dashboard" | "projects" | "calendar" | "flow";
+export type NavShortcutId = "discover" | "projects" | "calendar" | "flow";
 
 export interface NavShortcut {
   /** Nav item id from src/config/navigation.ts. */
@@ -35,10 +35,10 @@ export interface NavShortcut {
 }
 
 export const NAV_SHORTCUTS: readonly NavShortcut[] = [
-  { id: "dashboard", path: "/dashboard", label: "Home",     chord: "Alt+1", leaderKey: "d" },
-  { id: "projects",  path: "/projects",  label: "Projects", chord: "Alt+2", leaderKey: "p" },
-  { id: "calendar",  path: "/calendar",  label: "Calendar", chord: "Alt+3", leaderKey: "c" },
-  { id: "flow",      path: "/flow",      label: "Flow",     chord: "Alt+4", leaderKey: "f" },
+  { id: "discover", path: "/discover", label: "Discover", chord: "Alt+1", leaderKey: "d" },
+  { id: "projects", path: "/projects", label: "Projects", chord: "Alt+2", leaderKey: "p" },
+  { id: "calendar", path: "/calendar", label: "Calendar", chord: "Alt+3", leaderKey: "c" },
+  { id: "flow",     path: "/flow",     label: "Flow",     chord: "Alt+4", leaderKey: "f" },
 ] as const;
 
 /** Window in which a leader-sequence second-key must arrive. */

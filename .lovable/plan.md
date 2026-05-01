@@ -1,101 +1,131 @@
-# Launchpad accessibility + rewards visibility + chart-style detail page
+# Rhozeland v6 — Discovery Network for Independent Artists
 
-Three goals from your message:
-1. **Accessibility** — Launchpad should be reachable from Hub, not buried.
-2. **$RHOZE rewards visibility** — bring back the per-task / per-milestone earning breakdown that used to be front-and-center.
-3. **Trading terminal feel** — pump.fun / Padre / Bullx-style chart layout on the launch detail page, with a chart that's togglable.
+## The 5-word pitch
 
----
+**"Get discovered. Get supported. On-chain."**
 
-## 1. Hub: add Launchpad as a 5th lane
+Longer form, for landing & pitch decks:
 
-In `src/pages/HubPage.tsx`:
-- Add a new lane `coins` (icon: `Coins`, label "Coins", tagline "Artist coins on the bonding curve.").
-- Lane query selects from `coin_launches` (status = `live` or `graduated`), reusing the same card styling pattern as `LaunchpadPage`'s `LaunchCard`.
-- Empty state: "No coins minted yet — verify a Work to launch one." with a CTA to `/works`.
-- The full `/launchpad` route stays as-is (it's the dedicated browser); the Hub lane is the discovery surface.
+> Rhozeland is a discovery + support network for independent artists.
+> Fans find creators they care about, support them in any way that fits, and both sides get rewarded on-chain for the attention they create together.
 
-Also add a small **"Launchpad"** chip-link in the Hub hero subtitle area so even users on other lanes see it exists.
+## What changes in framing
 
-## 2. Rewards visibility — Launchpad earnings card
+| Today (v5) | New (v6) |
+|---|---|
+| "Decentralized productivity studio" | "Discovery network for independent artists" |
+| Problem = managing creative work | Problem = nobody knows you exist & nobody buys |
+| Hero promise = earn $RHOZE | Hero promise = get known, get supported |
+| $RHOZE is the product | $RHOZE is the retention loop |
+| Projects is a top-level pillar | Projects is a power tool inside profiles |
+| Front door = Dashboard / Home acts | Front door = a creator discovery feed |
+| Audience = "creators" (vague) | Audience = independent artists / musicians (sharp), architecture ready for brands |
 
-Two placements:
+## The four jobs Rhozeland does (in order)
 
-**A. Inside `/launchpad`** (top of page, under the mode banner):
-- New component `LaunchpadEarnPanel` showing:
-  - Current $RHOZE balance (from `useRhozeBalance` if wallet connected, else `user_credits.balance`).
-  - Reward streak chip (reuses `RhozeStreakBadge`).
-  - A compact 2-column grid of the 6 reward actions from `RewardsDashboard`'s `REWARD_ACTIONS` constant (Post to Flow +2, Like/Save +1, Review +3, **Milestone Approved +10**, Drop Room +1, 7-Day Streak +5) with icon, action name, and reward amount.
-  - "See all rewards →" link to `/dashboard?tab=rewards` (existing route).
-- Goal: every visitor to /launchpad immediately sees how to earn $RHOZE.
+1. **Get found** — feed-led discovery, profiles that read like press kits, shareable links artists actually want to send.
+2. **Get cared about** — Works (verified IP), Conversations (the artist's voice), Events (real-life proof) all build belief.
+3. **Get supported** — Offerings (services / merch / digital goods), Coins (skin in the game), Events (tickets), DMs (direct deals). Support can land on-platform OR off-platform via outbound links.
+4. **Get rewarded** — both sides earn $RHOZE for the attention loop: creators for shipping, fans for showing up early, sharing, holding, buying. Reward = retention, not headline.
 
-**B. Inside the launch detail trade panel** (`TradePanel.tsx`):
-- A small footer line under the existing "3% fee" disclaimer: "Trades by Verified IP holders earn +1 $RHOZE per buy" (matches existing claim-rhoze patterns; copy only — no business logic change unless you ask).
-
-## 3. Pump.fun-style detail page
-
-Rebuild `src/pages/LaunchDetailPage.tsx` layout to a 2-column terminal:
+## Navigation v6 (proposed)
 
 ```text
-┌─────────────────────────────────────────┬──────────────┐
-│  Header: $TICKER  Name  VerifiedIP      │   Trade      │
-│  Price · Mcap · 24h vol · Holders       │   Panel      │
-├─────────────────────────────────────────┤              │
-│  [Chart  |  Bonding Curve]  ← TOGGLE    │              │
-│  ┌─────────────────────────────────┐    │              │
-│  │                                  │   │              │
-│  │   Recharts area/line chart of    │   │              │
-│  │   price over time (from          │   │              │
-│  │   coin_trades.price_per_token)   │   │              │
-│  │                                  │   │              │
-│  └─────────────────────────────────┘    │              │
-│  Timeframe: [1H] [6H] [1D] [ALL]        │              │
-├─────────────────────────────────────────┤   Holdings   │
-│  Trades  |  Holders  |  About           │   On-chain   │
-│  (recent trades table — existing)        │   addresses  │
-└─────────────────────────────────────────┴──────────────┘
+Dock:  Discover  ·  Hub  ·  Spaces  ·  Inbox
+                                       (was Projects)
 ```
 
-### New component: `src/components/launchpad/PriceChartCard.tsx`
-- Pulls `coin_trades` (id, price_per_token, created_at, side, sol_amount) for the launch, ordered ascending.
-- Uses `recharts` (already installed) — `AreaChart` with gradient fill, emerald→fuchsia matching the brand.
-- View toggle (segmented control):
-  - **Price** (default) — line chart of `price_per_token` over time.
-  - **Bonding Curve** — static line of `real_sol_reserves` toward `graduation_sol_target` (the existing progress bar visualized).
-- Timeframe pills: 1H / 6H / 1D / ALL — filter the data window.
-- Empty state when 0 trades: "Chart will appear after the first trade." with a faded illustrative line.
-- Tooltip: price + time + side dot (green buy / red sell).
+- **Discover** (new front door, replaces Home/Dashboard split)
+  - A vertical, feed-led page: hero featured artist → trending creators → fresh works → live events → coins moving today.
+  - First thing a logged-out visitor sees. Same page logged in, just personalized.
+  - Replaces the current "Good morning, X" dashboard as the default landing — dashboard becomes a profile sub-tab.
 
-### Detail page restructure
-- Header strip: ticker + name + Verified IP badge + status badges, with a 4-stat row (Price, Mcap, 24h Vol from `coin_trades`, Holders count from `coin_holdings`).
-- Below header: `PriceChartCard` (the new chart), then under it the existing **bonding-curve progress bar** and **Recent trades** list as tabs (`Trades | Holders | About`) — pump.fun pattern.
-- Right column unchanged: `LaunchpadModeBanner`, `TradePanel`, then user holdings card + `OnChainAddressesCard` + `OnChainBalancesCard` collapsed into one stack.
-- Mobile: column collapses; chart sits above trade panel; trade panel sticks to bottom on small viewports.
+- **Hub** (mostly unchanged, lightly renamed)
+  - Conversations · Offerings · Opportunities · Works
+  - Stays the "creator activity" surface.
 
-### Holders tab
-- Lightweight: `select trader_id, balance from coin_holdings where launch_id = X order by balance desc limit 25` joined to `profiles_public` for display name/avatar. Shows balance and % of supply.
+- **Spaces** (unchanged)
+  - Physical network: Spaces · Events · Residencies.
 
----
+- **Inbox** (new — replaces Projects in dock)
+  - DMs + Inquiries + Collab requests in one place.
+  - This is the consumer surface fans expect: "did the artist reply?".
 
-## Files
+- **Projects** demoted
+  - Lives as a tab on the artist's own profile: **"Building"** (open collabs, projects in progress).
+  - Full project tooling (Roadmap / Tools / Scope / Vault) stays — only the *entry point* moves.
+  - Dock no longer carries it.
 
-**Created**
-- `src/components/launchpad/LaunchpadEarnPanel.tsx`
-- `src/components/launchpad/PriceChartCard.tsx`
-- `src/components/launchpad/HoldersList.tsx`
+## Profile becomes the product
 
-**Edited**
-- `src/pages/HubPage.tsx` — add `coins` lane + tab + query + grid + Launchpad chip in hero.
-- `src/pages/LaunchpadPage.tsx` — render `LaunchpadEarnPanel` above the tabs.
-- `src/pages/LaunchDetailPage.tsx` — restructure layout, mount chart + tabs.
-- `src/components/launchpad/TradePanel.tsx` — add the "+1 $RHOZE per buy" reward hint line (copy only).
+The artist profile is the highest-leverage page on the platform. It's what they share. It needs to feel like a press kit + storefront + fan club, not a settings screen.
 
-## Out of scope (won't touch)
-- No DB migrations — all data sources already exist (`coin_launches`, `coin_trades`, `coin_holdings`, `credit_transactions`, `user_credits`).
-- No changes to bonding curve / fee math / on-chain flow / IDL pipeline.
-- No new $RHOZE issuance logic; the trade-reward line is informational and tracks the existing reward system (will be wired on the server side later if you want).
+Profile tab order (revised):
 
-## Notes / decisions made
-- Recharts (already in deps) over `lightweight-charts` — keeps bundle lean and matches the rest of the app's charting.
-- Hub chip-link kept tiny instead of adding Launchpad to the dock by default; the dock is locked at 4 pillars per the v5 spec, and users can already pin Launchpad via Settings → Dock Customizer.
-- Reward amounts pulled from the existing `REWARD_ACTIONS` constant so the source of truth stays in `RewardsDashboard.tsx` (will refactor to a shared module if you want).
+1. **Overview** — bio, links, hero work, live now (event / drop / open inquiry).
+2. **Works** — verified IP grid, the proof.
+3. **Offerings** — services / merch / digital goods to buy now.
+4. **Coin** — `$TICKER` chart, holders, "speculate" CTA. Always visible if launched.
+5. **Building** — current Projects (open collabs, public roadmap). NEW home for projects.
+6. **Events** — past + upcoming.
+7. **Support** — single page that surfaces every way to back this artist (buy offering, book session, hold coin, attend event, tip, off-platform links).
+
+The "Support" tab is the single answer to *"how do I help this artist?"* — currently that answer is scattered across 5 surfaces.
+
+## Rewards reframed (not removed)
+
+`$RHOZE` stays, but the story changes:
+
+- Creators earn for **shipping** (verified work, events held, sales made).
+- Fans earn for **showing up early** (early follower, first holder, event attendee, sharer).
+- Public-facing copy: *"Both sides get rewarded for the attention you build together."*
+- Remove "earn $RHOZE" from hero copy. Move it to a single "How rewards work" page + a small badge inside the profile.
+
+## Hackathon-ready demo arc (what a judge sees in 90 seconds)
+
+1. **Landing** — bold one-liner: "Get discovered. Get supported. On-chain." → Discover feed visible without signup.
+2. **Discover feed** — scroll a curated artist, tap their profile.
+3. **Artist profile** — see their work, hear a track, see their `$TICKER`, see their offerings, see their next event.
+4. **Support** — buy a beat / book a session / hold the coin in 2 taps.
+5. **Reward receipt** — both buyer and creator see "+X $RHOZE for early support" on-chain memo.
+
+That's the loop. Five surfaces, one story.
+
+## What stays exactly as-is
+
+- Spaces hub, Events, Residencies.
+- Hub lanes (Conversations / Offerings / Opportunities / Works).
+- Launchpad mechanics, coin gating to Verified IP.
+- Solana anchoring of Works, contributions, splits.
+- Auth, RLS, wallet binding, all backend logic.
+
+## Technical scope (rough phasing — for the build call later)
+
+**Phase 1 — Framing (no schema changes, ~UI + copy only)**
+- Rewrite landing hero, meta tags, onboarding copy, dashboard greeting copy.
+- New `/discover` route as the new index; old `/` redirects there.
+- Move Projects out of dock; add `Inbox` dock entry that wraps existing messages + inquiries.
+- Add a "Building" tab on profile that lists the user's own Projects.
+
+**Phase 2 — Discover feed**
+- Server-side ordered feed query: featured artists → trending creators (by recent activity) → fresh verified works → live events → moving coins.
+- Tap-through cards land on profile, not on standalone subpages.
+
+**Phase 3 — Profile as product**
+- Reorder tabs, add **Support** tab that aggregates offerings + coin + events + tip + outbound links.
+- Inline coin chart on profile (uses existing `coin_launches` data).
+
+**Phase 4 — Rewards copy + page**
+- Single `/rewards` explainer.
+- Strip $RHOZE from primary CTAs everywhere.
+
+No DB schema changes are required for Phases 1–3. Phase 4 may add a small `outbound_links` table on profiles (off-platform support targets).
+
+## Open call to make before we build
+
+Two more decisions I'd want locked before writing code:
+
+1. **Discover sort logic** — pure recency, editorial curation (admin-picked), or algorithmic (verified IP × engagement × recency)? My recommendation: **editorial featured slot + algorithmic below**, so we can hand-pick a hero artist for the demo.
+2. **What replaces "Dashboard"?** — I'd fold creator stats (sales, followers, coin holders, $RHOZE earned) into a new **"Studio"** sub-tab on the user's own profile, viewable only by them. Removes the orphan "/dashboard" route entirely. OK to proceed that way?
+
+Answer those in chat and I'll move to the implementation plan.

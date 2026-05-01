@@ -40,6 +40,7 @@ import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import OnboardingPage from "@/pages/OnboardingPage";
 // MarketplacePage retained as a file but no longer routed — /marketplace redirects to /hub.
 import HomePage from "@/pages/HomePage";
+import DiscoverPage from "@/pages/DiscoverPage";
 import InfrastructurePage from "@/pages/InfrastructurePage";
 // WorksPage is no longer routed here — it's mounted inside SettingsPage
 // (Provenance section). /works redirects to /settings#provenance below.
@@ -78,6 +79,7 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/explore/creators/:id",
   "/",
   "/dashboard",
+  "/discover",
   "/hub",
   "/profile",
   "/spaces",
@@ -131,7 +133,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) return <Navigate to="/discover" replace />;
   return <>{children}</>;
 };
 
@@ -146,11 +148,11 @@ const AuthGateWrapper = ({ children }: { children: React.ReactNode }) => {
 
 /**
  * Root entry — `/`
- * Guests see the public HomePage (clean, no sidebar/dock).
- * Authed users redirect to /dashboard inside AppLayout.
+ * v6: Discover is the front door for everyone. Guests see it (with the
+ * landing-style hero copy), authed users see it personalized.
  */
 const RootEntry = () => {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -158,8 +160,7 @@ const RootEntry = () => {
       </div>
     );
   }
-  if (user) return <Navigate to="/dashboard" replace />;
-  return <HomePage />;
+  return <Navigate to="/discover" replace />;
 };
 
 const App = () => (
@@ -196,6 +197,7 @@ const App = () => (
               {/* Main app — browsable by everyone, auth-gated actions inside */}
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/discover" element={<DiscoverPage />} />
                 {/* Primary pillars: Home · Hub · Spaces · Projects · Profile.
                     /spaces is the Events · Spaces · Discover hub.
                     /studios redirects in for backwards compatibility. */}
