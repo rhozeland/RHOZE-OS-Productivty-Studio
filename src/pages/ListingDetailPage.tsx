@@ -41,6 +41,10 @@ import {
   Send,
   HandshakeIcon,
   Zap,
+  Eye,
+  EyeOff,
+  Trash2,
+  Shield,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -50,6 +54,7 @@ import StarRating from "@/components/marketplace/StarRating";
 import QuickMessageDialog from "@/components/messages/QuickMessageDialog";
 import RevenueSplitConfig from "@/components/revenue/RevenueSplitConfig";
 import AttachedWorks from "@/components/works/AttachedWorks";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 const CATEGORIES: Record<string, { label: string; icon: any; color: string }> = {
   music: { label: "Music", icon: Music, color: "hsl(280, 60%, 55%)" },
@@ -147,6 +152,37 @@ const ListingDetailPage = () => {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [dmOpen, setDmOpen] = useState(false);
+  const { isAdmin } = useAdminCheck();
+
+  const toggleActive = useMutation({
+    mutationFn: async (next: boolean) => {
+      const { error } = await supabase
+        .from("marketplace_listings")
+        .update({ is_active: next })
+        .eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: (_d, next) => {
+      queryClient.invalidateQueries({ queryKey: ["listing", id] });
+      toast.success(next ? "Listing visible" : "Listing hidden");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const deleteListing = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("marketplace_listings")
+        .delete()
+        .eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Listing deleted");
+      navigate("/hub?lane=offerings");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const { data: listing } = useQuery({
     queryKey: ["listing", id],
@@ -762,10 +798,65 @@ const ListingDetailPage = () => {
               {/* Owner view */}
               {isOwner && (
                 <div className="space-y-4">
-                  <div className="rounded-lg bg-muted/40 border border-dashed border-border p-3 text-xs text-muted-foreground text-center">
-                    This is your listing. <Link to="/seller" className="text-primary hover:underline">Manage in Seller Dashboard</Link>
+                  <div className="rounded-lg bg-muted/30 border border-border p-3 space-y-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Your listing
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full gap-1.5"
+                        onClick={() => toggleActive.mutate(!listing.is_active)}
+                        disabled={toggleActive.isPending}
+                      >
+                        {listing.is_active ? (
+                          <><EyeOff className="h-3.5 w-3.5" /> Hide listing</>
+                        ) : (
+                          <><Eye className="h-3.5 w-3.5" /> Make visible</>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full gap-1.5 text-destructive hover:text-destructive"
+                        onClick={() => {
+                          if (confirm("Delete this listing? This can't be undone.")) {
+                            deleteListing.mutate();
+                          }
+                        }}
+                        disabled={deleteListing.isPending}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Delete
+                      </Button>
+                    </div>
+                    {!listing.is_active && (
+                      <p className="text-[11px] text-muted-foreground">
+                        Hidden from the Hub. Only you can see it.
+                      </p>
+                    )}
                   </div>
                   <RevenueSplitConfig listingId={listing.id} />
+                </div>
+              )}
+
+              {/* Admin moderation — non-owner admins can remove listings */}
+              {!isOwner && isAdmin && (
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                    <Shield className="h-3 w-3" /> Admin
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full gap-1.5 text-destructive hover:text-destructive"
+                    onClick={() => {
+                      if (confirm("Delete this listing as admin?")) deleteListing.mutate();
+                    }}
+                    disabled={deleteListing.isPending}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Delete listing
+                  </Button>
                 </div>
               )}
 
