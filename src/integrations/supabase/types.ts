@@ -1666,29 +1666,44 @@ export type Database = {
       moodboard_items: {
         Row: {
           created_at: string
-          file_name: string
+          file_name: string | null
           file_type: string | null
-          file_url: string
+          file_url: string | null
           id: string
+          kind: string
+          link_url: string | null
+          note: string | null
+          position: number
           project_id: string
+          title: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
-          file_name: string
+          file_name?: string | null
           file_type?: string | null
-          file_url: string
+          file_url?: string | null
           id?: string
+          kind?: string
+          link_url?: string | null
+          note?: string | null
+          position?: number
           project_id: string
+          title?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
-          file_name?: string
+          file_name?: string | null
           file_type?: string | null
-          file_url?: string
+          file_url?: string | null
           id?: string
+          kind?: string
+          link_url?: string | null
+          note?: string | null
+          position?: number
           project_id?: string
+          title?: string | null
           user_id?: string
         }
         Relationships: [
