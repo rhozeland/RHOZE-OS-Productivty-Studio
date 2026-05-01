@@ -9,7 +9,7 @@
  *     hosts can already configure pricing now.
  *   • Publish/unpublish action when in draft.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -20,6 +20,8 @@ import {
   Plus,
   CheckCircle2,
   Loader2,
+  ScanLine,
+  Radio,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { shortHash } from "@/lib/content-hash";
+import QrCheckInScanner from "@/components/events/QrCheckInScanner";
 
 const EventManagePage = () => {
   const { id } = useParams<{ id: string }>();
@@ -80,6 +83,30 @@ const EventManagePage = () => {
   const [tierUsd, setTierUsd] = useState("");
   const [tierRhoze, setTierRhoze] = useState("");
   const [tierQty, setTierQty] = useState("");
+  const [scannerOpen, setScannerOpen] = useState(false);
+
+  // Live attendee list — reflect check-ins from any device instantly.
+  useEffect(() => {
+    if (!id) return;
+    const channel = supabase
+      .channel(`event-tickets-${id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "event_tickets",
+          filter: `event_id=eq.${id}`,
+        },
+        () => {
+          qc.invalidateQueries({ queryKey: ["event-tickets-manage", id] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, qc]);
 
   const addTier = useMutation({
     mutationFn: async () => {
@@ -197,6 +224,41 @@ const EventManagePage = () => {
         description: err instanceof Error ? err.message : "Unknown error",
       }),
   });
+
+  // Resolve a scanned QR token → ticket → check-in. Looks up locally first
+  // (so the host gets instant feedback) then falls back to a server lookup
+  // in case the realtime cache hasn't caught up.
+  const handleScannedToken = async (rawToken: string) => {
+    const token = rawToken.trim();
+    if (!token) return;
+    setScannerOpen(false);
+
+    let match: any = (tickets ?? []).find((t: any) => t.qr_token === token);
+    if (!match) {
+      const { data, error } = await supabase
+        .from("event_tickets")
+        .select("*")
+        .eq("event_id", id!)
+        .eq("qr_token", token)
+        .maybeSingle();
+      if (error || !data) {
+        toast.error("Ticket not found", {
+          description: "That QR isn't valid for this event.",
+        });
+        return;
+      }
+      match = data;
+    }
+
+    if (match.status === "checked_in") {
+      toast.info("Already checked in", {
+        description: `Scanned at ${format(new Date(match.checked_in_at ?? match.issued_at), "h:mm a")}`,
+      });
+      return;
+    }
+
+    checkIn.mutate(match.id);
+  };
 
   if (isLoading) {
     return (
@@ -348,7 +410,22 @@ const EventManagePage = () => {
 
       {/* Attendees */}
       <section className="space-y-3">
-        <h2 className="font-display text-lg font-bold tracking-tight">Attendees</h2>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <h2 className="font-display text-lg font-bold tracking-tight">Attendees</h2>
+            <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-emerald-500">
+              <Radio className="h-3 w-3 animate-pulse" /> Live
+            </span>
+          </div>
+          <Button
+            size="sm"
+            className="rounded-full gap-1.5"
+            onClick={() => setScannerOpen(true)}
+          >
+            <ScanLine className="h-4 w-4" /> Scan QR
+          </Button>
+        </div>
+
         {(tickets ?? []).length === 0 ? (
           <p className="text-sm text-muted-foreground">No tickets yet.</p>
         ) : (
@@ -386,6 +463,12 @@ const EventManagePage = () => {
           </div>
         )}
       </section>
+
+      <QrCheckInScanner
+        open={scannerOpen}
+        onOpenChange={setScannerOpen}
+        onScan={handleScannedToken}
+      />
     </div>
   );
 };
