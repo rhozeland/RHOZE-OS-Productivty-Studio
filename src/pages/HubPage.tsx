@@ -44,7 +44,7 @@ import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 
-type Lane = "conversations" | "offerings" | "opportunities" | "works";
+type Lane = "conversations" | "offerings" | "opportunities" | "works" | "coins";
 
 const LANES: { key: Lane; label: string; icon: typeof Briefcase; tagline: string }[] = [
   {
@@ -70,6 +70,12 @@ const LANES: { key: Lane; label: string; icon: typeof Briefcase; tagline: string
     label: "Works",
     icon: Shield,
     tagline: "Anchored creative IP — verified on Solana.",
+  },
+  {
+    key: "coins",
+    label: "Coins",
+    icon: Coins,
+    tagline: "Artist coins on the bonding curve — Launchpad.",
   },
 ];
 
