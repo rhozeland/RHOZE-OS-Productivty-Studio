@@ -443,6 +443,36 @@ const ProjectDetailPage = () => {
         <TabsContent value="tools">
           <ProjectTools projectId={id!} projectTitle={project.title} />
         </TabsContent>
+
+        {/* Vault — ambient Works surface scoped to this project. Lets the
+            owner upload, fingerprint and attach anchored deliverables
+            without leaving the workspace. Read-only for non-owners. */}
+        <TabsContent value="vault" className="space-y-4">
+          <Card className="border-dashed bg-muted/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base font-display">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                Project Vault
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground space-y-1">
+              <p className="flex items-start gap-2">
+                <Fingerprint className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                Every file you add here is content-hashed and anchored on Solana — proving authorship and timestamp without revealing the file itself.
+              </p>
+              <p className="pl-5.5">
+                Attached works flow into listings, contracts and revenue splits tied to this project.
+              </p>
+            </CardContent>
+          </Card>
+
+          <AttachedWorks
+            targetType="project"
+            targetId={id!}
+            canManage={project.user_id === user?.id}
+            title="Anchored deliverables"
+          />
+        </TabsContent>
       </Tabs>
 
       {/* Link Smartboard Dialog */}
