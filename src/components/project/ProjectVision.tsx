@@ -539,6 +539,7 @@ const ProjectVision = ({ project, projectId }: ProjectVisionProps) => {
             <Plus className="h-4 w-4" />
           </Button>
         </form>
+      </div>
     </div>
   );
 };
