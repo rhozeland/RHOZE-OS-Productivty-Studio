@@ -36,10 +36,11 @@ const SECTIONS = [
   { id: "avatar", label: "Display Picture", icon: Camera },
   { id: "banner", label: "Banner & Background", icon: Palette },
   { id: "wallet", label: "Wallet", icon: Wallet },
-  // Provenance vault — full Works registry. Works is ambient elsewhere
+  // Verified IP vault — full Works registry. Works is ambient elsewhere
   // (VerifiedIPBadge surfaces it inline on every creation); this is the
   // dedicated personal vault, intentionally tucked under Settings.
-  { id: "provenance", label: "Provenance", icon: Fingerprint },
+  // NOTE: id stays "provenance" so existing /settings#provenance links keep working.
+  { id: "provenance", label: "Verified IP", icon: Fingerprint },
   { id: "shipping", label: "Shipping", icon: MapPin },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "security", label: "Security", icon: Lock },
