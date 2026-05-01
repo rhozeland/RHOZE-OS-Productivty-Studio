@@ -40,6 +40,8 @@ type Launch = {
   lp_lock_months: number;
   graduated_at: string | null;
   created_at: string;
+  mint_address: string | null;
+  raydium_pool: string | null;
 };
 
 type Trade = {
