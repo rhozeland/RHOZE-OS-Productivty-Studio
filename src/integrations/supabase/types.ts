@@ -340,6 +340,33 @@ export type Database = {
         }
         Relationships: []
       }
+      capital_underwriting_rules_audit: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          changed_fields: string[]
+          id: string
+          new_values: Json
+          old_values: Json
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          changed_fields?: string[]
+          id?: string
+          new_values: Json
+          old_values: Json
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          changed_fields?: string[]
+          id?: string
+          new_values?: Json
+          old_values?: Json
+        }
+        Relationships: []
+      }
       chat_group_members: {
         Row: {
           group_id: string
