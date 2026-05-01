@@ -951,6 +951,107 @@ const CalendarPage = () => {
         )}
       </div>
 
+      {/* Events & reminders list */}
+      <div className="surface-card p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-display text-lg font-semibold text-foreground">Events & Reminders</h3>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              resetEventForm();
+              const today = new Date();
+              setEventDate(format(today, "yyyy-MM-dd"));
+              setEventStartTime("10:00");
+              setEventEndTime("11:00");
+              setEventType("reminder");
+              setBookingDialogOpen(true);
+            }}
+          >
+            <Plus className="mr-1.5 h-4 w-4" /> New
+          </Button>
+        </div>
+        {(!calendarEvents || calendarEvents.length === 0) ? (
+          <div className="text-center py-10 rounded-xl bg-muted/30">
+            <Bell className="h-9 w-9 text-muted-foreground mx-auto mb-2" />
+            <p className="text-foreground font-medium">No events yet</p>
+            <p className="text-sm text-muted-foreground mt-1">Create a reminder or schedule a project session.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {calendarEvents.map((ev: any) => {
+              const start = new Date(ev.start_time);
+              const end = new Date(ev.end_time);
+              const linkedProject = projects?.find((p) => p.id === ev.project_id);
+              return (
+                <div
+                  key={ev.id}
+                  className="flex items-center justify-between rounded-lg border border-border p-4 hover:bg-muted/20 transition-colors"
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/15 shrink-0">
+                      {ev.project_id ? (
+                        <FolderKanban className="h-5 w-5 text-accent-foreground" />
+                      ) : (
+                        <Bell className="h-5 w-5 text-accent-foreground" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-foreground truncate">{ev.title}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {format(start, "EEE, MMM d · h:mma")} – {format(end, "h:mma")}
+                      </p>
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                        {linkedProject && (
+                          <Badge variant="secondary" className="text-[10px]">{linkedProject.title}</Badge>
+                        )}
+                        {Array.isArray(ev.attendees) && ev.attendees.length > 0 && (
+                          <Badge variant="outline" className="text-[10px] gap-1">
+                            <Users className="h-3 w-3" /> {ev.attendees.length}
+                          </Badge>
+                        )}
+                        {ev.reminder_minutes != null && (
+                          <Badge variant="outline" className="text-[10px] gap-1">
+                            <Bell className="h-3 w-3" />
+                            {ev.reminder_minutes === 0
+                              ? "At time"
+                              : ev.reminder_minutes >= 1440
+                              ? `${Math.round(ev.reminder_minutes / 1440)}d before`
+                              : ev.reminder_minutes >= 60
+                              ? `${Math.round(ev.reminder_minutes / 60)}h before`
+                              : `${ev.reminder_minutes}m before`}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => openEditEvent(ev)}
+                      aria-label="Edit event"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => deleteCalendarEvent(ev.id)}
+                      aria-label="Delete event"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Booking / Event dialog */}
       <Dialog open={bookingDialogOpen} onOpenChange={(open) => {
         if (!open) {
