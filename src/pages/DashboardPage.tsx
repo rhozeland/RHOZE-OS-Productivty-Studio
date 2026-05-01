@@ -335,24 +335,28 @@ const DashboardPage = () => {
   const pulseItems = useMemo<PulseItem[]>(() => {
     const items: PulseItem[] = [];
     (studios ?? []).forEach((s: any) => {
+      const img = s.cover_image_url ?? s.hero_image_url ?? null;
+      if (!img) return; // skip filler-only studios
       items.push({
         kind: "studio",
         id: `s-${s.id}`,
         title: s.name,
         subtitle: [s.city, s.country].filter(Boolean).join(", ") || "Studio Space",
-        image: s.cover_image_url ?? s.hero_image_url ?? null,
+        image: img,
         href: `/studios/${s.id}`,
         timestamp: s.created_at ?? new Date().toISOString(),
         icon: Building2,
       });
     });
     (hubListings ?? []).forEach((l: any) => {
+      const img = l.cover_url ?? l.image_url ?? null;
+      if (!img) return; // skip filler-only listings
       items.push({
         kind: "hub",
         id: `h-${l.id}`,
         title: l.title,
         subtitle: l.category ?? "Offering",
-        image: l.cover_url ?? l.image_url ?? null,
+        image: img,
         href: `/marketplace/${l.id}`,
         timestamp: l.created_at,
         icon: Sparkles,
@@ -609,7 +613,7 @@ const DashboardPage = () => {
             <>
               {greeting()}
               {firstName ? ", " : " "}
-              <span className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">
                 {firstName || "Creator"}
               </span>
             </>
@@ -617,7 +621,7 @@ const DashboardPage = () => {
             <>
               Two networks.
               <br />
-              <span className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">
                 One creative space.
               </span>
             </>
@@ -826,7 +830,12 @@ const DashboardPage = () => {
           ACT 2 — Cinematic stacked previews
           Two full-width editorial blocks. One per network.
           ════════════════════════════════════════════════════════════════ */}
-      {(studios ?? []).length > 0 && (
+      {(() => {
+        const studiosWithImages = (studios ?? []).filter(
+          (s: any) => s.cover_image_url || s.hero_image_url,
+        );
+        if (studiosWithImages.length === 0) return null;
+        return (
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -849,7 +858,7 @@ const DashboardPage = () => {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {(studios ?? []).slice(0, 4).map((s: any, i: number) => (
+            {studiosWithImages.slice(0, 4).map((s: any, i: number) => (
               <motion.div
                 key={s.id}
                 initial={{ opacity: 0, y: 16 }}
@@ -861,18 +870,12 @@ const DashboardPage = () => {
                   to={`/studios/${s.id}`}
                   className="group block aspect-[4/5] rounded-2xl overflow-hidden border border-border/50 bg-muted relative"
                 >
-                  {s.cover_image_url || s.hero_image_url ? (
-                    <img
-                      src={s.cover_image_url ?? s.hero_image_url}
-                      alt={s.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500/10 to-cyan-500/10">
-                      <Building2 className="h-10 w-10 text-muted-foreground/40" />
-                    </div>
-                  )}
+                  <img
+                    src={s.cover_image_url ?? s.hero_image_url}
+                    alt={s.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    loading="lazy"
+                  />
                   <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
                     <p className="text-sm font-semibold text-white truncate">{s.name}</p>
                     {s.city && (
@@ -887,9 +890,15 @@ const DashboardPage = () => {
             ))}
           </div>
         </motion.section>
-      )}
+        );
+      })()}
 
-      {(hubListings ?? []).length > 0 && (
+      {(() => {
+        const listingsWithImages = (hubListings ?? []).filter(
+          (l: any) => l.cover_url || l.image_url,
+        );
+        if (listingsWithImages.length === 0) return null;
+        return (
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -912,7 +921,7 @@ const DashboardPage = () => {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {(hubListings ?? []).slice(0, 6).map((l: any, i: number) => (
+            {listingsWithImages.slice(0, 6).map((l: any, i: number) => (
               <motion.div
                 key={l.id}
                 initial={{ opacity: 0, y: 16 }}
@@ -924,18 +933,12 @@ const DashboardPage = () => {
                   to={`/marketplace/${l.id}`}
                   className="group block aspect-[4/3] rounded-2xl overflow-hidden border border-border/50 bg-muted relative"
                 >
-                  {l.cover_url || l.image_url ? (
-                    <img
-                      src={l.cover_url ?? l.image_url}
-                      alt={l.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-500/10 to-amber-500/10">
-                      <Sparkles className="h-10 w-10 text-muted-foreground/40" />
-                    </div>
-                  )}
+                  <img
+                    src={l.cover_url ?? l.image_url}
+                    alt={l.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    loading="lazy"
+                  />
                   <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
                     <p className="text-[10px] uppercase tracking-wider text-white/70 mb-0.5">
                       {l.category}
@@ -947,7 +950,8 @@ const DashboardPage = () => {
             ))}
           </div>
         </motion.section>
-      )}
+        );
+      })()}
 
       {/* ════════════════════════════════════════════════════════════════
           ACT 3 — Unified pulse feed (toggle: All / Studios / Hub)

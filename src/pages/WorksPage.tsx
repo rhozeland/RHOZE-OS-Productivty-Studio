@@ -30,15 +30,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -528,42 +519,52 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
     !!file && !!contentHash && !!title.trim() && !hashing && !submitting;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="gap-1.5 rounded-full">
-          <Plus className="h-4 w-4" /> Register a work
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Register a work</DialogTitle>
-          <DialogDescription>
+    <section className="surface-card p-5 sm:p-6 space-y-5">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
+            <Plus className="h-4 w-4 text-primary" /> Register a work
+          </h2>
+          <p className="text-xs text-muted-foreground mt-1 max-w-md">
             We hash the file in your browser — the bytes never leave your
             device until you confirm.
-          </DialogDescription>
-        </DialogHeader>
+          </p>
+        </div>
+        {open && (
+          <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+            Hide
+          </Button>
+        )}
+      </div>
 
+      {!open ? (
+        <Button onClick={() => setOpen(true)} className="gap-1.5 rounded-full">
+          <Plus className="h-4 w-4" /> New work
+        </Button>
+      ) : (
         <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="work-file">File</Label>
-            <Input id="work-file" type="file" onChange={handleFileChange} />
-            {file && (
-              <div className="text-xs text-muted-foreground flex items-center gap-2 pt-1">
-                <span>{KIND_LABEL[inferredKind]}</span>
-                <span>· {formatFileSize(file.size)}</span>
-              </div>
-            )}
-          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="work-file">File</Label>
+              <Input id="work-file" type="file" onChange={handleFileChange} />
+              {file && (
+                <div className="text-xs text-muted-foreground flex items-center gap-2 pt-1">
+                  <span>{KIND_LABEL[inferredKind]}</span>
+                  <span>· {formatFileSize(file.size)}</span>
+                </div>
+              )}
+            </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="work-title">Title</Label>
-            <Input
-              id="work-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Untitled"
-              maxLength={140}
-            />
+            <div className="space-y-1.5">
+              <Label htmlFor="work-title">Title</Label>
+              <Input
+                id="work-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Untitled"
+                maxLength={140}
+              />
+            </div>
           </div>
 
           <div className="space-y-1.5">
@@ -578,7 +579,7 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
             />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 max-w-xs">
             <Label>Visibility</Label>
             <Select
               value={visibility}
@@ -609,25 +610,34 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
               )}
             </div>
           )}
-        </div>
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={!canSubmit}>
-            {submitting ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Uploading…
-              </>
-            ) : (
-              "Register"
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setOpen(false);
+                setFile(null);
+                setTitle("");
+                setDescription("");
+                setContentHash(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSubmit} disabled={!canSubmit}>
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Uploading…
+                </>
+              ) : (
+                "Register"
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 
