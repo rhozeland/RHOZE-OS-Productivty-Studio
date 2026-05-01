@@ -767,7 +767,12 @@ const SettingsPage = () => {
     </div>
   );
 
-  const renderProvenance = () => <WorksPage embedded />;
+  const renderProvenance = () => (
+    <div className="space-y-6">
+      <MyVerificationRequests />
+      <WorksPage embedded />
+    </div>
+  );
 
   const sectionRenderers: Record<SectionId, () => JSX.Element> = {
     profile: renderProfile,
