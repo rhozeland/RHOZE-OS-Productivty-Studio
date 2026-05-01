@@ -11,6 +11,7 @@
  * LaunchCoinDialog instance starts using real Anchor calls — no code edits.
  */
 import type { Idl } from "@coral-xyz/anchor";
+import { validateLaunchpadIdl, type IdlValidationResult } from "./launchpad-idl-validator";
 
 const LS_KEY = "launchpad-idl-json";
 const LS_PROGRAM_ID = "launchpad-program-id";
