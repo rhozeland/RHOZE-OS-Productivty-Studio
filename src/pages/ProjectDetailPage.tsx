@@ -416,15 +416,9 @@ const ProjectDetailPage = () => {
             onLinkSmartboard={() => setLinkDialogOpen(true)}
             onUnlinkSmartboard={(sbId: string) => unlinkSmartboard.mutate(sbId)}
           />
-          {/* Verified IP — fingerprint deliverable files inline. Lives next
-              to the project's scope/deliverables so creators can attach
-              hashed proofs of authorship without leaving the project. */}
-          <AttachedWorks
-            targetType="project"
-            targetId={id!}
-            canManage={project.user_id === user?.id}
-            title="Verified IP & deliverables"
-          />
+          {/* Verified IP & deliverables now live in the Vault tab — keeps
+              Scope focused on what's being built, Vault on what's been
+              anchored. */}
         </TabsContent>
 
         {isPaid && (
