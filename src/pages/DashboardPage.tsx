@@ -249,6 +249,19 @@ const DashboardPage = () => {
       return data ?? [];
     },
   });
+  const { data: spacesEvents } = useQuery({
+    queryKey: ["home-spaces-events"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("events")
+        .select("id, title, starts_at, cover_image_url, city, category")
+        .eq("status", "published")
+        .gte("starts_at", new Date().toISOString())
+        .order("starts_at", { ascending: true })
+        .limit(6);
+      return data ?? [];
+    },
+  });
   const { data: rooms } = useQuery({
     queryKey: ["home-rooms"],
     queryFn: async () => {
