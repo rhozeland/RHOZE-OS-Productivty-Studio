@@ -227,9 +227,24 @@ const FlowModePage = () => {
         progress: 0,
         error: null,
         uploadedUrl: null,
+        contentHash: null,
+        hashing: true,
       });
     }
-    if (accepted.length) setPendingFiles((prev) => [...prev, ...accepted]);
+    if (accepted.length) {
+      setPendingFiles((prev) => [...prev, ...accepted]);
+      // Fingerprint each accepted file in parallel. Hashing happens in the
+      // browser via Web Crypto and finishes long before most uploads, so by
+      // the time the user hits Publish the SHA-256 is ready to embed in the
+      // flow_items row. Failures degrade gracefully — the upload still
+      // succeeds, the row just won't carry a hash and can be re-fingerprinted
+      // later via the verification flow.
+      for (const pf of accepted) {
+        computeContentHash(pf.file)
+          .then((hash) => patchPendingFile(pf.id, { contentHash: hash, hashing: false }))
+          .catch(() => patchPendingFile(pf.id, { contentHash: null, hashing: false }));
+      }
+    }
     if (rejections.length) {
       setFileError(rejections.length === 1 ? rejections[0] : `${rejections.length} files rejected. ${rejections[0]}`);
     } else {
