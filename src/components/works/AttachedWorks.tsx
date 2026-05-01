@@ -21,6 +21,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -49,9 +51,10 @@ import {
   Video,
   FileText,
   File as FileIcon,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
-import { shortHash } from "@/lib/content-hash";
+import { computeContentHash, inferWorkKind, formatFileSize, shortHash } from "@/lib/content-hash";
 
 export type AttachTargetType = "listing" | "project" | "contract";
 
