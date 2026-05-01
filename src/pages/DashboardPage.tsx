@@ -303,11 +303,14 @@ const DashboardPage = () => {
   const completedTasks = tasks?.filter((t) => t.completed).length ?? 0;
   const totalTasks = tasks?.length ?? 0;
   const activeProjects = projects?.filter((p) => p.status === "active").length ?? 0;
-  const firstName =
+  const firstName = (
     profile?.display_name?.split(" ")[0]?.trim() ||
-    (profile as any)?.username ||
-    (user ? user.email?.split("@")[0] : "") ||
-    "";
+    (profile as any)?.username?.trim() ||
+    user?.user_metadata?.full_name?.split(" ")[0]?.trim() ||
+    user?.user_metadata?.name?.split(" ")[0]?.trim() ||
+    user?.email?.split("@")[0] ||
+    "Creator"
+  ).trim() || "Creator";
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -614,17 +617,26 @@ const DashboardPage = () => {
         <h1 className="font-display text-3xl sm:text-4xl md:text-5xl text-foreground leading-[1.1]">
           {user ? (
             <>
-              {greeting()}
-              {firstName ? ", " : " "}
-              <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">
-                {firstName || "Creator"}
+              <span className="text-foreground">{greeting()}, </span>
+              <span
+                className="inline-block bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text"
+                style={{
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  color: "transparent",
+                }}
+              >
+                {firstName}.
               </span>
             </>
           ) : (
             <>
-              Two networks.
-              <br />
-              <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">
+              <span className="text-foreground">Two networks. </span>
+              <span
+                className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent"
+                style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+              >
                 One creative space.
               </span>
             </>
@@ -633,13 +645,13 @@ const DashboardPage = () => {
         <p className="text-sm text-muted-foreground mt-3 max-w-xl">
           {user
             ? activeProjects > 0
-              ? `You have ${activeProjects} active project${activeProjects > 1 ? "s" : ""}${
+              ? `${activeProjects} active project${activeProjects > 1 ? "s" : ""}${
                   (unreadCount ?? 0) > 0
-                    ? ` · ${unreadCount} unread message${(unreadCount ?? 0) > 1 ? "s" : ""}`
+                    ? ` · ${unreadCount} unread`
                     : ""
                 }.`
-              : "Step into a studio space, tune into the Hub — or open a new project."
-            : "Step into physical studios or tune into the digital Hub. Two doors into the same world."}
+              : "Open a Space, tune into the Hub, or start a new project."
+            : "Step into Spaces or tune into the Hub."}
         </p>
       </motion.div>
 

@@ -63,14 +63,13 @@ const Header = ({ active, user }: { active: Tab; user: any }) => (
     <div className="relative flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
       <div>
         <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 mb-2">
-          Physical Network · Where the work gathers
+          Physical Network
         </p>
         <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground tracking-tight leading-[1.05]">
           Spaces.
         </h1>
-        <p className="text-muted-foreground mt-2.5 text-sm md:text-base max-w-lg">
-          Browse vetted studios, host or RSVP to events, and discover what the
-          community is building IRL — every gathering anchored on Solana.
+        <p className="text-muted-foreground mt-2.5 text-sm md:text-base max-w-md">
+          Studios, events, gatherings — anchored on Solana.
         </p>
       </div>
       {user && (
