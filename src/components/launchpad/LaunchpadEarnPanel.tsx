@@ -239,7 +239,7 @@ const LaunchpadEarnPanel = () => {
 
         {/* ── Reward grid ─────────────────────────────────────────────── */}
         <ul
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 list-none"
+          className="grid grid-cols-2 lg:grid-cols-3 gap-2 list-none"
           aria-label="Ways to earn $RHOZE"
         >
           {ACTIONS.map(({ label, reward, icon: Icon, hint, featured }) => (
