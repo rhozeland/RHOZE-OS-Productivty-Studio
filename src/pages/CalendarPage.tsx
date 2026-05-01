@@ -74,6 +74,14 @@ const CalendarPage = () => {
   const [bookingNotes, setBookingNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("credits");
   const [bookingLoading, setBookingLoading] = useState(false);
+  // Event editor extras
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [eventDate, setEventDate] = useState<string>(""); // YYYY-MM-DD
+  const [eventStartTime, setEventStartTime] = useState<string>(""); // HH:mm
+  const [eventEndTime, setEventEndTime] = useState<string>(""); // HH:mm
+  const [attendeesInput, setAttendeesInput] = useState<string>("");
+  const [attendees, setAttendees] = useState<string[]>([]);
+  const [reminderMinutes, setReminderMinutes] = useState<string>("none");
   // Google Calendar
   const [googleEvents, setGoogleEvents] = useState<CalendarEvent[]>([]);
   const [googleLoading, setGoogleLoading] = useState(false);
