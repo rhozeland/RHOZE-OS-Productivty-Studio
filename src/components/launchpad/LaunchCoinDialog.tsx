@@ -188,10 +188,7 @@ const LaunchCoinDialog = ({
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="image">Image URL (optional)</Label>
-            <Input id="image" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" />
-          </div>
+
 
           <div>
             <Label htmlFor="desc">Description (optional)</Label>
