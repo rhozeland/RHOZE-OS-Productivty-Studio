@@ -734,7 +734,11 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
           </motion.div>
         </TabsContent>
 
-        {/* ═══════ Purchases & $RHOZE Tab ═══════ */}
+        {/* ═══════ Verified IP — Works explainer + recent anchors ═══════ */}
+        <TabsContent value="works" className="mt-4 space-y-6">
+          <VerifiedIPSection userId={user?.id ?? null} />
+        </TabsContent>
+
         <TabsContent value="purchases" className="mt-4 space-y-6">
           {/* Sub-tab toggle */}
           <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-fit">
