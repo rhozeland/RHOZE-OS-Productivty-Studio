@@ -40,7 +40,7 @@ import rhozelandLogo from "@/assets/rhozeland-logo.png";
 const pillarItems = [
   { icon: Home, label: "Home", path: "/dashboard" },
   { icon: Sparkles, label: "Hub", path: "/hub" },
-  { icon: Building2, label: "Studios", path: "/studios" },
+  { icon: Building2, label: "Spaces", path: "/spaces" },
   { icon: FolderKanban, label: "Projects", path: "/projects" },
 ];
 

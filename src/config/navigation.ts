@@ -58,7 +58,7 @@ export const NAV_ITEMS: NavItem[] = [
   // active-state, and deep-link pages still work, but no longer the
   // primary navigation surfaces. (`marketplace` and `flow` ids removed —
   // both fully absorbed by Hub / Projects respectively.)
-  { id: "studios", label: "Studios", icon: Building2, path: "/studios" },
+  { id: "studios", label: "Spaces", icon: Building2, path: "/spaces", matchPaths: ["/studios"] },
   { id: "boards", label: "Boards", icon: Palette, path: "/smartboards" },
   {
     id: "droprooms",
