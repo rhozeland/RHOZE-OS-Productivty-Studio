@@ -36,8 +36,9 @@ import ProjectControls from "@/components/project/ProjectControls";
 import RevenueSplitConfig from "@/components/revenue/RevenueSplitConfig";
 import AttachedWorks from "@/components/works/AttachedWorks";
 import ProjectTools from "@/components/project/ProjectTools";
+import ProjectMoodboard from "@/components/project/ProjectMoodboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Archive, ShieldCheck, Fingerprint } from "lucide-react";
+import { Archive, ShieldCheck, Fingerprint, Image as ImageIcon } from "lucide-react";
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -332,6 +333,9 @@ const ProjectDetailPage = () => {
           {isPaid && <TabsTrigger value="budget" className="shrink-0">Budget</TabsTrigger>}
           <TabsTrigger value="team" className="shrink-0">Team</TabsTrigger>
           <TabsTrigger value="tools" className="shrink-0">Tools</TabsTrigger>
+          <TabsTrigger value="moodboard" className="shrink-0 gap-1.5">
+            <ImageIcon className="h-3.5 w-3.5" /> Moodboard
+          </TabsTrigger>
           <TabsTrigger value="vault" className="shrink-0 gap-1.5">
             <Archive className="h-3.5 w-3.5" /> Vault
           </TabsTrigger>
@@ -436,6 +440,10 @@ const ProjectDetailPage = () => {
 
         <TabsContent value="tools">
           <ProjectTools projectId={id!} projectTitle={project.title} />
+        </TabsContent>
+
+        <TabsContent value="moodboard">
+          <ProjectMoodboard projectId={id!} canManage={project.user_id === user?.id} />
         </TabsContent>
 
         {/* Vault — ambient Works surface scoped to this project. Lets the
