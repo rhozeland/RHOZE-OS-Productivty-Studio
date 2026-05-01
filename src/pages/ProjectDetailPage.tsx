@@ -44,6 +44,7 @@ const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { canManage: canManageProject, isOwner: isProjectOwner } = useProjectRole(id);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [editingHeader, setEditingHeader] = useState(false);
   const [editTitle, setEditTitle] = useState("");
