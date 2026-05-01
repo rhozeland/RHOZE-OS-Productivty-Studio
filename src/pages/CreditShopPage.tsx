@@ -291,6 +291,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
           <TabsTrigger value="pass" className="gap-1.5"><Award className="h-3.5 w-3.5" /> My Pass</TabsTrigger>
           <TabsTrigger value="shop" className="gap-1.5"><Coins className="h-3.5 w-3.5" /> Plans</TabsTrigger>
           <TabsTrigger value="how" className="gap-1.5"><Info className="h-3.5 w-3.5" /> How It Works</TabsTrigger>
+          <TabsTrigger value="works" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Verified IP</TabsTrigger>
           <TabsTrigger value="purchases" className="gap-1.5"><ShoppingBag className="h-3.5 w-3.5" /> Purchases</TabsTrigger>
         </TabsList>
 
@@ -733,7 +734,11 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
           </motion.div>
         </TabsContent>
 
-        {/* ═══════ Purchases & $RHOZE Tab ═══════ */}
+        {/* ═══════ Verified IP — Works explainer + recent anchors ═══════ */}
+        <TabsContent value="works" className="mt-4 space-y-6">
+          <VerifiedIPSection userId={user?.id ?? null} />
+        </TabsContent>
+
         <TabsContent value="purchases" className="mt-4 space-y-6">
           {/* Sub-tab toggle */}
           <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-fit">
@@ -1042,6 +1047,119 @@ const TransactionHistory = ({ userId }: { userId?: string }) => {
             </span>
           </div>
         ))}
+      </div>
+    </div>
+  );
+};
+
+/* ───────────────────────────────────────────────────────────────────────
+   Verified IP — Works explainer + recent anchored works for the creator.
+   Lives inside Creator Pass so the IP toolkit feels like part of the kit
+   instead of a standalone tab. The full vault still lives at /works.
+   ─────────────────────────────────────────────────────────────────────── */
+const VerifiedIPSection = ({ userId }: { userId: string | null }) => {
+  const { data: works = [], isLoading } = useQuery({
+    queryKey: ["creator-pass-works", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data } = await supabase
+        .from("works")
+        .select("id, title, kind, content_hash, solana_signature, anchored_at, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(6);
+      return data ?? [];
+    },
+    enabled: !!userId,
+  });
+
+  const anchoredCount = works.filter((w: any) => w.solana_signature).length;
+
+  return (
+    <div className="space-y-6">
+      {/* Explainer */}
+      <div className="surface-card p-5 sm:p-6">
+        <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-muted-foreground mb-2">
+          <Shield className="h-3.5 w-3.5" /> Layer I · Provenance
+        </div>
+        <h3 className="font-display text-2xl font-bold text-foreground">
+          Every file you make can be Verified IP.
+        </h3>
+        <p className="text-sm text-muted-foreground mt-2 max-w-2xl leading-relaxed">
+          Drop in any audio, image, video, or document and Rhozeland computes a
+          <strong className="text-foreground"> SHA-256 fingerprint</strong> in
+          your browser — a unique signature of the file's bytes. Anchor it on
+          Solana and you get a public, timestamped proof of authorship that
+          travels with the work everywhere it goes: profiles, projects, the Hub,
+          even revenue splits.
+        </p>
+        <div className="grid sm:grid-cols-3 gap-3 mt-5">
+          <div className="rounded-xl border border-border p-3">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Fingerprinted</p>
+            <p className="font-display text-2xl font-bold text-foreground">{works.length}</p>
+          </div>
+          <div className="rounded-xl border border-border p-3">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Anchored on Solana</p>
+            <p className="font-display text-2xl font-bold text-foreground">{anchoredCount}</p>
+          </div>
+          <div className="rounded-xl border border-border p-3 flex items-center">
+            <Link to="/works" className="text-sm font-medium text-foreground hover:underline inline-flex items-center gap-1">
+              Open the vault →
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent works */}
+      <div className="surface-card p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="font-display text-base font-semibold text-foreground">Your recent works</h4>
+          <Link to="/works" className="text-xs text-muted-foreground hover:text-foreground">See all →</Link>
+        </div>
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground py-6 text-center">Loading…</p>
+        ) : works.length === 0 ? (
+          <div className="text-center py-8 space-y-3">
+            <p className="text-sm text-muted-foreground">No works registered yet.</p>
+            <Link to="/works">
+              <Button size="sm" className="rounded-full">Register your first work</Button>
+            </Link>
+          </div>
+        ) : (
+          <ul className="divide-y divide-border">
+            {works.map((w: any) => (
+              <li key={w.id} className="flex items-center gap-3 py-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary shrink-0">
+                  <Shield className="h-3.5 w-3.5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-medium text-foreground truncate">{w.title}</p>
+                    <Badge variant="outline" className="text-[10px] py-0 h-4">{w.kind}</Badge>
+                    {w.solana_signature && (
+                      <Badge variant="outline" className="gap-1 text-[10px] py-0 h-4">
+                        <Shield className="h-2.5 w-2.5" /> Anchored
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-[10px] font-mono text-muted-foreground truncate" title={w.content_hash}>
+                    sha256:{w.content_hash?.slice(0, 10)}…{w.content_hash?.slice(-6)}
+                  </p>
+                </div>
+                {w.solana_signature && (
+                  <a
+                    href={`https://solscan.io/tx/${w.solana_signature}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-foreground text-xs"
+                  >
+                    Solscan →
+                  </a>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

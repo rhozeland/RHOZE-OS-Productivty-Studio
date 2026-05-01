@@ -402,7 +402,7 @@ const ProjectDetailPage = () => {
           </Tabs>
         </TabsContent>
 
-        <TabsContent value="vision">
+        <TabsContent value="vision" className="space-y-6">
           <ProjectVision
             project={project}
             projectId={id!}
@@ -410,6 +410,15 @@ const ProjectDetailPage = () => {
             linkedIds={linkedIds}
             onLinkSmartboard={() => setLinkDialogOpen(true)}
             onUnlinkSmartboard={(sbId: string) => unlinkSmartboard.mutate(sbId)}
+          />
+          {/* Verified IP — fingerprint deliverable files inline. Lives next
+              to the project's scope/deliverables so creators can attach
+              hashed proofs of authorship without leaving the project. */}
+          <AttachedWorks
+            targetType="project"
+            targetId={id!}
+            canManage={project.user_id === user?.id}
+            title="Verified IP & deliverables"
           />
         </TabsContent>
 
@@ -424,16 +433,6 @@ const ProjectDetailPage = () => {
 
         <TabsContent value="team">
           <Collaborators projectId={id!} isCollaborative={project.project_type === "collaborative"} />
-          {/* Linked Works — Phase 3 bridge so registered IP assets follow
-              the project across the infra stack. Owner manages, all
-              project viewers see. */}
-          <div className="mt-6">
-            <AttachedWorks
-              targetType="project"
-              targetId={id!}
-              canManage={project.user_id === user?.id}
-            />
-          </div>
         </TabsContent>
 
         <TabsContent value="tools">
