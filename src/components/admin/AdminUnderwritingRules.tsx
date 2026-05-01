@@ -10,8 +10,9 @@
  *   2. Eligibility thresholds (min events / works / amount)
  *   3. Score weights + normalization
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -24,12 +25,54 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Save, RotateCcw, Sliders, ShieldCheck, Banknote } from "lucide-react";
+import {
+  Loader2,
+  Save,
+  RotateCcw,
+  Sliders,
+  ShieldCheck,
+  Banknote,
+  Wand2,
+} from "lucide-react";
 import {
   useUnderwritingRules,
   DEFAULT_RULES,
   type UnderwritingRules,
 } from "@/hooks/useUnderwritingRules";
+
+/**
+ * Validation schema — enforces sensible per-field ranges.
+ * These bounds protect both the seller-facing estimator (no nonsensical
+ * advances) and the underwriting math itself (no division-by-zero, no
+ * negative weights, no caps that would let admins approve unbounded $$).
+ */
+const rulesSchema = z.object({
+  base_advance_ratio: z.number().min(0, "Must be ≥ 0").max(2, "Cap at 2.0 (200%)"),
+  provenance_bonus_max: z.number().min(0, "Must be ≥ 0").max(1, "Cap at 1.0 (+100%)"),
+  tenure_floor_mult: z.number().min(0, "Must be ≥ 0").max(1, "Cap at 1.0"),
+  tenure_full_months: z.number().int("Must be a whole number").min(1, "At least 1 month").max(60, "Cap at 60 months"),
+  diversification_floor_per_work: z.number().min(0, "Must be ≥ 0").max(1000, "Cap at $1,000"),
+  advance_cap: z.number().min(100, "At least $100").max(1_000_000, "Cap at $1M"),
+  min_settled_events: z.number().int("Whole number").min(0, "Must be ≥ 0").max(100, "Cap at 100"),
+  min_anchored_works: z.number().int("Whole number").min(0, "Must be ≥ 0").max(100, "Cap at 100"),
+  min_advance_amount: z.number().min(0, "Must be ≥ 0").max(100_000, "Cap at $100k"),
+  score_weight_revenue: z.number().min(0, "Must be ≥ 0").max(100, "Cap at 100"),
+  score_weight_provenance: z.number().min(0, "Must be ≥ 0").max(100, "Cap at 100"),
+  score_weight_tenure: z.number().min(0, "Must be ≥ 0").max(100, "Cap at 100"),
+  score_weight_anchored: z.number().min(0, "Must be ≥ 0").max(100, "Cap at 100"),
+  revenue_score_target: z.number().min(1, "Must be ≥ $1").max(10_000_000, "Cap at $10M"),
+  anchored_score_per_work: z.number().min(0, "Must be ≥ 0").max(100, "Cap at 100"),
+}).refine(
+  (v) => v.min_advance_amount <= v.advance_cap,
+  { message: "Min advance amount cannot exceed the advance cap", path: ["min_advance_amount"] },
+);
+
+const WEIGHT_KEYS = [
+  "score_weight_revenue",
+  "score_weight_provenance",
+  "score_weight_tenure",
+  "score_weight_anchored",
+] as const satisfies ReadonlyArray<keyof UnderwritingRules>;
 
 type Field = {
   key: keyof UnderwritingRules;
@@ -37,6 +80,7 @@ type Field = {
   hint?: string;
   step?: number;
   min?: number;
+  max?: number;
   suffix?: string;
 };
 
