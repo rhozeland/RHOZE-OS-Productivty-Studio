@@ -444,28 +444,24 @@ const ProjectDetailPage = () => {
           <ProjectTools projectId={id!} projectTitle={project.title} />
         </TabsContent>
 
-        <TabsContent value="moodboard">
-          <ProjectMoodboard projectId={id!} canManage={canManageProject} />
-        </TabsContent>
-
-        {/* Vault — ambient Works surface scoped to this project. Lets the
-            owner upload, fingerprint and attach anchored deliverables
-            without leaving the workspace. Read-only for non-owners. */}
+        {/* Vault — every file attached to this project. References, drafts,
+            and final deliverables all land here. The Verified IP filter
+            surfaces what's been content-hashed + anchored on Solana. */}
         <TabsContent value="vault" className="space-y-4">
           <Card className="border-dashed bg-muted/20">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base font-display">
-                <ShieldCheck className="h-4 w-4 text-primary" />
+                <Archive className="h-4 w-4 text-primary" />
                 Project Vault
               </CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground space-y-1">
-              <p className="flex items-start gap-2">
-                <Fingerprint className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                Every file you add here is content-hashed and anchored on Solana — proving authorship and timestamp without revealing the file itself.
+            <CardContent className="text-sm text-muted-foreground space-y-1.5">
+              <p>
+                Everything attached to this project lives here — references, drafts and final deliverables.
               </p>
-              <p className="pl-5.5">
-                Attached works flow into listings, contracts and revenue splits tied to this project.
+              <p className="flex items-start gap-2 text-xs">
+                <Fingerprint className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary" />
+                Items marked <span className="font-medium text-foreground">Verified IP</span> have been content-hashed and anchored on Solana — proving authorship and timestamp without revealing the file itself.
               </p>
             </CardContent>
           </Card>
@@ -474,7 +470,7 @@ const ProjectDetailPage = () => {
             targetType="project"
             targetId={id!}
             canManage={canManageProject}
-            title="Anchored deliverables"
+            title="Attached to this project"
           />
         </TabsContent>
       </Tabs>
