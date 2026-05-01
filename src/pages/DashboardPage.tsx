@@ -616,14 +616,20 @@ const DashboardPage = () => {
           {user ? (
             <>
               <span className="text-foreground">{greeting()}, </span>
-              <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">
+              <span
+                className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent"
+                style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+              >
                 {firstName}.
               </span>
             </>
           ) : (
             <>
               <span className="text-foreground">Two networks. </span>
-              <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">
+              <span
+                className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent"
+                style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+              >
                 One creative space.
               </span>
             </>
