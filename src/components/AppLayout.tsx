@@ -151,48 +151,51 @@ const AppLayout = () => {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  // Search studios
+  // Query-driven search — only fires once the user has typed ≥2 characters.
+  // Keeps the palette quiet by default (Pages only) and prevents an
+  // ever-growing dump of every studio/creator/listing in the system.
   const { data: studios } = useQuery({
-    queryKey: ["search-studios"],
+    queryKey: ["search-studios", trimmedQuery],
     queryFn: async () => {
       const { data } = await supabase
         .from("studios")
         .select("id, name, city, category")
         .eq("is_active", true)
         .eq("status", "approved")
-        .limit(50);
+        .ilike("name", `%${trimmedQuery}%`)
+        .limit(5);
       return data ?? [];
     },
-    enabled: searchOpen,
+    enabled: queryEnabled,
   });
 
-  // Search listings
   const { data: listings } = useQuery({
-    queryKey: ["search-listings"],
+    queryKey: ["search-listings", trimmedQuery],
     queryFn: async () => {
       const { data } = await supabase
         .from("marketplace_listings")
         .select("id, title, category")
         .eq("is_active", true)
-        .limit(50);
+        .ilike("title", `%${trimmedQuery}%`)
+        .limit(5);
       return data ?? [];
     },
-    enabled: searchOpen,
+    enabled: queryEnabled,
   });
 
-  // Search profiles
   const { data: profiles } = useQuery({
-    queryKey: ["search-profiles"],
+    queryKey: ["search-profiles", trimmedQuery],
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
         .select("user_id, display_name")
         .eq("is_public", true)
         .not("display_name", "is", null)
-        .limit(50);
+        .ilike("display_name", `%${trimmedQuery}%`)
+        .limit(5);
       return data ?? [];
     },
-    enabled: searchOpen,
+    enabled: queryEnabled,
   });
 
   // Header avatar
