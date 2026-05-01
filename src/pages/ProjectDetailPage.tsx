@@ -442,6 +442,10 @@ const ProjectDetailPage = () => {
           <ProjectTools projectId={id!} projectTitle={project.title} />
         </TabsContent>
 
+        <TabsContent value="moodboard">
+          <ProjectMoodboard projectId={id!} canManage={project.user_id === user?.id} />
+        </TabsContent>
+
         {/* Vault — ambient Works surface scoped to this project. Lets the
             owner upload, fingerprint and attach anchored deliverables
             without leaving the workspace. Read-only for non-owners. */}
