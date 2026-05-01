@@ -76,6 +76,39 @@ const LaunchCoinDialog = ({
   const [imageUrl, setImageUrl] = useState(defaultImage ?? "");
   const [lpLock, setLpLock] = useState("12");
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Image files only", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Image too large", description: "Max 5 MB.", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    const { data: userResp } = await supabase.auth.getUser();
+    if (!userResp.user) {
+      setUploading(false);
+      toast({ title: "Sign in to upload", variant: "destructive" });
+      return;
+    }
+    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+    const path = `${userResp.user.id}/coin-${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("avatar-uploads")
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (upErr) {
+      setUploading(false);
+      toast({ title: "Upload failed", description: upErr.message, variant: "destructive" });
+      return;
+    }
+    const { data: pub } = supabase.storage.from("avatar-uploads").getPublicUrl(path);
+    setImageUrl(pub.publicUrl);
+    setUploading(false);
+    toast({ title: "Image uploaded" });
+  };
 
   const isProfileCoin = !workId;
 
