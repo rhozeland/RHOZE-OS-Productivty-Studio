@@ -52,6 +52,8 @@ import EventManagePage from "@/pages/EventManagePage";
 import TicketDetailPage from "@/pages/TicketDetailPage";
 import { ProfileRedirect } from "@/components/ProfileRedirect";
 import FlowModePage from "@/pages/FlowModePage";
+import LaunchpadPage from "@/pages/LaunchpadPage";
+import LaunchDetailPage from "@/pages/LaunchDetailPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -223,6 +225,8 @@ const App = () => (
                     redirect into Projects; their detail routes stay live so
                     the Tools panel can deep-link individual items. */}
                 <Route path="/flow" element={<FlowModePage />} />
+                <Route path="/launchpad" element={<LaunchpadPage />} />
+                <Route path="/launchpad/:id" element={<LaunchDetailPage />} />
                 <Route path="/smartboards" element={<Navigate to="/projects" replace />} />
                 <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
                 <Route path="/drop-rooms" element={<Navigate to="/projects" replace />} />

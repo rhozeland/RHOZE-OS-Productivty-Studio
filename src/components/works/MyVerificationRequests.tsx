@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, ShieldCheck, ExternalLink, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { shortHash } from "@/lib/content-hash";
+import LaunchCoinButton from "@/components/launchpad/LaunchCoinButton";
 
 type Row = {
   id: string;
@@ -117,12 +118,20 @@ const MyVerificationRequests = () => {
               <span className="text-[11px] text-muted-foreground">
                 {new Date(r.decided_at || r.created_at).toLocaleDateString()}
               </span>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 {r.status === "approved" && r.work?.solana_signature && (
-                  <a href={`https://solscan.io/tx/${r.work.solana_signature}`} target="_blank" rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline">
-                    Solscan <ExternalLink className="h-3 w-3" />
-                  </a>
+                  <>
+                    <a href={`https://solscan.io/tx/${r.work.solana_signature}`} target="_blank" rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline">
+                      Solscan <ExternalLink className="h-3 w-3" />
+                    </a>
+                    <LaunchCoinButton
+                      workId={r.work_id}
+                      isOwner={true}
+                      isVerified={true}
+                      workName={r.work?.title}
+                    />
+                  </>
                 )}
                 {["pending", "changes_requested"].includes(r.status) && (
                   <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => cancel(r.id)}>
