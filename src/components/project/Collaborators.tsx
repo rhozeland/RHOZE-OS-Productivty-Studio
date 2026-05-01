@@ -26,10 +26,11 @@ interface CollaboratorsProps {
 const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { isOwner, isAdmin, canManage } = useProjectRole(projectId);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<{ user_id: string; display_name: string } | null>(null);
-  const [role, setRole] = useState("viewer");
+  const [role, setRole] = useState<"member" | "admin">("member");
   const [projectRole, setProjectRole] = useState("client");
   const [showResults, setShowResults] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
