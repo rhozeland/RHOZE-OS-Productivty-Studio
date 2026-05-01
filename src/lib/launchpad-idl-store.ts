@@ -79,11 +79,16 @@ export const isIdlFromOverride = (): boolean => cachedFromOverride;
 
 /** Async loader. Idempotent — multiple callers share the same in-flight promise. */
 export const loadLaunchpadIdl = async (): Promise<Idl | null> => {
+  // Lazily wire the versions → store bridge once, so switching the active
+  // version in Settings instantly invalidates the cache and re-notifies
+  // every TradePanel/banner subscriber.
+  ensureVersionsBridge();
+
   if (cached !== undefined) return cached;
   if (inflight) return inflight;
 
   inflight = (async () => {
-    // 1. localStorage override
+    // 1. localStorage override (mirrored from active version when one exists)
     if (typeof window !== "undefined") {
       const fromLS = tryParse(window.localStorage.getItem(LS_KEY));
       if (fromLS) {
@@ -114,6 +119,24 @@ export const loadLaunchpadIdl = async (): Promise<Idl | null> => {
   } finally {
     inflight = null;
   }
+};
+
+// Bridge: subscribe to versions changes exactly once. Lazy-imported to
+// avoid a circular module init cycle.
+let bridged = false;
+const ensureVersionsBridge = (): void => {
+  if (bridged || typeof window === "undefined") return;
+  bridged = true;
+  void import("./launchpad-idl-versions").then((mod) => {
+    mod.hydrateLegacyMirror();
+    mod.subscribeVersions(() => {
+      // The legacy single-slot keys were just rewritten; drop the cache so
+      // the next read picks up the new active version.
+      resetIdlCache();
+      // Eagerly re-load so subscribers (banner, settings) flip immediately.
+      void loadLaunchpadIdl();
+    });
+  });
 };
 
 /**
