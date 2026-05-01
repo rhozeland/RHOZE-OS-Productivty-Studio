@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { SolanaWalletProvider } from "@/contexts/SolanaWalletContext";
+import LaunchpadWalletBridge from "@/components/launchpad/LaunchpadWalletBridge";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthGateProvider } from "@/components/AuthGateDialog";
 import AppLayout from "@/components/AppLayout";
