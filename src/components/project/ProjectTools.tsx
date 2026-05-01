@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Palette, Flame, Radio, Plus, ExternalLink, Clock, ArrowRight } from "lucide-react";
+import { Palette, Flame, Radio, Plus, ExternalLink, Clock, ArrowRight, Link2, X } from "lucide-react";
 
 const ROOM_DURATIONS = [
   { label: "1 hour", hours: 1 },
@@ -44,9 +44,12 @@ const ROOM_DURATIONS = [
 interface Props {
   projectId: string;
   projectTitle: string;
+  smartboardDetails?: any[] | null;
+  onLinkSmartboard?: () => void;
+  onUnlinkSmartboard?: (id: string) => void;
 }
 
-const ProjectTools = ({ projectId, projectTitle }: Props) => {
+const ProjectTools = ({ projectId, projectTitle, smartboardDetails, onLinkSmartboard, onUnlinkSmartboard }: Props) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
