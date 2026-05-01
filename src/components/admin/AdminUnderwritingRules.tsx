@@ -364,15 +364,13 @@ const AdminUnderwritingRules = () => {
       if (!parsed.success) {
         throw new Error(parsed.error.issues[0]?.message ?? "Invalid rules");
       }
-      const { data: auth } = await supabase.auth.getUser();
-      const { error } = await (supabase as any)
-        .from("capital_underwriting_rules")
-        .update({
-          ...parsed.data,
-          updated_by: auth.user?.id ?? null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", 1);
+      // Save through the admin-only RPC. The function re-checks the caller's
+      // role server-side, so even if a non-admin user got this UI to render
+      // (e.g. via devtools), the write is rejected.
+      const { error } = await (supabase as any).rpc(
+        "update_underwriting_rules",
+        { _payload: parsed.data },
+      );
       if (error) throw error;
     },
     onSuccess: () => {
