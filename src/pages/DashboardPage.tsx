@@ -303,12 +303,14 @@ const DashboardPage = () => {
   const completedTasks = tasks?.filter((t) => t.completed).length ?? 0;
   const totalTasks = tasks?.length ?? 0;
   const activeProjects = projects?.filter((p) => p.status === "active").length ?? 0;
-  const firstName =
+  const firstName = (
     profile?.display_name?.split(" ")[0]?.trim() ||
     (profile as any)?.username?.trim() ||
     user?.user_metadata?.full_name?.split(" ")[0]?.trim() ||
+    user?.user_metadata?.name?.split(" ")[0]?.trim() ||
     user?.email?.split("@")[0] ||
-    "Creator";
+    "Creator"
+  ).trim() || "Creator";
 
   const greeting = () => {
     const h = new Date().getHours();
