@@ -221,10 +221,60 @@ const LaunchCoinDialog = ({
             </p>
           </div>
 
-          <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-[11px] text-muted-foreground space-y-1">
-            <div className="flex justify-between"><span>Trade fee</span><span className="font-mono">3% (2% creator · 1% platform)</span></div>
-            <div className="flex justify-between"><span>Total supply</span><span className="font-mono">1,000,000,000</span></div>
-            <div className="flex justify-between"><span>Graduation target</span><span className="font-mono">85 SOL</span></div>
+          <div className="space-y-2">
+            <Label>Coin image (optional)</Label>
+            <div className="flex items-start gap-3">
+              {imageUrl ? (
+                <div className="relative shrink-0">
+                  <img
+                    src={imageUrl}
+                    alt=""
+                    className="h-16 w-16 rounded-lg object-cover border border-border/60"
+                    onError={() => setImageUrl("")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setImageUrl("")}
+                    className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-background border border-border/60 flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition"
+                    aria-label="Remove image"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <label className="h-16 w-16 shrink-0 rounded-lg border border-dashed border-border/60 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/30 transition text-muted-foreground">
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4" />
+                      <span className="text-[9px] mt-0.5">Upload</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={uploading}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleFile(f);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              )}
+              <div className="flex-1 min-w-0 space-y-1">
+                <Input
+                  id="image"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="…or paste image URL"
+                  className="text-xs"
+                />
+                <p className="text-[10px] text-muted-foreground">PNG/JPG/GIF · max 5 MB</p>
+              </div>
+            </div>
           </div>
         </div>
 
