@@ -70,6 +70,10 @@ const ListingCard = ({
   const coverImage = listing.cover_url || media?.find((m: any) => m.file_type?.startsWith("image"))?.file_url;
   const audioFile = media?.find((m: any) => m.file_type?.startsWith("audio"));
   const videoFile = media?.find((m: any) => m.file_type?.startsWith("video"));
+  // If there's an audio/video preview, skip the empty placeholder cover —
+  // the inline player already gives the card a visual anchor and avoids
+  // the wall of whitespace the editorial placeholder was creating.
+  const hasInlinePreview = !!audioFile || !!videoFile;
 
   return (
     <motion.div
