@@ -104,15 +104,16 @@ export const NAV_ITEMS_BY_ID: Record<string, NavItem> = NAV_ITEMS.reduce(
   {} as Record<string, NavItem>,
 );
 
-// 4-pillar dock: Home · Hub · Studios · Projects.
-// Hub (digital network) and Studios (physical network) sit side-by-side
-// as equal peers. Profile is reachable via the user's avatar in the
-// sidebar/header — no need to duplicate it in the dock.
+// v6 dock: Discover · Hub · Spaces · Inbox.
+// Discover is the new feed-led front door (replaces "Home → Dashboard").
+// Inbox replaces Projects in the dock — Projects lives as a tab on the
+// artist's own profile in the v6 IA. The user's own profile is reachable
+// via the avatar in the header.
 export const DEFAULT_DOCK_IDS = [
-  "dashboard",
+  "discover",
   "hub",
   "studios",
-  "projects",
+  "messages",
 ];
 
 /** Returns true if the current pathname should mark this nav item active. */
