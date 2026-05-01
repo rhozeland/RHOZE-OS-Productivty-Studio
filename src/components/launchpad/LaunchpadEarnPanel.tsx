@@ -258,8 +258,10 @@ const LaunchpadEarnPanel = () => {
                 aria-hidden
               />
               <div className="min-w-0 flex-1">
-                <div className="flex items-baseline justify-between gap-2">
-                  <p className="text-[11px] font-medium truncate">{label}</p>
+                <div className="flex items-baseline justify-between gap-1.5">
+                  <p className="text-[11px] font-medium leading-tight break-words">
+                    {label}
+                  </p>
                   <span
                     className={`text-[10px] font-mono font-semibold shrink-0 tabular-nums ${
                       featured ? "text-emerald-500" : "text-foreground"
@@ -268,7 +270,9 @@ const LaunchpadEarnPanel = () => {
                     {reward}
                   </span>
                 </div>
-                <p className="text-[10px] text-muted-foreground truncate">{hint}</p>
+                <p className="text-[10px] text-muted-foreground leading-snug mt-0.5 line-clamp-2">
+                  {hint}
+                </p>
               </div>
             </li>
           ))}
