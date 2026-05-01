@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,10 +13,16 @@ import {
   Trash2,
   FileText,
   Tags,
+  Upload,
+  Fingerprint,
+  Loader2,
+  ExternalLink,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { computeContentHash, formatFileSize, shortHash } from "@/lib/content-hash";
 
 const SCOPE_CATEGORIES = [
   { value: "Sound", icon: "🎵" },
