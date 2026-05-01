@@ -45,7 +45,7 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Hub",
     icon: Sparkles,
     path: "/hub",
-    matchPaths: ["/marketplace", "/creators", "/people", "/spaces"],
+    matchPaths: ["/marketplace", "/creators", "/people"],
   },
   // Projects — promoted to the dock. Hosts Flow / Smartboards / Drop Rooms
   // as in-context tools (see ProjectDetailPage Tools tab).
@@ -58,7 +58,7 @@ export const NAV_ITEMS: NavItem[] = [
   // active-state, and deep-link pages still work, but no longer the
   // primary navigation surfaces. (`marketplace` and `flow` ids removed —
   // both fully absorbed by Hub / Projects respectively.)
-  { id: "studios", label: "Studios", icon: Building2, path: "/studios" },
+  { id: "studios", label: "Spaces", icon: Building2, path: "/spaces", matchPaths: ["/studios"] },
   { id: "boards", label: "Boards", icon: Palette, path: "/smartboards" },
   {
     id: "droprooms",

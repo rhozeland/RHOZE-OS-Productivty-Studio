@@ -42,9 +42,10 @@ import HomePage from "@/pages/HomePage";
 import InfrastructurePage from "@/pages/InfrastructurePage";
 // WorksPage is no longer routed here — it's mounted inside SettingsPage
 // (Provenance section). /works redirects to /settings#provenance below.
-// SpacesPage / PeoplePage retained as files but no longer routed —
-// /spaces and /people redirect to /hub (unified feed).
+// /spaces is now the tabbed Spaces · Events · Residencies hub.
+// PeoplePage retained but unrouted — /people redirects to /hub.
 import HubPage from "@/pages/HubPage";
+import SpacesHubPage from "@/pages/SpacesHubPage";
 import { ProfileRedirect } from "@/components/ProfileRedirect";
 // FlowAuthGuard retained — no longer needed at top-level since /flow redirects.
 import NotFound from "./pages/NotFound";
@@ -73,6 +74,10 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/dashboard",
   "/hub",
   "/profile",
+  "/spaces",
+  "/spaces/events/:id",
+  "/spaces/events/new",
+  "/spaces/events/:id/manage",
   "/studios",
   "/studios/:id",
   "/studios/apply",
@@ -182,13 +187,17 @@ const App = () => (
               {/* Main app — browsable by everyone, auth-gated actions inside */}
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
-                {/* Primary pillars: Home · Hub · Projects · Profile.
-                    People + Spaces are absorbed into Hub (unified feed). */}
-                <Route path="/spaces" element={<Navigate to="/hub" replace />} />
+                {/* Primary pillars: Home · Hub · Spaces · Projects · Profile.
+                    /spaces is the tabbed Spaces · Events · Residencies hub.
+                    /studios redirects in for backwards compatibility. */}
+                <Route path="/spaces" element={<SpacesHubPage />} />
+                <Route path="/spaces/events/:id" element={<Navigate to="/spaces?tab=events" replace />} />
+                <Route path="/spaces/events/new" element={<Navigate to="/spaces?tab=events" replace />} />
+                <Route path="/spaces/events/:id/manage" element={<Navigate to="/spaces?tab=events" replace />} />
                 <Route path="/people" element={<Navigate to="/hub" replace />} />
                 <Route path="/hub" element={<HubPage />} />
                 <Route path="/profile" element={<ProfileRedirect />} />
-                <Route path="/studios" element={<StudiosPage />} />
+                <Route path="/studios" element={<Navigate to="/spaces?tab=spaces" replace />} />
                 <Route path="/studios/:id" element={<StudioDetailPage />} />
                 <Route path="/studios/apply" element={<StudioApplicationPage />} />
                 <Route path="/studios/:id/manage" element={<StudioManagePage />} />
