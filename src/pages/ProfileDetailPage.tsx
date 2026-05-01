@@ -347,6 +347,18 @@ const ProfileDetailPage = () => {
           </div>
         </motion.div>
 
+        {/* ─── Tabbed sections ─── */}
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <TabsList className="w-full grid grid-cols-5 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
+            <TabsTrigger value="overview" className="text-xs gap-1.5"><UserIcon className="h-3 w-3" />Overview</TabsTrigger>
+            <TabsTrigger value="coin" className="text-xs gap-1.5"><Coins className="h-3 w-3" />Coin</TabsTrigger>
+            <TabsTrigger value="works" className="text-xs gap-1.5"><Sparkles className="h-3 w-3" />Works</TabsTrigger>
+            <TabsTrigger value="listings" className="text-xs gap-1.5"><ShoppingBag className="h-3 w-3" />Listings</TabsTrigger>
+            <TabsTrigger value="availability" className="text-xs gap-1.5"><CalendarIcon className="h-3 w-3" />Availability</TabsTrigger>
+          </TabsList>
+
+          {/* ─── Overview tab ─── */}
+          <TabsContent value="overview" className="space-y-5 mt-5">
         {/* ─── About + Details ─── */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-4">
