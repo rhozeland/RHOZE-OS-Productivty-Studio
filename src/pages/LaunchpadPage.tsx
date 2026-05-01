@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Coins, Flame, GraduationCap, TrendingUp } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import LaunchpadModeBanner from "@/components/launchpad/LaunchpadModeBanner";
+import { isLaunchpadOnChainEnabled } from "@/lib/launchpad-onchain";
 
 type Launch = {
   id: string;
@@ -100,18 +102,20 @@ const LaunchpadPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl space-y-8">
-      <header className="space-y-2">
+      <header className="space-y-3">
         <div className="flex items-center gap-2">
           <Coins className="h-6 w-6 text-emerald-500" />
           <h1 className="text-3xl font-bold tracking-tight">Launchpad</h1>
-          <Badge variant="outline" className="ml-2 text-[10px]">Beta · Simulated</Badge>
+          <Badge variant="outline" className="ml-2 text-[10px]">
+            {isLaunchpadOnChainEnabled() ? "On-chain · Devnet" : "Beta · Simulated"}
+          </Badge>
         </div>
         <p className="text-sm text-muted-foreground max-w-2xl">
           Coins minted by artists, gated to <strong>Verified IP</strong> works only.
           Trade on a bonding curve until graduation, then liquidity migrates to
-          Raydium with creator-locked LP. Step 4a runs on a simulated curve —
-          no real SOL moves yet.
+          Raydium with creator-locked LP.
         </p>
+        <LaunchpadModeBanner />
       </header>
 
       <Tabs defaultValue="live">
