@@ -225,6 +225,41 @@ const EventManagePage = () => {
       }),
   });
 
+  // Resolve a scanned QR token → ticket → check-in. Looks up locally first
+  // (so the host gets instant feedback) then falls back to a server lookup
+  // in case the realtime cache hasn't caught up.
+  const handleScannedToken = async (rawToken: string) => {
+    const token = rawToken.trim();
+    if (!token) return;
+    setScannerOpen(false);
+
+    let match: any = (tickets ?? []).find((t: any) => t.qr_token === token);
+    if (!match) {
+      const { data, error } = await supabase
+        .from("event_tickets")
+        .select("*")
+        .eq("event_id", id!)
+        .eq("qr_token", token)
+        .maybeSingle();
+      if (error || !data) {
+        toast.error("Ticket not found", {
+          description: "That QR isn't valid for this event.",
+        });
+        return;
+      }
+      match = data;
+    }
+
+    if (match.status === "checked_in") {
+      toast.info("Already checked in", {
+        description: `Scanned at ${format(new Date(match.checked_in_at ?? match.issued_at), "h:mm a")}`,
+      });
+      return;
+    }
+
+    checkIn.mutate(match.id);
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-3xl mx-auto py-20 text-center">
