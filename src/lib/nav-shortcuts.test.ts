@@ -31,7 +31,7 @@ const ev = (overrides: Partial<ShortcutEvent>): ShortcutEvent => ({
 describe("NAV_SHORTCUTS table", () => {
   it("registers exactly the four primary destinations", () => {
     expect(NAV_SHORTCUTS.map((s) => s.id)).toEqual([
-      "dashboard",
+      "discover",
       "projects",
       "calendar",
       "flow",
