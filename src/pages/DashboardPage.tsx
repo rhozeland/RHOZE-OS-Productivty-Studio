@@ -612,11 +612,14 @@ const DashboardPage = () => {
         <p className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-2">
           {user ? "Your Spaces" : "Welcome to Rhozeland"}
         </p>
-        <h1 className="font-display text-3xl sm:text-4xl md:text-5xl leading-[1.1]">
+        <h1 className="font-display text-3xl sm:text-4xl md:text-5xl text-foreground leading-[1.1]">
           {user ? (
-            <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">
-              {greeting()}, {firstName}.
-            </span>
+            <>
+              <span className="text-foreground">{greeting()}, </span>
+              <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">
+                {firstName}.
+              </span>
+            </>
           ) : (
             <>
               <span className="text-foreground">Two networks. </span>
