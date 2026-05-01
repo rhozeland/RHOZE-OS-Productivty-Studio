@@ -700,7 +700,7 @@ const DashboardPage = () => {
         </form>
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {/* STUDIO SPACES — physical · 60% on desktop (3/5) */}
+          {/* SPACES — physical · 60% on desktop (3/5) — discovery feed */}
           <motion.div
             initial={{ opacity: 0, x: -16 }}
             animate={{ opacity: 1, x: 0 }}
@@ -726,7 +726,7 @@ const DashboardPage = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent" />
 
               <div className="relative h-full flex flex-col p-6 sm:p-8">
-                <div className="flex items-start justify-between gap-4 mb-6">
+                <div className="flex items-start justify-between gap-4 mb-5">
                   <div>
                     <div className="inline-flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur px-2.5 py-1 mb-3">
                       <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
@@ -735,10 +735,10 @@ const DashboardPage = () => {
                       </span>
                     </div>
                     <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-[1.05]">
-                      Studio Spaces
+                      Spaces
                     </h2>
-                    <p className="text-sm text-muted-foreground mt-2 max-w-xs">
-                      Real rooms. Real gear. Booked by the hour.
+                    <p className="text-sm text-muted-foreground mt-2 max-w-sm">
+                      Events, rooms, and residencies happening near you.
                     </p>
                   </div>
                   <Building2
@@ -748,51 +748,111 @@ const DashboardPage = () => {
                   />
                 </div>
 
-                {/* Real content peek — 4 studio tiles */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-auto">
-                  {(studios ?? []).slice(0, 4).map((s: any) => (
-                    <div
-                      key={s.id}
-                      className="aspect-square rounded-xl border border-border/40 overflow-hidden bg-muted relative group/tile"
-                    >
-                      {s.cover_image_url || s.hero_image_url ? (
-                        <img
-                          src={s.cover_image_url ?? s.hero_image_url}
-                          alt=""
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover/tile:scale-110"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-blue-500/20 to-cyan-500/10">
-                          <Building2 className="h-5 w-5 text-blue-500/60" />
+                {/* Discovery feed — mixed events + studios */}
+                <div className="flex-1 flex flex-col gap-2 mt-auto">
+                  {/* Upcoming events row */}
+                  {(spacesEvents ?? []).length > 0 && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
+                          Upcoming
+                        </span>
+                      </div>
+                      <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
+                        {(spacesEvents ?? []).slice(0, 4).map((ev: any) => {
+                          const d = new Date(ev.starts_at);
+                          return (
+                            <div
+                              key={ev.id}
+                              className="shrink-0 w-[140px] rounded-xl border border-border/40 overflow-hidden bg-muted relative group/tile"
+                            >
+                              <div className="aspect-[4/3] relative">
+                                {ev.cover_image_url ? (
+                                  <img
+                                    src={ev.cover_image_url}
+                                    alt=""
+                                    className="h-full w-full object-cover transition-transform duration-500 group-hover/tile:scale-110"
+                                    loading="lazy"
+                                  />
+                                ) : (
+                                  <div className="h-full w-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-500/20 to-cyan-500/10">
+                                    <span className="text-[10px] uppercase tracking-widest text-blue-500/70 font-semibold">
+                                      {format(d, "MMM")}
+                                    </span>
+                                    <span className="font-display text-2xl text-foreground/80 leading-none">
+                                      {format(d, "d")}
+                                    </span>
+                                  </div>
+                                )}
+                                <div className="absolute inset-x-0 bottom-0 p-1.5 bg-gradient-to-t from-black/85 to-transparent">
+                                  <p className="text-[10px] font-medium text-white truncate">
+                                    {ev.title}
+                                  </p>
+                                  <p className="text-[9px] text-white/70 truncate uppercase tracking-wider">
+                                    {format(d, "EEE · MMM d")}
+                                    {ev.city ? ` · ${ev.city}` : ""}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Bookable studios row */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
+                        Studios near you
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-2">
+                      {(studios ?? []).slice(0, 4).map((s: any) => (
+                        <div
+                          key={s.id}
+                          className="aspect-square rounded-xl border border-border/40 overflow-hidden bg-muted relative group/tile"
+                        >
+                          {s.cover_image_url || s.hero_image_url ? (
+                            <img
+                              src={s.cover_image_url ?? s.hero_image_url}
+                              alt=""
+                              className="h-full w-full object-cover transition-transform duration-500 group-hover/tile:scale-110"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-blue-500/20 to-cyan-500/10">
+                              <Building2 className="h-5 w-5 text-blue-500/60" />
+                            </div>
+                          )}
+                          {(s.cover_image_url || s.hero_image_url) && s.city && (
+                            <div className="absolute inset-x-0 bottom-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
+                              <p className="text-[9px] font-medium text-white truncate uppercase tracking-wider">
+                                {s.city}
+                              </p>
+                            </div>
+                          )}
                         </div>
-                      )}
-                      {(s.cover_image_url || s.hero_image_url) && s.city && (
-                        <div className="absolute inset-x-0 bottom-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
-                          <p className="text-[9px] font-medium text-white truncate uppercase tracking-wider">
-                            {s.city}
-                          </p>
-                        </div>
+                      ))}
+                      {Array.from({ length: Math.max(0, 4 - (studios?.length ?? 0)) }).map(
+                        (_, i) => (
+                          <div
+                            key={`ph-${i}`}
+                            className="aspect-square rounded-xl border border-dashed border-border/40 bg-gradient-to-br from-blue-500/[0.04] to-cyan-500/[0.02]"
+                          />
+                        ),
                       )}
                     </div>
-                  ))}
-                  {/* Pad with placeholders so the grid never looks empty */}
-                  {Array.from({ length: Math.max(0, 4 - (studios?.length ?? 0)) }).map(
-                    (_, i) => (
-                      <div
-                        key={`ph-${i}`}
-                        className="aspect-square rounded-xl border border-dashed border-border/40 bg-gradient-to-br from-blue-500/[0.04] to-cyan-500/[0.02]"
-                      />
-                    ),
-                  )}
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between mt-5 pt-4 border-t border-border/40">
                   <span className="text-xs text-muted-foreground">
-                    {studios?.length ?? 0} bookable · across cities
+                    {(spacesEvents?.length ?? 0)} upcoming · {studios?.length ?? 0} studios
                   </span>
                   <span className="inline-flex items-center gap-1 text-sm font-semibold text-foreground group-hover:gap-2 transition-all">
-                    Step in <ArrowRight className="h-4 w-4" />
+                    Discover <ArrowRight className="h-4 w-4" />
                   </span>
                 </div>
               </div>
