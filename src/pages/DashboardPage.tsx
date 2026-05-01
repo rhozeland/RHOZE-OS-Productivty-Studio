@@ -864,12 +864,12 @@ const DashboardPage = () => {
         </div>
 
         {/* Caption: how Spaces lead into Projects */}
-        <p className="text-center text-xs text-muted-foreground/70 mt-4 italic">
-          Both networks lead to{" "}
-          <Link to="/projects" className="text-foreground hover:underline not-italic font-medium">
+        <p className="text-center text-[11px] text-muted-foreground/70 mt-4 tracking-wide">
+          Both lead to{" "}
+          <Link to="/projects" className="text-foreground hover:underline font-medium">
             Projects
-          </Link>{" "}
-          — the work that happens once you're inside a space.
+          </Link>
+          .
         </p>
       </section>
 
