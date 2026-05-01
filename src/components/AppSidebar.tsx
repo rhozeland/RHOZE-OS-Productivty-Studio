@@ -11,7 +11,7 @@ import {
   UserPlus,
   FolderKanban,
   Sparkles,
-  User,
+  Building2,
   Fingerprint,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,12 +35,14 @@ import {
 } from "@/components/ui/sidebar";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-// Pillars (mirror the dock)
+// Pillars (mirror the dock). Two networks (Hub + Studios) sit side-by-side
+// so the digital and physical spaces feel equal. Profile is reachable via
+// the avatar in the sidebar footer, so it isn't duplicated here.
 const pillarItems = [
   { icon: Home, label: "Home", path: "/dashboard" },
   { icon: Sparkles, label: "Hub", path: "/hub" },
+  { icon: Building2, label: "Studios", path: "/studios" },
   { icon: FolderKanban, label: "Projects", path: "/projects" },
-  { icon: User, label: "Profile", path: "/profile" },
 ];
 
 // Side-nav-only destinations.

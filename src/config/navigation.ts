@@ -85,14 +85,15 @@ export const NAV_ITEMS_BY_ID: Record<string, NavItem> = NAV_ITEMS.reduce(
   {} as Record<string, NavItem>,
 );
 
-// 4-pillar dock: Home · Hub · Projects · Profile.
-// People + Spaces are absorbed into Hub. Flow/Smartboards/Drop Rooms
-// live inside Projects as in-context tools. Inbox lives in the side-nav.
+// 4-pillar dock: Home · Hub · Studios · Projects.
+// Hub (digital network) and Studios (physical network) sit side-by-side
+// as equal peers. Profile is reachable via the user's avatar in the
+// sidebar/header — no need to duplicate it in the dock.
 export const DEFAULT_DOCK_IDS = [
   "dashboard",
   "hub",
+  "studios",
   "projects",
-  "profile",
 ];
 
 /** Returns true if the current pathname should mark this nav item active. */
