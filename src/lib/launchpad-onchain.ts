@@ -69,8 +69,35 @@ export const deriveLaunchPda = (workId: string): PublicKey | null => {
   return PublicKey.findProgramAddressSync([new TextEncoder().encode("launch"), bytes], pid)[0];
 };
 
+/**
+ * Derive a child PDA off the launch PDA using a string seed prefix. Used for
+ * the SOL vault (`["sol-vault", launch]`) and token vault (`["token-vault",
+ * launch]`) per the launchpad program spec.
+ */
+const deriveChildPda = (workId: string, prefix: string): PublicKey | null => {
+  const pid = resolveProgramId();
+  const launch = deriveLaunchPda(workId);
+  if (!pid || !launch) return null;
+  return PublicKey.findProgramAddressSync(
+    [new TextEncoder().encode(prefix), launch.toBuffer()],
+    pid,
+  )[0];
+};
+
+export const deriveSolVaultPda = (workId: string): PublicKey | null =>
+  deriveChildPda(workId, "sol-vault");
+
+export const deriveTokenVaultPda = (workId: string): PublicKey | null =>
+  deriveChildPda(workId, "token-vault");
+
+export const deriveCurveAuthorityPda = (workId: string): PublicKey | null =>
+  deriveChildPda(workId, "curve-auth");
+
 export const explorerUrl = (address: string): string =>
   `https://solscan.io/account/${address}${LAUNCHPAD_NETWORK === "devnet" ? "?cluster=devnet" : ""}`;
+
+export const solscanClusterSuffix = (): string =>
+  LAUNCHPAD_NETWORK === "devnet" ? "?cluster=devnet" : "";
 
 export type OnChainResult<T> =
   | { enabled: false }

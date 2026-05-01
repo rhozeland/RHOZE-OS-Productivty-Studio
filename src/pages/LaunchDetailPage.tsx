@@ -15,6 +15,7 @@ import { Coins, GraduationCap, Lock, ExternalLink, Loader2, ArrowLeft, Copy } fr
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import TradePanel from "@/components/launchpad/TradePanel";
 import LaunchpadModeBanner from "@/components/launchpad/LaunchpadModeBanner";
+import OnChainBalancesCard from "@/components/launchpad/OnChainBalancesCard";
 import { Button } from "@/components/ui/button";
 import { deriveLaunchPda, LAUNCHPAD_NETWORK } from "@/lib/launchpad-onchain";
 import { toast } from "sonner";
@@ -170,6 +171,13 @@ const LaunchDetailPage = () => {
             mint={launch.mint_address}
             launchPda={deriveLaunchPda(launch.id)?.toBase58() ?? null}
             raydiumPool={launch.raydium_pool}
+          />
+
+          {/* Live vault balances */}
+          <OnChainBalancesCard
+            workId={launch.id}
+            ticker={launch.ticker}
+            mint={launch.mint_address}
           />
 
           {/* Recent trades */}
