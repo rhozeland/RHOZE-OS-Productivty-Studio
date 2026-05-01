@@ -11,6 +11,7 @@ import {
   badgeColorClassFor,
   badgePlacementClassFor,
 } from "@/lib/flow-card-prefs";
+import FlowProvenanceChip from "@/components/flow/FlowProvenanceChip";
 
 /* ─── Platform detection ─── */
 const detectPlatform = (url?: string | null) => {
@@ -81,6 +82,17 @@ interface FlowCardProps {
     user_id?: string;
     creator_name?: string | null;
     profiles?: { display_name?: string | null; avatar_url?: string | null } | null;
+    // Verified-IP lifecycle (Phase 1+ of the Works/Flow bridge). Optional
+    // so tests and seed data without these columns still render cleanly.
+    content_hash?: string | null;
+    solana_signature?: string | null;
+    verification_status?:
+      | "none"
+      | "pending"
+      | "verified"
+      | "rejected"
+      | "changes_requested"
+      | null;
   };
   expanded: boolean;
   onToggleExpand: () => void;
