@@ -16,6 +16,7 @@ import {
   CheckCircle,
   Calendar,
   MessageSquare,
+  Coins,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import StudioBookingModal from "@/components/booking/StudioBookingModal";
@@ -94,6 +95,22 @@ const StudioDetailPage = () => {
       return data ?? [];
     },
     enabled: !!id,
+  });
+
+  // Coins tied to this space — surfaced only on the space detail page.
+  // Currently scoped to launches by the studio owner (the host's Verified IP coins).
+  const { data: spaceCoins } = useQuery({
+    queryKey: ["studio-detail-coins", studio?.owner_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("coin_launches")
+        .select("id, name, ticker, image_url, status, real_sol_reserves, graduation_sol_target")
+        .eq("creator_id", studio!.owner_id)
+        .order("created_at", { ascending: false })
+        .limit(6);
+      return (data as any[]) ?? [];
+    },
+    enabled: !!studio?.owner_id,
   });
 
   const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -273,6 +290,78 @@ const StudioDetailPage = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Artist coins — Coins/Launchpad surface tied to this Space (host's Verified IP). */}
+          {spaceCoins && spaceCoins.length > 0 && (
+            <div>
+              <div className="flex items-end justify-between gap-3 mb-3">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
+                    Artist coins
+                  </p>
+                  <h2 className="font-display text-lg font-semibold text-foreground">
+                    From this space.
+                  </h2>
+                </div>
+                <Link
+                  to="/launchpad"
+                  className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                >
+                  Open Launchpad →
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {spaceCoins.map((c: any) => {
+                  const progress = Math.min(
+                    100,
+                    (Number(c.real_sol_reserves) / Number(c.graduation_sol_target)) * 100,
+                  );
+                  return (
+                    <Link
+                      key={c.id}
+                      to={`/launchpad/${c.id}`}
+                      className="group block rounded-2xl border border-border bg-card hover:border-emerald-500/40 hover:-translate-y-0.5 transition-all p-4"
+                    >
+                      <div className="flex items-start gap-3 mb-3">
+                        {c.image_url ? (
+                          <img
+                            src={c.image_url}
+                            alt={c.name}
+                            className="h-11 w-11 rounded-md object-cover shrink-0"
+                          />
+                        ) : (
+                          <div className="h-11 w-11 rounded-md bg-gradient-to-br from-emerald-500/30 to-fuchsia-500/30 flex items-center justify-center shrink-0">
+                            <Coins className="h-5 w-5 text-emerald-500" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono font-bold text-sm">${c.ticker}</span>
+                            {c.status === "graduated" && (
+                              <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500">
+                                Grad
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground truncate">{c.name}</p>
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-[10px] font-mono text-muted-foreground mb-1">
+                        <span>{Number(c.real_sol_reserves).toFixed(2)} SOL</span>
+                        <span>{c.graduation_sol_target} SOL goal</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-emerald-500 to-fuchsia-500"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           )}
