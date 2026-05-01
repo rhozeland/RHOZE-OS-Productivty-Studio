@@ -624,25 +624,32 @@ const DashboardPage = () => {
         <p className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-2">
           {user ? "Your Spaces" : "Welcome to Rhozeland"}
         </p>
-        <h1 className="font-display text-3xl sm:text-4xl md:text-5xl leading-[1.1]">
+        <h1 className="font-display text-3xl sm:text-4xl md:text-5xl leading-[1.1] text-foreground">
           {user ? (
-            <span
-              className="inline-block bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text"
-              style={{
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                color: "transparent",
-              }}
-            >
-              {greeting()}, {firstName}.
-            </span>
+            <>
+              {greeting()},{" "}
+              <span
+                className="inline-block"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(to right, hsl(330 81% 60%), hsl(292 84% 61%), hsl(38 92% 50%))",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  color: "transparent",
+                }}
+              >
+                {firstName}.
+              </span>
+            </>
           ) : (
             <>
-              <span className="text-foreground">Two networks. </span>
+              Two networks.{" "}
               <span
-                className="inline-block bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text"
+                className="inline-block"
                 style={{
+                  backgroundImage:
+                    "linear-gradient(to right, hsl(330 81% 60%), hsl(292 84% 61%), hsl(38 92% 50%))",
                   WebkitBackgroundClip: "text",
                   backgroundClip: "text",
                   WebkitTextFillColor: "transparent",
