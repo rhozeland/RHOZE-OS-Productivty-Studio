@@ -798,10 +798,65 @@ const ListingDetailPage = () => {
               {/* Owner view */}
               {isOwner && (
                 <div className="space-y-4">
-                  <div className="rounded-lg bg-muted/40 border border-dashed border-border p-3 text-xs text-muted-foreground text-center">
-                    This is your listing. <Link to="/seller" className="text-primary hover:underline">Manage in Seller Dashboard</Link>
+                  <div className="rounded-lg bg-muted/30 border border-border p-3 space-y-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Your listing
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full gap-1.5"
+                        onClick={() => toggleActive.mutate(!listing.is_active)}
+                        disabled={toggleActive.isPending}
+                      >
+                        {listing.is_active ? (
+                          <><EyeOff className="h-3.5 w-3.5" /> Hide listing</>
+                        ) : (
+                          <><Eye className="h-3.5 w-3.5" /> Make visible</>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full gap-1.5 text-destructive hover:text-destructive"
+                        onClick={() => {
+                          if (confirm("Delete this listing? This can't be undone.")) {
+                            deleteListing.mutate();
+                          }
+                        }}
+                        disabled={deleteListing.isPending}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Delete
+                      </Button>
+                    </div>
+                    {!listing.is_active && (
+                      <p className="text-[11px] text-muted-foreground">
+                        Hidden from the Hub. Only you can see it.
+                      </p>
+                    )}
                   </div>
                   <RevenueSplitConfig listingId={listing.id} />
+                </div>
+              )}
+
+              {/* Admin moderation — non-owner admins can remove listings */}
+              {!isOwner && isAdmin && (
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                    <Shield className="h-3 w-3" /> Admin
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full gap-1.5 text-destructive hover:text-destructive"
+                    onClick={() => {
+                      if (confirm("Delete this listing as admin?")) deleteListing.mutate();
+                    }}
+                    disabled={deleteListing.isPending}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Delete listing
+                  </Button>
                 </div>
               )}
 
