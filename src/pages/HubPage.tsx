@@ -209,8 +209,12 @@ const HubPage = () => {
       if (error) throw error;
       return data ?? [];
     },
-    enabled: lane === "coins",
+    enabled: lane === "works",
   });
+
+  // Reuse Coins inside Works (Verified IP → optional bonding-curve coin).
+  // Coins live alongside Works only — they're not surfaced in the
+  // Conversations / Offerings / Opportunities lanes.
 
   const activeLane = LANES.find((l) => l.key === lane)!;
 
