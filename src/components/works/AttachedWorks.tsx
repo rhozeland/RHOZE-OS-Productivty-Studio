@@ -108,6 +108,15 @@ const AttachedWorks = ({
   const [pickedWorkId, setPickedWorkId] = useState<string>("");
   const [pickedRole, setPickedRole] = useState<string>("reference");
 
+  // Upload-and-fingerprint flow (creates a new Work + auto-attaches it).
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadTitle, setUploadTitle] = useState("");
+  const [uploadRole, setUploadRole] = useState<string>("deliverable");
+  const [uploadVisibility, setUploadVisibility] = useState<"public" | "private">("private");
+  const [hashing, setHashing] = useState(false);
+  const [contentHash, setContentHash] = useState<string | null>(null);
+
   const { data: attached = [], isLoading } = useQuery({
     queryKey: ["work-attachments", targetType, targetId],
     queryFn: async () => {
