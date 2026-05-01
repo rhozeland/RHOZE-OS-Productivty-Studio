@@ -71,7 +71,9 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "calendar", label: "Calendar", icon: Calendar, path: "/calendar" },
   { id: "bookings", label: "Bookings", icon: Calendar, path: "/bookings" },
   { id: "credits", label: "Credits", icon: CreditCard, path: "/credits" },
-  { id: "launchpad", label: "Launchpad", icon: Coins, path: "/launchpad" },
+  // Launchpad nav id removed — coins are now profile-bound. Saved
+  // dock_config entries with id "launchpad" will surface as "Missing"
+  // in the dock customizer until users re-pick (typically a profile link).
   // Flow Mode — fully merged into Projects. Nav id removed; saved
   // dock_config entries with id "flow" will surface as "Missing" in
   // the dock customizer until users re-pick.
