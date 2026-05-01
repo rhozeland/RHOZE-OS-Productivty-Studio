@@ -152,6 +152,37 @@ const ListingDetailPage = () => {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [dmOpen, setDmOpen] = useState(false);
+  const { isAdmin } = useAdminCheck();
+
+  const toggleActive = useMutation({
+    mutationFn: async (next: boolean) => {
+      const { error } = await supabase
+        .from("marketplace_listings")
+        .update({ is_active: next })
+        .eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: (_d, next) => {
+      queryClient.invalidateQueries({ queryKey: ["listing", id] });
+      toast.success(next ? "Listing visible" : "Listing hidden");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const deleteListing = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("marketplace_listings")
+        .delete()
+        .eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Listing deleted");
+      navigate("/hub?lane=offerings");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const { data: listing } = useQuery({
     queryKey: ["listing", id],
