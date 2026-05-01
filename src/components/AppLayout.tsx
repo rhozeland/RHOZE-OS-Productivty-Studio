@@ -363,6 +363,7 @@ const AppLayout = () => {
             <Outlet />
           </main>
           {user && !location.pathname.startsWith("/flow") && <DockBar />}
+          {user && <FlowLauncher />}
         </div>
       </div>
 
