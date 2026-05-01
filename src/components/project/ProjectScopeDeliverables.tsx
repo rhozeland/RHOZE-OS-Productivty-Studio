@@ -204,6 +204,7 @@ const ProjectScopeDeliverables = ({
     },
   });
 
+  const completedCount = deliverables.filter((d) => d.completed).length;
   const totalCount = deliverables.length;
   const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
