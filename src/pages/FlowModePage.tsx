@@ -1392,6 +1392,7 @@ const FlowModePage = () => {
                           isOwner={item.user_id === user?.id}
                           isAdmin={isAdmin}
                           profilesLoading={flowItemsFetching}
+                          coin={(item as any).work_id ? coinByWork?.get((item as any).work_id) ?? null : null}
                         />
                       </div>
                     ))}
