@@ -16,6 +16,7 @@ import {
   CheckCircle,
   Calendar,
   MessageSquare,
+  Coins,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import StudioBookingModal from "@/components/booking/StudioBookingModal";
