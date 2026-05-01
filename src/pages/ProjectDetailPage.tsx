@@ -430,7 +430,13 @@ const ProjectDetailPage = () => {
         </TabsContent>
 
         <TabsContent value="tools">
-          <ProjectTools projectId={id!} projectTitle={project.title} />
+          <ProjectTools
+            projectId={id!}
+            projectTitle={project.title}
+            smartboardDetails={smartboardDetails}
+            onLinkSmartboard={() => setLinkDialogOpen(true)}
+            onUnlinkSmartboard={(sbId: string) => unlinkSmartboard.mutate(sbId)}
+          />
         </TabsContent>
 
         {/* Vault — every file attached to this project. References, drafts,
