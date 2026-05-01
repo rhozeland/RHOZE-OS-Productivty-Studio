@@ -1,7 +1,7 @@
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Navigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Users, Award, Building2, Coins, AlertTriangle, Wallet, Eye, Sliders } from "lucide-react";
+import { BarChart3, Users, Award, Building2, Coins, AlertTriangle, Wallet, Eye, Sliders, ShieldCheck } from "lucide-react";
 import AdminOverview from "@/components/admin/AdminOverview";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminBadges from "@/components/admin/AdminBadges";
@@ -12,6 +12,7 @@ import AdminWithdrawals from "@/components/admin/AdminWithdrawals";
 import AdminContentModeration from "@/components/admin/AdminContentModeration";
 import AdminUnderwritingRules from "@/components/admin/AdminUnderwritingRules";
 import AdminUnderwritingRulesAudit from "@/components/admin/AdminUnderwritingRulesAudit";
+import AdminWorkVerifications from "@/components/admin/AdminWorkVerifications";
 
 const AdminPage = () => {
   const { isAdmin, loading } = useAdminCheck();
@@ -52,6 +53,9 @@ const AdminPage = () => {
           <TabsTrigger value="studios" className="gap-1.5 text-xs shrink-0">
             <Building2 className="h-3.5 w-3.5" /> Studios
           </TabsTrigger>
+          <TabsTrigger value="ip" className="gap-1.5 text-xs shrink-0">
+            <ShieldCheck className="h-3.5 w-3.5" /> IP Verifications
+          </TabsTrigger>
           <TabsTrigger value="disputes" className="gap-1.5 text-xs shrink-0">
             <AlertTriangle className="h-3.5 w-3.5" /> Disputes
           </TabsTrigger>
@@ -71,6 +75,7 @@ const AdminPage = () => {
         <TabsContent value="users"><AdminUsers /></TabsContent>
         <TabsContent value="badges"><AdminBadges /></TabsContent>
         <TabsContent value="studios"><AdminStudioApplications /></TabsContent>
+        <TabsContent value="ip"><AdminWorkVerifications /></TabsContent>
         <TabsContent value="disputes"><AdminDisputes /></TabsContent>
         <TabsContent value="withdrawals"><AdminWithdrawals /></TabsContent>
         <TabsContent value="moderation"><AdminContentModeration /></TabsContent>
