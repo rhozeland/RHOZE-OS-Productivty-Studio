@@ -88,7 +88,7 @@ const DashboardPage = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, avatar_url, dashboard_layout")
+        .select("display_name, username, avatar_url, dashboard_layout")
         .eq("user_id", user!.id)
         .maybeSingle();
       return data;
@@ -304,7 +304,10 @@ const DashboardPage = () => {
   const totalTasks = tasks?.length ?? 0;
   const activeProjects = projects?.filter((p) => p.status === "active").length ?? 0;
   const firstName =
-    profile?.display_name?.split(" ")[0] || (user ? user.email?.split("@")[0] : "") || "";
+    profile?.display_name?.split(" ")[0]?.trim() ||
+    (profile as any)?.username ||
+    (user ? user.email?.split("@")[0] : "") ||
+    "";
 
   const greeting = () => {
     const h = new Date().getHours();
