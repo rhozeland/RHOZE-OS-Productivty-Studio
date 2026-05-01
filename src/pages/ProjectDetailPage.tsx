@@ -413,17 +413,7 @@ const ProjectDetailPage = () => {
         </TabsContent>
 
         <TabsContent value="vision" className="space-y-6">
-          <ProjectVision
-            project={project}
-            projectId={id!}
-            smartboardDetails={smartboardDetails}
-            linkedIds={linkedIds}
-            onLinkSmartboard={() => setLinkDialogOpen(true)}
-            onUnlinkSmartboard={(sbId: string) => unlinkSmartboard.mutate(sbId)}
-          />
-          {/* Verified IP & deliverables now live in the Vault tab — keeps
-              Scope focused on what's being built, Vault on what's been
-              anchored. */}
+          <ProjectVision project={project} projectId={id!} />
         </TabsContent>
 
         {isPaid && (
