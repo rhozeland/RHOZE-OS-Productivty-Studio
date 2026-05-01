@@ -15,8 +15,9 @@
  *   - Guest   → CTA prompting sign-in (no balance row)
  *   - Authed  → balance(s) + streak chip + grid of reward actions
  */
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useWallet } from "@solana/wallet-adapter-react";
 import {
   type LucideIcon,
@@ -36,6 +37,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAuthGate } from "@/components/AuthGateDialog";
 import { useRhozeBalance } from "@/hooks/useRhozeBalance";
+import { useRewardStreak } from "@/hooks/useRewardStreak";
 import { supabase } from "@/integrations/supabase/client";
 
 interface RewardAction {
@@ -65,25 +67,91 @@ const ACTIONS: RewardAction[] = [
 const formatBalance = (n: number, max = 0) =>
   n.toLocaleString(undefined, { maximumFractionDigits: max });
 
+const creditsKey = (uid?: string) => ["launchpad-earn-credits", uid] as const;
+
 const LaunchpadEarnPanel = () => {
   const { user } = useAuth();
   const { requireAuth } = useAuthGate();
   const { connected } = useWallet();
-  const { data: tokenInfo, isLoading: loadingToken } = useRhozeBalance();
+  const queryClient = useQueryClient();
 
-  const { data: credits, isLoading: loadingCredits } = useQuery({
-    queryKey: ["launchpad-earn-credits", user?.id],
+  // Keep the daily login streak ticking while this panel is mounted.
+  useRewardStreak();
+
+  const { data: tokenInfo, isLoading: loadingToken, refetch: refetchToken } =
+    useRhozeBalance();
+
+  const {
+    data: credits,
+    isLoading: loadingCredits,
+    refetch: refetchCredits,
+  } = useQuery({
+    queryKey: creditsKey(user?.id),
     queryFn: async () => {
       if (!user) return null;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("user_credits")
         .select("balance, reward_streak")
         .eq("user_id", user.id)
         .maybeSingle();
+      if (error) throw error;
       return data;
     },
     enabled: !!user,
+    // Re-pull when the tab regains focus so a reward earned elsewhere shows up.
+    refetchOnWindowFocus: true,
+    staleTime: 15_000,
   });
+
+  // Realtime: any change to this user's credits row (balance/streak), a new
+  // credit_transactions entry, or pending_rewards activity refreshes balances.
+  useEffect(() => {
+    if (!user) return;
+
+    const refresh = () => {
+      queryClient.invalidateQueries({ queryKey: creditsKey(user.id) });
+      refetchCredits();
+      if (connected) refetchToken();
+    };
+
+    const channel = supabase
+      .channel(`launchpad-earn:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "user_credits",
+          filter: `user_id=eq.${user.id}`,
+        },
+        refresh,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "credit_transactions",
+          filter: `user_id=eq.${user.id}`,
+        },
+        refresh,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "pending_rewards",
+          filter: `user_id=eq.${user.id}`,
+        },
+        refresh,
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, connected, queryClient, refetchCredits, refetchToken]);
 
   const offChainBalance = Number(credits?.balance ?? 0);
   const onChainBalance = connected ? Number(tokenInfo?.balance ?? 0) : null;

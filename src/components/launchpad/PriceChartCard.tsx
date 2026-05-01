@@ -13,7 +13,7 @@
  * Data source: `coin_trades` (publicly readable). Uses recharts
  * (already a dep).
  */
-import { useMemo, useState } from "react";
+import { useMemo, useState, type KeyboardEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Area,
@@ -39,6 +39,47 @@ const RANGE_MS: Record<Range, number | null> = {
   "1D": 24 * 60 * 60 * 1000,
   ALL: null,
 };
+
+const RANGE_LABELS: Record<Range, string> = {
+  "1H": "Last 1 hour",
+  "6H": "Last 6 hours",
+  "1D": "Last 24 hours",
+  ALL: "All time",
+};
+
+function handleRovingKeyDown<T extends string>(
+  e: KeyboardEvent<HTMLDivElement>,
+  options: T[],
+  current: T,
+  setValue: (v: T) => void,
+) {
+  const idx = options.indexOf(current);
+  if (idx < 0) return;
+  let nextIdx = idx;
+  switch (e.key) {
+    case "ArrowRight":
+    case "ArrowDown":
+      nextIdx = (idx + 1) % options.length;
+      break;
+    case "ArrowLeft":
+    case "ArrowUp":
+      nextIdx = (idx - 1 + options.length) % options.length;
+      break;
+    case "Home":
+      nextIdx = 0;
+      break;
+    case "End":
+      nextIdx = options.length - 1;
+      break;
+    default:
+      return;
+  }
+  e.preventDefault();
+  setValue(options[nextIdx]);
+  // Move focus to the newly-selected control
+  const target = e.currentTarget.querySelectorAll<HTMLButtonElement>("button[role]")[nextIdx];
+  target?.focus();
+}
 
 interface Props {
   launchId: string;
@@ -95,46 +136,70 @@ const PriceChartCard = ({ launchId, ticker, realSolReserves, graduationTarget }:
       <CardContent className="p-4 space-y-3">
         {/* Toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="inline-flex rounded-full border border-border/60 bg-muted/30 p-0.5 text-[11px]">
-            <button
-              type="button"
-              onClick={() => setView("price")}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition-colors ${
-                view === "price" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <LineChartIcon className="h-3 w-3" /> Price
-            </button>
-            <button
-              type="button"
-              onClick={() => setView("curve")}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition-colors ${
-                view === "curve" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Activity className="h-3 w-3" /> Bonding Curve
-            </button>
+          <div
+            role="tablist"
+            aria-label="Chart view"
+            className="inline-flex rounded-full border border-border/60 bg-muted/30 p-0.5 text-[11px]"
+            onKeyDown={(e) => handleRovingKeyDown<View>(e, ["price", "curve"], view, setView)}
+          >
+            {([
+              { id: "price" as const, label: "Price", Icon: LineChartIcon, desc: "Token price over time" },
+              { id: "curve" as const, label: "Bonding Curve", Icon: Activity, desc: "Progress toward graduation" },
+            ]).map(({ id, label, Icon, desc }) => {
+              const selected = view === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  id={`chart-tab-${id}`}
+                  aria-selected={selected}
+                  aria-label={`${label} view — ${desc}`}
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => setView(id)}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
+                    selected ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="h-3 w-3" aria-hidden="true" /> {label}
+                </button>
+              );
+            })}
           </div>
 
           {view === "price" && (
-            <div className="inline-flex rounded-full border border-border/60 bg-muted/30 p-0.5 text-[10px] font-mono">
-              {(["1H", "6H", "1D", "ALL"] as Range[]).map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setRange(r)}
-                  className={`px-2 py-1 rounded-full transition-colors ${
-                    range === r ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {r}
-                </button>
-              ))}
+            <div
+              role="radiogroup"
+              aria-label="Chart timeframe"
+              className="inline-flex rounded-full border border-border/60 bg-muted/30 p-0.5 text-[10px] font-mono"
+              onKeyDown={(e) =>
+                handleRovingKeyDown<Range>(e, ["1H", "6H", "1D", "ALL"], range, setRange)
+              }
+            >
+              {(["1H", "6H", "1D", "ALL"] as Range[]).map((r) => {
+                const selected = range === r;
+                return (
+                  <button
+                    key={r}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    aria-label={RANGE_LABELS[r]}
+                    tabIndex={selected ? 0 : -1}
+                    onClick={() => setRange(r)}
+                    className={`px-2 py-1 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
+                      selected ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {r}
+                  </button>
+                );
+              })}
             </div>
           )}
 
-          <Badge variant="outline" className="text-[10px] gap-1">
-            <TrendingUp className="h-2.5 w-2.5" />
+          <Badge variant="outline" className="text-[10px] gap-1" aria-live="polite">
+            <TrendingUp className="h-2.5 w-2.5" aria-hidden="true" />
             {view === "price"
               ? `${priceSeries.length} pts`
               : `${realSolReserves.toFixed(2)} / ${graduationTarget} SOL`}
