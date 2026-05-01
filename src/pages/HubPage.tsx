@@ -564,37 +564,35 @@ const HubPage = () => {
       )}
 
       {/* ════════════════════════════════════════════════════════════════
-          LANE: Coins (artist coins on the bonding curve — Launchpad)
+          Coins sub-strip — shown inside the Works lane only.
+          Coins are derived from Verified IP, so they belong with Works.
           ════════════════════════════════════════════════════════════════ */}
-      {lane === "coins" && (
-        <section>
+      {lane === "works" && (loadingCoins || (coins && coins.length > 0)) && (
+        <section className="space-y-3 pt-2">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
+                Artist coins
+              </p>
+              <h2 className="font-display text-xl text-foreground">From Verified IP.</h2>
+            </div>
+            <Link
+              to="/launchpad"
+              className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+            >
+              Open Launchpad →
+            </Link>
+          </div>
+
           {loadingCoins ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="h-40 bg-muted animate-pulse rounded-2xl" />
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-32 bg-muted animate-pulse rounded-2xl" />
               ))}
-            </div>
-          ) : !coins || coins.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
-              <Coins className="h-10 w-10 text-emerald-500/40 mx-auto mb-3" />
-              <p className="text-sm text-foreground font-medium">
-                {search ? "No coins match your search." : "No artist coins minted yet."}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
-                Verify a Work as IP and you can launch a coin against it on the
-                bonding curve.
-              </p>
-              <Button
-                onClick={() => navigate("/launchpad")}
-                className="mt-4 rounded-full"
-                variant="outline"
-              >
-                Open Launchpad
-              </Button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {coins.map((c: any, i: number) => {
+              {coins!.slice(0, 6).map((c: any, i: number) => {
                 const progress = Math.min(
                   100,
                   (Number(c.real_sol_reserves) / Number(c.graduation_sol_target)) * 100,
@@ -634,11 +632,6 @@ const HubPage = () => {
                           <p className="text-[11px] text-muted-foreground truncate">{c.name}</p>
                         </div>
                       </div>
-                      {c.description && (
-                        <p className="text-[11px] text-muted-foreground line-clamp-2 mb-3">
-                          {c.description}
-                        </p>
-                      )}
                       <div className="flex justify-between text-[10px] font-mono text-muted-foreground mb-1">
                         <span>{Number(c.real_sol_reserves).toFixed(2)} SOL</span>
                         <span>{c.graduation_sol_target} SOL goal</span>
