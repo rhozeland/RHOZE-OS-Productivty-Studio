@@ -803,22 +803,28 @@ const DashboardPage = () => {
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/30 to-transparent" />
 
+              {/* Oversized editorial glyph — art, not decoration */}
+              <Sparkles
+                aria-hidden
+                strokeWidth={0.6}
+                className="absolute -right-6 -top-6 h-56 w-56 text-pink-500/15 group-hover:text-pink-500/25 transition-colors duration-500 pointer-events-none"
+              />
+
               <div className="relative h-full flex flex-col p-6 sm:p-8">
                 <div className="flex-1">
                   <div className="inline-flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur px-2.5 py-1 mb-4">
                     <span className="h-1.5 w-1.5 rounded-full bg-pink-500 animate-pulse" />
                     <span className="text-[10px] uppercase tracking-widest text-foreground font-medium">
-                      Digital Network
+                      Digital
                     </span>
                   </div>
-                  <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-none mb-2">
+                  <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-none mb-3">
                     The
                     <br />
                     Hub
                   </h2>
-                  <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
-                    Tune in. Conversations, offerings, opportunities, and verified Works — the
-                    pulse of the community.
+                  <p className="text-sm text-muted-foreground leading-snug">
+                    The pulse of the community.
                   </p>
                 </div>
 
@@ -846,7 +852,7 @@ const DashboardPage = () => {
 
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
-                    {people?.length ?? 0} creator{(people?.length ?? 0) === 1 ? "" : "s"} active
+                    {people?.length ?? 0} active
                   </span>
                   <span className="inline-flex items-center gap-1 text-sm font-semibold text-foreground group-hover:gap-2 transition-all">
                     Tune in <ArrowRight className="h-4 w-4" />
