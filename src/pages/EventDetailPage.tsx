@@ -5,6 +5,7 @@
  * RSVP / claim button per tier. Free tiers issue a ticket immediately;
  * paid tiers display price and a "coming soon" hint until checkout lands.
  */
+import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -26,12 +27,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { shortHash } from "@/lib/content-hash";
+import TicketCheckoutDialog from "@/components/events/TicketCheckoutDialog";
 
 const EventDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const [checkoutTier, setCheckoutTier] = useState<any | null>(null);
 
   const { data: ev, isLoading } = useQuery({
     queryKey: ["event", id],
@@ -311,8 +314,13 @@ const EventDetailPage = () => {
                     {!user ? "Sign in to RSVP" : "RSVP"}
                   </Button>
                 ) : (
-                  <Button size="sm" variant="outline" className="rounded-full" disabled>
-                    Checkout coming
+                  <Button
+                    size="sm"
+                    className="rounded-full"
+                    disabled={!user}
+                    onClick={() => setCheckoutTier(t)}
+                  >
+                    {!user ? "Sign in to buy" : "Buy ticket"}
                   </Button>
                 )}
               </div>
@@ -320,6 +328,19 @@ const EventDetailPage = () => {
           })}
         </div>
       </section>
+
+      {checkoutTier && (
+        <TicketCheckoutDialog
+          open={!!checkoutTier}
+          onOpenChange={(o) => !o && setCheckoutTier(null)}
+          event={{ id: ev.id, title: ev.title }}
+          tier={checkoutTier}
+          onIssued={() => {
+            qc.invalidateQueries({ queryKey: ["event-my-ticket", id] });
+            qc.invalidateQueries({ queryKey: ["event-tiers", id] });
+          }}
+        />
+      )}
     </div>
   );
 };
