@@ -389,14 +389,20 @@ const AppLayout = () => {
       </div>
 
       {/* Command palette search */}
-      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <CommandInput placeholder="Search pages, studios, listings, creators..." />
+      {/* Command palette search — Pages always visible; studios/listings/creators
+          only surface once the user has typed (>=2 chars). */}
+      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen} shouldFilter={!queryEnabled}>
+        <CommandInput
+          placeholder="Search pages, studios, listings, creators..."
+          value={searchQuery}
+          onValueChange={setSearchQuery}
+        />
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
+          <CommandEmpty>
+            {queryEnabled ? "No results found." : "Type to search the network."}
+          </CommandEmpty>
           <CommandGroup heading="Pages">
             {PAGES.map((page) => {
-              // Surface the global keyboard shortcut next to a page when one
-              // exists, so users discover them without an extra help screen.
               const shortcut = NAV_SHORTCUTS.find((s) => s.path === page.path);
               return (
                 <CommandItem key={page.path} onSelect={() => goTo(page.path)}>
@@ -416,7 +422,7 @@ const AppLayout = () => {
               );
             })}
           </CommandGroup>
-          {studios && studios.length > 0 && (
+          {queryEnabled && studios && studios.length > 0 && (
             <CommandGroup heading="Studios">
               {studios.map((s) => (
                 <CommandItem key={s.id} onSelect={() => goTo(`/studios/${s.id}`)}>
@@ -427,7 +433,7 @@ const AppLayout = () => {
               ))}
             </CommandGroup>
           )}
-          {listings && listings.length > 0 && (
+          {queryEnabled && listings && listings.length > 0 && (
             <CommandGroup heading="Marketplace">
               {listings.map((l) => (
                 <CommandItem key={l.id} onSelect={() => goTo(`/creators/${l.id}`)}>
@@ -438,7 +444,7 @@ const AppLayout = () => {
               ))}
             </CommandGroup>
           )}
-          {profiles && profiles.length > 0 && (
+          {queryEnabled && profiles && profiles.length > 0 && (
             <CommandGroup heading="Creators">
               {profiles.map((p) => (
                 <CommandItem key={p.user_id} onSelect={() => goTo(`/profiles/${p.user_id}`)}>
