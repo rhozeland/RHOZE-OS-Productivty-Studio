@@ -619,7 +619,7 @@ const DashboardPage = () => {
             <>
               <span className="text-foreground">{greeting()}, </span>
               <span
-                className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text"
+                className="inline-block bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text"
                 style={{
                   WebkitBackgroundClip: "text",
                   backgroundClip: "text",
