@@ -1,92 +1,163 @@
-## Applying the S33R Thesis to Rhozeland
+# Spaces 2.0 — Spaces · Events · Residencies
 
-The S33R piece argues the real blockchain shift in music is **infrastructure** (rights, royalties, settlement, provenance) — not NFTs. Rhozeland already has the bones for the *creator-services* version of that stack. To "apply" the thesis we (a) reframe what we have using S33R's vocabulary, and (b) extend the model from one-off projects → ongoing IP/royalty streams (music being the launch vertical).
+## What we're building
 
-This plan is a phased build. We can start with Phase 1 alone if you want a quick win.
+Rename `/studios` → `/spaces` and turn it into the home of the **physical-and-gathered network** with three tabs:
 
----
+- **Spaces** — existing studios marketplace (no behavioral change)
+- **Events** — new: hosting, RSVP + paid ticketing, on-chain provenance
+- **Residencies** — placeholder tab with a "Coming soon" state
 
-### How Rhozeland already maps to the S33R stack
+Anyone authenticated can host. Tickets sell in fiat (Square) or $RHOZE, mirroring Projects (10% platform fee). Events get the full IP-anchoring treatment: manifest hash at publish, optional post-event artifact hashes, and proof-of-attendance hashes per ticket.
 
-| S33R layer | Rhozeland today | Gap |
-|---|---|---|
-| **Provenance** | `anchor_contribution` edge fn writes Solana memos at milestone events | Not extended to audio files / IP works |
-| **Data normalization** | Internal — every payment is one Square charge → one `credit_transactions` row | No external DSP ingestion |
-| **Programmable IP / splits** | `revenue_split_configs` (creator/curator/buyback %) + curator invite handshake | No multi-recipient splits, no royalty-on-resale |
-| **Settlement** | Square fiat payouts (5–8 day manual) + $RHOZE off-chain credits | No stablecoin rails; Anchor escrow still spec only (`.lovable/anchor-program-spec.md`) |
-| **Capital** | Withdrawal panel ($10 min, manual) | No advances / streams as collateral |
-| **Applications** | Hub, Spaces, Projects | — |
+## Why anchoring an event makes sense
 
-So we already own **Provenance + Splits + Applications**. The S33R-aligned roadmap is: harden splits → add a **Work** primitive (the IP asset) → add **stablecoin (USDC) settlement** → expose **royalty streams** as objects you can point earnings at.
+An event isn't a file, but its *terms* and *outputs* are. Three anchor layers, each reusing the existing `contribution_proofs` + `anchor-contribution` infra:
 
----
+1. **Manifest** — at publish, hash a canonical JSON of `{title, host_id, starts_at, ends_at, venue, description, lineup, ticket_terms}`. One Solana memo. Proves "this event existed with these terms on this date."
+2. **Artifacts** — after the event, host uploads recordings/photos/zines. Each file SHA-256'd and anchored exactly like a project deliverable, surfaced via `<VerifiedIPBadge />`.
+3. **Proof-of-attendance** — when a ticket is issued, hash `{event_manifest_hash, holder_user_id, issued_at, ticket_id}`. Stored on the ticket row; one-tap "Anchor my attendance" button on the holder's ticket detail.
 
-### Phase 1 — Rename & reframe (1 session, no schema changes)
+## URL & navigation moves
 
-Pure framing work. Lets us pitch the existing product in S33R's language.
+```text
+/studios          → 301 redirect to /spaces?tab=spaces
+/spaces           → new tabbed page (Spaces · Events · Residencies)
+/spaces/events/:id          → event detail (public)
+/spaces/events/new          → event create wizard
+/spaces/events/:id/manage   → host dashboard (attendees, scans, payouts, artifacts)
+/tickets/:id                → ticket detail (holder view, QR, anchor button)
+```
 
-- Add a new public page `/infrastructure` (linked from landing nav) that walks through the four-layer stack with our own component names: *Provenance · Splits · Settlement · Capital*. Each layer shows a real Rhozeland screenshot + one sentence on what's live vs. coming.
-- Update landing page hero subtitle from "decentralized productivity studio" to something like *"Programmable revenue infrastructure for independent creators."*
-- Rename `RevenueSplitConfig` UI label "Revenue Split" → "Programmable Split" and add a one-line caption: *"Executable code, not a contract clause."*
-- Add a `splits_hash` column display (we already store splits; show their SHA-256 hash in the UI as a "fingerprint" — this is the same field the Anchor spec freezes on lock, so we're priming users for it).
+Sidebar/dock label updates from "Studios" to "Spaces". Pillars v5 memory updated.
 
-### Phase 2 — Works (the IP asset primitive) (1 session)
+## Database (one migration)
 
-The piece's strongest claim is that *rights become programmable financial assets*. Right now in our DB the asset is implicit — a `listing` or a `contract`. Make it explicit.
+```text
+events
+  id, host_id, space_id (nullable FK to studios), title, slug, description,
+  cover_url, category, starts_at, ends_at, venue_name, venue_address,
+  is_online, online_url, capacity, status (draft|published|cancelled|completed),
+  manifest_hash, manifest_json, solana_signature, anchored_at,
+  ticket_currency_modes (text[]), created_at, updated_at
 
-New table `works`:
-- `id`, `owner_id`, `title`, `kind` (`song`, `design`, `writing`, `service`, `other`)
-- `iswc/isrc` (nullable, for music)
-- `created_at`, `provenance_signature` (Solana memo tx hash from anchor-contribution at registration)
-- `file_url` (storage), `sha256` (content hash)
+event_ticket_tiers
+  id, event_id, name, description, price_usd (nullable), price_rhoze (nullable),
+  quantity_total, quantity_sold, sale_starts_at, sale_ends_at, is_active
 
-A `revenue_split_configs` row gets an optional `work_id` FK. So one Work can have many splits over time, and earnings from any listing/contract attached to a Work flow through that Work's active split.
+event_tickets
+  id, event_id, tier_id, holder_id, purchase_currency (usd|rhoze|free),
+  amount_paid, payment_reference, status (issued|checked_in|refunded|cancelled),
+  attendance_hash, solana_signature, anchored_at, qr_token (unique), issued_at, checked_in_at
 
-UI: a `/works` page (new side-nav entry, music vertical first) where a creator drops an audio file, we hash + register it via the existing `anchor-contribution` function (one memo tx = timestamped registration), and the Work appears with its on-chain proof link.
+event_artifacts
+  id, event_id, uploader_id, file_url, file_name, file_size, file_type,
+  sha256_hash, solana_signature, anchored_at, caption, created_at
 
-This is the **Provenance + IP-asset** combo from the article in one shipped feature.
+event_check_ins  (audit trail)
+  id, ticket_id, scanned_by, scanned_at, method
+```
 
-### Phase 3 — Multi-recipient splits + royalty-on-resale (1 session)
+RLS sketch: events readable when `status='published'` or by host; tiers/tickets follow event visibility; tickets writable by holder for own; artifacts insertable by host or attendees with `checked_in` ticket; check-ins insertable by host only. Storage: new `event-artifacts` bucket (private, host + ticket-holders read).
 
-Today `revenue_split_configs` is a single row with `creator_pct / curator_pct / buyback_pct`. To represent real music splits (producer 20%, vocalist 30%, label 25%, writer 25%) we need an array.
+## UI surfaces
 
-- New table `split_recipients(id, split_config_id, recipient_user_id, wallet_address, basis_points)`
-- Constraint: sum of `basis_points` per config = 10000
-- Update `split-revenue` edge function to fan out to N recipients instead of 3 fixed buckets
-- Update `RevenueSplitConfig` UI to add/remove rows with sliders, mirrors the Anchor spec's `Split` PDA so we can swap to on-chain later with zero data migration
-- Add optional `royalty_basis_points` on `works` (resale royalty) — used when a listing is re-sold
+**Events tab** — grid of cards (cover, title, date, venue, price-from, capacity bar). Filters: upcoming/past, free/paid, online/in-person, category. Search by title/venue.
 
-### Phase 4 — Stablecoin (USDC) settlement opt-in (1 session)
+**Event create wizard** (`InlineFormPanel` reused from the onboarding refactor):
+1. Basics (title, description, category, cover)
+2. When/Where (date range, venue or online URL, optional link to one of host's Spaces)
+3. Tickets (add tiers; each tier picks USD, $RHOZE, or both; capacity per tier)
+4. Review → Publish (computes manifest hash, anchors via `anchor-contribution`, shows Solscan link)
 
-The article's biggest unlock: months → minutes. We already have the Solana plumbing.
+**Event detail page** — hero (cover, title, date, host w/ verified badge), description, ticket tiers with buy buttons, attendee count (privacy-respecting), `<VerifiedIPBadge />` for the manifest, artifacts gallery (post-event), share.
 
-- Add `payout_currency` (`fiat_usd` | `usdc_solana`) preference per recipient on `split_recipients`
-- New edge function `payout-usdc` — given a payout amount + wallet, build & submit an SPL transfer of USDC (devnet first, mainnet after audit)
-- `split-revenue` reads each recipient's preference and routes accordingly (Square for fiat recipients, USDC tx for crypto recipients) — all in the same atomic milestone approval
-- Show a "Settled in 12s · [tx link]" badge on `RevenueSplitLog` rows paid via USDC vs the existing "Manual payout in 5–8 days" line for fiat
+**Ticket detail** (`/tickets/:id`) — gradient gym-card style matching Creator Pass, QR for check-in, "Anchor my attendance" button → writes hash + memo, shows Solscan link once anchored.
 
-### Phase 5 — Pitch this as the music vertical
+**Host manage page** — tabs: Overview · Attendees (with check-in scanner) · Artifacts (upload + anchor) · Settlement (USD revenue, $RHOZE credited via admin gate, 10% platform fee shown). Reuses patterns from `StudioManagePage` and `ProjectScopeDeliverables`.
 
-Once 1–4 ship, we have a credible "music infrastructure" angle to take to S33R-type partners and to the hackathon judges:
+**Residencies tab** — single empty-state card: "Long-form residencies at member Spaces — coming soon. Want to host one? [Contact us]." No DB, no routes.
 
-- Landing variant `/for-music` showing the same product with music-specific copy (ISRC fields, royalty splits, sub-minute USDC payouts to collaborators)
-- Case study / demo project: one Work, three collaborators, one paid milestone, three USDC transfers visible on Solana explorer, all in <2 minutes
+## Payments
 
----
+- **Fiat** — extend the existing Square card form (`SquareCardForm`, `BookingCheckoutModal`). On success: insert `event_tickets` row, generate `qr_token`, fire `event-ticket-purchased` notification + email, deduct 10% platform fee into `credit_transactions`.
+- **$RHOZE** — same pattern as Hub Offerings $RHOZE purchases: deduct from buyer's wallet via admin reward gate, credit host (75/15/10 split where applicable), insert ticket row.
+- **Free RSVP** — single button, instant ticket, no payment leg.
 
-### Technical notes
+## Anchoring integration
 
-- Phase 2's content hash + memo registration reuses the existing `anchor-contribution` edge function — no new on-chain code needed.
-- Phase 3 keeps the schema shape compatible with the `Split` PDA in `.lovable/anchor-program-spec.md`, so when we eventually deploy the Anchor program (out of scope here — needs Rust toolchain) we can mirror DB rows → PDAs 1:1.
-- Phase 4 USDC: use the existing lightweight Solana JSON-RPC pattern (per our edge-function memory rule) — `@solana/web3.js` + `@solana/spl-token` via dynamic import only inside the function. Devnet USDC mint: `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`.
-- No changes to auth, RLS posture stays strict (recipients can only see their own splits/payouts).
+Reuses `anchor-contribution` edge function (no new function needed). Three new `action_type` values in `contribution_proofs`:
+- `event_manifest`
+- `event_artifact`
+- `event_attendance`
 
----
+Each writes `solana_signature` back to its host row (events / event_artifacts / event_tickets). `<VerifiedIPBadge />` already accepts a signature; we surface it on event cards, ticket cards, and the artifacts gallery.
 
-### What to decide
+## Notifications & email
 
-Three orthogonal choices — I'd like your call before building:
+Templates added (queued, branded): `event-published`, `event-ticket-purchased`, `event-reminder-24h`, `event-checked-in`, `event-artifact-uploaded`. All 7-day auto-purge per existing rules.
 
-1. **Scope to start with**: Phase 1 only (framing, ~30 min) · Phase 1+2 (framing + Works, ~2 sessions) · Full 1→4 (full stack, ~4 sessions).
-2. **Music-first or generic**: Do we put music vocabulary (ISRC, royalty, DSP) front-and-center, or keep "Works" generic and let music be one `kind` among many?
-3. **USDC network**: Devnet only for the demo (safe, free, instant) or wire mainnet behind a feature flag (real, but needs treasury USDC + audit caveats)?
+## Security
+
+- RLS on every new table from day one.
+- `qr_token` is a 24-char random nanoid; check-in endpoint validates token + host identity server-side.
+- Attendance anchoring requires the holder's auth context — no third-party can anchor someone else's attendance.
+- Wallet locking + 1:1 binding rules unchanged.
+- Square + $RHOZE flows reuse existing audited paths; no new payment surface.
+
+## Out of scope for this plan
+
+- Recurring events / series
+- Waitlists & refund automation (manual via host for v1)
+- Co-hosts / revenue splits across multiple hosts (use existing revenue_split_configs in a follow-up)
+- Residency application flow
+- Calendar (.ics) export — easy follow-up
+- Map view of in-person events
+
+## File-level changes
+
+```text
+NEW
+  supabase/migrations/<timestamp>_events.sql           tables, RLS, bucket, policies
+  supabase/functions/event-checkin/index.ts            QR validation + attendance log
+  src/pages/SpacesHubPage.tsx                          tabbed shell (Spaces|Events|Residencies)
+  src/pages/events/EventsListTab.tsx
+  src/pages/events/EventDetailPage.tsx
+  src/pages/events/EventCreatePage.tsx
+  src/pages/events/EventManagePage.tsx
+  src/pages/TicketDetailPage.tsx
+  src/components/events/EventCard.tsx
+  src/components/events/TicketTierEditor.tsx
+  src/components/events/TicketPurchaseModal.tsx        wraps Square + $RHOZE flows
+  src/components/events/EventArtifactUploader.tsx      reuses content-hash + anchor pattern
+  src/components/events/AttendeeCheckInScanner.tsx
+  src/components/events/EventManifestPreview.tsx
+  src/lib/event-manifest.ts                            canonical JSON + hash helper
+  mem://features/spaces-events                          new feature memory
+
+EDIT
+  src/App.tsx                                          routes; redirect /studios → /spaces
+  src/components/AppSidebar.tsx                        label "Studios" → "Spaces"
+  src/components/AppLayout.tsx                         dock label
+  src/config/navigation.ts                             route + label
+  src/pages/StudiosPage.tsx                            becomes "Spaces" tab content (export as component)
+  src/integrations/supabase/types.ts                   auto-regenerated post-migration
+  mem://index.md                                       update navigation core line + add memory ref
+  mem://features/studios-marketplace                   note it now lives under /spaces?tab=spaces
+  mem://arch/pillars-v5                                add Events as physical-network surface
+```
+
+## Build order
+
+1. **Migration first** — schema + RLS + storage bucket + policies, then await approval.
+2. **Tabbed shell** — `/spaces` with existing studios as tab 1; redirect `/studios`.
+3. **Events read path** — list + detail (no auth-gated actions yet).
+4. **Event create + manifest anchoring** — wizard, hash, `anchor-contribution` call.
+5. **Free RSVP tickets** — simplest ticket flow end-to-end.
+6. **Paid tickets** — Square first, then $RHOZE.
+7. **Host manage + check-in** — scanner + attendee list + artifact uploads with anchoring.
+8. **Attendance anchoring** — holder-side button on ticket detail.
+9. **Notifications + emails**.
+10. **Residencies stub** + memory updates + nav parity tests.
+
+This delivers a complete event lifecycle — publish → sell → attend → archive → verify — with provenance baked into every layer.
