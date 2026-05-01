@@ -303,14 +303,24 @@ const DashboardPage = () => {
   const completedTasks = tasks?.filter((t) => t.completed).length ?? 0;
   const totalTasks = tasks?.length ?? 0;
   const activeProjects = projects?.filter((p) => p.status === "active").length ?? 0;
-  const firstName = (
-    profile?.display_name?.split(" ")[0]?.trim() ||
-    (profile as any)?.username?.trim() ||
-    user?.user_metadata?.full_name?.split(" ")[0]?.trim() ||
-    user?.user_metadata?.name?.split(" ")[0]?.trim() ||
-    user?.email?.split("@")[0] ||
-    "Creator"
-  ).trim() || "Creator";
+  const firstName = useMemo(() => {
+    const pickFirstWord = (v?: string | null) => {
+      const s = (v ?? "").trim();
+      if (!s) return "";
+      return s.split(/\s+/)[0]?.trim() ?? "";
+    };
+    const meta = (user?.user_metadata ?? {}) as Record<string, any>;
+    const candidates = [
+      pickFirstWord(profile?.display_name),
+      pickFirstWord((profile as any)?.username),
+      pickFirstWord(meta.full_name),
+      pickFirstWord(meta.name),
+      pickFirstWord(meta.preferred_username),
+      pickFirstWord(meta.user_name),
+      pickFirstWord(user?.email?.split("@")[0]),
+    ];
+    return candidates.find((c) => c.length > 0) || "Creator";
+  }, [profile, user]);
 
   const greeting = () => {
     const h = new Date().getHours();
