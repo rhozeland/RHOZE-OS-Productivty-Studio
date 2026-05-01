@@ -2,11 +2,11 @@ import {
   Home,
   Building2,
   FolderKanban,
-  
+
   MessageSquare,
   Palette,
   Radio,
-  
+
   Calendar,
   CreditCard,
   User,
@@ -15,6 +15,7 @@ import {
   Users,
   Sparkles,
   Coins,
+  Compass,
   type LucideIcon,
 } from "lucide-react";
 
