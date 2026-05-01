@@ -82,6 +82,20 @@ export async function loadFlowFeed(
     items = [...preferred, ...rest];
   }
 
+  // Provenance bias: surface verified-IP items first, then fingerprinted,
+  // then everything else. Stable within each tier so the time-desc order
+  // from the SQL query is preserved. This makes Flow feel like a feed of
+  // creative IP people can actually speculate on, while keeping the
+  // "nothing is hidden" contract.
+  const tierOf = (i: FlowItem) => {
+    const status = (i as any).verification_status as string | undefined;
+    if (status === "verified") return 0;
+    if (status === "pending") return 1;
+    if ((i as any).content_hash) return 2;
+    return 3;
+  };
+  items = [...items].sort((a, b) => tierOf(a) - tierOf(b));
+
   const userIds = [...new Set(items.map((i) => i.user_id).filter(Boolean))];
   const now = Date.now();
   const profileMap = new Map<string, FlowProfile>();
