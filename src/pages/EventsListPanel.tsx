@@ -54,7 +54,7 @@ const EventsListPanel = () => {
         </h2>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
           Be the first to host. Every event manifest, artifact, and ticket is
-          SHA-256 anchored on Solana — verifiable provenance for the whole
+          SHA-256 anchored on Solana — verifiable receipts for the whole
           gathering.
         </p>
         {user && (
@@ -69,7 +69,7 @@ const EventsListPanel = () => {
             <Sparkles className="h-3 w-3" /> Manifest hash on publish
           </span>
           <span className="inline-flex items-center gap-1.5 text-[11px] rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
-            <Sparkles className="h-3 w-3" /> Artifact provenance
+            <Sparkles className="h-3 w-3" /> Verified artifacts
           </span>
           <span className="inline-flex items-center gap-1.5 text-[11px] rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
             <Sparkles className="h-3 w-3" /> Proof of attendance
