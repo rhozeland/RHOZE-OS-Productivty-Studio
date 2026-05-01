@@ -272,7 +272,7 @@ const ProjectDetailPage = () => {
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {project.user_id === user?.id && (
+          {isProjectOwner && (
             <Button
               variant="default"
               size="sm"
