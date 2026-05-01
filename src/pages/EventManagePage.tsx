@@ -263,6 +263,54 @@ const EventManagePage = () => {
     checkIn.mutate(match.id);
   };
 
+  // Manual lookup — host can paste a ticket id or qr_token to find and
+  // check in an attendee without scanning (useful for typed entries, paper
+  // backups, or accessibility).
+  const handleManualLookup = async () => {
+    const q = lookupQuery.trim();
+    if (!q) return;
+    setLookupBusy(true);
+    try {
+      // Try local cache first against both qr_token and id (incl. prefix match)
+      let match: any = (tickets ?? []).find(
+        (t: any) =>
+          t.qr_token === q ||
+          t.id === q ||
+          t.qr_token.startsWith(q) ||
+          t.id.startsWith(q),
+      );
+
+      if (!match) {
+        const { data, error } = await supabase
+          .from("event_tickets")
+          .select("*")
+          .eq("event_id", id!)
+          .or(`qr_token.eq.${q},id.eq.${q}`)
+          .maybeSingle();
+        if (error || !data) {
+          toast.error("Attendee not found", {
+            description: "No ticket matches that id or QR token.",
+          });
+          return;
+        }
+        match = data;
+      }
+
+      if (match.status === "checked_in") {
+        toast.info("Already checked in", {
+          description: `Scanned at ${format(new Date(match.checked_in_at ?? match.issued_at), "h:mm a")}`,
+        });
+        setLookupQuery("");
+        return;
+      }
+
+      checkIn.mutate(match.id);
+      setLookupQuery("");
+    } finally {
+      setLookupBusy(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-3xl mx-auto py-20 text-center">
@@ -426,6 +474,36 @@ const EventManagePage = () => {
             onClick={() => setScannerOpen(true)}
           >
             <ScanLine className="h-4 w-4" /> Scan QR
+          </Button>
+        </div>
+
+        {/* Manual lookup — paste a ticket id or qr_token */}
+        <div className="rounded-xl border border-dashed border-border p-3 flex items-center gap-2">
+          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+          <Input
+            value={lookupQuery}
+            onChange={(e) => setLookupQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleManualLookup();
+              }
+            }}
+            placeholder="Paste ticket id or QR token…"
+            className="h-9 border-0 bg-transparent focus-visible:ring-0 px-1 font-mono text-xs"
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            className="rounded-full"
+            disabled={lookupBusy || checkIn.isPending || !lookupQuery.trim()}
+            onClick={handleManualLookup}
+          >
+            {lookupBusy ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              "Check in"
+            )}
           </Button>
         </div>
 
