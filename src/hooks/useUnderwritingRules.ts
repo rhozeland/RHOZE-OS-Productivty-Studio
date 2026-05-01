@@ -1,7 +1,13 @@
 /**
  * useUnderwritingRules — fetches the active platform underwriting rules
- * from `capital_underwriting_rules` (single-row table). Used by the
- * Capital scoring panel so admin edits flow through without a redeploy.
+ * via the `get_active_underwriting_rules` RPC.
+ *
+ * The base table `capital_underwriting_rules` is restricted to admins; this
+ * hook intentionally goes through a SECURITY DEFINER RPC that returns only
+ * the values the seller-facing Capital advance estimator needs. Sellers
+ * can read these values to compute their own preview, but cannot read or
+ * modify any other column on the rules table (e.g. `updated_by`,
+ * `updated_at`) and cannot reach the audit log.
  */
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,34 +48,35 @@ export const DEFAULT_RULES: UnderwritingRules = {
   anchored_score_per_work: 5,
 };
 
+const coerce = (row: Record<string, any>): UnderwritingRules => ({
+  base_advance_ratio: Number(row.base_advance_ratio),
+  provenance_bonus_max: Number(row.provenance_bonus_max),
+  tenure_floor_mult: Number(row.tenure_floor_mult),
+  tenure_full_months: Number(row.tenure_full_months),
+  diversification_floor_per_work: Number(row.diversification_floor_per_work),
+  advance_cap: Number(row.advance_cap),
+  min_settled_events: Number(row.min_settled_events),
+  min_anchored_works: Number(row.min_anchored_works),
+  min_advance_amount: Number(row.min_advance_amount),
+  score_weight_revenue: Number(row.score_weight_revenue),
+  score_weight_provenance: Number(row.score_weight_provenance),
+  score_weight_tenure: Number(row.score_weight_tenure),
+  score_weight_anchored: Number(row.score_weight_anchored),
+  revenue_score_target: Number(row.revenue_score_target),
+  anchored_score_per_work: Number(row.anchored_score_per_work),
+});
+
 export const useUnderwritingRules = () => {
   return useQuery({
     queryKey: ["capital-underwriting-rules"],
     queryFn: async (): Promise<UnderwritingRules> => {
-      const { data, error } = await (supabase as any)
-        .from("capital_underwriting_rules")
-        .select("*")
-        .eq("id", 1)
-        .maybeSingle();
+      const { data, error } = await (supabase as any).rpc(
+        "get_active_underwriting_rules",
+      );
       if (error) throw error;
-      if (!data) return DEFAULT_RULES;
-      return {
-        base_advance_ratio: Number(data.base_advance_ratio),
-        provenance_bonus_max: Number(data.provenance_bonus_max),
-        tenure_floor_mult: Number(data.tenure_floor_mult),
-        tenure_full_months: Number(data.tenure_full_months),
-        diversification_floor_per_work: Number(data.diversification_floor_per_work),
-        advance_cap: Number(data.advance_cap),
-        min_settled_events: Number(data.min_settled_events),
-        min_anchored_works: Number(data.min_anchored_works),
-        min_advance_amount: Number(data.min_advance_amount),
-        score_weight_revenue: Number(data.score_weight_revenue),
-        score_weight_provenance: Number(data.score_weight_provenance),
-        score_weight_tenure: Number(data.score_weight_tenure),
-        score_weight_anchored: Number(data.score_weight_anchored),
-        revenue_score_target: Number(data.revenue_score_target),
-        anchored_score_per_work: Number(data.anchored_score_per_work),
-      };
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row) return DEFAULT_RULES;
+      return coerce(row);
     },
     staleTime: 5 * 60 * 1000,
   });

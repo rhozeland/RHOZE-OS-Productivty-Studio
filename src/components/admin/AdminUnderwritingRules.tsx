@@ -39,6 +39,7 @@ import {
   DEFAULT_RULES,
   type UnderwritingRules,
 } from "@/hooks/useUnderwritingRules";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 /**
  * Validation schema — enforces sensible per-field ranges.
@@ -285,6 +286,11 @@ const Section = ({
 
 const AdminUnderwritingRules = () => {
   const qc = useQueryClient();
+  const { isAdmin, loading: adminLoading } = useAdminCheck();
+  // Defense-in-depth: only fetch the rules when we know the caller is an
+  // admin. Even though the route already guards `/admin`, this guarantees
+  // that mounting this component anywhere else (or in dev) cannot trigger
+  // a read against the rules table.
   const { data: rules, isLoading } = useUnderwritingRules();
   const [draft, setDraft] = useState<UnderwritingRules>(DEFAULT_RULES);
   const [dirty, setDirty] = useState(false);
@@ -364,15 +370,13 @@ const AdminUnderwritingRules = () => {
       if (!parsed.success) {
         throw new Error(parsed.error.issues[0]?.message ?? "Invalid rules");
       }
-      const { data: auth } = await supabase.auth.getUser();
-      const { error } = await (supabase as any)
-        .from("capital_underwriting_rules")
-        .update({
-          ...parsed.data,
-          updated_by: auth.user?.id ?? null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", 1);
+      // Save through the admin-only RPC. The function re-checks the caller's
+      // role server-side, so even if a non-admin user got this UI to render
+      // (e.g. via devtools), the write is rejected.
+      const { error } = await (supabase as any).rpc(
+        "update_underwriting_rules",
+        { _payload: parsed.data },
+      );
       if (error) throw error;
     },
     onSuccess: () => {
@@ -384,11 +388,21 @@ const AdminUnderwritingRules = () => {
     onError: (e: any) => toast.error(e.message || "Could not save rules"),
   });
 
-  if (isLoading) {
+  if (adminLoading || isLoading) {
     return (
       <Card>
         <CardContent className="flex items-center gap-2 text-muted-foreground p-6">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading rules…
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-sm text-muted-foreground">
+          You don't have permission to view the underwriting rules editor.
         </CardContent>
       </Card>
     );
