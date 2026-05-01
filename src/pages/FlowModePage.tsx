@@ -93,6 +93,23 @@ const FlowModePage = () => {
   // so flipping back to "For You" restores their preferences without re-prompting.
   const [preferredCategories, setPreferredCategories] = useState<string[]>([]);
   const [feedScope, setFeedScope] = useState<"all" | "preferred">("preferred");
+
+  // When Flow is launched from a Project (Tools → Open Flow), pre-apply the
+  // project's categories as a one-shot scope so the user lands inside a
+  // relevant slice instead of the global feed.
+  useEffect(() => {
+    const raw = searchParams.get("tags");
+    if (!raw) return;
+    const tags = raw.split(",").map((t) => t.trim()).filter(Boolean);
+    if (tags.length === 0) return;
+    setSelectedCategories(tags);
+    setFeedScope("preferred");
+    toast.message(`Flow scoped to ${tags.slice(0, 3).join(", ")}`, {
+      description: "Showing items tagged like your project.",
+    });
+    // intentionally only on first read of the param
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // Locked `true` for ~SCOPE_TRANSITION_MS after a scope flip so the fade
   // overlay shows even when React Query resolves from cache instantly.
   // Without this, switching to a previously-loaded scope would just snap
