@@ -1108,50 +1108,167 @@ const CalendarPage = () => {
             </div>
           )}
 
-          {/* Project session flow */}
-          {eventType === "project" && (
+          {/* Project / Reminder shared editor */}
+          {(eventType === "project" || eventType === "reminder") && (
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-foreground mb-1.5 block">Session Title</label>
-                <Input placeholder="e.g. Mix review, Recording vocals..." value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} />
+                <label className="text-sm font-medium text-foreground mb-1.5 block">
+                  {eventType === "project" ? "Session Title" : "Reminder Title"}
+                </label>
+                <Input
+                  placeholder={
+                    eventType === "project"
+                      ? "e.g. Mix review, Recording vocals..."
+                      : "e.g. Submit final deliverables..."
+                  }
+                  value={eventTitle}
+                  onChange={(e) => setEventTitle(e.target.value)}
+                />
               </div>
+
+              {eventType === "project" && (
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1.5 block">Link to Project</label>
+                  <Select value={selectedProject} onValueChange={setSelectedProject}>
+                    <SelectTrigger><SelectValue placeholder="Select a project (optional)" /></SelectTrigger>
+                    <SelectContent>
+                      {projects?.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               <div>
-                <label className="text-sm font-medium text-foreground mb-1.5 block">Link to Project</label>
-                <Select value={selectedProject} onValueChange={setSelectedProject}>
-                  <SelectTrigger><SelectValue placeholder="Select a project (optional)" /></SelectTrigger>
-                  <SelectContent>
-                    {projects?.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">Date</label>
+                <Input
+                  type="date"
+                  value={eventDate}
+                  onChange={(e) => setEventDate(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1.5 block">Start time</label>
+                  <Input
+                    type="time"
+                    value={eventStartTime}
+                    onChange={(e) => setEventStartTime(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1.5 block">End time</label>
+                  <Input
+                    type="time"
+                    value={eventEndTime}
+                    onChange={(e) => setEventEndTime(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5" /> Attendees
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    type="email"
+                    placeholder="name@example.com"
+                    value={attendeesInput}
+                    onChange={(e) => setAttendeesInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === ",") {
+                        e.preventDefault();
+                        addAttendee();
+                      }
+                    }}
+                  />
+                  <Button type="button" variant="outline" size="icon" onClick={addAttendee} aria-label="Add attendee">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                {attendees.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {attendees.map((email) => (
+                      <Badge key={email} variant="secondary" className="gap-1 pr-1">
+                        {email}
+                        <button
+                          type="button"
+                          onClick={() => removeAttendee(email)}
+                          className="ml-0.5 rounded-full hover:bg-muted-foreground/20 p-0.5"
+                          aria-label={`Remove ${email}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
                     ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block flex items-center gap-1.5">
+                  <Bell className="h-3.5 w-3.5" /> Reminder
+                </label>
+                <Select value={reminderMinutes} onValueChange={setReminderMinutes}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No reminder</SelectItem>
+                    <SelectItem value="0">At time of event</SelectItem>
+                    <SelectItem value="5">5 minutes before</SelectItem>
+                    <SelectItem value="10">10 minutes before</SelectItem>
+                    <SelectItem value="15">15 minutes before</SelectItem>
+                    <SelectItem value="30">30 minutes before</SelectItem>
+                    <SelectItem value="60">1 hour before</SelectItem>
+                    <SelectItem value="1440">1 day before</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1.5 block">Notes (optional)</label>
-                <Textarea placeholder="Details about this session..." value={bookingNotes} onChange={(e) => setBookingNotes(e.target.value)} rows={2} />
-              </div>
-              <Button className="w-full" onClick={createCalendarEvent} disabled={bookingLoading}>
-                {bookingLoading ? "Saving..." : "Add to Calendar"}
-              </Button>
-              <Button variant="ghost" size="sm" className="w-full" onClick={() => setEventType(null)}>← Back</Button>
-            </div>
-          )}
 
-          {/* Reminder flow */}
-          {eventType === "reminder" && (
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1.5 block">Reminder Title</label>
-                <Input placeholder="e.g. Submit final deliverables..." value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} />
-              </div>
               <div>
                 <label className="text-sm font-medium text-foreground mb-1.5 block">Notes (optional)</label>
-                <Textarea placeholder="Any extra details..." value={bookingNotes} onChange={(e) => setBookingNotes(e.target.value)} rows={2} />
+                <Textarea
+                  placeholder={eventType === "project" ? "Details about this session..." : "Any extra details..."}
+                  value={bookingNotes}
+                  onChange={(e) => setBookingNotes(e.target.value)}
+                  rows={2}
+                />
               </div>
-              <Button className="w-full" onClick={createCalendarEvent} disabled={bookingLoading}>
-                {bookingLoading ? "Saving..." : "Set Reminder"}
+
+              <Button className="w-full" onClick={saveCalendarEvent} disabled={bookingLoading}>
+                {bookingLoading
+                  ? "Saving..."
+                  : editingEventId
+                  ? "Save Changes"
+                  : eventType === "project"
+                  ? "Add to Calendar"
+                  : "Set Reminder"}
               </Button>
-              <Button variant="ghost" size="sm" className="w-full" onClick={() => setEventType(null)}>← Back</Button>
+
+              {editingEventId && (
+                <Button
+                  variant="outline"
+                  className="w-full text-destructive hover:text-destructive"
+                  onClick={() => deleteCalendarEvent(editingEventId)}
+                  disabled={bookingLoading}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" /> Delete event
+                </Button>
+              )}
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full"
+                onClick={() => {
+                  setEventType(null);
+                  setEditingEventId(null);
+                }}
+              >
+                ← Back
+              </Button>
             </div>
           )}
         </DialogContent>
