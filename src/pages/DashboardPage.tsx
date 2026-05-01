@@ -305,9 +305,10 @@ const DashboardPage = () => {
   const activeProjects = projects?.filter((p) => p.status === "active").length ?? 0;
   const firstName =
     profile?.display_name?.split(" ")[0]?.trim() ||
-    (profile as any)?.username ||
-    (user ? user.email?.split("@")[0] : "") ||
-    "";
+    (profile as any)?.username?.trim() ||
+    user?.user_metadata?.full_name?.split(" ")[0]?.trim() ||
+    user?.email?.split("@")[0] ||
+    "Creator";
 
   const greeting = () => {
     const h = new Date().getHours();
