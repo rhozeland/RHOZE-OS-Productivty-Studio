@@ -31,6 +31,7 @@ import {
   onChainBuy,
   onChainSell,
 } from "@/lib/launchpad-onchain";
+import { decodeTradeError, type DecodedTradeError } from "@/lib/launchpad-error-decoder";
 
 interface Props {
   launchId: string;
@@ -48,26 +49,7 @@ type TxPhase =
   | { kind: "sent"; signature: string }
   | { kind: "confirmed"; signature: string }
   | { kind: "finalized"; signature: string }
-  | { kind: "error"; message: string; signature?: string; logs?: string[] };
-
-// Map common Anchor / SPL errors to friendlier copy. Extend as the program
-// evolves; the spec in `.lovable/launchpad-program-spec.md` is the source.
-const ERROR_HINTS: Array<{ test: RegExp; hint: string }> = [
-  { test: /slippage/i, hint: "Price moved past your slippage. Try a smaller size or refresh quote." },
-  { test: /insufficient.*lamports|insufficient funds/i, hint: "Wallet doesn't have enough SOL for this trade + fees." },
-  { test: /custom program error: 0x1\b/i, hint: "Program rejected the trade (custom error 0x1) — likely curve full or paused." },
-  { test: /custom program error: 0x6/i, hint: "Math overflow / underflow in the curve. Reduce size." },
-  { test: /blockhash not found|expired/i, hint: "Network was congested and the blockhash expired. Retry." },
-  { test: /User rejected|wallet.*rejected/i, hint: "You rejected the transaction in your wallet." },
-  { test: /AccountNotFound|could not find account/i, hint: "An on-chain account is missing — the launch may not be initialized yet." },
-];
-
-const decodeError = (raw: string, logs?: string[]): string => {
-  for (const { test, hint } of ERROR_HINTS) {
-    if (test.test(raw) || logs?.some((l) => test.test(l))) return hint;
-  }
-  return raw;
-};
+  | { kind: "error"; decoded: DecodedTradeError; signature?: string; logs?: string[] };
 
 const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTraded }: Props) => {
   const { user } = useAuth();
@@ -148,7 +130,10 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
     const launchPda = deriveLaunchPda(launchId)?.toBase58();
     if (!launchPda) {
       setBusy(false);
-      setPhase({ kind: "error", message: "Launch PDA could not be derived. Program ID missing." });
+      setPhase({
+        kind: "error",
+        decoded: decodeTradeError("Launch PDA could not be derived. Program ID missing."),
+      });
       return;
     }
 
@@ -160,13 +145,17 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
 
     if (result.enabled === false) {
       setBusy(false);
-      setPhase({ kind: "error", message: "On-chain mode unexpectedly disabled." });
+      setPhase({
+        kind: "error",
+        decoded: decodeTradeError("On-chain mode unexpectedly disabled."),
+      });
       return;
     }
     if (result.ok === false) {
+      const decoded = decodeTradeError(result.error);
       setBusy(false);
-      setPhase({ kind: "error", message: decodeError(result.error) });
-      toast({ title: "Trade failed", description: decodeError(result.error), variant: "destructive" });
+      setPhase({ kind: "error", decoded });
+      toast({ title: decoded.title, description: decoded.detail, variant: "destructive" });
       return;
     }
 
@@ -180,10 +169,11 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
       if (status1.value.err) {
         const errStr = JSON.stringify(status1.value.err);
         const tx = await conn.getTransaction(signature, { commitment: "confirmed", maxSupportedTransactionVersion: 0 });
-        const logs = tx?.meta?.logMessages ?? undefined;
+        const logs = tx?.meta?.logMessages ?? [];
+        const decoded = decodeTradeError(errStr, logs);
         setBusy(false);
-        setPhase({ kind: "error", message: decodeError(errStr, logs), signature, logs });
-        toast({ title: "Trade reverted", description: decodeError(errStr, logs), variant: "destructive" });
+        setPhase({ kind: "error", decoded, signature, logs });
+        toast({ title: decoded.title, description: decoded.detail, variant: "destructive" });
         return;
       }
       setPhase({ kind: "confirmed", signature });
@@ -204,8 +194,9 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
       onTraded();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      setPhase({ kind: "error", message: decodeError(msg), signature });
-      toast({ title: "Couldn't confirm", description: decodeError(msg), variant: "destructive" });
+      const decoded = decodeTradeError(msg);
+      setPhase({ kind: "error", decoded, signature });
+      toast({ title: decoded.title || "Couldn't confirm", description: decoded.detail, variant: "destructive" });
     } finally {
       setBusy(false);
     }
@@ -371,9 +362,25 @@ const TxStatus = ({ phase, explorerUrl }: { phase: TxPhase; explorerUrl: string 
         </a>
       )}
 
-      {isError && (
-        <>
-          <p className="text-destructive">{phase.message}</p>
+      {isError && phase.kind === "error" && (
+        <div className="space-y-1.5">
+          <div className="flex items-start gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-destructive font-medium">{phase.decoded.title}</p>
+              <p className="text-[11px] text-destructive/80">{phase.decoded.detail}</p>
+            </div>
+            <div className="flex flex-col items-end gap-0.5 shrink-0">
+              <Badge variant="outline" className="text-[9px] uppercase border-destructive/40 text-destructive">
+                {phase.decoded.source}
+              </Badge>
+              {phase.decoded.code !== null && (
+                <span className="text-[9px] font-mono text-muted-foreground">
+                  code {phase.decoded.code}
+                  {phase.decoded.name ? ` · ${phase.decoded.name}` : ""}
+                </span>
+              )}
+            </div>
+          </div>
           {phase.logs && phase.logs.length > 0 && (
             <details className="text-[10px] text-muted-foreground">
               <summary className="cursor-pointer hover:text-foreground">Program logs ({phase.logs.length})</summary>
@@ -382,7 +389,12 @@ const TxStatus = ({ phase, explorerUrl }: { phase: TxPhase; explorerUrl: string 
               </pre>
             </details>
           )}
-        </>
+          {phase.decoded.source === "anchor" && phase.decoded.code !== null && phase.decoded.name === null && (
+            <p className="text-[10px] text-muted-foreground italic">
+              No matching entry in your IDL. Paste the latest IDL in Settings → Verified IP for richer messages.
+            </p>
+          )}
+        </div>
       )}
     </div>
   );
