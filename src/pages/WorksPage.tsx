@@ -507,11 +507,7 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
         description: "Fingerprint stored. Anchor it on-chain when you're ready.",
       });
       setOpen(false);
-      setFile(null);
-      setTitle("");
-      setDescription("");
-      setContentHash(null);
-      setVisibility("public");
+      resetForm();
       onCreated();
     } catch (err) {
       toast.error("Could not register work", {
@@ -522,129 +518,93 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
     }
   };
 
+  const [open, setOpen] = useState(false);
   const canSubmit =
     !!file && !!contentHash && !!title.trim() && !hashing && !submitting;
 
   return (
-    <section className="surface-card p-5 sm:p-6 space-y-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
-            <Plus className="h-4 w-4 text-primary" /> Register a work
-          </h2>
-          <p className="text-xs text-muted-foreground mt-1 max-w-md">
-            We hash the file in your browser — the bytes never leave your
-            device until you confirm.
-          </p>
-        </div>
-        {open && (
-          <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-            Hide
-          </Button>
-        )}
-      </div>
-
-      {!open ? (
-        <Button onClick={() => setOpen(true)} className="gap-1.5 rounded-full">
-          <Plus className="h-4 w-4" /> New work
-        </Button>
-      ) : (
-        <div className="space-y-4">
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="work-file">File</Label>
-              <Input id="work-file" type="file" onChange={handleFileChange} />
-              {file && (
-                <div className="text-xs text-muted-foreground flex items-center gap-2 pt-1">
-                  <span>{KIND_LABEL[inferredKind]}</span>
-                  <span>· {formatFileSize(file.size)}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="work-title">Title</Label>
-              <Input
-                id="work-title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Untitled"
-                maxLength={140}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="work-desc">Description (optional)</Label>
-            <Textarea
-              id="work-desc"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              maxLength={500}
-              placeholder="Notes, credits, context…"
-            />
-          </div>
-
-          <div className="space-y-1.5 max-w-xs">
-            <Label>Visibility</Label>
-            <Select
-              value={visibility}
-              onValueChange={(v) => setVisibility(v as "public" | "private")}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="public">Public — listed in registry</SelectItem>
-                <SelectItem value="private">Private — only visible to you</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {(hashing || contentHash) && (
-            <div className="rounded-md bg-muted/40 px-3 py-2 text-[11px] font-mono text-muted-foreground flex items-center gap-2">
-              <Fingerprint className="h-3.5 w-3.5 shrink-0" />
-              {hashing ? (
-                <span className="flex items-center gap-1.5">
-                  <Loader2 className="h-3 w-3 animate-spin" /> Computing
-                  SHA-256…
-                </span>
-              ) : (
-                <span className="truncate">
-                  sha256:{contentHash && shortHash(contentHash, 10, 10)}
-                </span>
-              )}
+    <InlineFormPanel
+      icon={Plus}
+      title="Register a work"
+      description="We hash the file in your browser — the bytes never leave your device until you confirm."
+      triggerLabel="New work"
+      submitLabel="Register"
+      submittingLabel="Uploading…"
+      submitting={submitting}
+      canSubmit={canSubmit}
+      onSubmit={handleSubmit}
+      onReset={resetForm}
+      open={open}
+      onOpenChange={setOpen}
+    >
+      <div className="grid sm:grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="work-file">File</Label>
+          <Input id="work-file" type="file" onChange={handleFileChange} />
+          {file && (
+            <div className="text-xs text-muted-foreground flex items-center gap-2 pt-1">
+              <span>{KIND_LABEL[inferredKind]}</span>
+              <span>· {formatFileSize(file.size)}</span>
             </div>
           )}
+        </div>
 
-          <div className="flex items-center justify-end gap-2 pt-1">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setOpen(false);
-                setFile(null);
-                setTitle("");
-                setDescription("");
-                setContentHash(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleSubmit} disabled={!canSubmit}>
-              {submitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Uploading…
-                </>
-              ) : (
-                "Register"
-              )}
-            </Button>
-          </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="work-title">Title</Label>
+          <Input
+            id="work-title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Untitled"
+            maxLength={140}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="work-desc">Description (optional)</Label>
+        <Textarea
+          id="work-desc"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={3}
+          maxLength={500}
+          placeholder="Notes, credits, context…"
+        />
+      </div>
+
+      <div className="space-y-1.5 max-w-xs">
+        <Label>Visibility</Label>
+        <Select
+          value={visibility}
+          onValueChange={(v) => setVisibility(v as "public" | "private")}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="public">Public — listed in registry</SelectItem>
+            <SelectItem value="private">Private — only visible to you</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {(hashing || contentHash) && (
+        <div className="rounded-md bg-muted/40 px-3 py-2 text-[11px] font-mono text-muted-foreground flex items-center gap-2">
+          <Fingerprint className="h-3.5 w-3.5 shrink-0" />
+          {hashing ? (
+            <span className="flex items-center gap-1.5">
+              <Loader2 className="h-3 w-3 animate-spin" /> Computing
+              SHA-256…
+            </span>
+          ) : (
+            <span className="truncate">
+              sha256:{contentHash && shortHash(contentHash, 10, 10)}
+            </span>
+          )}
         </div>
       )}
-    </section>
+    </InlineFormPanel>
   );
 }
 
