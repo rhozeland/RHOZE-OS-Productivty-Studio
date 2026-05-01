@@ -46,6 +46,12 @@ interface Deliverable {
   title: string;
   completed: boolean;
   sort_order: number;
+  file_url: string | null;
+  file_name: string | null;
+  mime_type: string | null;
+  file_size: number | null;
+  content_hash: string | null;
+  file_uploaded_at: string | null;
 }
 
 interface ProjectScopeDeliverablesProps {
