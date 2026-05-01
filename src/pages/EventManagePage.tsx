@@ -9,7 +9,7 @@
  *     hosts can already configure pricing now.
  *   • Publish/unpublish action when in draft.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -20,6 +20,8 @@ import {
   Plus,
   CheckCircle2,
   Loader2,
+  ScanLine,
+  Radio,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { shortHash } from "@/lib/content-hash";
+import QrCheckInScanner from "@/components/events/QrCheckInScanner";
 
 const EventManagePage = () => {
   const { id } = useParams<{ id: string }>();
