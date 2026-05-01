@@ -1582,8 +1582,14 @@ export type Database = {
       project_deliverables: {
         Row: {
           completed: boolean
+          content_hash: string | null
           created_at: string
+          file_name: string | null
+          file_size: number | null
+          file_uploaded_at: string | null
+          file_url: string | null
           id: string
+          mime_type: string | null
           project_id: string
           sort_order: number
           title: string
@@ -1592,8 +1598,14 @@ export type Database = {
         }
         Insert: {
           completed?: boolean
+          content_hash?: string | null
           created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_uploaded_at?: string | null
+          file_url?: string | null
           id?: string
+          mime_type?: string | null
           project_id: string
           sort_order?: number
           title: string
@@ -1602,8 +1614,14 @@ export type Database = {
         }
         Update: {
           completed?: boolean
+          content_hash?: string | null
           created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_uploaded_at?: string | null
+          file_url?: string | null
           id?: string
+          mime_type?: string | null
           project_id?: string
           sort_order?: number
           title?: string
