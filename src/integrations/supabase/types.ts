@@ -1581,6 +1581,7 @@ export type Database = {
       }
       project_deliverables: {
         Row: {
+          anchored_at: string | null
           completed: boolean
           content_hash: string | null
           created_at: string
@@ -1591,12 +1592,14 @@ export type Database = {
           id: string
           mime_type: string | null
           project_id: string
+          solana_signature: string | null
           sort_order: number
           title: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          anchored_at?: string | null
           completed?: boolean
           content_hash?: string | null
           created_at?: string
@@ -1607,12 +1610,14 @@ export type Database = {
           id?: string
           mime_type?: string | null
           project_id: string
+          solana_signature?: string | null
           sort_order?: number
           title: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          anchored_at?: string | null
           completed?: boolean
           content_hash?: string | null
           created_at?: string
@@ -1623,6 +1628,7 @@ export type Database = {
           id?: string
           mime_type?: string | null
           project_id?: string
+          solana_signature?: string | null
           sort_order?: number
           title?: string
           updated_at?: string
