@@ -44,39 +44,13 @@ import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 
-type Lane = "conversations" | "offerings" | "opportunities" | "works" | "coins";
+type Lane = "conversations" | "offerings" | "opportunities" | "works";
 
 const LANES: { key: Lane; label: string; icon: typeof Briefcase; tagline: string }[] = [
-  {
-    key: "conversations",
-    label: "Conversations",
-    icon: MessageCircle,
-    tagline: "What the community is dropping right now.",
-  },
-  {
-    key: "offerings",
-    label: "Offerings",
-    icon: Briefcase,
-    tagline: "Services & digital goods from creators.",
-  },
-  {
-    key: "opportunities",
-    label: "Opportunities",
-    icon: Megaphone,
-    tagline: "Open calls, briefs, paid gigs, and collabs.",
-  },
-  {
-    key: "works",
-    label: "Works",
-    icon: Shield,
-    tagline: "Anchored creative IP — verified on Solana.",
-  },
-  {
-    key: "coins",
-    label: "Coins",
-    icon: Coins,
-    tagline: "Artist coins on the bonding curve — Launchpad.",
-  },
+  { key: "conversations", label: "Conversations", icon: MessageCircle, tagline: "Live drops from the community." },
+  { key: "offerings",     label: "Offerings",     icon: Briefcase,    tagline: "Services & digital goods." },
+  { key: "opportunities", label: "Opportunities", icon: Megaphone,    tagline: "Open calls, briefs, gigs." },
+  { key: "works",         label: "Works",         icon: Shield,       tagline: "Verified IP — anchored on Solana." },
 ];
 
 const HubPage = () => {
