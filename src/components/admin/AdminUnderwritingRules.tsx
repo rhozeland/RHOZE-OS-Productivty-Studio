@@ -220,44 +220,65 @@ const Section = ({
   icon: Icon,
   fields,
   values,
+  errors,
   onChange,
+  rightSlot,
 }: {
   title: string;
   icon: typeof Sliders;
   fields: Field[];
   values: UnderwritingRules;
+  errors: Partial<Record<keyof UnderwritingRules, string>>;
   onChange: (k: keyof UnderwritingRules, v: number) => void;
+  rightSlot?: React.ReactNode;
 }) => (
   <div className="space-y-3">
-    <div className="flex items-center gap-2">
-      <Icon className="h-4 w-4 text-primary" />
-      <h3 className="text-sm font-semibold">{title}</h3>
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
+        <Icon className="h-4 w-4 text-primary" />
+        <h3 className="text-sm font-semibold">{title}</h3>
+      </div>
+      {rightSlot}
     </div>
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {fields.map((f) => (
-        <div key={f.key} className="space-y-1">
-          <Label htmlFor={f.key} className="text-xs flex items-center gap-1">
-            {f.label}
-            {f.suffix && (
-              <span className="text-[10px] text-muted-foreground font-mono">
-                ({f.suffix})
-              </span>
-            )}
-          </Label>
-          <Input
-            id={f.key}
-            type="number"
-            step={f.step}
-            min={f.min}
-            value={values[f.key]}
-            onChange={(e) => onChange(f.key, Number(e.target.value))}
-            className="font-mono text-sm h-9"
-          />
-          {f.hint && (
-            <p className="text-[10px] text-muted-foreground leading-snug">{f.hint}</p>
-          )}
-        </div>
-      ))}
+      {fields.map((f) => {
+        const err = errors[f.key];
+        return (
+          <div key={f.key} className="space-y-1">
+            <Label htmlFor={f.key} className="text-xs flex items-center gap-1">
+              {f.label}
+              {f.suffix && (
+                <span className="text-[10px] text-muted-foreground font-mono">
+                  ({f.suffix})
+                </span>
+              )}
+              {(f.min !== undefined || f.max !== undefined) && (
+                <span className="text-[10px] text-muted-foreground/60 font-mono ml-auto">
+                  {f.min ?? "−∞"}–{f.max ?? "∞"}
+                </span>
+              )}
+            </Label>
+            <Input
+              id={f.key}
+              type="number"
+              step={f.step}
+              min={f.min}
+              max={f.max}
+              value={values[f.key]}
+              onChange={(e) => onChange(f.key, Number(e.target.value))}
+              aria-invalid={!!err}
+              className={`font-mono text-sm h-9 ${
+                err ? "border-destructive focus-visible:ring-destructive/30" : ""
+              }`}
+            />
+            {err ? (
+              <p className="text-[10px] text-destructive leading-snug">{err}</p>
+            ) : f.hint ? (
+              <p className="text-[10px] text-muted-foreground leading-snug">{f.hint}</p>
+            ) : null}
+          </div>
+        );
+      })}
     </div>
   </div>
 );
@@ -280,13 +301,74 @@ const AdminUnderwritingRules = () => {
     setDirty(true);
   };
 
+  // Validate the entire draft on every change. Building a per-field
+  // error map keeps the UI cheap (no re-validation per input event)
+  // and lets us disable Save when anything is out of range.
+  const { errors, isValid } = useMemo(() => {
+    const result = rulesSchema.safeParse(draft);
+    if (result.success) return { errors: {} as Partial<Record<keyof UnderwritingRules, string>>, isValid: true };
+    const map: Partial<Record<keyof UnderwritingRules, string>> = {};
+    for (const issue of result.error.issues) {
+      const key = issue.path[0] as keyof UnderwritingRules | undefined;
+      if (key && !map[key]) map[key] = issue.message;
+    }
+    return { errors: map, isValid: false };
+  }, [draft]);
+
+  const totalWeight =
+    draft.score_weight_revenue +
+    draft.score_weight_provenance +
+    draft.score_weight_tenure +
+    draft.score_weight_anchored;
+
+  /**
+   * Proportionally rescale the four scoring weights so they sum to 100.
+   * Falls back to an even 25/25/25/25 split if all weights are currently 0
+   * (no proportional information to preserve). Rounds to integers and
+   * absorbs the rounding remainder into the largest weight so the total
+   * is exactly 100.
+   */
+  const normalizeWeights = () => {
+    const current = WEIGHT_KEYS.map((k) => Math.max(0, Number(draft[k]) || 0));
+    const sum = current.reduce((a, b) => a + b, 0);
+    let scaled: number[];
+    if (sum <= 0) {
+      scaled = [25, 25, 25, 25];
+    } else {
+      const raw = current.map((v) => (v / sum) * 100);
+      scaled = raw.map((v) => Math.round(v));
+      const diff = 100 - scaled.reduce((a, b) => a + b, 0);
+      if (diff !== 0) {
+        const maxIdx = scaled.indexOf(Math.max(...scaled));
+        scaled[maxIdx] = scaled[maxIdx] + diff;
+      }
+    }
+    setDraft((d) => ({
+      ...d,
+      score_weight_revenue: scaled[0],
+      score_weight_provenance: scaled[1],
+      score_weight_tenure: scaled[2],
+      score_weight_anchored: scaled[3],
+    }));
+    setDirty(true);
+    toast.success("Scoring weights normalized to 100");
+  };
+
   const saveMutation = useMutation({
     mutationFn: async (payload: UnderwritingRules) => {
+      // Re-validate server-side-bound payload before send. Client-side
+      // bounds and the schema are a UX hint; we still want to refuse
+      // submission of obviously broken inputs even if the form was
+      // bypassed via devtools.
+      const parsed = rulesSchema.safeParse(payload);
+      if (!parsed.success) {
+        throw new Error(parsed.error.issues[0]?.message ?? "Invalid rules");
+      }
       const { data: auth } = await supabase.auth.getUser();
       const { error } = await (supabase as any)
         .from("capital_underwriting_rules")
         .update({
-          ...payload,
+          ...parsed.data,
           updated_by: auth.user?.id ?? null,
           updated_at: new Date().toISOString(),
         })
@@ -302,12 +384,6 @@ const AdminUnderwritingRules = () => {
     onError: (e: any) => toast.error(e.message || "Could not save rules"),
   });
 
-  const totalWeight =
-    draft.score_weight_revenue +
-    draft.score_weight_provenance +
-    draft.score_weight_tenure +
-    draft.score_weight_anchored;
-
   if (isLoading) {
     return (
       <Card>
@@ -317,6 +393,8 @@ const AdminUnderwritingRules = () => {
       </Card>
     );
   }
+
+  const weightsBalanced = totalWeight === 100;
 
   return (
     <Card>
@@ -329,10 +407,15 @@ const AdminUnderwritingRules = () => {
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="font-mono text-[10px]">
               score weights = {totalWeight}
-              {totalWeight !== 100 && (
+              {!weightsBalanced && (
                 <span className="ml-1 text-amber-500">(≠ 100)</span>
               )}
             </Badge>
+            {!isValid && (
+              <Badge variant="destructive" className="text-[10px]">
+                Invalid
+              </Badge>
+            )}
             {dirty && (
               <Badge variant="secondary" className="text-[10px]">
                 Unsaved
@@ -352,6 +435,7 @@ const AdminUnderwritingRules = () => {
           icon={Banknote}
           fields={FORMULA_FIELDS}
           values={draft}
+          errors={errors}
           onChange={setField}
         />
 
@@ -360,6 +444,7 @@ const AdminUnderwritingRules = () => {
           icon={ShieldCheck}
           fields={ELIGIBILITY_FIELDS}
           values={draft}
+          errors={errors}
           onChange={setField}
         />
 
@@ -368,7 +453,26 @@ const AdminUnderwritingRules = () => {
           icon={Sliders}
           fields={SCORE_FIELDS}
           values={draft}
+          errors={errors}
           onChange={setField}
+          rightSlot={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 text-[11px]"
+              onClick={normalizeWeights}
+              disabled={weightsBalanced}
+              title={
+                weightsBalanced
+                  ? "Weights already sum to 100"
+                  : "Proportionally rescale the four weights to sum to 100"
+              }
+            >
+              <Wand2 className="h-3 w-3 mr-1" />
+              Normalize to 100
+            </Button>
+          }
         />
 
         <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/40">
@@ -399,8 +503,9 @@ const AdminUnderwritingRules = () => {
           </Button>
           <Button
             size="sm"
-            disabled={!dirty || saveMutation.isPending}
+            disabled={!dirty || !isValid || saveMutation.isPending}
             onClick={() => saveMutation.mutate(draft)}
+            title={!isValid ? "Fix the highlighted fields before saving" : undefined}
           >
             {saveMutation.isPending ? (
               <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
