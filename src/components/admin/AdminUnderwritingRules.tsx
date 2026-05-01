@@ -96,7 +96,7 @@ const FORMULA_FIELDS: Field[] = [
   },
   {
     key: "provenance_bonus_max",
-    label: "Provenance bonus (max)",
+    label: "Verified-IP bonus (max)",
     hint: "Extra multiplier when 100% of settlements are on-chain. 0.25 = +25%.",
     step: 0.05,
     min: 0,
@@ -175,7 +175,7 @@ const SCORE_FIELDS: Field[] = [
   },
   {
     key: "score_weight_provenance",
-    label: "Provenance weight",
+    label: "Verified-IP weight",
     hint: "Max points from on-chain ratio.",
     step: 1,
     min: 0,

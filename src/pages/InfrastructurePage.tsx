@@ -45,7 +45,7 @@ const LAYERS: Layer[] = [
   {
     index: "I",
     icon: ShieldCheck,
-    title: "Provenance",
+    title: "Verified IP",
     tagline: "Timestamped, on-chain proof at the point of creation.",
     body:
       "Authorship and contribution disputes get resolved by contracts and lawyers today. Rhozeland writes a Solana memo every time a milestone is signed, a contribution is logged, or a roadmap locks — creating a verifiable, public record that doesn't depend on us.",
@@ -89,7 +89,7 @@ const LAYERS: Layer[] = [
     body:
       "When royalty streams become programmable financial primitives, they unlock something the music industry has gated for decades: capital access without label advances. Transparent earnings can collateralize lending, smooth cash flow, and shift financial power back to creators.",
     liveToday:
-      "Per-creator USD wallet with $10 minimum withdrawal, Seller Dashboard transaction history, and a Capital advance estimator that scores trailing-90-day settlement gross, on-chain provenance ratio, tenure, and anchored-IP breadth into a one-click advance request.",
+      "Per-creator USD wallet with $10 minimum withdrawal, Seller Dashboard transaction history, and a Capital advance estimator that scores trailing-90-day settlement gross, on-chain receipts ratio, tenure, and anchored-IP breadth into a one-click advance request.",
     comingSoon:
       "Underwriter automation + Anchor-program escrowed advances priced against on-chain settlement history, not gut feel.",
     status: "live",
@@ -253,7 +253,7 @@ const InfrastructurePage = () => {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-2 pt-4 font-mono text-xs sm:text-sm">
-            {["Provenance", "Splits", "Settlement", "Capital", "Applications"].map(
+            {["Verified IP", "Splits", "Settlement", "Capital", "Applications"].map(
               (label, i, arr) => (
                 <div key={label} className="flex items-center gap-2">
                   <Badge

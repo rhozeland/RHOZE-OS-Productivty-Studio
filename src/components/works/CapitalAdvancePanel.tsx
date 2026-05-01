@@ -352,7 +352,7 @@ const CapitalAdvancePanel = ({ userId }: Props) => {
           </p>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
             Up to {Math.round(activeRules.base_advance_ratio * 100)}% of your trailing-90-day gross,
-            multiplied by a provenance bonus (+{Math.round(activeRules.provenance_bonus_max * 100)}% at
+            multiplied by a Verified-IP bonus (+{Math.round(activeRules.provenance_bonus_max * 100)}% at
             100% on-chain) and a tenure factor (full at {activeRules.tenure_full_months}+ months).
             Capped at {fmt(activeRules.advance_cap)} per request. All inputs are auditable in your{" "}
             <span className="font-medium text-foreground">Per-Work Settlements</span> table

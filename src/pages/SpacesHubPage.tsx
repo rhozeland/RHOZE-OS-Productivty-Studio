@@ -159,7 +159,7 @@ const EventTimeline = ({ user }: { user: any }) => {
         </h2>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
           Be the first to host. Every manifest, artifact, and check-in is
-          SHA-256 anchored on Solana — verifiable provenance for the whole
+          SHA-256 anchored on Solana — verifiable receipts for the whole
           gathering.
         </p>
         {user && (
