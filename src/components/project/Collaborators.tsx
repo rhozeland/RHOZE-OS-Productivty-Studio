@@ -301,21 +301,38 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                 )}
               </div>
             </div>
-            <Select value={collab.role} onValueChange={(val) => updateRole.mutate({ id: collab.id, role: val })}>
-              <SelectTrigger className="h-7 w-[100px] text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(ROLE_INFO).map(([key, info]) => (
-                  <SelectItem key={key} value={key}>
-                    <span className="capitalize">{info.label}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => remove.mutate(collab.id)}>
-              <X className="h-3.5 w-3.5 text-muted-foreground" />
-            </Button>
+            {canManage ? (
+              <Select
+                value={collab.role}
+                onValueChange={(val) => updateRole.mutate({ id: collab.id, role: val })}
+              >
+                <SelectTrigger className="h-7 w-[110px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(ROLE_INFO).map(([key, info]) => (
+                    <SelectItem key={key} value={key} disabled={key === "admin" && !isOwner}>
+                      <span className="capitalize">{info.label}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${roleColors[collab.role] ?? roleColors.member}`}>
+                {ROLE_INFO[collab.role]?.label ?? collab.role}
+              </span>
+            )}
+            {(canManage || collab.user_id === user?.id) && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 shrink-0"
+                onClick={() => remove.mutate(collab.id)}
+                title={collab.user_id === user?.id ? "Leave project" : "Remove member"}
+              >
+                <X className="h-3.5 w-3.5 text-muted-foreground" />
+              </Button>
+            )}
           </motion.div>
         );
       })}
