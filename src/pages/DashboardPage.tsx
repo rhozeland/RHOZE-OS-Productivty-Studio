@@ -626,29 +626,13 @@ const DashboardPage = () => {
         </p>
         <h1 className="font-display text-3xl sm:text-4xl md:text-5xl leading-[1.1]">
           {user ? (
-            <span
-              className="inline-block bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text"
-              style={{
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                color: "transparent",
-              }}
-            >
+            <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">
               {greeting()}, {firstName}.
             </span>
           ) : (
             <>
               <span className="text-foreground">Two networks. </span>
-              <span
-                className="inline-block bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text"
-                style={{
-                  WebkitBackgroundClip: "text",
-                  backgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  color: "transparent",
-                }}
-              >
+              <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">
                 One creative space.
               </span>
             </>
