@@ -215,6 +215,29 @@ const HubPage = () => {
   });
   const workOwnerMap = new Map(workOwners?.map((p: any) => [p.user_id, p]) ?? []);
 
+  // ─── Coins: live + recently graduated bonding-curve launches ────────
+  const { data: coins, isLoading: loadingCoins } = useQuery({
+    queryKey: ["hub-coins", search],
+    queryFn: async () => {
+      let q = supabase
+        .from("coin_launches")
+        .select(
+          "id,ticker,name,description,image_url,status,real_sol_reserves,graduation_sol_target,creator_id,created_at",
+        )
+        .in("status", ["live", "graduated"])
+        .order("real_sol_reserves", { ascending: false })
+        .limit(30);
+      if (search.trim()) {
+        const term = search.trim();
+        q = q.or(`ticker.ilike.%${term}%,name.ilike.%${term}%,description.ilike.%${term}%`);
+      }
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: lane === "coins",
+  });
+
   const activeLane = LANES.find((l) => l.key === lane)!;
 
   // ─── Lane-aware "post" CTA ──────────────────────────────────────────
