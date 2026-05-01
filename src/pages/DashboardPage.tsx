@@ -663,12 +663,8 @@ const DashboardPage = () => {
         </h1>
         <p className="text-sm text-muted-foreground mt-3 max-w-xl">
           {user
-            ? activeProjects > 0
-              ? `${activeProjects} active project${activeProjects > 1 ? "s" : ""}${
-                  (unreadCount ?? 0) > 0
-                    ? ` · ${unreadCount} unread`
-                    : ""
-                }.`
+            ? (unreadCount ?? 0) > 0
+              ? `${unreadCount} unread.`
               : "Open a Space, tune into the Hub, or start a new project."
             : "Step into Spaces or tune into the Hub."}
         </p>
