@@ -3764,6 +3764,10 @@ export type Database = {
         Args: { _amount: number; _description: string; _user_id: string }
         Returns: undefined
       }
+      can_manage_project: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_read_smartboard_file: {
         Args: { _file_path: string; _user_id: string }
         Returns: boolean
@@ -3891,6 +3895,10 @@ export type Database = {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
       }
+      is_project_member: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
       lock_escrow_credits: {
         Args: { _amount: number; _client_id: string; _contract_id: string }
         Returns: undefined
@@ -3928,6 +3936,10 @@ export type Database = {
           _request_id: string
         }
         Returns: undefined
+      }
+      project_member_role: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: string
       }
       purchase_listing: {
         Args: { _buyer_id: string; _listing_id: string }
