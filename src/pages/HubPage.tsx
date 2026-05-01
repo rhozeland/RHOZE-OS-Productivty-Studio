@@ -233,22 +233,13 @@ const HubPage = () => {
         <div className="relative flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-2">
-              Digital Network · Tune in
+              Digital Network
             </p>
             <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground tracking-tight">
               The Hub.
             </h1>
-            <p className="text-muted-foreground mt-2 text-sm md:text-base max-w-lg">
-              Conversations, offerings, opportunities, verified Works, and{" "}
-              <Link to="/launchpad" className="text-foreground hover:underline inline-flex items-center gap-1">
-                <Coins className="h-3.5 w-3.5 text-emerald-500" />
-                artist coins
-              </Link>{" "}
-              — the digital pulse of the Rhozeland community. Looking for a
-              physical space?{" "}
-              <Link to="/studios" className="text-foreground hover:underline">
-                Browse studios →
-              </Link>
+            <p className="text-muted-foreground mt-2 text-sm md:text-base max-w-md">
+              Tune in. Drop, browse, and verify — all in one feed.
             </p>
           </div>
           <div className="flex gap-2">
@@ -260,8 +251,6 @@ const HubPage = () => {
                 ? "Post Opportunity"
                 : lane === "offerings"
                 ? "Post Offering"
-                : lane === "coins"
-                ? "Open Launchpad"
                 : "Drop a Post"}
             </Button>
           </div>
