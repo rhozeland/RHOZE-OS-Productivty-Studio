@@ -22,6 +22,7 @@ import {
   Loader2,
   ScanLine,
   Radio,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -84,6 +85,8 @@ const EventManagePage = () => {
   const [tierRhoze, setTierRhoze] = useState("");
   const [tierQty, setTierQty] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [lookupQuery, setLookupQuery] = useState("");
+  const [lookupBusy, setLookupBusy] = useState(false);
 
   // Live attendee list — reflect check-ins from any device instantly.
   useEffect(() => {
