@@ -247,6 +247,10 @@ const HubPage = () => {
       navigate("/works");
       return;
     }
+    if (lane === "coins") {
+      navigate("/launchpad");
+      return;
+    }
     setCreateOpen(true);
   };
 
@@ -265,9 +269,13 @@ const HubPage = () => {
               The Hub.
             </h1>
             <p className="text-muted-foreground mt-2 text-sm md:text-base max-w-lg">
-              Conversations, offerings, opportunities, and verified Works — the
-              digital pulse of the Rhozeland community. Looking for a physical
-              space?{" "}
+              Conversations, offerings, opportunities, verified Works, and{" "}
+              <Link to="/launchpad" className="text-foreground hover:underline inline-flex items-center gap-1">
+                <Coins className="h-3.5 w-3.5 text-emerald-500" />
+                artist coins
+              </Link>{" "}
+              — the digital pulse of the Rhozeland community. Looking for a
+              physical space?{" "}
               <Link to="/studios" className="text-foreground hover:underline">
                 Browse studios →
               </Link>
@@ -282,6 +290,8 @@ const HubPage = () => {
                 ? "Post Opportunity"
                 : lane === "offerings"
                 ? "Post Offering"
+                : lane === "coins"
+                ? "Open Launchpad"
                 : "Drop a Post"}
             </Button>
           </div>
