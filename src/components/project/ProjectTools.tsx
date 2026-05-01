@@ -1,11 +1,9 @@
 /**
  * ProjectTools — in-context tools panel for a project.
  *
- * Surfaces Smartboards, Flow, and Drop Rooms inside Projects (which is now
- * their canonical home after the IA consolidation). Each tile launches the
- * tool deep-linked to this project where supported, or to the tool's main
- * surface otherwise. Smartboards already use `project_smartboards` to link
- * boards to a project; that list is shown directly here.
+ * Order: Drop Rooms (primary collab) → Smartboards (read-only mini list,
+ * full management lives in Scope) → Flow (least priority, jumps to the
+ * global Flow swipe feed scoped by this project's tags).
  */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
@@ -33,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Palette, Flame, Radio, Plus, Link2, ExternalLink, Clock, Users } from "lucide-react";
+import { Palette, Flame, Radio, Plus, ExternalLink, Clock, ArrowRight } from "lucide-react";
 
 const ROOM_DURATIONS = [
   { label: "1 hour", hours: 1 },
@@ -52,14 +50,26 @@ const ProjectTools = ({ projectId, projectTitle }: Props) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const [linkOpen, setLinkOpen] = useState(false);
   const [roomOpen, setRoomOpen] = useState(false);
   const [roomTitle, setRoomTitle] = useState("");
   const [roomDescription, setRoomDescription] = useState("");
   const [roomHours, setRoomHours] = useState(24);
   const [creatingRoom, setCreatingRoom] = useState(false);
 
-  // Smartboards already linked to this project.
+  // Project meta — used to tag the Flow jump.
+  const { data: projectMeta } = useQuery({
+    queryKey: ["project-tools-meta", projectId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("projects")
+        .select("categories")
+        .eq("id", projectId)
+        .single();
+      return data;
+    },
+  });
+
+  // Smartboards already linked to this project (read-only here; manage in Scope).
   const { data: linked } = useQuery({
     queryKey: ["project-smartboards", projectId],
     queryFn: async () => {
@@ -83,39 +93,6 @@ const ProjectTools = ({ projectId, projectTitle }: Props) => {
     },
     enabled: !!linked && linked.length > 0,
   });
-
-  const { data: mySmartboards } = useQuery({
-    queryKey: ["my-smartboards-tools", user?.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("smartboards")
-        .select("id, title, description, cover_color")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false });
-      return data ?? [];
-    },
-    enabled: !!user && linkOpen,
-  });
-
-  const linkSb = useMutation({
-    mutationFn: async (sbId: string) => {
-      const { error } = await supabase.from("project_smartboards" as any).insert({
-        project_id: projectId,
-        smartboard_id: sbId,
-        linked_by: user!.id,
-      } as any);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["project-smartboards", projectId] });
-      setLinkOpen(false);
-      toast.success("Smartboard linked");
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-
-  const linkedSet = new Set(linked ?? []);
-  const available = (mySmartboards ?? []).filter((b: any) => !linkedSet.has(b.id));
 
   // ─── Drop Rooms scoped to this project ───────────────────────────────
   const { data: rooms } = useQuery({
@@ -165,6 +142,12 @@ const ProjectTools = ({ projectId, projectTitle }: Props) => {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const openFlowScoped = () => {
+    const tags = (projectMeta?.categories ?? []) as string[];
+    const qs = tags.length ? `?tags=${encodeURIComponent(tags.join(","))}` : "";
+    navigate(`/flow${qs}`);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -175,85 +158,12 @@ const ProjectTools = ({ projectId, projectTitle }: Props) => {
           Build it your way
         </h3>
         <p className="text-sm text-muted-foreground mt-1">
-          Smartboards, Flow, and Drop Rooms now live inside your projects so
-          everything you make stays in scope.
+          Spin up live rooms, peek your linked smartboards, or jump into the
+          Flow feed — all scoped to <span className="text-foreground font-medium">{projectTitle}</span>.
         </p>
       </div>
 
-      {/* ─── Smartboards ────────────────────────────────────────────── */}
-      <section className="rounded-2xl border border-border bg-card p-5">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Palette className="h-4 w-4 text-primary" />
-            <h4 className="font-display text-base font-semibold">Smartboards</h4>
-          </div>
-          <Button size="sm" variant="outline" className="rounded-full h-8" onClick={() => setLinkOpen(true)}>
-            <Plus className="h-3.5 w-3.5 mr-1" /> Link board
-          </Button>
-        </div>
-        {boards && boards.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {boards.map((b: any, i: number) => (
-              <motion.div
-                key={b.id}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03 }}
-              >
-                <Link
-                  to={`/smartboards/${b.id}`}
-                  className="group block rounded-xl overflow-hidden border border-border hover:-translate-y-0.5 transition-all"
-                >
-                  <div
-                    className="aspect-[16/9]"
-                    style={{ background: b.cover_color || "hsl(var(--muted))" }}
-                  />
-                  <div className="p-3">
-                    <p className="text-sm font-display font-semibold text-foreground line-clamp-1">
-                      {b.title}
-                    </p>
-                    {b.description && (
-                      <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
-                        {b.description}
-                      </p>
-                    )}
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            No smartboards linked yet. Link an existing board or create one.
-          </p>
-        )}
-      </section>
-
-      {/* ─── Flow launcher (Drop Rooms have their own section below) ─── */}
-      <a
-        href="#"
-        onClick={(e) => {
-          e.preventDefault();
-          toast.message("Flow inside Projects is coming next", {
-            description: "For now, capture inspiration from the Hub feed.",
-          });
-        }}
-        className="group block rounded-2xl border border-border bg-card p-5 hover:-translate-y-0.5 transition-all"
-      >
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2 mb-2">
-            <Flame className="h-4 w-4 text-primary" />
-            <h4 className="font-display text-base font-semibold">Flow</h4>
-          </div>
-          <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Capture references, notes, and quick drops inside the project's
-          scope. Coming online soon.
-        </p>
-      </a>
-
-      {/* ─── Drop Rooms (project-scoped) ─────────────────────────────── */}
+      {/* ─── Drop Rooms (primary) ─────────────────────────────────────── */}
       <section className="rounded-2xl border border-border bg-card p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -264,6 +174,9 @@ const ProjectTools = ({ projectId, projectTitle }: Props) => {
             <Plus className="h-3.5 w-3.5 mr-1" /> New room
           </Button>
         </div>
+        <p className="text-xs text-muted-foreground mb-3">
+          Pop-up collab spaces that auto-expire. Great for review sessions and fast feedback.
+        </p>
         {rooms && rooms.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {rooms.map((r: any, i: number) => (
@@ -298,52 +211,73 @@ const ProjectTools = ({ projectId, projectTitle }: Props) => {
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">
-            No active rooms for {projectTitle ? `"${projectTitle}"` : "this project"} yet.
-            Launch one to collaborate live.
+            No active rooms yet. Launch one to collaborate live.
           </p>
         )}
       </section>
 
-      <Dialog open={linkOpen} onOpenChange={setLinkOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-display">Link a Smartboard</DialogTitle>
-          </DialogHeader>
-          {available.length === 0 ? (
-            <div className="text-center py-8 text-sm text-muted-foreground">
-              {(mySmartboards ?? []).length === 0
-                ? "You don't have any smartboards yet."
-                : "All your smartboards are already linked."}
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-80 overflow-y-auto">
-              {available.map((b: any) => (
-                <button
-                  key={b.id}
-                  onClick={() => linkSb.mutate(b.id)}
-                  className="flex w-full items-center gap-3 rounded-lg p-3 text-left hover:bg-muted/60 transition-colors"
+      {/* ─── Smartboards (read-only mini list) ────────────────────────── */}
+      <section className="rounded-2xl border border-border bg-card p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Palette className="h-4 w-4 text-primary" />
+            <h4 className="font-display text-base font-semibold">Smartboards</h4>
+          </div>
+          <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            Manage in Scope
+          </span>
+        </div>
+        {boards && boards.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+            {boards.map((b: any, i: number) => (
+              <motion.div
+                key={b.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.03 }}
+              >
+                <Link
+                  to={`/smartboards/${b.id}`}
+                  className="group block rounded-xl overflow-hidden border border-border hover:-translate-y-0.5 transition-all"
                 >
                   <div
-                    className="h-10 w-10 rounded-lg shrink-0"
+                    className="aspect-[16/10]"
                     style={{ background: b.cover_color || "hsl(var(--muted))" }}
                   />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground truncate">
+                  <div className="p-2">
+                    <p className="text-xs font-display font-semibold text-foreground line-clamp-1">
                       {b.title}
                     </p>
-                    {b.description && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        {b.description}
-                      </p>
-                    )}
                   </div>
-                  <Link2 className="h-4 w-4 text-muted-foreground" />
-                </button>
-              ))}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No smartboards linked yet — open the <span className="font-medium text-foreground">Scope</span> tab to link one.
+          </p>
+        )}
+      </section>
+
+      {/* ─── Flow (least priority — jumps to global feed scoped) ──────── */}
+      <button
+        onClick={openFlowScoped}
+        className="group w-full text-left rounded-2xl border border-border bg-card p-4 hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            <Flame className="h-4 w-4 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-display text-sm font-semibold text-foreground">Open Flow</p>
+            <p className="text-[11px] text-muted-foreground line-clamp-1">
+              Discover Verified IP and references tagged like this project.
+            </p>
+          </div>
+        </div>
+        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0" />
+      </button>
 
       {/* ─── Create Drop Room dialog ─────────────────────────────────── */}
       <Dialog open={roomOpen} onOpenChange={setRoomOpen}>
@@ -394,7 +328,6 @@ const ProjectTools = ({ projectId, projectTitle }: Props) => {
         </DialogContent>
       </Dialog>
     </div>
-
   );
 };
 
