@@ -362,9 +362,25 @@ const TxStatus = ({ phase, explorerUrl }: { phase: TxPhase; explorerUrl: string 
         </a>
       )}
 
-      {isError && (
-        <>
-          <p className="text-destructive">{phase.message}</p>
+      {isError && phase.kind === "error" && (
+        <div className="space-y-1.5">
+          <div className="flex items-start gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-destructive font-medium">{phase.decoded.title}</p>
+              <p className="text-[11px] text-destructive/80">{phase.decoded.detail}</p>
+            </div>
+            <div className="flex flex-col items-end gap-0.5 shrink-0">
+              <Badge variant="outline" className="text-[9px] uppercase border-destructive/40 text-destructive">
+                {phase.decoded.source}
+              </Badge>
+              {phase.decoded.code !== null && (
+                <span className="text-[9px] font-mono text-muted-foreground">
+                  code {phase.decoded.code}
+                  {phase.decoded.name ? ` · ${phase.decoded.name}` : ""}
+                </span>
+              )}
+            </div>
+          </div>
           {phase.logs && phase.logs.length > 0 && (
             <details className="text-[10px] text-muted-foreground">
               <summary className="cursor-pointer hover:text-foreground">Program logs ({phase.logs.length})</summary>
@@ -373,7 +389,12 @@ const TxStatus = ({ phase, explorerUrl }: { phase: TxPhase; explorerUrl: string 
               </pre>
             </details>
           )}
-        </>
+          {phase.decoded.source === "anchor" && phase.decoded.code !== null && phase.decoded.name === null && (
+            <p className="text-[10px] text-muted-foreground italic">
+              No matching entry in your IDL. Paste the latest IDL in Settings → Verified IP for richer messages.
+            </p>
+          )}
+        </div>
       )}
     </div>
   );
