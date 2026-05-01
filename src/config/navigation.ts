@@ -38,7 +38,16 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { id: "dashboard", label: "Home", icon: Home, path: "/dashboard" },
+  // v6 front door — feed-led discovery for guests AND signed-in users.
+  // Replaces the old "Home → Dashboard" framing as the dock pillar.
+  // /dashboard remains routable as the user's private control room.
+  {
+    id: "discover",
+    label: "Discover",
+    icon: Compass,
+    path: "/discover",
+    matchPaths: ["/dashboard"],
+  },
   // Hub — the digital network in the "Spaces" model. Lanes:
   // Conversations · Offerings · Opportunities · Works.
   // Replaces /marketplace, /creators, /flow, /people, /spaces.
@@ -49,18 +58,27 @@ export const NAV_ITEMS: NavItem[] = [
     path: "/hub",
     matchPaths: ["/marketplace", "/creators", "/people"],
   },
-  // Projects — promoted to the dock. Hosts Flow / Smartboards / Drop Rooms
-  // as in-context tools (see ProjectDetailPage Tools tab).
-  { id: "projects", label: "Projects", icon: FolderKanban, path: "/projects" },
-  // Profile — user's own profile is the 4th dock pillar.
-  { id: "profile", label: "Profile", icon: User, path: "/profile" },
-  // Side-nav / secondary destinations
+  // Spaces — physical network (events / spaces / residencies).
+  {
+    id: "studios",
+    label: "Spaces",
+    icon: Building2,
+    path: "/spaces",
+    matchPaths: ["/studios"],
+  },
+  // Inbox — DMs + inquiries. Replaces Projects in the dock so the
+  // consumer-facing "did the artist reply?" surface is one tap away.
   { id: "messages", label: "Inbox", icon: MessageSquare, path: "/messages" },
+  // ─── Secondary destinations (still routable; not in default dock) ─────
+  // Projects demoted out of the dock as part of v6. Lives as a tab on
+  // the artist's own profile ("Building"). Route + nav id stay so deep
+  // links and the Tools-tab back-references keep working.
+  { id: "projects", label: "Projects", icon: FolderKanban, path: "/projects" },
+  // Profile — user's own profile.
+  { id: "dashboard", label: "Studio", icon: Home, path: "/dashboard" },
+  { id: "profile", label: "Profile", icon: User, path: "/profile" },
   // Legacy / utility entries — kept registered so dock customization,
-  // active-state, and deep-link pages still work, but no longer the
-  // primary navigation surfaces. (`marketplace` and `flow` ids removed —
-  // both fully absorbed by Hub / Projects respectively.)
-  { id: "studios", label: "Spaces", icon: Building2, path: "/spaces", matchPaths: ["/studios"] },
+  // active-state, and deep-link pages still work.
   { id: "boards", label: "Boards", icon: Palette, path: "/smartboards" },
   {
     id: "droprooms",
@@ -72,12 +90,8 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "calendar", label: "Calendar", icon: Calendar, path: "/calendar" },
   { id: "bookings", label: "Bookings", icon: Calendar, path: "/bookings" },
   { id: "credits", label: "Credits", icon: CreditCard, path: "/credits" },
-  // Launchpad nav id removed — coins are now profile-bound. Saved
-  // dock_config entries with id "launchpad" will surface as "Missing"
-  // in the dock customizer until users re-pick (typically a profile link).
-  // Flow Mode — fully merged into Projects. Nav id removed; saved
-  // dock_config entries with id "flow" will surface as "Missing" in
-  // the dock customizer until users re-pick.
+  // Launchpad nav id removed — coins are now profile-bound.
+  // Flow Mode — fully merged into Projects.
   { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
   { id: "services", label: "Services", icon: Store, path: "/services" },
 ];
