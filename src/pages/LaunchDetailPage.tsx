@@ -189,6 +189,7 @@ const LaunchDetailPage = () => {
 
         {/* Trade panel */}
         <div className="space-y-4">
+          <LaunchpadModeBanner />
           <TradePanel
             launchId={launch.id}
             ticker={launch.ticker}
