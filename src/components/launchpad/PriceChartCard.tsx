@@ -95,46 +95,70 @@ const PriceChartCard = ({ launchId, ticker, realSolReserves, graduationTarget }:
       <CardContent className="p-4 space-y-3">
         {/* Toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="inline-flex rounded-full border border-border/60 bg-muted/30 p-0.5 text-[11px]">
-            <button
-              type="button"
-              onClick={() => setView("price")}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition-colors ${
-                view === "price" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <LineChartIcon className="h-3 w-3" /> Price
-            </button>
-            <button
-              type="button"
-              onClick={() => setView("curve")}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition-colors ${
-                view === "curve" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Activity className="h-3 w-3" /> Bonding Curve
-            </button>
+          <div
+            role="tablist"
+            aria-label="Chart view"
+            className="inline-flex rounded-full border border-border/60 bg-muted/30 p-0.5 text-[11px]"
+            onKeyDown={(e) => handleRovingKeyDown(e, ["price", "curve"], view, setView)}
+          >
+            {([
+              { id: "price" as const, label: "Price", Icon: LineChartIcon, desc: "Token price over time" },
+              { id: "curve" as const, label: "Bonding Curve", Icon: Activity, desc: "Progress toward graduation" },
+            ]).map(({ id, label, Icon, desc }) => {
+              const selected = view === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  id={`chart-tab-${id}`}
+                  aria-selected={selected}
+                  aria-label={`${label} view — ${desc}`}
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => setView(id)}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
+                    selected ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="h-3 w-3" aria-hidden="true" /> {label}
+                </button>
+              );
+            })}
           </div>
 
           {view === "price" && (
-            <div className="inline-flex rounded-full border border-border/60 bg-muted/30 p-0.5 text-[10px] font-mono">
-              {(["1H", "6H", "1D", "ALL"] as Range[]).map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setRange(r)}
-                  className={`px-2 py-1 rounded-full transition-colors ${
-                    range === r ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {r}
-                </button>
-              ))}
+            <div
+              role="radiogroup"
+              aria-label="Chart timeframe"
+              className="inline-flex rounded-full border border-border/60 bg-muted/30 p-0.5 text-[10px] font-mono"
+              onKeyDown={(e) =>
+                handleRovingKeyDown(e, ["1H", "6H", "1D", "ALL"] as Range[], range, setRange)
+              }
+            >
+              {(["1H", "6H", "1D", "ALL"] as Range[]).map((r) => {
+                const selected = range === r;
+                return (
+                  <button
+                    key={r}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    aria-label={RANGE_LABELS[r]}
+                    tabIndex={selected ? 0 : -1}
+                    onClick={() => setRange(r)}
+                    className={`px-2 py-1 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
+                      selected ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {r}
+                  </button>
+                );
+              })}
             </div>
           )}
 
-          <Badge variant="outline" className="text-[10px] gap-1">
-            <TrendingUp className="h-2.5 w-2.5" />
+          <Badge variant="outline" className="text-[10px] gap-1" aria-live="polite">
+            <TrendingUp className="h-2.5 w-2.5" aria-hidden="true" />
             {view === "price"
               ? `${priceSeries.length} pts`
               : `${realSolReserves.toFixed(2)} / ${graduationTarget} SOL`}
