@@ -56,6 +56,7 @@ import FlowShareDialog from "@/components/flow/FlowShareDialog";
 import LinkPreviewCard from "@/components/flow/LinkPreviewCard";
 import { cn } from "@/lib/utils";
 import { loadFlowFeed } from "@/lib/flow-feed";
+import { computeContentHash } from "@/lib/content-hash";
 import AdminFlowSeedPanel from "@/components/flow/AdminFlowSeedPanel";
 import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
 import SignUpToPostPrompt from "@/components/flow/SignUpToPostPrompt";
@@ -139,6 +140,10 @@ const FlowModePage = () => {
   const dragCounterRef = useRef(0);
 
   // Multi-file upload state — each file tracks its own progress, xhr, and error.
+  // `contentHash` is the SHA-256 of the file bytes computed in the browser
+  // immediately after acceptance. It's the foundation of every Flow item's
+  // Verified-IP lifecycle (Fingerprinted → Pending review → Verified) and
+  // gets persisted onto the resulting `flow_items` row.
   type PendingFile = {
     id: string;
     file: File;
@@ -147,6 +152,8 @@ const FlowModePage = () => {
     progress: number;
     error: string | null;
     uploadedUrl: string | null;
+    contentHash: string | null;
+    hashing: boolean;
   };
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   // Map of file id → in-flight XHR + watchdog refs (kept outside state to avoid re-renders).
