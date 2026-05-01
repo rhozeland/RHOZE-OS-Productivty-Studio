@@ -335,24 +335,28 @@ const DashboardPage = () => {
   const pulseItems = useMemo<PulseItem[]>(() => {
     const items: PulseItem[] = [];
     (studios ?? []).forEach((s: any) => {
+      const img = s.cover_image_url ?? s.hero_image_url ?? null;
+      if (!img) return; // skip filler-only studios
       items.push({
         kind: "studio",
         id: `s-${s.id}`,
         title: s.name,
         subtitle: [s.city, s.country].filter(Boolean).join(", ") || "Studio Space",
-        image: s.cover_image_url ?? s.hero_image_url ?? null,
+        image: img,
         href: `/studios/${s.id}`,
         timestamp: s.created_at ?? new Date().toISOString(),
         icon: Building2,
       });
     });
     (hubListings ?? []).forEach((l: any) => {
+      const img = l.cover_url ?? l.image_url ?? null;
+      if (!img) return; // skip filler-only listings
       items.push({
         kind: "hub",
         id: `h-${l.id}`,
         title: l.title,
         subtitle: l.category ?? "Offering",
-        image: l.cover_url ?? l.image_url ?? null,
+        image: img,
         href: `/marketplace/${l.id}`,
         timestamp: l.created_at,
         icon: Sparkles,
