@@ -79,6 +79,7 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/explore/creators/:id",
   "/",
   "/dashboard",
+  "/discover",
   "/hub",
   "/profile",
   "/spaces",
@@ -197,6 +198,7 @@ const App = () => (
               {/* Main app — browsable by everyone, auth-gated actions inside */}
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/discover" element={<DiscoverPage />} />
                 {/* Primary pillars: Home · Hub · Spaces · Projects · Profile.
                     /spaces is the Events · Spaces · Discover hub.
                     /studios redirects in for backwards compatibility. */}
