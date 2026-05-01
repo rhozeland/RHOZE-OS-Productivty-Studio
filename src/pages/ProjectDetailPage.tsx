@@ -334,13 +334,10 @@ const ProjectDetailPage = () => {
       <Tabs defaultValue="roadmap" className="w-full">
         <TabsList className="mb-4 w-full justify-start overflow-x-auto flex-nowrap shrink-0">
           <TabsTrigger value="roadmap" className="shrink-0">Roadmap</TabsTrigger>
+          <TabsTrigger value="tools" className="shrink-0">Tools</TabsTrigger>
           <TabsTrigger value="vision" className="shrink-0">Scope</TabsTrigger>
           {isPaid && <TabsTrigger value="budget" className="shrink-0">Budget</TabsTrigger>}
           <TabsTrigger value="team" className="shrink-0">Team</TabsTrigger>
-          <TabsTrigger value="tools" className="shrink-0">Tools</TabsTrigger>
-          <TabsTrigger value="moodboard" className="shrink-0 gap-1.5">
-            <ImageIcon className="h-3.5 w-3.5" /> Moodboard
-          </TabsTrigger>
           <TabsTrigger value="vault" className="shrink-0 gap-1.5">
             <Archive className="h-3.5 w-3.5" /> Vault
           </TabsTrigger>
