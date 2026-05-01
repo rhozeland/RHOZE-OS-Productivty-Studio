@@ -513,7 +513,13 @@ const CalendarPage = () => {
   };
 
   const handleMouseUp = () => {
-    if (isDragging && dragStartHour !== null && dragEndHour !== null) {
+    if (isDragging && dragStartHour !== null && dragEndHour !== null && dragDate) {
+      // Prefill the editor's date/time fields from the drag selection
+      const startH = Math.min(dragStartHour, dragEndHour);
+      const endH = Math.max(dragStartHour, dragEndHour) + 1;
+      setEventDate(format(dragDate, "yyyy-MM-dd"));
+      setEventStartTime(`${String(startH).padStart(2, "0")}:00`);
+      setEventEndTime(`${String(endH).padStart(2, "0")}:00`);
       // If coming from a service pre-selection, auto-set to studio
       if (searchParams.get("service")) setEventType("studio");
       setBookingDialogOpen(true);
