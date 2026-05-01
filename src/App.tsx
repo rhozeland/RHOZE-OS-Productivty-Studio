@@ -53,8 +53,7 @@ import EventManagePage from "@/pages/EventManagePage";
 import TicketDetailPage from "@/pages/TicketDetailPage";
 import { ProfileRedirect } from "@/components/ProfileRedirect";
 import FlowModePage from "@/pages/FlowModePage";
-import LaunchpadPage from "@/pages/LaunchpadPage";
-import LaunchDetailPage from "@/pages/LaunchDetailPage";
+import LaunchRedirect from "@/pages/LaunchRedirect";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
