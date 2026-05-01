@@ -286,6 +286,11 @@ const Section = ({
 
 const AdminUnderwritingRules = () => {
   const qc = useQueryClient();
+  const { isAdmin, loading: adminLoading } = useAdminCheck();
+  // Defense-in-depth: only fetch the rules when we know the caller is an
+  // admin. Even though the route already guards `/admin`, this guarantees
+  // that mounting this component anywhere else (or in dev) cannot trigger
+  // a read against the rules table.
   const { data: rules, isLoading } = useUnderwritingRules();
   const [draft, setDraft] = useState<UnderwritingRules>(DEFAULT_RULES);
   const [dirty, setDirty] = useState(false);
