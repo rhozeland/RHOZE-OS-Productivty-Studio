@@ -61,6 +61,7 @@ import AdminFlowSeedPanel from "@/components/flow/AdminFlowSeedPanel";
 import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
 import SignUpToPostPrompt from "@/components/flow/SignUpToPostPrompt";
 import FlowFeedErrorState from "@/components/flow/FlowFeedErrorState";
+import { useFlowCoinsByWork } from "@/hooks/useFlowCoinsByWork";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
