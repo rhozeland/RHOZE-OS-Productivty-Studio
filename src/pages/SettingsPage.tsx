@@ -23,6 +23,7 @@ import SettingsSubNav, {
   useActiveSettingsSection,
 } from "@/components/settings/SettingsSubNav";
 import WorksPage from "@/pages/WorksPage";
+import MyVerificationRequests from "@/components/works/MyVerificationRequests";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -767,7 +768,12 @@ const SettingsPage = () => {
     </div>
   );
 
-  const renderProvenance = () => <WorksPage embedded />;
+  const renderProvenance = () => (
+    <div className="space-y-6">
+      <MyVerificationRequests />
+      <WorksPage embedded />
+    </div>
+  );
 
   const sectionRenderers: Record<SectionId, () => JSX.Element> = {
     profile: renderProfile,

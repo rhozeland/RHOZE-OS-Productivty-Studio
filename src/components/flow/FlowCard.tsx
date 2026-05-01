@@ -12,6 +12,8 @@ import {
   badgePlacementClassFor,
 } from "@/lib/flow-card-prefs";
 import FlowProvenanceChip from "@/components/flow/FlowProvenanceChip";
+import VerifyWorkDialog from "@/components/works/VerifyWorkDialog";
+import { ShieldCheck } from "lucide-react";
 
 /* ─── Platform detection ─── */
 const detectPlatform = (url?: string | null) => {
@@ -93,6 +95,7 @@ interface FlowCardProps {
       | "rejected"
       | "changes_requested"
       | null;
+    work_id?: string | null;
   };
   expanded: boolean;
   onToggleExpand: () => void;
@@ -112,6 +115,12 @@ interface FlowCardProps {
 const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner, isAdmin, profilesLoading }: FlowCardProps) => {
   const navigate = useNavigate();
   const [imageEnlarged, setImageEnlarged] = useState(false);
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const canApplyForVerification =
+    !!isOwner &&
+    item.verification_status !== "verified" &&
+    item.verification_status !== "pending" &&
+    (!!item.file_url || !!(item as any).work_id);
   const cardPrefs = useFlowCardPrefs();
   const platform = detectPlatform(item.link_url);
   const CatIcon = CATEGORY_ICONS[item.category] || Palette;
@@ -360,6 +369,16 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
             solanaSignature={item.solana_signature}
             isOwner={isOwner}
           />
+          {canApplyForVerification && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setVerifyOpen(true); }}
+              className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
+              title="Apply for the Verified IP badge"
+            >
+              <ShieldCheck className="h-3 w-3" />
+              Verify
+            </button>
+          )}
 
           <div className="ml-auto flex items-center gap-3">
             <button
@@ -468,6 +487,23 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
           </div>
         )}
       </div>
+
+      {/* ═══ VERIFY-IP DIALOG (owner only) ═══ */}
+      {isOwner && (
+        <VerifyWorkDialog
+          open={verifyOpen}
+          onOpenChange={setVerifyOpen}
+          flowItem={{
+            id: item.id,
+            user_id: item.user_id,
+            title: item.title,
+            description: item.description,
+            file_url: item.file_url,
+            content_hash: item.content_hash,
+            work_id: (item as any).work_id ?? null,
+          }}
+        />
+      )}
 
       {/* ═══ ENLARGED IMAGE DIALOG ═══ */}
       <Dialog open={imageEnlarged} onOpenChange={setImageEnlarged}>

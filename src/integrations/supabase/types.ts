@@ -3419,6 +3419,56 @@ export type Database = {
           },
         ]
       }
+      work_verification_requests: {
+        Row: {
+          applicant_id: string
+          applicant_note: string | null
+          created_at: string
+          decided_at: string | null
+          id: string
+          review_note: string | null
+          reviewer_id: string | null
+          status: string
+          supporting_urls: string[]
+          updated_at: string
+          work_id: string
+        }
+        Insert: {
+          applicant_id: string
+          applicant_note?: string | null
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          review_note?: string | null
+          reviewer_id?: string | null
+          status?: string
+          supporting_urls?: string[]
+          updated_at?: string
+          work_id: string
+        }
+        Update: {
+          applicant_id?: string
+          applicant_note?: string | null
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          review_note?: string | null
+          reviewer_id?: string | null
+          status?: string
+          supporting_urls?: string[]
+          updated_at?: string
+          work_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_verification_requests_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "works"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       works: {
         Row: {
           anchored_at: string | null
@@ -3515,6 +3565,14 @@ export type Database = {
       approve_pending_rewards_batch: {
         Args: { _admin_id: string; _reward_ids: string[] }
         Returns: number
+      }
+      approve_work_verification: {
+        Args: {
+          _request_id: string
+          _review_note?: string
+          _solana_signature: string
+        }
+        Returns: undefined
       }
       award_rhoze: {
         Args: { _amount: number; _description: string; _user_id: string }
@@ -3687,6 +3745,14 @@ export type Database = {
         Args: { _admin_id: string; _note?: string; _reward_id: string }
         Returns: undefined
       }
+      reject_work_verification: {
+        Args: {
+          _changes_requested?: boolean
+          _request_id: string
+          _review_note: string
+        }
+        Returns: undefined
+      }
       release_milestone_credits: {
         Args: { _approver_id: string; _milestone_id: string }
         Returns: undefined
@@ -3697,6 +3763,14 @@ export type Database = {
           _payout_details?: Json
           _payout_method: string
           _user_id: string
+        }
+        Returns: string
+      }
+      submit_work_verification: {
+        Args: {
+          _applicant_note?: string
+          _supporting_urls?: string[]
+          _work_id: string
         }
         Returns: string
       }
