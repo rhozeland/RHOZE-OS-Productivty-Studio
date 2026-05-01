@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   Moon, Sun, Upload, Eye, EyeOff, X, Camera, Lock, MapPin, Bell,
   Trash2, AlertTriangle, Download, User, Box, Wallet, Palette,
-  LayoutDashboard, ChevronRight, Sparkles,
+  LayoutDashboard, ChevronRight, Sparkles, Fingerprint,
 } from "lucide-react";
 import LogoCustomizer from "@/components/onboarding/LogoCustomizer";
 import DockCustomizer from "@/components/settings/DockCustomizer";
@@ -22,6 +22,7 @@ import ClaimLimitsControl from "@/components/settings/ClaimLimitsControl";
 import SettingsSubNav, {
   useActiveSettingsSection,
 } from "@/components/settings/SettingsSubNav";
+import WorksPage from "@/pages/WorksPage";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +35,10 @@ const SECTIONS = [
   { id: "avatar", label: "Display Picture", icon: Camera },
   { id: "banner", label: "Banner & Background", icon: Palette },
   { id: "wallet", label: "Wallet", icon: Wallet },
+  // Provenance vault — full Works registry. Works is ambient elsewhere
+  // (VerifiedIPBadge surfaces it inline on every creation); this is the
+  // dedicated personal vault, intentionally tucked under Settings.
+  { id: "provenance", label: "Provenance", icon: Fingerprint },
   { id: "shipping", label: "Shipping", icon: MapPin },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "security", label: "Security", icon: Lock },
@@ -762,6 +767,8 @@ const SettingsPage = () => {
     </div>
   );
 
+  const renderProvenance = () => <WorksPage embedded />;
+
   const sectionRenderers: Record<SectionId, () => JSX.Element> = {
     profile: renderProfile,
     appearance: renderAppearance,
@@ -770,6 +777,7 @@ const SettingsPage = () => {
     avatar: renderAvatar,
     banner: renderBanner,
     wallet: renderWallet,
+    provenance: renderProvenance,
     shipping: renderShipping,
     notifications: renderNotifications,
     security: renderSecurity,

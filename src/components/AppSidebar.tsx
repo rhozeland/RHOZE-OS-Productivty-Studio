@@ -12,7 +12,6 @@ import {
   FolderKanban,
   Sparkles,
   Building2,
-  Fingerprint,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -45,9 +44,10 @@ const pillarItems = [
   { icon: FolderKanban, label: "Projects", path: "/projects" },
 ];
 
-// Side-nav-only destinations.
-const workItems = [
-  { icon: Fingerprint, label: "Works", path: "/works" },
+// Side-nav-only destinations. Works is intentionally absent — it's
+// surfaced ambiently via <VerifiedIPBadge /> wherever a creation lives,
+// and the personal vault now lives at /settings#provenance (Pillars v5).
+const secondaryItems = [
   { icon: MessageSquare, label: "Inbox", path: "/messages" },
   { icon: CreditCard, label: "Creator Pass", path: "/credits" },
 ];
@@ -132,11 +132,11 @@ const AppSidebar = () => {
     );
   };
 
-  const renderGroup = (label: string, items: any[]) => (
+  const renderGroup = (items: any[], opts?: { label?: string }) => (
     <SidebarGroup>
-      {!collapsed && (
+      {!collapsed && opts?.label && (
         <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-muted-foreground/60 px-3 mb-1">
-          {label}
+          {opts.label}
         </SidebarGroupLabel>
       )}
       <SidebarGroupContent>
@@ -169,8 +169,8 @@ const AppSidebar = () => {
       </Link>
 
       <SidebarContent className="px-2 pt-3 space-y-2">
-        {renderGroup("Pillars", pillarItems)}
-        {renderGroup("Work", workItems)}
+        {renderGroup(pillarItems, { label: "Pillars" })}
+        {renderGroup(secondaryItems)}
       </SidebarContent>
 
       <SidebarFooter className="px-2 pb-4 mt-auto">

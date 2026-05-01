@@ -96,7 +96,12 @@ const KIND_LABEL: Record<WorkKind, string> = {
   other: "Other",
 };
 
-const WorksPage = () => {
+interface WorksPageProps {
+  /** When true, hides the page-level header (used when embedded inside Settings). */
+  embedded?: boolean;
+}
+
+const WorksPage = ({ embedded = false }: WorksPageProps = {}) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -143,39 +148,49 @@ const WorksPage = () => {
   });
 
   return (
-    <div className="container mx-auto max-w-5xl px-4 py-8 sm:py-10 space-y-8">
-      {/* Header */}
-      <header className="space-y-3">
-        <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-muted-foreground">
-          <Fingerprint className="h-3.5 w-3.5" /> Layer I · Provenance
-        </div>
-        <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-tight">
-          Works
-        </h1>
-        <p className="text-sm sm:text-base text-muted-foreground max-w-2xl">
-          Register any file — audio, image, video, text — as a verifiable
-          IP asset. Each work gets a SHA-256 content fingerprint and can
-          be anchored on Solana for a public, timestamped proof of
-          authorship.{" "}
-          <Link
-            to="/infrastructure"
-            className="underline-offset-4 hover:underline text-foreground"
-          >
-            Read the thesis →
-          </Link>
-        </p>
-
-        {user && (
-          <div className="pt-2">
-            <UploadDialog
-              onCreated={() => {
-                queryClient.invalidateQueries({ queryKey: ["works-mine"] });
-                queryClient.invalidateQueries({ queryKey: ["works-registry"] });
-              }}
-            />
+    <div className={embedded ? "space-y-6" : "container mx-auto max-w-5xl px-4 py-8 sm:py-10 space-y-8"}>
+      {/* Header — hidden when embedded inside Settings (Settings supplies its own) */}
+      {!embedded && (
+        <header className="space-y-3">
+          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-muted-foreground">
+            <Fingerprint className="h-3.5 w-3.5" /> Layer I · Provenance
           </div>
-        )}
-      </header>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-tight">
+            Works
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground max-w-2xl">
+            Register any file — audio, image, video, text — as a verifiable
+            IP asset. Each work gets a SHA-256 content fingerprint and can
+            be anchored on Solana for a public, timestamped proof of
+            authorship.{" "}
+            <Link
+              to="/infrastructure"
+              className="underline-offset-4 hover:underline text-foreground"
+            >
+              Read the thesis →
+            </Link>
+          </p>
+        </header>
+      )}
+
+      {embedded && (
+        <p className="text-sm text-muted-foreground">
+          Your personal vault of fingerprinted works. New uploads can also
+          happen inline anywhere a creation surfaces — this page is the
+          full registry.
+        </p>
+      )}
+
+      {user && (
+        <div>
+          <UploadDialog
+            onCreated={() => {
+              queryClient.invalidateQueries({ queryKey: ["works-mine"] });
+              queryClient.invalidateQueries({ queryKey: ["works-registry"] });
+            }}
+          />
+        </div>
+      )}
 
       <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
         <TabsList>
