@@ -494,6 +494,7 @@ const AttachedWorks = ({
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          </div>
         )}
       </header>
 
