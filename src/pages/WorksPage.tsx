@@ -174,11 +174,23 @@ const WorksPage = ({ embedded = false }: WorksPageProps = {}) => {
       )}
 
       {embedded && (
-        <p className="text-sm text-muted-foreground">
-          Your personal vault of fingerprinted works. New uploads can also
-          happen inline anywhere a creation surfaces — this page is the
-          full registry.
-        </p>
+        <div className="rounded-xl border border-border/60 bg-card p-4 space-y-2">
+          <p className="text-sm text-foreground font-medium">
+            Your vault of fingerprinted works.
+          </p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Drop in any file — audio, image, video, text — and we hash it in
+            your browser to create a tamper-proof fingerprint. Optionally
+            anchor it on Solana for a public, timestamped proof.{" "}
+            <Link
+              to="/projects"
+              className="text-foreground underline-offset-2 hover:underline"
+            >
+              Attach works to projects
+            </Link>{" "}
+            when you want collaborators to see the proof.
+          </p>
+        </div>
       )}
 
       {user && (

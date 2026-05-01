@@ -773,10 +773,31 @@ const SettingsPage = () => {
 
   const renderProvenance = () => (
     <div className="space-y-6">
+      {/* Top: status of any pending verification requests (only shows when present) */}
       <MyVerificationRequests />
-      <LaunchpadIdlVersions />
-      <LaunchpadIdlSettings />
+
+      {/* Main: the personal vault — the everyday surface for this section */}
       <WorksPage embedded />
+
+      {/* Developer tools — collapsed by default so the page stays focused.
+          Only relevant for users who deploy their own Launchpad program. */}
+      <details className="group rounded-xl border border-border/60 bg-muted/20 overflow-hidden">
+        <summary className="cursor-pointer select-none px-4 py-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center justify-between">
+          <span className="inline-flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
+            Developer tools — Launchpad IDL
+          </span>
+          <ChevronRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90" />
+        </summary>
+        <div className="px-4 pb-4 pt-2 space-y-4 border-t border-border/40">
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            Advanced. Paste a deployed Anchor IDL to switch the Launchpad to
+            real on-chain trading instead of the simulation.
+          </p>
+          <LaunchpadIdlVersions />
+          <LaunchpadIdlSettings />
+        </div>
+      </details>
     </div>
   );
 

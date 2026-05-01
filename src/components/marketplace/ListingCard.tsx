@@ -107,12 +107,16 @@ const ListingCard = ({
           </div>
         </div>
       ) : (
+        // Text-led editorial cover — no oversized empty palette icon.
+        // Reads as an intentional typographic surface instead of "missing image".
         <div
-          className="aspect-[16/10] flex items-center justify-center relative"
-          style={{ background: `linear-gradient(135deg, ${catMeta.color}22, ${catMeta.color}11)` }}
+          className="relative aspect-[16/10] flex flex-col justify-between p-4 overflow-hidden"
+          style={{
+            background: `linear-gradient(135deg, ${catMeta.color}1f 0%, ${catMeta.color}0a 60%, transparent 100%)`,
+          }}
         >
-          <CatIcon className="h-12 w-12" style={{ color: catMeta.color, opacity: 0.4 }} />
-          <div className="absolute top-2 left-2">
+          {/* Top: type badge + small category tag */}
+          <div className="flex items-start justify-between gap-2">
             <Badge
               variant="secondary"
               className={`bg-card/80 backdrop-blur-sm text-xs gap-1 ${isRequest ? "border-amber-500/30" : ""}`}
@@ -120,7 +124,37 @@ const ListingCard = ({
               <TypeIcon className="h-3 w-3" />
               {typeMeta.label}
             </Badge>
+            <span
+              className="text-[10px] uppercase tracking-[0.18em] font-semibold"
+              style={{ color: catMeta.color }}
+            >
+              {catMeta.label}
+            </span>
           </div>
+
+          {/* Center: editorial title preview (truncated; full title still in body) */}
+          <div className="flex-1 flex items-center pt-2">
+            <p
+              className="font-display font-bold text-foreground/90 leading-[1.05] line-clamp-3 text-base sm:text-lg"
+              title={listing.title}
+            >
+              {listing.title}
+            </p>
+          </div>
+
+          {/* Bottom: signature color band as visual anchor */}
+          <div
+            className="h-1 w-12 rounded-full mt-2"
+            style={{ background: catMeta.color }}
+          />
+
+          {/* Subtle corner monogram, decorative only */}
+          <CatIcon
+            aria-hidden
+            strokeWidth={0.6}
+            className="absolute -right-3 -bottom-3 h-20 w-20 pointer-events-none"
+            style={{ color: catMeta.color, opacity: 0.08 }}
+          />
         </div>
       )}
 

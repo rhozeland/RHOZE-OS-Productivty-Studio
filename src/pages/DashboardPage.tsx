@@ -614,7 +614,7 @@ const DashboardPage = () => {
   const visibleSections = sectionOrder.filter((s) => !hiddenSections.includes(s));
 
   return (
-    <div className="max-w-6xl mx-auto pb-24 space-y-12">
+    <div className="max-w-5xl mx-auto pb-24 space-y-12">
       {/* ─── Greeting strip ─────────────────────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -686,16 +686,17 @@ const DashboardPage = () => {
           />
         </form>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* STUDIO SPACES — physical */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {/* STUDIO SPACES — physical · 60% on desktop (3/5) */}
           <motion.div
             initial={{ opacity: 0, x: -16 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
+            className="md:col-span-3"
           >
             <Link
-              to="/studios"
-              className="group block relative overflow-hidden rounded-3xl border border-border/60 bg-card aspect-[4/5] sm:aspect-[5/4] md:aspect-[4/5]"
+              to="/spaces"
+              className="group block relative overflow-hidden rounded-3xl border border-border/60 bg-card min-h-[360px] md:min-h-[420px] h-full"
             >
               {/* Iridescent backdrop */}
               <div className="absolute inset-0 opacity-80">
@@ -703,71 +704,79 @@ const DashboardPage = () => {
                   className="absolute -top-1/2 -left-1/4 w-[150%] h-[150%]"
                   style={{
                     background: `
-                      radial-gradient(ellipse 50% 40% at 30% 30%, hsl(220 70% 50% / 0.35) 0%, transparent 70%),
-                      radial-gradient(ellipse 40% 50% at 70% 70%, hsl(180 60% 45% / 0.3) 0%, transparent 70%)
+                      radial-gradient(ellipse 50% 40% at 30% 30%, hsl(220 70% 50% / 0.30) 0%, transparent 70%),
+                      radial-gradient(ellipse 40% 50% at 70% 70%, hsl(180 60% 45% / 0.25) 0%, transparent 70%)
                     `,
                   }}
                 />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent" />
 
-              {/* Oversized editorial glyph — art, not decoration */}
-              <Building2
-                aria-hidden
-                strokeWidth={0.5}
-                style={{ color: "hsl(220 70% 50% / 0.12)" }}
-                className="absolute -right-8 -top-8 h-64 w-64 group-hover:opacity-150 transition-opacity duration-500 pointer-events-none"
-              />
-
-              {/* Content */}
               <div className="relative h-full flex flex-col p-6 sm:p-8">
-                <div className="flex-1">
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur px-2.5 py-1 mb-4">
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
-                    <span className="text-[10px] uppercase tracking-widest text-foreground font-medium">
-                      Physical
-                    </span>
+                <div className="flex items-start justify-between gap-4 mb-6">
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur px-2.5 py-1 mb-3">
+                      <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                      <span className="text-[10px] uppercase tracking-widest text-foreground font-medium">
+                        Physical
+                      </span>
+                    </div>
+                    <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-[1.05]">
+                      Studio Spaces
+                    </h2>
+                    <p className="text-sm text-muted-foreground mt-2 max-w-xs">
+                      Real rooms. Real gear. Booked by the hour.
+                    </p>
                   </div>
-                  <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-none mb-3">
-                    Studio
-                    <br />
-                    Spaces
-                  </h2>
-                  <p className="text-sm text-muted-foreground leading-snug">
-                    Real rooms. Real gear.
-                  </p>
+                  <Building2
+                    aria-hidden
+                    strokeWidth={0.6}
+                    className="h-16 w-16 text-blue-500/15 shrink-0 hidden sm:block"
+                  />
                 </div>
 
-                {/* Live previews — first 3 studio thumbnails */}
-                <div className="flex -space-x-3 mb-4">
+                {/* Real content peek — 4 studio tiles */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-auto">
                   {(studios ?? []).slice(0, 4).map((s: any) => (
                     <div
                       key={s.id}
-                      className="h-12 w-12 rounded-2xl border-2 border-background overflow-hidden bg-muted"
+                      className="aspect-square rounded-xl border border-border/40 overflow-hidden bg-muted relative group/tile"
                     >
                       {s.cover_image_url || s.hero_image_url ? (
                         <img
                           src={s.cover_image_url ?? s.hero_image_url}
                           alt=""
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover/tile:scale-110"
+                          loading="lazy"
                         />
                       ) : (
-                        <div className="h-full w-full flex items-center justify-center">
-                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                        <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-blue-500/20 to-cyan-500/10">
+                          <Building2 className="h-5 w-5 text-blue-500/60" />
+                        </div>
+                      )}
+                      {(s.cover_image_url || s.hero_image_url) && s.city && (
+                        <div className="absolute inset-x-0 bottom-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
+                          <p className="text-[9px] font-medium text-white truncate uppercase tracking-wider">
+                            {s.city}
+                          </p>
                         </div>
                       )}
                     </div>
                   ))}
-                  {(studios?.length ?? 0) > 4 && (
-                    <div className="h-12 w-12 rounded-2xl border-2 border-background bg-card flex items-center justify-center text-xs font-semibold">
-                      +{(studios?.length ?? 0) - 4}
-                    </div>
+                  {/* Pad with placeholders so the grid never looks empty */}
+                  {Array.from({ length: Math.max(0, 4 - (studios?.length ?? 0)) }).map(
+                    (_, i) => (
+                      <div
+                        key={`ph-${i}`}
+                        className="aspect-square rounded-xl border border-dashed border-border/40 bg-gradient-to-br from-blue-500/[0.04] to-cyan-500/[0.02]"
+                      />
+                    ),
                   )}
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mt-5 pt-4 border-t border-border/40">
                   <span className="text-xs text-muted-foreground">
-                    {studios?.length ?? 0} bookable
+                    {studios?.length ?? 0} bookable · across cities
                   </span>
                   <span className="inline-flex items-center gap-1 text-sm font-semibold text-foreground group-hover:gap-2 transition-all">
                     Step in <ArrowRight className="h-4 w-4" />
@@ -777,78 +786,88 @@ const DashboardPage = () => {
             </Link>
           </motion.div>
 
-          {/* HUB — digital */}
+          {/* HUB — digital · 40% on desktop (2/5) */}
           <motion.div
             initial={{ opacity: 0, x: 16 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
+            className="md:col-span-2"
           >
             <Link
               to="/hub"
-              className="group block relative overflow-hidden rounded-3xl border border-border/60 bg-card aspect-[4/5] sm:aspect-[5/4] md:aspect-[4/5]"
+              className="group block relative overflow-hidden rounded-3xl border border-border/60 bg-card min-h-[360px] md:min-h-[420px] h-full"
             >
               <div className="absolute inset-0 opacity-80">
                 <div
                   className="absolute -top-1/2 -left-1/4 w-[150%] h-[150%]"
                   style={{
                     background: `
-                      radial-gradient(ellipse 50% 40% at 70% 30%, hsl(320 80% 60% / 0.35) 0%, transparent 70%),
-                      radial-gradient(ellipse 40% 50% at 30% 70%, hsl(30 90% 55% / 0.3) 0%, transparent 70%)
+                      radial-gradient(ellipse 50% 40% at 70% 30%, hsl(320 80% 60% / 0.30) 0%, transparent 70%),
+                      radial-gradient(ellipse 40% 50% at 30% 70%, hsl(30 90% 55% / 0.25) 0%, transparent 70%)
                     `,
                   }}
                 />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent" />
 
-              {/* Oversized editorial glyph — art, not decoration */}
-              <Sparkles
-                aria-hidden
-                strokeWidth={0.5}
-                style={{ color: "hsl(320 80% 60% / 0.14)" }}
-                className="absolute -right-8 -top-8 h-64 w-64 transition-opacity duration-500 pointer-events-none"
-              />
+              <div className="relative h-full flex flex-col p-6 sm:p-7">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur px-2.5 py-1 mb-3 self-start">
+                  <span className="h-1.5 w-1.5 rounded-full bg-pink-500 animate-pulse" />
+                  <span className="text-[10px] uppercase tracking-widest text-foreground font-medium">
+                    Digital
+                  </span>
+                </div>
+                <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-[1.05]">
+                  The Hub
+                </h2>
+                <p className="text-sm text-muted-foreground mt-2">
+                  The pulse of the community.
+                </p>
 
-              <div className="relative h-full flex flex-col p-6 sm:p-8">
-                <div className="flex-1">
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur px-2.5 py-1 mb-4">
-                    <span className="h-1.5 w-1.5 rounded-full bg-pink-500 animate-pulse" />
-                    <span className="text-[10px] uppercase tracking-widest text-foreground font-medium">
-                      Digital
-                    </span>
+                {/* Lane previews — text-led, no big icons */}
+                <div className="space-y-1.5 mt-5">
+                  {[
+                    { label: "Conversations", icon: MessageSquare, color: "text-pink-500" },
+                    { label: "Offerings", icon: Briefcase, color: "text-amber-500" },
+                    { label: "Opportunities", icon: Megaphone, color: "text-fuchsia-500" },
+                    { label: "Works", icon: Sparkles, color: "text-emerald-500" },
+                  ].map((lane) => {
+                    const Icon = lane.icon;
+                    return (
+                      <div
+                        key={lane.label}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-background/40 backdrop-blur-sm border border-border/30"
+                      >
+                        <Icon className={`h-3.5 w-3.5 ${lane.color}`} />
+                        <span className="text-xs font-medium text-foreground">
+                          {lane.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* People avatars — small */}
+                {(people?.length ?? 0) > 0 && (
+                  <div className="flex -space-x-2 mt-auto pt-5">
+                    {(people ?? []).slice(0, 5).map((p: any) => (
+                      <div
+                        key={p.user_id}
+                        className="h-7 w-7 rounded-full border-2 border-background overflow-hidden bg-muted"
+                      >
+                        {p.avatar_url ? (
+                          <img src={p.avatar_url} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-[9px] font-bold">
+                            {(p.display_name || p.username || "?")[0].toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                  <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-none mb-3">
-                    The
-                    <br />
-                    Hub
-                  </h2>
-                  <p className="text-sm text-muted-foreground leading-snug">
-                    The pulse of the community.
-                  </p>
-                </div>
+                )}
 
-                <div className="flex -space-x-3 mb-4">
-                  {(people ?? []).slice(0, 4).map((p: any) => (
-                    <div
-                      key={p.user_id}
-                      className="h-12 w-12 rounded-full border-2 border-background overflow-hidden bg-muted"
-                    >
-                      {p.avatar_url ? (
-                        <img src={p.avatar_url} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="h-full w-full flex items-center justify-center text-xs font-bold">
-                          {(p.display_name || p.username || "?")[0].toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {(people?.length ?? 0) > 4 && (
-                    <div className="h-12 w-12 rounded-full border-2 border-background bg-card flex items-center justify-center text-xs font-semibold">
-                      +{(people?.length ?? 0) - 4}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/40">
                   <span className="text-xs text-muted-foreground">
                     {people?.length ?? 0} active
                   </span>
