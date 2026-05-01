@@ -153,7 +153,7 @@ const WorksPage = ({ embedded = false }: WorksPageProps = {}) => {
       {!embedded && (
         <header className="space-y-3">
           <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-muted-foreground">
-            <Fingerprint className="h-3.5 w-3.5" /> Layer I · Provenance
+            <Fingerprint className="h-3.5 w-3.5" /> Layer I · Verified IP
           </div>
           <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-tight">
             Works
