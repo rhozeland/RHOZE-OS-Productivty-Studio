@@ -42,7 +42,7 @@ import HomePage from "@/pages/HomePage";
 import InfrastructurePage from "@/pages/InfrastructurePage";
 // WorksPage is no longer routed here — it's mounted inside SettingsPage
 // (Provenance section). /works redirects to /settings#provenance below.
-// /spaces is now the tabbed Spaces · Events · Residencies hub.
+// /spaces is the Luma-inspired hub: Events timeline · Spaces marketplace · Discover.
 // PeoplePage retained but unrouted — /people redirects to /hub.
 import HubPage from "@/pages/HubPage";
 import SpacesHubPage from "@/pages/SpacesHubPage";
@@ -193,7 +193,7 @@ const App = () => (
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 {/* Primary pillars: Home · Hub · Spaces · Projects · Profile.
-                    /spaces is the tabbed Spaces · Events · Residencies hub.
+                    /spaces is the Events · Spaces · Discover hub.
                     /studios redirects in for backwards compatibility. */}
                 <Route path="/spaces" element={<SpacesHubPage />} />
                 <Route path="/spaces/events/new" element={<ProtectedRoute><EventCreatePage /></ProtectedRoute>} />
