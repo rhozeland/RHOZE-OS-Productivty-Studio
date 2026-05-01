@@ -73,9 +73,7 @@ export const NAV_ITEMS: NavItem[] = [
   // Projects demoted out of the dock as part of v6. Lives as a tab on
   // the artist's own profile ("Building"). Route + nav id stay so deep
   // links and the Tools-tab back-references keep working.
-  { id: "projects", label: "Projects", icon: FolderKanban, path: "/projects" },
   // Profile — user's own profile.
-  { id: "dashboard", label: "Studio", icon: Home, path: "/dashboard" },
   { id: "profile", label: "Profile", icon: User, path: "/profile" },
   // Legacy / utility entries — kept registered so dock customization,
   // active-state, and deep-link pages still work.
