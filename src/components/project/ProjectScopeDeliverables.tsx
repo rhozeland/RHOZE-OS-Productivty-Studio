@@ -18,6 +18,8 @@ import {
   Loader2,
   ExternalLink,
   X,
+  ShieldCheck,
+  Anchor,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -52,6 +54,8 @@ interface Deliverable {
   file_size: number | null;
   content_hash: string | null;
   file_uploaded_at: string | null;
+  solana_signature: string | null;
+  anchored_at: string | null;
 }
 
 interface ProjectScopeDeliverablesProps {
