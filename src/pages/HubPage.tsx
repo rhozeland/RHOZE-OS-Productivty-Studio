@@ -37,7 +37,7 @@ import {
   Shield,
   Flame,
   ArrowRight,
-} from "lucide-react";
+  Coins,
 import ListingCard from "@/components/marketplace/ListingCard";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
