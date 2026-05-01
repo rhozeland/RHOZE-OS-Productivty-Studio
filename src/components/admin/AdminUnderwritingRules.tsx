@@ -223,15 +223,21 @@ const AdminUnderwritingRules = () => {
 
   const saveMutation = useMutation({
     mutationFn: async (payload: UnderwritingRules) => {
+      const { data: auth } = await supabase.auth.getUser();
       const { error } = await (supabase as any)
         .from("capital_underwriting_rules")
-        .update(payload)
+        .update({
+          ...payload,
+          updated_by: auth.user?.id ?? null,
+          updated_at: new Date().toISOString(),
+        })
         .eq("id", 1);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Underwriting rules updated");
       qc.invalidateQueries({ queryKey: ["capital-underwriting-rules"] });
+      qc.invalidateQueries({ queryKey: ["capital-underwriting-rules-audit"] });
       setDirty(false);
     },
     onError: (e: any) => toast.error(e.message || "Could not save rules"),
