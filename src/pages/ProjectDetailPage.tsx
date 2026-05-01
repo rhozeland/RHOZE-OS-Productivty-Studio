@@ -247,8 +247,11 @@ const ProjectDetailPage = () => {
             </div>
           ) : (
             <div
-              className="group cursor-pointer rounded-lg p-1 -m-1 hover:bg-muted/40 transition-colors"
-              onClick={startEditing}
+              className={
+                "group rounded-lg p-1 -m-1 transition-colors " +
+                (canManageProject ? "cursor-pointer hover:bg-muted/40" : "")
+              }
+              onClick={canManageProject ? startEditing : undefined}
             >
               <div className="flex items-center gap-3">
                 <div
