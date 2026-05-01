@@ -774,6 +774,7 @@ const SettingsPage = () => {
   const renderProvenance = () => (
     <div className="space-y-6">
       <MyVerificationRequests />
+      <LaunchpadIdlVersions />
       <LaunchpadIdlSettings />
       <WorksPage embedded />
     </div>
