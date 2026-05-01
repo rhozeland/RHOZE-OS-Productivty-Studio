@@ -1080,7 +1080,7 @@ const VerifiedIPSection = ({ userId }: { userId: string | null }) => {
       {/* Explainer */}
       <div className="surface-card p-5 sm:p-6">
         <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-muted-foreground mb-2">
-          <Shield className="h-3.5 w-3.5" /> Layer I · Provenance
+          <Shield className="h-3.5 w-3.5" /> Layer I · Verified IP
         </div>
         <h3 className="font-display text-2xl font-bold text-foreground">
           Every file you make can be Verified IP.
