@@ -15,9 +15,10 @@ import { useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Building2, CalendarDays, Sprout, Plus, Sparkles } from "lucide-react";
+import { Building2, CalendarDays, Sprout, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import StudiosPage from "@/pages/StudiosPage";
+import EventsListPanel from "@/pages/EventsListPanel";
 
 type Tab = "spaces" | "events" | "residencies";
 
@@ -88,36 +89,9 @@ const SpacesHubPage = () => {
           <StudiosPage />
         </TabsContent>
 
-        {/* Events — placeholder until the events list/detail/wizard land */}
+        {/* Events — list of published events */}
         <TabsContent value="events" className="mt-6">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-border bg-card p-10 text-center"
-          >
-            <div className="mx-auto h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <CalendarDays className="h-6 w-6 text-primary" />
-            </div>
-            <h2 className="font-display text-xl font-bold text-foreground mb-1.5">
-              Events are coming next
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              RSVP and paid ticketing (USD + $RHOZE), with every event manifest,
-              artifact, and ticket SHA-256 anchored on Solana. Hosting opens to
-              all members.
-            </p>
-            <div className="flex items-center justify-center gap-2 mt-5 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 text-[11px] rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
-                <Sparkles className="h-3 w-3" /> Manifest hash on publish
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-[11px] rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
-                <Sparkles className="h-3 w-3" /> Artifact provenance
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-[11px] rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
-                <Sparkles className="h-3 w-3" /> Proof of attendance
-              </span>
-            </div>
-          </motion.div>
+          <EventsListPanel />
         </TabsContent>
 
         {/* Residencies — coming-soon stub (no DB, no flows in v1) */}
