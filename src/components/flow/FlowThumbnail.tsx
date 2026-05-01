@@ -58,11 +58,21 @@ export const FlowThumbnail = ({
     );
   }
 
+  // Text-led editorial fallback — no oversized palette icon. Reads as an
+  // intentional typographic surface so empty thumbnails stop screaming
+  // "missing image" across feeds.
   return (
-    <div className="w-full h-full bg-gradient-to-br from-primary/15 to-accent/10 flex items-center justify-center p-4">
-      <p className="text-xs text-center text-muted-foreground line-clamp-6 font-body">
-        {description || title}
-      </p>
+    <div className="w-full h-full bg-gradient-to-br from-primary/[0.08] via-card to-accent/[0.06] flex items-center justify-center p-5">
+      <div className="text-center max-w-full">
+        <p className="font-display font-bold text-foreground/80 leading-tight line-clamp-3 text-sm sm:text-base">
+          {title}
+        </p>
+        {description && (
+          <p className="text-[11px] text-muted-foreground/80 line-clamp-2 mt-2 font-body">
+            {description}
+          </p>
+        )}
+      </div>
     </div>
   );
 };
