@@ -89,7 +89,7 @@ const EventDetailPage = () => {
             holder_id: user.id,
             tier_id: tierId,
             qr_token,
-            purchase_currency: "rsvp",
+            purchase_currency: "free",
             amount_paid: 0,
             status: "issued",
           },
