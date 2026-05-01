@@ -572,16 +572,10 @@ const HubPage = () => {
           <div className="flex items-end justify-between gap-3">
             <div>
               <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
-                Artist coins
+                Creator coins
               </p>
-              <h2 className="font-display text-xl text-foreground">From Verified IP.</h2>
+              <h2 className="font-display text-xl text-foreground">Back the artist.</h2>
             </div>
-            <Link
-              to="/launchpad"
-              className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-            >
-              Open Launchpad →
-            </Link>
           </div>
 
           {loadingCoins ? (
@@ -605,7 +599,7 @@ const HubPage = () => {
                     transition={{ delay: i * 0.04 }}
                   >
                     <Link
-                      to={`/launchpad/${c.id}`}
+                      to={`/profiles/${c.creator_id}?tab=coin`}
                       className="group block rounded-2xl border border-border bg-card hover:border-emerald-500/40 hover:-translate-y-0.5 transition-all p-4 h-full"
                     >
                       <div className="flex items-start gap-3 mb-3">
