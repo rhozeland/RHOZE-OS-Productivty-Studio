@@ -135,7 +135,75 @@ const ProjectScopeDeliverables = ({
     },
   });
 
-  const completedCount = deliverables.filter((d) => d.completed).length;
+  /**
+   * Per-row file upload. Hashes the file in the browser with SHA-256,
+   * uploads to the `flow-uploads` bucket under <uid>/deliverables/...,
+   * then patches the deliverable row with file metadata + content_hash so
+   * we have a verifiable fingerprint of every project file we host.
+   */
+  const uploadFileForDeliverable = async (deliverableId: string, file: File) => {
+    if (!user) return;
+    setUploadingId(deliverableId);
+    try {
+      const contentHash = await computeContentHash(file);
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `${user.id}/deliverables/${projectId}/${Date.now()}_${safeName}`;
+      const { error: uploadErr } = await supabase.storage
+        .from("flow-uploads")
+        .upload(path, file, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: file.type || undefined,
+        });
+      if (uploadErr) throw uploadErr;
+      const { data: pub } = supabase.storage.from("flow-uploads").getPublicUrl(path);
+
+      const { error: updateErr } = await supabase
+        .from("project_deliverables" as any)
+        .update({
+          file_url: pub.publicUrl,
+          file_name: file.name,
+          mime_type: file.type || null,
+          file_size: file.size,
+          content_hash: contentHash,
+          file_uploaded_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } as any)
+        .eq("id", deliverableId);
+      if (updateErr) throw updateErr;
+
+      toast.success("File attached", {
+        description: `Fingerprint sha256:${shortHash(contentHash)}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["project-deliverables", projectId] });
+    } catch (err: any) {
+      toast.error("Upload failed", { description: err?.message ?? "Unknown error" });
+    } finally {
+      setUploadingId(null);
+    }
+  };
+
+  const clearFile = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("project_deliverables" as any)
+        .update({
+          file_url: null,
+          file_name: null,
+          mime_type: null,
+          file_size: null,
+          content_hash: null,
+          file_uploaded_at: null,
+          updated_at: new Date().toISOString(),
+        } as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-deliverables", projectId] });
+    },
+  });
+
   const totalCount = deliverables.length;
   const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
