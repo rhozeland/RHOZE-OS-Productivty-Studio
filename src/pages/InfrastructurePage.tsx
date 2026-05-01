@@ -253,7 +253,7 @@ const InfrastructurePage = () => {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-2 pt-4 font-mono text-xs sm:text-sm">
-            {["Provenance", "Splits", "Settlement", "Capital", "Applications"].map(
+            {["Verified IP", "Splits", "Settlement", "Capital", "Applications"].map(
               (label, i, arr) => (
                 <div key={label} className="flex items-center gap-2">
                   <Badge
