@@ -89,7 +89,7 @@ describe("decideShortcut — leader sequence", () => {
   });
 
   it.each([
-    ["d", "/dashboard"],
+    ["d", "/discover"],
     ["p", "/projects"],
     ["c", "/calendar"],
     ["f", "/flow"],
