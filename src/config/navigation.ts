@@ -45,7 +45,7 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Hub",
     icon: Sparkles,
     path: "/hub",
-    matchPaths: ["/marketplace", "/creators", "/people", "/spaces"],
+    matchPaths: ["/marketplace", "/creators", "/people"],
   },
   // Projects — promoted to the dock. Hosts Flow / Smartboards / Drop Rooms
   // as in-context tools (see ProjectDetailPage Tools tab).
