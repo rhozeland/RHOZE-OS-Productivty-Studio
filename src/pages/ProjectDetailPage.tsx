@@ -473,7 +473,7 @@ const ProjectDetailPage = () => {
           <AttachedWorks
             targetType="project"
             targetId={id!}
-            canManage={project.user_id === user?.id}
+            canManage={canManageProject}
             title="Anchored deliverables"
           />
         </TabsContent>
