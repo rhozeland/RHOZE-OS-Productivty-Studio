@@ -11,10 +11,11 @@ import { Users, Plus, X, Search, Info, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
+import { useProjectRole } from "@/hooks/useProjectRole";
+
 const ROLE_INFO: Record<string, { label: string; description: string }> = {
-  viewer: { label: "Viewer", description: "Can view project details, goals, and files but cannot make changes." },
-  editor: { label: "Editor", description: "Can edit goals, upload files, post updates, and manage deliverables." },
-  admin: { label: "Admin", description: "Full access — can invite/remove members, edit settings, and approve stages." },
+  member: { label: "Member", description: "Can view the project, its goals, files, and team — but cannot edit settings, manage the team, or upload to the moodboard." },
+  admin: { label: "Admin", description: "Full editing access — can update project settings, manage the team, edit goals, and upload to the moodboard. Cannot remove the owner." },
 };
 
 interface CollaboratorsProps {
