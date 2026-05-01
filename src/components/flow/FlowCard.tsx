@@ -95,6 +95,7 @@ interface FlowCardProps {
       | "rejected"
       | "changes_requested"
       | null;
+    work_id?: string | null;
   };
   expanded: boolean;
   onToggleExpand: () => void;
