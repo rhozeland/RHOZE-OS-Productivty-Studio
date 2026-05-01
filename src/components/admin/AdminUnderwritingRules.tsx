@@ -388,11 +388,21 @@ const AdminUnderwritingRules = () => {
     onError: (e: any) => toast.error(e.message || "Could not save rules"),
   });
 
-  if (isLoading) {
+  if (adminLoading || isLoading) {
     return (
       <Card>
         <CardContent className="flex items-center gap-2 text-muted-foreground p-6">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading rules…
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-sm text-muted-foreground">
+          You don't have permission to view the underwriting rules editor.
         </CardContent>
       </Card>
     );
