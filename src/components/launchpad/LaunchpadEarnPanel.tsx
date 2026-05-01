@@ -175,7 +175,7 @@ const LaunchpadEarnPanel = () => {
               <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 Earn $RHOZE
               </p>
-              <p className="text-sm font-semibold leading-tight truncate">
+              <p className="text-sm font-semibold leading-tight break-words">
                 Trading fuel — earned by contributing.
               </p>
             </div>
