@@ -25,8 +25,20 @@ const ProfileDetailPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const isOwnProfile = user?.id === id;
+
+  // Tabs: Overview · Coin · Works · Listings · Availability.
+  // ?tab=coin etc. deep-links from Flow speculate pills + Hub coins strip.
+  const tabFromUrl = searchParams.get("tab") || "overview";
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
+  const handleTabChange = (v: string) => {
+    setActiveTab(v);
+    const next = new URLSearchParams(searchParams);
+    if (v === "overview") next.delete("tab"); else next.set("tab", v);
+    setSearchParams(next, { replace: true });
+  };
 
   // ─── Data fetching ───
   const { data: profile, isLoading } = useQuery({
