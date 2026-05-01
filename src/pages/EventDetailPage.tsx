@@ -5,6 +5,7 @@
  * RSVP / claim button per tier. Free tiers issue a ticket immediately;
  * paid tiers display price and a "coming soon" hint until checkout lands.
  */
+import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -26,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { shortHash } from "@/lib/content-hash";
+import TicketCheckoutDialog from "@/components/events/TicketCheckoutDialog";
 
 const EventDetailPage = () => {
   const { id } = useParams<{ id: string }>();
