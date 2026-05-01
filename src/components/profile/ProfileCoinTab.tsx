@@ -30,7 +30,7 @@ interface Props {
   memberSince?: string | null;
 }
 
-const ProfileCoinTab = ({ creatorId, isOwnProfile, defaultName, defaultImage }: Props) => {
+const ProfileCoinTab = ({ creatorId, isOwnProfile, defaultName, defaultImage, memberSince }: Props) => {
   const [launchOpen, setLaunchOpen] = useState(false);
 
   const { data: coin, isLoading, refetch } = useQuery({
