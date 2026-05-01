@@ -34,6 +34,7 @@ const EventDetailPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const [checkoutTier, setCheckoutTier] = useState<any | null>(null);
 
   const { data: ev, isLoading } = useQuery({
     queryKey: ["event", id],
