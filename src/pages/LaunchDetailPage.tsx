@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Coins, GraduationCap, Lock, ExternalLink, Loader2, ArrowLeft } from "lucide-react";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import TradePanel from "@/components/launchpad/TradePanel";
+import LaunchpadModeBanner from "@/components/launchpad/LaunchpadModeBanner";
 import { Button } from "@/components/ui/button";
 
 type Launch = {
@@ -188,6 +189,7 @@ const LaunchDetailPage = () => {
 
         {/* Trade panel */}
         <div className="space-y-4">
+          <LaunchpadModeBanner />
           <TradePanel
             launchId={launch.id}
             ticker={launch.ticker}
