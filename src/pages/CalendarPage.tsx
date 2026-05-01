@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, Clock, X, CalendarDays, RefreshCw, Coins, CreditCard, Wallet, Check, Building2, FolderKanban, Bell } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, X, CalendarDays, RefreshCw, Coins, CreditCard, Wallet, Check, Building2, FolderKanban, Bell, Pencil, Trash2, Plus, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
 import PaySolAndVerify from "@/components/PaySolAndVerify";
@@ -74,6 +74,14 @@ const CalendarPage = () => {
   const [bookingNotes, setBookingNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("credits");
   const [bookingLoading, setBookingLoading] = useState(false);
+  // Event editor extras
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [eventDate, setEventDate] = useState<string>(""); // YYYY-MM-DD
+  const [eventStartTime, setEventStartTime] = useState<string>(""); // HH:mm
+  const [eventEndTime, setEventEndTime] = useState<string>(""); // HH:mm
+  const [attendeesInput, setAttendeesInput] = useState<string>("");
+  const [attendees, setAttendees] = useState<string[]>([]);
+  const [reminderMinutes, setReminderMinutes] = useState<string>("none");
   // Google Calendar
   const [googleEvents, setGoogleEvents] = useState<CalendarEvent[]>([]);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -139,36 +147,120 @@ const CalendarPage = () => {
     },
   });
 
-  const createCalendarEvent = async () => {
-    if (!dragDate || dragStartHour === null || dragEndHour === null || !user) return;
-    const startH = Math.min(dragStartHour, dragEndHour);
-    const endH = Math.max(dragStartHour, dragEndHour) + 1;
-    const start = setMinutes(setHours(dragDate, startH), 0);
-    const end = setMinutes(setHours(dragDate, endH), 0);
+  const resetEventForm = () => {
+    setEditingEventId(null);
+    setEventTitle("");
+    setSelectedProject("");
+    setBookingNotes("");
+    setEventDate("");
+    setEventStartTime("");
+    setEventEndTime("");
+    setAttendees([]);
+    setAttendeesInput("");
+    setReminderMinutes("none");
+  };
+
+  const addAttendee = () => {
+    const value = attendeesInput.trim();
+    if (!value) return;
+    // very light email validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      toast.error("Enter a valid email address");
+      return;
+    }
+    if (attendees.includes(value)) {
+      setAttendeesInput("");
+      return;
+    }
+    setAttendees([...attendees, value]);
+    setAttendeesInput("");
+  };
+
+  const removeAttendee = (email: string) => {
+    setAttendees(attendees.filter((a) => a !== email));
+  };
+
+  const openEditEvent = (ev: any) => {
+    const start = new Date(ev.start_time);
+    const end = new Date(ev.end_time);
+    setEditingEventId(ev.id);
+    setEventType(ev.project_id ? "project" : "reminder");
+    setEventTitle(ev.title || "");
+    setSelectedProject(ev.project_id || "");
+    setBookingNotes(ev.description || "");
+    setEventDate(format(start, "yyyy-MM-dd"));
+    setEventStartTime(format(start, "HH:mm"));
+    setEventEndTime(format(end, "HH:mm"));
+    setAttendees(Array.isArray(ev.attendees) ? ev.attendees : []);
+    setReminderMinutes(ev.reminder_minutes != null ? String(ev.reminder_minutes) : "none");
+    setBookingDialogOpen(true);
+  };
+
+  const deleteCalendarEvent = async (id: string) => {
+    try {
+      const { error } = await supabase.from("calendar_events").delete().eq("id", id);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
+      toast.success("Event deleted");
+      setBookingDialogOpen(false);
+      resetEventForm();
+      setEventType(null);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete event");
+    }
+  };
+
+  const saveCalendarEvent = async () => {
+    if (!user) return;
+    if (!eventDate || !eventStartTime || !eventEndTime) {
+      toast.error("Please pick a date and time");
+      return;
+    }
+    const start = new Date(`${eventDate}T${eventStartTime}`);
+    const end = new Date(`${eventDate}T${eventEndTime}`);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      toast.error("Invalid date or time");
+      return;
+    }
+    if (end <= start) {
+      toast.error("End time must be after start time");
+      return;
+    }
 
     setBookingLoading(true);
     try {
-      const { error } = await supabase.from("calendar_events").insert({
+      const payload = {
         user_id: user.id,
         title: eventTitle || (eventType === "project" ? "Project Session" : "Reminder"),
         start_time: start.toISOString(),
         end_time: end.toISOString(),
         description: bookingNotes || null,
-        project_id: selectedProject || null,
+        project_id: eventType === "project" ? (selectedProject || null) : null,
+        attendees,
+        reminder_minutes: reminderMinutes === "none" ? null : Number(reminderMinutes),
         color: eventType === "project" ? "hsl(175, 60%, 55%)" : "hsl(280, 60%, 55%)",
-      });
-      if (error) throw error;
+      };
+
+      if (editingEventId) {
+        const { error } = await supabase
+          .from("calendar_events")
+          .update(payload)
+          .eq("id", editingEventId);
+        if (error) throw error;
+        toast.success("Event updated");
+      } else {
+        const { error } = await supabase.from("calendar_events").insert(payload);
+        if (error) throw error;
+        toast.success(eventType === "project" ? "Project session added!" : "Reminder set!");
+      }
 
       queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
       resetDrag();
       setBookingDialogOpen(false);
       setEventType(null);
-      setEventTitle("");
-      setSelectedProject("");
-      setBookingNotes("");
-      toast.success(eventType === "project" ? "Project session added!" : "Reminder set!");
+      resetEventForm();
     } catch (err: any) {
-      toast.error(err.message || "Failed to create event");
+      toast.error(err.message || "Failed to save event");
     } finally {
       setBookingLoading(false);
     }
@@ -421,7 +513,13 @@ const CalendarPage = () => {
   };
 
   const handleMouseUp = () => {
-    if (isDragging && dragStartHour !== null && dragEndHour !== null) {
+    if (isDragging && dragStartHour !== null && dragEndHour !== null && dragDate) {
+      // Prefill the editor's date/time fields from the drag selection
+      const startH = Math.min(dragStartHour, dragEndHour);
+      const endH = Math.max(dragStartHour, dragEndHour) + 1;
+      setEventDate(format(dragDate, "yyyy-MM-dd"));
+      setEventStartTime(`${String(startH).padStart(2, "0")}:00`);
+      setEventEndTime(`${String(endH).padStart(2, "0")}:00`);
       // If coming from a service pre-selection, auto-set to studio
       if (searchParams.get("service")) setEventType("studio");
       setBookingDialogOpen(true);
@@ -531,24 +629,40 @@ const CalendarPage = () => {
           <h1 className="font-display text-3xl font-bold text-foreground">Calendar</h1>
           <p className="text-muted-foreground">Schedule and manage your creative sessions</p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={fetchGoogleCalendar}
-          disabled={googleLoading}
-        >
-          {googleLoading ? (
-            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-            </svg>
-          )}
-          {googleConnected ? "Refresh Google" : "Import Google Calendar"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            onClick={() => {
+              resetEventForm();
+              const today = new Date();
+              setEventDate(format(today, "yyyy-MM-dd"));
+              setEventStartTime("10:00");
+              setEventEndTime("11:00");
+              setEventType("reminder");
+              setBookingDialogOpen(true);
+            }}
+          >
+            <Plus className="mr-1.5 h-4 w-4" /> Add event
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchGoogleCalendar}
+            disabled={googleLoading}
+          >
+            {googleLoading ? (
+              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+              </svg>
+            )}
+            {googleConnected ? "Refresh Google" : "Import Google Calendar"}
+          </Button>
+        </div>
       </div>
 
       {/* Legend */}
@@ -662,9 +776,13 @@ const CalendarPage = () => {
                           </div>
                         ))}
                         {items.events.slice(0, totalItems > 2 ? 1 : 2).map((e) => (
-                          <div key={e.id} className="truncate rounded bg-accent/15 px-1.5 py-0.5 text-[10px] text-accent-foreground">
+                          <button
+                            key={e.id}
+                            onClick={(ev) => { ev.stopPropagation(); openEditEvent(e); }}
+                            className="w-full text-left truncate rounded bg-accent/15 px-1.5 py-0.5 text-[10px] text-accent-foreground hover:bg-accent/25 transition-colors"
+                          >
                             {e.title}
-                          </div>
+                          </button>
                         ))}
                         {items.google.slice(0, 1).map((e) => (
                           <div key={e.id} className="truncate rounded px-1.5 py-0.5 text-[10px]" style={{ backgroundColor: "rgba(66,133,244,0.15)", color: "#4285F4" }}>
@@ -833,15 +951,114 @@ const CalendarPage = () => {
         )}
       </div>
 
+      {/* Events & reminders list */}
+      <div className="surface-card p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-display text-lg font-semibold text-foreground">Events & Reminders</h3>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              resetEventForm();
+              const today = new Date();
+              setEventDate(format(today, "yyyy-MM-dd"));
+              setEventStartTime("10:00");
+              setEventEndTime("11:00");
+              setEventType("reminder");
+              setBookingDialogOpen(true);
+            }}
+          >
+            <Plus className="mr-1.5 h-4 w-4" /> New
+          </Button>
+        </div>
+        {(!calendarEvents || calendarEvents.length === 0) ? (
+          <div className="text-center py-10 rounded-xl bg-muted/30">
+            <Bell className="h-9 w-9 text-muted-foreground mx-auto mb-2" />
+            <p className="text-foreground font-medium">No events yet</p>
+            <p className="text-sm text-muted-foreground mt-1">Create a reminder or schedule a project session.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {calendarEvents.map((ev: any) => {
+              const start = new Date(ev.start_time);
+              const end = new Date(ev.end_time);
+              const linkedProject = projects?.find((p) => p.id === ev.project_id);
+              return (
+                <div
+                  key={ev.id}
+                  className="flex items-center justify-between rounded-lg border border-border p-4 hover:bg-muted/20 transition-colors"
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/15 shrink-0">
+                      {ev.project_id ? (
+                        <FolderKanban className="h-5 w-5 text-accent-foreground" />
+                      ) : (
+                        <Bell className="h-5 w-5 text-accent-foreground" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-foreground truncate">{ev.title}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {format(start, "EEE, MMM d · h:mma")} – {format(end, "h:mma")}
+                      </p>
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                        {linkedProject && (
+                          <Badge variant="secondary" className="text-[10px]">{linkedProject.title}</Badge>
+                        )}
+                        {Array.isArray(ev.attendees) && ev.attendees.length > 0 && (
+                          <Badge variant="outline" className="text-[10px] gap-1">
+                            <Users className="h-3 w-3" /> {ev.attendees.length}
+                          </Badge>
+                        )}
+                        {ev.reminder_minutes != null && (
+                          <Badge variant="outline" className="text-[10px] gap-1">
+                            <Bell className="h-3 w-3" />
+                            {ev.reminder_minutes === 0
+                              ? "At time"
+                              : ev.reminder_minutes >= 1440
+                              ? `${Math.round(ev.reminder_minutes / 1440)}d before`
+                              : ev.reminder_minutes >= 60
+                              ? `${Math.round(ev.reminder_minutes / 60)}h before`
+                              : `${ev.reminder_minutes}m before`}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => openEditEvent(ev)}
+                      aria-label="Edit event"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => deleteCalendarEvent(ev.id)}
+                      aria-label="Delete event"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Booking / Event dialog */}
       <Dialog open={bookingDialogOpen} onOpenChange={(open) => {
         if (!open) {
           resetDrag();
           if (!searchParams.get("service")) setSelectedService("");
           setEventType(null);
-          setEventTitle("");
-          setSelectedProject("");
-          setBookingNotes("");
+          resetEventForm();
           setPaymentMethod("credits");
           setSearchParams({}, { replace: true });
         }
@@ -850,7 +1067,13 @@ const CalendarPage = () => {
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display">
-              {!eventType ? "What would you like to do?" : eventType === "studio" ? "Book a Studio Session" : eventType === "project" ? "Schedule Project Session" : "Set a Reminder"}
+              {!eventType
+                ? "What would you like to do?"
+                : eventType === "studio"
+                ? "Book a Studio Session"
+                : eventType === "project"
+                ? (editingEventId ? "Edit Project Session" : "Schedule Project Session")
+                : (editingEventId ? "Edit Reminder" : "Set a Reminder")}
             </DialogTitle>
           </DialogHeader>
 
@@ -1006,50 +1229,167 @@ const CalendarPage = () => {
             </div>
           )}
 
-          {/* Project session flow */}
-          {eventType === "project" && (
+          {/* Project / Reminder shared editor */}
+          {(eventType === "project" || eventType === "reminder") && (
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-foreground mb-1.5 block">Session Title</label>
-                <Input placeholder="e.g. Mix review, Recording vocals..." value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} />
+                <label className="text-sm font-medium text-foreground mb-1.5 block">
+                  {eventType === "project" ? "Session Title" : "Reminder Title"}
+                </label>
+                <Input
+                  placeholder={
+                    eventType === "project"
+                      ? "e.g. Mix review, Recording vocals..."
+                      : "e.g. Submit final deliverables..."
+                  }
+                  value={eventTitle}
+                  onChange={(e) => setEventTitle(e.target.value)}
+                />
               </div>
+
+              {eventType === "project" && (
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1.5 block">Link to Project</label>
+                  <Select value={selectedProject} onValueChange={setSelectedProject}>
+                    <SelectTrigger><SelectValue placeholder="Select a project (optional)" /></SelectTrigger>
+                    <SelectContent>
+                      {projects?.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               <div>
-                <label className="text-sm font-medium text-foreground mb-1.5 block">Link to Project</label>
-                <Select value={selectedProject} onValueChange={setSelectedProject}>
-                  <SelectTrigger><SelectValue placeholder="Select a project (optional)" /></SelectTrigger>
-                  <SelectContent>
-                    {projects?.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">Date</label>
+                <Input
+                  type="date"
+                  value={eventDate}
+                  onChange={(e) => setEventDate(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1.5 block">Start time</label>
+                  <Input
+                    type="time"
+                    value={eventStartTime}
+                    onChange={(e) => setEventStartTime(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1.5 block">End time</label>
+                  <Input
+                    type="time"
+                    value={eventEndTime}
+                    onChange={(e) => setEventEndTime(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5" /> Attendees
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    type="email"
+                    placeholder="name@example.com"
+                    value={attendeesInput}
+                    onChange={(e) => setAttendeesInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === ",") {
+                        e.preventDefault();
+                        addAttendee();
+                      }
+                    }}
+                  />
+                  <Button type="button" variant="outline" size="icon" onClick={addAttendee} aria-label="Add attendee">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                {attendees.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {attendees.map((email) => (
+                      <Badge key={email} variant="secondary" className="gap-1 pr-1">
+                        {email}
+                        <button
+                          type="button"
+                          onClick={() => removeAttendee(email)}
+                          className="ml-0.5 rounded-full hover:bg-muted-foreground/20 p-0.5"
+                          aria-label={`Remove ${email}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
                     ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block flex items-center gap-1.5">
+                  <Bell className="h-3.5 w-3.5" /> Reminder
+                </label>
+                <Select value={reminderMinutes} onValueChange={setReminderMinutes}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No reminder</SelectItem>
+                    <SelectItem value="0">At time of event</SelectItem>
+                    <SelectItem value="5">5 minutes before</SelectItem>
+                    <SelectItem value="10">10 minutes before</SelectItem>
+                    <SelectItem value="15">15 minutes before</SelectItem>
+                    <SelectItem value="30">30 minutes before</SelectItem>
+                    <SelectItem value="60">1 hour before</SelectItem>
+                    <SelectItem value="1440">1 day before</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1.5 block">Notes (optional)</label>
-                <Textarea placeholder="Details about this session..." value={bookingNotes} onChange={(e) => setBookingNotes(e.target.value)} rows={2} />
-              </div>
-              <Button className="w-full" onClick={createCalendarEvent} disabled={bookingLoading}>
-                {bookingLoading ? "Saving..." : "Add to Calendar"}
-              </Button>
-              <Button variant="ghost" size="sm" className="w-full" onClick={() => setEventType(null)}>← Back</Button>
-            </div>
-          )}
 
-          {/* Reminder flow */}
-          {eventType === "reminder" && (
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1.5 block">Reminder Title</label>
-                <Input placeholder="e.g. Submit final deliverables..." value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} />
-              </div>
               <div>
                 <label className="text-sm font-medium text-foreground mb-1.5 block">Notes (optional)</label>
-                <Textarea placeholder="Any extra details..." value={bookingNotes} onChange={(e) => setBookingNotes(e.target.value)} rows={2} />
+                <Textarea
+                  placeholder={eventType === "project" ? "Details about this session..." : "Any extra details..."}
+                  value={bookingNotes}
+                  onChange={(e) => setBookingNotes(e.target.value)}
+                  rows={2}
+                />
               </div>
-              <Button className="w-full" onClick={createCalendarEvent} disabled={bookingLoading}>
-                {bookingLoading ? "Saving..." : "Set Reminder"}
+
+              <Button className="w-full" onClick={saveCalendarEvent} disabled={bookingLoading}>
+                {bookingLoading
+                  ? "Saving..."
+                  : editingEventId
+                  ? "Save Changes"
+                  : eventType === "project"
+                  ? "Add to Calendar"
+                  : "Set Reminder"}
               </Button>
-              <Button variant="ghost" size="sm" className="w-full" onClick={() => setEventType(null)}>← Back</Button>
+
+              {editingEventId && (
+                <Button
+                  variant="outline"
+                  className="w-full text-destructive hover:text-destructive"
+                  onClick={() => deleteCalendarEvent(editingEventId)}
+                  disabled={bookingLoading}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" /> Delete event
+                </Button>
+              )}
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full"
+                onClick={() => {
+                  setEventType(null);
+                  setEditingEventId(null);
+                }}
+              >
+                ← Back
+              </Button>
             </div>
           )}
         </DialogContent>
