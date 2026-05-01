@@ -227,8 +227,11 @@ const App = () => (
                     redirect into Projects; their detail routes stay live so
                     the Tools panel can deep-link individual items. */}
                 <Route path="/flow" element={<FlowModePage />} />
-                <Route path="/launchpad" element={<LaunchpadPage />} />
-                <Route path="/launchpad/:id" element={<LaunchDetailPage />} />
+                {/* Launchpad page is gone — coins are now profile-bound.
+                    /launchpad redirects to the Hub; /launchpad/:id resolves
+                    the coin's creator and forwards to their profile Coin tab. */}
+                <Route path="/launchpad" element={<Navigate to="/hub" replace />} />
+                <Route path="/launchpad/:id" element={<LaunchRedirect />} />
                 <Route path="/smartboards" element={<Navigate to="/projects" replace />} />
                 <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
                 <Route path="/drop-rooms" element={<Navigate to="/projects" replace />} />
