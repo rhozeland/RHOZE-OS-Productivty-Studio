@@ -37,7 +37,8 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Home", icon: Home, path: "/dashboard" },
-  // Hub — unified discovery: feed + people + spaces + storefronts.
+  // Hub — the digital network in the "Spaces" model. Lanes:
+  // Conversations · Offerings · Opportunities · Works.
   // Replaces /marketplace, /creators, /flow, /people, /spaces.
   {
     id: "hub",

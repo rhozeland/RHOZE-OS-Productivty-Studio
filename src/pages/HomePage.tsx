@@ -411,7 +411,7 @@ const HomePage = () => {
               What it actually is
             </p>
             <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground">
-              A real workspace for creative people.
+              Two networks. One creative space.
             </h2>
             <p className="text-sm text-muted-foreground mt-3 max-w-lg mx-auto">
               Not a feed. Not a token. A place to make and ship work with other
