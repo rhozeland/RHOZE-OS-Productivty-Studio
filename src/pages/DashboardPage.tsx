@@ -609,7 +609,7 @@ const DashboardPage = () => {
             <>
               {greeting()}
               {firstName ? ", " : " "}
-              <span className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">
                 {firstName || "Creator"}
               </span>
             </>
@@ -617,7 +617,7 @@ const DashboardPage = () => {
             <>
               Two networks.
               <br />
-              <span className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">
                 One creative space.
               </span>
             </>
