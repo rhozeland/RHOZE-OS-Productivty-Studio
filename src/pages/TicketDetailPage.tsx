@@ -220,11 +220,21 @@ const TicketDetailPage = () => {
               View on Solscan <ExternalLink className="h-3 w-3" />
             </a>
           </>
+        ) : ticket.status !== "checked_in" ? (
+          <>
+            <p className="text-xs text-muted-foreground">
+              Proof-of-attendance unlocks once the host scans you in at the
+              event. They'll mint your verifiable receipt automatically.
+            </p>
+            <Button className="rounded-full gap-1.5 w-full" disabled variant="outline">
+              <Sparkles className="h-4 w-4" /> Awaiting check-in
+            </Button>
+          </>
         ) : (
           <>
             <p className="text-xs text-muted-foreground">
-              Anchor a SHA-256 of your ticket + the event manifest on Solana.
-              You'll have a permanent receipt that you were here.
+              You're checked in. Mint your SHA-256 attendance hash on Solana
+              for a permanent, verifiable receipt.
             </p>
             <Button
               className="rounded-full gap-1.5 w-full"
