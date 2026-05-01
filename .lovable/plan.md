@@ -1,111 +1,101 @@
-# One Pipeline: Upload → Verify → (Optionally) Launch a Coin
+# Launchpad accessibility + rewards visibility + chart-style detail page
 
-You're right that everything we've built — Flow uploads, Works fingerprinting, Spaces, Events, Hub — is really one motion: **register a creation, prove it's yours, give it a lifeline.** This plan unifies them around that single idea.
+Three goals from your message:
+1. **Accessibility** — Launchpad should be reachable from Hub, not buried.
+2. **$RHOZE rewards visibility** — bring back the per-task / per-milestone earning breakdown that used to be front-and-center.
+3. **Trading terminal feel** — pump.fun / Padre / Bullx-style chart layout on the launch detail page, with a chart that's togglable.
 
-## The mental model
+---
+
+## 1. Hub: add Launchpad as a 5th lane
+
+In `src/pages/HubPage.tsx`:
+- Add a new lane `coins` (icon: `Coins`, label "Coins", tagline "Artist coins on the bonding curve.").
+- Lane query selects from `coin_launches` (status = `live` or `graduated`), reusing the same card styling pattern as `LaunchpadPage`'s `LaunchCard`.
+- Empty state: "No coins minted yet — verify a Work to launch one." with a CTA to `/works`.
+- The full `/launchpad` route stays as-is (it's the dedicated browser); the Hub lane is the discovery surface.
+
+Also add a small **"Launchpad"** chip-link in the Hub hero subtitle area so even users on other lanes see it exists.
+
+## 2. Rewards visibility — Launchpad earnings card
+
+Two placements:
+
+**A. Inside `/launchpad`** (top of page, under the mode banner):
+- New component `LaunchpadEarnPanel` showing:
+  - Current $RHOZE balance (from `useRhozeBalance` if wallet connected, else `user_credits.balance`).
+  - Reward streak chip (reuses `RhozeStreakBadge`).
+  - A compact 2-column grid of the 6 reward actions from `RewardsDashboard`'s `REWARD_ACTIONS` constant (Post to Flow +2, Like/Save +1, Review +3, **Milestone Approved +10**, Drop Room +1, 7-Day Streak +5) with icon, action name, and reward amount.
+  - "See all rewards →" link to `/dashboard?tab=rewards` (existing route).
+- Goal: every visitor to /launchpad immediately sees how to earn $RHOZE.
+
+**B. Inside the launch detail trade panel** (`TradePanel.tsx`):
+- A small footer line under the existing "3% fee" disclaimer: "Trades by Verified IP holders earn +1 $RHOZE per buy" (matches existing claim-rhoze patterns; copy only — no business logic change unless you ask).
+
+## 3. Pump.fun-style detail page
+
+Rebuild `src/pages/LaunchDetailPage.tsx` layout to a 2-column terminal:
 
 ```text
-                                     ┌──────────────────┐
-   Upload anywhere (Flow, Works,     │  Verified IP     │   ┌───────────────┐
-   Listing, Project, Event)  ──────► │  (admin review,  │──►│  Launch coin  │
-   → SHA-256 fingerprint instantly   │   anchor on Sol) │   │  (optional)   │
-                                     └──────────────────┘   └───────────────┘
+┌─────────────────────────────────────────┬──────────────┐
+│  Header: $TICKER  Name  VerifiedIP      │   Trade      │
+│  Price · Mcap · 24h vol · Holders       │   Panel      │
+├─────────────────────────────────────────┤              │
+│  [Chart  |  Bonding Curve]  ← TOGGLE    │              │
+│  ┌─────────────────────────────────┐    │              │
+│  │                                  │   │              │
+│  │   Recharts area/line chart of    │   │              │
+│  │   price over time (from          │   │              │
+│  │   coin_trades.price_per_token)   │   │              │
+│  │                                  │   │              │
+│  └─────────────────────────────────┘    │              │
+│  Timeframe: [1H] [6H] [1D] [ALL]        │              │
+├─────────────────────────────────────────┤   Holdings   │
+│  Trades  |  Holders  |  About           │   On-chain   │
+│  (recent trades table — existing)        │   addresses  │
+└─────────────────────────────────────────┴──────────────┘
 ```
 
-Three states for any creation:
-1. **Fingerprinted** — hashed in the browser the moment it's uploaded. Free, automatic, invisible to the user.
-2. **Verified** — creator submitted it for review, an admin confirmed authorship/originality, then it's anchored on Solana with a public proof. Earns the **Verified** badge.
-3. **Launched** — creator mints a token tied to the asset. Supporters buy in on a bonding curve. Becomes a tradeable lifeline for the work.
+### New component: `src/components/launchpad/PriceChartCard.tsx`
+- Pulls `coin_trades` (id, price_per_token, created_at, side, sol_amount) for the launch, ordered ascending.
+- Uses `recharts` (already installed) — `AreaChart` with gradient fill, emerald→fuchsia matching the brand.
+- View toggle (segmented control):
+  - **Price** (default) — line chart of `price_per_token` over time.
+  - **Bonding Curve** — static line of `real_sol_reserves` toward `graduation_sol_target` (the existing progress bar visualized).
+- Timeframe pills: 1H / 6H / 1D / ALL — filter the data window.
+- Empty state when 0 trades: "Chart will appear after the first trade." with a faded illustrative line.
+- Tooltip: price + time + side dot (green buy / red sell).
 
-We stop saying "provenance" in the UI. We say **Verified** (badge), **Receipts** (tooltip-friendly nickname for the hash + Solscan link), and **Launch a Coin**.
+### Detail page restructure
+- Header strip: ticker + name + Verified IP badge + status badges, with a 4-stat row (Price, Mcap, 24h Vol from `coin_trades`, Holders count from `coin_holdings`).
+- Below header: `PriceChartCard` (the new chart), then under it the existing **bonding-curve progress bar** and **Recent trades** list as tabs (`Trades | Holders | About`) — pump.fun pattern.
+- Right column unchanged: `LaunchpadModeBanner`, `TradePanel`, then user holdings card + `OnChainAddressesCard` + `OnChainBalancesCard` collapsed into one stack.
+- Mobile: column collapses; chart sits above trade panel; trade panel sticks to bottom on small viewports.
 
----
-
-## Phase 1 — Fix Flow Mode + bridge it to Works
-
-**Flow Mode stays.** It becomes the public browser for creative IP. Today it's buggy because we routed `/flow` → `/projects` and the upload pipeline drifted from the Works pipeline. We re-anchor it.
-
-- Restore `/flow` as a real page (un-redirect). Inside Projects → Tools, "Flow" launches `/flow`.
-- Every Flow upload runs the SHA-256 hash in the browser (same `computeContentHash` already used by Works). The hash + file metadata is saved on the `flow_items` row.
-- Below every Flow card, show one of three chips:
-  - `Fingerprinted` (gray, default) — has a hash, not yet submitted for review
-  - `Pending review` (amber) — creator submitted it
-  - `Verified` (the existing `<VerifiedIPBadge />`) — anchored on Solana
-- A "Verify this work" CTA on each of the user's own Flow cards opens a one-screen submission form (title, description, optional supporting links). It creates a Work record + a verification request.
-- Old Flow posts (uploaded before today) get **no automatic backfill**. Instead, the "Verify this work" CTA on those cards still works — when the creator clicks it, we re-hash the file from storage server-side and create the Work + request. So the door is open, but only when the creator actively chooses it.
-
-**What this does for Flow:** it stops being a throwaway swipe feed and becomes a public registry where every card can earn a blue check.
+### Holders tab
+- Lightweight: `select trader_id, balance from coin_holdings where launch_id = X order by balance desc limit 25` joined to `profiles_public` for display name/avatar. Shows balance and % of supply.
 
 ---
 
-## Phase 2 — Verification application & admin review
+## Files
 
-A new lightweight workflow, modelled on the existing studio-application + admin-review patterns.
+**Created**
+- `src/components/launchpad/LaunchpadEarnPanel.tsx`
+- `src/components/launchpad/PriceChartCard.tsx`
+- `src/components/launchpad/HoldersList.tsx`
 
-- New table `work_verification_requests`: `work_id`, `applicant_id`, `status` (`pending` / `approved` / `rejected` / `changes_requested`), `applicant_note`, `supporting_urls[]`, `reviewer_id`, `review_note`, `decided_at`.
-- Creator submits → status `pending`, notification fires to admins.
-- New admin tab in `/admin` → **IP Verifications** (sits next to Studio Applications). Lists pending requests with: file preview, hash, applicant profile, supporting links, side-by-side reverse-image hint area for future automation, Approve / Request changes / Reject buttons.
-- On approve → call existing `anchor-contribution` edge function → write `solana_signature` onto the `works` row → set request to `approved` → fire notification + email to creator → `<VerifiedIPBadge />` appears everywhere that Work surfaces.
-- Settings → Provenance gets a new section "My Verification Requests" listing status + admin notes for each submission.
+**Edited**
+- `src/pages/HubPage.tsx` — add `coins` lane + tab + query + grid + Launchpad chip in hero.
+- `src/pages/LaunchpadPage.tsx` — render `LaunchpadEarnPanel` above the tabs.
+- `src/pages/LaunchDetailPage.tsx` — restructure layout, mount chart + tabs.
+- `src/components/launchpad/TradePanel.tsx` — add the "+1 $RHOZE per buy" reward hint line (copy only).
 
-**Backfill of historical uploads** is the same flow with the rehash-from-storage helper. We don't bulk-import anything — each piece is opt-in by the creator and reviewed before it earns the badge.
+## Out of scope (won't touch)
+- No DB migrations — all data sources already exist (`coin_launches`, `coin_trades`, `coin_holdings`, `credit_transactions`, `user_credits`).
+- No changes to bonding curve / fee math / on-chain flow / IDL pipeline.
+- No new $RHOZE issuance logic; the trade-reward line is informational and tracks the existing reward system (will be wired on the server side later if you want).
 
----
-
-## Phase 3 — Word choice + UX polish
-
-- "Provenance" stays as a section name in Settings (creators searching for it will find it) but the body copy uses **Verified IP** and **Receipts** consistently.
-- Tooltip everywhere the hash appears: *"Receipts: a tamper-proof fingerprint of this file recorded on Solana. Click to view on Solscan."*
-- The "Verify" badge gets a hover card explaining: who reviewed it, when it was anchored, the SHA-256, the Solana tx.
-
----
-
-## Phase 4 — Launchpad (`pump.fun for artists`)
-
-This is the bold part. We give creators an option (never a requirement) to mint a token tied to a Verified Work, Space, or Event. Holders become supporters. The token becomes the asset's lifeline.
-
-**Constraints we're committing to:**
-- Token is only available **after** the asset reaches `Verified` status. No verification, no coin. This protects the brand and prevents spam mints.
-- Built on Solana. Token = SPL. Launch = bonding curve (constant-product, like pump.fun) priced in **SOL**, not $RHOZE. Creator gets a fixed % of every trade; platform gets a fixed %; rest goes into the curve.
-- A migration threshold (e.g., curve hits X SOL of liquidity) graduates the token to a Raydium pool, locks LP. After graduation, Rhozeland just shows the chart and links out.
-
-**What ships in this phase:**
-- A new on-chain Solana program (Anchor) for the bonding curve — biggest piece of work; spec lives in `.lovable/anchor-program-spec.md` and gets extended.
-- New tables: `asset_tokens` (one row per launched asset → mint address, curve PDA, creator %, status), `token_trades` (indexer cache for the chart).
-- New page `/launch/:asset_type/:asset_id` — single-screen launch form: name, ticker, image (defaults to the Work's file), creator share %, confirm. Connects wallet, signs, mint goes live.
-- `/coin/:mint` page — chart, buy/sell, holder list, "About this Work/Space/Event" panel that pulls in the verified hash + Solscan receipt + owner profile.
-- Surface the "Launch a coin" button on every Verified asset detail page (Works, Spaces, Events, eligible Hub offerings).
-- Indexer edge function (`index-token-trades`) polls the program for trade events and caches them for chart rendering. No third-party indexer dependency.
-
-**Legal/comms note (not code):** before launch we surface an in-app disclaimer that this is permissionless, creators are responsible for their own representations, and the platform takes no custody. We'll want to revisit terms-of-service text — flagged as a non-engineering follow-up.
-
----
-
-## Build order (so we don't try to do everything at once)
-
-1. **Un-break Flow Mode** + add fingerprinting on every Flow upload (no review yet, just the chip). *Smallest, ships value immediately.*
-2. **Verification request flow** + admin review tab + opt-in backfill of old uploads.
-3. **Vocabulary pass** (Verified / Receipts / tooltips).
-4. **Launchpad — Phase 4a:** the Anchor program + `asset_tokens` schema + a thin "Launch coin" form on Verified Works only. SOL-denominated bonding curve. No chart yet, just buy/sell + holder list.
-5. **Launchpad — Phase 4b:** the chart, the indexer, graduation to Raydium, opening up to Spaces and Events.
-
-We pause for your review between each step rather than shipping it all at once.
-
----
-
-## Technical notes
-
-- **Existing infra reused:** `computeContentHash`, `works` table, `work_attachments`, `anchor-contribution` edge function, `<VerifiedIPBadge />`, admin role gating via `has_role()`.
-- **New tables (Phase 2):** `work_verification_requests` with RLS — creators see only their own, admins see all (via `has_role(auth.uid(), 'admin')`).
-- **New tables (Phase 4):** `asset_tokens`, `token_trades` — both readable by anyone (these are public-by-design), insert/update only via edge functions using the service role.
-- **New edge functions:** `request-work-verification`, `approve-work-verification` (wraps the anchor call so review + anchor are atomic), `rehash-stored-file` (server-side re-hash from storage for backfill), `launch-asset-token` (builds and submits the Anchor mint tx), `index-token-trades`.
-- **Solana program:** new Anchor workspace under `programs/rhoze-launchpad/`. Spec extended in `.lovable/anchor-program-spec.md`. Devnet first, mainnet after audit.
-- **Buffer polyfill** stays as is — already in place for Solana web3 on the client.
-- **Fee model (Phase 4):** 1% platform, 1% to a creator-treasury PDA, rest to the curve — concrete numbers locked in during step 4a.
-
----
-
-## Two open product calls I need from you
-
-1. **Word for the badge** — you skipped that question. I'll default to **"Verified"** (matches the existing badge component and is the most universally understood) unless you want **"Receipts"** as the badge wording with "Verified" reserved for the tooltip.
-2. **Token denomination** — I've assumed **SOL** for the bonding curve because that's how pump.fun works and it gives the asset real liquidity from day one. The alternative is **$RHOZE-denominated**, which keeps everything inside our economy but bootstraps slower. Confirm SOL or flip to $RHOZE before step 4a.
+## Notes / decisions made
+- Recharts (already in deps) over `lightweight-charts` — keeps bundle lean and matches the rest of the app's charting.
+- Hub chip-link kept tiny instead of adding Launchpad to the dock by default; the dock is locked at 4 pillars per the v5 spec, and users can already pin Launchpad via Settings → Dock Customizer.
+- Reward amounts pulled from the existing `REWARD_ACTIONS` constant so the source of truth stays in `RewardsDashboard.tsx` (will refactor to a shared module if you want).

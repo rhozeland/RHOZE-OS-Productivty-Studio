@@ -291,6 +291,10 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
           ? `Live on Solana ${LAUNCHPAD_NETWORK} · 3% fee · wallet signature required`
           : "Simulated curve · 3% fee · no real SOL is moved"}
       </p>
+      <p className="text-[10px] text-emerald-500/80 text-center flex items-center justify-center gap-1">
+        <Radio className="h-2.5 w-2.5" />
+        Active traders earn $RHOZE — every trade builds your reputation.
+      </p>
     </div>
   );
 };

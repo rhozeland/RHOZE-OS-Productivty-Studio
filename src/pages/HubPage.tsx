@@ -37,13 +37,14 @@ import {
   Shield,
   Flame,
   ArrowRight,
+  Coins,
 } from "lucide-react";
 import ListingCard from "@/components/marketplace/ListingCard";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 
-type Lane = "conversations" | "offerings" | "opportunities" | "works";
+type Lane = "conversations" | "offerings" | "opportunities" | "works" | "coins";
 
 const LANES: { key: Lane; label: string; icon: typeof Briefcase; tagline: string }[] = [
   {
@@ -69,6 +70,12 @@ const LANES: { key: Lane; label: string; icon: typeof Briefcase; tagline: string
     label: "Works",
     icon: Shield,
     tagline: "Anchored creative IP — verified on Solana.",
+  },
+  {
+    key: "coins",
+    label: "Coins",
+    icon: Coins,
+    tagline: "Artist coins on the bonding curve — Launchpad.",
   },
 ];
 
@@ -208,6 +215,29 @@ const HubPage = () => {
   });
   const workOwnerMap = new Map(workOwners?.map((p: any) => [p.user_id, p]) ?? []);
 
+  // ─── Coins: live + recently graduated bonding-curve launches ────────
+  const { data: coins, isLoading: loadingCoins } = useQuery({
+    queryKey: ["hub-coins", search],
+    queryFn: async () => {
+      let q = supabase
+        .from("coin_launches")
+        .select(
+          "id,ticker,name,description,image_url,status,real_sol_reserves,graduation_sol_target,creator_id,created_at",
+        )
+        .in("status", ["live", "graduated"])
+        .order("real_sol_reserves", { ascending: false })
+        .limit(30);
+      if (search.trim()) {
+        const term = search.trim();
+        q = q.or(`ticker.ilike.%${term}%,name.ilike.%${term}%,description.ilike.%${term}%`);
+      }
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: lane === "coins",
+  });
+
   const activeLane = LANES.find((l) => l.key === lane)!;
 
   // ─── Lane-aware "post" CTA ──────────────────────────────────────────
@@ -215,6 +245,10 @@ const HubPage = () => {
     if (!requireAuth("Sign up to post to the Hub.")) return;
     if (lane === "works") {
       navigate("/works");
+      return;
+    }
+    if (lane === "coins") {
+      navigate("/launchpad");
       return;
     }
     setCreateOpen(true);
@@ -235,9 +269,13 @@ const HubPage = () => {
               The Hub.
             </h1>
             <p className="text-muted-foreground mt-2 text-sm md:text-base max-w-lg">
-              Conversations, offerings, opportunities, and verified Works — the
-              digital pulse of the Rhozeland community. Looking for a physical
-              space?{" "}
+              Conversations, offerings, opportunities, verified Works, and{" "}
+              <Link to="/launchpad" className="text-foreground hover:underline inline-flex items-center gap-1">
+                <Coins className="h-3.5 w-3.5 text-emerald-500" />
+                artist coins
+              </Link>{" "}
+              — the digital pulse of the Rhozeland community. Looking for a
+              physical space?{" "}
               <Link to="/studios" className="text-foreground hover:underline">
                 Browse studios →
               </Link>
@@ -252,6 +290,8 @@ const HubPage = () => {
                 ? "Post Opportunity"
                 : lane === "offerings"
                 ? "Post Offering"
+                : lane === "coins"
+                ? "Open Launchpad"
                 : "Drop a Post"}
             </Button>
           </div>
@@ -551,6 +591,101 @@ const HubPage = () => {
                           ? new Date(w.anchored_at).toLocaleDateString()
                           : new Date(w.created_at).toLocaleDateString()}
                       </span>
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════
+          LANE: Coins (artist coins on the bonding curve — Launchpad)
+          ════════════════════════════════════════════════════════════════ */}
+      {lane === "coins" && (
+        <section>
+          {loadingCoins ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-40 bg-muted animate-pulse rounded-2xl" />
+              ))}
+            </div>
+          ) : !coins || coins.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
+              <Coins className="h-10 w-10 text-emerald-500/40 mx-auto mb-3" />
+              <p className="text-sm text-foreground font-medium">
+                {search ? "No coins match your search." : "No artist coins minted yet."}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                Verify a Work as IP and you can launch a coin against it on the
+                bonding curve.
+              </p>
+              <Button
+                onClick={() => navigate("/launchpad")}
+                className="mt-4 rounded-full"
+                variant="outline"
+              >
+                Open Launchpad
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {coins.map((c: any, i: number) => {
+                const progress = Math.min(
+                  100,
+                  (Number(c.real_sol_reserves) / Number(c.graduation_sol_target)) * 100,
+                );
+                return (
+                  <motion.div
+                    key={c.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.04 }}
+                  >
+                    <Link
+                      to={`/launchpad/${c.id}`}
+                      className="group block rounded-2xl border border-border bg-card hover:border-emerald-500/40 hover:-translate-y-0.5 transition-all p-4 h-full"
+                    >
+                      <div className="flex items-start gap-3 mb-3">
+                        {c.image_url ? (
+                          <img
+                            src={c.image_url}
+                            alt={c.name}
+                            className="h-11 w-11 rounded-md object-cover shrink-0"
+                          />
+                        ) : (
+                          <div className="h-11 w-11 rounded-md bg-gradient-to-br from-emerald-500/30 to-fuchsia-500/30 flex items-center justify-center shrink-0">
+                            <Coins className="h-5 w-5 text-emerald-500" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono font-bold text-sm">${c.ticker}</span>
+                            {c.status === "graduated" && (
+                              <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500">
+                                Grad
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground truncate">{c.name}</p>
+                        </div>
+                      </div>
+                      {c.description && (
+                        <p className="text-[11px] text-muted-foreground line-clamp-2 mb-3">
+                          {c.description}
+                        </p>
+                      )}
+                      <div className="flex justify-between text-[10px] font-mono text-muted-foreground mb-1">
+                        <span>{Number(c.real_sol_reserves).toFixed(2)} SOL</span>
+                        <span>{c.graduation_sol_target} SOL goal</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-emerald-500 to-fuchsia-500"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
                     </Link>
                   </motion.div>
                 );
