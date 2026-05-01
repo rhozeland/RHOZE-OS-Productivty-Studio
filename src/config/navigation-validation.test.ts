@@ -33,14 +33,14 @@ describe("partitionDockIds", () => {
   });
 
   it("classifies known ids as valid", () => {
-    const { valid, unknown } = partitionDockIds(["dashboard", "studios", "messages"]);
-    expect(valid).toEqual(["dashboard", "studios", "messages"]);
+    const { valid, unknown } = partitionDockIds(["discover", "studios", "messages"]);
+    expect(valid).toEqual(["discover", "studios", "messages"]);
     expect(unknown).toEqual([]);
   });
 
   it("classifies unknown string ids as unknown", () => {
-    const { valid, unknown } = partitionDockIds(["dashboard", "ghost-route", "messages"]);
-    expect(valid).toEqual(["dashboard", "messages"]);
+    const { valid, unknown } = partitionDockIds(["discover", "ghost-route", "messages"]);
+    expect(valid).toEqual(["discover", "messages"]);
     expect(unknown).toEqual(["ghost-route"]);
   });
 
