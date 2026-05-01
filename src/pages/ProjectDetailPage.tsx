@@ -36,6 +36,8 @@ import ProjectControls from "@/components/project/ProjectControls";
 import RevenueSplitConfig from "@/components/revenue/RevenueSplitConfig";
 import AttachedWorks from "@/components/works/AttachedWorks";
 import ProjectTools from "@/components/project/ProjectTools";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Archive, ShieldCheck, Fingerprint } from "lucide-react";
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -330,6 +332,9 @@ const ProjectDetailPage = () => {
           {isPaid && <TabsTrigger value="budget" className="shrink-0">Budget</TabsTrigger>}
           <TabsTrigger value="team" className="shrink-0">Team</TabsTrigger>
           <TabsTrigger value="tools" className="shrink-0">Tools</TabsTrigger>
+          <TabsTrigger value="vault" className="shrink-0 gap-1.5">
+            <Archive className="h-3.5 w-3.5" /> Vault
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="roadmap" className="space-y-4">
@@ -411,15 +416,9 @@ const ProjectDetailPage = () => {
             onLinkSmartboard={() => setLinkDialogOpen(true)}
             onUnlinkSmartboard={(sbId: string) => unlinkSmartboard.mutate(sbId)}
           />
-          {/* Verified IP — fingerprint deliverable files inline. Lives next
-              to the project's scope/deliverables so creators can attach
-              hashed proofs of authorship without leaving the project. */}
-          <AttachedWorks
-            targetType="project"
-            targetId={id!}
-            canManage={project.user_id === user?.id}
-            title="Verified IP & deliverables"
-          />
+          {/* Verified IP & deliverables now live in the Vault tab — keeps
+              Scope focused on what's being built, Vault on what's been
+              anchored. */}
         </TabsContent>
 
         {isPaid && (
@@ -437,6 +436,36 @@ const ProjectDetailPage = () => {
 
         <TabsContent value="tools">
           <ProjectTools projectId={id!} projectTitle={project.title} />
+        </TabsContent>
+
+        {/* Vault — ambient Works surface scoped to this project. Lets the
+            owner upload, fingerprint and attach anchored deliverables
+            without leaving the workspace. Read-only for non-owners. */}
+        <TabsContent value="vault" className="space-y-4">
+          <Card className="border-dashed bg-muted/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base font-display">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                Project Vault
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground space-y-1">
+              <p className="flex items-start gap-2">
+                <Fingerprint className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                Every file you add here is content-hashed and anchored on Solana — proving authorship and timestamp without revealing the file itself.
+              </p>
+              <p className="pl-5.5">
+                Attached works flow into listings, contracts and revenue splits tied to this project.
+              </p>
+            </CardContent>
+          </Card>
+
+          <AttachedWorks
+            targetType="project"
+            targetId={id!}
+            canManage={project.user_id === user?.id}
+            title="Anchored deliverables"
+          />
         </TabsContent>
       </Tabs>
 
