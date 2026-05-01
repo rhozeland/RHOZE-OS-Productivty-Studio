@@ -391,7 +391,7 @@ const AppLayout = () => {
       {/* Command palette search */}
       {/* Command palette search — Pages always visible; studios/listings/creators
           only surface once the user has typed (>=2 chars). */}
-      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen} shouldFilter={!queryEnabled}>
+      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
         <CommandInput
           placeholder="Search pages, studios, listings, creators..."
           value={searchQuery}
