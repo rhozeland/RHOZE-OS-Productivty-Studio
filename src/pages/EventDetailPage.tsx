@@ -328,6 +328,19 @@ const EventDetailPage = () => {
           })}
         </div>
       </section>
+
+      {checkoutTier && (
+        <TicketCheckoutDialog
+          open={!!checkoutTier}
+          onOpenChange={(o) => !o && setCheckoutTier(null)}
+          event={{ id: ev.id, title: ev.title }}
+          tier={checkoutTier}
+          onIssued={() => {
+            qc.invalidateQueries({ queryKey: ["event-my-ticket", id] });
+            qc.invalidateQueries({ queryKey: ["event-tiers", id] });
+          }}
+        />
+      )}
     </div>
   );
 };
