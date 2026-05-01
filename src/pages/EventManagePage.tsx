@@ -410,7 +410,22 @@ const EventManagePage = () => {
 
       {/* Attendees */}
       <section className="space-y-3">
-        <h2 className="font-display text-lg font-bold tracking-tight">Attendees</h2>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <h2 className="font-display text-lg font-bold tracking-tight">Attendees</h2>
+            <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-emerald-500">
+              <Radio className="h-3 w-3 animate-pulse" /> Live
+            </span>
+          </div>
+          <Button
+            size="sm"
+            className="rounded-full gap-1.5"
+            onClick={() => setScannerOpen(true)}
+          >
+            <ScanLine className="h-4 w-4" /> Scan QR
+          </Button>
+        </div>
+
         {(tickets ?? []).length === 0 ? (
           <p className="text-sm text-muted-foreground">No tickets yet.</p>
         ) : (
@@ -448,6 +463,12 @@ const EventManagePage = () => {
           </div>
         )}
       </section>
+
+      <QrCheckInScanner
+        open={scannerOpen}
+        onOpenChange={setScannerOpen}
+        onScan={handleScannedToken}
+      />
     </div>
   );
 };
