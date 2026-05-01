@@ -114,6 +114,17 @@ const AppLayout = () => {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Reset query when the palette closes so the next open starts clean.
+  useEffect(() => {
+    if (!searchOpen) setSearchQuery("");
+  }, [searchOpen]);
+
+  // Only run remote search after the user actually types something — avoids
+  // dumping every studio/creator/listing into the palette by default.
+  const trimmedQuery = searchQuery.trim();
+  const queryEnabled = searchOpen && trimmedQuery.length >= 2;
 
   // Only run reward streak for authenticated users
   useRewardStreak();
