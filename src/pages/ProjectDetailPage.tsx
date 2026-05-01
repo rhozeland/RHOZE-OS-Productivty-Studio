@@ -36,6 +36,7 @@ import ProjectControls from "@/components/project/ProjectControls";
 import RevenueSplitConfig from "@/components/revenue/RevenueSplitConfig";
 import AttachedWorks from "@/components/works/AttachedWorks";
 import ProjectTools from "@/components/project/ProjectTools";
+import { useProjectRole } from "@/hooks/useProjectRole";
 import ProjectMoodboard from "@/components/project/ProjectMoodboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Archive, ShieldCheck, Fingerprint, Image as ImageIcon } from "lucide-react";
