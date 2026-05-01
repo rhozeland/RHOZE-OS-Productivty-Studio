@@ -91,6 +91,7 @@ const FORMULA_FIELDS: Field[] = [
     hint: "Fraction of trailing-90d gross used as the advance base. 0.60 = 60%.",
     step: 0.05,
     min: 0,
+    max: 2,
   },
   {
     key: "provenance_bonus_max",
@@ -98,6 +99,7 @@ const FORMULA_FIELDS: Field[] = [
     hint: "Extra multiplier when 100% of settlements are on-chain. 0.25 = +25%.",
     step: 0.05,
     min: 0,
+    max: 1,
   },
   {
     key: "tenure_floor_mult",
@@ -105,6 +107,7 @@ const FORMULA_FIELDS: Field[] = [
     hint: "Multiplier for brand-new sellers (months active = 0).",
     step: 0.05,
     min: 0,
+    max: 1,
   },
   {
     key: "tenure_full_months",
@@ -112,6 +115,7 @@ const FORMULA_FIELDS: Field[] = [
     hint: "Months active to reach full 1.0 tenure multiplier.",
     step: 1,
     min: 1,
+    max: 60,
     suffix: "mo",
   },
   {
@@ -120,6 +124,7 @@ const FORMULA_FIELDS: Field[] = [
     hint: "Tiny floor each anchored Work contributes (USD).",
     step: 5,
     min: 0,
+    max: 1000,
     suffix: "$",
   },
   {
@@ -127,7 +132,8 @@ const FORMULA_FIELDS: Field[] = [
     label: "Advance cap",
     hint: "Hard maximum per request (USD).",
     step: 500,
-    min: 0,
+    min: 100,
+    max: 1_000_000,
     suffix: "$",
   },
 ];
@@ -138,18 +144,21 @@ const ELIGIBILITY_FIELDS: Field[] = [
     label: "Min settled events",
     step: 1,
     min: 0,
+    max: 100,
   },
   {
     key: "min_anchored_works",
     label: "Min anchored Works",
     step: 1,
     min: 0,
+    max: 100,
   },
   {
     key: "min_advance_amount",
     label: "Min advance amount",
     step: 25,
     min: 0,
+    max: 100_000,
     suffix: "$",
   },
 ];
@@ -161,6 +170,7 @@ const SCORE_FIELDS: Field[] = [
     hint: "Max points from 90d gross.",
     step: 1,
     min: 0,
+    max: 100,
   },
   {
     key: "score_weight_provenance",
@@ -168,6 +178,7 @@ const SCORE_FIELDS: Field[] = [
     hint: "Max points from on-chain ratio.",
     step: 1,
     min: 0,
+    max: 100,
   },
   {
     key: "score_weight_tenure",
@@ -175,6 +186,7 @@ const SCORE_FIELDS: Field[] = [
     hint: "Max points from months active.",
     step: 1,
     min: 0,
+    max: 100,
   },
   {
     key: "score_weight_anchored",
@@ -182,6 +194,7 @@ const SCORE_FIELDS: Field[] = [
     hint: "Max points from number of anchored Works.",
     step: 1,
     min: 0,
+    max: 100,
   },
   {
     key: "revenue_score_target",
@@ -189,6 +202,7 @@ const SCORE_FIELDS: Field[] = [
     hint: "Trailing-90d gross that earns full revenue points.",
     step: 250,
     min: 1,
+    max: 10_000_000,
     suffix: "$",
   },
   {
@@ -197,6 +211,7 @@ const SCORE_FIELDS: Field[] = [
     hint: "Points contributed per anchored Work, up to the weight cap.",
     step: 1,
     min: 0,
+    max: 100,
   },
 ];
 
