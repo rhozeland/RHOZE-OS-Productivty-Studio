@@ -715,22 +715,29 @@ const DashboardPage = () => {
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/30 to-transparent" />
 
+              {/* Oversized editorial glyph — art, not decoration */}
+              <Building2
+                aria-hidden
+                strokeWidth={0.6}
+                className="absolute -right-6 -top-6 h-56 w-56 text-blue-500/15 group-hover:text-blue-500/25 transition-colors duration-500 pointer-events-none"
+              />
+
               {/* Content */}
               <div className="relative h-full flex flex-col p-6 sm:p-8">
                 <div className="flex-1">
                   <div className="inline-flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur px-2.5 py-1 mb-4">
                     <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
                     <span className="text-[10px] uppercase tracking-widest text-foreground font-medium">
-                      Physical Network
+                      Physical
                     </span>
                   </div>
-                  <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-none mb-2">
+                  <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-none mb-3">
                     Studio
                     <br />
                     Spaces
                   </h2>
-                  <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
-                    Step in. Real rooms, real gear, vetted hosts. Book by the hour or the day.
+                  <p className="text-sm text-muted-foreground leading-snug">
+                    Real rooms. Real gear.
                   </p>
                 </div>
 
@@ -763,7 +770,7 @@ const DashboardPage = () => {
 
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
-                    {studios?.length ?? 0} space{(studios?.length ?? 0) === 1 ? "" : "s"} bookable
+                    {studios?.length ?? 0} bookable
                   </span>
                   <span className="inline-flex items-center gap-1 text-sm font-semibold text-foreground group-hover:gap-2 transition-all">
                     Step in <ArrowRight className="h-4 w-4" />
