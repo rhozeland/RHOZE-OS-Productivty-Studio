@@ -130,7 +130,10 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
     const launchPda = deriveLaunchPda(launchId)?.toBase58();
     if (!launchPda) {
       setBusy(false);
-      setPhase({ kind: "error", message: "Launch PDA could not be derived. Program ID missing." });
+      setPhase({
+        kind: "error",
+        decoded: decodeTradeError("Launch PDA could not be derived. Program ID missing."),
+      });
       return;
     }
 
@@ -142,13 +145,17 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
 
     if (result.enabled === false) {
       setBusy(false);
-      setPhase({ kind: "error", message: "On-chain mode unexpectedly disabled." });
+      setPhase({
+        kind: "error",
+        decoded: decodeTradeError("On-chain mode unexpectedly disabled."),
+      });
       return;
     }
     if (result.ok === false) {
+      const decoded = decodeTradeError(result.error);
       setBusy(false);
-      setPhase({ kind: "error", message: decodeError(result.error) });
-      toast({ title: "Trade failed", description: decodeError(result.error), variant: "destructive" });
+      setPhase({ kind: "error", decoded });
+      toast({ title: decoded.title, description: decoded.detail, variant: "destructive" });
       return;
     }
 
@@ -162,10 +169,11 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
       if (status1.value.err) {
         const errStr = JSON.stringify(status1.value.err);
         const tx = await conn.getTransaction(signature, { commitment: "confirmed", maxSupportedTransactionVersion: 0 });
-        const logs = tx?.meta?.logMessages ?? undefined;
+        const logs = tx?.meta?.logMessages ?? [];
+        const decoded = decodeTradeError(errStr, logs);
         setBusy(false);
-        setPhase({ kind: "error", message: decodeError(errStr, logs), signature, logs });
-        toast({ title: "Trade reverted", description: decodeError(errStr, logs), variant: "destructive" });
+        setPhase({ kind: "error", decoded, signature, logs });
+        toast({ title: decoded.title, description: decoded.detail, variant: "destructive" });
         return;
       }
       setPhase({ kind: "confirmed", signature });
@@ -186,8 +194,9 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
       onTraded();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      setPhase({ kind: "error", message: decodeError(msg), signature });
-      toast({ title: "Couldn't confirm", description: decodeError(msg), variant: "destructive" });
+      const decoded = decodeTradeError(msg);
+      setPhase({ kind: "error", decoded, signature });
+      toast({ title: decoded.title || "Couldn't confirm", description: decoded.detail, variant: "destructive" });
     } finally {
       setBusy(false);
     }
