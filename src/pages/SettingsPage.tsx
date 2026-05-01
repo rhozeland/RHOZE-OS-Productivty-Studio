@@ -25,6 +25,7 @@ import SettingsSubNav, {
 import WorksPage from "@/pages/WorksPage";
 import MyVerificationRequests from "@/components/works/MyVerificationRequests";
 import LaunchpadIdlSettings from "@/components/launchpad/LaunchpadIdlSettings";
+import LaunchpadIdlVersions from "@/components/launchpad/LaunchpadIdlVersions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -773,6 +774,7 @@ const SettingsPage = () => {
   const renderProvenance = () => (
     <div className="space-y-6">
       <MyVerificationRequests />
+      <LaunchpadIdlVersions />
       <LaunchpadIdlSettings />
       <WorksPage embedded />
     </div>
