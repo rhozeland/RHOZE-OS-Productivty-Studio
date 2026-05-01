@@ -46,6 +46,10 @@ import InfrastructurePage from "@/pages/InfrastructurePage";
 // PeoplePage retained but unrouted — /people redirects to /hub.
 import HubPage from "@/pages/HubPage";
 import SpacesHubPage from "@/pages/SpacesHubPage";
+import EventCreatePage from "@/pages/EventCreatePage";
+import EventDetailPage from "@/pages/EventDetailPage";
+import EventManagePage from "@/pages/EventManagePage";
+import TicketDetailPage from "@/pages/TicketDetailPage";
 import { ProfileRedirect } from "@/components/ProfileRedirect";
 // FlowAuthGuard retained — no longer needed at top-level since /flow redirects.
 import NotFound from "./pages/NotFound";
@@ -107,6 +111,7 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/settings",
   "/admin",
   "/boards/:id",
+  "/tickets/:id",
   // Auto-register every legacy alias as `<from>/*` so the dev-only nav
   // sanity check sees them and the array stays the source of truth.
   ...NAV_ALIASES.map(({ from }) => `${from}/*`),
@@ -191,9 +196,10 @@ const App = () => (
                     /spaces is the tabbed Spaces · Events · Residencies hub.
                     /studios redirects in for backwards compatibility. */}
                 <Route path="/spaces" element={<SpacesHubPage />} />
-                <Route path="/spaces/events/:id" element={<Navigate to="/spaces?tab=events" replace />} />
-                <Route path="/spaces/events/new" element={<Navigate to="/spaces?tab=events" replace />} />
-                <Route path="/spaces/events/:id/manage" element={<Navigate to="/spaces?tab=events" replace />} />
+                <Route path="/spaces/events/new" element={<ProtectedRoute><EventCreatePage /></ProtectedRoute>} />
+                <Route path="/spaces/events/:id" element={<EventDetailPage />} />
+                <Route path="/spaces/events/:id/manage" element={<ProtectedRoute><EventManagePage /></ProtectedRoute>} />
+                <Route path="/tickets/:id" element={<ProtectedRoute><TicketDetailPage /></ProtectedRoute>} />
                 <Route path="/people" element={<Navigate to="/hub" replace />} />
                 <Route path="/hub" element={<HubPage />} />
                 <Route path="/profile" element={<ProfileRedirect />} />
