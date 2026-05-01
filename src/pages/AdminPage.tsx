@@ -74,7 +74,10 @@ const AdminPage = () => {
         <TabsContent value="disputes"><AdminDisputes /></TabsContent>
         <TabsContent value="withdrawals"><AdminWithdrawals /></TabsContent>
         <TabsContent value="moderation"><AdminContentModeration /></TabsContent>
-        <TabsContent value="capital"><AdminUnderwritingRules /></TabsContent>
+        <TabsContent value="capital" className="space-y-4">
+          <AdminUnderwritingRules />
+          <AdminUnderwritingRulesAudit />
+        </TabsContent>
       </Tabs>
     </div>
   );
