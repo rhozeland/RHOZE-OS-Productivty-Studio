@@ -166,6 +166,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
     <SolanaWalletProvider>
+    <LaunchpadWalletBridge />
     <TooltipProvider>
       <Toaster />
       <Sonner />
