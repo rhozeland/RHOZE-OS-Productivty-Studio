@@ -229,4 +229,78 @@ const Stat = ({ label, value, icon }: { label: string; value: string; icon?: Rea
   </div>
 );
 
+const solscanCluster = LAUNCHPAD_NETWORK === "devnet" ? "?cluster=devnet" : "";
+
+const AddressRow = ({ label, address, kind }: { label: string; address: string; kind: "account" | "token" }) => {
+  const url = `https://solscan.io/${kind}/${address}${solscanCluster}`;
+  const copy = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigator.clipboard.writeText(address);
+    toast.success(`${label} copied`);
+  };
+  return (
+    <div className="flex items-center justify-between gap-2 py-1.5 border-b border-border/30 last:border-0">
+      <span className="text-[10px] uppercase tracking-wide text-muted-foreground shrink-0">{label}</span>
+      <div className="flex items-center gap-1 min-w-0">
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-mono text-xs truncate hover:text-emerald-500 transition-colors"
+          title={address}
+        >
+          {address.slice(0, 6)}…{address.slice(-6)}
+        </a>
+        <button onClick={copy} className="text-muted-foreground hover:text-foreground shrink-0" aria-label={`Copy ${label}`}>
+          <Copy className="h-3 w-3" />
+        </button>
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-muted-foreground hover:text-foreground shrink-0"
+          aria-label={`Open ${label} on Solscan`}
+        >
+          <ExternalLink className="h-3 w-3" />
+        </a>
+      </div>
+    </div>
+  );
+};
+
+const OnChainAddressesCard = ({
+  mint,
+  launchPda,
+  raydiumPool,
+}: {
+  mint: string | null;
+  launchPda: string | null;
+  raydiumPool: string | null;
+}) => {
+  const hasAny = mint || launchPda || raydiumPool;
+  return (
+    <Card className="bg-card/40 backdrop-blur">
+      <CardContent className="p-4 space-y-1">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-sm font-semibold">On-chain addresses</h2>
+          <Badge variant="outline" className="text-[10px] font-mono">
+            {LAUNCHPAD_NETWORK === "devnet" ? "Devnet" : "Mainnet"}
+          </Badge>
+        </div>
+        {!hasAny ? (
+          <p className="text-xs text-muted-foreground py-2">
+            No on-chain addresses yet. Once the Anchor program is deployed and this launch is initialized, the mint and launch PDA will appear here.
+          </p>
+        ) : (
+          <>
+            {launchPda && <AddressRow label="Launch PDA" address={launchPda} kind="account" />}
+            {mint && <AddressRow label="Mint" address={mint} kind="token" />}
+            {raydiumPool && <AddressRow label="Raydium pool" address={raydiumPool} kind="account" />}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 export default LaunchDetailPage;
