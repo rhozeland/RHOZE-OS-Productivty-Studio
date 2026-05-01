@@ -807,8 +807,9 @@ const DashboardPage = () => {
               {/* Oversized editorial glyph — art, not decoration */}
               <Sparkles
                 aria-hidden
-                strokeWidth={0.6}
-                className="absolute -right-6 -top-6 h-56 w-56 text-pink-500/15 group-hover:text-pink-500/25 transition-colors duration-500 pointer-events-none"
+                strokeWidth={0.5}
+                style={{ color: "hsl(320 80% 60% / 0.14)" }}
+                className="absolute -right-8 -top-8 h-64 w-64 transition-opacity duration-500 pointer-events-none"
               />
 
               <div className="relative h-full flex flex-col p-6 sm:p-8">
