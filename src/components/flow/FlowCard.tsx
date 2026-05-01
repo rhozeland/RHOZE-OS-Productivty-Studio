@@ -394,15 +394,17 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
             />
           )}
 
-          {/* Speculate pill — only when a coin already exists for the
-              underlying Verified IP. We deliberately do NOT auto-launch
-              coins on upload; creators opt in from the Works page. */}
-          {coin && (
+          {/* Speculate pill — only when the uploader has launched a profile
+              coin. Tapping it jumps straight to that creator's profile Coin
+              tab where the bonding-curve chart + trade panel live. We
+              deliberately do NOT auto-launch coins on upload; creators opt
+              in from their own profile page. */}
+          {coin && item.user_id && (
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); navigate(`/launchpad/${coin.id}`); }}
+              onClick={(e) => { e.stopPropagation(); navigate(`/profiles/${item.user_id}?tab=coin`); }}
               className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-500/15 transition-colors"
-              title="Speculate on this work — view the bonding curve"
+              title="Speculate on this creator — view their bonding curve"
             >
               <Coins className="h-3 w-3" />
               <span>${coin.ticker}</span>
