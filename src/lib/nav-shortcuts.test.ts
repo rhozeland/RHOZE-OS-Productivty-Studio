@@ -53,7 +53,7 @@ describe("NAV_SHORTCUTS table", () => {
 
 describe("decideShortcut — Alt chords", () => {
   it.each([
-    ["1", "/dashboard"],
+    ["1", "/discover"],
     ["2", "/projects"],
     ["3", "/calendar"],
     ["4", "/flow"],
