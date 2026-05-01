@@ -445,7 +445,7 @@ const ProjectDetailPage = () => {
         </TabsContent>
 
         <TabsContent value="moodboard">
-          <ProjectMoodboard projectId={id!} canManage={project.user_id === user?.id} />
+          <ProjectMoodboard projectId={id!} canManage={canManageProject} />
         </TabsContent>
 
         {/* Vault — ambient Works surface scoped to this project. Lets the
