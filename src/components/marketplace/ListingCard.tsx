@@ -110,16 +110,37 @@ const ListingCard = ({
             </Badge>
           </div>
         </div>
-      ) : (
-        // Text-led editorial cover — no oversized empty palette icon.
-        // Reads as an intentional typographic surface instead of "missing image".
+      ) : hasInlinePreview ? (
+        // Compact header strip when audio/video preview will render below.
+        // Keeps the type badge + category accent without the giant blank canvas.
         <div
-          className="relative aspect-[16/10] flex flex-col justify-between p-4 overflow-hidden"
+          className="relative flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border/60"
+          style={{
+            background: `linear-gradient(90deg, ${catMeta.color}14 0%, transparent 70%)`,
+          }}
+        >
+          <Badge
+            variant="secondary"
+            className={`bg-card/80 backdrop-blur-sm text-xs gap-1 ${isRequest ? "border-amber-500/30" : ""}`}
+          >
+            <TypeIcon className="h-3 w-3" />
+            {typeMeta.label}
+          </Badge>
+          <span
+            className="text-[10px] uppercase tracking-[0.18em] font-semibold"
+            style={{ color: catMeta.color }}
+          >
+            {catMeta.label}
+          </span>
+        </div>
+      ) : (
+        // Text-led editorial cover — shorter aspect to cut whitespace.
+        <div
+          className="relative aspect-[16/6] flex flex-col justify-between p-4 overflow-hidden"
           style={{
             background: `linear-gradient(135deg, ${catMeta.color}1f 0%, ${catMeta.color}0a 60%, transparent 100%)`,
           }}
         >
-          {/* Top: type badge + small category tag */}
           <div className="flex items-start justify-between gap-2">
             <Badge
               variant="secondary"
@@ -136,27 +157,16 @@ const ListingCard = ({
             </span>
           </div>
 
-          {/* Center: editorial title preview (truncated; full title still in body) */}
-          <div className="flex-1 flex items-center pt-2">
-            <p
-              className="font-display font-bold text-foreground/90 leading-[1.05] line-clamp-3 text-base sm:text-lg"
-              title={listing.title}
-            >
-              {listing.title}
-            </p>
-          </div>
-
-          {/* Bottom: signature color band as visual anchor */}
+          {/* Signature color band as visual anchor */}
           <div
-            className="h-1 w-12 rounded-full mt-2"
+            className="h-1 w-12 rounded-full"
             style={{ background: catMeta.color }}
           />
 
-          {/* Subtle corner monogram, decorative only */}
           <CatIcon
             aria-hidden
             strokeWidth={0.6}
-            className="absolute -right-3 -bottom-3 h-20 w-20 pointer-events-none"
+            className="absolute -right-3 -bottom-3 h-16 w-16 pointer-events-none"
             style={{ color: catMeta.color, opacity: 0.08 }}
           />
         </div>
