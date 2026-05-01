@@ -221,10 +221,6 @@ const HubPage = () => {
       navigate("/works");
       return;
     }
-    if (lane === "coins") {
-      navigate("/launchpad");
-      return;
-    }
     setCreateOpen(true);
   };
 
