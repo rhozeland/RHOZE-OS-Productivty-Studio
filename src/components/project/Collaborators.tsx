@@ -264,6 +264,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       {/* Owner */}
