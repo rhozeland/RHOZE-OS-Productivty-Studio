@@ -3203,6 +3203,26 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_active_underwriting_rules: {
+        Args: never
+        Returns: {
+          advance_cap: number
+          anchored_score_per_work: number
+          base_advance_ratio: number
+          diversification_floor_per_work: number
+          min_advance_amount: number
+          min_anchored_works: number
+          min_settled_events: number
+          provenance_bonus_max: number
+          revenue_score_target: number
+          score_weight_anchored: number
+          score_weight_provenance: number
+          score_weight_revenue: number
+          score_weight_tenure: number
+          tenure_floor_mult: number
+          tenure_full_months: number
+        }[]
+      }
       get_profiles_by_ids: {
         Args: { _ids: string[] }
         Returns: {
@@ -3325,6 +3345,10 @@ export type Database = {
           _user_id: string
         }
         Returns: string
+      }
+      update_underwriting_rules: {
+        Args: { _payload: Json }
+        Returns: undefined
       }
       update_user_subscription: {
         Args: {
