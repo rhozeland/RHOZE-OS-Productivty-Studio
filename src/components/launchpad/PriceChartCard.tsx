@@ -140,7 +140,7 @@ const PriceChartCard = ({ launchId, ticker, realSolReserves, graduationTarget }:
             role="tablist"
             aria-label="Chart view"
             className="inline-flex rounded-full border border-border/60 bg-muted/30 p-0.5 text-[11px]"
-            onKeyDown={(e) => handleRovingKeyDown(e, ["price", "curve"], view, setView)}
+            onKeyDown={(e) => handleRovingKeyDown<View>(e, ["price", "curve"], view, setView)}
           >
             {([
               { id: "price" as const, label: "Price", Icon: LineChartIcon, desc: "Token price over time" },
@@ -173,7 +173,7 @@ const PriceChartCard = ({ launchId, ticker, realSolReserves, graduationTarget }:
               aria-label="Chart timeframe"
               className="inline-flex rounded-full border border-border/60 bg-muted/30 p-0.5 text-[10px] font-mono"
               onKeyDown={(e) =>
-                handleRovingKeyDown(e, ["1H", "6H", "1D", "ALL"] as Range[], range, setRange)
+                handleRovingKeyDown<Range>(e, ["1H", "6H", "1D", "ALL"], range, setRange)
               }
             >
               {(["1H", "6H", "1D", "ALL"] as Range[]).map((r) => {
