@@ -369,7 +369,8 @@ const AppLayout = () => {
             <Outlet />
           </main>
           {user && !location.pathname.startsWith("/flow") && <DockBar />}
-          {user && <FlowLauncher />}
+          {/* Flow launcher now lives in the top search bar (replaces "browse spaces") */}
+
         </div>
       </div>
 
