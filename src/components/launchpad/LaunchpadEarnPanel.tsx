@@ -15,8 +15,9 @@
  *   - Guest   → CTA prompting sign-in (no balance row)
  *   - Authed  → balance(s) + streak chip + grid of reward actions
  */
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useWallet } from "@solana/wallet-adapter-react";
 import {
   type LucideIcon,
@@ -36,6 +37,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAuthGate } from "@/components/AuthGateDialog";
 import { useRhozeBalance } from "@/hooks/useRhozeBalance";
+import { useRewardStreak } from "@/hooks/useRewardStreak";
 import { supabase } from "@/integrations/supabase/client";
 
 interface RewardAction {
@@ -65,25 +67,91 @@ const ACTIONS: RewardAction[] = [
 const formatBalance = (n: number, max = 0) =>
   n.toLocaleString(undefined, { maximumFractionDigits: max });
 
+const creditsKey = (uid?: string) => ["launchpad-earn-credits", uid] as const;
+
 const LaunchpadEarnPanel = () => {
   const { user } = useAuth();
   const { requireAuth } = useAuthGate();
   const { connected } = useWallet();
-  const { data: tokenInfo, isLoading: loadingToken } = useRhozeBalance();
+  const queryClient = useQueryClient();
 
-  const { data: credits, isLoading: loadingCredits } = useQuery({
-    queryKey: ["launchpad-earn-credits", user?.id],
+  // Keep the daily login streak ticking while this panel is mounted.
+  useRewardStreak();
+
+  const { data: tokenInfo, isLoading: loadingToken, refetch: refetchToken } =
+    useRhozeBalance();
+
+  const {
+    data: credits,
+    isLoading: loadingCredits,
+    refetch: refetchCredits,
+  } = useQuery({
+    queryKey: creditsKey(user?.id),
     queryFn: async () => {
       if (!user) return null;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("user_credits")
         .select("balance, reward_streak")
         .eq("user_id", user.id)
         .maybeSingle();
+      if (error) throw error;
       return data;
     },
     enabled: !!user,
+    // Re-pull when the tab regains focus so a reward earned elsewhere shows up.
+    refetchOnWindowFocus: true,
+    staleTime: 15_000,
   });
+
+  // Realtime: any change to this user's credits row (balance/streak), a new
+  // credit_transactions entry, or pending_rewards activity refreshes balances.
+  useEffect(() => {
+    if (!user) return;
+
+    const refresh = () => {
+      queryClient.invalidateQueries({ queryKey: creditsKey(user.id) });
+      refetchCredits();
+      if (connected) refetchToken();
+    };
+
+    const channel = supabase
+      .channel(`launchpad-earn:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "user_credits",
+          filter: `user_id=eq.${user.id}`,
+        },
+        refresh,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "credit_transactions",
+          filter: `user_id=eq.${user.id}`,
+        },
+        refresh,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "pending_rewards",
+          filter: `user_id=eq.${user.id}`,
+        },
+        refresh,
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, connected, queryClient, refetchCredits, refetchToken]);
 
   const offChainBalance = Number(credits?.balance ?? 0);
   const onChainBalance = connected ? Number(tokenInfo?.balance ?? 0) : null;
@@ -107,7 +175,7 @@ const LaunchpadEarnPanel = () => {
               <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 Earn $RHOZE
               </p>
-              <p className="text-sm font-semibold leading-tight truncate">
+              <p className="text-sm font-semibold leading-tight break-words">
                 Trading fuel — earned by contributing.
               </p>
             </div>
@@ -171,7 +239,7 @@ const LaunchpadEarnPanel = () => {
 
         {/* ── Reward grid ─────────────────────────────────────────────── */}
         <ul
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 list-none"
+          className="grid grid-cols-2 lg:grid-cols-3 gap-2 list-none"
           aria-label="Ways to earn $RHOZE"
         >
           {ACTIONS.map(({ label, reward, icon: Icon, hint, featured }) => (
@@ -190,8 +258,10 @@ const LaunchpadEarnPanel = () => {
                 aria-hidden
               />
               <div className="min-w-0 flex-1">
-                <div className="flex items-baseline justify-between gap-2">
-                  <p className="text-[11px] font-medium truncate">{label}</p>
+                <div className="flex items-baseline justify-between gap-1.5">
+                  <p className="text-[11px] font-medium leading-tight break-words">
+                    {label}
+                  </p>
                   <span
                     className={`text-[10px] font-mono font-semibold shrink-0 tabular-nums ${
                       featured ? "text-emerald-500" : "text-foreground"
@@ -200,7 +270,9 @@ const LaunchpadEarnPanel = () => {
                     {reward}
                   </span>
                 </div>
-                <p className="text-[10px] text-muted-foreground truncate">{hint}</p>
+                <p className="text-[10px] text-muted-foreground leading-snug mt-0.5 line-clamp-2">
+                  {hint}
+                </p>
               </div>
             </li>
           ))}
