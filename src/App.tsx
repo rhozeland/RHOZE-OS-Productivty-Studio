@@ -40,6 +40,7 @@ import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import OnboardingPage from "@/pages/OnboardingPage";
 // MarketplacePage retained as a file but no longer routed — /marketplace redirects to /hub.
 import HomePage from "@/pages/HomePage";
+import DiscoverPage from "@/pages/DiscoverPage";
 import InfrastructurePage from "@/pages/InfrastructurePage";
 // WorksPage is no longer routed here — it's mounted inside SettingsPage
 // (Provenance section). /works redirects to /settings#provenance below.
