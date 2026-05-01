@@ -20,12 +20,14 @@ import { Button } from "@/components/ui/button";
 import PriceChartCard from "@/components/launchpad/PriceChartCard";
 import TradePanel from "@/components/launchpad/TradePanel";
 import LaunchCoinDialog from "@/components/launchpad/LaunchCoinDialog";
+import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
 
 interface Props {
   creatorId: string;
   isOwnProfile: boolean;
   defaultName?: string | null;
   defaultImage?: string | null;
+  memberSince?: string | null;
 }
 
 const ProfileCoinTab = ({ creatorId, isOwnProfile, defaultName, defaultImage }: Props) => {
