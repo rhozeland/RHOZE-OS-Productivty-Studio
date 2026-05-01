@@ -600,6 +600,101 @@ const HubPage = () => {
         </section>
       )}
 
+      {/* ════════════════════════════════════════════════════════════════
+          LANE: Coins (artist coins on the bonding curve — Launchpad)
+          ════════════════════════════════════════════════════════════════ */}
+      {lane === "coins" && (
+        <section>
+          {loadingCoins ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-40 bg-muted animate-pulse rounded-2xl" />
+              ))}
+            </div>
+          ) : !coins || coins.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
+              <Coins className="h-10 w-10 text-emerald-500/40 mx-auto mb-3" />
+              <p className="text-sm text-foreground font-medium">
+                {search ? "No coins match your search." : "No artist coins minted yet."}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                Verify a Work as IP and you can launch a coin against it on the
+                bonding curve.
+              </p>
+              <Button
+                onClick={() => navigate("/launchpad")}
+                className="mt-4 rounded-full"
+                variant="outline"
+              >
+                Open Launchpad
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {coins.map((c: any, i: number) => {
+                const progress = Math.min(
+                  100,
+                  (Number(c.real_sol_reserves) / Number(c.graduation_sol_target)) * 100,
+                );
+                return (
+                  <motion.div
+                    key={c.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.04 }}
+                  >
+                    <Link
+                      to={`/launchpad/${c.id}`}
+                      className="group block rounded-2xl border border-border bg-card hover:border-emerald-500/40 hover:-translate-y-0.5 transition-all p-4 h-full"
+                    >
+                      <div className="flex items-start gap-3 mb-3">
+                        {c.image_url ? (
+                          <img
+                            src={c.image_url}
+                            alt={c.name}
+                            className="h-11 w-11 rounded-md object-cover shrink-0"
+                          />
+                        ) : (
+                          <div className="h-11 w-11 rounded-md bg-gradient-to-br from-emerald-500/30 to-fuchsia-500/30 flex items-center justify-center shrink-0">
+                            <Coins className="h-5 w-5 text-emerald-500" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono font-bold text-sm">${c.ticker}</span>
+                            {c.status === "graduated" && (
+                              <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500">
+                                Grad
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground truncate">{c.name}</p>
+                        </div>
+                      </div>
+                      {c.description && (
+                        <p className="text-[11px] text-muted-foreground line-clamp-2 mb-3">
+                          {c.description}
+                        </p>
+                      )}
+                      <div className="flex justify-between text-[10px] font-mono text-muted-foreground mb-1">
+                        <span>{Number(c.real_sol_reserves).toFixed(2)} SOL</span>
+                        <span>{c.graduation_sol_target} SOL goal</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-emerald-500 to-fuchsia-500"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
       <CreateListingDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );
