@@ -669,7 +669,7 @@ const FlowModePage = () => {
       };
 
       const rows = latest.length === 0
-        ? [{ ...baseRow, file_url: null, content_type: newLink ? "link" : "text" }]
+        ? [{ ...baseRow, file_url: null, content_type: newLink ? "link" : "text", content_hash: null }]
         : latest.map((pf) => ({
             ...baseRow,
             file_url: pf.uploadedUrl,
@@ -680,6 +680,10 @@ const FlowModePage = () => {
               : pf.file.type.startsWith("audio")
               ? "audio"
               : "file",
+            // SHA-256 fingerprint computed during acceptance. Will usually be
+            // ready by the time we publish; if hashing failed (rare) we still
+            // ship the row and let the creator request verification later.
+            content_hash: pf.contentHash,
           }));
 
       const { error } = await supabase.from("flow_items").insert(rows as any);
