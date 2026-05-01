@@ -147,36 +147,120 @@ const CalendarPage = () => {
     },
   });
 
-  const createCalendarEvent = async () => {
-    if (!dragDate || dragStartHour === null || dragEndHour === null || !user) return;
-    const startH = Math.min(dragStartHour, dragEndHour);
-    const endH = Math.max(dragStartHour, dragEndHour) + 1;
-    const start = setMinutes(setHours(dragDate, startH), 0);
-    const end = setMinutes(setHours(dragDate, endH), 0);
+  const resetEventForm = () => {
+    setEditingEventId(null);
+    setEventTitle("");
+    setSelectedProject("");
+    setBookingNotes("");
+    setEventDate("");
+    setEventStartTime("");
+    setEventEndTime("");
+    setAttendees([]);
+    setAttendeesInput("");
+    setReminderMinutes("none");
+  };
+
+  const addAttendee = () => {
+    const value = attendeesInput.trim();
+    if (!value) return;
+    // very light email validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      toast.error("Enter a valid email address");
+      return;
+    }
+    if (attendees.includes(value)) {
+      setAttendeesInput("");
+      return;
+    }
+    setAttendees([...attendees, value]);
+    setAttendeesInput("");
+  };
+
+  const removeAttendee = (email: string) => {
+    setAttendees(attendees.filter((a) => a !== email));
+  };
+
+  const openEditEvent = (ev: any) => {
+    const start = new Date(ev.start_time);
+    const end = new Date(ev.end_time);
+    setEditingEventId(ev.id);
+    setEventType(ev.project_id ? "project" : "reminder");
+    setEventTitle(ev.title || "");
+    setSelectedProject(ev.project_id || "");
+    setBookingNotes(ev.description || "");
+    setEventDate(format(start, "yyyy-MM-dd"));
+    setEventStartTime(format(start, "HH:mm"));
+    setEventEndTime(format(end, "HH:mm"));
+    setAttendees(Array.isArray(ev.attendees) ? ev.attendees : []);
+    setReminderMinutes(ev.reminder_minutes != null ? String(ev.reminder_minutes) : "none");
+    setBookingDialogOpen(true);
+  };
+
+  const deleteCalendarEvent = async (id: string) => {
+    try {
+      const { error } = await supabase.from("calendar_events").delete().eq("id", id);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
+      toast.success("Event deleted");
+      setBookingDialogOpen(false);
+      resetEventForm();
+      setEventType(null);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete event");
+    }
+  };
+
+  const saveCalendarEvent = async () => {
+    if (!user) return;
+    if (!eventDate || !eventStartTime || !eventEndTime) {
+      toast.error("Please pick a date and time");
+      return;
+    }
+    const start = new Date(`${eventDate}T${eventStartTime}`);
+    const end = new Date(`${eventDate}T${eventEndTime}`);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      toast.error("Invalid date or time");
+      return;
+    }
+    if (end <= start) {
+      toast.error("End time must be after start time");
+      return;
+    }
 
     setBookingLoading(true);
     try {
-      const { error } = await supabase.from("calendar_events").insert({
+      const payload = {
         user_id: user.id,
         title: eventTitle || (eventType === "project" ? "Project Session" : "Reminder"),
         start_time: start.toISOString(),
         end_time: end.toISOString(),
         description: bookingNotes || null,
-        project_id: selectedProject || null,
+        project_id: eventType === "project" ? (selectedProject || null) : null,
+        attendees,
+        reminder_minutes: reminderMinutes === "none" ? null : Number(reminderMinutes),
         color: eventType === "project" ? "hsl(175, 60%, 55%)" : "hsl(280, 60%, 55%)",
-      });
-      if (error) throw error;
+      };
+
+      if (editingEventId) {
+        const { error } = await supabase
+          .from("calendar_events")
+          .update(payload)
+          .eq("id", editingEventId);
+        if (error) throw error;
+        toast.success("Event updated");
+      } else {
+        const { error } = await supabase.from("calendar_events").insert(payload);
+        if (error) throw error;
+        toast.success(eventType === "project" ? "Project session added!" : "Reminder set!");
+      }
 
       queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
       resetDrag();
       setBookingDialogOpen(false);
       setEventType(null);
-      setEventTitle("");
-      setSelectedProject("");
-      setBookingNotes("");
-      toast.success(eventType === "project" ? "Project session added!" : "Reminder set!");
+      resetEventForm();
     } catch (err: any) {
-      toast.error(err.message || "Failed to create event");
+      toast.error(err.message || "Failed to save event");
     } finally {
       setBookingLoading(false);
     }
