@@ -11,11 +11,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Coins, GraduationCap, Lock, ExternalLink, Loader2, ArrowLeft } from "lucide-react";
+import { Coins, GraduationCap, Lock, ExternalLink, Loader2, ArrowLeft, Copy } from "lucide-react";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import TradePanel from "@/components/launchpad/TradePanel";
 import LaunchpadModeBanner from "@/components/launchpad/LaunchpadModeBanner";
 import { Button } from "@/components/ui/button";
+import { deriveLaunchPda, LAUNCHPAD_NETWORK } from "@/lib/launchpad-onchain";
+import { toast } from "sonner";
 
 type Launch = {
   id: string;
