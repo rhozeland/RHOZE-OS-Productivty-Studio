@@ -1,163 +1,111 @@
-# Spaces 2.0 — Spaces · Events · Residencies
+# One Pipeline: Upload → Verify → (Optionally) Launch a Coin
 
-## What we're building
+You're right that everything we've built — Flow uploads, Works fingerprinting, Spaces, Events, Hub — is really one motion: **register a creation, prove it's yours, give it a lifeline.** This plan unifies them around that single idea.
 
-Rename `/studios` → `/spaces` and turn it into the home of the **physical-and-gathered network** with three tabs:
-
-- **Spaces** — existing studios marketplace (no behavioral change)
-- **Events** — new: hosting, RSVP + paid ticketing, on-chain provenance
-- **Residencies** — placeholder tab with a "Coming soon" state
-
-Anyone authenticated can host. Tickets sell in fiat (Square) or $RHOZE, mirroring Projects (10% platform fee). Events get the full IP-anchoring treatment: manifest hash at publish, optional post-event artifact hashes, and proof-of-attendance hashes per ticket.
-
-## Why anchoring an event makes sense
-
-An event isn't a file, but its *terms* and *outputs* are. Three anchor layers, each reusing the existing `contribution_proofs` + `anchor-contribution` infra:
-
-1. **Manifest** — at publish, hash a canonical JSON of `{title, host_id, starts_at, ends_at, venue, description, lineup, ticket_terms}`. One Solana memo. Proves "this event existed with these terms on this date."
-2. **Artifacts** — after the event, host uploads recordings/photos/zines. Each file SHA-256'd and anchored exactly like a project deliverable, surfaced via `<VerifiedIPBadge />`.
-3. **Proof-of-attendance** — when a ticket is issued, hash `{event_manifest_hash, holder_user_id, issued_at, ticket_id}`. Stored on the ticket row; one-tap "Anchor my attendance" button on the holder's ticket detail.
-
-## URL & navigation moves
+## The mental model
 
 ```text
-/studios          → 301 redirect to /spaces?tab=spaces
-/spaces           → new tabbed page (Spaces · Events · Residencies)
-/spaces/events/:id          → event detail (public)
-/spaces/events/new          → event create wizard
-/spaces/events/:id/manage   → host dashboard (attendees, scans, payouts, artifacts)
-/tickets/:id                → ticket detail (holder view, QR, anchor button)
+                                     ┌──────────────────┐
+   Upload anywhere (Flow, Works,     │  Verified IP     │   ┌───────────────┐
+   Listing, Project, Event)  ──────► │  (admin review,  │──►│  Launch coin  │
+   → SHA-256 fingerprint instantly   │   anchor on Sol) │   │  (optional)   │
+                                     └──────────────────┘   └───────────────┘
 ```
 
-Sidebar/dock label updates from "Studios" to "Spaces". Pillars v5 memory updated.
+Three states for any creation:
+1. **Fingerprinted** — hashed in the browser the moment it's uploaded. Free, automatic, invisible to the user.
+2. **Verified** — creator submitted it for review, an admin confirmed authorship/originality, then it's anchored on Solana with a public proof. Earns the **Verified** badge.
+3. **Launched** — creator mints a token tied to the asset. Supporters buy in on a bonding curve. Becomes a tradeable lifeline for the work.
 
-## Database (one migration)
+We stop saying "provenance" in the UI. We say **Verified** (badge), **Receipts** (tooltip-friendly nickname for the hash + Solscan link), and **Launch a Coin**.
 
-```text
-events
-  id, host_id, space_id (nullable FK to studios), title, slug, description,
-  cover_url, category, starts_at, ends_at, venue_name, venue_address,
-  is_online, online_url, capacity, status (draft|published|cancelled|completed),
-  manifest_hash, manifest_json, solana_signature, anchored_at,
-  ticket_currency_modes (text[]), created_at, updated_at
+---
 
-event_ticket_tiers
-  id, event_id, name, description, price_usd (nullable), price_rhoze (nullable),
-  quantity_total, quantity_sold, sale_starts_at, sale_ends_at, is_active
+## Phase 1 — Fix Flow Mode + bridge it to Works
 
-event_tickets
-  id, event_id, tier_id, holder_id, purchase_currency (usd|rhoze|free),
-  amount_paid, payment_reference, status (issued|checked_in|refunded|cancelled),
-  attendance_hash, solana_signature, anchored_at, qr_token (unique), issued_at, checked_in_at
+**Flow Mode stays.** It becomes the public browser for creative IP. Today it's buggy because we routed `/flow` → `/projects` and the upload pipeline drifted from the Works pipeline. We re-anchor it.
 
-event_artifacts
-  id, event_id, uploader_id, file_url, file_name, file_size, file_type,
-  sha256_hash, solana_signature, anchored_at, caption, created_at
+- Restore `/flow` as a real page (un-redirect). Inside Projects → Tools, "Flow" launches `/flow`.
+- Every Flow upload runs the SHA-256 hash in the browser (same `computeContentHash` already used by Works). The hash + file metadata is saved on the `flow_items` row.
+- Below every Flow card, show one of three chips:
+  - `Fingerprinted` (gray, default) — has a hash, not yet submitted for review
+  - `Pending review` (amber) — creator submitted it
+  - `Verified` (the existing `<VerifiedIPBadge />`) — anchored on Solana
+- A "Verify this work" CTA on each of the user's own Flow cards opens a one-screen submission form (title, description, optional supporting links). It creates a Work record + a verification request.
+- Old Flow posts (uploaded before today) get **no automatic backfill**. Instead, the "Verify this work" CTA on those cards still works — when the creator clicks it, we re-hash the file from storage server-side and create the Work + request. So the door is open, but only when the creator actively chooses it.
 
-event_check_ins  (audit trail)
-  id, ticket_id, scanned_by, scanned_at, method
-```
+**What this does for Flow:** it stops being a throwaway swipe feed and becomes a public registry where every card can earn a blue check.
 
-RLS sketch: events readable when `status='published'` or by host; tiers/tickets follow event visibility; tickets writable by holder for own; artifacts insertable by host or attendees with `checked_in` ticket; check-ins insertable by host only. Storage: new `event-artifacts` bucket (private, host + ticket-holders read).
+---
 
-## UI surfaces
+## Phase 2 — Verification application & admin review
 
-**Events tab** — grid of cards (cover, title, date, venue, price-from, capacity bar). Filters: upcoming/past, free/paid, online/in-person, category. Search by title/venue.
+A new lightweight workflow, modelled on the existing studio-application + admin-review patterns.
 
-**Event create wizard** (`InlineFormPanel` reused from the onboarding refactor):
-1. Basics (title, description, category, cover)
-2. When/Where (date range, venue or online URL, optional link to one of host's Spaces)
-3. Tickets (add tiers; each tier picks USD, $RHOZE, or both; capacity per tier)
-4. Review → Publish (computes manifest hash, anchors via `anchor-contribution`, shows Solscan link)
+- New table `work_verification_requests`: `work_id`, `applicant_id`, `status` (`pending` / `approved` / `rejected` / `changes_requested`), `applicant_note`, `supporting_urls[]`, `reviewer_id`, `review_note`, `decided_at`.
+- Creator submits → status `pending`, notification fires to admins.
+- New admin tab in `/admin` → **IP Verifications** (sits next to Studio Applications). Lists pending requests with: file preview, hash, applicant profile, supporting links, side-by-side reverse-image hint area for future automation, Approve / Request changes / Reject buttons.
+- On approve → call existing `anchor-contribution` edge function → write `solana_signature` onto the `works` row → set request to `approved` → fire notification + email to creator → `<VerifiedIPBadge />` appears everywhere that Work surfaces.
+- Settings → Provenance gets a new section "My Verification Requests" listing status + admin notes for each submission.
 
-**Event detail page** — hero (cover, title, date, host w/ verified badge), description, ticket tiers with buy buttons, attendee count (privacy-respecting), `<VerifiedIPBadge />` for the manifest, artifacts gallery (post-event), share.
+**Backfill of historical uploads** is the same flow with the rehash-from-storage helper. We don't bulk-import anything — each piece is opt-in by the creator and reviewed before it earns the badge.
 
-**Ticket detail** (`/tickets/:id`) — gradient gym-card style matching Creator Pass, QR for check-in, "Anchor my attendance" button → writes hash + memo, shows Solscan link once anchored.
+---
 
-**Host manage page** — tabs: Overview · Attendees (with check-in scanner) · Artifacts (upload + anchor) · Settlement (USD revenue, $RHOZE credited via admin gate, 10% platform fee shown). Reuses patterns from `StudioManagePage` and `ProjectScopeDeliverables`.
+## Phase 3 — Word choice + UX polish
 
-**Residencies tab** — single empty-state card: "Long-form residencies at member Spaces — coming soon. Want to host one? [Contact us]." No DB, no routes.
+- "Provenance" stays as a section name in Settings (creators searching for it will find it) but the body copy uses **Verified IP** and **Receipts** consistently.
+- Tooltip everywhere the hash appears: *"Receipts: a tamper-proof fingerprint of this file recorded on Solana. Click to view on Solscan."*
+- The "Verify" badge gets a hover card explaining: who reviewed it, when it was anchored, the SHA-256, the Solana tx.
 
-## Payments
+---
 
-- **Fiat** — extend the existing Square card form (`SquareCardForm`, `BookingCheckoutModal`). On success: insert `event_tickets` row, generate `qr_token`, fire `event-ticket-purchased` notification + email, deduct 10% platform fee into `credit_transactions`.
-- **$RHOZE** — same pattern as Hub Offerings $RHOZE purchases: deduct from buyer's wallet via admin reward gate, credit host (75/15/10 split where applicable), insert ticket row.
-- **Free RSVP** — single button, instant ticket, no payment leg.
+## Phase 4 — Launchpad (`pump.fun for artists`)
 
-## Anchoring integration
+This is the bold part. We give creators an option (never a requirement) to mint a token tied to a Verified Work, Space, or Event. Holders become supporters. The token becomes the asset's lifeline.
 
-Reuses `anchor-contribution` edge function (no new function needed). Three new `action_type` values in `contribution_proofs`:
-- `event_manifest`
-- `event_artifact`
-- `event_attendance`
+**Constraints we're committing to:**
+- Token is only available **after** the asset reaches `Verified` status. No verification, no coin. This protects the brand and prevents spam mints.
+- Built on Solana. Token = SPL. Launch = bonding curve (constant-product, like pump.fun) priced in **SOL**, not $RHOZE. Creator gets a fixed % of every trade; platform gets a fixed %; rest goes into the curve.
+- A migration threshold (e.g., curve hits X SOL of liquidity) graduates the token to a Raydium pool, locks LP. After graduation, Rhozeland just shows the chart and links out.
 
-Each writes `solana_signature` back to its host row (events / event_artifacts / event_tickets). `<VerifiedIPBadge />` already accepts a signature; we surface it on event cards, ticket cards, and the artifacts gallery.
+**What ships in this phase:**
+- A new on-chain Solana program (Anchor) for the bonding curve — biggest piece of work; spec lives in `.lovable/anchor-program-spec.md` and gets extended.
+- New tables: `asset_tokens` (one row per launched asset → mint address, curve PDA, creator %, status), `token_trades` (indexer cache for the chart).
+- New page `/launch/:asset_type/:asset_id` — single-screen launch form: name, ticker, image (defaults to the Work's file), creator share %, confirm. Connects wallet, signs, mint goes live.
+- `/coin/:mint` page — chart, buy/sell, holder list, "About this Work/Space/Event" panel that pulls in the verified hash + Solscan receipt + owner profile.
+- Surface the "Launch a coin" button on every Verified asset detail page (Works, Spaces, Events, eligible Hub offerings).
+- Indexer edge function (`index-token-trades`) polls the program for trade events and caches them for chart rendering. No third-party indexer dependency.
 
-## Notifications & email
+**Legal/comms note (not code):** before launch we surface an in-app disclaimer that this is permissionless, creators are responsible for their own representations, and the platform takes no custody. We'll want to revisit terms-of-service text — flagged as a non-engineering follow-up.
 
-Templates added (queued, branded): `event-published`, `event-ticket-purchased`, `event-reminder-24h`, `event-checked-in`, `event-artifact-uploaded`. All 7-day auto-purge per existing rules.
+---
 
-## Security
+## Build order (so we don't try to do everything at once)
 
-- RLS on every new table from day one.
-- `qr_token` is a 24-char random nanoid; check-in endpoint validates token + host identity server-side.
-- Attendance anchoring requires the holder's auth context — no third-party can anchor someone else's attendance.
-- Wallet locking + 1:1 binding rules unchanged.
-- Square + $RHOZE flows reuse existing audited paths; no new payment surface.
+1. **Un-break Flow Mode** + add fingerprinting on every Flow upload (no review yet, just the chip). *Smallest, ships value immediately.*
+2. **Verification request flow** + admin review tab + opt-in backfill of old uploads.
+3. **Vocabulary pass** (Verified / Receipts / tooltips).
+4. **Launchpad — Phase 4a:** the Anchor program + `asset_tokens` schema + a thin "Launch coin" form on Verified Works only. SOL-denominated bonding curve. No chart yet, just buy/sell + holder list.
+5. **Launchpad — Phase 4b:** the chart, the indexer, graduation to Raydium, opening up to Spaces and Events.
 
-## Out of scope for this plan
+We pause for your review between each step rather than shipping it all at once.
 
-- Recurring events / series
-- Waitlists & refund automation (manual via host for v1)
-- Co-hosts / revenue splits across multiple hosts (use existing revenue_split_configs in a follow-up)
-- Residency application flow
-- Calendar (.ics) export — easy follow-up
-- Map view of in-person events
+---
 
-## File-level changes
+## Technical notes
 
-```text
-NEW
-  supabase/migrations/<timestamp>_events.sql           tables, RLS, bucket, policies
-  supabase/functions/event-checkin/index.ts            QR validation + attendance log
-  src/pages/SpacesHubPage.tsx                          tabbed shell (Spaces|Events|Residencies)
-  src/pages/events/EventsListTab.tsx
-  src/pages/events/EventDetailPage.tsx
-  src/pages/events/EventCreatePage.tsx
-  src/pages/events/EventManagePage.tsx
-  src/pages/TicketDetailPage.tsx
-  src/components/events/EventCard.tsx
-  src/components/events/TicketTierEditor.tsx
-  src/components/events/TicketPurchaseModal.tsx        wraps Square + $RHOZE flows
-  src/components/events/EventArtifactUploader.tsx      reuses content-hash + anchor pattern
-  src/components/events/AttendeeCheckInScanner.tsx
-  src/components/events/EventManifestPreview.tsx
-  src/lib/event-manifest.ts                            canonical JSON + hash helper
-  mem://features/spaces-events                          new feature memory
+- **Existing infra reused:** `computeContentHash`, `works` table, `work_attachments`, `anchor-contribution` edge function, `<VerifiedIPBadge />`, admin role gating via `has_role()`.
+- **New tables (Phase 2):** `work_verification_requests` with RLS — creators see only their own, admins see all (via `has_role(auth.uid(), 'admin')`).
+- **New tables (Phase 4):** `asset_tokens`, `token_trades` — both readable by anyone (these are public-by-design), insert/update only via edge functions using the service role.
+- **New edge functions:** `request-work-verification`, `approve-work-verification` (wraps the anchor call so review + anchor are atomic), `rehash-stored-file` (server-side re-hash from storage for backfill), `launch-asset-token` (builds and submits the Anchor mint tx), `index-token-trades`.
+- **Solana program:** new Anchor workspace under `programs/rhoze-launchpad/`. Spec extended in `.lovable/anchor-program-spec.md`. Devnet first, mainnet after audit.
+- **Buffer polyfill** stays as is — already in place for Solana web3 on the client.
+- **Fee model (Phase 4):** 1% platform, 1% to a creator-treasury PDA, rest to the curve — concrete numbers locked in during step 4a.
 
-EDIT
-  src/App.tsx                                          routes; redirect /studios → /spaces
-  src/components/AppSidebar.tsx                        label "Studios" → "Spaces"
-  src/components/AppLayout.tsx                         dock label
-  src/config/navigation.ts                             route + label
-  src/pages/StudiosPage.tsx                            becomes "Spaces" tab content (export as component)
-  src/integrations/supabase/types.ts                   auto-regenerated post-migration
-  mem://index.md                                       update navigation core line + add memory ref
-  mem://features/studios-marketplace                   note it now lives under /spaces?tab=spaces
-  mem://arch/pillars-v5                                add Events as physical-network surface
-```
+---
 
-## Build order
+## Two open product calls I need from you
 
-1. **Migration first** — schema + RLS + storage bucket + policies, then await approval.
-2. **Tabbed shell** — `/spaces` with existing studios as tab 1; redirect `/studios`.
-3. **Events read path** — list + detail (no auth-gated actions yet).
-4. **Event create + manifest anchoring** — wizard, hash, `anchor-contribution` call.
-5. **Free RSVP tickets** — simplest ticket flow end-to-end.
-6. **Paid tickets** — Square first, then $RHOZE.
-7. **Host manage + check-in** — scanner + attendee list + artifact uploads with anchoring.
-8. **Attendance anchoring** — holder-side button on ticket detail.
-9. **Notifications + emails**.
-10. **Residencies stub** + memory updates + nav parity tests.
-
-This delivers a complete event lifecycle — publish → sell → attend → archive → verify — with provenance baked into every layer.
+1. **Word for the badge** — you skipped that question. I'll default to **"Verified"** (matches the existing badge component and is the most universally understood) unless you want **"Receipts"** as the badge wording with "Verified" reserved for the tooltip.
+2. **Token denomination** — I've assumed **SOL** for the bonding curve because that's how pump.fun works and it gives the asset real liquidity from day one. The alternative is **$RHOZE-denominated**, which keeps everything inside our economy but bootstraps slower. Confirm SOL or flip to $RHOZE before step 4a.

@@ -14,8 +14,8 @@ import DashboardPage from "@/pages/DashboardPage";
 import ProjectsPage from "@/pages/ProjectsPage";
 import ProjectDetailPage from "@/pages/ProjectDetailPage";
 import CalendarPage from "@/pages/CalendarPage";
-// FlowModePage / SmartboardsPage retained as files but no longer routed —
-// /flow and /smartboards index routes redirect to /projects.
+// FlowModePage is the public Verified-IP browser.
+// SmartboardsPage retained as a file but no longer routed at /smartboards.
 import CreatorsHubPage from "@/pages/CreatorsHubPage";
 import ListingDetailPage from "@/pages/ListingDetailPage";
 import SmartboardDetailPage from "@/pages/SmartboardDetailPage";
@@ -51,7 +51,7 @@ import EventDetailPage from "@/pages/EventDetailPage";
 import EventManagePage from "@/pages/EventManagePage";
 import TicketDetailPage from "@/pages/TicketDetailPage";
 import { ProfileRedirect } from "@/components/ProfileRedirect";
-// FlowAuthGuard retained — no longer needed at top-level since /flow redirects.
+import FlowModePage from "@/pages/FlowModePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -95,6 +95,7 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/purchases",
   "/smartboards",
   "/smartboards/:id",
+  "/flow",
   "/creators",
   "/creators/:id",
   "/marketplace",
@@ -217,10 +218,11 @@ const App = () => (
                 <Route path="/bookings" element={<CalendarPage />} />
                 <Route path="/credits" element={<CreditShopPage />} />
                 <Route path="/purchases" element={<Navigate to="/credits?tab=purchases" replace />} />
-                {/* Flow / Smartboards / Drop Rooms — index routes redirect
-                    into Projects (their new home as in-context tools).
-                    Detail routes stay live so the Tools panel can deep-link
-                    individual smartboards and drop rooms. */}
+                {/* Flow Mode — first-class public browser for fingerprinted
+                    creative IP. Smartboards / Drop Rooms index routes still
+                    redirect into Projects; their detail routes stay live so
+                    the Tools panel can deep-link individual items. */}
+                <Route path="/flow" element={<FlowModePage />} />
                 <Route path="/smartboards" element={<Navigate to="/projects" replace />} />
                 <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
                 <Route path="/drop-rooms" element={<Navigate to="/projects" replace />} />

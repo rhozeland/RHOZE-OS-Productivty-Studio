@@ -1244,7 +1244,9 @@ export type Database = {
       }
       flow_items: {
         Row: {
+          anchored_at: string | null
           category: string
+          content_hash: string | null
           content_type: string
           created_at: string
           creator_name: string | null
@@ -1252,12 +1254,17 @@ export type Database = {
           file_url: string | null
           id: string
           link_url: string | null
+          solana_signature: string | null
           tags: string[] | null
           title: string
           user_id: string
+          verification_status: string
+          work_id: string | null
         }
         Insert: {
+          anchored_at?: string | null
           category?: string
+          content_hash?: string | null
           content_type?: string
           created_at?: string
           creator_name?: string | null
@@ -1265,12 +1272,17 @@ export type Database = {
           file_url?: string | null
           id?: string
           link_url?: string | null
+          solana_signature?: string | null
           tags?: string[] | null
           title: string
           user_id: string
+          verification_status?: string
+          work_id?: string | null
         }
         Update: {
+          anchored_at?: string | null
           category?: string
+          content_hash?: string | null
           content_type?: string
           created_at?: string
           creator_name?: string | null
@@ -1278,11 +1290,22 @@ export type Database = {
           file_url?: string | null
           id?: string
           link_url?: string | null
+          solana_signature?: string | null
           tags?: string[] | null
           title?: string
           user_id?: string
+          verification_status?: string
+          work_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "flow_items_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "works"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       listing_inquiries: {
         Row: {

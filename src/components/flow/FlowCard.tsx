@@ -11,6 +11,7 @@ import {
   badgeColorClassFor,
   badgePlacementClassFor,
 } from "@/lib/flow-card-prefs";
+import FlowProvenanceChip from "@/components/flow/FlowProvenanceChip";
 
 /* ─── Platform detection ─── */
 const detectPlatform = (url?: string | null) => {
@@ -81,6 +82,17 @@ interface FlowCardProps {
     user_id?: string;
     creator_name?: string | null;
     profiles?: { display_name?: string | null; avatar_url?: string | null } | null;
+    // Verified-IP lifecycle (Phase 1+ of the Works/Flow bridge). Optional
+    // so tests and seed data without these columns still render cleanly.
+    content_hash?: string | null;
+    solana_signature?: string | null;
+    verification_status?:
+      | "none"
+      | "pending"
+      | "verified"
+      | "rejected"
+      | "changes_requested"
+      | null;
   };
   expanded: boolean;
   onToggleExpand: () => void;
@@ -337,8 +349,17 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
             left of the action buttons. Corner placements skip this and
             render the badge as an absolute overlay (see below the
             outer card div). */}
-        <div className="px-5 pt-4 pb-2 flex items-center gap-3">
+        <div className="px-5 pt-4 pb-2 flex items-center gap-2 flex-wrap">
           {cardPrefs.badgePlacement === "inline" && categoryBadge}
+          {/* Verified-IP status — fingerprint, pending review, or anchored.
+              Sits next to the category so the provenance signal travels with
+              every card without competing with the action bar. */}
+          <FlowProvenanceChip
+            status={item.verification_status}
+            contentHash={item.content_hash}
+            solanaSignature={item.solana_signature}
+            isOwner={isOwner}
+          />
 
           <div className="ml-auto flex items-center gap-3">
             <button

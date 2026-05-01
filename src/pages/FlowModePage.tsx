@@ -56,6 +56,7 @@ import FlowShareDialog from "@/components/flow/FlowShareDialog";
 import LinkPreviewCard from "@/components/flow/LinkPreviewCard";
 import { cn } from "@/lib/utils";
 import { loadFlowFeed } from "@/lib/flow-feed";
+import { computeContentHash } from "@/lib/content-hash";
 import AdminFlowSeedPanel from "@/components/flow/AdminFlowSeedPanel";
 import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
 import SignUpToPostPrompt from "@/components/flow/SignUpToPostPrompt";
@@ -139,6 +140,10 @@ const FlowModePage = () => {
   const dragCounterRef = useRef(0);
 
   // Multi-file upload state — each file tracks its own progress, xhr, and error.
+  // `contentHash` is the SHA-256 of the file bytes computed in the browser
+  // immediately after acceptance. It's the foundation of every Flow item's
+  // Verified-IP lifecycle (Fingerprinted → Pending review → Verified) and
+  // gets persisted onto the resulting `flow_items` row.
   type PendingFile = {
     id: string;
     file: File;
@@ -147,6 +152,8 @@ const FlowModePage = () => {
     progress: number;
     error: string | null;
     uploadedUrl: string | null;
+    contentHash: string | null;
+    hashing: boolean;
   };
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   // Map of file id → in-flight XHR + watchdog refs (kept outside state to avoid re-renders).
@@ -220,9 +227,24 @@ const FlowModePage = () => {
         progress: 0,
         error: null,
         uploadedUrl: null,
+        contentHash: null,
+        hashing: true,
       });
     }
-    if (accepted.length) setPendingFiles((prev) => [...prev, ...accepted]);
+    if (accepted.length) {
+      setPendingFiles((prev) => [...prev, ...accepted]);
+      // Fingerprint each accepted file in parallel. Hashing happens in the
+      // browser via Web Crypto and finishes long before most uploads, so by
+      // the time the user hits Publish the SHA-256 is ready to embed in the
+      // flow_items row. Failures degrade gracefully — the upload still
+      // succeeds, the row just won't carry a hash and can be re-fingerprinted
+      // later via the verification flow.
+      for (const pf of accepted) {
+        computeContentHash(pf.file)
+          .then((hash) => patchPendingFile(pf.id, { contentHash: hash, hashing: false }))
+          .catch(() => patchPendingFile(pf.id, { contentHash: null, hashing: false }));
+      }
+    }
     if (rejections.length) {
       setFileError(rejections.length === 1 ? rejections[0] : `${rejections.length} files rejected. ${rejections[0]}`);
     } else {
@@ -647,7 +669,7 @@ const FlowModePage = () => {
       };
 
       const rows = latest.length === 0
-        ? [{ ...baseRow, file_url: null, content_type: newLink ? "link" : "text" }]
+        ? [{ ...baseRow, file_url: null, content_type: newLink ? "link" : "text", content_hash: null }]
         : latest.map((pf) => ({
             ...baseRow,
             file_url: pf.uploadedUrl,
@@ -658,6 +680,10 @@ const FlowModePage = () => {
               : pf.file.type.startsWith("audio")
               ? "audio"
               : "file",
+            // SHA-256 fingerprint computed during acceptance. Will usually be
+            // ready by the time we publish; if hashing failed (rare) we still
+            // ship the row and let the creator request verification later.
+            content_hash: pf.contentHash,
           }));
 
       const { error } = await supabase.from("flow_items").insert(rows as any);
