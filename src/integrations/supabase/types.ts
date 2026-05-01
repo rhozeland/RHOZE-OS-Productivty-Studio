@@ -901,6 +901,305 @@ export type Database = {
           },
         ]
       }
+      event_artifacts: {
+        Row: {
+          anchored_at: string | null
+          caption: string | null
+          created_at: string
+          event_id: string
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          id: string
+          sha256_hash: string | null
+          solana_signature: string | null
+          uploader_id: string
+        }
+        Insert: {
+          anchored_at?: string | null
+          caption?: string | null
+          created_at?: string
+          event_id: string
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          sha256_hash?: string | null
+          solana_signature?: string | null
+          uploader_id: string
+        }
+        Update: {
+          anchored_at?: string | null
+          caption?: string | null
+          created_at?: string
+          event_id?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          sha256_hash?: string | null
+          solana_signature?: string | null
+          uploader_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_artifacts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_check_ins: {
+        Row: {
+          id: string
+          method: string
+          scanned_at: string
+          scanned_by: string
+          ticket_id: string
+        }
+        Insert: {
+          id?: string
+          method?: string
+          scanned_at?: string
+          scanned_by: string
+          ticket_id: string
+        }
+        Update: {
+          id?: string
+          method?: string
+          scanned_at?: string
+          scanned_by?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_check_ins_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "event_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_ticket_tiers: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_id: string
+          id: string
+          is_active: boolean
+          name: string
+          price_rhoze: number | null
+          price_usd: number | null
+          quantity_sold: number
+          quantity_total: number | null
+          sale_ends_at: string | null
+          sale_starts_at: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_id: string
+          id?: string
+          is_active?: boolean
+          name: string
+          price_rhoze?: number | null
+          price_usd?: number | null
+          quantity_sold?: number
+          quantity_total?: number | null
+          sale_ends_at?: string | null
+          sale_starts_at?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_id?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          price_rhoze?: number | null
+          price_usd?: number | null
+          quantity_sold?: number
+          quantity_total?: number | null
+          sale_ends_at?: string | null
+          sale_starts_at?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_ticket_tiers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_tickets: {
+        Row: {
+          amount_paid: number
+          anchored_at: string | null
+          attendance_hash: string | null
+          checked_in_at: string | null
+          event_id: string
+          holder_id: string
+          id: string
+          issued_at: string
+          metadata: Json
+          payment_reference: string | null
+          purchase_currency: Database["public"]["Enums"]["event_purchase_currency"]
+          qr_token: string
+          solana_signature: string | null
+          status: Database["public"]["Enums"]["event_ticket_status"]
+          tier_id: string | null
+        }
+        Insert: {
+          amount_paid?: number
+          anchored_at?: string | null
+          attendance_hash?: string | null
+          checked_in_at?: string | null
+          event_id: string
+          holder_id: string
+          id?: string
+          issued_at?: string
+          metadata?: Json
+          payment_reference?: string | null
+          purchase_currency?: Database["public"]["Enums"]["event_purchase_currency"]
+          qr_token: string
+          solana_signature?: string | null
+          status?: Database["public"]["Enums"]["event_ticket_status"]
+          tier_id?: string | null
+        }
+        Update: {
+          amount_paid?: number
+          anchored_at?: string | null
+          attendance_hash?: string | null
+          checked_in_at?: string | null
+          event_id?: string
+          holder_id?: string
+          id?: string
+          issued_at?: string
+          metadata?: Json
+          payment_reference?: string | null
+          purchase_currency?: Database["public"]["Enums"]["event_purchase_currency"]
+          qr_token?: string
+          solana_signature?: string | null
+          status?: Database["public"]["Enums"]["event_ticket_status"]
+          tier_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_tickets_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_tickets_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "event_ticket_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          anchored_at: string | null
+          capacity: number | null
+          category: string
+          cover_url: string | null
+          created_at: string
+          description: string | null
+          ends_at: string
+          host_id: string
+          id: string
+          is_online: boolean
+          manifest_hash: string | null
+          manifest_json: Json | null
+          online_url: string | null
+          slug: string | null
+          solana_signature: string | null
+          space_id: string | null
+          starts_at: string
+          status: Database["public"]["Enums"]["event_status"]
+          ticket_currency_modes: string[]
+          title: string
+          updated_at: string
+          venue_address: string | null
+          venue_name: string | null
+        }
+        Insert: {
+          anchored_at?: string | null
+          capacity?: number | null
+          category?: string
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          ends_at: string
+          host_id: string
+          id?: string
+          is_online?: boolean
+          manifest_hash?: string | null
+          manifest_json?: Json | null
+          online_url?: string | null
+          slug?: string | null
+          solana_signature?: string | null
+          space_id?: string | null
+          starts_at: string
+          status?: Database["public"]["Enums"]["event_status"]
+          ticket_currency_modes?: string[]
+          title: string
+          updated_at?: string
+          venue_address?: string | null
+          venue_name?: string | null
+        }
+        Update: {
+          anchored_at?: string | null
+          capacity?: number | null
+          category?: string
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          ends_at?: string
+          host_id?: string
+          id?: string
+          is_online?: boolean
+          manifest_hash?: string | null
+          manifest_json?: Json | null
+          online_url?: string | null
+          slug?: string | null
+          solana_signature?: string | null
+          space_id?: string | null
+          starts_at?: string
+          status?: Database["public"]["Enums"]["event_status"]
+          ticket_currency_modes?: string[]
+          title?: string
+          updated_at?: string
+          venue_address?: string | null
+          venue_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "studios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flow_interactions: {
         Row: {
           action: string
@@ -3288,6 +3587,10 @@ export type Database = {
           youtube_url: string
         }[]
       }
+      has_event_ticket: {
+        Args: { _event_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3297,6 +3600,10 @@ export type Database = {
       }
       is_contract_party: {
         Args: { _contract_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_event_host: {
+        Args: { _event_id: string; _user_id: string }
         Returns: boolean
       }
       is_group_member: {
@@ -3396,6 +3703,9 @@ export type Database = {
         | "funded"
         | "rejected"
         | "cancelled"
+      event_purchase_currency: "usd" | "rhoze" | "free"
+      event_status: "draft" | "published" | "cancelled" | "completed"
+      event_ticket_status: "issued" | "checked_in" | "refunded" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3532,6 +3842,9 @@ export const Constants = {
         "rejected",
         "cancelled",
       ],
+      event_purchase_currency: ["usd", "rhoze", "free"],
+      event_status: ["draft", "published", "cancelled", "completed"],
+      event_ticket_status: ["issued", "checked_in", "refunded", "cancelled"],
     },
   },
 } as const
