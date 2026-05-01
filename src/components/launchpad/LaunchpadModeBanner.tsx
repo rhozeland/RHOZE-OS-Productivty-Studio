@@ -2,11 +2,15 @@
  * LaunchpadModeBanner — surfaces whether trades are simulated (Step 4a) or
  * routed through the on-chain Anchor program (Step 4b, once deployed).
  */
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Beaker, Radio } from "lucide-react";
 import { isLaunchpadOnChainEnabled, LAUNCHPAD_NETWORK } from "@/lib/launchpad-onchain";
+import { subscribeIdl } from "@/lib/launchpad-idl-store";
 
 const LaunchpadModeBanner = () => {
+  const [, force] = useState(0);
+  useEffect(() => subscribeIdl(() => force((n) => n + 1)), []);
   const onChain = isLaunchpadOnChainEnabled();
 
   if (!onChain) {
