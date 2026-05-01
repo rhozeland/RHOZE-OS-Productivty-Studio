@@ -521,7 +521,7 @@ export type Database = {
           updated_at: string
           virtual_sol_reserves: number
           virtual_token_reserves: number
-          work_id: string
+          work_id: string | null
         }
         Insert: {
           created_at?: string
@@ -547,7 +547,7 @@ export type Database = {
           updated_at?: string
           virtual_sol_reserves?: number
           virtual_token_reserves?: number
-          work_id: string
+          work_id?: string | null
         }
         Update: {
           created_at?: string
@@ -573,7 +573,7 @@ export type Database = {
           updated_at?: string
           virtual_sol_reserves?: number
           virtual_token_reserves?: number
-          work_id?: string
+          work_id?: string | null
         }
         Relationships: [
           {
@@ -3800,6 +3800,18 @@ export type Database = {
           _platform_fee_bps?: number
           _ticker: string
           _work_id: string
+        }
+        Returns: string
+      }
+      create_profile_coin_launch: {
+        Args: {
+          _creator_fee_bps?: number
+          _description?: string
+          _image_url?: string
+          _lp_lock_months?: number
+          _name: string
+          _platform_fee_bps?: number
+          _ticker: string
         }
         Returns: string
       }

@@ -1,21 +1,23 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Globe, CheckCircle, UserPlus, UserCheck, MessageSquare, MapPin, Clock,
   EyeOff, Loader2, Settings, Store, Star, ExternalLink, ShoppingBag,
   Sparkles, Image as ImageIcon, Play, Music, FileText, Award, Shield,
-  Zap,
+  Zap, Coins, Calendar as CalendarIcon, User as UserIcon,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import ProfileBadges from "@/components/profile/ProfileBadges";
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
+import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
 import { cn } from "@/lib/utils";
 
 const ProfileDetailPage = () => {
@@ -23,8 +25,20 @@ const ProfileDetailPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const isOwnProfile = user?.id === id;
+
+  // Tabs: Overview · Coin · Works · Listings · Availability.
+  // ?tab=coin etc. deep-links from Flow speculate pills + Hub coins strip.
+  const tabFromUrl = searchParams.get("tab") || "overview";
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
+  const handleTabChange = (v: string) => {
+    setActiveTab(v);
+    const next = new URLSearchParams(searchParams);
+    if (v === "overview") next.delete("tab"); else next.set("tab", v);
+    setSearchParams(next, { replace: true });
+  };
 
   // ─── Data fetching ───
   const { data: profile, isLoading } = useQuery({
@@ -333,6 +347,18 @@ const ProfileDetailPage = () => {
           </div>
         </motion.div>
 
+        {/* ─── Tabbed sections ─── */}
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <TabsList className="w-full grid grid-cols-5 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
+            <TabsTrigger value="overview" className="text-xs gap-1.5"><UserIcon className="h-3 w-3" />Overview</TabsTrigger>
+            <TabsTrigger value="coin" className="text-xs gap-1.5"><Coins className="h-3 w-3" />Coin</TabsTrigger>
+            <TabsTrigger value="works" className="text-xs gap-1.5"><Sparkles className="h-3 w-3" />Works</TabsTrigger>
+            <TabsTrigger value="listings" className="text-xs gap-1.5"><ShoppingBag className="h-3 w-3" />Listings</TabsTrigger>
+            <TabsTrigger value="availability" className="text-xs gap-1.5"><CalendarIcon className="h-3 w-3" />Availability</TabsTrigger>
+          </TabsList>
+
+          {/* ─── Overview tab ─── */}
+          <TabsContent value="overview" className="space-y-5 mt-5">
         {/* ─── About + Details ─── */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -442,98 +468,7 @@ const ProfileDetailPage = () => {
           </motion.div>
         )}
 
-        {/* ─── Availability Calendar ─── */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.18, duration: 0.4 }}
-        >
-          <CreatorAvailabilityCalendar
-            creatorId={id!}
-            creatorName={p.display_name || p.username}
-          />
-        </motion.div>
-
-        {/* ─── Offerings ─── */}
-        {hasSellerContent && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.4 }} className="space-y-3">
-            <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-              <ShoppingBag className="h-4 w-4 text-primary" /> Offerings
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {sellerListings!.map((listing: any) => (
-                <div key={listing.id} onClick={() => navigate(`/creators/${listing.id}`)}
-                  className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden cursor-pointer hover:shadow-md hover:border-primary/30 transition-all duration-200">
-                  {(listing.cover_url || listing.image_url) ? (
-                    <div className="aspect-[4/3] overflow-hidden bg-muted">
-                      <img src={listing.cover_url || listing.image_url} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    </div>
-                  ) : (
-                    <div className="aspect-[4/3] flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
-                      <Store className="h-6 w-6 text-muted-foreground/40" />
-                    </div>
-                  )}
-                  <div className="p-3">
-                    <p className="text-sm font-medium text-foreground truncate">{listing.title}</p>
-                    <div className="flex items-center justify-between mt-1">
-                      <Badge variant="outline" className="text-[9px] capitalize">{listing.category}</Badge>
-                      {listing.credits_price && <span className="text-[10px] font-semibold text-primary">{listing.credits_price} ◊</span>}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* ─── Flow Posts ─── */}
-        {flowPosts && flowPosts.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25, duration: 0.4 }} className="space-y-3">
-            <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" /> Flow Posts
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {flowPosts.map((post: any) => (
-                <div key={post.id} onClick={() => navigate("/flow")}
-                  className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer">
-                  {post.file_url && (post.category === "photo" || post.category === "design" || post.content_type === "image") ? (
-                    <div className="aspect-square overflow-hidden bg-muted">
-                      <img src={post.file_url} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                    </div>
-                  ) : post.file_url && (post.category === "video" || post.content_type === "video") ? (
-                    <div className="aspect-square overflow-hidden bg-muted">
-                      <video src={post.file_url} className="h-full w-full object-cover" muted preload="metadata" />
-                    </div>
-                  ) : post.link_url && post.link_url.includes("youtu") ? (
-                    <div className="aspect-square overflow-hidden bg-muted relative">
-                      <img src={`https://img.youtube.com/vi/${post.link_url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?\s]+)/)?.[1]}/mqdefault.jpg`} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="h-10 w-10 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center">
-                          <Play className="h-4 w-4 text-foreground ml-0.5" />
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="aspect-square flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5 p-3">
-                      {post.category === "music" ? <Music className="h-6 w-6 text-muted-foreground/40" /> :
-                       post.category === "writing" ? <FileText className="h-6 w-6 text-muted-foreground/40" /> :
-                       <ImageIcon className="h-6 w-6 text-muted-foreground/40" />}
-                      <p className="text-xs text-muted-foreground mt-2 text-center line-clamp-2">{post.title}</p>
-                    </div>
-                  )}
-                  <div className="p-2.5">
-                    <p className="text-xs font-medium text-foreground truncate">{post.title}</p>
-                    <Badge variant="outline" className="text-[8px] mt-1 capitalize">{post.category}</Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* ─── Ratings ─── */}
+        {/* Ratings inside Overview */}
         {reviewStats && reviewStats.count > 0 && (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.4 }}
@@ -554,6 +489,106 @@ const ProfileDetailPage = () => {
             </div>
           </motion.div>
         )}
+          </TabsContent>
+
+          {/* ─── Coin tab ─── */}
+          <TabsContent value="coin" className="mt-5">
+            <ProfileCoinTab
+              creatorId={id!}
+              isOwnProfile={isOwnProfile}
+              defaultName={p.display_name || p.username}
+              defaultImage={p.avatar_url}
+            />
+          </TabsContent>
+
+          {/* ─── Works (Flow Posts) tab ─── */}
+          <TabsContent value="works" className="mt-5">
+            {flowPosts && flowPosts.length > 0 ? (
+              <div className="space-y-3">
+                <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" /> Flow Posts
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {flowPosts.map((post: any) => (
+                    <div key={post.id} onClick={() => navigate("/flow")}
+                      className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer">
+                      {post.file_url && (post.category === "photo" || post.category === "design" || post.content_type === "image") ? (
+                        <div className="aspect-square overflow-hidden bg-muted">
+                          <img src={post.file_url} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                        </div>
+                      ) : post.file_url && (post.category === "video" || post.content_type === "video") ? (
+                        <div className="aspect-square overflow-hidden bg-muted">
+                          <video src={post.file_url} className="h-full w-full object-cover" muted preload="metadata" />
+                        </div>
+                      ) : (
+                        <div className="aspect-square flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5 p-3">
+                          {post.category === "music" ? <Music className="h-6 w-6 text-muted-foreground/40" /> :
+                           post.category === "writing" ? <FileText className="h-6 w-6 text-muted-foreground/40" /> :
+                           <ImageIcon className="h-6 w-6 text-muted-foreground/40" />}
+                          <p className="text-xs text-muted-foreground mt-2 text-center line-clamp-2">{post.title}</p>
+                        </div>
+                      )}
+                      <div className="p-2.5">
+                        <p className="text-xs font-medium text-foreground truncate">{post.title}</p>
+                        <Badge variant="outline" className="text-[8px] mt-1 capitalize">{post.category}</Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-8 text-center text-sm text-muted-foreground">
+                No works posted yet.
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ─── Listings tab ─── */}
+          <TabsContent value="listings" className="mt-5">
+            {hasSellerContent ? (
+              <div className="space-y-3">
+                <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
+                  <ShoppingBag className="h-4 w-4 text-primary" /> Offerings
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {sellerListings!.map((listing: any) => (
+                    <div key={listing.id} onClick={() => navigate(`/creators/${listing.id}`)}
+                      className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden cursor-pointer hover:shadow-md hover:border-primary/30 transition-all duration-200">
+                      {(listing.cover_url || listing.image_url) ? (
+                        <div className="aspect-[4/3] overflow-hidden bg-muted">
+                          <img src={listing.cover_url || listing.image_url} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        </div>
+                      ) : (
+                        <div className="aspect-[4/3] flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
+                          <Store className="h-6 w-6 text-muted-foreground/40" />
+                        </div>
+                      )}
+                      <div className="p-3">
+                        <p className="text-sm font-medium text-foreground truncate">{listing.title}</p>
+                        <div className="flex items-center justify-between mt-1">
+                          <Badge variant="outline" className="text-[9px] capitalize">{listing.category}</Badge>
+                          {listing.credits_price && <span className="text-[10px] font-semibold text-primary">{listing.credits_price} ◊</span>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-8 text-center text-sm text-muted-foreground">
+                No active listings.
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ─── Availability tab ─── */}
+          <TabsContent value="availability" className="mt-5">
+            <CreatorAvailabilityCalendar
+              creatorId={id!}
+              creatorName={p.display_name || p.username}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

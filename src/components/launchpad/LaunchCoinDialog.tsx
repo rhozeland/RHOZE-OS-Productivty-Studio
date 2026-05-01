@@ -38,9 +38,19 @@ import { Loader2, Coins, Lock } from "lucide-react";
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  workId: string;
+  /**
+   * Work-coin mode (legacy): pass a workId. The coin is bound to that
+   * Verified IP work and the dialog calls `create_coin_launch`.
+   *
+   * Profile-coin mode (current): omit workId. The dialog calls
+   * `create_profile_coin_launch` and the coin is bound to the signed-in
+   * creator's profile (one active profile coin per creator).
+   */
+  workId?: string;
   defaultName?: string;
   defaultImage?: string | null;
+  /** Optional callback so parents can refetch their coin query on success. */
+  onLaunched?: (launchId: string) => void;
 }
 
 const LP_LOCK_OPTIONS = [
@@ -57,6 +67,7 @@ const LaunchCoinDialog = ({
   workId,
   defaultName,
   defaultImage,
+  onLaunched,
 }: Props) => {
   const navigate = useNavigate();
   const [ticker, setTicker] = useState("");
@@ -65,6 +76,8 @@ const LaunchCoinDialog = ({
   const [imageUrl, setImageUrl] = useState(defaultImage ?? "");
   const [lpLock, setLpLock] = useState("12");
   const [submitting, setSubmitting] = useState(false);
+
+  const isProfileCoin = !workId;
 
   const submit = async () => {
     if (ticker.trim().length < 2) {
@@ -76,8 +89,8 @@ const LaunchCoinDialog = ({
       return;
     }
     setSubmitting(true);
-    const { data, error } = await supabase.rpc("create_coin_launch", {
-      _work_id: workId,
+
+    const payload = {
       _ticker: ticker.trim(),
       _name: name.trim(),
       _description: description.trim() || null,
@@ -85,7 +98,12 @@ const LaunchCoinDialog = ({
       _creator_fee_bps: 200,
       _platform_fee_bps: 100,
       _lp_lock_months: Number(lpLock),
-    });
+    };
+
+    const { data, error } = isProfileCoin
+      ? await supabase.rpc("create_profile_coin_launch", payload)
+      : await supabase.rpc("create_coin_launch", { ...payload, _work_id: workId! });
+
     setSubmitting(false);
     if (error) {
       toast({ title: "Launch failed", description: error.message, variant: "destructive" });
@@ -93,7 +111,15 @@ const LaunchCoinDialog = ({
     }
     toast({ title: "Coin launched", description: `$${ticker.toUpperCase()} is now live on the curve.` });
     onOpenChange(false);
-    if (data) navigate(`/launchpad/${data}`);
+    if (data) {
+      onLaunched?.(data as string);
+      // Always send creators back to their profile Coin tab — that's where
+      // the chart + trade panel now live.
+      const { data: userResp } = await supabase.auth.getUser();
+      if (userResp.user) {
+        navigate(`/profiles/${userResp.user.id}?tab=coin`);
+      }
+    }
   };
 
   return (
@@ -102,11 +128,12 @@ const LaunchCoinDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Coins className="h-4 w-4 text-emerald-500" />
-            Launch a coin for this work
+            {isProfileCoin ? "Launch your profile coin" : "Launch a coin for this work"}
           </DialogTitle>
           <DialogDescription>
-            Mint a fan coin tied to your Verified IP. Trades flow through a bonding
-            curve until graduation, then migrate to Raydium with locked LP.
+            {isProfileCoin
+              ? "Mint a coin tied to your profile so collectors can back you. Trades flow through a bonding curve until graduation, then migrate to Raydium with locked LP."
+              : "Mint a fan coin tied to your Verified IP. Trades flow through a bonding curve until graduation, then migrate to Raydium with locked LP."}
           </DialogDescription>
         </DialogHeader>
 
