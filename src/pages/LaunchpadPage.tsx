@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Coins, Flame, GraduationCap, TrendingUp } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import LaunchpadModeBanner from "@/components/launchpad/LaunchpadModeBanner";
+import LaunchpadEarnPanel from "@/components/launchpad/LaunchpadEarnPanel";
 import { isLaunchpadOnChainEnabled } from "@/lib/launchpad-onchain";
 
 type Launch = {
