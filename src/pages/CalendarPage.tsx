@@ -776,9 +776,13 @@ const CalendarPage = () => {
                           </div>
                         ))}
                         {items.events.slice(0, totalItems > 2 ? 1 : 2).map((e) => (
-                          <div key={e.id} className="truncate rounded bg-accent/15 px-1.5 py-0.5 text-[10px] text-accent-foreground">
+                          <button
+                            key={e.id}
+                            onClick={(ev) => { ev.stopPropagation(); openEditEvent(e); }}
+                            className="w-full text-left truncate rounded bg-accent/15 px-1.5 py-0.5 text-[10px] text-accent-foreground hover:bg-accent/25 transition-colors"
+                          >
                             {e.title}
-                          </div>
+                          </button>
                         ))}
                         {items.google.slice(0, 1).map((e) => (
                           <div key={e.id} className="truncate rounded px-1.5 py-0.5 text-[10px]" style={{ backgroundColor: "rgba(66,133,244,0.15)", color: "#4285F4" }}>
