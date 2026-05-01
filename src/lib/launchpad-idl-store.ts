@@ -11,6 +11,7 @@
  * LaunchCoinDialog instance starts using real Anchor calls — no code edits.
  */
 import type { Idl } from "@coral-xyz/anchor";
+import { validateLaunchpadIdl, type IdlValidationResult } from "./launchpad-idl-validator";
 
 const LS_KEY = "launchpad-idl-json";
 const LS_PROGRAM_ID = "launchpad-program-id";
@@ -115,7 +116,17 @@ export const loadLaunchpadIdl = async (): Promise<Idl | null> => {
   }
 };
 
-/** Persist a user-pasted IDL. Pass `null` to clear. Returns parsed Idl on success. */
+/**
+ * Validate raw IDL JSON without persisting. Useful for live preview as the
+ * user types/pastes into the textarea.
+ */
+export const validateIdl = (raw: string): IdlValidationResult => validateLaunchpadIdl(raw);
+
+/**
+ * Persist a user-pasted IDL. Pass `null` to clear. Returns parsed Idl on
+ * success. Throws an Error whose `.message` lists each blocking issue when
+ * the IDL fails validation, so the UI can show a precise reason.
+ */
 export const setOverrideIdl = (raw: string | null): Idl | null => {
   if (typeof window === "undefined") return null;
   if (raw === null || raw.trim() === "") {
@@ -123,16 +134,22 @@ export const setOverrideIdl = (raw: string | null): Idl | null => {
     resetIdlCache();
     return null;
   }
-  const parsed = tryParse(raw);
-  if (!parsed) {
-    throw new Error("Invalid IDL: expected JSON with an `instructions` array.");
+  const result = validateLaunchpadIdl(raw);
+  if (!result.ok || !result.parsed) {
+    const blockers = result.issues.filter((i) => i.severity === "error");
+    const summary = blockers.map((i) => `• ${i.field}: ${i.message}`).join("\n");
+    const err = new Error(
+      `Invalid IDL — fix the following before saving:\n${summary || "Unknown structural error."}`,
+    );
+    (err as Error & { issues?: typeof result.issues }).issues = blockers;
+    throw err;
   }
   window.localStorage.setItem(LS_KEY, raw);
-  cached = parsed;
+  cached = result.parsed as Idl;
   cachedFromOverride = true;
   inflight = null;
   notify();
-  return parsed;
+  return cached;
 };
 
 /** Optional override for program ID (rare — env var is preferred). */

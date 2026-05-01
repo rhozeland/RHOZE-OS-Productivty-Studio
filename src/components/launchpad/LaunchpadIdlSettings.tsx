@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, AlertTriangle, RotateCcw, Save } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CheckCircle2, AlertTriangle, RotateCcw, Save, XCircle, Info } from "lucide-react";
 import { toast } from "sonner";
 import {
   setOverrideIdl,
@@ -21,8 +22,10 @@ import {
   isIdlFromOverride,
   subscribeIdl,
   loadLaunchpadIdl,
+  validateIdl,
 } from "@/lib/launchpad-idl-store";
 import { LAUNCHPAD_NETWORK, isLaunchpadOnChainEnabled, getLaunchpadProgramId } from "@/lib/launchpad-onchain";
+import { cn } from "@/lib/utils";
 
 const LaunchpadIdlSettings = () => {
   const [idlText, setIdlText] = useState("");
@@ -40,6 +43,14 @@ const LaunchpadIdlSettings = () => {
   const enabled = isLaunchpadOnChainEnabled();
   const activePid = getLaunchpadProgramId()?.toBase58() ?? null;
 
+  // Live validation as the user types
+  const liveValidation = useMemo(
+    () => (idlText.trim() ? validateIdl(idlText) : null),
+    [idlText],
+  );
+  const blockingErrors = liveValidation?.issues.filter((i) => i.severity === "error") ?? [];
+  const warnings = liveValidation?.issues.filter((i) => i.severity === "warning") ?? [];
+
   const ixSummary = useMemo(() => {
     if (!idl) return null;
     const list = (idl as unknown as { instructions?: Array<{ name: string }> }).instructions ?? [];
@@ -56,7 +67,9 @@ const LaunchpadIdlSettings = () => {
       });
       setIdlText("");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to save IDL");
+      toast.error("IDL rejected", {
+        description: e instanceof Error ? e.message : "Failed to save IDL",
+      });
     }
   };
 
@@ -67,6 +80,9 @@ const LaunchpadIdlSettings = () => {
     setProgramId("");
     toast.success("Cleared. Falling back to simulation mode.");
   };
+
+  const canSave =
+    (idlText.trim() && liveValidation?.ok) || (!idlText.trim() && programId.trim().length > 0);
 
   return (
     <Card className="bg-card/40 backdrop-blur">
@@ -87,8 +103,9 @@ const LaunchpadIdlSettings = () => {
       <CardContent className="space-y-4">
         <p className="text-xs text-muted-foreground">
           Paste your deployed Anchor IDL (and program ID if it differs from the env var). Both
-          are stored in your browser only. The trade buttons switch to real on-chain calls the
-          moment both are present and a wallet is connected.
+          are stored in your browser only. The IDL must include <code className="text-foreground">address</code>,{" "}
+          <code className="text-foreground">instructions</code>, and <code className="text-foreground">accounts</code>{" "}
+          before on-chain trading is enabled.
         </p>
 
         <div className="space-y-1.5">
@@ -107,14 +124,81 @@ const LaunchpadIdlSettings = () => {
         <div className="space-y-1.5">
           <label className="text-xs font-medium">IDL JSON</label>
           <Textarea
-            placeholder='{ "address": "...", "metadata": {...}, "instructions": [...] }'
+            placeholder='{ "address": "...", "metadata": {...}, "instructions": [...], "accounts": [...] }'
             value={idlText}
             onChange={(e) => setIdlText(e.target.value)}
-            className="font-mono text-[11px] min-h-[140px]"
+            className={cn(
+              "font-mono text-[11px] min-h-[140px]",
+              liveValidation && !liveValidation.ok && "border-destructive/60 focus-visible:ring-destructive/40",
+              liveValidation?.ok && "border-emerald-500/50 focus-visible:ring-emerald-500/40",
+            )}
           />
         </div>
 
-        {idl && ixSummary && (
+        {liveValidation && !liveValidation.ok && (
+          <Alert variant="destructive" className="bg-destructive/5">
+            <XCircle className="h-4 w-4" />
+            <AlertTitle className="text-sm">
+              {blockingErrors.length} required field{blockingErrors.length === 1 ? "" : "s"} missing or invalid
+            </AlertTitle>
+            <AlertDescription>
+              <ul className="mt-2 space-y-1 text-xs">
+                {blockingErrors.map((issue, i) => (
+                  <li key={i} className="flex gap-2">
+                    <code className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-destructive/15 text-destructive shrink-0 h-fit">
+                      {issue.field}
+                    </code>
+                    <span>{issue.message}</span>
+                  </li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {liveValidation?.ok && warnings.length > 0 && (
+          <Alert className="bg-amber-500/5 border-amber-500/30">
+            <Info className="h-4 w-4 text-amber-500" />
+            <AlertTitle className="text-sm text-amber-200">
+              Valid — {warnings.length} recommendation{warnings.length === 1 ? "" : "s"}
+            </AlertTitle>
+            <AlertDescription>
+              <ul className="mt-2 space-y-1 text-xs">
+                {warnings.map((issue, i) => (
+                  <li key={i} className="flex gap-2">
+                    <code className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 shrink-0 h-fit">
+                      {issue.field}
+                    </code>
+                    <span className="text-muted-foreground">{issue.message}</span>
+                  </li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {liveValidation?.ok && (
+          <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs space-y-1.5">
+            <div className="flex items-center gap-2 font-semibold text-emerald-400">
+              <CheckCircle2 className="h-3.5 w-3.5" /> Ready to save
+            </div>
+            <div className="grid grid-cols-2 gap-1 text-[11px] text-muted-foreground">
+              <span>Instructions: <span className="text-foreground">{liveValidation.summary.instructionCount}</span></span>
+              <span>Accounts: <span className="text-foreground">{liveValidation.summary.accountCount}</span></span>
+              <span>Events: <span className="text-foreground">{liveValidation.summary.eventCount}</span></span>
+              <span>Errors: <span className="text-foreground">{liveValidation.summary.errorCount}</span></span>
+            </div>
+            {liveValidation.summary.foundIxAliases.length > 0 && (
+              <div className="flex flex-wrap gap-1 pt-1">
+                {liveValidation.summary.foundIxAliases.map((a) => (
+                  <Badge key={a} variant="secondary" className="font-mono text-[10px]">{a}</Badge>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {idl && ixSummary && !idlText.trim() && (
           <div className="rounded-md border border-emerald-500/20 bg-emerald-500/5 p-3 space-y-1.5 text-xs">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-emerald-500">IDL loaded</span>
@@ -136,7 +220,7 @@ const LaunchpadIdlSettings = () => {
         )}
 
         <div className="flex gap-2 pt-1">
-          <Button onClick={handleSave} disabled={!idlText.trim() && !programId.trim()} className="gap-1.5">
+          <Button onClick={handleSave} disabled={!canSave} className="gap-1.5">
             <Save className="h-3.5 w-3.5" /> Save
           </Button>
           <Button onClick={handleClear} variant="outline" className="gap-1.5">
