@@ -96,7 +96,7 @@ const FORMULA_FIELDS: Field[] = [
   },
   {
     key: "provenance_bonus_max",
-    label: "Provenance bonus (max)",
+    label: "Verified-IP bonus (max)",
     hint: "Extra multiplier when 100% of settlements are on-chain. 0.25 = +25%.",
     step: 0.05,
     min: 0,
