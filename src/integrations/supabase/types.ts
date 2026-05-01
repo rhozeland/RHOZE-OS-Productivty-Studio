@@ -458,6 +458,171 @@ export type Database = {
         }
         Relationships: []
       }
+      coin_holdings: {
+        Row: {
+          balance: number
+          launch_id: string
+          sol_invested: number
+          trader_id: string
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          launch_id: string
+          sol_invested?: number
+          trader_id: string
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          launch_id?: string
+          sol_invested?: number
+          trader_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coin_holdings_launch_id_fkey"
+            columns: ["launch_id"]
+            isOneToOne: false
+            referencedRelation: "coin_launches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coin_launches: {
+        Row: {
+          created_at: string
+          creator_fee_bps: number
+          creator_fees_earned: number
+          creator_id: string
+          description: string | null
+          graduated_at: string | null
+          graduation_sol_target: number
+          id: string
+          image_url: string | null
+          lp_lock_months: number
+          mint_address: string | null
+          name: string
+          platform_fee_bps: number
+          platform_fees_earned: number
+          raydium_pool: string | null
+          real_sol_reserves: number
+          real_token_reserves: number
+          status: string
+          ticker: string
+          total_supply: number
+          updated_at: string
+          virtual_sol_reserves: number
+          virtual_token_reserves: number
+          work_id: string
+        }
+        Insert: {
+          created_at?: string
+          creator_fee_bps?: number
+          creator_fees_earned?: number
+          creator_id: string
+          description?: string | null
+          graduated_at?: string | null
+          graduation_sol_target?: number
+          id?: string
+          image_url?: string | null
+          lp_lock_months?: number
+          mint_address?: string | null
+          name: string
+          platform_fee_bps?: number
+          platform_fees_earned?: number
+          raydium_pool?: string | null
+          real_sol_reserves?: number
+          real_token_reserves?: number
+          status?: string
+          ticker: string
+          total_supply?: number
+          updated_at?: string
+          virtual_sol_reserves?: number
+          virtual_token_reserves?: number
+          work_id: string
+        }
+        Update: {
+          created_at?: string
+          creator_fee_bps?: number
+          creator_fees_earned?: number
+          creator_id?: string
+          description?: string | null
+          graduated_at?: string | null
+          graduation_sol_target?: number
+          id?: string
+          image_url?: string | null
+          lp_lock_months?: number
+          mint_address?: string | null
+          name?: string
+          platform_fee_bps?: number
+          platform_fees_earned?: number
+          raydium_pool?: string | null
+          real_sol_reserves?: number
+          real_token_reserves?: number
+          status?: string
+          ticker?: string
+          total_supply?: number
+          updated_at?: string
+          virtual_sol_reserves?: number
+          virtual_token_reserves?: number
+          work_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coin_launches_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "works"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coin_trades: {
+        Row: {
+          created_at: string
+          fee_sol: number
+          id: string
+          launch_id: string
+          price_per_token: number
+          side: string
+          sol_amount: number
+          token_amount: number
+          trader_id: string
+        }
+        Insert: {
+          created_at?: string
+          fee_sol?: number
+          id?: string
+          launch_id: string
+          price_per_token: number
+          side: string
+          sol_amount: number
+          token_amount: number
+          trader_id: string
+        }
+        Update: {
+          created_at?: string
+          fee_sol?: number
+          id?: string
+          launch_id?: string
+          price_per_token?: number
+          side?: string
+          sol_amount?: number
+          token_amount?: number
+          trader_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coin_trades_launch_id_fkey"
+            columns: ["launch_id"]
+            isOneToOne: false
+            referencedRelation: "coin_launches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       connections: {
         Row: {
           created_at: string
@@ -3582,6 +3747,7 @@ export type Database = {
         Args: { _file_path: string; _user_id: string }
         Returns: boolean
       }
+      cancel_coin_launch: { Args: { _launch_id: string }; Returns: undefined }
       check_username_available: {
         Args: { _username: string }
         Returns: boolean
@@ -3598,6 +3764,19 @@ export type Database = {
           _total_credits?: number
         }
         Returns: Json
+      }
+      create_coin_launch: {
+        Args: {
+          _creator_fee_bps?: number
+          _description?: string
+          _image_url?: string
+          _lp_lock_months?: number
+          _name: string
+          _platform_fee_bps?: number
+          _ticker: string
+          _work_id: string
+        }
+        Returns: string
       }
       delete_email: {
         Args: { message_id: number; queue_name: string }
@@ -3765,6 +3944,10 @@ export type Database = {
           _user_id: string
         }
         Returns: string
+      }
+      simulate_coin_trade: {
+        Args: { _amount: number; _launch_id: string; _side: string }
+        Returns: Json
       }
       submit_work_verification: {
         Args: {
