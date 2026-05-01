@@ -498,6 +498,7 @@ const ProfileDetailPage = () => {
               isOwnProfile={isOwnProfile}
               defaultName={p.display_name || p.username}
               defaultImage={p.avatar_url}
+              memberSince={p.created_at}
             />
           </TabsContent>
 
