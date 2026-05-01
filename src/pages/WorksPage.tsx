@@ -430,7 +430,6 @@ function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
 
 function UploadDialog({ onCreated }: { onCreated: () => void }) {
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -438,6 +437,14 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
   const [hashing, setHashing] = useState(false);
   const [contentHash, setContentHash] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const resetForm = () => {
+    setFile(null);
+    setTitle("");
+    setDescription("");
+    setContentHash(null);
+    setVisibility("public");
+  };
 
   const inferredKind = useMemo(
     () => inferWorkKind(file?.type ?? null),
