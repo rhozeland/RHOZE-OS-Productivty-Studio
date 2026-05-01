@@ -59,6 +59,7 @@ import {
   formatFileSize,
   shortHash,
 } from "@/lib/content-hash";
+import { InlineFormPanel } from "@/components/ui/inline-form-panel";
 
 type WorkKind = "audio" | "image" | "video" | "text" | "other";
 
