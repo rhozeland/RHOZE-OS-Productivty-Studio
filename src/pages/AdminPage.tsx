@@ -11,6 +11,7 @@ import AdminDisputes from "@/components/admin/AdminDisputes";
 import AdminWithdrawals from "@/components/admin/AdminWithdrawals";
 import AdminContentModeration from "@/components/admin/AdminContentModeration";
 import AdminUnderwritingRules from "@/components/admin/AdminUnderwritingRules";
+import AdminUnderwritingRulesAudit from "@/components/admin/AdminUnderwritingRulesAudit";
 
 const AdminPage = () => {
   const { isAdmin, loading } = useAdminCheck();
@@ -73,7 +74,10 @@ const AdminPage = () => {
         <TabsContent value="disputes"><AdminDisputes /></TabsContent>
         <TabsContent value="withdrawals"><AdminWithdrawals /></TabsContent>
         <TabsContent value="moderation"><AdminContentModeration /></TabsContent>
-        <TabsContent value="capital"><AdminUnderwritingRules /></TabsContent>
+        <TabsContent value="capital" className="space-y-4">
+          <AdminUnderwritingRules />
+          <AdminUnderwritingRulesAudit />
+        </TabsContent>
       </Tabs>
     </div>
   );
