@@ -11,6 +11,7 @@ import AdminDisputes from "@/components/admin/AdminDisputes";
 import AdminWithdrawals from "@/components/admin/AdminWithdrawals";
 import AdminContentModeration from "@/components/admin/AdminContentModeration";
 import AdminUnderwritingRules from "@/components/admin/AdminUnderwritingRules";
+import AdminUnderwritingRulesAudit from "@/components/admin/AdminUnderwritingRulesAudit";
 
 const AdminPage = () => {
   const { isAdmin, loading } = useAdminCheck();
