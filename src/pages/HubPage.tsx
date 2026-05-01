@@ -38,6 +38,7 @@ import {
   Flame,
   ArrowRight,
   Coins,
+} from "lucide-react";
 import ListingCard from "@/components/marketplace/ListingCard";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
