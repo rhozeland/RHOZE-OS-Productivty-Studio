@@ -40,7 +40,8 @@ import OnboardingPage from "@/pages/OnboardingPage";
 // MarketplacePage retained as a file but no longer routed — /marketplace redirects to /hub.
 import HomePage from "@/pages/HomePage";
 import InfrastructurePage from "@/pages/InfrastructurePage";
-import WorksPage from "@/pages/WorksPage";
+// WorksPage is no longer routed here — it's mounted inside SettingsPage
+// (Provenance section). /works redirects to /settings#provenance below.
 // SpacesPage / PeoplePage retained as files but no longer routed —
 // /spaces and /people redirect to /hub (unified feed).
 import HubPage from "@/pages/HubPage";
@@ -194,7 +195,9 @@ const App = () => (
                 <Route path="/services" element={<ServicesPage />} />
                 <Route path="/projects" element={<ProjectsPage />} />
                 <Route path="/projects/:id" element={<ProjectDetailPage />} />
-                <Route path="/works" element={<WorksPage />} />
+                {/* Works is now the personal vault under Settings → Provenance.
+                    /works keeps working as a deep link via redirect. */}
+                <Route path="/works" element={<Navigate to="/settings#provenance" replace />} />
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/bookings" element={<CalendarPage />} />
                 <Route path="/credits" element={<CreditShopPage />} />
