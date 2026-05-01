@@ -438,6 +438,45 @@ const ProjectScopeDeliverables = ({
                           sha256:{shortHash(d.content_hash)}
                         </span>
                       )}
+
+                      {/* Anchor on Solana — only when fingerprinted and not yet anchored */}
+                      {d.content_hash && !d.solana_signature && (
+                        <button
+                          type="button"
+                          onClick={() => anchorDeliverable.mutate(d)}
+                          disabled={anchoringId === d.id}
+                          className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-2 py-0.5 text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
+                          title="Sign a Solana memo containing this fingerprint"
+                        >
+                          {anchoringId === d.id ? (
+                            <>
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              Anchoring…
+                            </>
+                          ) : (
+                            <>
+                              <Anchor className="h-3 w-3" />
+                              Anchor on Solana
+                            </>
+                          )}
+                        </button>
+                      )}
+
+                      {/* Anchored badge + Solscan link */}
+                      {d.solana_signature && (
+                        <a
+                          href={`https://solscan.io/tx/${d.solana_signature}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-primary hover:bg-primary/20 transition-colors"
+                          title={`Solana tx ${d.solana_signature}`}
+                        >
+                          <ShieldCheck className="h-3 w-3" />
+                          Anchored · {d.solana_signature.slice(0, 6)}…
+                          <ExternalLink className="h-2.5 w-2.5" />
+                        </a>
+                      )}
+
                       <button
                         type="button"
                         onClick={() => clearFile.mutate(d.id)}
