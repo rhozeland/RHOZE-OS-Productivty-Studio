@@ -36,6 +36,7 @@ import ProjectControls from "@/components/project/ProjectControls";
 import RevenueSplitConfig from "@/components/revenue/RevenueSplitConfig";
 import AttachedWorks from "@/components/works/AttachedWorks";
 import ProjectTools from "@/components/project/ProjectTools";
+import { useProjectRole } from "@/hooks/useProjectRole";
 import ProjectMoodboard from "@/components/project/ProjectMoodboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Archive, ShieldCheck, Fingerprint, Image as ImageIcon } from "lucide-react";
@@ -44,6 +45,7 @@ const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { canManage: canManageProject, isOwner: isProjectOwner } = useProjectRole(id);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [editingHeader, setEditingHeader] = useState(false);
   const [editTitle, setEditTitle] = useState("");
@@ -245,8 +247,11 @@ const ProjectDetailPage = () => {
             </div>
           ) : (
             <div
-              className="group cursor-pointer rounded-lg p-1 -m-1 hover:bg-muted/40 transition-colors"
-              onClick={startEditing}
+              className={
+                "group rounded-lg p-1 -m-1 transition-colors " +
+                (canManageProject ? "cursor-pointer hover:bg-muted/40" : "")
+              }
+              onClick={canManageProject ? startEditing : undefined}
             >
               <div className="flex items-center gap-3">
                 <div
@@ -259,7 +264,7 @@ const ProjectDetailPage = () => {
                     <Lock className="h-3 w-3" /> Locked
                   </Badge>
                 )}
-                <Pencil className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Pencil className={"h-4 w-4 text-muted-foreground transition-opacity " + (canManageProject ? "opacity-0 group-hover:opacity-100" : "hidden")} />
               </div>
               <p className="mt-1 text-muted-foreground pl-7">
                 {project.description || (
@@ -270,7 +275,7 @@ const ProjectDetailPage = () => {
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {project.user_id === user?.id && (
+          {isProjectOwner && (
             <Button
               variant="default"
               size="sm"
@@ -443,7 +448,7 @@ const ProjectDetailPage = () => {
         </TabsContent>
 
         <TabsContent value="moodboard">
-          <ProjectMoodboard projectId={id!} canManage={project.user_id === user?.id} />
+          <ProjectMoodboard projectId={id!} canManage={canManageProject} />
         </TabsContent>
 
         {/* Vault — ambient Works surface scoped to this project. Lets the
@@ -471,7 +476,7 @@ const ProjectDetailPage = () => {
           <AttachedWorks
             targetType="project"
             targetId={id!}
-            canManage={project.user_id === user?.id}
+            canManage={canManageProject}
             title="Anchored deliverables"
           />
         </TabsContent>

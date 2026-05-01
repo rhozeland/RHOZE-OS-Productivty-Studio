@@ -11,10 +11,11 @@ import { Users, Plus, X, Search, Info, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
+import { useProjectRole } from "@/hooks/useProjectRole";
+
 const ROLE_INFO: Record<string, { label: string; description: string }> = {
-  viewer: { label: "Viewer", description: "Can view project details, goals, and files but cannot make changes." },
-  editor: { label: "Editor", description: "Can edit goals, upload files, post updates, and manage deliverables." },
-  admin: { label: "Admin", description: "Full access — can invite/remove members, edit settings, and approve stages." },
+  member: { label: "Member", description: "Can view the project, its goals, files, and team — but cannot edit settings, manage the team, or upload to the moodboard." },
+  admin: { label: "Admin", description: "Full editing access — can update project settings, manage the team, edit goals, and upload to the moodboard. Cannot remove the owner." },
 };
 
 interface CollaboratorsProps {
@@ -25,10 +26,11 @@ interface CollaboratorsProps {
 const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { isOwner, isAdmin, canManage } = useProjectRole(projectId);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<{ user_id: string; display_name: string } | null>(null);
-  const [role, setRole] = useState("viewer");
+  const [role, setRole] = useState<"member" | "admin">("member");
   const [projectRole, setProjectRole] = useState("client");
   const [showResults, setShowResults] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -126,8 +128,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
   const profileMap = new Map(collabProfiles?.map((p: any) => [p.user_id, p]) ?? []);
 
   const roleColors: Record<string, string> = {
-    viewer: "bg-secondary text-secondary-foreground",
-    editor: "bg-primary/10 text-primary",
+    member: "bg-secondary text-secondary-foreground",
     admin: "bg-amber-500/10 text-amber-600",
   };
 
@@ -174,6 +175,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
             </PopoverContent>
           </Popover>
         </div>
+        {canManage && (
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setSearch(""); setSelectedUser(null); } }}>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm"><Plus className="mr-1 h-4 w-4" />Invite</Button>
@@ -246,20 +248,23 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                   </SelectContent>
                 </Select>
               )}
-              <Select value={role} onValueChange={setRole}>
+              <Select value={role} onValueChange={(v) => setRole(v as "member" | "admin")}>
                 <SelectTrigger><SelectValue placeholder="Permission" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="viewer">Viewer</SelectItem>
-                  <SelectItem value="editor">Editor</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="member">Member</SelectItem>
+                  {isOwner && <SelectItem value="admin">Admin</SelectItem>}
                 </SelectContent>
               </Select>
+              {!isOwner && role === "admin" && (
+                <p className="text-xs text-muted-foreground">Only the owner can promote someone to Admin.</p>
+              )}
               <Button type="submit" className="w-full" disabled={invite.isPending || !selectedUser}>
                 {invite.isPending ? "Inviting..." : "Invite"}
               </Button>
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       {/* Owner */}
@@ -296,21 +301,38 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                 )}
               </div>
             </div>
-            <Select value={collab.role} onValueChange={(val) => updateRole.mutate({ id: collab.id, role: val })}>
-              <SelectTrigger className="h-7 w-[100px] text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(ROLE_INFO).map(([key, info]) => (
-                  <SelectItem key={key} value={key}>
-                    <span className="capitalize">{info.label}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => remove.mutate(collab.id)}>
-              <X className="h-3.5 w-3.5 text-muted-foreground" />
-            </Button>
+            {canManage ? (
+              <Select
+                value={collab.role}
+                onValueChange={(val) => updateRole.mutate({ id: collab.id, role: val })}
+              >
+                <SelectTrigger className="h-7 w-[110px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(ROLE_INFO).map(([key, info]) => (
+                    <SelectItem key={key} value={key} disabled={key === "admin" && !isOwner}>
+                      <span className="capitalize">{info.label}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${roleColors[collab.role] ?? roleColors.member}`}>
+                {ROLE_INFO[collab.role]?.label ?? collab.role}
+              </span>
+            )}
+            {(canManage || collab.user_id === user?.id) && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 shrink-0"
+                onClick={() => remove.mutate(collab.id)}
+                title={collab.user_id === user?.id ? "Leave project" : "Remove member"}
+              >
+                <X className="h-3.5 w-3.5 text-muted-foreground" />
+              </Button>
+            )}
           </motion.div>
         );
       })}
