@@ -1229,6 +1229,9 @@ const CreatorAvailabilityCalendar = ({
           <span className="inline-block h-3 w-3 rounded bg-emerald-500/40" /> Available
         </span>
         <span className="flex items-center gap-1.5">
+          <span className="inline-block h-3 w-3 rounded bg-sky-500/30" /> <Repeat className="h-2.5 w-2.5" /> Weekly
+        </span>
+        <span className="flex items-center gap-1.5">
           <span className="inline-block h-3 w-3 rounded bg-destructive/30" /> Booked
         </span>
         {!isOwner && (
