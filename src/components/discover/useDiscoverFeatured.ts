@@ -249,7 +249,7 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
       next.push({
         kind: "event",
         id: event.id,
-        href: `/events/${event.slug || event.id}`,
+        href: `/spaces/events/${event.id}`,
         title: event.title,
         subtitle: event.description,
         banner: event.cover_url,

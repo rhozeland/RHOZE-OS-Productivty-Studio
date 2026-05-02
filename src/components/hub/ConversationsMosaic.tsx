@@ -476,19 +476,7 @@ const MosaicTileCard = ({
     </motion.button>
   );
 
-  return (
-    <HoverCard openDelay={250} closeDelay={120}>
-      <HoverCardTrigger asChild>{tileButton}</HoverCardTrigger>
-      <HoverCardContent
-        side="top"
-        align="center"
-        sideOffset={8}
-        className="w-80 p-0 overflow-hidden rounded-2xl border-border bg-card/95 backdrop-blur-xl shadow-2xl"
-      >
-        <TilePreview tile={tile} onOpen={onClick} />
-      </HoverCardContent>
-    </HoverCard>
-  );
+  return tileButton;
 };
 
 // ─── Hover preview panel ───────────────────────────────────────────────
