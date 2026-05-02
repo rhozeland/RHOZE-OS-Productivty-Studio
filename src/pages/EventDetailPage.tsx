@@ -80,6 +80,20 @@ const EventDetailPage = () => {
     enabled: !!id && !!user,
   });
 
+  const { data: isCollaborator } = useQuery({
+    queryKey: ["event-is-collab", id, user?.id],
+    enabled: !!id && !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("event_collaborators")
+        .select("id")
+        .eq("event_id", id!)
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return !!data;
+    },
+  });
+
   const rsvpMutation = useMutation({
     mutationFn: async (tierId: string) => {
       if (!user) throw new Error("Sign in to RSVP");
