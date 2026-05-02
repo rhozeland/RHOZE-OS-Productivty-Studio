@@ -138,8 +138,7 @@ const ProjectTools = ({ projectId, projectTitle, smartboardDetails, onLinkSmartb
           Build it your way
         </h3>
         <p className="text-sm text-muted-foreground mt-1">
-          Spin up live rooms, peek your linked smartboards, or jump into the
-          Flow feed — all scoped to <span className="text-foreground font-medium">{projectTitle}</span>.
+          Spin up live rooms or pin mood boards — all scoped to <span className="text-foreground font-medium">{projectTitle}</span>.
         </p>
       </div>
 
