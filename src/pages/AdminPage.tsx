@@ -70,6 +70,9 @@ const AdminPage = () => {
           <TabsTrigger value="rewards" className="gap-1.5 text-xs shrink-0">
             <Coins className="h-3.5 w-3.5" /> Rewards
           </TabsTrigger>
+          <TabsTrigger value="caps" className="gap-1.5 text-xs shrink-0">
+            <Sliders className="h-3.5 w-3.5" /> Reward Caps
+          </TabsTrigger>
           <TabsTrigger value="users" className="gap-1.5 text-xs shrink-0">
             <Users className="h-3.5 w-3.5" /> Users
           </TabsTrigger>
