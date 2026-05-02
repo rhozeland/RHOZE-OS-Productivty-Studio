@@ -447,7 +447,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
             </div>
           )}
 
-          <div className="relative flex min-h-[360px] items-center justify-center px-3 py-5 sm:px-6 lg:min-h-[460px]">
+          <div className="relative flex min-h-[300px] items-center justify-center px-3 py-2 sm:px-4 lg:min-h-[380px]">
             <div
               className="relative aspect-square w-full max-w-[560px] touch-none select-none"
               onPointerDown={handlePointerDown}
