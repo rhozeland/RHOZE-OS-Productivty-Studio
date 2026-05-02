@@ -10,7 +10,7 @@ import {
   Globe, CheckCircle, UserPlus, UserCheck, MessageSquare, MapPin, Clock,
   EyeOff, Loader2, Settings, Store, Star, ExternalLink, ShoppingBag,
   Sparkles, Image as ImageIcon, Play, Music, FileText, Award, Shield,
-  Zap, Coins, Calendar as CalendarIcon, User as UserIcon,
+  Zap, Coins, Calendar as CalendarIcon, User as UserIcon, FolderKanban,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -93,6 +93,19 @@ const ProfileDetailPage = () => {
     queryFn: async () => {
       const { data } = await supabase.from("flow_items")
         .select("id, title, file_url, link_url, category, content_type, description, created_at")
+        .eq("user_id", id!).order("created_at", { ascending: false }).limit(12);
+      return data ?? [];
+    },
+    enabled: !!id,
+  });
+
+  // "Building" — projects this user owns. RLS limits visibility to team
+  // members; for non-members the array is just empty (graceful).
+  const { data: buildingProjects } = useQuery({
+    queryKey: ["profile-building-projects", id],
+    queryFn: async () => {
+      const { data } = await supabase.from("projects")
+        .select("id, title, description, status, cover_color, categories, created_at")
         .eq("user_id", id!).order("created_at", { ascending: false }).limit(12);
       return data ?? [];
     },
@@ -349,11 +362,12 @@ const ProfileDetailPage = () => {
 
         {/* ─── Tabbed sections ─── */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="w-full grid grid-cols-5 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
+          <TabsList className="w-full grid grid-cols-6 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
             <TabsTrigger value="overview" className="text-xs gap-1.5"><UserIcon className="h-3 w-3" />Overview</TabsTrigger>
             <TabsTrigger value="coin" className="text-xs gap-1.5"><Coins className="h-3 w-3" />Coin</TabsTrigger>
             <TabsTrigger value="works" className="text-xs gap-1.5"><Sparkles className="h-3 w-3" />Works</TabsTrigger>
             <TabsTrigger value="listings" className="text-xs gap-1.5"><ShoppingBag className="h-3 w-3" />Listings</TabsTrigger>
+            <TabsTrigger value="building" className="text-xs gap-1.5"><FolderKanban className="h-3 w-3" />Building</TabsTrigger>
             <TabsTrigger value="availability" className="text-xs gap-1.5"><CalendarIcon className="h-3 w-3" />Availability</TabsTrigger>
           </TabsList>
 
@@ -578,6 +592,49 @@ const ProfileDetailPage = () => {
             ) : (
               <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-8 text-center text-sm text-muted-foreground">
                 No active listings.
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ─── Building (Projects) tab ─── */}
+          <TabsContent value="building" className="mt-5">
+            {buildingProjects && buildingProjects.length > 0 ? (
+              <div className="space-y-3">
+                <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
+                  <FolderKanban className="h-4 w-4 text-primary" /> Currently Building
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {buildingProjects.map((proj: any) => (
+                    <div
+                      key={proj.id}
+                      onClick={() => navigate(`/projects/${proj.id}`)}
+                      className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden cursor-pointer hover:shadow-md hover:border-primary/30 transition-all duration-200"
+                    >
+                      <div
+                        className="h-20 w-full"
+                        style={{ background: `linear-gradient(135deg, ${proj.cover_color || "#7c3aed"}, hsl(var(--accent)))` }}
+                      />
+                      <div className="p-4 space-y-2">
+                        <p className="text-sm font-semibold text-foreground truncate">{proj.title}</p>
+                        {proj.description && (
+                          <p className="text-xs text-muted-foreground line-clamp-2">{proj.description}</p>
+                        )}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <Badge variant="outline" className="text-[9px] capitalize">{proj.status}</Badge>
+                          {(proj.categories ?? []).slice(0, 2).map((c: string) => (
+                            <Badge key={c} variant="secondary" className="text-[9px]">{c}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-8 text-center text-sm text-muted-foreground">
+                {isOwnProfile
+                  ? "No active projects yet. Start one from the Projects page."
+                  : "Nothing public to share here yet."}
               </div>
             )}
           </TabsContent>
