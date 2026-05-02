@@ -18,6 +18,7 @@ import { Flame, Sparkles, ArrowRight, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { loadFlowFeed } from "@/lib/flow-feed";
 import { Button } from "@/components/ui/button";
+import FlowThumbnail from "@/components/flow/FlowThumbnail";
 
 const HubFlowWidget = ({ expanded = false }: { expanded?: boolean }) => {
   const navigate = useNavigate();
@@ -86,18 +87,13 @@ const HubFlowWidget = ({ expanded = false }: { expanded?: boolean }) => {
                   onClick={() => navigate("/flow")}
                   className="group relative aspect-[3/4] rounded-2xl overflow-hidden border border-border bg-muted text-left transition-transform hover:-translate-y-0.5"
                 >
-                  {item.media_url ? (
-                    <img
-                      src={item.media_url}
-                      alt={item.title ?? "Flow item"}
-                      loading="lazy"
-                      className="absolute inset-0 h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 to-amber-500/10 flex items-center justify-center">
-                      <Sparkles className="h-6 w-6 text-muted-foreground/40" />
-                    </div>
-                  )}
+                  <FlowThumbnail
+                    fileUrl={item.file_url}
+                    linkUrl={item.link_url}
+                    title={item.title ?? "Untitled"}
+                    description={item.description as string | null}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
                   <div className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-black/80 via-black/30 to-transparent">
                     <p className="text-[11px] font-medium text-white truncate">
                       {item.title ?? "Untitled"}
