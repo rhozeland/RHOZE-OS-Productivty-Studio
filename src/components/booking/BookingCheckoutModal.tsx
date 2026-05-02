@@ -213,7 +213,11 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
           time: timeSlot?.label || selectedTime,
           duration_hours: service.duration_hours,
           payment_method: paymentMethod,
-          payment_amount: paymentMethod === "credits" ? `${service.credits_cost} credits` : paymentMethod === "card" ? `$${usdPrice}` : `~${solPrice} SOL`,
+          payment_amount:
+            paymentMethod === "credits" ? `${service.credits_cost} credits`
+            : paymentMethod === "card" ? `$${usdPrice}`
+            : paymentMethod === "rhoze" ? `${rhozePrice.toLocaleString()} $RHOZE`
+            : `~${solPrice} SOL`,
           notes: notes || undefined,
         },
       }).catch((err) => console.error("Confirmation email failed:", err));
@@ -424,6 +428,26 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
                   <p className="text-xs text-muted-foreground">~{solPrice} SOL via Phantom/Solflare</p>
                 </div>
                 {paymentMethod === "crypto" && <Check className="h-5 w-5 text-primary" />}
+              </button>
+
+              {/* $RHOZE */}
+              <button
+                onClick={() => setPaymentMethod("rhoze")}
+                className={cn(
+                  "flex items-center gap-4 rounded-xl border p-4 transition-all text-left",
+                  paymentMethod === "rhoze" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+                )}
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-500/10">
+                  <Coins className="h-5 w-5 text-pink-500" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-foreground">Pay with $RHOZE</p>
+                  <p className="text-xs text-muted-foreground">
+                    {rhozePrice.toLocaleString()} $RHOZE • on-chain payment to treasury
+                  </p>
+                </div>
+                {paymentMethod === "rhoze" && <Check className="h-5 w-5 text-primary" />}
               </button>
             </div>
 
