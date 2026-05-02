@@ -75,15 +75,17 @@ const HubPage = () => {
   const initialView = (params.get("view") as "tile" | "flow") === "flow" ? "flow" : "tile";
   const [viewMode, setViewMode] = useState<"tile" | "flow">(initialView);
 
-  // Keep URL in sync (so back-button + sharing land on the same lane)
+  // Keep URL in sync (so back-button + sharing land on the same lane/view)
   useEffect(() => {
     const next = new URLSearchParams(params);
     next.set("lane", lane);
     if (search.trim()) next.set("q", search.trim());
     else next.delete("q");
+    if (viewMode === "flow") next.set("view", "flow");
+    else next.delete("view");
     setParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lane, search]);
+  }, [lane, search, viewMode]);
 
   // ─── Conversations: Flow feed ───────────────────────────────────────
   const { data: flowItems, isLoading: loadingFlow } = useQuery({
