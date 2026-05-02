@@ -158,6 +158,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
         <TabsContent value="pass" className="mt-4 space-y-4">
           <CreatorPassCard />
           <StreakCard />
+          <CoinPortfolio />
         </TabsContent>
 
         {/* ═══════ Tiers (replaces old paid Plans) ═══════ */}
