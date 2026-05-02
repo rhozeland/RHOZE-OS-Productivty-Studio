@@ -62,6 +62,7 @@ import {
 import { InlineFormPanel } from "@/components/ui/inline-form-panel";
 import TokenGateDialog from "@/components/works/TokenGateDialog";
 import UnlockButton from "@/components/works/UnlockButton";
+import UnverifiedWorkChip from "@/components/works/UnverifiedWorkChip";
 
 type WorkKind = "audio" | "image" | "video" | "text" | "other";
 
@@ -88,6 +89,7 @@ interface Work {
   anchored_at: string | null;
   created_at: string;
   gating?: WorkGating | null;
+  is_unverified?: boolean;
 }
 
 const KIND_ICON: Record<WorkKind, typeof Music> = {
@@ -395,6 +397,7 @@ function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
                 <Lock className="h-3 w-3" /> Private
               </Badge>
             )}
+            <UnverifiedWorkChip isUnverified={work.is_unverified} size="xs" />
           </div>
           <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
             <span>{KIND_LABEL[work.kind]}</span>
