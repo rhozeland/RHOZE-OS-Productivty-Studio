@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Play, FileText, ExternalLink, ChevronDown, Music, Palette, Camera, Video, PenTool, Bookmark, Send, Maximize2, X, Trash2, Coins, ArrowRight } from "lucide-react";
+import { Play, FileText, ExternalLink, ChevronDown, Music, Palette, Camera, Video, PenTool, Heart, MessageCircle, Send, Maximize2, X, Trash2, Coins, ArrowRight } from "lucide-react";
 import AudioPreview from "@/components/marketplace/AudioPreview";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -99,11 +99,20 @@ interface FlowCardProps {
   };
   expanded: boolean;
   onToggleExpand: () => void;
-  onSave: () => void;
+  /** Up-swipe / heart button. Toggles like state on the item. */
+  onLike: () => void;
+  /** Down-swipe / message button. Opens the comment thread sheet. */
+  onComment: () => void;
+  /** Send-icon button (no longer a swipe). Opens the share-to-DM dialog. */
   onShare: () => void;
   onDelete?: () => void;
   isOwner?: boolean;
   isAdmin?: boolean;
+  /** Whether the current user has liked this item (drives heart fill). */
+  liked?: boolean;
+  /** Cached counts for like/comment buttons. */
+  likeCount?: number;
+  commentCount?: number;
   /**
    * True while uploader profile attribution (`profiles_public`) is still
    * being resolved. When true and no profile is attached yet, the card
@@ -118,7 +127,7 @@ interface FlowCardProps {
   coin?: { id: string; ticker: string } | null;
 }
 
-const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, isOwner, isAdmin, profilesLoading, coin }: FlowCardProps) => {
+const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, onDelete, isOwner, isAdmin, liked, likeCount, commentCount, profilesLoading, coin }: FlowCardProps) => {
   const navigate = useNavigate();
   const [imageEnlarged, setImageEnlarged] = useState(false);
   const [verifyOpen, setVerifyOpen] = useState(false);
@@ -425,12 +434,23 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
 
           <div className="ml-auto flex items-center gap-3">
             <button
-              onClick={(e) => { e.stopPropagation(); onSave(); }}
-              className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group"
-              title="Save to board"
+              onClick={(e) => { e.stopPropagation(); onLike(); }}
+              className={cn(
+                "flex items-center gap-1.5 transition-colors group",
+                liked ? "text-rose-500" : "text-muted-foreground hover:text-rose-500",
+              )}
+              title={liked ? "Unlike" : "Like"}
             >
-              <Bookmark className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
-              <span className="text-[11px] font-medium">Save</span>
+              <Heart className={cn("h-[18px] w-[18px] group-hover:scale-110 transition-transform", liked && "fill-current")} />
+              <span className="text-[11px] font-medium tabular-nums">{likeCount && likeCount > 0 ? likeCount : "Like"}</span>
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onComment(); }}
+              className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group"
+              title="Comments"
+            >
+              <MessageCircle className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
+              <span className="text-[11px] font-medium tabular-nums">{commentCount && commentCount > 0 ? commentCount : "Comment"}</span>
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onShare(); }}
@@ -438,7 +458,6 @@ const FlowCard = ({ item, expanded, onToggleExpand, onSave, onShare, onDelete, i
               title="Send to someone"
             >
               <Send className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
-              <span className="text-[11px] font-medium">Send</span>
             </button>
 
             {(isOwner || isAdmin) && onDelete && (
