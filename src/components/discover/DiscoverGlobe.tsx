@@ -219,6 +219,26 @@ const buildLongitudePath = (longitude: number, rotation: number) => {
   return path;
 };
 
+// Build a closed polygon for a continent. Skips polygons that are
+// fully on the back hemisphere; partially-visible polygons clip points
+// crossing the horizon so shapes hug the sphere.
+const buildContinentPath = (points: [number, number][], rotation: number) => {
+  const projected = points.map(([lat, lng]) => projectPoint(lat, lng, rotation));
+  if (!projected.some((p) => p.depth > 0)) return "";
+  let path = "";
+  let drawing = false;
+  for (const p of projected) {
+    if (p.depth > -0.05) {
+      path += `${drawing ? " L" : "M"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`;
+      drawing = true;
+    } else {
+      drawing = false;
+    }
+  }
+  if (drawing) path += " Z";
+  return path;
+};
+
 const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], height = 520 }: DiscoverGlobeProps) => {
   const dragState = useRef<{ pointerId: number; startX: number; startRotation: number } | null>(null);
   const [rotation, setRotation] = useState(-22);
