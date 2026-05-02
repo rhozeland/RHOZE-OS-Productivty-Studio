@@ -131,7 +131,10 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
     return setMinutes(setHours(selectedDate, h), m);
   };
 
-  const handleConfirm = async (tokenOverride?: string) => {
+  const handleConfirm = async (
+    tokenOverride?: string,
+    rhozeContext?: { signature: string; payerWallet: string },
+  ) => {
     if (!user || !service) return;
     const startTime = getStartTime();
     if (!startTime) return;
@@ -185,8 +188,33 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
         status: "upcoming",
       };
       if (selectedStaffId) bookingPayload.staff_member_id = selectedStaffId;
-      const { error: bookingError } = await supabase.from("bookings").insert(bookingPayload);
+      const { data: bookingRow, error: bookingError } = await supabase
+        .from("bookings")
+        .insert(bookingPayload)
+        .select("id")
+        .single();
       if (bookingError) throw bookingError;
+
+      // Record an immutable ledger entry for $RHOZE-paid bookings
+      if (paymentMethod === "rhoze" && rhozeContext) {
+        await supabase.from("rhoze_booking_ledger").insert({
+          user_id: user.id,
+          booking_id: bookingRow?.id ?? null,
+          service_id: service.id,
+          entry_kind: "booking_payment",
+          rhoze_amount: rhozePrice,
+          usd_value: usdPrice,
+          rate_rhoze_per_usd: RHOZE_PER_USD,
+          solana_signature: rhozeContext.signature,
+          payer_wallet: rhozeContext.payerWallet,
+          description: `Booking: ${service.title}`,
+          metadata: {
+            duration_hours: service.duration_hours,
+            staff_member_id: selectedStaffId,
+            start_time: startTime.toISOString(),
+          },
+        });
+      }
 
       // Auto-create calendar event
       await supabase.from("calendar_events").insert({
@@ -562,7 +590,7 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
                   label={`Pay ${rhozePrice.toLocaleString()} $RHOZE & Book`}
                   className="flex-1"
                   variant="default"
-                  onSuccess={() => handleConfirm()}
+                  onSuccess={(result) => handleConfirm(undefined, result)}
                 />
               ) : paymentMethod === "credits" ? (
                 <Button
