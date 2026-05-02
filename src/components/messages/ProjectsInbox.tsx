@@ -57,6 +57,7 @@ import {
   Users,
   Loader2,
   ExternalLink,
+  Link as LinkIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
