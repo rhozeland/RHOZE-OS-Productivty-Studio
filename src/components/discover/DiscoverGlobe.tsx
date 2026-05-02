@@ -434,9 +434,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
         <div className="relative overflow-hidden rounded-[1.7rem] border border-border/50 bg-background/45 backdrop-blur-xl">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_46%,hsl(var(--background)/0)_0%,hsl(var(--primary)/0.12)_32%,transparent_54%),radial-gradient(circle_at_50%_86%,hsl(var(--accent)/0.18),transparent_30%)]" />
 
-          <div className="absolute left-4 top-4 z-20 max-w-[12rem] rounded-full border border-border/50 bg-background/72 px-3 py-1.5 backdrop-blur-md">
-            <p className="text-[11px] font-medium text-foreground/80">Spin the world →</p>
-          </div>
+          {/* spin hint pill removed — globe affords drag visually */}
 
           {hoveredRegion && (
             <div className="absolute right-4 top-4 z-20 max-w-[14rem] rounded-[1.3rem] border border-border/50 bg-background/80 px-3 py-2.5 shadow-lg backdrop-blur-md">
