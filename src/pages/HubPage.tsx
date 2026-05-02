@@ -22,6 +22,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
+import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAuthGate } from "@/components/AuthGateDialog";
@@ -38,11 +39,16 @@ import {
   Flame,
   ArrowRight,
   Coins,
+  CalendarDays,
+  Building2,
+  MapPin,
+  Globe2,
 } from "lucide-react";
 import ListingCard from "@/components/marketplace/ListingCard";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
+import StreamComposer, { type StreamPostType } from "@/components/stream/StreamComposer";
 
 type Lane = "conversations" | "offerings" | "opportunities" | "works";
 
