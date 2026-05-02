@@ -13,11 +13,9 @@ import { Separator } from "@/components/ui/separator";
 import {
   Moon, Sun, Upload, Eye, EyeOff, X, Camera, Lock, MapPin, Bell,
   Trash2, AlertTriangle, Download, User, Box, Wallet, Palette,
-  LayoutDashboard, ChevronRight, Sparkles, Fingerprint,
+  ChevronRight, Fingerprint,
 } from "lucide-react";
 import LogoCustomizer from "@/components/onboarding/LogoCustomizer";
-import DockCustomizer from "@/components/settings/DockCustomizer";
-import FlowCardCustomizer from "@/components/settings/FlowCardCustomizer";
 import ClaimLimitsControl from "@/components/settings/ClaimLimitsControl";
 import SettingsSubNav, {
   useActiveSettingsSection,
@@ -32,9 +30,6 @@ import { cn } from "@/lib/utils";
 /* ─── Section nav items ─── */
 const SECTIONS = [
   { id: "profile", label: "Profile", icon: User },
-  { id: "appearance", label: "Appearance", icon: Palette },
-  { id: "dock", label: "Dock Menu", icon: LayoutDashboard },
-  { id: "flow-cards", label: "Flow Cards", icon: Sparkles },
   { id: "avatar", label: "Display Picture", icon: Camera },
   { id: "banner", label: "Banner & Background", icon: Palette },
   { id: "wallet", label: "Wallet", icon: Wallet },
@@ -409,38 +404,10 @@ const SettingsPage = () => {
     </form>
   );
 
-  const renderAppearance = () => (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {theme === "light" ? <Sun className="h-5 w-5 text-amber-500" /> : <Moon className="h-5 w-5 text-primary" />}
-          <div>
-            <Label className="text-sm font-medium">Dark Mode</Label>
-            <p className="text-xs text-muted-foreground">Switch between light and dark themes</p>
-          </div>
-        </div>
-        <Switch checked={theme === "dark"} onCheckedChange={toggleTheme} />
-      </div>
-    </div>
-  );
-
-  const renderDock = () => (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Choose which 5 features appear in your bottom dock bar and reorder them.
-      </p>
-      <DockCustomizer
-        dockConfig={(profile as any)?.dock_config as string[] | null}
-        onSave={async (config) => {
-          await supabase.from("profiles").update({ dock_config: config } as any).eq("user_id", user!.id);
-          queryClient.invalidateQueries({ queryKey: ["my-profile"] });
-          queryClient.invalidateQueries({ queryKey: ["my-profile-dock"] });
-        }}
-      />
-    </div>
-  );
-
-  const renderFlowCards = () => <FlowCardCustomizer />;
+  // Appearance, Dock Menu, and Flow Cards customizers were retired in the
+  // v7 settings cleanup. Theme toggle lives in the global header; the dock
+  // is hidden globally; Flow Cards customization will return alongside the
+  // Hub view toggle if user demand re-emerges.
 
   const renderAvatar = () => (
     <div className="space-y-4">
@@ -803,9 +770,6 @@ const SettingsPage = () => {
 
   const sectionRenderers: Record<SectionId, () => JSX.Element> = {
     profile: renderProfile,
-    appearance: renderAppearance,
-    dock: renderDock,
-    "flow-cards": renderFlowCards,
     avatar: renderAvatar,
     banner: renderBanner,
     wallet: renderWallet,
