@@ -4158,6 +4158,10 @@ export type Database = {
         Returns: string
       }
       request_work_unlock: { Args: { _work_id: string }; Returns: Json }
+      reward_daily_cap_hit: {
+        Args: { _action_type: string; _cap: number; _user_id: string }
+        Returns: boolean
+      }
       simulate_coin_trade: {
         Args: { _amount: number; _launch_id: string; _side: string }
         Returns: Json
