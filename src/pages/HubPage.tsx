@@ -271,41 +271,38 @@ const HubPage = () => {
     setCreateOpen(true);
   };
 
+  // Map active lane → default composer type so the primary CTA matches
+  // what the user is most likely to want to drop in that lane.
+  const composerDefault: StreamPostType =
+    lane === "offerings"     ? "offering"
+    : lane === "opportunities" ? "opportunity"
+    : lane === "works"         ? "work"
+    : "text";
+
   return (
-    <div className="space-y-10 max-w-6xl mx-auto pb-12">
+    <div className="space-y-8 max-w-6xl mx-auto pb-12">
       {/* ─── Hero ────────────────────────────────────────────────────── */}
-      <header className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-pink-500/5 via-background to-amber-500/5 p-8 md:p-12">
+      <header className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-pink-500/5 via-background to-amber-500/5 p-8 md:p-10">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(320_80%_60%/0.15),transparent_55%)] pointer-events-none" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_85%,hsl(30_90%_55%/0.12),transparent_55%)] pointer-events-none" />
-        <div className="relative flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-2">
-              Digital Network
-            </p>
-            <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground tracking-tight">
-              The Hub.
-            </h1>
-            <p className="text-muted-foreground mt-2 text-sm md:text-base max-w-md">
-              Tune in. Drop, browse, and verify — all in one feed.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={handlePost} className="rounded-full">
-              <Plus className="mr-1.5 h-4 w-4" />
-              {lane === "works"
-                ? "Anchor a Work"
-                : lane === "opportunities"
-                ? "Post Opportunity"
-                : lane === "offerings"
-                ? "Post Offering"
-                : "Drop a Post"}
-            </Button>
-          </div>
+        <div className="relative">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-2">
+            The Stream
+          </p>
+          <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground tracking-tight">
+            What&rsquo;s happening.
+          </h1>
+          <p className="text-muted-foreground mt-2 text-sm md:text-base max-w-md">
+            Drops, offerings, calls, events, spaces, works — one feed.
+          </p>
         </div>
       </header>
 
+      {/* ─── Lane-aware composer (the new "Drop" surface) ─────────────── */}
+      <StreamComposer defaultType={composerDefault} />
+
       {/* ─── Lane tabs ──────────────────────────────────────────────── */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div className="flex gap-2 flex-wrap">
           {LANES.map((l) => {
             const Icon = l.icon;
@@ -340,6 +337,131 @@ const HubPage = () => {
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
+
+      {/* ════════════════════════════════════════════════════════════════
+          LANE: Conversations sub-strip — Happenings (events + spaces)
+          ════════════════════════════════════════════════════════════════
+          v7 phase 2: Spaces + Events live inline as a thin "Happenings"
+          strip above the Conversations grid so users see what's coming
+          up without leaving the Stream. */}
+      {lane === "conversations" && (
+        ((upcomingEvents?.length ?? 0) > 0 || (featuredSpaces?.length ?? 0) > 0) && (
+          <section className="space-y-4">
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
+                  Happenings
+                </p>
+                <h2 className="font-display text-xl text-foreground">
+                  Events &amp; Spaces, on the calendar.
+                </h2>
+              </div>
+              <div className="flex gap-1.5">
+                <Link to="/spaces/events/new" className="text-xs font-medium text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+                  Host event <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Upcoming events */}
+            {(upcomingEvents?.length ?? 0) > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {upcomingEvents!.map((ev: any, i: number) => (
+                  <motion.div
+                    key={ev.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.04 }}
+                  >
+                    <Link
+                      to={`/spaces/events/${ev.id}`}
+                      className="group block rounded-2xl border border-border bg-card hover:border-foreground/30 hover:-translate-y-0.5 transition-all overflow-hidden h-full"
+                    >
+                      <div className="relative aspect-video bg-muted overflow-hidden">
+                        {ev.cover_url ? (
+                          <img
+                            src={ev.cover_url}
+                            alt={ev.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-500/20 to-pink-500/10">
+                            <CalendarDays className="h-8 w-8 text-foreground/30" />
+                          </div>
+                        )}
+                        <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-background/90 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium text-foreground shadow-sm">
+                          <CalendarDays className="h-2.5 w-2.5" /> Event
+                        </span>
+                      </div>
+                      <div className="p-3">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
+                          {format(new Date(ev.starts_at), "EEE, MMM d · h:mm a")}
+                        </p>
+                        <h3 className="font-display font-semibold text-foreground text-sm group-hover:text-primary transition-colors line-clamp-2 leading-tight">
+                          {ev.title}
+                        </h3>
+                        <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1 truncate">
+                          {ev.is_online ? (
+                            <><Globe2 className="h-3 w-3 shrink-0" /> Online</>
+                          ) : ev.venue_name ? (
+                            <><MapPin className="h-3 w-3 shrink-0" /> {ev.venue_name}</>
+                          ) : null}
+                        </p>
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+
+            {/* Featured spaces */}
+            {(featuredSpaces?.length ?? 0) > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                {featuredSpaces!.map((s: any, i: number) => (
+                  <motion.div
+                    key={s.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.04 }}
+                  >
+                    <Link
+                      to={`/studios/${s.id}`}
+                      className="group block rounded-xl border border-border bg-card hover:border-foreground/30 hover:-translate-y-0.5 transition-all overflow-hidden"
+                    >
+                      <div className="relative aspect-square bg-muted overflow-hidden">
+                        {s.cover_image_url ? (
+                          <img
+                            src={s.cover_image_url}
+                            alt={s.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-emerald-500/15 to-cyan-500/10">
+                            <Building2 className="h-7 w-7 text-foreground/30" />
+                          </div>
+                        )}
+                        <span className="absolute top-1.5 left-1.5 inline-flex items-center gap-1 rounded-full bg-background/90 backdrop-blur-sm px-1.5 py-0.5 text-[9px] font-medium text-foreground shadow-sm">
+                          <Building2 className="h-2.5 w-2.5" /> Space
+                        </span>
+                      </div>
+                      <div className="p-2.5">
+                        <h3 className="font-display font-semibold text-foreground text-xs group-hover:text-primary transition-colors line-clamp-1">
+                          {s.name}
+                        </h3>
+                        {(s.city || s.country) && (
+                          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                            {[s.city, s.country].filter(Boolean).join(", ")}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </section>
+        )
+      )}
 
       {/* ════════════════════════════════════════════════════════════════
           LANE: Conversations
