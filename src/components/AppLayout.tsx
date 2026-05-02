@@ -442,6 +442,7 @@ const AppLayout = () => {
         </CommandList>
       </CommandDialog>
       {user && <UsernamePrompt />}
+      </CelebrationProvider>
     </SidebarProvider>
   );
 };
