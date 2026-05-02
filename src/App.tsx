@@ -266,7 +266,7 @@ const App = () => (
                 <Route path="/marketplace" element={<Navigate to="/discover?kind=offering" replace />} />
                 <Route path="/marketplace/:id" element={<ListingDetailPage />} />
                 <Route path="/seller" element={<Navigate to="/settings" replace />} />
-                <Route path="/inquiries" element={<Navigate to="/messages?tab=inquiries" replace />} />
+                <Route path="/inquiries" element={<Navigate to="/messages" replace />} />
                 <Route path="/profiles" element={<Navigate to="/discover" replace />} />
                 <Route path="/profiles/:id" element={<ProfileDetailPage />} />
                 {/* Centralized legacy aliases — generated from NAV_ALIASES.
