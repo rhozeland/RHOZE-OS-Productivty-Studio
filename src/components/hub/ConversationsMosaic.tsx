@@ -15,7 +15,7 @@
  *    opportunities lead with the brief, works show the verified badge.
  *  - Staggered framer-motion entrance + subtle hover lift for tactility.
  */
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
