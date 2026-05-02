@@ -9,7 +9,7 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointer
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowUpRight, Calendar, MapPin, Sparkles, Users } from "lucide-react";
+import { ArrowUpRight, Calendar, ImageIcon, MapPin, Sparkles, Users } from "lucide-react";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,9 @@ import { cn } from "@/lib/utils";
 import { MARKET_COLORS } from "./market-colors";
 import type { FeaturedSlide } from "./useDiscoverFeatured";
 import { ROLE_BY_ID } from "@/lib/creator-roles";
+import RegionChip from "@/components/profile/RegionChip";
+import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
+import { avatarGradientFor } from "@/lib/avatar-gradient";
 
 const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
   KR: { lat: 37.55, lng: 126.99 },
