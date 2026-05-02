@@ -25,15 +25,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Coins, Lock, Upload, X } from "lucide-react";
+import { Loader2, Coins, Upload, X } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -201,23 +194,6 @@ const LaunchCoinDialog = ({
             />
           </div>
 
-          <div>
-            <Label className="flex items-center gap-1.5">
-              <Lock className="h-3 w-3" /> LP lock at graduation
-            </Label>
-            <Select value={lpLock} onValueChange={setLpLock}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {LP_LOCK_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              When the curve fills (85 SOL), liquidity migrates to Raydium and is locked for this duration.
-            </p>
-          </div>
-
           <div className="space-y-2">
             <Label>Coin image (optional)</Label>
             <div className="flex items-start gap-3">
@@ -274,11 +250,10 @@ const LaunchCoinDialog = ({
             </div>
           </div>
 
-          <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-[11px] text-muted-foreground space-y-1">
-            <div className="flex justify-between"><span>Trade fee</span><span className="font-mono">3% (2% creator · 1% platform)</span></div>
-            <div className="flex justify-between"><span>Total supply</span><span className="font-mono">1,000,000,000</span></div>
-            <div className="flex justify-between"><span>Graduation target</span><span className="font-mono">85 SOL</span></div>
+          <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-[11px] text-muted-foreground">
+            Simulated launch — no real liquidity yet. Tokenomics (supply, fees, graduation) lock in once the on-chain mint ships.
           </div>
+
         </div>
 
         <DialogFooter>
