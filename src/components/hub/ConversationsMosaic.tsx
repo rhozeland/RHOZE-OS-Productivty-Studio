@@ -171,25 +171,20 @@ const ConversationsMosaic = ({
 
       const drops = supabase
         .from("flow_items")
-        .select("id, title, description, category, file_url, link_url, created_at, user_id")
+        .select("id, title, description, category, file_url, link_url, created_at, user_id, solana_signature")
         .order("created_at", { ascending: false })
         .limit(12);
 
+      // Offerings + Open Calls now share one bucket — they're all
+      // marketplace listings, just with different listing_types. The tile
+      // surfaces "Open Call" as a sub-label when relevant.
       const offerings = supabase
         .from("marketplace_listings")
         .select("id, title, description, category, price, credits_price, listing_type, created_at, user_id")
         .eq("is_active", true)
-        .in("listing_type", ["service", "digital_product", "collaboration"])
+        .in("listing_type", ["service", "digital_product", "collaboration", "project_request"])
         .order("created_at", { ascending: false })
-        .limit(8);
-
-      const opps = supabase
-        .from("marketplace_listings")
-        .select("id, title, description, category, price, credits_price, created_at, user_id")
-        .eq("is_active", true)
-        .eq("listing_type", "project_request")
-        .order("created_at", { ascending: false })
-        .limit(6);
+        .limit(14);
 
       const events = supabase
         .from("events")
@@ -206,14 +201,7 @@ const ConversationsMosaic = ({
         .order("created_at", { ascending: false })
         .limit(6);
 
-      const works = supabase
-        .from("contribution_proofs")
-        .select("id, action_type, metadata, solana_signature, anchored_at, created_at, user_id")
-        .not("solana_signature", "is", null)
-        .order("anchored_at", { ascending: false, nullsFirst: false })
-        .limit(6);
-
-      const [dr, of, op, ev, sp, wk] = await Promise.all([drops, offerings, opps, events, spaces, works]);
+      const [dr, of, ev, sp] = await Promise.all([drops, offerings, events, spaces]);
 
       const tiles: MosaicTile[] = [];
 
@@ -224,39 +212,29 @@ const ConversationsMosaic = ({
           kind: "drop",
           title: d.title ?? "Drop",
           description: d.description,
+          category: d.category,
           fileUrl: d.file_url,
           linkUrl: d.link_url,
           href: `/flow`,
           meta: d.category,
+          // Verified Works are no longer a separate lane — when a drop has
+          // an on-chain signature, we surface the Verified IP shield on
+          // the tile itself. "Works = a badge on a Drop."
+          verifiedSignature: d.solana_signature ?? null,
           createdAt: d.created_at,
         });
       });
 
       (of.data ?? []).forEach((l: any) => {
         if (ilike && !`${l.title} ${l.description} ${l.category}`.toLowerCase().includes(term.toLowerCase())) return;
+        const isOpenCall = l.listing_type === "project_request";
         tiles.push({
           id: `off-${l.id}`,
           kind: "offering",
+          variant: isOpenCall ? "Open Call" : null,
           title: l.title,
           description: l.description,
-          href: `/marketplace/${l.id}`,
-          meta: l.category,
-          badge: l.credits_price
-            ? `${l.credits_price} ◊`
-            : l.price
-              ? `$${Number(l.price).toFixed(0)}`
-              : null,
-          createdAt: l.created_at,
-        });
-      });
-
-      (op.data ?? []).forEach((l: any) => {
-        if (ilike && !`${l.title} ${l.description} ${l.category}`.toLowerCase().includes(term.toLowerCase())) return;
-        tiles.push({
-          id: `opp-${l.id}`,
-          kind: "opportunity",
-          title: l.title,
-          description: l.description,
+          category: l.category,
           href: `/marketplace/${l.id}`,
           meta: l.category,
           badge: l.credits_price
@@ -296,20 +274,6 @@ const ConversationsMosaic = ({
         });
       });
 
-      (wk.data ?? []).forEach((w: any) => {
-        const desc = (w.metadata as Record<string, unknown> | null)?.description as string | undefined;
-        if (ilike && !`${w.action_type} ${desc ?? ""}`.toLowerCase().includes(term.toLowerCase())) return;
-        tiles.push({
-          id: `wk-${w.id}`,
-          kind: "work",
-          title: desc ?? w.action_type,
-          href: `/works`,
-          meta: w.action_type,
-          signature: w.solana_signature,
-          createdAt: w.anchored_at ?? w.created_at,
-        });
-      });
-
       return seededShuffle(tiles, tiles.length);
     },
     staleTime: 30_000,
@@ -320,7 +284,7 @@ const ConversationsMosaic = ({
   // Per-kind counts power the badge numbers in HubPage's filter chips.
   const counts = useMemo(() => {
     const c: Record<MosaicKindFilter, number> = {
-      all: allTiles.length, drop: 0, offering: 0, opportunity: 0, event: 0, space: 0, work: 0,
+      all: allTiles.length, drop: 0, offering: 0, event: 0, space: 0,
     };
     for (const t of allTiles) c[t.kind]++;
     return c;
