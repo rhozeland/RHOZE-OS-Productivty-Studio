@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCreatorXP, getTitleForLevel } from "@/hooks/useCreatorXP";
 import { useCelebration } from "@/components/hud/CelebrationProvider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -31,6 +32,15 @@ const HudDock = () => {
   const { pathname } = useLocation();
   const { data: xp } = useCreatorXP();
   const { celebrate } = useCelebration();
+  const { state, isMobile } = useSidebar();
+  // Offset half the sidebar width so the dock visually centers within the
+  // main content column (not the full viewport). On mobile the sidebar is
+  // an overlay, so no offset is needed.
+  const sidebarOffset = isMobile
+    ? "0px"
+    : state === "expanded"
+      ? "8rem" // half of 16rem sidebar width
+      : "1.5rem"; // half of 3rem icon-collapsed width
 
   // Detect level-up by tracking last-seen level.
   const lastLevel = useRef<number | null>(null);
@@ -64,12 +74,15 @@ const HudDock = () => {
 
   return (
     <TooltipProvider delayDuration={150}>
+      <div
+        className="hud-dock fixed bottom-4 z-40 pointer-events-none -translate-x-1/2"
+        style={{ left: `calc(50% + ${sidebarOffset})` }}
+      >
       <motion.nav
         aria-label="Player HUD"
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 28, delay: 0.3 }}
-        className="hud-dock fixed bottom-4 left-1/2 -translate-x-1/2 z-40 pointer-events-none"
       >
         <div
           className={cn(
@@ -274,6 +287,7 @@ const HudDock = () => {
           </div>
         </div>
       </motion.nav>
+      </div>
     </TooltipProvider>
   );
 };
