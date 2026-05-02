@@ -683,7 +683,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                   </div>
                 </motion.div>
               ) : (
-                <div className="mt-4 rounded-[1.5rem] border border-dashed border-border/50 bg-card/35 p-6 text-sm text-muted-foreground">
+                <div className="rounded-[1.5rem] border border-dashed border-border/50 bg-card/35 p-6 text-sm text-muted-foreground">
                   Featured orbit is warming up.
                 </div>
               )}
