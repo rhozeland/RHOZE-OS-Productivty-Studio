@@ -557,7 +557,7 @@ const NewProjectDialog = ({
   const create = useMutation({
     mutationFn: async () => {
       if (!title.trim()) throw new Error("Title required.");
-      const { data, error } = await supabase.rpc("create_project_with_owner", {
+      const { data, error } = await (supabase.rpc as any)("create_project_with_owner", {
         _title: title.trim(),
         _description: description.trim() || null,
         _vision: vision.trim() || null,
@@ -567,8 +567,9 @@ const NewProjectDialog = ({
         _cover_color: coverColor,
       });
       if (error) throw error;
-      if (!data?.id) throw new Error("Project creation returned no project.");
-      return data;
+      const project = Array.isArray(data) ? data[0] : data;
+      if (!project?.id) throw new Error("Project creation returned no project.");
+      return project;
     },
     onSuccess: (p: any) => {
       setTitle("");
