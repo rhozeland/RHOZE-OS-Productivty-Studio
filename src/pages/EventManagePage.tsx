@@ -32,6 +32,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { shortHash } from "@/lib/content-hash";
 import QrCheckInScanner from "@/components/events/QrCheckInScanner";
+import EventCollaborators from "@/components/events/EventCollaborators";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const EventManagePage = () => {
   const { id } = useParams<{ id: string }>();
