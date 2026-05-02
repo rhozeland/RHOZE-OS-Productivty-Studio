@@ -686,30 +686,38 @@ const CreatorAvailabilityCalendar = ({
 
     setSaving(true);
     try {
+      // Generate a free in-app Jitsi room — no account or external service required.
+      // Cap session at 60 min (clamp end if longer).
+      const cappedEnd =
+        differenceInMinutes(end, start) > 60 ? addMinutes(start, 60) : end;
+      const room = `rhozeland-${(creatorName ?? "creator").toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Math.random().toString(36).slice(2, 8)}`;
+      const meetingUrl = `https://meet.jit.si/${room}`;
+
       const { error } = await supabase.from("bookings").insert({
         user_id: user.id,
         staff_member_id: creatorId,
         title: `Session with ${creatorName ?? "creator"}`,
         start_time: start.toISOString(),
-        end_time: end.toISOString(),
-        duration_hours: +(differenceInMinutes(end, start) / 60).toFixed(2),
+        end_time: cappedEnd.toISOString(),
+        duration_hours: +(differenceInMinutes(cappedEnd, start) / 60).toFixed(2),
         status: "upcoming",
         notes: bookingNotes || null,
+        meeting_url: meetingUrl,
       });
       if (error) throw error;
 
       await supabase.from("calendar_events").insert({
         user_id: user.id,
         title: `📅 ${creatorName ?? "Creator"} session`,
-        description: bookingNotes || null,
+        description: `${bookingNotes ? bookingNotes + "\n\n" : ""}Join: ${meetingUrl}`,
         start_time: start.toISOString(),
-        end_time: end.toISOString(),
+        end_time: cappedEnd.toISOString(),
         color: "#7c3aed",
       });
 
       await queryClient.invalidateQueries({ queryKey: ["creator-bookings", creatorId] });
       toast.success(
-        `Booked ${format(day, "MMM d")} · ${formatTime(day, startMin)}–${formatTime(day, endMin)}`
+        `Booked ${format(day, "MMM d")} · ${formatTime(day, startMin)}–${formatTime(day, Math.min(endMin, startMin + 60))} · video room ready`
       );
       setBookingOpen(false);
       setBookingNotes("");
