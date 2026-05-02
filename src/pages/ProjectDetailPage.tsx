@@ -284,17 +284,6 @@ const ProjectDetailPage = () => {
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {isProjectOwner && (
-            <Button
-              variant="default"
-              size="sm"
-              className="gap-1.5"
-              onClick={() => setListingDialogOpen(true)}
-            >
-              <ShoppingBag className="h-4 w-4" />
-              List on Marketplace
-            </Button>
-          )}
           <Button
             variant="outline"
             size="sm"
@@ -325,17 +314,6 @@ const ProjectDetailPage = () => {
           </Button>
         </div>
       </div>
-
-      <CreateListingDialog
-        open={listingDialogOpen}
-        onOpenChange={setListingDialogOpen}
-        prefill={{
-          title: project.title,
-          description: project.description ?? undefined,
-          listing_type: "project_request",
-          category: project.categories?.[0] ?? "design",
-        }}
-      />
 
       {/* Progress Overview */}
       <ProgressChart goals={goals} />
