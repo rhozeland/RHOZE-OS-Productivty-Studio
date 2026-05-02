@@ -882,32 +882,32 @@ const FlowModePage = () => {
     };
   }, []);
 
-  const performAction = useCallback((action: string, smartboardId?: string, item?: any) => {
+  const performAction = useCallback((action: string, _unused?: string, item?: any) => {
     const targetItem = item || currentItem;
     if (!targetItem) return;
     if (navigator.vibrate) navigator.vibrate(20);
-    if (soundEnabled) playSwipeSound(action === "save" ? "up" : action === "dislike" ? "left" : action === "share" ? "down" : "right");
+    if (soundEnabled) playSwipeSound(action === "like" ? "up" : action === "dislike" ? "left" : action === "comment" ? "down" : "right");
 
-    if (action === "save") {
-      if (smartboardId) {
-        interact.mutate({ itemId: targetItem.id, action, smartboardId });
-        toast.success("Saved to board!");
-        setSavePickerOpen(false);
-        advanceCard();
-      } else {
-        setShareItem(targetItem);
-        setSavePickerOpen(true);
-        return;
-      }
-    } else if (action === "share") {
+    if (action === "like") {
+      // Like is a non-blocking interaction — record it but don't auto-advance,
+      // so the heart fills under the user's thumb and they can keep reading.
+      if (user) interact.mutate({ itemId: targetItem.id, action });
+      return;
+    }
+    if (action === "comment") {
+      setCommentItem(targetItem);
+      setCommentSheetOpen(true);
+      return;
+    }
+    if (action === "share") {
       setShareItem(targetItem);
       setShareDialogOpen(true);
       return;
-    } else {
-      interact.mutate({ itemId: targetItem.id, action });
-      advanceCard();
     }
-  }, [currentItem, interact, advanceCard, soundEnabled]);
+    // dislike / skip / next: record + advance.
+    if (user) interact.mutate({ itemId: targetItem.id, action });
+    advanceCard();
+  }, [currentItem, interact, advanceCard, soundEnabled, user]);
 
   // Lock all swipe gestures while:
   //   • a card is expanded (taps inside the detail view should never
