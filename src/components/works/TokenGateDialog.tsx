@@ -287,7 +287,10 @@ export const TokenGateDialog = ({
               )}
               <Button
                 onClick={() => saveMut.mutate()}
-                disabled={saveMut.isPending || !launchId}
+                disabled={
+                  saveMut.isPending ||
+                  (poolType === "launch" && !launchId)
+                }
                 className="gap-1.5"
               >
                 {saveMut.isPending && (
@@ -297,7 +300,6 @@ export const TokenGateDialog = ({
               </Button>
             </div>
           </div>
-        )}
       </DialogContent>
     </Dialog>
   );
