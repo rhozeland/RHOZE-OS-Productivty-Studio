@@ -974,7 +974,7 @@ const CreatorAvailabilityCalendar = ({
                             <Repeat className="h-2.5 w-2.5 text-sky-700 dark:text-sky-300" />
                           </div>
                         )}
-                        {editable && (
+                        {editable && !isRecurring && (
                           <>
                             <div
                               role="button"
