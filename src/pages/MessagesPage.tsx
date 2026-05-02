@@ -419,7 +419,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl font-bold text-foreground">Conversations</h1>
-        <p className="text-muted-foreground">DMs, projects, inquiries, and listings — all in one place.</p>
+        <p className="text-muted-foreground">DMs, projects, and inquiries — all in one place.</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -438,13 +438,6 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="listings" className="gap-1.5">
-            <Store className="h-3.5 w-3.5" /> Listings
-          </TabsTrigger>
-          {/* Circles is hidden from primary tabs in v8 — group chats are
-              accessed via the "+ Group" action inside DMs. The Groups tab
-              stays mounted only when ?tab=groups is set, so legacy links
-              still resolve. */}
           {activeTab === "groups" && (
             <TabsTrigger value="groups" className="gap-1.5">
               <Users className="h-3.5 w-3.5" /> Groups
