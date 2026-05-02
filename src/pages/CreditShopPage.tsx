@@ -25,6 +25,7 @@ import { format } from "date-fns";
 import { Link, useSearchParams } from "react-router-dom";
 import CreatorPassCard from "@/components/creators/CreatorPassCard";
 import TierMatrix from "@/components/creators/TierMatrix";
+import { StreakCard } from "@/components/creators/StreakCard";
 import { REWARDS_BY_CATEGORY } from "@/lib/rewards-catalog";
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
