@@ -116,6 +116,7 @@ const CreatorAvailabilityCalendar = ({
   const isOwner = user?.id === creatorId;
 
   const [mode, setMode] = useState<Mode>("view");
+  const [addType, setAddType] = useState<"once" | "weekly">("once");
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [saving, setSaving] = useState(false);
 
