@@ -39,7 +39,7 @@ const useLaunches = (status: "live" | "graduated") => {
     let cancelled = false;
     supabase
       .from("coin_launches")
-      .select("id,ticker,name,description,image_url,status,real_sol_reserves,graduation_sol_target,creator_id,created_at")
+      .select("id,ticker,name,description,image_url,status,real_sol_reserves,graduation_sol_target,creator_id,created_at,mint_address")
       .eq("status", status)
       .order(status === "live" ? "real_sol_reserves" : "graduated_at", { ascending: false })
       .limit(60)
