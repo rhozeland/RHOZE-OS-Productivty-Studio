@@ -623,7 +623,25 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                       {activeSpotlight.banner ? (
                         <img src={activeSpotlight.banner} alt={activeSpotlight.title} className="h-full w-full object-cover" />
                       ) : (
-                        <div className="h-full w-full bg-[radial-gradient(circle_at_24%_26%,hsl(var(--primary)/0.24),transparent_26%),radial-gradient(circle_at_70%_30%,hsl(var(--accent)/0.18),transparent_28%),linear-gradient(135deg,hsl(var(--background)),hsl(var(--card)))]" />
+                        <>
+                          <div
+                            className="absolute inset-0"
+                            style={{ background: avatarGradientFor(activeSpotlight.id).background }}
+                          />
+                          {activeSpotlight.kind === "artist" && activeSpotlight.avatar && (
+                            <img
+                              src={activeSpotlight.avatar}
+                              alt=""
+                              aria-hidden
+                              className="absolute inset-0 h-full w-full object-cover opacity-40 blur-2xl scale-125"
+                            />
+                          )}
+                          {activeSpotlight.kind !== "artist" && (
+                            <div className="absolute inset-0 flex items-center justify-center text-foreground/30">
+                              <ImageIcon className="h-8 w-8" />
+                            </div>
+                          )}
+                        </>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/35 to-transparent" />
                       <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2">
@@ -633,34 +651,51 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                           {activeSpotlight.kind === "space" && <><Users className="h-3 w-3" /> Featured space</>}
                         </span>
                         {activeSpotlight.region_code && (
-                          <span className="inline-flex rounded-full border border-border/45 bg-background/68 px-2 py-1 text-[10px] text-foreground/80 backdrop-blur-md">
-                            {activeSpotlight.region_code}
-                          </span>
+                          <RegionChip code={activeSpotlight.region_code} size="sm" showLabel />
+                        )}
+                        {activeSpotlight.kind === "artist" && activeSpotlight.verification_status === "verified" && (
+                          <VerifiedArtistBadge status="verified" size="xs" showLabel={false} />
                         )}
                       </div>
                     </div>
 
-                    <div className="space-y-4 p-4">
+                    <div className="space-y-3 p-4">
                       {activeSpotlight.kind === "artist" ? (
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-12 w-12 border border-border/50 shadow-sm">
-                            <AvatarImage src={activeSpotlight.avatar ?? undefined} />
-                            <AvatarFallback>{initials(activeSpotlight.title)}</AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0">
-                            <h3 className="truncate font-display text-2xl leading-none text-foreground">{activeSpotlight.title}</h3>
-                            {activeSpotlight.creator_roles?.length ? (
-                              <p className="mt-1 text-[11px] font-medium text-foreground/80 line-clamp-1">
-                                {activeSpotlight.creator_roles.slice(0, 2).map((id) => {
-                                  const role = ROLE_BY_ID.get(id);
-                                  return role ? `${role.emoji} ${role.label}` : id;
-                                }).join(" · ")}
-                              </p>
-                            ) : activeSpotlight.mediums?.length ? (
-                              <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{activeSpotlight.mediums.slice(0, 3).join(" · ")}</p>
-                            ) : null}
+                        <>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-12 w-12 border border-border/50 shadow-sm">
+                              <AvatarImage src={activeSpotlight.avatar ?? undefined} />
+                              <AvatarFallback>{initials(activeSpotlight.title)}</AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0 flex-1">
+                              <h3 className="truncate font-display text-2xl leading-none text-foreground">{activeSpotlight.title}</h3>
+                              {activeSpotlight.creator_roles?.length ? (
+                                <p className="mt-1 text-[11px] font-medium text-foreground/80 line-clamp-1">
+                                  {activeSpotlight.creator_roles.slice(0, 2).map((id) => {
+                                    const role = ROLE_BY_ID.get(id);
+                                    return role ? `${role.emoji} ${role.label}` : id;
+                                  }).join(" · ")}
+                                </p>
+                              ) : activeSpotlight.mediums?.length ? (
+                                <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{activeSpotlight.mediums.slice(0, 3).join(" · ")}</p>
+                              ) : null}
+                            </div>
                           </div>
-                        </div>
+
+                          {((activeSpotlight.works_count ?? 0) > 0 || (activeSpotlight.followers_count ?? 0) > 0) && (
+                            <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                              {(activeSpotlight.works_count ?? 0) > 0 && (
+                                <span><span className="font-semibold text-foreground">{activeSpotlight.works_count}</span> {activeSpotlight.works_count === 1 ? "work" : "works"}</span>
+                              )}
+                              {(activeSpotlight.followers_count ?? 0) > 0 && (
+                                <>
+                                  <span className="text-border">·</span>
+                                  <span><span className="font-semibold text-foreground">{activeSpotlight.followers_count}</span> {activeSpotlight.followers_count === 1 ? "follower" : "followers"}</span>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </>
                       ) : (
                         <div>
                           <h3 className="font-display text-2xl leading-tight text-foreground">{activeSpotlight.title}</h3>
@@ -681,7 +716,12 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                       )}
 
                       {activeSpotlight.subtitle && (
-                        <p className="text-sm leading-6 text-foreground/74 line-clamp-3">{activeSpotlight.subtitle}</p>
+                        <p className={cn(
+                          "text-sm leading-6 text-foreground/74 line-clamp-3",
+                          activeSpotlight.kind === "artist" && "italic",
+                        )}>
+                          {activeSpotlight.kind === "artist" ? `"${activeSpotlight.subtitle}"` : activeSpotlight.subtitle}
+                        </p>
                       )}
 
                       <Link
