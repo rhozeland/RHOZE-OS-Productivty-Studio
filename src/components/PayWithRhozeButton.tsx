@@ -29,7 +29,7 @@ interface PayWithRhozeButtonProps {
   type?: string;
   /** "subscription" tells the backend not to award credits (tier benefits applied separately). */
   intent?: "credits" | "subscription";
-  onSuccess?: () => void;
+  onSuccess?: (result?: { signature: string; payerWallet: string }) => void;
   label?: string;
   className?: string;
   variant?: "default" | "outline" | "secondary" | "ghost";
@@ -112,7 +112,7 @@ const PayWithRhozeButton = ({
           ? `Paid ${tokenAmount} $RHOZE!`
           : `Paid ${tokenAmount} $RHOZE! ${awarded} credits added.`
       );
-      onSuccess?.();
+      onSuccess?.({ signature, payerWallet: publicKey.toBase58() });
     } catch (error: any) {
       const msg = error?.message || "Transaction failed";
       if (msg.includes("User rejected")) {
