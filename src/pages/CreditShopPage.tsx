@@ -25,6 +25,7 @@ import { format } from "date-fns";
 import { Link, useSearchParams } from "react-router-dom";
 import CreatorPassCard from "@/components/creators/CreatorPassCard";
 import TierMatrix from "@/components/creators/TierMatrix";
+import { StreakCard } from "@/components/creators/StreakCard";
 import { REWARDS_BY_CATEGORY } from "@/lib/rewards-catalog";
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
@@ -154,8 +155,9 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
         </TabsList>
 
         {/* ═══════ My Pass ═══════ */}
-        <TabsContent value="pass" className="mt-4">
+        <TabsContent value="pass" className="mt-4 space-y-4">
           <CreatorPassCard />
+          <StreakCard />
         </TabsContent>
 
         {/* ═══════ Tiers (replaces old paid Plans) ═══════ */}
