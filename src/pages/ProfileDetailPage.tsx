@@ -943,17 +943,19 @@ const ProfileDetailPage = () => {
 
         {/* Booking modal — opened from the "Book a session" support card */}
         <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
+          <DialogContent className="max-w-6xl w-[95vw] max-h-[92vh] overflow-y-auto p-0">
+            <DialogHeader className="px-6 pt-6 pb-3 border-b border-border/40">
               <DialogTitle className="font-display flex items-center gap-2">
                 <CalendarIcon className="h-4 w-4 text-primary" />
                 Book a session with {p.display_name || p.username}
               </DialogTitle>
             </DialogHeader>
-            <CreatorAvailabilityCalendar
-              creatorId={id!}
-              creatorName={p.display_name || p.username}
-            />
+            <div className="p-4 sm:p-6">
+              <CreatorAvailabilityCalendar
+                creatorId={id!}
+                creatorName={p.display_name || p.username}
+              />
+            </div>
           </DialogContent>
         </Dialog>
       </div>
