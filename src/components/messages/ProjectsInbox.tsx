@@ -274,7 +274,6 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
               project={selectedProject}
               userId={userId}
               onBack={() => setSelected(null)}
-              onOpenFull={() => navigate(`/projects/${selectedProject.id}`)}
             />
           )}
         </div>
