@@ -82,6 +82,13 @@ const OnboardingPage = () => {
         }
       }
 
+      if (regionCode) {
+        await supabase
+          .from("profiles")
+          .update({ region_code: regionCode })
+          .eq("user_id", user.id);
+      }
+
       toast.success("Welcome aboard! 🎉");
       navigate("/dashboard", { replace: true });
     } catch (err) {
