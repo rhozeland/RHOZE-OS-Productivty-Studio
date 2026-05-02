@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft, Sparkles, Palette, Layout, Users, CheckCircle2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, Sparkles, Palette, Layout, Users, CheckCircle2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LogoCustomizer } from "@/components/onboarding/LogoCustomizer";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { REGIONS, MARKETS } from "@/lib/regions";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
 const STEPS = [
   { id: "welcome", icon: Sparkles, title: "Welcome to Rhozeland" },
   { id: "logo", icon: Palette, title: "Create Your Toybox" },
+  { id: "region", icon: MapPin, title: "Where are you based?" },
   { id: "tour", icon: Layout, title: "Quick Tour" },
   { id: "ready", icon: CheckCircle2, title: "You're All Set" },
 ];
@@ -37,6 +39,7 @@ const TOUR_SLIDES = [
 const OnboardingPage = () => {
   const [step, setStep] = useState(0);
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+  const [regionCode, setRegionCode] = useState<string>("");
   const [tourSlide, setTourSlide] = useState(0);
   const [saving, setSaving] = useState(false);
   const [showExportHint, setShowExportHint] = useState(false);
