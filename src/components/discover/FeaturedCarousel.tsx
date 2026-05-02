@@ -73,7 +73,18 @@ const FeaturedCarousel = ({ slides }: FeaturedCarouselProps) => {
               style={{ backgroundImage: `url(${current.banner})` }}
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-accent/10 to-background" />
+            <>
+              <div
+                className="absolute inset-0"
+                style={{ background: avatarGradientFor(current.id).background }}
+              />
+              {current.kind === "artist" && current.avatar && (
+                <div
+                  className="absolute inset-0 bg-cover bg-center opacity-35 blur-3xl scale-125"
+                  style={{ backgroundImage: `url(${current.avatar})` }}
+                />
+              )}
+            </>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/10" />
 
