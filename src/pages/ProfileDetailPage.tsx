@@ -21,6 +21,18 @@ import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilit
 import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
 import { cn } from "@/lib/utils";
 
+// Human-readable labels + destinations for on-chain reputation tiles.
+// Tiles are clickable when href is set; otherwise rendered as static cards.
+const PROOF_TYPE_META: Record<string, { label: string; href: string | null }> = {
+  reward:           { label: "Rewards earned",   href: "/rewards" },
+  work_register:    { label: "Works registered", href: "/works" },
+  event_attendance: { label: "Events attended",  href: "/spaces?tab=events" },
+  event_manifest:   { label: "Events hosted",    href: "/spaces?tab=events" },
+  milestone:        { label: "Milestones",       href: null },
+  flow_post:        { label: "Flow posts",       href: "/discover" },
+  review:           { label: "Reviews",          href: null },
+};
+
 const ProfileDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
