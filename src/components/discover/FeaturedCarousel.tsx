@@ -8,119 +8,26 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Calendar, MapPin, Sparkles, Users } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import RegionChip from "@/components/profile/RegionChip";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import type { RegionMarket } from "@/lib/regions";
+import type { FeaturedSlide } from "./useDiscoverFeatured";
 
 const initials = (name?: string | null) =>
   (name ?? "")
     .split(/\s+/).map((s) => s[0]).filter(Boolean).slice(0, 2).join("").toUpperCase() || "·";
 
-type Slide =
-  | { kind: "artist"; id: string; href: string; title: string; subtitle?: string | null;
-      banner?: string | null; avatar?: string | null; region_code?: string | null;
-      mediums?: string[] | null }
-  | { kind: "event"; id: string; href: string; title: string; subtitle?: string | null;
-      banner?: string | null; starts_at: string; venue?: string | null; is_online?: boolean }
-  | { kind: "space"; id: string; href: string; title: string; subtitle?: string | null;
-      banner?: string | null; location?: string | null };
-
 interface FeaturedCarouselProps {
-  marketFilter: RegionMarket | "All";
+  slides: FeaturedSlide[];
 }
 
-const FeaturedCarousel = ({ marketFilter }: FeaturedCarouselProps) => {
+const FeaturedCarousel = ({ slides }: FeaturedCarouselProps) => {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-
-  const { data: artist } = useQuery({
-    queryKey: ["featured-carousel-artist", marketFilter],
-    queryFn: async () => {
-      let q = supabase
-        .from("profiles")
-        .select("user_id, display_name, headline, bio, avatar_url, banner_url, region_code, mediums")
-        .eq("is_public", true)
-        .not("avatar_url", "is", null)
-        .not("bio", "is", null);
-      const { data } = await q.order("updated_at", { ascending: false }).limit(20);
-      // If a market filter is active, prefer artists from that market.
-      const list = data ?? [];
-      if (marketFilter !== "All") {
-        const filtered = list.filter((p: any) => {
-          const code = (p.region_code || "").toUpperCase();
-          // Lazy market lookup via REGIONS map
-          return code && marketsByCode.get(code) === marketFilter;
-        });
-        return filtered[0] ?? list[0] ?? null;
-      }
-      return list[0] ?? null;
-    },
-  });
-
-  const { data: event } = useQuery({
-    queryKey: ["featured-carousel-event"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("events")
-        .select("id, slug, title, description, cover_url, starts_at, venue_name, is_online")
-        .eq("status", "published")
-        .gte("starts_at", new Date().toISOString())
-        .order("starts_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-  });
-
-  const { data: space } = useQuery({
-    queryKey: ["featured-carousel-space"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("studios")
-        .select("id, name, short_description, cover_image_url, location")
-        .eq("is_active", true)
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data as { id: string; name: string; short_description: string | null; cover_image_url: string | null; location: string | null } | null;
-    },
-  });
-
-  const slides = useMemo<Slide[]>(() => {
-    const out: Slide[] = [];
-    if (artist) {
-      out.push({
-        kind: "artist", id: artist.user_id, href: `/profiles/${artist.user_id}`,
-        title: artist.display_name || "Untitled artist",
-        subtitle: artist.headline || artist.bio,
-        banner: artist.banner_url, avatar: artist.avatar_url,
-        region_code: artist.region_code, mediums: artist.mediums,
-      });
-    }
-    if (event) {
-      out.push({
-        kind: "event", id: event.id, href: `/events/${event.slug || event.id}`,
-        title: event.title, subtitle: event.description,
-        banner: event.cover_url, starts_at: event.starts_at,
-        venue: event.venue_name, is_online: event.is_online,
-      });
-    }
-    if (space) {
-      out.push({
-        kind: "space", id: space.id, href: `/studios/${space.id}`,
-        title: space.name, subtitle: space.short_description,
-        banner: space.cover_image_url, location: space.location,
-      });
-    }
-    return out;
-  }, [artist, event, space]);
 
   useEffect(() => {
     if (paused || slides.length < 2) return;
@@ -237,10 +144,5 @@ const FeaturedCarousel = ({ marketFilter }: FeaturedCarouselProps) => {
     </div>
   );
 };
-
-// Local market index used to filter the featured artist by selected market
-// without re-importing the full REGIONS list everywhere.
-import { REGIONS } from "@/lib/regions";
-const marketsByCode = new Map(REGIONS.map((r) => [r.code, r.market]));
 
 export default FeaturedCarousel;
