@@ -428,14 +428,7 @@ const ListingDetailPage = () => {
             <div className="rounded-2xl overflow-hidden bg-muted aspect-[16/10]">
               <img src={listing.cover_url} alt={listing.title} className="w-full h-full object-cover" />
             </div>
-          ) : (
-            <div
-              className="rounded-2xl aspect-[16/10] flex items-center justify-center"
-              style={{ background: `linear-gradient(135deg, ${catMeta.color}22, ${catMeta.color}11)` }}
-            >
-              <CatIcon className="h-16 w-16" style={{ color: catMeta.color, opacity: 0.3 }} />
-            </div>
-          )}
+          ) : null}
 
           {/* Thumbnail strip */}
           {images.length > 1 && (
