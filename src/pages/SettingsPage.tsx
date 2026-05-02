@@ -13,8 +13,11 @@ import { Separator } from "@/components/ui/separator";
 import {
   Moon, Sun, Upload, Eye, EyeOff, X, Camera, Lock, MapPin, Bell,
   Trash2, AlertTriangle, Download, User, Box, Wallet, Palette,
-  ChevronRight, Fingerprint,
+  ChevronRight, Fingerprint, BadgeCheck,
 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useArtistVerification } from "@/hooks/useArtistVerification";
+import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import LogoCustomizer from "@/components/onboarding/LogoCustomizer";
 import ClaimLimitsControl from "@/components/settings/ClaimLimitsControl";
 import SettingsSubNav, {
@@ -38,6 +41,7 @@ const SECTIONS = [
   // dedicated personal vault, intentionally tucked under Settings.
   // NOTE: id stays "provenance" so existing /settings#provenance links keep working.
   { id: "provenance", label: "Verified IP", icon: Fingerprint },
+  { id: "verification", label: "Verified Artist", icon: BadgeCheck },
   { id: "shipping", label: "Shipping", icon: MapPin },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "security", label: "Security", icon: Lock },
