@@ -56,6 +56,7 @@ import { ProfileRedirect } from "@/components/ProfileRedirect";
 import FlowModePage from "@/pages/FlowModePage";
 import LaunchRedirect from "@/pages/LaunchRedirect";
 import RewardsPage from "@/pages/RewardsPage";
+import SwapHistoryPage from "@/pages/SwapHistoryPage";
 import VerificationPage from "@/pages/VerificationPage";
 import NotFound from "./pages/NotFound";
 
@@ -101,6 +102,7 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/credits",
   "/purchases",
   "/rewards",
+  "/swaps",
   "/smartboards",
   "/smartboards/:id",
   "/flow",
@@ -238,6 +240,7 @@ const App = () => (
                     Primary CTAs no longer pitch tokens — anyone curious
                     lands here from a quiet "How rewards work" link. */}
                 <Route path="/rewards" element={<RewardsPage />} />
+                <Route path="/swaps" element={<SwapHistoryPage />} />
                 {/* Flow Mode — first-class public browser for fingerprinted
                     creative IP. Smartboards / Drop Rooms index routes still
                     redirect into Projects; their detail routes stay live so
