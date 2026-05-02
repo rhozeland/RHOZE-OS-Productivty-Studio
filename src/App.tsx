@@ -55,7 +55,7 @@ import TicketDetailPage from "@/pages/TicketDetailPage";
 import { ProfileRedirect } from "@/components/ProfileRedirect";
 import FlowModePage from "@/pages/FlowModePage";
 import LaunchRedirect from "@/pages/LaunchRedirect";
-import RewardsPage from "@/pages/RewardsPage";
+// /rewards now redirects to /credits?tab=how — explainer lives inside Creator Pass
 import SwapHistoryPage from "@/pages/SwapHistoryPage";
 import UnsubscribePage from "@/pages/UnsubscribePage";
 import VerificationPage from "@/pages/VerificationPage";
@@ -240,10 +240,10 @@ const App = () => (
                 <Route path="/bookings" element={<CalendarPage />} />
                 <Route path="/credits" element={<CreditShopPage />} />
                 <Route path="/purchases" element={<Navigate to="/credits?tab=purchases" replace />} />
-                {/* v6: single explainer for the $RHOZE reward layer.
-                    Primary CTAs no longer pitch tokens — anyone curious
-                    lands here from a quiet "How rewards work" link. */}
-                <Route path="/rewards" element={<RewardsPage />} />
+                {/* v8: rewards explainer folded back into Creator Pass
+                    as a tab so back-nav lands you on Creator Pass instead
+                    of Discover. /rewards stays as a deep-link redirect. */}
+                <Route path="/rewards" element={<Navigate to="/credits?tab=how" replace />} />
                 <Route path="/swaps" element={<SwapHistoryPage />} />
                 {/* Flow Mode — first-class public browser for fingerprinted
                     creative IP. Smartboards / Drop Rooms index routes still

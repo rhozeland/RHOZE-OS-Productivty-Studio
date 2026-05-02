@@ -348,7 +348,7 @@ const CreatorPassCard = () => {
             <Star className="h-4 w-4 text-primary" />
             Tier perks — hold or earn
           </h3>
-          <Link to="/rewards" className="text-[11px] text-muted-foreground hover:text-foreground underline underline-offset-2">
+          <Link to="/credits?tab=how" className="text-[11px] text-muted-foreground hover:text-foreground underline underline-offset-2">
             How rewards work →
           </Link>
         </div>
