@@ -81,6 +81,7 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/",
   "/dashboard",
   "/discover",
+  "/stream",
   "/hub",
   "/profile",
   "/spaces",
@@ -200,23 +201,30 @@ const App = () => (
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/discover" element={<DiscoverPage />} />
-                {/* Primary pillars: Home · Hub · Spaces · Projects · Profile.
-                    /spaces is the Events · Spaces · Discover hub.
-                    /studios redirects in for backwards compatibility. */}
-                <Route path="/spaces" element={<SpacesHubPage />} />
+                {/* v7 Stream — unified social pillar. For phase 1 it
+                    renders the existing HubPage so behavior matches what
+                    users already know; phase 2 will merge Spaces lanes
+                    in. Legacy bare roots redirect here; sub-routes stay
+                    live (e.g. /spaces/events/:id, /studios/:id). */}
+                <Route path="/stream" element={<HubPage />} />
+                <Route path="/hub" element={<Navigate to="/stream" replace />} />
+                <Route path="/spaces" element={<Navigate to="/stream?tab=spaces" replace />} />
                 <Route path="/spaces/events/new" element={<ProtectedRoute><EventCreatePage /></ProtectedRoute>} />
                 <Route path="/spaces/events/:id" element={<EventDetailPage />} />
                 <Route path="/spaces/events/:id/manage" element={<ProtectedRoute><EventManagePage /></ProtectedRoute>} />
                 <Route path="/tickets/:id" element={<ProtectedRoute><TicketDetailPage /></ProtectedRoute>} />
-                <Route path="/people" element={<Navigate to="/hub" replace />} />
-                <Route path="/hub" element={<HubPage />} />
+                <Route path="/people" element={<Navigate to="/stream" replace />} />
                 <Route path="/profile" element={<ProfileRedirect />} />
-                <Route path="/studios" element={<Navigate to="/spaces?tab=spaces" replace />} />
+                <Route path="/studios" element={<Navigate to="/stream?tab=spaces" replace />} />
                 <Route path="/studios/:id" element={<StudioDetailPage />} />
                 <Route path="/studios/apply" element={<StudioApplicationPage />} />
                 <Route path="/studios/:id/manage" element={<StudioManagePage />} />
                 <Route path="/services" element={<ServicesPage />} />
-                <Route path="/projects" element={<ProjectsPage />} />
+                {/* v7: Projects collapses into Inbox (next pass adds
+                    inline-expansion). Bare /projects redirects; the
+                    detail page stays live so existing thread links and
+                    deep-links from Tools tabs still resolve. */}
+                <Route path="/projects" element={<Navigate to="/messages?tab=projects" replace />} />
                 <Route path="/projects/:id" element={<ProjectDetailPage />} />
                 {/* Works is now the personal vault under Settings → Provenance.
                     /works keeps working as a deep link via redirect. */}
