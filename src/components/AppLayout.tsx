@@ -2,13 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link, NavLink, useLocation } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import AppSidebar from "@/components/AppSidebar";
-import DockBar from "@/components/DockBar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import WalletButton from "@/components/WalletButton";
 import NotificationBell from "@/components/NotificationBell";
 import UsernamePrompt from "@/components/UsernamePrompt";
-// FlowLauncher (floating FAB) retired — Flow is now reachable from the top search bar.
-import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Sun, Moon, Settings as SettingsIcon, LogOut, Flame } from "lucide-react";
+// FlowLauncher (floating FAB) retired — Flow is now reachable via the Hub view toggle + HubFlowWidget.
+// DockBar retired in v7 (post phase-2) — navigation happens via the left side nav + global ⌘K search.
+import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Sun, Moon, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
