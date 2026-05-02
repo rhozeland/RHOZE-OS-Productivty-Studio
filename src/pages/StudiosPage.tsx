@@ -161,7 +161,9 @@ const StudiosPage = () => {
                 </div>
 
                 {studio.short_description && (
-                  <p className="text-xs text-muted-foreground line-clamp-2">{studio.short_description}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {rewriteShortDescription(studio.short_description, studio.city)}
+                  </p>
                 )}
 
                 <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
