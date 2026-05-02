@@ -102,7 +102,7 @@ const DiscoverPage = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("flow_items")
-        .select("id, title, file_url, category, content_type, verification_status, work_id, user_id, creator_name, created_at")
+        .select("id, title, file_url, category, content_type, verification_status, work_id, user_id, creator_name, solana_signature, created_at")
         .order("created_at", { ascending: false })
         .limit(40);
       const order = (s?: string | null) =>
@@ -317,8 +317,8 @@ const DiscoverPage = () => {
                       <span className="text-[10px] text-muted-foreground truncate">
                         {w.creator_name ?? "—"}
                       </span>
-                      {w.work_id && (
-                        <VerifiedIPBadge workId={w.work_id} status={w.verification_status} size="sm" />
+                      {w.solana_signature && (
+                        <VerifiedIPBadge signature={w.solana_signature} size="xs" showLabel={false} />
                       )}
                     </div>
                   </div>
