@@ -118,6 +118,7 @@ const CONTINENTS: { name: string; points: [number, number][] }[] = [
   },
 ];
 
+interface DiscoverGlobeProps {
   marketFilter: RegionMarket | "All";
   onSelectMarket: (m: RegionMarket | "All") => void;
   featuredSlides?: FeaturedSlide[];
