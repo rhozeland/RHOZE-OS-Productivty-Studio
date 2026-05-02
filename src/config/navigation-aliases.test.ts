@@ -84,7 +84,7 @@ describe("resolveAlias", () => {
   });
 
   it("returns null for unrelated routes", () => {
-    expect(resolveAlias("/dashboard")).toBeNull();
+    expect(resolveAlias("/totally-unknown-route")).toBeNull();
     expect(resolveAlias("/")).toBeNull();
     expect(resolveAlias("/drop-rooms")).toBeNull(); // already canonical
   });

@@ -16,6 +16,7 @@ import {
   Sparkles,
   Coins,
   Compass,
+  Waves,
   type LucideIcon,
 } from "lucide-react";
 
@@ -48,27 +49,26 @@ export const NAV_ITEMS: NavItem[] = [
     path: "/discover",
     matchPaths: ["/dashboard"],
   },
-  // Hub — the digital network in the "Spaces" model. Lanes:
-  // Conversations · Offerings · Opportunities · Works.
-  // Replaces /marketplace, /creators, /flow, /people, /spaces.
+  // v7: Stream — the unified social pillar. Conversations, offerings,
+  // opportunities, events, spaces, works, project inquiries — everything
+  // that used to live in Hub + Spaces + Projects now scrolls here as
+  // typed posts. Bare-root legacy redirects (/hub, /spaces, /studios,
+  // /marketplace, /creators, /people, /projects) are handled by explicit
+  // <Navigate> in App.tsx so their sub-routes (/spaces/events/:id,
+  // /studios/:id, /projects/:id, etc.) keep resolving. matchPaths is
+  // intentionally empty here.
   {
-    id: "hub",
-    label: "Hub",
-    icon: Sparkles,
-    path: "/hub",
-    matchPaths: ["/marketplace", "/creators", "/people"],
+    id: "stream",
+    label: "Stream",
+    icon: Waves,
+    path: "/stream",
   },
-  // Spaces — physical network (events / spaces / residencies).
-  {
-    id: "studios",
-    label: "Spaces",
-    icon: Building2,
-    path: "/spaces",
-    matchPaths: ["/studios"],
-  },
-  // Inbox — DMs + inquiries. Replaces Projects in the dock so the
-  // consumer-facing "did the artist reply?" surface is one tap away.
+  // Inbox — DMs + inquiries + (next pass) inline-expanded project work.
+  // Sits next to Stream so "did the artist reply?" is always one tap away.
   { id: "messages", label: "Inbox", icon: MessageSquare, path: "/messages" },
+  // Hub/Studios/Spaces nav ids retired in v7. Their explicit routes in
+  // App.tsx redirect into /stream; their sub-routes (/spaces/events/:id,
+  // /studios/:id, etc.) stay live until a future pass re-homes them.
   // ─── Secondary destinations (still routable; not in default dock) ─────
   // Projects demoted out of the dock as part of v6. Lives as a tab on
   // the artist's own profile ("Building"). Route + nav id stay so deep
@@ -103,16 +103,15 @@ export const NAV_ITEMS_BY_ID: Record<string, NavItem> = NAV_ITEMS.reduce(
   {} as Record<string, NavItem>,
 );
 
-// v6 dock: Discover · Hub · Spaces · Inbox.
-// Discover is the new feed-led front door (replaces "Home → Dashboard").
-// Inbox replaces Projects in the dock — Projects lives as a tab on the
-// artist's own profile in the v6 IA. The user's own profile is reachable
-// via the avatar in the header.
+// v7 dock: Discover · Stream · Inbox · Profile.
+// Stream absorbed Hub + Spaces + Projects into one scroll-and-respond
+// surface. Profile takes the 4th slot so artists' Verified IP / coins /
+// identity are always one tap away — that's the point of the network.
 export const DEFAULT_DOCK_IDS = [
   "discover",
-  "hub",
-  "studios",
+  "stream",
   "messages",
+  "profile",
 ];
 
 /** Returns true if the current pathname should mark this nav item active. */

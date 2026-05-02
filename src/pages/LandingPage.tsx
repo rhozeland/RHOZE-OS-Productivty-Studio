@@ -109,15 +109,15 @@ const LandingPage = () => {
               </div>
 
               <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold leading-[1.1] text-foreground mb-4">
-                Get discovered.
+                Own a piece of
                 <br />
-                Get supported.
+                the artists you love.
               </h1>
 
               <p className="text-sm sm:text-base text-muted-foreground mb-8 leading-relaxed">
-                A discovery + support network for independent artists.
-                <br />
-                Share your work, find your people, and get backed on-chain.
+                Rhozeland verifies independent artists and gives them tools to
+                prove their work on-chain — so fans can buy ownership, access,
+                and upside in the art they back.
               </p>
 
               <div className="flex items-center gap-3 flex-wrap justify-center lg:justify-start">
