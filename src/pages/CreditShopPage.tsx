@@ -1,32 +1,15 @@
-import { useState, useEffect, useRef } from "react";
-
-/** Animated counter that counts from 0 to `end` */
-const CountUp = ({ end, delay = 0 }: { end: number; delay?: number }) => {
-  const [value, setValue] = useState(0);
-  const ref = useRef(false);
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (ref.current) return;
-      ref.current = true;
-      const duration = 1200;
-      const steps = 30;
-      const increment = end / steps;
-      let current = 0;
-      const interval = setInterval(() => {
-        current += increment;
-        if (current >= end) {
-          setValue(end);
-          clearInterval(interval);
-        } else {
-          setValue(Math.round(current));
-        }
-      }, duration / steps);
-    }, delay * 1000);
-    return () => clearTimeout(timeout);
-  }, [end, delay]);
-  return <>{value}</>;
-};
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+/**
+ * CreditShopPage — `/credits` (Creator Pass)
+ *
+ * v8: Subscriptions killed. Tiers are earned only — by holding $RHOZE
+ * OR ecosystem activity (posts, projects, listings, events, interactions).
+ * The old `/rewards` page is folded back inline as the "How rewards
+ * work" tab so back-nav from Discover always lands you back on Creator
+ * Pass instead of bouncing around.
+ *
+ * Tabs: My Pass · Tiers · How rewards work · Verified IP · Purchases
+ */
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
@@ -34,47 +17,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Coins,
-  Sparkles,
-  Flower2,
-  Sun,
-  Gamepad,
-  Check,
-  CreditCard,
-  Wallet,
-  ShoppingBag,
-  Download,
-  Music,
-  Info,
-  CircleDollarSign,
-  BadgeCheck,
-  ArrowRightLeft,
-  Zap,
-  Shield,
-  TrendingUp,
-  RefreshCw,
-  Award,
-  Link2,
-  Palette,
-  Camera,
-  Video,
-  PenTool,
-  ExternalLink,
+  Coins, Sparkles, Check, Wallet, ShoppingBag, Download, Music, Info, Shield,
+  Award, Palette, Camera, Video, PenTool, ExternalLink, Star, Heart, Trophy,
+  HelpCircle,
 } from "lucide-react";
-import { toast } from "sonner";
 import { format } from "date-fns";
 import { Link, useSearchParams } from "react-router-dom";
-import PaySolAndVerify from "@/components/PaySolAndVerify";
-import PayWithRhozeButton from "@/components/PayWithRhozeButton";
-import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
 import CreatorPassCard from "@/components/creators/CreatorPassCard";
-import GuestCreditsPreview from "@/components/guest/GuestCreditsPreview";
+import TierMatrix from "@/components/creators/TierMatrix";
+import { REWARDS_BY_CATEGORY } from "@/lib/rewards-catalog";
+import {
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const CAT_ICONS: Record<string, any> = {
   music: Music, design: Palette, photo: Camera, video: Video, writing: PenTool,
@@ -83,93 +37,30 @@ const CAT_ICONS: Record<string, any> = {
 const RHOZE_CA = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
 const PUMP_FUN_URL = `https://pump.fun/coin/${RHOZE_CA}`;
 
-const TIERS = [
-  {
-    key: "spark",
-    name: "Spark",
-    price: 0,
-    gradient: "linear-gradient(135deg, hsl(205, 75%, 65%), hsl(210, 65%, 52%), hsl(220, 55%, 42%))",
-    glowColor: "hsl(210, 70%, 55%)",
-    icon: Sparkles,
-    isFree: true,
-    bestFor: "Exploring the platform, getting started",
-    features: [
-      "3 Boards",
-      "Drop Rooms — 1 hr max",
-      "Browse studios & creators",
-      "Basic profile",
-    ],
-    limits: { smartboards: 3, dropRoomHours: 1, studioDiscount: 0 },
-  },
-  {
-    key: "bloom",
-    name: "Bloom",
-    price: 10,
-    gradient: "linear-gradient(135deg, hsl(330, 65%, 72%), hsl(340, 60%, 58%), hsl(345, 55%, 48%))",
-    glowColor: "hsl(335, 60%, 65%)",
-    icon: Flower2,
-    bestFor: "New creators, freelancers, side-hustlers",
-    features: [
-      "15 Boards",
-      "Drop Rooms — 4 hr max",
-      "5% off studio bookings",
-      "Marketplace access",
-    ],
-    limits: { smartboards: 15, dropRoomHours: 4, studioDiscount: 5 },
-  },
-  {
-    key: "glow",
-    name: "Glow",
-    price: 20,
-    gradient: "linear-gradient(135deg, hsl(30, 90%, 60%), hsl(25, 85%, 50%), hsl(20, 80%, 42%))",
-    glowColor: "hsl(28, 85%, 55%)",
-    icon: Sun,
-    bestFor: "Semi-pros, scaling creators",
-    features: [
-      "50 Boards",
-      "Drop Rooms — 12 hr max",
-      "10% off studio bookings",
-      "Priority booking",
-      "Marketplace access",
-    ],
-    limits: { smartboards: 50, dropRoomHours: 12, studioDiscount: 10 },
-  },
-  {
-    key: "play",
-    name: "Play",
-    price: 30,
-    gradient: "linear-gradient(135deg, hsl(50, 90%, 58%), hsl(43, 85%, 48%), hsl(38, 80%, 40%))",
-    glowColor: "hsl(45, 85%, 52%)",
-    icon: Gamepad,
-    bestFor: "Full-time creators, funded artists",
-    features: [
-      "Unlimited Boards",
-      "Unlimited Drop Rooms",
-      "15% off studio bookings",
-      "Priority booking",
-      "Marketplace access",
-    ],
-    limits: { smartboards: -1, dropRoomHours: -1, studioDiscount: 15 },
-  },
-];
-
 const CreditShopPage = () => {
   const { user } = useAuth();
-
   if (!user) {
-    return <GuestCreditsPreview />;
+    // Guests see the same earned-tier story.
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="font-display text-3xl font-bold text-foreground">Creator Pass</h1>
+          <p className="text-muted-foreground">Tiers unlock by holding $RHOZE or showing up — no subscriptions.</p>
+        </div>
+        <TierMatrix />
+        <div className="text-center">
+          <Link to="/auth">
+            <Button>Sign in to start earning</Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
-
   return <AuthenticatedCreditShopPage user={user} />;
 };
 
 const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<typeof useAuth>["user"]> }) => {
-  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [subPaymentOpen, setSubPaymentOpen] = useState(false);
-  const [subPaymentMethod, setSubPaymentMethod] = useState<"card" | "crypto">("card");
-  const [pendingTier, setPendingTier] = useState<(typeof TIERS)[number] | null>(null);
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const [purchaseSubTab, setPurchaseSubTab] = useState<"history" | "buy">("history");
 
   const activeTab = searchParams.get("tab") || "pass";
@@ -185,34 +76,6 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
       return data;
     },
     enabled: !!user,
-  });
-
-  const subscribeTier = useMutation({
-    mutationFn: async (tier: (typeof TIERS)[number]) => {
-      const now = new Date();
-      const endDate = new Date(now);
-      if (billingCycle === "annual") {
-        endDate.setFullYear(endDate.getFullYear() + 1);
-      } else {
-        endDate.setMonth(endDate.getMonth() + 1);
-      }
-
-      const { error } = await supabase.rpc("update_user_subscription", {
-        _user_id: user!.id,
-        _tier: tier.key,
-        _tier_credits_monthly: 0,
-        _subscription_start: now.toISOString().split("T")[0],
-        _subscription_end: endDate.toISOString().split("T")[0],
-        _description: `${tier.name} subscription — ${billingCycle}`,
-        _payment_method: subPaymentMethod,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-credits"] });
-      toast.success("Subscription activated!");
-    },
-    onError: (e: any) => toast.error(e.message),
   });
 
   const LEGACY_TIER_MAP: Record<string, string> = { bronze: "spark", gold: "bloom", diamond: "glow", prism: "play" };
@@ -262,11 +125,6 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
     setSearchParams(searchParams, { replace: true });
   };
 
-  const getPrice = (tier: typeof TIERS[number]) => {
-    if (tier.isFree) return 0;
-    return billingCycle === "annual" ? tier.price * 10 : tier.price; // 2 months free on annual
-  };
-
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -274,13 +132,13 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground">Creator Pass</h1>
-            <p className="text-muted-foreground">Your creative membership — unlock more boards, longer rooms, and studio discounts</p>
+            <p className="text-muted-foreground">Earned tiers — hold $RHOZE or show up. No subscriptions.</p>
           </div>
           <div className="surface-card flex items-center gap-3 px-5 py-3">
             <Coins className="h-5 w-5 text-primary" />
             <div>
               <p className="font-display text-lg font-bold text-foreground capitalize">{currentTier}</p>
-              <p className="text-xs text-muted-foreground">Current Plan</p>
+              <p className="text-xs text-muted-foreground">Current Tier</p>
             </div>
           </div>
         </div>
@@ -289,160 +147,42 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
       <Tabs value={activeTab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="pass" className="gap-1.5"><Award className="h-3.5 w-3.5" /> My Pass</TabsTrigger>
-          <TabsTrigger value="shop" className="gap-1.5"><Coins className="h-3.5 w-3.5" /> Plans</TabsTrigger>
-          <TabsTrigger value="how" className="gap-1.5"><Info className="h-3.5 w-3.5" /> Rewards</TabsTrigger>
+          <TabsTrigger value="tiers" className="gap-1.5"><Star className="h-3.5 w-3.5" /> Tiers</TabsTrigger>
+          <TabsTrigger value="how" className="gap-1.5"><HelpCircle className="h-3.5 w-3.5" /> How rewards work</TabsTrigger>
           <TabsTrigger value="works" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Verified IP</TabsTrigger>
           <TabsTrigger value="purchases" className="gap-1.5"><ShoppingBag className="h-3.5 w-3.5" /> Purchases</TabsTrigger>
         </TabsList>
 
-        {/* ═══════ My Pass Tab (Primary) ═══════ */}
+        {/* ═══════ My Pass ═══════ */}
         <TabsContent value="pass" className="mt-4">
           <CreatorPassCard />
         </TabsContent>
 
-        {/* ═══════ Plans Tab ═══════ */}
-        <TabsContent value="shop" className="space-y-6 mt-4">
-          {/* Billing toggle */}
-          <div className="flex items-center justify-center gap-2">
-            <button
-              onClick={() => setBillingCycle("monthly")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${billingCycle === "monthly" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setBillingCycle("annual")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${billingCycle === "annual" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
-            >
-              Annual <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Save 2 months</Badge>
-            </button>
-          </div>
-
-          {/* Tiers */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {TIERS.map((tier, i) => {
-              const TierIcon = tier.icon;
-              const isCurrentTier = currentTier === tier.key;
-              const isBestValue = tier.key === "glow";
-              const displayPrice = getPrice(tier);
-              return (
-                <motion.div
-                  key={tier.key}
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1, type: "spring", stiffness: 180 }}
-                  whileHover={{ y: -6, scale: 1.02 }}
-                  className={`relative rounded-2xl overflow-hidden transition-all ${
-                    isCurrentTier ? "border-2 border-primary shadow-xl"
-                      : isBestValue ? "border-2 border-primary/50 shadow-lg"
-                      : "border border-border hover:shadow-xl"
-                  }`}
-                  style={{
-                    boxShadow: isCurrentTier
-                      ? `0 12px 40px -8px ${tier.glowColor}50`
-                      : isBestValue ? `0 8px 30px -6px ${tier.glowColor}30` : undefined,
-                  }}
-                >
-                  {isBestValue && !isCurrentTier && (
-                    <div className="absolute top-3 right-3 z-20 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-primary-foreground shadow-sm">Best Value</div>
-                  )}
-
-                  <div
-                    className="px-5 py-6 text-center text-white relative overflow-hidden animated-gradient"
-                    style={{ background: tier.gradient, backgroundSize: "200% 200%" }}
-                  >
-                    <div className="absolute inset-0 opacity-20" style={{ background: "radial-gradient(circle at 30% 20%, rgba(255,255,255,0.4) 0%, transparent 60%)" }} />
-                    <p className="text-xs font-semibold tracking-widest uppercase opacity-90 relative z-10">{tier.name}</p>
-                    <div className="flex items-center justify-center gap-2 mt-2 relative z-10">
-                      <TierIcon className="h-6 w-6 drop-shadow-sm" />
-                      <span className="font-display text-4xl font-bold drop-shadow-sm">
-                        {tier.isFree ? "Free" : `$${displayPrice}`}
-                      </span>
-                    </div>
-                    <p className="text-sm opacity-80 mt-1 relative z-10">
-                      {tier.isFree ? "forever" : billingCycle === "annual" ? "/ year" : "/ month"}
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-card space-y-3">
-                    <p className="text-xs text-muted-foreground font-medium leading-snug">{tier.bestFor}</p>
-                    <ul className="space-y-1.5">
-                      {tier.features.map((f) => (
-                        <li key={f} className="flex items-start gap-2 text-xs text-foreground leading-snug">
-                          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/15 shrink-0 mt-0.5">
-                            <Check className="h-2.5 w-2.5 text-primary" />
-                          </span>
-                          <span>{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-
-                    {isCurrentTier ? (
-                      <Button className="w-full h-9 font-semibold text-xs" variant="outline" disabled>Current Plan</Button>
-                    ) : tier.isFree ? (
-                      <Button className="w-full h-9 font-semibold text-xs" variant="secondary" disabled>Included</Button>
-                    ) : (
-                      <Button
-                        className="w-full h-9 font-semibold text-xs gap-1"
-                        onClick={() => { setPendingTier(tier); setSubPaymentMethod("card"); setSubPaymentOpen(true); }}
-                      >
-                        Subscribe — ${displayPrice}
-                      </Button>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-
-          
-        </TabsContent>
-
-
-
-
-        {/* ═══════ Rewards Tab — slim pointer to /rewards ═══════
-            v6: the full $RHOZE explainer + earning catalog + claim flow
-            now lives on a single dedicated `/rewards` route. This tab is
-            kept so users browsing Plans don't lose the thread, but it
-            no longer duplicates the marketing copy. */}
-        <TabsContent value="how" className="mt-4">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-border bg-card p-8 text-center max-w-xl mx-auto space-y-4"
-          >
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/15 px-3 py-1">
-              <Coins className="h-3 w-3 text-primary" />
-              <span className="text-[11px] font-medium text-primary tracking-wide uppercase">
-                Optional layer
-              </span>
-            </div>
-            <h2 className="font-display text-2xl font-bold text-foreground leading-tight">
-              $RHOZE rewards live on their own page now.
-            </h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              You don't need a token to use Rhozeland. If you're curious how
-              earning, claiming, and the 75/15/10 split work, the full
-              explainer + your balance is one click away.
+        {/* ═══════ Tiers (replaces old paid Plans) ═══════ */}
+        <TabsContent value="tiers" className="mt-4 space-y-4">
+          <div className="space-y-1.5">
+            <h2 className="font-display text-xl font-bold text-foreground">Tier eligibility</h2>
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              Two ways to climb: hold $RHOZE long-term, <em>or</em> hit any single
+              activity bar — posts, completed projects, listings, events hosted, or
+              successful interactions. Whichever is higher wins.
             </p>
-            <div className="pt-2">
-              <Link to="/rewards">
-                <Button size="lg" className="rounded-full gap-1.5">
-                  How rewards work <ArrowRightLeft className="h-3.5 w-3.5" />
-                </Button>
-              </Link>
-            </div>
-          </motion.div>
+          </div>
+          <TierMatrix activeTier={currentTier as any} />
         </TabsContent>
 
-        {/* ═══════ Verified IP — Works explainer + recent anchors ═══════ */}
+        {/* ═══════ How rewards work — inlined from old /rewards page ═══════ */}
+        <TabsContent value="how" className="mt-4 space-y-6">
+          <RewardsExplainer />
+        </TabsContent>
+
+        {/* ═══════ Verified IP ═══════ */}
         <TabsContent value="works" className="mt-4 space-y-6">
           <VerifiedIPSection userId={user?.id ?? null} />
         </TabsContent>
 
+        {/* ═══════ Purchases / Buy $RHOZE ═══════ */}
         <TabsContent value="purchases" className="mt-4 space-y-6">
-          {/* Sub-tab toggle */}
           <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-fit">
             <button
               onClick={() => setPurchaseSubTab("history")}
@@ -460,7 +200,6 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
 
           {purchaseSubTab === "history" ? (
             <>
-              {/* Purchases */}
               {purchasesLoading ? (
                 <div className="flex items-center justify-center py-20">
                   <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -469,8 +208,8 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
                 <div className="text-center py-12 space-y-4">
                   <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground/40" />
                   <p className="text-muted-foreground">No purchases yet</p>
-                  <Link to="/creators">
-                    <Button variant="outline" className="rounded-full">Browse Creators Hub</Button>
+                  <Link to="/discover">
+                    <Button variant="outline" className="rounded-full">Browse Discover</Button>
                   </Link>
                 </div>
               ) : (
@@ -514,7 +253,6 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
               <TransactionHistory userId={user?.id} />
             </>
           ) : (
-            /* Buy $RHOZE sub-tab */
             <div className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="space-y-6">
@@ -549,151 +287,128 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
                   />
                 </motion.div>
               </div>
-              <div className="surface-card p-6">
-                <h3 className="font-display text-lg font-semibold text-foreground mb-4">How it works</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {[
-                    { step: "1", title: "Connect Wallet", desc: "Connect your Phantom or Solflare wallet to get started." },
-                    { step: "2", title: "Swap SOL → $RHOZE", desc: "Use Pump Fun or any Solana DEX to swap SOL for $RHOZE tokens." },
-                    { step: "3", title: "Pay with Crypto", desc: "Use SOL or $RHOZE to pay for studio bookings and marketplace items at a discount." },
-                  ].map((item) => (
-                    <div key={item.step} className="flex gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm shrink-0">{item.step}</div>
-                      <div>
-                        <p className="font-medium text-foreground text-sm">{item.title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           )}
         </TabsContent>
       </Tabs>
-
-      {/* Subscription Payment Modal */}
-      <Dialog open={subPaymentOpen} onOpenChange={setSubPaymentOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-display text-xl">Subscribe to {pendingTier?.name}</DialogTitle>
-          </DialogHeader>
-          {pendingTier && (
-            <>
-              <div className="rounded-lg bg-muted/50 border border-border p-4 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground">{pendingTier.name} Plan</span>
-                  <span className="text-lg font-bold text-primary">${getPrice(pendingTier)}{billingCycle === "annual" ? "/yr" : "/mo"}</span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Billed {billingCycle}
-                  {billingCycle === "annual" && " • 2 months free"}
-                </p>
-              </div>
-
-              {/* Payment method toggle */}
-              <div className="flex rounded-lg bg-muted p-1 gap-1">
-                <button
-                  onClick={() => setSubPaymentMethod("card")}
-                  className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${subPaymentMethod === "card" ? "bg-card shadow text-foreground" : "text-muted-foreground"}`}
-                >
-                  <CreditCard className="inline h-3.5 w-3.5 mr-1" /> Card
-                </button>
-                <button
-                  onClick={() => setSubPaymentMethod("crypto")}
-                  className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${subPaymentMethod === "crypto" ? "bg-card shadow text-foreground" : "text-muted-foreground"}`}
-                >
-                  <Wallet className="inline h-3.5 w-3.5 mr-1" /> Crypto (SOL)
-                </button>
-              </div>
-
-              {subPaymentMethod === "card" ? (
-                <SquareCardForm
-                  amount={getPrice(pendingTier)}
-                  onTokenize={async (token) => {
-                    const price = getPrice(pendingTier);
-                    const { data, error } = await supabase.functions.invoke("square-payment", {
-                      body: {
-                        amount_cents: price * 100,
-                        currency: "USD",
-                        description: `Rhozeland: ${pendingTier.name} subscription (${billingCycle})`,
-                        source_id: token,
-                        location_id: SQUARE_LOCATION_ID,
-                      },
-                    });
-                    if (error) throw error;
-                    if (!data?.success) throw new Error(data?.error || "Payment failed");
-
-                    const paymentId = data?.payment_id;
-                    await subscribeTier.mutateAsync(pendingTier);
-
-                    const now = new Date();
-                    const endDate = new Date(now);
-                    if (billingCycle === "annual") endDate.setFullYear(endDate.getFullYear() + 1);
-                    else endDate.setMonth(endDate.getMonth() + 1);
-
-                    supabase.functions.invoke("send-subscription-receipt", {
-                      body: {
-                        to_email: user?.email,
-                        user_name: user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Creator",
-                        tier_name: pendingTier.name,
-                        credits: 0,
-                        amount: price.toFixed(2),
-                        payment_id: paymentId,
-                        subscription_start: now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-                        subscription_end: endDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-                      },
-                    }).catch((err) => console.error("Receipt email failed:", err));
-
-                    setSubPaymentOpen(false);
-                    setPendingTier(null);
-                  }}
-                />
-              ) : (
-                <div className="space-y-3">
-                  <PaySolAndVerify
-                    solAmount={+(getPrice(pendingTier) / 150).toFixed(4)}
-                    intent="subscription"
-                    type="subscription"
-                    description={`${pendingTier.name} subscription (${billingCycle}, SOL)`}
-                    label={`Pay ~${(getPrice(pendingTier) / 150).toFixed(4)} SOL`}
-                    className="w-full"
-                    onSuccess={async () => {
-                      await subscribeTier.mutateAsync(pendingTier);
-                      setSubPaymentOpen(false);
-                      setPendingTier(null);
-                    }}
-                  />
-                  <div className="relative flex items-center gap-2 my-2">
-                    <div className="flex-1 h-px bg-border" />
-                    <span className="text-[10px] text-muted-foreground font-body">or pay with $RHOZE</span>
-                    <div className="flex-1 h-px bg-border" />
-                  </div>
-                  <PayWithRhozeButton
-                    tokenAmount={Math.ceil(getPrice(pendingTier) * 100)}
-                    intent="subscription"
-                    type="subscription"
-                    description={`${pendingTier.name} subscription (${billingCycle}, $RHOZE)`}
-                    label={`Pay ${Math.ceil(getPrice(pendingTier) * 100)} $RHOZE`}
-                    className="w-full"
-                    onSuccess={async () => {
-                      await subscribeTier.mutateAsync(pendingTier);
-                      setSubPaymentOpen(false);
-                      setPendingTier(null);
-                    }}
-                  />
-                  <p className="text-xs text-center text-muted-foreground">
-                    Pay via Phantom or Solflare • SOL or $RHOZE accepted
-                  </p>
-                </div>
-              )}
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
+
+/* ─── How rewards work — inlined explainer (was /rewards) ─── */
+const RewardsExplainer = () => (
+  <div className="space-y-8">
+    <header className="space-y-2">
+      <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/15 px-3 py-1">
+        <Coins className="h-3 w-3 text-primary" />
+        <span className="text-[11px] font-medium text-primary tracking-wide uppercase">Optional layer</span>
+      </div>
+      <h2 className="font-display text-2xl sm:text-3xl font-bold leading-tight text-foreground">
+        $RHOZE rewards the people who show up.
+      </h2>
+      <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
+        You don't need a token to use Rhozeland. But if you post work, support
+        artists, and complete milestones, $RHOZE accrues — usable for bookings,
+        marketplace, or held to climb tiers.
+      </p>
+    </header>
+
+    {/* Three-line explainer */}
+    <section className="grid sm:grid-cols-3 gap-3">
+      {[
+        { icon: Sparkles, title: "Earn by contributing", desc: "Posting, reviewing, milestones, streaks. All admin-approved." },
+        { icon: Shield, title: "Yours to keep", desc: "Bind a Solana wallet to claim on-chain. No wallet? Credits stay parked." },
+        { icon: Coins, title: "Use it or hold it", desc: "Pay for bookings at a discount, unlock higher tiers, or hold long-term." },
+      ].map((item) => (
+        <div key={item.title} className="rounded-2xl bg-card/60 backdrop-blur-sm border border-border/50 p-4">
+          <item.icon className="h-4 w-4 text-primary mb-2" />
+          <h3 className="font-display text-sm font-semibold text-foreground mb-1">{item.title}</h3>
+          <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+        </div>
+      ))}
+    </section>
+
+    {/* Earning catalog */}
+    <section className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Sparkles className="h-4 w-4 text-primary" />
+        <h3 className="font-display text-lg font-semibold text-foreground">How you earn</h3>
+      </div>
+      {[
+        { key: "engagement" as const, icon: Heart, title: "Engagement", subtitle: "Small + capped." },
+        { key: "commerce" as const, icon: ShoppingBag, title: "Commerce", subtitle: "Bigger — back artists, get rewarded." },
+        { key: "milestone" as const, icon: Trophy, title: "Milestones", subtitle: "One-time unlocks." },
+      ].map(({ key, icon: Icon, title, subtitle }) => (
+        <div key={key} className="rounded-2xl border border-border/50 bg-card/60 p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <Icon className="h-4 w-4 text-primary" />
+            <h4 className="font-display text-sm font-semibold">{title}</h4>
+            <span className="text-[11px] text-muted-foreground">· {subtitle}</span>
+          </div>
+          <ul className="divide-y divide-border/40">
+            {REWARDS_BY_CATEGORY[key].map((r) => (
+              <li key={r.action} className="flex items-start justify-between gap-3 py-2">
+                <div>
+                  <p className="text-sm font-medium text-foreground">{r.label}</p>
+                  <p className="text-xs text-muted-foreground">{r.description}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-sm font-semibold text-primary">{r.amount}</p>
+                  {r.cap && <p className="text-[10px] text-muted-foreground">{r.cap}</p>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </section>
+
+    {/* FAQ */}
+    <section className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Info className="h-4 w-4 text-primary" />
+        <h3 className="font-display text-lg font-semibold text-foreground">Quick FAQ</h3>
+      </div>
+      <div className="rounded-2xl bg-card/60 backdrop-blur-sm border border-border/50 px-4 sm:px-5">
+        <Accordion type="single" collapsible>
+          <AccordionItem value="claim" className="border-border/40">
+            <AccordionTrigger className="text-sm font-medium">How do I claim what I've earned?</AccordionTrigger>
+            <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+              Earnings sit as credits until an admin approves them — keeps the
+              reward pool honest. Once approved, bind a Solana wallet in{" "}
+              <Link to="/settings" className="underline underline-offset-2 hover:text-foreground">Settings</Link>{" "}
+              and claim on-chain from <strong>My Pass</strong>.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="splits" className="border-border/40">
+            <AccordionTrigger className="text-sm font-medium">How do paid project splits work?</AccordionTrigger>
+            <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+              Paid projects use a 75 / 15 / 10 split: creator, collaborators,
+              platform. Splits are configured at lock and anchored on-chain so
+              nobody can quietly rewrite them mid-project.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="wallet" className="border-border/40">
+            <AccordionTrigger className="text-sm font-medium">Do I need a wallet?</AccordionTrigger>
+            <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+              No. Discovery, conversations, projects, and bookings all work
+              with a regular account. A wallet only matters to claim $RHOZE
+              on-chain or mint Verified IP.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="revoke" className="last:border-b-0">
+            <AccordionTrigger className="text-sm font-medium">Can rewards be revoked?</AccordionTrigger>
+            <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+              Approved on-chain claims are yours. Pending credits can be
+              rejected if flagged (spam, duplicate, fake engagement). Reasoning
+              is always logged in your reward history.
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </div>
+    </section>
+  </div>
+);
 
 const TransactionHistory = ({ userId }: { userId?: string }) => {
   const { data: transactions } = useQuery({
@@ -745,7 +460,7 @@ const TransactionHistory = ({ userId }: { userId?: string }) => {
               </div>
             </div>
             <span className={`font-display font-bold text-sm whitespace-nowrap ${tx.amount > 0 ? "text-primary" : "text-destructive"}`}>
-              {tx.amount > 0 ? "+" : ""}${Math.abs(tx.amount * 75).toFixed(0) !== "0" ? (Math.abs(tx.amount) * 1).toFixed(0) : tx.amount} cr
+              {tx.amount > 0 ? "+" : ""}{Math.abs(tx.amount).toFixed(0)} cr
             </span>
           </div>
         ))}
@@ -754,11 +469,8 @@ const TransactionHistory = ({ userId }: { userId?: string }) => {
   );
 };
 
-/* ───────────────────────────────────────────────────────────────────────
-   Verified IP — Works explainer + recent anchored works for the creator.
-   Lives inside Creator Pass so the IP toolkit feels like part of the kit
-   instead of a standalone tab. The full vault still lives at /works.
-   ─────────────────────────────────────────────────────────────────────── */
+import { useState } from "react";
+
 const VerifiedIPSection = ({ userId }: { userId: string | null }) => {
   const { data: works = [], isLoading } = useQuery({
     queryKey: ["creator-pass-works", userId],
@@ -779,7 +491,6 @@ const VerifiedIPSection = ({ userId }: { userId: string | null }) => {
 
   return (
     <div className="space-y-6">
-      {/* Explainer */}
       <div className="surface-card p-5 sm:p-6">
         <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-muted-foreground mb-2">
           <Shield className="h-3.5 w-3.5" /> Layer I · Verified IP
@@ -792,8 +503,7 @@ const VerifiedIPSection = ({ userId }: { userId: string | null }) => {
           <strong className="text-foreground"> SHA-256 fingerprint</strong> in
           your browser — a unique signature of the file's bytes. Anchor it on
           Solana and you get a public, timestamped proof of authorship that
-          travels with the work everywhere it goes: profiles, projects, the Hub,
-          even revenue splits.
+          travels with the work everywhere it goes.
         </p>
         <div className="grid sm:grid-cols-3 gap-3 mt-5">
           <div className="rounded-xl border border-border p-3">
@@ -812,7 +522,6 @@ const VerifiedIPSection = ({ userId }: { userId: string | null }) => {
         </div>
       </div>
 
-      {/* Recent works */}
       <div className="surface-card p-5">
         <div className="flex items-center justify-between mb-3">
           <h4 className="font-display text-base font-semibold text-foreground">Your recent works</h4>
