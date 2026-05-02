@@ -898,14 +898,23 @@ const ProfileDetailPage = () => {
             )}
           </TabsContent>
 
-          {/* ─── Availability tab ─── */}
-          <TabsContent value="availability" className="mt-5">
+        </Tabs>
+
+        {/* Booking modal — opened from the "Book a session" support card */}
+        <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="font-display flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4 text-primary" />
+                Book a session with {p.display_name || p.username}
+              </DialogTitle>
+            </DialogHeader>
             <CreatorAvailabilityCalendar
               creatorId={id!}
               creatorName={p.display_name || p.username}
             />
-          </TabsContent>
-        </Tabs>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
