@@ -49,6 +49,7 @@ const ProfileDetailPage = () => {
   // ?tab=coin etc. deep-links from Flow speculate pills + Hub coins strip.
   const tabFromUrl = searchParams.get("tab") || "overview";
   const [activeTab, setActiveTab] = useState(tabFromUrl);
+  const [bookingOpen, setBookingOpen] = useState(false);
   const handleTabChange = (v: string) => {
     setActiveTab(v);
     const next = new URLSearchParams(searchParams);
