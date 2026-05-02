@@ -74,7 +74,7 @@ const STATUS_META: Record<string, { label: string; icon: typeof Clock; color: st
 
 const ProjectsInbox = ({ userId }: { userId: string }) => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
   const [params, setParams] = useSearchParams();
   const selectedId = params.get("p");
   const showNew = params.get("new") === "1";
