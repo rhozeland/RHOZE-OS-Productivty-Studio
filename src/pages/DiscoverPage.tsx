@@ -29,6 +29,7 @@ import StreamComposer from "@/components/stream/StreamComposer";
 import ConversationsMosaic from "@/components/hub/ConversationsMosaic";
 import type { RegionMarket } from "@/lib/regions";
 import { ArrowRight, Coins, Loader2 } from "lucide-react";
+import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
 
 const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
 
