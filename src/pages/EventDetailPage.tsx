@@ -253,7 +253,7 @@ const EventDetailPage = () => {
             </div>
           )}
 
-          {isHost && (
+          {canManage && (
             <div className="pt-2">
               <Link to={`/spaces/events/${ev.id}/manage`}>
                 <Button variant="outline" size="sm" className="rounded-full gap-1.5">
