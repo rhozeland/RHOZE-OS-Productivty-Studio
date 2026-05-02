@@ -22,15 +22,19 @@ import { motion } from "framer-motion";
 import { format } from "date-fns";
 import {
   Briefcase,
-  Megaphone,
   CalendarDays,
   Building2,
-  Shield,
   Flame,
   MapPin,
   Globe2,
   ArrowRight,
   Sparkles,
+  Music,
+  Palette,
+  Camera,
+  Video,
+  PenTool,
+  Theater,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
