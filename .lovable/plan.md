@@ -1,110 +1,77 @@
-## Part 1 — Flow Mode: drop "Save", add "Like" + inline comments
+# Gamify Rhozeland — HUD Dock + XP Celebrations
 
-**Swipe map (new):**
-- Up = **Like** (already a `flow_interaction` action; persists, fires reward)
-- Down = **Comment** (opens lightweight inline thread sheet — no modal)
-- Left = **Pass** (unchanged)
-- Right = **Next** (unchanged)
-- Send-to-friend stays available as a small icon button on the card (no longer a swipe gesture, removes the popup-on-swipe friction).
-
-**FlowCard action bar (bottom of card):**
-- Replace `Save` button with `Like` (heart icon, filled when liked, count visible).
-- Keep `Send` (icon-only, no label) — still opens existing FlowShareDialog.
-- Add `Comment` button (icon + count) → opens the same inline sheet as swipe-down.
-
-**Comment sheet:**
-- New `<FlowCommentSheet />` — a bottom Sheet (not Dialog), max-h 70vh, glass background. Shows comment list + input. Reuses existing `flow_comments` table if it exists; otherwise add one.
-- Compact, no popup feeling — slides up from bottom edge.
-
-**Cleanup:**
-- Remove `savePickerOpen` dialog, `smartboards` query, save→smartboard branch in `performAction`.
-- Update onboarding tutorial overlay copy & idle hints (Save → Like, Share → Comment).
-- Update `playSwipeSound` mapping.
-- Smartboards stay reachable via Projects → Tools (unchanged).
-
-**DB:**
-- Add `flow_comments` table if not present: `id, flow_item_id, user_id, body, created_at`. RLS: read public for items in public scope; insert auth'd users; delete own or admin.
-- `flow_interactions.action = 'like'` already supported; no schema change needed.
+Yes, we can absolutely gamify this. Here's the proposal, broken into three layers so we can ship it in slices instead of one giant drop.
 
 ---
 
-## Part 2 — Discover page redesign
+## Layer 1 — The HUD Dock (the centerpiece)
 
-**New top section: Globe + Featured carousel (combined hero)**
+Bring DockBar back, but reinvented as a **gaming HUD** inspired by your reference (dark glass pill + glowing gem orb on the left).
 
 ```text
-┌─────────────────────────────────────────────────────────┐
-│  [3D rotating globe]      │   FEATURED                  │
-│   • pulsing pins per      │   ┌─────────────────────┐   │
-│     region with artists   │   │  Artist · Event ·   │   │
-│   • click pin → filters   │   │  Space (shuffles)   │   │
-│     featured + feed       │   │  with arrows + dots │   │
-│                           │   └─────────────────────┘   │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  ◉   Lv 4  ████████░░  120/200 XP   🔥 7d   ◬ 240   [⌂][◎][✦] │
+│  GEM                                                          │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-- **3D globe**: `react-globe.gl` (uses three.js). Pins built from `profiles.region_code` aggregated counts. Clicking a pin sets `marketFilter` AND filters the carousel.
-- **Featured carousel**: shuffles between featured artist, featured event, featured space. Auto-advances every 6s, manual arrows + dot indicators. Each slide styled per type, all clickable.
-- Place at top of Discover, replaces standalone "Featured artist" + standalone "By region" strip.
+- **Left orb (the "gem")**: animated iridescent sphere whose color/intensity = current Tier (Spark→Bloom→Glow→Play). Click → opens Creator Pass.
+- **XP bar**: thin progress segment with shimmer; fills in real time when XP is awarded.
+- **Streak chip**: 🔥 N-day streak (from existing StreakCard data).
+- **$RHOZE balance chip**: live balance, click → /credits.
+- **Nav pills**: Discover · Conversations · Profile (matches v8 nav, not the old DockBar's saved config).
+- **Bottom-anchored, glassmorphic, dark**. Hides on scroll-down (existing behavior).
+- Mobile: collapses to just the gem + XP bar; tap to expand.
 
-**Remove:**
-- Current "Trending this week" creator row (entire section) — per user request.
-- Current "By region" pill strip (replaced by globe).
-- `<TrendingArtistsLane />` — gone for now (memory-noted).
+This replaces the current dead `DockBar.tsx` (kept on disk for revert). Sidebar stays as the primary nav; dock is the **persistent player HUD**.
 
-**Keep + upgrade: Fresh works → infinite scroll**
-- Keep tile grid styling.
-- Use `useInfiniteQuery` with page size 16, cursor by `created_at`. IntersectionObserver sentinel to load next page.
-- Verified-IP-first ordering preserved within first batch only (subsequent pages chronological so cursor stays stable).
+## Layer 2 — Celebration system (the dopamine)
 
-**Keep as-is:**
-- Showing up soon (events) — small carousel below Fresh.
-- Coins moving today.
-- Empty state + sign-up nudge.
+A global `<RewardToast />` portal that listens for events and fires:
 
-**New files:**
-- `src/components/discover/DiscoverGlobe.tsx` — react-globe.gl wrapper, lazy-loaded via `React.lazy` so three.js doesn't bloat initial bundle.
-- `src/components/discover/FeaturedCarousel.tsx` — auto-advancing carousel for artist/event/space.
-- `src/components/discover/FreshWorksGrid.tsx` — extracted infinite-scroll grid.
-- `src/components/flow/FlowCommentSheet.tsx` — inline comment sheet.
+- **+XP burst**: small numeric "+15 XP" floats up from the gem with particle confetti.
+- **+$RHOZE drop**: coin icon rains into the balance chip.
+- **Level up**: full-screen flash, gem pulses, "LEVEL 5 — Builder" banner with sound + haptic.
+- **Streak extended**: flame burst on the streak chip.
+- **Verified IP minted / coin launched / first booking**: themed confetti.
 
-**Memory updates:**
-- Update Flow Mode memory: Save→Like+Comment, Smartboard save removed.
-- Update Discover memory: globe hero, no Trending lane.
+Implementation:
+- New `useRewardEvents()` hook listening on a Supabase realtime channel for the current user's `pending_rewards` and `credit_transactions` inserts.
+- New `<CelebrationProvider>` mounted in `AppLayout`, uses framer-motion + canvas-confetti.
+- Reuses existing `playSwipeSound` pattern for short audio cues.
+- Respects `prefers-reduced-motion` (and a new Settings toggle "HUD effects").
 
-## Technical details
+## Layer 3 — XP unification
 
-**Dependencies:**
-- `react-globe.gl@2.27` + `three@0.160` (already present? will verify before adding).
-- No version bumps to react/framer-motion.
+Right now XP lives in two places (CreatorJourney's local calc + StreakCard). Consolidate:
 
-**Globe behavior:**
-- Initial camera lat/lng centered on equator. Auto-rotate at 0.5°/s until user interacts.
-- Pin size scales with artist count per region. Hover shows tooltip with region label + count.
-- Mobile: globe height 280px; desktop 380px. Falls back to a static "select region" pill list if WebGL unavailable.
-- Lazy loaded with Suspense + skeleton globe placeholder.
+- Reuse `CreatorJourney`'s `LEVEL_XP` + 5-title ladder (Newcomer → Pro) as the canonical model — already shipped, no DB change needed.
+- Compute XP from `pending_rewards` + `credit_transactions` (already done in CreatorJourney).
+- Expose via a single `useCreatorXP()` hook so HUD, Creator Pass, and profile show the same numbers.
+- Add a small `<XpTicker />` on the HUD that subscribes and animates deltas.
 
-**Carousel:**
-- `framer-motion` AnimatePresence + slide transition.
-- Pauses auto-advance on hover.
-- 3 source queries (featured artist, featured event, featured space) combined into a single slide array; randomized order on mount.
+---
 
-**Fresh works infinite scroll:**
-- `useInfiniteQuery({ getNextPageParam: lastPage => lastPage.length === 16 ? lastPage[15].created_at : undefined })`.
-- Sentinel div with IntersectionObserver triggers `fetchNextPage`.
-- Verified-first sort applied to first page only to avoid cursor confusion.
+## What ships in this round
 
-**Flow comments table (if needed):**
-```sql
-CREATE TABLE public.flow_comments (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  flow_item_id uuid NOT NULL REFERENCES flow_items(id) ON DELETE CASCADE,
-  user_id uuid NOT NULL,
-  body text NOT NULL CHECK (length(body) BETWEEN 1 AND 1000),
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-ALTER TABLE flow_comments ENABLE ROW LEVEL SECURITY;
--- Read: public; Insert: auth.uid() = user_id; Delete: own row or admin.
-CREATE INDEX flow_comments_item_idx ON flow_comments(flow_item_id, created_at DESC);
-```
-Will check if it already exists in types before migrating.
+1. New `src/components/hud/HudDock.tsx` (the reference-style dock).
+2. New `src/components/hud/RewardCelebration.tsx` + `CelebrationProvider`.
+3. New `src/hooks/useCreatorXP.ts` (extracted from CreatorJourney).
+4. Mount HUD + provider in `AppLayout` (auth-only, hidden on /auth /onboarding /flow).
+5. Settings toggle: "HUD & celebration effects" (on by default).
+6. Wire celebration triggers to existing reward inserts via realtime — no schema change.
+
+## What I will **not** change in this round
+- Sidebar nav, route structure, Creator Pass page layout — all stay.
+- The deferred view-milestone rewards.
+- DockBar.tsx itself (stays on disk; HUD lives at a new path).
+
+## Tech notes
+- Glow/gem: layered radial gradients + `iridescent-blob` keyframe already in index.css.
+- Particles: `canvas-confetti` (tiny, 8KB) — add as dep.
+- Realtime: one channel per user filtered to `pending_rewards.user_id=eq.{uid}` and `credit_transactions.user_id=eq.{uid}`.
+- All colors via semantic tokens (no raw hex in components).
+
+---
+
+Approve and I'll build all six items in one pass. If you'd rather phase it (HUD first, celebrations second), say the word.
