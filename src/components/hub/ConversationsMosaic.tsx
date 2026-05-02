@@ -35,6 +35,11 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 // ─── Tile shape ────────────────────────────────────────────────────────
 type TileKind = "drop" | "offering" | "opportunity" | "event" | "space" | "work";
@@ -322,6 +327,14 @@ const ConversationsMosaic = ({ search = "" }: { search?: string }) => {
 };
 
 // ─── Tile renderer ─────────────────────────────────────────────────────
+//
+// Interactions:
+//   • Click  → navigate to the kind-specific detail page (tile.href).
+//   • Hover  → after 250ms, surface a glassy preview popover with the
+//     cover, description, meta, and an explicit "Open" CTA. On touch
+//     devices HoverCard simply doesn't fire (no hover) — click still
+//     navigates, so behavior degrades gracefully.
+//
 const MosaicTileCard = ({
   tile,
   sizeClass,
@@ -337,7 +350,7 @@ const MosaicTileCard = ({
   const hasImage = !!(tile.cover || tile.fileUrl || tile.linkUrl);
   const isLarge = sizeClass.includes("row-span-2") || sizeClass.includes("col-span-2");
 
-  return (
+  const tileButton = (
     <motion.button
       type="button"
       onClick={onClick}
@@ -345,8 +358,9 @@ const MosaicTileCard = ({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ delay: Math.min(index * 0.025, 0.35), type: "spring", stiffness: 220, damping: 24 }}
       whileHover={{ y: -3 }}
-      className={`${sizeClass} group relative overflow-hidden rounded-2xl border border-border bg-card text-left transition-colors hover:border-foreground/30`}
-      aria-label={`${label}: ${tile.title}`}
+      whileTap={{ scale: 0.98 }}
+      className={`${sizeClass} group relative w-full h-full overflow-hidden rounded-2xl border border-border bg-card text-left transition-all duration-300 hover:border-foreground/40 hover:shadow-lg cursor-pointer`}
+      aria-label={`${label}: ${tile.title}. Click to open.`}
     >
       {/* Background — image or gradient tint */}
       {tile.cover ? (
@@ -365,13 +379,17 @@ const MosaicTileCard = ({
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
       ) : (
-        <div className={`absolute inset-0 bg-gradient-to-br ${tint}`} />
+        <div className={`absolute inset-0 bg-gradient-to-br ${tint} transition-transform duration-700 group-hover:scale-110`} />
       )}
 
       {/* Gradient overlay for legibility on imagery */}
       {hasImage && (
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
       )}
+
+      {/* Hover scrim — extra contrast on hover so the preview handoff
+          feels intentional. */}
+      <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/5 transition-colors duration-300 pointer-events-none" />
 
       {/* Top chip row */}
       <div className="absolute top-2.5 left-2.5 right-2.5 flex items-start justify-between gap-2 z-10">
@@ -391,13 +409,8 @@ const MosaicTileCard = ({
 
       {/* Content footer */}
       <div className={`absolute inset-x-0 bottom-0 p-3 ${hasImage ? "text-white" : "text-foreground"} z-10`}>
-        {tile.meta && !hasImage && (
-          <p className={`text-[10px] uppercase tracking-wider mb-1 ${hasImage ? "text-white/70" : "text-muted-foreground"}`}>
-            {tile.meta}
-          </p>
-        )}
-        {tile.meta && hasImage && (
-          <p className="text-[10px] uppercase tracking-wider mb-1 text-white/80">
+        {tile.meta && (
+          <p className={`text-[10px] uppercase tracking-wider mb-1 ${hasImage ? "text-white/80" : "text-muted-foreground"}`}>
             {tile.meta}
           </p>
         )}
@@ -426,6 +439,117 @@ const MosaicTileCard = ({
         )}
       </div>
     </motion.button>
+  );
+
+  return (
+    <HoverCard openDelay={250} closeDelay={120}>
+      <HoverCardTrigger asChild>{tileButton}</HoverCardTrigger>
+      <HoverCardContent
+        side="top"
+        align="center"
+        sideOffset={8}
+        className="w-80 p-0 overflow-hidden rounded-2xl border-border bg-card/95 backdrop-blur-xl shadow-2xl"
+      >
+        <TilePreview tile={tile} onOpen={onClick} />
+      </HoverCardContent>
+    </HoverCard>
+  );
+};
+
+// ─── Hover preview panel ───────────────────────────────────────────────
+//
+// Glassy popover surfaced on hover. Shows the cover (if any), kind chip,
+// full title + description, kind-specific meta, and a primary "Open"
+// button that mirrors the tile's click target. Keeping click + hover in
+// one component keeps the affordances in lockstep.
+//
+const TilePreview = ({ tile, onOpen }: { tile: MosaicTile; onOpen: () => void }) => {
+  const { Icon, label, chipBg, tint } = KIND_META[tile.kind];
+  const hasImage = !!(tile.cover || tile.fileUrl || tile.linkUrl);
+
+  const openCopy: Record<TileKind, string> = {
+    drop: "Open in Flow",
+    offering: "View offering",
+    opportunity: "Apply",
+    event: "View event",
+    space: "Visit space",
+    work: "Inspect proof",
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.18, ease: "easeOut" }}
+      className="flex flex-col"
+    >
+      {/* Cover strip */}
+      <div className="relative h-32 w-full overflow-hidden bg-muted">
+        {tile.cover ? (
+          <img
+            src={tile.cover}
+            alt={tile.title}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : tile.kind === "drop" && (tile.fileUrl || tile.linkUrl) ? (
+          <FlowThumbnail
+            fileUrl={tile.fileUrl}
+            linkUrl={tile.linkUrl}
+            title={tile.title}
+            description={tile.description}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <div className={`absolute inset-0 bg-gradient-to-br ${tint}`} />
+        )}
+        {hasImage && (
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
+        )}
+        <span className={`absolute top-2 left-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider backdrop-blur-md ${chipBg}`}>
+          <Icon className="h-2.5 w-2.5" />
+          {label}
+        </span>
+        {tile.badge && (
+          <span className="absolute top-2 right-2 inline-flex items-center rounded-full bg-background/90 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-foreground shadow-sm">
+            {tile.badge}
+          </span>
+        )}
+      </div>
+
+      {/* Body */}
+      <div className="p-4 space-y-2">
+        <h4 className="font-display font-semibold text-foreground text-sm leading-tight line-clamp-2">
+          {tile.title}
+        </h4>
+        {tile.meta && (
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground/80">
+            {tile.meta}
+          </p>
+        )}
+        {tile.subtitle && (
+          <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+            {tile.kind === "event" && tile.subtitle === "Online" ? <Globe2 className="h-3 w-3 shrink-0" /> : null}
+            {tile.kind === "event" && tile.subtitle !== "Online" ? <MapPin className="h-3 w-3 shrink-0" /> : null}
+            {tile.kind === "space" ? <MapPin className="h-3 w-3 shrink-0" /> : null}
+            {tile.subtitle}
+          </p>
+        )}
+        {tile.description && (
+          <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+            {tile.description}
+          </p>
+        )}
+
+        <button
+          type="button"
+          onClick={onOpen}
+          className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-foreground text-background text-xs font-semibold py-2 hover:gap-2 transition-all"
+        >
+          {openCopy[tile.kind]}
+          <ArrowRight className="h-3 w-3" />
+        </button>
+      </div>
+    </motion.div>
   );
 };
 
