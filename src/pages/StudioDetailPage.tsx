@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { rewriteShortDescription } from "@/lib/studio-copy";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -224,7 +225,9 @@ const StudioDetailPage = () => {
           {studio.description && (
             <div>
               <h2 className="font-display text-lg font-semibold text-foreground mb-2">About this space</h2>
-              <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{studio.description}</p>
+              <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                {rewriteShortDescription(studio.description, studio.city)}
+              </p>
             </div>
           )}
 

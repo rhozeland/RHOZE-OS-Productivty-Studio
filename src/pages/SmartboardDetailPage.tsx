@@ -601,8 +601,18 @@ const SmartboardDetailPage = () => {
                         className="group relative rounded-xl overflow-hidden bg-card border border-border shadow-sm hover:shadow-md transition-all"
                       >
                       {isImage && (
-                        <div className="relative h-full">
-                          <img src={item.file_url!} alt={item.title || "Image"} className="w-full h-full object-cover" loading="lazy" />
+                        <div className="relative">
+                          <img
+                            src={item.file_url!}
+                            alt={item.title || ""}
+                            className="block w-full h-auto"
+                            loading="lazy"
+                            onError={(e) => {
+                              // Hide the broken image icon — leaves the title
+                              // overlay visible so the card still reads cleanly.
+                              (e.currentTarget as HTMLImageElement).style.visibility = "hidden";
+                            }}
+                          />
                           {item.title && (
                             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-foreground/60 to-transparent p-3">
                               <span className="text-card text-sm font-medium">{item.title}</span>
@@ -613,7 +623,7 @@ const SmartboardDetailPage = () => {
 
                       {isVideo && (
                         <div className="relative">
-                          <video src={item.file_url!} className="w-full" controls preload="metadata" />
+                          <video src={item.file_url!} className="block w-full h-auto" controls preload="metadata" playsInline />
                           {item.title && (
                             <div className="p-3 pt-1">
                               <span className="text-sm font-medium text-foreground">{item.title}</span>

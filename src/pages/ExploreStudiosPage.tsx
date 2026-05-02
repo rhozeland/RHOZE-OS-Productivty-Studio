@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { rewriteShortDescription } from "@/lib/studio-copy";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
@@ -168,7 +169,7 @@ const ExploreStudiosPage = () => {
                       </div>
                     )}
                   </div>
-                  {studio.short_description && <p className="text-xs text-muted-foreground line-clamp-2">{studio.short_description}</p>}
+                  {studio.short_description && <p className="text-xs text-muted-foreground line-clamp-2">{rewriteShortDescription(studio.short_description, studio.city)}</p>}
                   <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
                     {studio.location && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {studio.city || studio.location}</span>}
                     <span className="flex items-center gap-1 capitalize"><Clock className="h-3 w-3" /> {studio.category}</span>

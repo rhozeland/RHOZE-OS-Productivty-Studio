@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
+import { rewriteShortDescription } from "@/lib/studio-copy";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -161,7 +162,9 @@ const StudiosPage = () => {
                 </div>
 
                 {studio.short_description && (
-                  <p className="text-xs text-muted-foreground line-clamp-2">{studio.short_description}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {rewriteShortDescription(studio.short_description, studio.city)}
+                  </p>
                 )}
 
                 <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">

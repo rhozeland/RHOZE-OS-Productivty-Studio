@@ -4,6 +4,7 @@
  * drop_rooms tables; no schema changes.
  */
 import { useState, useMemo } from "react";
+import { rewriteShortDescription } from "@/lib/studio-copy";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -311,7 +312,7 @@ const SpacesPage = () => {
                     </div>
                     {studio.short_description && (
                       <p className="text-xs text-muted-foreground line-clamp-2">
-                        {studio.short_description}
+                        {rewriteShortDescription(studio.short_description, studio.city)}
                       </p>
                     )}
                     <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
