@@ -138,89 +138,18 @@ const DiscoverPage = () => {
       {/* ─── Quick-drop composer ───────────────────────────────────── */}
       {user && <StreamComposer defaultType="text" />}
 
-      {/* ─── Conversations mosaic — unified feed ───────────────────── */}
+      {/* ─── Conversations mosaic — content + IP + seasonal events ─── */}
       <section className="space-y-4">
-        <div className="flex items-end justify-between gap-3 flex-wrap">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-1">
-              Conversations
-            </p>
-            <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
-              Everything, in one breath.
-            </h2>
-          </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Link to="/flow" className="shrink-0">
-              <Button variant="outline" size="sm" className="rounded-full gap-1.5 h-10">
-                <Waves className="h-3.5 w-3.5" /> Flow
-              </Button>
-            </Link>
-            <div className="relative flex-1 sm:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={`Search ${activeFilter.label.toLowerCase()}…`}
-                className="pl-10 pr-9 h-10 rounded-full"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch("")}
-                  aria-label="Clear search"
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-1">
+            Conversations
+          </p>
+          <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
+            Everything, in one breath.
+          </h2>
         </div>
 
-        {/* Filter chips */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
-          {FILTERS.map((f) => {
-            const FIcon = f.Icon;
-            const active = kind === f.key;
-            const count = counts?.[f.key];
-            return (
-              <button
-                key={f.key}
-                type="button"
-                onClick={() => setKind(f.key)}
-                aria-pressed={active}
-                className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${
-                  active
-                    ? "bg-foreground text-background shadow-sm"
-                    : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
-                }`}
-              >
-                <FIcon className="h-3 w-3" />
-                {f.label}
-                {typeof count === "number" && count > 0 && (
-                  <span
-                    className={`ml-0.5 rounded-full px-1.5 py-0 text-[10px] font-bold tabular-nums ${
-                      active ? "bg-background/20 text-background" : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-          {hasFilter && (
-            <button
-              type="button"
-              onClick={() => { setKind("all"); setSearch(""); }}
-              className="shrink-0 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground ml-1 px-2 py-1 transition-colors"
-            >
-              <X className="h-3 w-3" /> Clear
-            </button>
-          )}
-        </div>
-
-        <ConversationsMosaic search={search} kind={kind} />
+        <ConversationsMosaic />
       </section>
 
       {/* ─── Coins moving today ─────────────────────────────────────── */}
