@@ -43,7 +43,7 @@ import { NAV_SHORTCUTS, formatChord, formatLeader } from "@/lib/nav-shortcuts";
 import { REGISTERED_ROUTE_PATHS } from "@/App";
 
 const PAGES = [
-  { name: "Home", path: "/dashboard", icon: FolderKanban },
+  { name: "Home", path: "/discover", icon: FolderKanban },
   { name: "Spaces", path: "/spaces", icon: Building2 },
   { name: "People", path: "/people", icon: User },
   { name: "Projects", path: "/projects", icon: FolderKanban },
