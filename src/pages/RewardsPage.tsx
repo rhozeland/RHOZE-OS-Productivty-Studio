@@ -153,6 +153,7 @@ const renderAnswer = (item: FaqItem): React.ReactNode => {
 
 const RewardsPage = () => {
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="min-h-screen bg-background">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
         {/* Back */}
