@@ -51,6 +51,19 @@ const VerificationPage = () => {
   const [socials, setSocials] = useState<string[]>(["", ""]);
   const [submitting, setSubmitting] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [latest, setLatest] = useState<LatestRequest | null>(null);
+
+  const loadLatest = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("artist_verification_requests")
+      .select("status, created_at, decided_at, review_note")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setLatest((data as LatestRequest | null) ?? null);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -60,6 +73,7 @@ const VerificationPage = () => {
       .eq("user_id", user.id)
       .maybeSingle()
       .then(({ data }) => setWalletAddress(data?.wallet_address ?? null));
+    loadLatest();
   }, [user]);
 
   const updateSocial = (i: number, v: string) =>
