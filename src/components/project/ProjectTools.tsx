@@ -111,12 +111,6 @@ const ProjectTools = ({ projectId, projectTitle, smartboardDetails, onLinkSmartb
     onError: (e: any) => toast.error(e.message),
   });
 
-  const openFlowScoped = () => {
-    const tags = (projectMeta?.categories ?? []) as string[];
-    const qs = tags.length ? `?tags=${encodeURIComponent(tags.join(","))}` : "";
-    navigate(`/flow${qs}`);
-  };
-
   return (
     <div className="space-y-6">
       <div>
