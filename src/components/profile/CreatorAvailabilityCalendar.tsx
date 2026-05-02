@@ -187,8 +187,50 @@ const CreatorAvailabilityCalendar = ({
     },
   });
 
+  const { data: recurring } = useQuery({
+    queryKey: ["creator-recurring-availability", creatorId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("creator_availability_recurring")
+        .select("*")
+        .eq("user_id", creatorId);
+      if (error) throw error;
+      return (data ?? []) as RecurringRow[];
+    },
+  });
+
   // Per-day intervals (minutes-from-midnight) for fast hit-testing
   const availabilityByDay = useMemo(() => {
+    const map: Record<number, Array<{ id: string; startMin: number; endMin: number; recurring?: boolean }>> = {};
+    weekDays.forEach((d, i) => (map[i] = []));
+    availability?.forEach((a) => {
+      const s = new Date(a.start_time);
+      const e = new Date(a.end_time);
+      const idx = weekDays.findIndex((d) => isSameDay(d, s));
+      if (idx === -1) return;
+      map[idx].push({
+        id: a.id,
+        startMin: s.getHours() * 60 + s.getMinutes(),
+        endMin: e.getHours() * 60 + e.getMinutes(),
+      });
+    });
+    // Merge recurring template (only on days that have no one-off block at that time)
+    recurring?.forEach((r) => {
+      const dayIdx = r.weekday;
+      if (dayIdx < 0 || dayIdx > 6) return;
+      const overlaps = map[dayIdx].some(
+        (iv) => r.start_minute < iv.endMin && r.end_minute > iv.startMin
+      );
+      if (overlaps) return;
+      map[dayIdx].push({
+        id: `recurring-${r.id}`,
+        startMin: r.start_minute,
+        endMin: r.end_minute,
+        recurring: true,
+      });
+    });
+    return map;
+  }, [availability, recurring, weekDays]);
     const map: Record<number, Array<{ id: string; startMin: number; endMin: number }>> = {};
     weekDays.forEach((d, i) => (map[i] = []));
     availability?.forEach((a) => {
