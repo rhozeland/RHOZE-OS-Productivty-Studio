@@ -542,36 +542,54 @@ const EventManagePage = () => {
           <p className="text-sm text-muted-foreground">No tickets yet.</p>
         ) : (
           <div className="space-y-2">
-            {(tickets ?? []).map((t: any) => (
-              <div
-                key={t.id}
-                className="rounded-xl bg-card border border-border p-3 flex items-center justify-between gap-3 text-sm"
-              >
-                <div>
-                  <p className="font-mono text-xs text-foreground">
-                    {t.qr_token.slice(0, 14)}…
-                  </p>
-                  <p className="text-[11px] text-muted-foreground capitalize">
-                    {t.status} · {format(new Date(t.issued_at), "MMM d, h:mm a")}
-                  </p>
+            {(tickets ?? []).map((t: any) => {
+              const name =
+                t.holder?.display_name ||
+                t.holder?.username ||
+                `Guest ${t.qr_token.slice(3, 7)}`;
+              const initials =
+                (name as string)
+                  .split(/\s+/)
+                  .map((c: string) => c[0])
+                  .filter(Boolean)
+                  .slice(0, 2)
+                  .join("")
+                  .toUpperCase() || "·";
+              return (
+                <div
+                  key={t.id}
+                  className="rounded-xl bg-card border border-border p-3 flex items-center justify-between gap-3 text-sm"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar className="h-9 w-9 shrink-0">
+                      <AvatarImage src={t.holder?.avatar_url ?? undefined} />
+                      <AvatarFallback>{initials}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{name}</p>
+                      <p className="text-[11px] text-muted-foreground capitalize">
+                        {t.status} · {format(new Date(t.issued_at), "MMM d, h:mm a")}
+                      </p>
+                    </div>
+                  </div>
+                  {t.status === "checked_in" ? (
+                    <span className="inline-flex items-center gap-1 text-xs text-emerald-500">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> In
+                    </span>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-full"
+                      disabled={checkIn.isPending}
+                      onClick={() => checkIn.mutate(t.id)}
+                    >
+                      Check in
+                    </Button>
+                  )}
                 </div>
-                {t.status === "checked_in" ? (
-                  <span className="inline-flex items-center gap-1 text-xs text-emerald-500">
-                    <CheckCircle2 className="h-3.5 w-3.5" /> In
-                  </span>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="rounded-full"
-                    disabled={checkIn.isPending}
-                    onClick={() => checkIn.mutate(t.id)}
-                  >
-                    Check in
-                  </Button>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
