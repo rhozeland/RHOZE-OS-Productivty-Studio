@@ -57,6 +57,7 @@ import FlowModePage from "@/pages/FlowModePage";
 import LaunchRedirect from "@/pages/LaunchRedirect";
 import RewardsPage from "@/pages/RewardsPage";
 import SwapHistoryPage from "@/pages/SwapHistoryPage";
+import UnsubscribePage from "@/pages/UnsubscribePage";
 import VerificationPage from "@/pages/VerificationPage";
 import NotFound from "./pages/NotFound";
 
