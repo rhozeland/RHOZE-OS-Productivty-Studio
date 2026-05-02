@@ -164,7 +164,7 @@ const AppSidebar = () => {
 
       <SidebarContent className="px-2 pt-3 space-y-2">
         {renderGroup(pillarItems, { label: "Pillars" })}
-        {renderGroup(secondaryItems)}
+        {secondaryItems.length > 0 && renderGroup(secondaryItems)}
       </SidebarContent>
 
       <SidebarFooter className="px-2 pb-4 mt-auto">
