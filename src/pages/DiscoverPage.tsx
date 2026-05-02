@@ -19,12 +19,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import FeaturedCarousel from "@/components/discover/FeaturedCarousel";
 import FreshWorksGrid from "@/components/discover/FreshWorksGrid";
+import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import { MARKETS, type RegionMarket } from "@/lib/regions";
 import { cn } from "@/lib/utils";
 import {
-  ArrowRight, Compass, Calendar as CalendarIcon, Coins, Globe2, Loader2,
+  ArrowRight, Compass, Coins, Loader2,
 } from "lucide-react";
-import { format } from "date-fns";
 
 // Globe hero lazily imported to keep Discover lightweight on first load.
 const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
@@ -32,21 +32,7 @@ const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
 const DiscoverPage = () => {
   const { user } = useAuth();
   const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
-
-  // ─── Upcoming events (small carousel) ────────────────────────────
-  const { data: events } = useQuery({
-    queryKey: ["discover-upcoming-events"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("events")
-        .select("id, slug, title, cover_url, starts_at, venue_name, is_online, category")
-        .eq("status", "published")
-        .gte("starts_at", new Date().toISOString())
-        .order("starts_at", { ascending: true })
-        .limit(6);
-      return data ?? [];
-    },
-  });
+  const { slides: featuredSlides, spotlights } = useDiscoverFeatured(marketFilter);
 
   // ─── Coins moving today ──────────────────────────────────────────
   const { data: coins } = useQuery({
@@ -100,7 +86,7 @@ const DiscoverPage = () => {
         transition={{ duration: 0.5, delay: 0.05 }}
         className="grid grid-cols-1 lg:grid-cols-2 gap-4"
       >
-        <div className="relative rounded-3xl overflow-hidden border border-border/60 bg-gradient-to-br from-background via-background to-card h-[360px]">
+        <div className="relative rounded-3xl overflow-hidden border border-border/60 bg-gradient-to-br from-background via-background to-card h-[390px] sm:h-[420px]">
           <Suspense
             fallback={
               <div className="h-full w-full flex items-center justify-center">
@@ -111,7 +97,8 @@ const DiscoverPage = () => {
             <DiscoverGlobe
               marketFilter={marketFilter}
               onSelectMarket={setMarketFilter}
-              height={360}
+              featuredSpotlights={spotlights}
+              height={420}
             />
           </Suspense>
 
@@ -135,61 +122,13 @@ const DiscoverPage = () => {
               );
             })}
           </div>
-
-          <div className="absolute top-3 left-4 flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-            <Globe2 className="h-3 w-3" /> Browse the world
-          </div>
         </div>
 
-        <FeaturedCarousel marketFilter={marketFilter} />
+        <FeaturedCarousel slides={featuredSlides} />
       </motion.section>
 
       {/* ─── Fresh works (infinite) ─────────────────────────────────── */}
       <FreshWorksGrid />
-
-      {/* ─── Upcoming events ────────────────────────────────────────── */}
-      {events && events.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-display text-sm uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-1.5">
-              <CalendarIcon className="h-3.5 w-3.5" /> Showing up soon
-            </h2>
-            <Link to="/spaces?tab=events" className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
-              All <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {events.map((e: any) => (
-              <Link
-                key={e.id}
-                to={`/events/${e.slug || e.id}`}
-                className="group rounded-xl border border-border/60 bg-card overflow-hidden hover:border-foreground/30 transition-colors"
-              >
-                {e.cover_url ? (
-                  <div className="aspect-video bg-muted overflow-hidden">
-                    <img src={e.cover_url} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                  </div>
-                ) : (
-                  <div className="aspect-video bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
-                    <CalendarIcon className="h-8 w-8 text-muted-foreground/40" />
-                  </div>
-                )}
-                <div className="p-4 space-y-1.5">
-                  <p className="text-sm font-semibold text-foreground line-clamp-1">{e.title}</p>
-                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                    <span>{format(new Date(e.starts_at), "MMM d · h:mm a")}</span>
-                    {e.is_online ? (
-                      <Badge variant="outline" className="text-[9px]">Online</Badge>
-                    ) : e.venue_name ? (
-                      <span className="truncate">· {e.venue_name}</span>
-                    ) : null}
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* ─── Coins moving today ─────────────────────────────────────── */}
       {coins && coins.length > 0 && (
