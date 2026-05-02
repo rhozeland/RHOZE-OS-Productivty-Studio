@@ -53,6 +53,7 @@ import { playSwipeSound } from "@/lib/swipe-sound";
 import FlowCard from "@/components/flow/FlowCard";
 import FlowCardBackground from "@/components/flow/FlowCardBackground";
 import FlowShareDialog from "@/components/flow/FlowShareDialog";
+import FlowCommentSheet from "@/components/flow/FlowCommentSheet";
 import LinkPreviewCard from "@/components/flow/LinkPreviewCard";
 import { cn } from "@/lib/utils";
 import { loadFlowFeed } from "@/lib/flow-feed";
@@ -146,7 +147,8 @@ const FlowModePage = () => {
   const [expandedCard, setExpandedCard] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"swipe" | "browse">("swipe");
-  const [savePickerOpen, setSavePickerOpen] = useState(false);
+  const [commentSheetOpen, setCommentSheetOpen] = useState(false);
+  const [commentItem, setCommentItem] = useState<any>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareItem, setShareItem] = useState<any>(null);
   const [newTitle, setNewTitle] = useState("");
@@ -199,8 +201,8 @@ const FlowModePage = () => {
     return saved !== null ? saved === "true" : true;
   });
   const [swipeMap] = useState({
-    up: "save",
-    down: "share",
+    up: "like",
+    down: "comment",
     left: "dislike",
     right: "skip",
   });
@@ -462,15 +464,11 @@ const FlowModePage = () => {
     retry: 1,
   });
 
-  const { data: smartboards } = useQuery({
-    queryKey: ["smartboards-for-flow", user?.id ?? "guest"],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data } = await supabase.from("smartboards").select("id, title, cover_color").eq("user_id", user.id);
-      return data ?? [];
-    },
-    enabled: calibrated && !!user,
-  });
+  // Note: Smartboards query removed — Flow no longer saves to boards.
+  // Saves are replaced by Likes (per-item heart) and Comments (sheet).
+
+  // Engagement counts (likes + comments) and per-user liked set are
+  // computed below, after `allItems` is declared. See `engagement` query.
 
   const interact = useMutation({
     mutationFn: async ({ itemId, action, smartboardId }: { itemId: string; action: string; smartboardId?: string }) => {
@@ -740,6 +738,32 @@ const FlowModePage = () => {
   // briefly render a card from the previous scope (which would "mix" the
   // sequence the user sees). The skeleton/empty state below renders instead.
   const allItems = flowItemsFetching ? [] : flowItems ?? [];
+
+  // Engagement counts (likes + comments) and per-user liked set for visible items.
+  const visibleIds = allItems.map((i: any) => i.id);
+  const { data: engagement } = useQuery({
+    queryKey: ["flow-engagement", visibleIds.join(",") || "none", user?.id ?? "guest"],
+    enabled: calibrated && visibleIds.length > 0,
+    queryFn: async () => {
+      const [likes, comments, mine] = await Promise.all([
+        supabase.from("flow_interactions").select("flow_item_id").eq("action", "like").in("flow_item_id", visibleIds),
+        supabase.from("flow_comments").select("flow_item_id").in("flow_item_id", visibleIds),
+        user
+          ? supabase.from("flow_interactions").select("flow_item_id").eq("action", "like").eq("user_id", user.id).in("flow_item_id", visibleIds)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+      const tally = (rows: any[] | null | undefined) => {
+        const m = new Map<string, number>();
+        (rows ?? []).forEach((r: any) => m.set(r.flow_item_id, (m.get(r.flow_item_id) ?? 0) + 1));
+        return m;
+      };
+      return {
+        likes: tally(likes.data),
+        comments: tally(comments.data),
+        liked: new Set((mine.data ?? []).map((r: any) => r.flow_item_id)),
+      };
+    },
+  });
   const currentItem = allItems.length > 0 ? allItems[currentIndex % allItems.length] : null;
 
   // Batched coin lookup keyed by uploader (creator_id). Coins are now
@@ -880,32 +904,32 @@ const FlowModePage = () => {
     };
   }, []);
 
-  const performAction = useCallback((action: string, smartboardId?: string, item?: any) => {
+  const performAction = useCallback((action: string, _unused?: string, item?: any) => {
     const targetItem = item || currentItem;
     if (!targetItem) return;
     if (navigator.vibrate) navigator.vibrate(20);
-    if (soundEnabled) playSwipeSound(action === "save" ? "up" : action === "dislike" ? "left" : action === "share" ? "down" : "right");
+    if (soundEnabled) playSwipeSound(action === "like" ? "up" : action === "dislike" ? "left" : action === "comment" ? "down" : "right");
 
-    if (action === "save") {
-      if (smartboardId) {
-        interact.mutate({ itemId: targetItem.id, action, smartboardId });
-        toast.success("Saved to board!");
-        setSavePickerOpen(false);
-        advanceCard();
-      } else {
-        setShareItem(targetItem);
-        setSavePickerOpen(true);
-        return;
-      }
-    } else if (action === "share") {
+    if (action === "like") {
+      // Like is a non-blocking interaction — record it but don't auto-advance,
+      // so the heart fills under the user's thumb and they can keep reading.
+      if (user) interact.mutate({ itemId: targetItem.id, action });
+      return;
+    }
+    if (action === "comment") {
+      setCommentItem(targetItem);
+      setCommentSheetOpen(true);
+      return;
+    }
+    if (action === "share") {
       setShareItem(targetItem);
       setShareDialogOpen(true);
       return;
-    } else {
-      interact.mutate({ itemId: targetItem.id, action });
-      advanceCard();
     }
-  }, [currentItem, interact, advanceCard, soundEnabled]);
+    // dislike / skip / next: record + advance.
+    if (user) interact.mutate({ itemId: targetItem.id, action });
+    advanceCard();
+  }, [currentItem, interact, advanceCard, soundEnabled, user]);
 
   // Lock all swipe gestures while:
   //   • a card is expanded (taps inside the detail view should never
@@ -1312,8 +1336,12 @@ const FlowModePage = () => {
                       item={currentItem}
                       expanded={expandedCard}
                       onToggleExpand={() => setExpandedCard(!expandedCard)}
-                      onSave={() => performAction("save")}
+                      onLike={() => performAction("like")}
+                      onComment={() => performAction("comment")}
                       onShare={() => performAction("share")}
+                      liked={engagement?.liked.has(currentItem.id)}
+                      likeCount={engagement?.likes.get(currentItem.id) ?? 0}
+                      commentCount={engagement?.comments.get(currentItem.id) ?? 0}
                       onDelete={() => deleteFlowItem.mutate(currentItem.id)}
                       isOwner={currentItem.user_id === user?.id}
                       isAdmin={isAdmin}
@@ -1405,8 +1433,12 @@ const FlowModePage = () => {
                           item={item}
                           expanded={false}
                           onToggleExpand={() => {}}
-                          onSave={() => performAction("save", undefined, item)}
+                          onLike={() => performAction("like", undefined, item)}
+                          onComment={() => performAction("comment", undefined, item)}
                           onShare={() => performAction("share", undefined, item)}
+                          liked={engagement?.liked.has(item.id)}
+                          likeCount={engagement?.likes.get(item.id) ?? 0}
+                          commentCount={engagement?.comments.get(item.id) ?? 0}
                           onDelete={() => deleteFlowItem.mutate(item.id)}
                           isOwner={item.user_id === user?.id}
                           isAdmin={isAdmin}
@@ -1481,7 +1513,7 @@ const FlowModePage = () => {
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
                 <span className="flex flex-col items-center gap-1 text-white/90">
                   <ChevronUp className="h-6 w-6" />
-                  <span className="text-sm font-medium">Save</span>
+                  <span className="text-sm font-medium">Like</span>
                 </span>
               </motion.div>
               {/* Middle row: Left + Center + Right */}
@@ -1507,7 +1539,7 @@ const FlowModePage = () => {
               {/* Down */}
               <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
                 <span className="flex flex-col items-center gap-1 text-white/90">
-                  <span className="text-sm font-medium">Share</span>
+                  <span className="text-sm font-medium">Comment</span>
                   <ChevronDown className="h-6 w-6" />
                 </span>
               </motion.div>
@@ -1537,7 +1569,7 @@ const FlowModePage = () => {
               className="pointer-events-none absolute left-0 right-0 top-16 z-40 flex justify-center"
             >
               <span className="flex items-center gap-1 rounded-full bg-card/80 border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm" style={{ textShadow: "0 1px 2px hsl(var(--background) / 0.5)" }}>
-                <ChevronUp className="h-3 w-3" /> Save
+                <ChevronUp className="h-3 w-3" /> Like
               </span>
             </motion.div>
             {/* Bottom — Share (centered in the card area, above dock) */}
@@ -1549,7 +1581,7 @@ const FlowModePage = () => {
               className="pointer-events-none absolute left-0 right-0 bottom-28 z-40 flex justify-center md:bottom-32"
             >
               <span className="flex items-center gap-1 rounded-full bg-card/80 border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm" style={{ textShadow: "0 1px 2px hsl(var(--background) / 0.5)" }}>
-                <ChevronDown className="h-3 w-3" /> Share
+                <ChevronDown className="h-3 w-3" /> Comment
               </span>
             </motion.div>
             {/* Left — Pass (constrained inside content, not overlapping sidebar) */}
@@ -1580,32 +1612,13 @@ const FlowModePage = () => {
         )}
       </AnimatePresence>
 
-      {/* Save to Board picker */}
-      <Dialog open={savePickerOpen} onOpenChange={setSavePickerOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="font-display text-lg">Save to board</DialogTitle>
-            <DialogDescription>Choose a Smartboard to save this content to.</DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto">
-            {smartboards?.map((board) => (
-              <button
-                key={board.id}
-                onClick={() => performAction("save", board.id, shareItem)}
-                className="rounded-xl border border-border bg-card p-4 text-left hover:shadow-md hover:border-primary/30 transition-all group"
-              >
-                <div className="h-16 rounded-lg mb-2" style={{ backgroundColor: board.cover_color || "hsl(var(--muted))" }} />
-                <h4 className="font-display font-semibold text-foreground text-sm truncate group-hover:text-primary transition-colors">
-                  {board.title}
-                </h4>
-              </button>
-            ))}
-            {(!smartboards || smartboards.length === 0) && (
-              <p className="col-span-2 text-center text-sm text-muted-foreground py-6">No boards yet. Create one first!</p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Comment thread sheet (replaces the old Save→Smartboard picker). */}
+      <FlowCommentSheet
+        open={commentSheetOpen}
+        onOpenChange={(o) => { setCommentSheetOpen(o); if (!o) setCommentItem(null); }}
+        flowItemId={commentItem?.id ?? null}
+        itemTitle={commentItem?.title}
+      />
 
       {/* Add content dialog */}
       <Dialog open={addOpen} onOpenChange={(open) => { if (!open) { cancelUpload(); resetPendingFiles(); setShareStep("compose"); } setAddOpen(open); }}>
