@@ -569,18 +569,6 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
           </div>
 
           <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => onSelectMarket("All")}
-              className={cn(
-                "rounded-full border px-3 py-1.5 text-[11px] font-medium backdrop-blur transition-colors",
-                marketFilter === "All"
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border/45 bg-background/68 text-foreground hover:bg-background/84",
-              )}
-            >
-              All regions
-            </button>
             {MARKETS.map((market) => {
               const active = marketFilter === market.id;
               return (
