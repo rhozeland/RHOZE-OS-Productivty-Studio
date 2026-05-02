@@ -56,6 +56,7 @@ import { ProfileRedirect } from "@/components/ProfileRedirect";
 import FlowModePage from "@/pages/FlowModePage";
 import LaunchRedirect from "@/pages/LaunchRedirect";
 import RewardsPage from "@/pages/RewardsPage";
+import VerificationPage from "@/pages/VerificationPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -275,6 +276,7 @@ const App = () => (
                 <Route path="/messages" element={<MessagesPage />} />
                 <Route path="/network" element={<Navigate to="/messages" replace />} />
                 <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/settings/verification" element={<VerificationPage />} />
                 <Route path="/admin" element={<AdminPage />} />
               </Route>
               <Route path="/boards/:id" element={<SmartboardPresentationPage />} />
