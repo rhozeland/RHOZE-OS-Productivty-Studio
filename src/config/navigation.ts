@@ -52,17 +52,16 @@ export const NAV_ITEMS: NavItem[] = [
   // v7: Stream — the unified social pillar. Conversations, offerings,
   // opportunities, events, spaces, works, project inquiries — everything
   // that used to live in Hub + Spaces + Projects now scrolls here as
-  // typed posts. Legacy /hub /spaces /studios /marketplace /creators
-  // /people redirect to /stream via explicit <Navigate> in App.tsx
-  // (NOT via matchPaths — those paths still have valid sub-routes like
-  // /spaces/events/:id that must keep resolving). matchPaths only lists
-  // bare legacy roots that have no live sub-routes.
+  // typed posts. Bare-root legacy redirects (/hub, /spaces, /studios,
+  // /marketplace, /creators, /people, /projects) are handled by explicit
+  // <Navigate> in App.tsx so their sub-routes (/spaces/events/:id,
+  // /studios/:id, /projects/:id, etc.) keep resolving. matchPaths is
+  // intentionally empty here.
   {
     id: "stream",
     label: "Stream",
     icon: Waves,
     path: "/stream",
-    matchPaths: ["/hub", "/spaces", "/marketplace", "/creators", "/people"],
   },
   // Inbox — DMs + inquiries + (next pass) inline-expanded project work.
   // Sits next to Stream so "did the artist reply?" is always one tap away.
