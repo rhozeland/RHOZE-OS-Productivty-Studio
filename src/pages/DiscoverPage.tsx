@@ -392,8 +392,39 @@ const DiscoverPage = () => {
         </section>
       )}
 
+      {/* ─── Cross-market region strip ─────────────────────────────── */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-sm uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-1.5">
+            <Globe2 className="h-3.5 w-3.5" /> By region
+          </h2>
+          <p className="text-[11px] text-muted-foreground hidden sm:block">
+            East ↔ West — discover across markets.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {MARKETS.map((m) => {
+            const active = marketFilter === m.id;
+            return (
+              <button
+                key={m.id}
+                onClick={() => setMarketFilter(m.id)}
+                className={cn(
+                  "rounded-full border px-3 py-1.5 text-xs transition-colors",
+                  active
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border/60 bg-card hover:border-foreground/40 text-foreground",
+                )}
+              >
+                {m.label}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       {/* ─── Trending Verified Artists (fan→artist swap funnel) ────── */}
-      <TrendingArtistsLane />
+      <TrendingArtistsLane marketFilter={marketFilter} />
 
       {/* ─── 5. Coins moving today ──────────────────────────────────── */}
       {coins && coins.length > 0 && (
