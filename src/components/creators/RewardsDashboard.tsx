@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { useRhozeBalance } from "@/hooks/useRhozeBalance";
 import ClaimRhozeButton from "@/components/ClaimRhozeButton";
 import RhozeClaimHistory from "@/components/RhozeClaimHistory";
+import RewardsLiveSections from "@/components/creators/RewardsLiveSections";
 import { Input } from "@/components/ui/input";
 import { useWallet } from "@solana/wallet-adapter-react";
 
@@ -240,6 +241,11 @@ const RewardsDashboard = () => {
           )}
         </motion.div>
       </div>
+
+      {/* ─── Live, account-scoped sections ───────────────────────────────
+          Verification status (wallet + Verified IP), pending rewards
+          in the admin queue, and upcoming reward-relevant events. */}
+      <RewardsLiveSections />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* How to earn */}
