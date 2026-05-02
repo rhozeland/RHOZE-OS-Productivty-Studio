@@ -37,21 +37,29 @@ import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 
 // ─── Tile shape ────────────────────────────────────────────────────────
-type TileKind = "drop" | "offering" | "opportunity" | "event" | "space" | "work";
+// Note: "work" + "opportunity" no longer exist as standalone tile kinds.
+//   - Verified Works are surfaced as a `verifiedSignature` badge on a Drop.
+//   - Open Calls (project_request listings) are folded into "offering" with
+//     an "Open Call" sub-label, since they live in the same marketplace.
+type TileKind = "drop" | "offering" | "event" | "space";
 
 interface MosaicTile {
   id: string;
   kind: TileKind;
+  /** Sub-classification within a kind (e.g. "Open Call" for offerings). */
+  variant?: string | null;
   title: string;
   subtitle?: string | null;
   description?: string | null;
+  category?: string | null;
   href: string;
   cover?: string | null;
   fileUrl?: string | null;
   linkUrl?: string | null;
   meta?: string | null;
   badge?: string | null;
-  signature?: string | null;
+  /** When set on a drop, surfaces the green Verified IP shield. */
+  verifiedSignature?: string | null;
   createdAt: string;
 }
 
@@ -88,12 +96,6 @@ const KIND_META: Record<
     tint: "from-sky-500/15 via-cyan-500/10 to-transparent",
     chipBg: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
   },
-  opportunity: {
-    label: "Open Call",
-    Icon: Megaphone,
-    tint: "from-violet-500/15 via-fuchsia-500/10 to-transparent",
-    chipBg: "bg-violet-500/15 text-violet-600 dark:text-violet-300",
-  },
   event: {
     label: "Event",
     Icon: CalendarDays,
@@ -106,13 +108,28 @@ const KIND_META: Record<
     tint: "from-emerald-500/15 via-teal-500/10 to-transparent",
     chipBg: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
   },
-  work: {
-    label: "Verified IP",
-    Icon: Shield,
-    tint: "from-emerald-500/15 via-lime-500/10 to-transparent",
-    chipBg: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
-  },
 };
+
+// Visual identity per offering category — drives the big icon + accent
+// color used on text-only offering/opportunity tiles. Kept in sync with
+// MarketplacePage's CATEGORIES.
+const CATEGORY_VISUAL: Record<string, { Icon: typeof Briefcase; accent: string; label: string }> = {
+  audio:   { Icon: Music,   accent: "hsl(280 60% 55%)", label: "Audio" },
+  music:   { Icon: Music,   accent: "hsl(280 60% 55%)", label: "Music" },
+  design:  { Icon: Palette, accent: "hsl(160 60% 50%)", label: "Design" },
+  photo:   { Icon: Camera,  accent: "hsl(35 90% 55%)",  label: "Photo" },
+  video:   { Icon: Video,   accent: "hsl(340 70% 55%)", label: "Video" },
+  writing: { Icon: PenTool, accent: "hsl(210 60% 55%)", label: "Writing" },
+  talent:  { Icon: Theater, accent: "hsl(50 80% 50%)",  label: "Talent" },
+};
+
+const getCategoryVisual = (cat?: string | null) =>
+  CATEGORY_VISUAL[(cat ?? "").toLowerCase()] ?? {
+    Icon: Briefcase,
+    accent: "hsl(var(--foreground))",
+    label: cat ?? "Offering",
+  };
+
 
 // Deterministic shuffle (Mulberry32 seeded by length) so order feels mixed
 // but doesn't dance on every render.
