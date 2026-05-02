@@ -415,6 +415,24 @@ function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
         <span className="truncate">sha256:{shortHash(work.content_hash)}</span>
       </div>
 
+      {work.gating?.enabled && (
+        <div className="flex items-center justify-between gap-2 rounded-md border border-border/50 bg-muted/30 px-2.5 py-1.5">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Lock className="h-3 w-3" />
+            Token-gated
+            {work.gating.min_tokens != null && (
+              <span>· ≥ {work.gating.min_tokens.toLocaleString()}</span>
+            )}
+          </div>
+          {!isOwner && (
+            <UnlockButton
+              workId={work.id}
+              threshold={work.gating.min_tokens ?? null}
+            />
+          )}
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-2 pt-1">
         {work.solana_signature ? (
           <a
@@ -447,16 +465,25 @@ function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
           <span className="text-xs text-muted-foreground">Not yet anchored</span>
         )}
 
-        {work.file_url && (
-          <a
-            href={work.file_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-          >
-            File <ExternalLink className="h-3 w-3" />
-          </a>
-        )}
+        <div className="flex items-center gap-2">
+          {isOwner && (
+            <TokenGateDialog
+              workId={work.id}
+              workTitle={work.title}
+              current={work.gating ?? null}
+            />
+          )}
+          {work.file_url && !work.gating?.enabled && (
+            <a
+              href={work.file_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+            >
+              File <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+        </div>
       </div>
     </article>
   );
