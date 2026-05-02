@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Palette, Flame, Radio, Plus, ExternalLink, Clock, ArrowRight, Link2, X } from "lucide-react";
+import { Palette, Radio, Plus, ExternalLink, Clock, Link2, X } from "lucide-react";
 
 const ROOM_DURATIONS = [
   { label: "1 hour", hours: 1 },
