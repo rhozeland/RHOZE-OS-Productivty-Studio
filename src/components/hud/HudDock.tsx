@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCreatorXP, getTitleForLevel } from "@/hooks/useCreatorXP";
 import { useCelebration } from "@/components/hud/CelebrationProvider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
 const NAV = [
