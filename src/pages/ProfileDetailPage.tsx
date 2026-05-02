@@ -10,7 +10,7 @@ import {
   Globe, CheckCircle, UserPlus, UserCheck, MessageSquare, MapPin, Clock,
   EyeOff, Loader2, Settings, Store, Star, ExternalLink, ShoppingBag,
   Sparkles, Image as ImageIcon, Play, Music, FileText, Award, Shield,
-  Zap, Coins, Calendar as CalendarIcon, User as UserIcon,
+  Zap, Coins, Calendar as CalendarIcon, User as UserIcon, FolderKanban,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -93,6 +93,19 @@ const ProfileDetailPage = () => {
     queryFn: async () => {
       const { data } = await supabase.from("flow_items")
         .select("id, title, file_url, link_url, category, content_type, description, created_at")
+        .eq("user_id", id!).order("created_at", { ascending: false }).limit(12);
+      return data ?? [];
+    },
+    enabled: !!id,
+  });
+
+  // "Building" — projects this user owns. RLS limits visibility to team
+  // members; for non-members the array is just empty (graceful).
+  const { data: buildingProjects } = useQuery({
+    queryKey: ["profile-building-projects", id],
+    queryFn: async () => {
+      const { data } = await supabase.from("projects")
+        .select("id, title, description, status, cover_color, categories, created_at")
         .eq("user_id", id!).order("created_at", { ascending: false }).limit(12);
       return data ?? [];
     },
