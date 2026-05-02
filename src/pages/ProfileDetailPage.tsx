@@ -697,50 +697,69 @@ const ProfileDetailPage = () => {
                 </button>
               )}
 
-              {/* Book / availability — opens calendar in modal */}
-              {profile.available && (
-                <button
-                  onClick={() => user ? setBookingOpen(true) : navigate("/auth")}
-                  className="group text-left rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-4 hover:border-foreground/30 transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <CalendarIcon className="h-4 w-4 text-primary" />
-                        <p className="text-sm font-semibold text-foreground">Book a session</p>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">They're open to work — pick a time that works for both of you.</p>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </button>
-              )}
+              {/* Book / availability — original slot now removed; Book card lives at top of grid */}
             </div>
 
-            {/* Listings inline — what they're offering, right next to Book a session */}
+            {/* Listings inline — what they're offering OR looking for */}
             {hasSellerContent && (
               <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
                 <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
-                  <ShoppingBag className="h-4 w-4 text-primary" /> Offerings
+                  <ShoppingBag className="h-4 w-4 text-primary" /> Offerings & requests
                 </h3>
                 <div className="space-y-2">
-                  {sellerListings!.slice(0, 5).map((listing: any) => (
-                    <button
-                      key={listing.id}
-                      onClick={() => navigate(`/creators/${listing.id}`)}
-                      className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{listing.title}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <Badge variant="outline" className="text-[9px] capitalize">{listing.category}</Badge>
-                          {listing.credits_price && <span className="text-[10px] font-semibold text-primary">{listing.credits_price} $RHOZE</span>}
-                          {listing.price && <span className="text-[10px] text-muted-foreground">${listing.price}</span>}
+                  {sellerListings!.slice(0, 5).map((listing: any) => {
+                    const isRequest = listing.listing_type === "project_request";
+                    return (
+                      <button
+                        key={listing.id}
+                        onClick={() => navigate(`/creators/${listing.id}`)}
+                        className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
+                      >
+                        <div
+                          className={cn(
+                            "h-11 w-11 rounded-lg flex items-center justify-center shrink-0 border",
+                            isRequest
+                              ? "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400"
+                              : "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                          )}
+                        >
+                          {isRequest ? <Search className="h-5 w-5" /> : <ShoppingBag className="h-5 w-5" />}
                         </div>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                    </button>
-                  ))}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "text-[9px] uppercase tracking-wide font-semibold",
+                                isRequest
+                                  ? "border-amber-500/40 text-amber-600 dark:text-amber-400"
+                                  : "border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
+                              )}
+                            >
+                              {isRequest ? "Looking for" : "Offering"}
+                            </Badge>
+                            {listing.category && (
+                              <Badge variant="outline" className="text-[9px] capitalize">
+                                {listing.category}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm font-medium text-foreground truncate">{listing.title}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {listing.credits_price && (
+                              <span className="text-[10px] font-semibold text-primary">
+                                {listing.credits_price} $RHOZE
+                              </span>
+                            )}
+                            {listing.price && (
+                              <span className="text-[10px] text-muted-foreground">${listing.price}</span>
+                            )}
+                          </div>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
