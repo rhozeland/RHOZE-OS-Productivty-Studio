@@ -16,6 +16,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
+import RegionChip from "@/components/profile/RegionChip";
+import { getRegion, type RegionMarket } from "@/lib/regions";
 import { ArrowRight, Coins, TrendingUp, Users } from "lucide-react";
 
 const initials = (name?: string | null) =>
@@ -27,7 +29,11 @@ const initials = (name?: string | null) =>
     .join("")
     .toUpperCase() || "·";
 
-const TrendingArtistsLane = () => {
+interface TrendingArtistsLaneProps {
+  marketFilter?: RegionMarket | "All";
+}
+
+const TrendingArtistsLane = ({ marketFilter = "All" }: TrendingArtistsLaneProps) => {
   const { data: items = [] } = useQuery({
     queryKey: ["discover-trending-artists-v2"],
     queryFn: async () => {
@@ -89,7 +95,7 @@ const TrendingArtistsLane = () => {
       const creatorIds = [...new Set(coins.map((c) => c.creator_id))];
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, display_name, username, avatar_url, headline, verification_status")
+        .select("user_id, display_name, username, avatar_url, headline, verification_status, region_code")
         .in("user_id", creatorIds);
       const verified = new Map(
         (profiles ?? [])
