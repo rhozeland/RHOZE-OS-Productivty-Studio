@@ -44,7 +44,7 @@ const ProjectDetailPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { canManage: canManageProject, isOwner: isProjectOwner } = useProjectRole(id);
+  const { canManage: canManageProject } = useProjectRole(id);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [editingHeader, setEditingHeader] = useState(false);
   const [editTitle, setEditTitle] = useState("");
