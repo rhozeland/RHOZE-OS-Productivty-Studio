@@ -370,8 +370,8 @@ const HubPage = () => {
             </div>
             <p className="text-xs text-muted-foreground italic">{activeLane.tagline}</p>
           </div>
-        </>
-      )}
+
+          {/* Tile-mode lane content (search + Happenings + lane grids) follows. */}
 
       {/* ─── Search ─────────────────────────────────────────────────── */}
       <div className="relative max-w-md">
@@ -854,6 +854,8 @@ const HubPage = () => {
             </div>
           )}
         </section>
+      )}
+        </>
       )}
 
       <CreateListingDialog open={createOpen} onOpenChange={setCreateOpen} />
