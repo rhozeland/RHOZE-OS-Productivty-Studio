@@ -68,12 +68,11 @@ const HudDock = () => {
       <div
         className={cn(
           "pointer-events-auto flex items-center gap-2 sm:gap-3 pl-2 pr-3 py-2 rounded-full",
-          "bg-[hsl(0_0%_8%/0.92)] dark:bg-[hsl(0_0%_5%/0.92)] backdrop-blur-2xl",
-          "border border-white/10 shadow-2xl shadow-black/40",
+          "bg-card/95 backdrop-blur-2xl border border-border shadow-2xl",
         )}
         style={{
           boxShadow:
-            "0 10px 40px -10px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.08)",
+            "0 12px 36px -12px hsl(var(--foreground) / 0.25), inset 0 1px 0 hsl(var(--background) / 0.4)",
         }}
       >
         {/* Gem orb — tier color radial gradient with iridescent shimmer */}
@@ -119,14 +118,14 @@ const HudDock = () => {
         {/* XP block — title + progress bar */}
         <div className="hidden sm:flex flex-col gap-0.5 min-w-[110px]">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[10px] font-body font-bold uppercase tracking-wider text-white/80">
+            <span className="text-[10px] font-body font-bold uppercase tracking-wider text-foreground/80">
               {title}
             </span>
-            <span className="text-[9px] font-body font-medium text-white/50 tabular-nums">
+            <span className="text-[9px] font-body font-medium text-muted-foreground tabular-nums">
               {totalXP}/{nextLevelXP}
             </span>
           </div>
-          <div className="relative h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+          <div className="relative h-1.5 w-full rounded-full bg-muted overflow-hidden">
             <motion.div
               key={progressPct}
               initial={{ width: 0 }}
@@ -135,14 +134,14 @@ const HudDock = () => {
               className="h-full rounded-full relative"
               style={{
                 background: `linear-gradient(90deg, hsl(${tierColor}), hsl(${tierColor} / 0.6))`,
-                boxShadow: `0 0 8px hsl(${tierColor} / 0.7)`,
+                boxShadow: `0 0 8px hsl(${tierColor} / 0.5)`,
               }}
             >
               <div
                 className="absolute inset-0 opacity-40"
                 style={{
                   background:
-                    "linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)",
+                    "linear-gradient(90deg, transparent, hsl(var(--background) / 0.6), transparent)",
                   animation: "gradient-shift 2s linear infinite",
                   backgroundSize: "200% 100%",
                 }}
@@ -152,7 +151,7 @@ const HudDock = () => {
         </div>
 
         {/* Divider */}
-        <div className="hidden sm:block h-7 w-px bg-white/10" />
+        <div className="hidden sm:block h-7 w-px bg-border" />
 
         {/* Streak chip */}
         <AnimatePresence>
@@ -161,10 +160,10 @@ const HudDock = () => {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              className="hidden md:flex items-center gap-1 px-2 py-1 rounded-full bg-orange-500/15 border border-orange-500/25"
+              className="hidden md:flex items-center gap-1 px-2 py-1 rounded-full bg-[hsl(var(--orange)/0.12)] border border-[hsl(var(--orange)/0.3)]"
             >
-              <Flame className="h-3 w-3 text-orange-400" />
-              <span className="text-[10px] font-bold font-body text-orange-200 tabular-nums">
+              <Flame className="h-3 w-3" style={{ color: "hsl(var(--orange))" }} />
+              <span className="text-[10px] font-bold font-body tabular-nums" style={{ color: "hsl(var(--orange))" }}>
                 {streak}d
               </span>
             </motion.div>
@@ -174,16 +173,16 @@ const HudDock = () => {
         {/* $RHOZE balance chip */}
         <Link
           to="/credits"
-          className="hidden md:flex items-center gap-1 px-2 py-1 rounded-full bg-pink-500/15 border border-pink-500/25 hover:bg-pink-500/25 transition-colors"
+          className="hidden md:flex items-center gap-1 px-2 py-1 rounded-full bg-[hsl(var(--pink)/0.15)] border border-[hsl(var(--pink)/0.35)] hover:bg-[hsl(var(--pink)/0.25)] transition-colors"
         >
-          <Coins className="h-3 w-3 text-pink-300" />
-          <span className="text-[10px] font-bold font-body text-pink-100 tabular-nums">
+          <Coins className="h-3 w-3" style={{ color: "hsl(var(--pink))" }} />
+          <span className="text-[10px] font-bold font-body tabular-nums text-foreground">
             {balance.toLocaleString()}
           </span>
         </Link>
 
         {/* Divider */}
-        <div className="hidden md:block h-7 w-px bg-white/10" />
+        <div className="hidden md:block h-7 w-px bg-border" />
 
         {/* Nav pills */}
         <div className="flex items-center gap-1">
@@ -206,8 +205,8 @@ const HudDock = () => {
                   className={cn(
                     "h-9 w-9 rounded-full flex items-center justify-center transition-colors",
                     active
-                      ? "bg-white/15 text-white"
-                      : "text-white/55 hover:text-white hover:bg-white/10",
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted",
                   )}
                 >
                   <Icon className="h-4 w-4" />
