@@ -139,6 +139,9 @@ const DiscoverPage = () => {
       {/* ─── Quick-drop composer ───────────────────────────────────── */}
       {user && <StreamComposer defaultType="text" />}
 
+      {/* ─── Creator Pass upgrade nudge ─────────────────────────────── */}
+      <CreatorPassUpgradeCta />
+
       {/* ─── Conversations mosaic — content + IP + seasonal events ─── */}
       <section className="space-y-4">
         <div>
