@@ -11,6 +11,7 @@ import { motion, useMotionTemplate, useMotionValue, useSpring, useTransform } fr
 import { supabase } from "@/integrations/supabase/client";
 import { REGIONS, type RegionMarket } from "@/lib/regions";
 import { MARKET_COLORS } from "./market-colors";
+import type { FeaturedSpotlight } from "./useDiscoverFeatured";
 
 // Approximate lat/lng for each region (good enough for a stylized pin).
 const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
@@ -48,6 +49,7 @@ const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
 interface DiscoverGlobeProps {
   marketFilter: RegionMarket | "All";
   onSelectMarket: (m: RegionMarket | "All") => void;
+  featuredSpotlights?: FeaturedSpotlight[];
   height?: number;
 }
 
@@ -63,9 +65,12 @@ const latLngToXY = (lat: number, lng: number) => {
   return { x, y };
 };
 
-const DiscoverGlobe = ({ marketFilter, onSelectMarket, height = 360 }: DiscoverGlobeProps) => {
+const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSpotlights = [], height = 360 }: DiscoverGlobeProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const dragState = useRef<{ startX: number; startRotation: number } | null>(null);
   const [hoveredCode, setHoveredCode] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [hasDragged, setHasDragged] = useState(false);
   const [width, setWidth] = useState(600);
   const rotate = useMotionValue(-14);
   const rotateSpring = useSpring(rotate, { stiffness: 40, damping: 18, mass: 1.2 });
@@ -83,6 +88,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, height = 360 }: DiscoverG
   }, []);
 
   useEffect(() => {
+    if (hasDragged) return;
     let direction = 1;
     const interval = window.setInterval(() => {
       const next = rotate.get() + direction * 6;
@@ -90,7 +96,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, height = 360 }: DiscoverG
       rotate.set(next);
     }, 2400);
     return () => window.clearInterval(interval);
-  }, []);
+  }, [hasDragged]);
 
   const { data: counts } = useQuery({
     queryKey: ["discover-region-counts"],
@@ -134,6 +140,47 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, height = 360 }: DiscoverG
     });
   }, [counts, hoveredCode, marketFilter]);
 
+  const spotlightMarkers = useMemo(() => {
+    const seenByCode = new Map<string, number>();
+
+    return featuredSpotlights
+      .map((spotlight) => {
+        const code = spotlight.region_code?.toUpperCase();
+        if (!code || !REGION_COORDS[code]) return null;
+
+        const coords = REGION_COORDS[code];
+        const { x, y } = latLngToXY(coords.lat, coords.lng);
+        const offsetIndex = seenByCode.get(code) ?? 0;
+        seenByCode.set(code, offsetIndex + 1);
+
+        return {
+          ...spotlight,
+          x: x + offsetIndex * 5,
+          y: y - 6 - offsetIndex * 5,
+        };
+      })
+      .filter(Boolean) as Array<FeaturedSpotlight & { x: number; y: number }>;
+  }, [featuredSpotlights]);
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    dragState.current = { startX: event.clientX, startRotation: rotate.get() };
+    setIsDragging(true);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragState.current) return;
+    const delta = event.clientX - dragState.current.startX;
+    const next = Math.max(-42, Math.min(42, dragState.current.startRotation + delta * 0.14));
+    rotate.set(next);
+  };
+
+  const handlePointerUp = () => {
+    if (!dragState.current) return;
+    dragState.current = null;
+    setIsDragging(false);
+    setHasDragged(true);
+  };
+
   return (
     <div
       ref={containerRef}
@@ -153,8 +200,12 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, height = 360 }: DiscoverG
 
       <div className="absolute inset-0 flex items-center justify-center px-4 py-5">
         <motion.div
-          className="relative aspect-square w-full max-w-[360px] sm:max-w-[420px]"
+          className="relative aspect-square w-full max-w-[340px] sm:max-w-[390px] cursor-grab active:cursor-grabbing"
           style={{ rotateY: rotateSpring, transformStyle: "preserve-3d" }}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
         >
           <div className="absolute inset-0 rounded-full border border-border/40 bg-background/10 backdrop-blur-sm shadow-[0_0_0_1px_hsl(var(--border)/0.18),0_30px_90px_hsl(var(--background)/0.6)]" />
           <motion.div className="absolute inset-[7%] rounded-full" style={{ background: glowBackground }} />
@@ -224,15 +275,41 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, height = 360 }: DiscoverG
               </g>
             ))}
           </svg>
+
+          <div className="absolute inset-[8%]">
+            {spotlightMarkers.map((spotlight) => (
+              <a
+                key={`${spotlight.kind}-${spotlight.id}`}
+                href={spotlight.href}
+                className="absolute -translate-x-1/2 -translate-y-1/2"
+                style={{ left: `${spotlight.x}%`, top: `${spotlight.y}%` }}
+              >
+                <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background/88 px-2 py-1 text-[10px] font-medium text-foreground shadow-md backdrop-blur-md">
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{
+                      backgroundColor:
+                        spotlight.kind === "artist"
+                          ? "hsl(330 81% 60%)"
+                          : spotlight.kind === "event"
+                            ? "hsl(38 92% 50%)"
+                            : "hsl(200 85% 60%)",
+                    }}
+                  />
+                  <span className="max-w-[7rem] truncate">{spotlight.title}</span>
+                </span>
+              </a>
+            ))}
+          </div>
         </motion.div>
       </div>
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background via-background/55 to-transparent" />
 
-      <div className="absolute left-4 top-4 max-w-[14rem]">
+      <div className="absolute left-4 top-4 z-10 max-w-[13rem] rounded-2xl border border-border/50 bg-background/72 px-3 py-2 backdrop-blur-md">
         <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Verified IP markets</p>
-        <p className="mt-2 text-sm text-foreground/80">
-          Tap a pulse to narrow the feed by region.
+        <p className="mt-1.5 text-sm text-foreground/80">
+          Drag to spin. Tap a pulse to narrow the feed.
         </p>
       </div>
 
@@ -240,7 +317,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, height = 360 }: DiscoverG
         const active = points.find((point) => point.code === hoveredCode);
         if (!active) return null;
         return (
-          <div className="absolute right-4 top-4 max-w-[13rem] rounded-2xl border border-border/60 bg-background/85 px-3 py-2 backdrop-blur-md shadow-lg">
+          <div className="absolute right-4 top-4 z-10 max-w-[13rem] rounded-2xl border border-border/60 bg-background/85 px-3 py-2 backdrop-blur-md shadow-lg">
             <p className="text-sm font-medium text-foreground">{active.flag} {active.label}</p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {active.count} {active.count === 1 ? "artist" : "artists"} · {active.market}
@@ -248,6 +325,12 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, height = 360 }: DiscoverG
           </div>
         );
       })()}
+
+      {isDragging && (
+        <div className="absolute bottom-16 left-1/2 z-10 -translate-x-1/2 rounded-full border border-border/60 bg-background/80 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground backdrop-blur-md">
+          Spinning
+        </div>
+      )}
     </div>
   );
 };
