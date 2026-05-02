@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { FeaturedSlide } from "./useDiscoverFeatured";
 import { ROLE_BY_ID } from "@/lib/creator-roles";
+import { avatarGradientFor } from "@/lib/avatar-gradient";
 
 const initials = (name?: string | null) =>
   (name ?? "")
