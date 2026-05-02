@@ -29,6 +29,7 @@ import LaunchpadIdlSettings from "@/components/launchpad/LaunchpadIdlSettings";
 import LaunchpadIdlVersions from "@/components/launchpad/LaunchpadIdlVersions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { REGIONS } from "@/lib/regions";
 
 /* ─── Section nav items ─── */
 const SECTIONS = [
