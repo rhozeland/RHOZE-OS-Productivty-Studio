@@ -192,6 +192,9 @@ const App = () => (
               {/* Public infrastructure thesis page (S33R-aligned framing) */}
               <Route path="/infrastructure" element={<InfrastructurePage />} />
 
+              {/* Email unsubscribe — fully public, accessible from email links */}
+              <Route path="/unsubscribe" element={<UnsubscribePage />} />
+
               {/* Explore pages — fully public */}
               <Route path="/explore/studios" element={<ExploreStudiosPage />} />
               <Route path="/explore/studios/:id" element={<ExploreStudiosPage />} />
