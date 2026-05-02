@@ -223,12 +223,48 @@ const RewardsPage = () => {
           ))}
         </section>
 
+        {/* FAQ — concise, tooltip-augmented */}
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <HelpCircle className="h-4 w-4 text-primary" />
+            <h2 className="font-display text-lg font-semibold text-foreground">
+              Quick FAQ
+            </h2>
+          </div>
+          <div className="rounded-2xl bg-card/60 backdrop-blur-sm border border-border/50 px-4 sm:px-5">
+            <Accordion type="single" collapsible className="w-full">
+              {FAQ.map((item, i) => (
+                <AccordionItem
+                  key={item.q}
+                  value={`item-${i}`}
+                  className="border-border/40 last:border-b-0"
+                >
+                  <AccordionTrigger className="text-sm font-medium text-foreground hover:no-underline text-left">
+                    {item.q}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+                    {renderAnswer(item)}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+          <p className="text-[11px] text-muted-foreground/70 px-1">
+            Still curious? Ping us in{" "}
+            <Link to="/inbox" className="underline underline-offset-2 hover:text-foreground">
+              Inbox
+            </Link>{" "}
+            — we read everything.
+          </p>
+        </section>
+
         {/* Existing RewardsDashboard — full catalog, balance, claim, history */}
         <section>
           <RewardsDashboard />
         </section>
       </div>
     </div>
+    </TooltipProvider>
   );
 };
 
