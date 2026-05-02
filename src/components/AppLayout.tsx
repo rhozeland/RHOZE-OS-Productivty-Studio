@@ -41,6 +41,8 @@ import { useNavShortcuts } from "@/hooks/useNavShortcuts";
 import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 import { NAV_SHORTCUTS, formatChord, formatLeader } from "@/lib/nav-shortcuts";
 import { REGISTERED_ROUTE_PATHS } from "@/App";
+import HudDock from "@/components/hud/HudDock";
+import { CelebrationProvider } from "@/components/hud/CelebrationProvider";
 
 const PAGES = [
   { name: "Home", path: "/discover", icon: FolderKanban },
@@ -223,6 +225,7 @@ const AppLayout = () => {
 
   return (
     <SidebarProvider defaultOpen={true}>
+      <CelebrationProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
@@ -363,11 +366,12 @@ const AppLayout = () => {
           <main className="flex-1 p-4 md:p-8 pb-8">
             <Outlet />
           </main>
-          {/* Bottom dock retired in v7 (post phase-2): navigation happens via the
-              left side nav + global ⌘K search. DockBar.tsx kept on disk for revert. */}
+          {/* HUD Dock — gamified player bar (level / XP / streak / $RHOZE / nav) */}
+          <HudDock />
 
         </div>
       </div>
+
 
       {/* Command palette search */}
       {/* Command palette search — Pages always visible; studios/listings/creators
@@ -438,6 +442,7 @@ const AppLayout = () => {
         </CommandList>
       </CommandDialog>
       {user && <UsernamePrompt />}
+      </CelebrationProvider>
     </SidebarProvider>
   );
 };
