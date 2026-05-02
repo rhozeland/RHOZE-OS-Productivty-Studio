@@ -649,6 +649,10 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
           <ProjectsInbox userId={user.id} />
         </TabsContent>
 
+        <TabsContent value="listings" className="mt-4">
+          <ListingsTab userId={user.id} />
+        </TabsContent>
+
         <TabsContent value="groups" className="mt-4">
           <CirclesTab />
         </TabsContent>
