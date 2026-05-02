@@ -564,6 +564,7 @@ const CreatorAvailabilityCalendar = ({
     edge: "top" | "bottom",
     e: React.PointerEvent
   ) => {
+    if (iv.id.startsWith("recurring-")) return; // recurring slots are managed by delete + re-add
     e.stopPropagation();
     e.preventDefault();
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
