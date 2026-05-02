@@ -245,21 +245,21 @@ const App = () => (
                 {/* Launchpad page is gone — coins are now profile-bound.
                     /launchpad redirects to the Hub; /launchpad/:id resolves
                     the coin's creator and forwards to their profile Coin tab. */}
-                <Route path="/launchpad" element={<Navigate to="/hub" replace />} />
+                <Route path="/launchpad" element={<Navigate to="/stream" replace />} />
                 <Route path="/launchpad/:id" element={<LaunchRedirect />} />
                 <Route path="/smartboards" element={<Navigate to="/projects" replace />} />
                 <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
                 <Route path="/drop-rooms" element={<Navigate to="/projects" replace />} />
                 <Route path="/drop-rooms/:id" element={<DropRoomDetailPage />} />
                 {/* Legacy Creators Hub → Hub */}
-                <Route path="/creators" element={<Navigate to="/hub" replace />} />
+                <Route path="/creators" element={<Navigate to="/stream" replace />} />
                 <Route path="/creators/:id" element={<ListingDetailPage />} />
                 {/* Legacy Marketplace → Hub (detail pages still resolve) */}
-                <Route path="/marketplace" element={<Navigate to="/hub" replace />} />
+                <Route path="/marketplace" element={<Navigate to="/stream" replace />} />
                 <Route path="/marketplace/:id" element={<ListingDetailPage />} />
                 <Route path="/seller" element={<Navigate to="/settings" replace />} />
                 <Route path="/inquiries" element={<Navigate to="/messages?tab=inquiries" replace />} />
-                <Route path="/profiles" element={<Navigate to="/hub" replace />} />
+                <Route path="/profiles" element={<Navigate to="/stream" replace />} />
                 <Route path="/profiles/:id" element={<ProfileDetailPage />} />
                 {/* Centralized legacy aliases — generated from NAV_ALIASES.
                     Add a new redirect by adding a `matchPaths` entry to a
