@@ -225,6 +225,7 @@ const AppLayout = () => {
 
   return (
     <SidebarProvider defaultOpen={true}>
+      <CelebrationProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
