@@ -11,6 +11,7 @@ import {
   EyeOff, Loader2, Settings, Store, Star, ExternalLink, ShoppingBag,
   Sparkles, Image as ImageIcon, Play, Music, FileText, Award, Shield,
   Zap, Coins, Calendar as CalendarIcon, User as UserIcon, FolderKanban,
+  Heart, ArrowRight,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -132,7 +133,39 @@ const ProfileDetailPage = () => {
     enabled: !!id,
   });
 
-  // On-chain reputation
+  // ─── Support tab data ───
+  const { data: profileCoin } = useQuery({
+    queryKey: ["profile-coin-ticker", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("coin_launches")
+        .select("id, ticker, name, image_url, status")
+        .eq("creator_id", id!)
+        .neq("status", "cancelled")
+        .order("work_id", { ascending: true, nullsFirst: true })
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!id,
+  });
+
+  const { data: upcomingEvents } = useQuery({
+    queryKey: ["profile-upcoming-events", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("events")
+        .select("id, slug, title, cover_url, starts_at, venue_name, is_online")
+        .eq("host_id", id!)
+        .eq("status", "published")
+        .gte("starts_at", new Date().toISOString())
+        .order("starts_at", { ascending: true })
+        .limit(3);
+      return data ?? [];
+    },
+    enabled: !!id,
+  });
   const { data: proofs } = useQuery({
     queryKey: ["contribution-proofs", id],
     queryFn: async () => {
@@ -362,8 +395,9 @@ const ProfileDetailPage = () => {
 
         {/* ─── Tabbed sections ─── */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="w-full grid grid-cols-6 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
+          <TabsList className="w-full grid grid-cols-7 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
             <TabsTrigger value="overview" className="text-xs gap-1.5"><UserIcon className="h-3 w-3" />Overview</TabsTrigger>
+            <TabsTrigger value="support" className="text-xs gap-1.5"><Heart className="h-3 w-3" />Support</TabsTrigger>
             <TabsTrigger value="coin" className="text-xs gap-1.5"><Coins className="h-3 w-3" />Coin</TabsTrigger>
             <TabsTrigger value="works" className="text-xs gap-1.5"><Sparkles className="h-3 w-3" />Works</TabsTrigger>
             <TabsTrigger value="listings" className="text-xs gap-1.5"><ShoppingBag className="h-3 w-3" />Listings</TabsTrigger>
@@ -503,6 +537,224 @@ const ProfileDetailPage = () => {
             </div>
           </motion.div>
         )}
+          </TabsContent>
+
+          {/* ─── Support tab — single answer to "how do I help this artist?" ─── */}
+          <TabsContent value="support" className="mt-5 space-y-4">
+            {/* Top intro */}
+            <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-card/80 to-accent/10 backdrop-blur-sm border border-border/50 p-5">
+              <div className="flex items-center gap-2 mb-1">
+                <Heart className="h-4 w-4 text-primary" />
+                <h2 className="font-display text-base font-semibold text-foreground">
+                  Ways to back {p.display_name || p.username || "this artist"}
+                </h2>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Pick whatever fits — every action helps and most of them earn you $RHOZE for showing up early.
+              </p>
+            </div>
+
+            {/* Action grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Follow */}
+              {!isOwnProfile && (
+                <button
+                  onClick={() => user ? followMutation.mutate() : navigate("/auth")}
+                  disabled={followMutation.isPending}
+                  className="group text-left rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-4 hover:border-foreground/30 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        {isFollowing ? <UserCheck className="h-4 w-4 text-primary" /> : <UserPlus className="h-4 w-4 text-primary" />}
+                        <p className="text-sm font-semibold text-foreground">{isFollowing ? "Following" : "Follow"}</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Show up in their early-supporter list. Free.</p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </button>
+              )}
+
+              {/* Message */}
+              {!isOwnProfile && (
+                <button
+                  onClick={() => user ? navigate(`/messages?to=${id}`) : navigate("/auth")}
+                  className="group text-left rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-4 hover:border-foreground/30 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4 text-primary" />
+                        <p className="text-sm font-semibold text-foreground">Send a message</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Hire, collab, or just say what their work means to you.</p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </button>
+              )}
+
+              {/* Coin */}
+              {profileCoin && (
+                <button
+                  onClick={() => handleTabChange("coin")}
+                  className="group text-left rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-4 hover:border-foreground/30 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Coins className="h-4 w-4 text-primary" />
+                        <p className="text-sm font-semibold text-foreground">Hold ${profileCoin.ticker}</p>
+                        {profileCoin.status === "graduated" && (
+                          <Badge variant="secondary" className="text-[9px]">Graduated</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1 truncate">
+                        Skin in the game. Trade their bonding-curve coin and ride the upside.
+                      </p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0" />
+                  </div>
+                </button>
+              )}
+
+              {/* Book / availability */}
+              {profile.available && (
+                <button
+                  onClick={() => handleTabChange("availability")}
+                  className="group text-left rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-4 hover:border-foreground/30 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <CalendarIcon className="h-4 w-4 text-primary" />
+                        <p className="text-sm font-semibold text-foreground">Book a session</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">They're open to work — pick a time that works for both of you.</p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </button>
+              )}
+            </div>
+
+            {/* Top offerings to buy */}
+            {hasSellerContent && (
+              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
+                    <ShoppingBag className="h-4 w-4 text-primary" /> Buy something
+                  </h3>
+                  <button
+                    onClick={() => handleTabChange("listings")}
+                    className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                  >
+                    All <ArrowRight className="h-3 w-3" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {sellerListings!.slice(0, 3).map((listing: any) => (
+                    <button
+                      key={listing.id}
+                      onClick={() => navigate(`/creators/${listing.id}`)}
+                      className="group text-left rounded-xl border border-border/60 bg-card/60 overflow-hidden hover:border-foreground/30 transition-colors"
+                    >
+                      {(listing.cover_url || listing.image_url) ? (
+                        <div className="aspect-[4/3] bg-muted overflow-hidden">
+                          <img src={listing.cover_url || listing.image_url} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        </div>
+                      ) : (
+                        <div className="aspect-[4/3] flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
+                          <Store className="h-5 w-5 text-muted-foreground/40" />
+                        </div>
+                      )}
+                      <div className="p-2.5">
+                        <p className="text-xs font-medium text-foreground truncate">{listing.title}</p>
+                        <Badge variant="outline" className="text-[9px] mt-1 capitalize">{listing.category}</Badge>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Upcoming events */}
+            {upcomingEvents && upcomingEvents.length > 0 && (
+              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
+                <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
+                  <CalendarIcon className="h-4 w-4 text-primary" /> Show up
+                </h3>
+                <div className="space-y-2">
+                  {upcomingEvents.map((e: any) => (
+                    <button
+                      key={e.id}
+                      onClick={() => navigate(`/events/${e.slug || e.id}`)}
+                      className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
+                    >
+                      {e.cover_url ? (
+                        <img src={e.cover_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
+                      ) : (
+                        <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
+                          <CalendarIcon className="h-5 w-5 text-muted-foreground/40" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{e.title}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {format(new Date(e.starts_at), "MMM d · h:mm a")}
+                          {e.is_online ? " · Online" : e.venue_name ? ` · ${e.venue_name}` : ""}
+                        </p>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Off-platform support */}
+            {(p.portfolio_url || p.instagram_url || p.tiktok_url || p.twitter_url || p.youtube_url) && (
+              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
+                <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
+                  <Globe className="h-4 w-4 text-primary" /> Find them off-platform
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {p.portfolio_url && (
+                    <a href={p.portfolio_url} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-border bg-card/60 hover:border-foreground/30 transition-colors">
+                      <Globe className="h-3 w-3" /> Portfolio <ExternalLink className="h-3 w-3 opacity-50" />
+                    </a>
+                  )}
+                  {p.instagram_url && (
+                    <a href={p.instagram_url} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-border bg-card/60 hover:border-foreground/30 transition-colors">
+                      Instagram <ExternalLink className="h-3 w-3 opacity-50" />
+                    </a>
+                  )}
+                  {p.tiktok_url && (
+                    <a href={p.tiktok_url} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-border bg-card/60 hover:border-foreground/30 transition-colors">
+                      TikTok <ExternalLink className="h-3 w-3 opacity-50" />
+                    </a>
+                  )}
+                  {p.twitter_url && (
+                    <a href={p.twitter_url} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-border bg-card/60 hover:border-foreground/30 transition-colors">
+                      X <ExternalLink className="h-3 w-3 opacity-50" />
+                    </a>
+                  )}
+                  {p.youtube_url && (
+                    <a href={p.youtube_url} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-border bg-card/60 hover:border-foreground/30 transition-colors">
+                      YouTube <ExternalLink className="h-3 w-3 opacity-50" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Empty fallback if nothing surfaces */}
+            {isOwnProfile && !hasSellerContent && !profileCoin && !upcomingEvents?.length && (
+              <div className="rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
+                Add an offering, launch your coin, or post an event so people have something to back.
+              </div>
+            )}
           </TabsContent>
 
           {/* ─── Coin tab ─── */}
