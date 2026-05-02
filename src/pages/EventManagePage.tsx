@@ -23,6 +23,8 @@ import {
   ScanLine,
   Radio,
   Search,
+  Image as ImageIcon,
+  Settings,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,7 +35,9 @@ import { Label } from "@/components/ui/label";
 import { shortHash } from "@/lib/content-hash";
 import QrCheckInScanner from "@/components/events/QrCheckInScanner";
 import EventCollaborators from "@/components/events/EventCollaborators";
+import EventMediaManager from "@/components/events/EventMediaManager";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const EventManagePage = () => {
   const { id } = useParams<{ id: string }>();
@@ -356,25 +360,28 @@ const EventManagePage = () => {
     .length;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <Link
-        to={`/spaces/events/${ev.id}`}
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back to event
-      </Link>
-
-      <div>
-        <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-1.5">
-          Manage
-        </p>
-        <h1 className="font-display text-3xl font-bold tracking-tight">
-          {ev.title}
-        </h1>
-        <p className="text-muted-foreground text-sm mt-1.5">
-          {format(new Date(ev.starts_at), "EEE, MMM d · h:mm a")} ·{" "}
-          <span className="capitalize">{ev.status}</span>
-        </p>
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3 min-w-0">
+          <Link to={`/spaces/events/${ev.id}`}>
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div className="min-w-0">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
+              Manage Event
+            </h1>
+            <p className="text-sm text-muted-foreground truncate">
+              {ev.title} · {format(new Date(ev.starts_at), "EEE, MMM d · h:mm a")}
+            </p>
+          </div>
+        </div>
+        <Button asChild variant="outline" size="sm" className="rounded-full gap-1.5">
+          <Link to={`/spaces/events/${ev.id}`}>
+            <Settings className="h-3.5 w-3.5" /> View Event
+          </Link>
+        </Button>
       </div>
 
       {/* Snapshot */}
@@ -422,177 +429,217 @@ const EventManagePage = () => {
         </div>
       )}
 
-      {/* Team — host + collaborators */}
-      {isHost && <EventCollaborators eventId={ev.id} hostId={ev.host_id} />}
+      <Tabs defaultValue="details">
+        <TabsList className="flex-wrap">
+          <TabsTrigger value="details" className="gap-1.5">
+            <Settings className="h-3.5 w-3.5" /> Details
+          </TabsTrigger>
+          <TabsTrigger value="media" className="gap-1.5">
+            <ImageIcon className="h-3.5 w-3.5" /> Media
+          </TabsTrigger>
+          {isHost && (
+            <TabsTrigger value="team" className="gap-1.5">
+              <Plus className="h-3.5 w-3.5" /> Team
+            </TabsTrigger>
+          )}
+          <TabsTrigger value="tickets" className="gap-1.5">
+            <Plus className="h-3.5 w-3.5" /> Tickets
+          </TabsTrigger>
+          <TabsTrigger value="attendees" className="gap-1.5">
+            <Radio className="h-3.5 w-3.5" /> Attendees
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Tiers */}
-      <section className="space-y-3">
-        <h2 className="font-display text-lg font-bold tracking-tight">
-          Ticket tiers
-        </h2>
-        <div className="space-y-2">
-          {(tiers ?? []).map((t: any) => (
-            <div
-              key={t.id}
-              className="rounded-xl bg-card border border-border p-4 flex items-center justify-between gap-3"
-            >
-              <div>
-                <p className="font-medium">{t.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {Number(t.price_usd) > 0 && `$${t.price_usd} USD`}
-                  {Number(t.price_usd) > 0 && Number(t.price_rhoze) > 0 && " · "}
-                  {Number(t.price_rhoze) > 0 && `${t.price_rhoze} $RHOZE`}
-                  {!Number(t.price_usd) && !Number(t.price_rhoze) && "Free"}
-                  {" · "}
-                  {t.quantity_sold}
-                  {t.quantity_total ? ` / ${t.quantity_total}` : ""} sold
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="rounded-xl border border-dashed border-border p-4 space-y-3">
-          <div className="flex items-center gap-2">
-            <Plus className="h-4 w-4 text-primary" />
-            <p className="font-medium text-sm">Add a paid tier</p>
+        <TabsContent value="details" className="space-y-4 mt-4">
+          <div className="surface-card p-6 space-y-3">
+            <h2 className="font-display text-lg font-bold tracking-tight">Snapshot</h2>
+            <p className="text-sm text-muted-foreground">
+              Quick view of attendance, capacity, and event proof state.
+            </p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <div className="space-y-1.5 col-span-2 sm:col-span-1">
-              <Label className="text-xs">Name</Label>
-              <Input value={tierName} onChange={(e) => setTierName(e.target.value)} placeholder="GA / VIP" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">USD</Label>
-              <Input type="number" min="0" value={tierUsd} onChange={(e) => setTierUsd(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">$RHOZE</Label>
-              <Input type="number" min="0" value={tierRhoze} onChange={(e) => setTierRhoze(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Quantity</Label>
-              <Input type="number" min="1" value={tierQty} onChange={(e) => setTierQty(e.target.value)} placeholder="∞" />
-            </div>
-          </div>
-          <Button
-            className="rounded-full"
-            size="sm"
-            disabled={addTier.isPending}
-            onClick={() => addTier.mutate()}
-          >
-            Add tier
-          </Button>
-          <p className="text-[11px] text-muted-foreground">
-            Pricing is saved now. Paid checkout (USD via Square, $RHOZE on-chain)
-            ships in the next pass.
-          </p>
-        </div>
-      </section>
+        </TabsContent>
 
-      {/* Attendees */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            <h2 className="font-display text-lg font-bold tracking-tight">Attendees</h2>
-            <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-emerald-500">
-              <Radio className="h-3 w-3 animate-pulse" /> Live
-            </span>
-          </div>
-          <Button
-            size="sm"
-            className="rounded-full gap-1.5"
-            onClick={() => setScannerOpen(true)}
-          >
-            <ScanLine className="h-4 w-4" /> Scan QR
-          </Button>
-        </div>
-
-        {/* Manual lookup — paste a ticket id or qr_token */}
-        <div className="rounded-xl border border-dashed border-border p-3 flex items-center gap-2">
-          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
-          <Input
-            value={lookupQuery}
-            onChange={(e) => setLookupQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleManualLookup();
-              }
+        <TabsContent value="media" className="space-y-4 mt-4">
+          <EventMediaManager
+            eventId={ev.id}
+            coverUrl={ev.cover_url}
+            title={ev.title}
+            onUpdate={() => {
+              qc.invalidateQueries({ queryKey: ["event-manage", id] });
+              qc.invalidateQueries({ queryKey: ["event", id] });
             }}
-            placeholder="Paste ticket id or QR token…"
-            className="h-9 border-0 bg-transparent focus-visible:ring-0 px-1 font-mono text-xs"
           />
-          <Button
-            size="sm"
-            variant="outline"
-            className="rounded-full"
-            disabled={lookupBusy || checkIn.isPending || !lookupQuery.trim()}
-            onClick={handleManualLookup}
-          >
-            {lookupBusy ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              "Check in"
-            )}
-          </Button>
-        </div>
+        </TabsContent>
 
-        {(tickets ?? []).length === 0 ? (
-          <p className="text-sm text-muted-foreground">No tickets yet.</p>
-        ) : (
-          <div className="space-y-2">
-            {(tickets ?? []).map((t: any) => {
-              const name =
-                t.holder?.display_name ||
-                t.holder?.username ||
-                `Guest ${t.qr_token.slice(3, 7)}`;
-              const initials =
-                (name as string)
-                  .split(/\s+/)
-                  .map((c: string) => c[0])
-                  .filter(Boolean)
-                  .slice(0, 2)
-                  .join("")
-                  .toUpperCase() || "·";
-              return (
+        {isHost && (
+          <TabsContent value="team" className="space-y-4 mt-4">
+            <EventCollaborators eventId={ev.id} hostId={ev.host_id} />
+          </TabsContent>
+        )}
+
+        <TabsContent value="tickets" className="space-y-4 mt-4">
+          <section className="space-y-3">
+            <h2 className="font-display text-lg font-bold tracking-tight">Ticket tiers</h2>
+            <div className="space-y-2">
+              {(tiers ?? []).map((t: any) => (
                 <div
                   key={t.id}
-                  className="rounded-xl bg-card border border-border p-3 flex items-center justify-between gap-3 text-sm"
+                  className="rounded-xl bg-card border border-border p-4 flex items-center justify-between gap-3"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Avatar className="h-9 w-9 shrink-0">
-                      <AvatarImage src={t.holder?.avatar_url ?? undefined} />
-                      <AvatarFallback>{initials}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{name}</p>
-                      <p className="text-[11px] text-muted-foreground capitalize">
-                        {t.status} · {format(new Date(t.issued_at), "MMM d, h:mm a")}
-                      </p>
-                    </div>
+                  <div>
+                    <p className="font-medium">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {Number(t.price_usd) > 0 && `$${t.price_usd} USD`}
+                      {Number(t.price_usd) > 0 && Number(t.price_rhoze) > 0 && " · "}
+                      {Number(t.price_rhoze) > 0 && `${t.price_rhoze} $RHOZE`}
+                      {!Number(t.price_usd) && !Number(t.price_rhoze) && "Free"}
+                      {" · "}
+                      {t.quantity_sold}
+                      {t.quantity_total ? ` / ${t.quantity_total}` : ""} sold
+                    </p>
                   </div>
-                  {t.status === "checked_in" ? (
-                    <span className="inline-flex items-center gap-1 text-xs text-emerald-500">
-                      <CheckCircle2 className="h-3.5 w-3.5" /> In
-                    </span>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="rounded-full"
-                      disabled={checkIn.isPending}
-                      onClick={() => checkIn.mutate(t.id)}
-                    >
-                      Check in
-                    </Button>
-                  )}
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+              ))}
+            </div>
+
+            <div className="rounded-xl border border-dashed border-border p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Plus className="h-4 w-4 text-primary" />
+                <p className="font-medium text-sm">Add a paid tier</p>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                  <Label className="text-xs">Name</Label>
+                  <Input value={tierName} onChange={(e) => setTierName(e.target.value)} placeholder="GA / VIP" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">USD</Label>
+                  <Input type="number" min="0" value={tierUsd} onChange={(e) => setTierUsd(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">$RHOZE</Label>
+                  <Input type="number" min="0" value={tierRhoze} onChange={(e) => setTierRhoze(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Quantity</Label>
+                  <Input type="number" min="1" value={tierQty} onChange={(e) => setTierQty(e.target.value)} placeholder="∞" />
+                </div>
+              </div>
+              <Button
+                className="rounded-full"
+                size="sm"
+                disabled={addTier.isPending}
+                onClick={() => addTier.mutate()}
+              >
+                Add tier
+              </Button>
+              <p className="text-[11px] text-muted-foreground">
+                Pricing is saved now. Paid checkout (USD via Square, $RHOZE on-chain) ships in the next pass.
+              </p>
+            </div>
+          </section>
+        </TabsContent>
+
+        <TabsContent value="attendees" className="space-y-4 mt-4">
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <h2 className="font-display text-lg font-bold tracking-tight">Attendees</h2>
+                <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-emerald-500">
+                  <Radio className="h-3 w-3 animate-pulse" /> Live
+                </span>
+              </div>
+              <Button
+                size="sm"
+                className="rounded-full gap-1.5"
+                onClick={() => setScannerOpen(true)}
+              >
+                <ScanLine className="h-4 w-4" /> Scan QR
+              </Button>
+            </div>
+
+            <div className="rounded-xl border border-dashed border-border p-3 flex items-center gap-2">
+              <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+              <Input
+                value={lookupQuery}
+                onChange={(e) => setLookupQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleManualLookup();
+                  }
+                }}
+                placeholder="Paste ticket id or QR token…"
+                className="h-9 border-0 bg-transparent focus-visible:ring-0 px-1 font-mono text-xs"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-full"
+                disabled={lookupBusy || checkIn.isPending || !lookupQuery.trim()}
+                onClick={handleManualLookup}
+              >
+                {lookupBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Check in"}
+              </Button>
+            </div>
+
+            {(tickets ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground">No tickets yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {(tickets ?? []).map((t: any) => {
+                  const name =
+                    t.holder?.display_name ||
+                    t.holder?.username ||
+                    `Guest ${t.qr_token.slice(3, 7)}`;
+                  const initials =
+                    (name as string)
+                      .split(/\s+/)
+                      .map((c: string) => c[0])
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .join("")
+                      .toUpperCase() || "·";
+                  return (
+                    <div
+                      key={t.id}
+                      className="rounded-xl bg-card border border-border p-3 flex items-center justify-between gap-3 text-sm"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Avatar className="h-9 w-9 shrink-0">
+                          <AvatarImage src={t.holder?.avatar_url ?? undefined} />
+                          <AvatarFallback>{initials}</AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{name}</p>
+                          <p className="text-[11px] text-muted-foreground capitalize">
+                            {t.status} · {format(new Date(t.issued_at), "MMM d, h:mm a")}
+                          </p>
+                        </div>
+                      </div>
+                      {t.status === "checked_in" ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-emerald-500">
+                          <CheckCircle2 className="h-3.5 w-3.5" /> In
+                        </span>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="rounded-full"
+                          disabled={checkIn.isPending}
+                          onClick={() => checkIn.mutate(t.id)}
+                        >
+                          Check in
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </TabsContent>
+      </Tabs>
 
       <QrCheckInScanner
         open={scannerOpen}
