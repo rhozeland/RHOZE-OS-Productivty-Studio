@@ -375,6 +375,10 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
     () => [-90, -45, 0, 45, 90].map((longitude) => buildLongitudePath(longitude, rotation)).filter(Boolean),
     [rotation],
   );
+  const continentPaths = useMemo(
+    () => CONTINENTS.map((c) => ({ name: c.name, d: buildContinentPath(c.points, rotation) })).filter((c) => c.d),
+    [rotation],
+  );
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     event.preventDefault();
