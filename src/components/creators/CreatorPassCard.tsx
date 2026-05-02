@@ -144,6 +144,29 @@ const CreatorPassCard = () => {
     enabled: !!user,
   });
 
+  // ─── Activity counts → activity-based tier eligibility ───
+  const { data: activityCounts } = useQuery({
+    queryKey: ["tier-activity", user?.id],
+    queryFn: async () => {
+      const sb = supabase as any;
+      const [posts, projects, listings, events] = await Promise.all([
+        sb.from("works").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
+        sb.from("projects").select("id", { count: "exact", head: true }).eq("user_id", user!.id).eq("status", "completed"),
+        sb.from("listings").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
+        sb.from("events").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
+      ]);
+      return {
+        posts: (posts?.count as number) ?? 0,
+        projects: (projects?.count as number) ?? 0,
+        listings: (listings?.count as number) ?? 0,
+        events: (events?.count as number) ?? 0,
+        // Successful interactions: approved reward txns proxy (bookings, support, milestones all flow through rewards)
+        interactions: xpData?.txCount ?? 0,
+      };
+    },
+    enabled: !!user && xpData !== undefined,
+  });
+
   const totalXP = xpData?.totalXP ?? 0;
   const currentLevel = LEVELS.reduce((acc, l) => (totalXP >= l.xp ? l : acc), LEVELS[0]);
   const nextLevel = LEVELS.find((l) => l.xp > totalXP) ?? LEVELS[LEVELS.length - 1];
@@ -151,12 +174,12 @@ const CreatorPassCard = () => {
     ? Math.min(100, ((totalXP - currentLevel.xp) / (nextLevel.xp - currentLevel.xp)) * 100)
     : 100;
 
-  // Determine effective tier: max of subscription tier and token-holding tier
-  const LEGACY_MAP: Record<string, string> = { bronze: "spark", gold: "bloom", diamond: "glow", prism: "play" };
-  const subTier = credits?.tier ? (LEGACY_MAP[credits.tier] || credits.tier) : "spark";
-  const holdTier = tokenInfo ? getTokenTier(tokenInfo.balance) : "spark";
-  const TIER_RANK: Record<string, number> = { spark: 0, bloom: 1, glow: 2, play: 3 };
-  const effectiveTier = (TIER_RANK[holdTier] ?? 0) >= (TIER_RANK[subTier] ?? 0) ? holdTier : subTier;
+  // Effective tier = max(subscription, $RHOZE hold, activity)
+  const LEGACY_MAP: Record<string, TierId> = { bronze: "spark", gold: "bloom", diamond: "glow", prism: "play" };
+  const subTier: TierId = credits?.tier ? ((LEGACY_MAP[credits.tier] || credits.tier) as TierId) : "spark";
+  const holdTier: TierId = tokenInfo ? (getHoldTier(tokenInfo.balance) as TierId) : "spark";
+  const activityTier: TierId = activityCounts ? getActivityTier(activityCounts) : "spark";
+  const effectiveTier = getEffectiveTier(subTier, holdTier, activityTier);
   const gradient = TIER_GRADIENTS[effectiveTier] || TIER_GRADIENTS.spark;
 
   if (!user) return null;
