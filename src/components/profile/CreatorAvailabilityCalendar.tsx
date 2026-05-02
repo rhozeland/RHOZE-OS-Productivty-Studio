@@ -79,6 +79,14 @@ interface BookingRow {
   status: string;
 }
 
+interface RecurringRow {
+  id: string;
+  user_id: string;
+  weekday: number; // 0 = Mon (matches our weekStartsOn:1 layout)
+  start_minute: number;
+  end_minute: number;
+}
+
 const snap = (m: number) => Math.round(m / SNAP_MIN) * SNAP_MIN;
 const clamp = (m: number) => Math.max(DAY_START_MIN, Math.min(DAY_END_MIN, m));
 
