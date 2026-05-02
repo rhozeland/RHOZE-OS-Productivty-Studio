@@ -80,6 +80,20 @@ const EventDetailPage = () => {
     enabled: !!id && !!user,
   });
 
+  const { data: isCollaborator } = useQuery({
+    queryKey: ["event-is-collab", id, user?.id],
+    enabled: !!id && !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("event_collaborators")
+        .select("id")
+        .eq("event_id", id!)
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return !!data;
+    },
+  });
+
   const rsvpMutation = useMutation({
     mutationFn: async (tierId: string) => {
       if (!user) throw new Error("Sign in to RSVP");
@@ -138,6 +152,7 @@ const EventDetailPage = () => {
   }
 
   const isHost = user?.id === ev.host_id;
+  const canManage = isHost || isCollaborator;
   const start = new Date(ev.starts_at);
   const end = new Date(ev.ends_at);
 
@@ -238,7 +253,7 @@ const EventDetailPage = () => {
             </div>
           )}
 
-          {isHost && (
+          {canManage && (
             <div className="pt-2">
               <Link to={`/spaces/events/${ev.id}/manage`}>
                 <Button variant="outline" size="sm" className="rounded-full gap-1.5">

@@ -364,7 +364,24 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
   const spotlightMarkersRef = useRef<SpotlightMarker[]>([]);
   spotlightMarkersRef.current = spotlightMarkers;
 
-  const activeSpotlight = spotlightMarkers.find((marker) => marker.key === activeSpotlightKey) ?? spotlightMarkers[0] ?? null;
+  const allSpotlights = useMemo(() => {
+    return featuredSlides.map((slide) => {
+      const code = slide.region_code?.toUpperCase() ?? null;
+      return {
+        ...slide,
+        key: `${slide.kind}-${slide.id}`,
+        region_code: code,
+        color: typeColorMap[slide.kind],
+      };
+    });
+  }, [featuredSlides]);
+
+  const activeSpotlight =
+    spotlightMarkers.find((marker) => marker.key === activeSpotlightKey) ??
+    (allSpotlights.find((s) => s.key === activeSpotlightKey) as any) ??
+    spotlightMarkers[0] ??
+    (allSpotlights[0] as any) ??
+    null;
   const hoveredRegion = points.find((point) => point.code === hoveredCode) ?? null;
 
   const latitudePaths = useMemo(
@@ -569,18 +586,6 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
           </div>
 
           <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => onSelectMarket("All")}
-              className={cn(
-                "rounded-full border px-3 py-1.5 text-[11px] font-medium backdrop-blur transition-colors",
-                marketFilter === "All"
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border/45 bg-background/68 text-foreground hover:bg-background/84",
-              )}
-            >
-              All regions
-            </button>
             {MARKETS.map((market) => {
               const active = marketFilter === market.id;
               return (
@@ -702,7 +707,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
           </div>
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-1">
-            {spotlightMarkers.map((marker) => {
+            {allSpotlights.map((marker: any) => {
               const active = marker.key === activeSpotlight?.key;
               return (
                 <button

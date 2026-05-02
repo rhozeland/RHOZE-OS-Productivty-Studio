@@ -32,6 +32,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { shortHash } from "@/lib/content-hash";
 import QrCheckInScanner from "@/components/events/QrCheckInScanner";
+import EventCollaborators from "@/components/events/EventCollaborators";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const EventManagePage = () => {
   const { id } = useParams<{ id: string }>();
@@ -75,9 +77,33 @@ const EventManagePage = () => {
         .eq("event_id", id!)
         .order("issued_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      const rows = data ?? [];
+      const ids = Array.from(new Set(rows.map((t: any) => t.holder_id)));
+      if (ids.length === 0) return rows;
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, username, avatar_url")
+        .in("user_id", ids);
+      const profMap = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
+      return rows.map((t: any) => ({ ...t, holder: profMap.get(t.holder_id) ?? null }));
     },
     enabled: !!id,
+  });
+
+  // Is the current user allowed to manage this event? (host or collaborator)
+  const { data: isManager } = useQuery({
+    queryKey: ["event-can-manage", id, user?.id],
+    enabled: !!id && !!user,
+    queryFn: async () => {
+      if (!user) return false;
+      const { data } = await supabase
+        .from("event_collaborators")
+        .select("id")
+        .eq("event_id", id!)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return !!data;
+    },
   });
 
   const [tierName, setTierName] = useState("");
@@ -320,8 +346,10 @@ const EventManagePage = () => {
   }
 
   if (!ev) return <Navigate to="/spaces?tab=events" replace />;
-  if (ev.host_id !== user?.id)
+  const isHost = ev.host_id === user?.id;
+  if (!isHost && !isManager) {
     return <Navigate to={`/spaces/events/${ev.id}`} replace />;
+  }
 
   const issued = (tickets ?? []).length;
   const checkedIn = (tickets ?? []).filter((t: any) => t.status === "checked_in")
@@ -393,6 +421,9 @@ const EventManagePage = () => {
           )}
         </div>
       )}
+
+      {/* Team — host + collaborators */}
+      {isHost && <EventCollaborators eventId={ev.id} hostId={ev.host_id} />}
 
       {/* Tiers */}
       <section className="space-y-3">
@@ -511,36 +542,54 @@ const EventManagePage = () => {
           <p className="text-sm text-muted-foreground">No tickets yet.</p>
         ) : (
           <div className="space-y-2">
-            {(tickets ?? []).map((t: any) => (
-              <div
-                key={t.id}
-                className="rounded-xl bg-card border border-border p-3 flex items-center justify-between gap-3 text-sm"
-              >
-                <div>
-                  <p className="font-mono text-xs text-foreground">
-                    {t.qr_token.slice(0, 14)}…
-                  </p>
-                  <p className="text-[11px] text-muted-foreground capitalize">
-                    {t.status} · {format(new Date(t.issued_at), "MMM d, h:mm a")}
-                  </p>
+            {(tickets ?? []).map((t: any) => {
+              const name =
+                t.holder?.display_name ||
+                t.holder?.username ||
+                `Guest ${t.qr_token.slice(3, 7)}`;
+              const initials =
+                (name as string)
+                  .split(/\s+/)
+                  .map((c: string) => c[0])
+                  .filter(Boolean)
+                  .slice(0, 2)
+                  .join("")
+                  .toUpperCase() || "·";
+              return (
+                <div
+                  key={t.id}
+                  className="rounded-xl bg-card border border-border p-3 flex items-center justify-between gap-3 text-sm"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar className="h-9 w-9 shrink-0">
+                      <AvatarImage src={t.holder?.avatar_url ?? undefined} />
+                      <AvatarFallback>{initials}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{name}</p>
+                      <p className="text-[11px] text-muted-foreground capitalize">
+                        {t.status} · {format(new Date(t.issued_at), "MMM d, h:mm a")}
+                      </p>
+                    </div>
+                  </div>
+                  {t.status === "checked_in" ? (
+                    <span className="inline-flex items-center gap-1 text-xs text-emerald-500">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> In
+                    </span>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-full"
+                      disabled={checkIn.isPending}
+                      onClick={() => checkIn.mutate(t.id)}
+                    >
+                      Check in
+                    </Button>
+                  )}
                 </div>
-                {t.status === "checked_in" ? (
-                  <span className="inline-flex items-center gap-1 text-xs text-emerald-500">
-                    <CheckCircle2 className="h-3.5 w-3.5" /> In
-                  </span>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="rounded-full"
-                    disabled={checkIn.isPending}
-                    onClick={() => checkIn.mutate(t.id)}
-                  >
-                    Check in
-                  </Button>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
