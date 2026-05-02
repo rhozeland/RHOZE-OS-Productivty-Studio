@@ -303,12 +303,10 @@ const ProjectThread = ({
   project,
   userId,
   onBack,
-  onOpenFull,
 }: {
   project: Project;
   userId: string;
   onBack: () => void;
-  onOpenFull: () => void;
 }) => {
   const queryClient = useQueryClient();
   const [text, setText] = useState("");
@@ -404,15 +402,23 @@ const ProjectThread = ({
         >
           <LinkIcon className="h-3 w-3" /> Copy link
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="rounded-full gap-1.5 text-xs"
-          onClick={onOpenFull}
-        >
-          Open full <ExternalLink className="h-3 w-3" />
-        </Button>
       </div>
+
+      {/* Pinned roadmap shortcut — sits right under the status row so the
+          full project surface (roadmap, vault, splits, tools) is always one
+          tap away without cluttering the thread with collapsible panels. */}
+      <Link
+        to={`/projects/${project.id}`}
+        className="flex items-center justify-between gap-3 border-b border-border bg-muted/30 px-4 md:px-6 py-2.5 hover:bg-muted/50 transition-colors"
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <ListTree className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <span className="text-xs text-muted-foreground truncate">
+            Open project workspace — roadmap, vault, splits, tools
+          </span>
+        </div>
+        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+      </Link>
 
       <ScrollArea className="flex-1">
         <div className="p-4 md:p-6 space-y-4">
