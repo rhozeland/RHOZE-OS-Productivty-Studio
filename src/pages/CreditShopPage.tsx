@@ -290,7 +290,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
         <TabsList>
           <TabsTrigger value="pass" className="gap-1.5"><Award className="h-3.5 w-3.5" /> My Pass</TabsTrigger>
           <TabsTrigger value="shop" className="gap-1.5"><Coins className="h-3.5 w-3.5" /> Plans</TabsTrigger>
-          <TabsTrigger value="how" className="gap-1.5"><Info className="h-3.5 w-3.5" /> How It Works</TabsTrigger>
+          <TabsTrigger value="how" className="gap-1.5"><Info className="h-3.5 w-3.5" /> Rewards</TabsTrigger>
           <TabsTrigger value="works" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Verified IP</TabsTrigger>
           <TabsTrigger value="purchases" className="gap-1.5"><ShoppingBag className="h-3.5 w-3.5" /> Purchases</TabsTrigger>
         </TabsList>
@@ -401,277 +401,39 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
 
 
 
-        {/* ═══════ How It Works Tab ═══════ */}
-        <TabsContent value="how" className="mt-4 space-y-10">
-          {/* ── Section 1 · Intro ── */}
+        {/* ═══════ Rewards Tab — slim pointer to /rewards ═══════
+            v6: the full $RHOZE explainer + earning catalog + claim flow
+            now lives on a single dedicated `/rewards` route. This tab is
+            kept so users browsing Plans don't lose the thread, but it
+            no longer duplicates the marketing copy. */}
+        <TabsContent value="how" className="mt-4">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center max-w-xl mx-auto space-y-2"
+            className="rounded-2xl border border-border bg-card p-8 text-center max-w-xl mx-auto space-y-4"
           >
-            <span className="text-[11px] font-bold tracking-[0.2em] text-muted-foreground uppercase">The system</span>
-            <h2 className="font-display text-3xl font-bold text-foreground leading-tight">How Rhozeland Works</h2>
-            <p className="text-muted-foreground text-sm">
-              Create. Earn. Build a verified record. Share the revenue.
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/15 px-3 py-1">
+              <Coins className="h-3 w-3 text-primary" />
+              <span className="text-[11px] font-medium text-primary tracking-wide uppercase">
+                Optional layer
+              </span>
+            </div>
+            <h2 className="font-display text-2xl font-bold text-foreground leading-tight">
+              $RHOZE rewards live on their own page now.
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              You don't need a token to use Rhozeland. If you're curious how
+              earning, claiming, and the 75/15/10 split work, the full
+              explainer + your balance is one click away.
             </p>
+            <div className="pt-2">
+              <Link to="/rewards">
+                <Button size="lg" className="rounded-full gap-1.5">
+                  How rewards work <ArrowRightLeft className="h-3.5 w-3.5" />
+                </Button>
+              </Link>
+            </div>
           </motion.div>
-
-          {/* ── Section 2 · The four-step journey ── */}
-          <section className="space-y-4">
-            <div className="flex items-center gap-3">
-              <span className="text-[11px] font-bold tracking-[0.2em] text-muted-foreground uppercase">01 · Journey</span>
-              <span className="h-px flex-1 bg-border" />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { icon: Zap, step: "01", title: "Create", desc: "Post to Flow, complete milestones, review work — earn $RHOZE automatically.", color: "hsl(210, 70%, 55%)" },
-                { icon: Shield, step: "02", title: "Verify", desc: "Every reward becomes a tamper-proof entry in your Earning History.", color: "hsl(335, 60%, 60%)" },
-                { icon: TrendingUp, step: "03", title: "Unlock", desc: "Spend $RHOZE on studios, marketplace, and higher Pass tiers.", color: "hsl(28, 80%, 55%)" },
-                { icon: RefreshCw, step: "04", title: "Reinvest", desc: "10% of every sale flows back to creators and the ecosystem.", color: "hsl(45, 80%, 50%)" },
-              ].map((s, i) => (
-                <motion.div
-                  key={s.step}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.08 }}
-                  className="rounded-2xl border border-border bg-card p-5 space-y-3 relative overflow-hidden group hover:shadow-lg transition-shadow"
-                >
-                  <div
-                    className="absolute top-0 right-0 w-24 h-24 rounded-bl-full opacity-10 group-hover:opacity-20 transition-opacity"
-                    style={{ background: s.color }}
-                  />
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="flex h-10 w-10 items-center justify-center rounded-xl"
-                      style={{ background: `${s.color}20` }}
-                    >
-                      <s.icon className="h-5 w-5" style={{ color: s.color }} />
-                    </div>
-                    <span className="text-[10px] font-bold text-muted-foreground tracking-[0.2em]">STEP {s.step}</span>
-                  </div>
-                  <h3 className="font-display text-lg font-semibold text-foreground">{s.title}</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{s.desc}</p>
-                </motion.div>
-              ))}
-            </div>
-          </section>
-
-          {/* ── Section 3 · Revenue Split (hero visual) ── */}
-          <section className="space-y-4">
-            <div className="flex items-center gap-3">
-              <span className="text-[11px] font-bold tracking-[0.2em] text-muted-foreground uppercase">02 · The split</span>
-              <span className="h-px flex-1 bg-border" />
-            </div>
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl border border-border bg-card p-6 space-y-5"
-            >
-              <div className="text-center max-w-md mx-auto space-y-1">
-                <h3 className="font-display text-xl font-semibold text-foreground">Every sale, split three ways</h3>
-                <p className="text-xs text-muted-foreground">Automatic on-chain distribution — no middlemen.</p>
-              </div>
-
-              {/* Stacked bar */}
-              <div className="flex h-6 w-full overflow-hidden rounded-full">
-                <div className="h-full bg-[hsl(150,55%,45%)]" style={{ width: "75%" }} />
-                <div className="h-full bg-[hsl(210,60%,55%)]" style={{ width: "15%" }} />
-                <div className="h-full bg-[hsl(40,80%,50%)]" style={{ width: "10%" }} />
-              </div>
-
-              {/* Legend — vertical stack avoids clipping */}
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { pct: "75%", label: "Creator", color: "hsl(150,55%,45%)" },
-                  { pct: "15%", label: "Curator", color: "hsl(210,60%,55%)" },
-                  { pct: "10%", label: "Buyback", color: "hsl(40,80%,50%)" },
-                ].map((row) => (
-                  <div key={row.label} className="rounded-xl border border-border/60 bg-muted/30 p-3 text-center space-y-0.5">
-                    <div className="flex items-center justify-center gap-1.5">
-                      <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: row.color }} />
-                      <span className="font-display text-lg font-bold text-foreground">{row.pct}</span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground">{row.label}</p>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </section>
-
-          {/* ── Section 4 · Three pillars ── */}
-          <section className="space-y-4">
-            <div className="flex items-center gap-3">
-              <span className="text-[11px] font-bold tracking-[0.2em] text-muted-foreground uppercase">03 · Pillars</span>
-              <span className="h-px flex-1 bg-border" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {[
-                {
-                  icon: CircleDollarSign,
-                  title: "$RHOZE Economy",
-                  color: "hsl(45, 80%, 50%)",
-                  points: [
-                    "SPL token on Solana",
-                    "Earned from posts, reviews & milestones",
-                    "Spent on studios, talent & marketplace",
-                    "Tiers: Spark → Bloom → Glow → Play",
-                  ],
-                },
-                {
-                  icon: BadgeCheck,
-                  title: "Reputation",
-                  color: "hsl(210, 70%, 55%)",
-                  points: [
-                    "Every reward = verified Earning entry",
-                    "Independently auditable on-chain",
-                    "Portable creator identity",
-                    "Builds trust with collaborators",
-                  ],
-                },
-                {
-                  icon: ArrowRightLeft,
-                  title: "Revenue Sharing",
-                  color: "hsl(150, 55%, 45%)",
-                  points: [
-                    "Auto 3-way split on every sale",
-                    "Creators take the majority",
-                    "Curators earn for referrals",
-                    "10% buyback strengthens $RHOZE",
-                  ],
-                },
-              ].map((pillar, i) => (
-                <motion.div
-                  key={pillar.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.08 }}
-                  className="rounded-2xl border border-border bg-card p-5 space-y-4"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="flex h-10 w-10 items-center justify-center rounded-xl"
-                      style={{ background: `${pillar.color}20` }}
-                    >
-                      <pillar.icon className="h-5 w-5" style={{ color: pillar.color }} />
-                    </div>
-                    <h3 className="font-display font-semibold text-foreground">{pillar.title}</h3>
-                  </div>
-                  <ul className="space-y-2">
-                    {pillar.points.map((pt) => (
-                      <li key={pt} className="flex items-start gap-2 text-xs text-muted-foreground leading-relaxed">
-                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 shrink-0 mt-0.5">
-                          <Check className="h-2.5 w-2.5 text-primary" />
-                        </span>
-                        <span className="min-w-0">{pt}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </motion.div>
-              ))}
-            </div>
-          </section>
-
-          {/* ── Section 5 · The flywheel ── */}
-          <section className="space-y-4">
-            <div className="flex items-center gap-3">
-              <span className="text-[11px] font-bold tracking-[0.2em] text-muted-foreground uppercase">04 · Flywheel</span>
-              <span className="h-px flex-1 bg-border" />
-            </div>
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl border border-border bg-muted/30 p-6 space-y-6 max-w-2xl mx-auto"
-            >
-              <div className="text-center space-y-1">
-                <Award className="h-7 w-7 text-primary mx-auto" />
-                <h3 className="font-display text-lg font-semibold text-foreground">Every action feeds the next</h3>
-              </div>
-
-              {/* Circular flywheel */}
-              <div className="relative mx-auto" style={{ width: 280, height: 280 }}>
-                <motion.div
-                  className="absolute inset-0 rounded-full border-2 border-dashed border-primary/20"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="h-20 w-20 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
-                    <RefreshCw className="h-7 w-7 text-primary" />
-                  </div>
-                </div>
-                {[
-                  { icon: Sparkles, label: "Create", angle: 0, color: "hsl(150,55%,45%)" },
-                  { icon: Coins, label: "Earn", angle: 72, color: "hsl(40,80%,50%)" },
-                  { icon: TrendingUp, label: "Grow", angle: 144, color: "hsl(210,60%,55%)" },
-                  { icon: Shield, label: "Reputation", angle: 216, color: "hsl(280,60%,60%)" },
-                  { icon: ArrowRightLeft, label: "Reinvest", angle: 288, color: "hsl(350,60%,55%)" },
-                ].map((node, i) => {
-                  const rad = (node.angle - 90) * (Math.PI / 180);
-                  const r = 115;
-                  const x = 140 + r * Math.cos(rad) - 28;
-                  const y = 140 + r * Math.sin(rad) - 28;
-                  return (
-                    <motion.div
-                      key={node.label}
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.3 + i * 0.1, type: "spring", stiffness: 200 }}
-                      className="absolute flex flex-col items-center gap-1"
-                      style={{ left: x, top: y, width: 56 }}
-                    >
-                      <div
-                        className="h-11 w-11 rounded-full flex items-center justify-center shadow-md"
-                        style={{ backgroundColor: node.color + "22", border: `2px solid ${node.color}` }}
-                      >
-                        <node.icon className="h-5 w-5" style={{ color: node.color }} />
-                      </div>
-                      <span className="text-[10px] font-semibold text-foreground whitespace-nowrap">{node.label}</span>
-                    </motion.div>
-                  );
-                })}
-                <svg className="absolute inset-0" viewBox="0 0 280 280" fill="none">
-                  {[0, 72, 144, 216, 288].map((angle, i) => {
-                    const rad1 = (angle - 90) * (Math.PI / 180);
-                    const rad2 = ((angle + 72) - 90) * (Math.PI / 180);
-                    const r = 90;
-                    const x1 = 140 + r * Math.cos(rad1);
-                    const y1 = 140 + r * Math.sin(rad1);
-                    const x2 = 140 + r * Math.cos(rad2);
-                    const y2 = 140 + r * Math.sin(rad2);
-                    const midAngle = (angle + 36 - 90) * (Math.PI / 180);
-                    const cx = 140 + (r + 20) * Math.cos(midAngle);
-                    const cy = 140 + (r + 20) * Math.sin(midAngle);
-                    return (
-                      <motion.path
-                        key={i}
-                        d={`M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`}
-                        stroke="hsl(var(--primary))"
-                        strokeWidth="1.5"
-                        strokeOpacity="0.25"
-                        strokeDasharray="4 3"
-                        fill="none"
-                        initial={{ pathLength: 0 }}
-                        animate={{ pathLength: 1 }}
-                        transition={{ delay: 0.8 + i * 0.15, duration: 0.5 }}
-                      />
-                    );
-                  })}
-                </svg>
-              </div>
-
-              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                <Link2 className="h-3.5 w-3.5" />
-                <a
-                  href={PUMP_FUN_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-foreground transition-colors"
-                >
-                  View $RHOZE on Pump Fun
-                </a>
-              </div>
-            </motion.div>
-          </section>
         </TabsContent>
 
         {/* ═══════ Verified IP — Works explainer + recent anchors ═══════ */}
