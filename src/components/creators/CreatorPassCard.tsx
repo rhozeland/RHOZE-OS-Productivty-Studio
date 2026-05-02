@@ -34,7 +34,7 @@ import {
   getEffectiveTier,
   type TierId,
 } from "@/lib/tier-matrix";
-import TierMatrix from "@/components/creators/TierMatrix";
+
 
 const TIER_GRADIENTS: Record<string, string> = Object.fromEntries(
   TIERS.map((t) => [t.id, t.gradient]),
