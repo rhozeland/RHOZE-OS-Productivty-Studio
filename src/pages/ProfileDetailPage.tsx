@@ -21,6 +21,7 @@ import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilit
 import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
 import { cn } from "@/lib/utils";
 import { ROLE_BY_ID } from "@/lib/creator-roles";
+import FlowThumbnail from "@/components/flow/FlowThumbnail";
 
 // Human-readable labels + destinations for on-chain reputation tiles.
 // Tiles are clickable when href is set; otherwise rendered as static cards.
