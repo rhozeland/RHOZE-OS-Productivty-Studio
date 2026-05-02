@@ -511,6 +511,7 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
                   {paymentMethod === "credits" && <><Coins className="h-3.5 w-3.5 text-primary" /> {service.credits_cost} credits</>}
                   {paymentMethod === "card" && <><CreditCard className="h-3.5 w-3.5 text-blue-500" /> ${usdPrice}</>}
                   {paymentMethod === "crypto" && <><Wallet className="h-3.5 w-3.5 text-orange-500" /> ~{solPrice} SOL</>}
+                  {paymentMethod === "rhoze" && <><Coins className="h-3.5 w-3.5 text-pink-500" /> {rhozePrice.toLocaleString()} $RHOZE</>}
                 </span>
               </div>
               {notes && (
@@ -550,6 +551,17 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
                   type="usage"
                   label={`Pay ${solPrice} SOL & Book`}
                   className="flex-1"
+                  onSuccess={() => handleConfirm()}
+                />
+              ) : paymentMethod === "rhoze" ? (
+                <PayWithRhozeButton
+                  tokenAmount={rhozePrice}
+                  description={`Booking: ${service.title}`}
+                  type="usage"
+                  intent="subscription"
+                  label={`Pay ${rhozePrice.toLocaleString()} $RHOZE & Book`}
+                  className="flex-1"
+                  variant="default"
                   onSuccess={() => handleConfirm()}
                 />
               ) : paymentMethod === "credits" ? (
