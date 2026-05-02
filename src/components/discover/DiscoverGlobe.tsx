@@ -451,32 +451,53 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
             >
               <div className="absolute inset-[7%] rounded-full border border-border/30 bg-background/15 shadow-[0_0_0_1px_hsl(var(--border)/0.12),0_28px_70px_hsl(var(--background)/0.55)] backdrop-blur-sm" />
               <div className="absolute inset-[2%] rounded-full border border-border/20" />
-              <div className="absolute inset-[17%] rounded-full bg-[radial-gradient(circle_at_45%_30%,hsl(var(--primary)/0.22),transparent_30%),radial-gradient(circle_at_60%_75%,hsl(var(--accent)/0.18),transparent_32%)] blur-2xl" />
+              <div className="absolute inset-[17%] rounded-full bg-[radial-gradient(circle_at_45%_30%,hsl(200_85%_60%/0.3),transparent_40%),radial-gradient(circle_at_60%_75%,hsl(220_70%_45%/0.25),transparent_40%)] blur-2xl" />
 
               <svg viewBox="0 0 100 100" className="absolute inset-[8%] h-[84%] w-[84%] overflow-visible">
                 <defs>
-                  <radialGradient id="discover-globe-surface" cx="42%" cy="34%" r="74%">
-                    <stop offset="0%" stopColor="hsl(var(--background))" stopOpacity="0.2" />
-                    <stop offset="34%" stopColor="hsl(var(--card))" stopOpacity="0.95" />
-                    <stop offset="78%" stopColor="hsl(var(--background))" stopOpacity="0.98" />
-                    <stop offset="100%" stopColor="hsl(var(--background))" stopOpacity="1" />
+                  <radialGradient id="discover-globe-ocean" cx="38%" cy="30%" r="78%">
+                    <stop offset="0%"  stopColor="hsl(200 85% 72%)" />
+                    <stop offset="40%" stopColor="hsl(210 75% 52%)" />
+                    <stop offset="78%" stopColor="hsl(220 70% 32%)" />
+                    <stop offset="100%" stopColor="hsl(225 65% 18%)" />
                   </radialGradient>
-                  <radialGradient id="discover-globe-highlight" cx="50%" cy="38%" r="65%">
-                    <stop offset="0%" stopColor="hsl(var(--foreground))" stopOpacity="0.12" />
-                    <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity="0" />
+                  <radialGradient id="discover-globe-land" cx="42%" cy="32%" r="80%">
+                    <stop offset="0%"  stopColor="hsl(85 55% 62%)" />
+                    <stop offset="55%" stopColor="hsl(120 40% 42%)" />
+                    <stop offset="100%" stopColor="hsl(150 45% 22%)" />
                   </radialGradient>
+                  <radialGradient id="discover-globe-highlight" cx="38%" cy="28%" r="55%">
+                    <stop offset="0%"  stopColor="hsl(0 0% 100%)" stopOpacity="0.35" />
+                    <stop offset="60%" stopColor="hsl(0 0% 100%)" stopOpacity="0.05" />
+                    <stop offset="100%" stopColor="hsl(0 0% 100%)" stopOpacity="0" />
+                  </radialGradient>
+                  <radialGradient id="discover-globe-shadow" cx="70%" cy="78%" r="60%">
+                    <stop offset="0%"  stopColor="hsl(225 70% 8%)" stopOpacity="0" />
+                    <stop offset="100%" stopColor="hsl(225 70% 8%)" stopOpacity="0.55" />
+                  </radialGradient>
+                  <clipPath id="discover-globe-clip">
+                    <circle cx={cx} cy={cy} r={radius} />
+                  </clipPath>
                 </defs>
 
-                <ellipse cx={cx} cy={cy + 36} rx={22} ry={6} fill="hsl(var(--primary) / 0.12)" />
-                <circle cx={cx} cy={cy} r={radius} fill="url(#discover-globe-surface)" stroke="hsl(var(--border) / 0.44)" strokeWidth="0.55" />
-                <circle cx={cx} cy={cy} r={radius} fill="url(#discover-globe-highlight)" />
+                <ellipse cx={cx} cy={cy + 38} rx={24} ry={5} fill="hsl(225 60% 12% / 0.35)" />
+                <circle cx={cx} cy={cy} r={radius + 1.2} fill="hsl(200 85% 70% / 0.18)" />
+                <circle cx={cx} cy={cy} r={radius} fill="url(#discover-globe-ocean)" stroke="hsl(225 65% 22%)" strokeWidth="0.5" />
 
-                {latitudePaths.map((path, index) => (
-                  <path key={`lat-${index}`} d={path} fill="none" stroke="hsl(var(--foreground) / 0.13)" strokeWidth="0.34" />
-                ))}
-                {longitudePaths.map((path, index) => (
-                  <path key={`lng-${index}`} d={path} fill="none" stroke="hsl(var(--foreground) / 0.1)" strokeWidth="0.3" />
-                ))}
+                <g clipPath="url(#discover-globe-clip)">
+                  {continentPaths.map((c) => (
+                    <path key={c.name} d={c.d} fill="url(#discover-globe-land)" stroke="hsl(150 50% 18% / 0.6)" strokeWidth="0.25" strokeLinejoin="round" />
+                  ))}
+                  {latitudePaths.map((path, index) => (
+                    <path key={`lat-${index}`} d={path} fill="none" stroke="hsl(0 0% 100% / 0.12)" strokeWidth="0.28" />
+                  ))}
+                  {longitudePaths.map((path, index) => (
+                    <path key={`lng-${index}`} d={path} fill="none" stroke="hsl(0 0% 100% / 0.1)" strokeWidth="0.26" />
+                  ))}
+                  <circle cx={cx} cy={cy} r={radius} fill="url(#discover-globe-shadow)" />
+                  <circle cx={cx} cy={cy} r={radius} fill="url(#discover-globe-highlight)" />
+                </g>
+
 
                 {points.map((point) => {
                   const front = point.depth > 0;
