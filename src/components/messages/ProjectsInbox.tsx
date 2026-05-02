@@ -470,28 +470,6 @@ const ProjectThread = ({
             </div>
           )}
 
-          {/* ─── Inline panels ─── */}
-          <div className="space-y-2 pt-3">
-            <ProjectPanel
-              icon={ListTree}
-              title="Roadmap"
-              description="Milestones · stages · approvals"
-              defaultOpen
-              actionHref={`/projects/${project.id}#roadmap`}
-            />
-            <ProjectPanel
-              icon={Wallet}
-              title="Vault"
-              description="Refs · finals · Verified IP"
-              actionHref={`/projects/${project.id}#vault`}
-            />
-            <ProjectPanel
-              icon={Users}
-              title="Splits"
-              description="Revenue split config + payout log"
-              actionHref={`/projects/${project.id}#splits`}
-            />
-          </div>
         </div>
       </ScrollArea>
 
