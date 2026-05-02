@@ -20,6 +20,7 @@ import {
 import { motion } from "framer-motion";
 import AudioPreview from "./AudioPreview";
 import StarRating from "./StarRating";
+import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 
 const CATEGORIES: Record<string, { label: string; icon: any; color: string }> = {
   audio: { label: "Audio", icon: Music, color: "hsl(280, 60%, 55%)" },
@@ -43,6 +44,8 @@ interface ListingCardProps {
   listing: any;
   media?: any[];
   reviewStats?: { avg: number; count: number } | null;
+  /** Anchored-work proof for this listing — surfaces the Verified IP badge. */
+  verifiedIp?: { signature: string; count: number } | null;
   index: number;
   isOwner: boolean;
   onInquire: () => void;
@@ -54,6 +57,7 @@ const ListingCard = ({
   listing,
   media,
   reviewStats,
+  verifiedIp,
   index,
   isOwner,
   onInquire,
@@ -109,6 +113,16 @@ const ListingCard = ({
               {typeMeta.label}
             </Badge>
           </div>
+          {verifiedIp && (
+            <div className="absolute top-2 right-2">
+              <VerifiedIPBadge
+                signature={verifiedIp.signature}
+                size="xs"
+                showLabel={false}
+                className="shadow-sm"
+              />
+            </div>
+          )}
         </div>
       ) : hasInlinePreview ? (
         // Compact header strip when audio/video preview will render below.
@@ -181,13 +195,24 @@ const ListingCard = ({
 
       <div className="p-4 space-y-2.5">
         {/* Category + Budget */}
-        <div className="flex items-center justify-between">
-          <Badge variant="outline" className="text-[10px] gap-1 rounded-full">
-            <CatIcon className="h-3 w-3" style={{ color: catMeta.color }} />
-            {catMeta.label}
-          </Badge>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Badge variant="outline" className="text-[10px] gap-1 rounded-full">
+              <CatIcon className="h-3 w-3" style={{ color: catMeta.color }} />
+              {catMeta.label}
+            </Badge>
+            {/* On non-image covers there's no overlay, so surface the proof
+                here too. The cover overlay still shows on image covers. */}
+            {verifiedIp && !coverImage && (
+              <VerifiedIPBadge
+                signature={verifiedIp.signature}
+                size="xs"
+                showLabel={false}
+              />
+            )}
+          </div>
           {listing.contact_info && (
-            <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+            <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground shrink-0">
               <DollarSign className="h-3 w-3" />
               {listing.contact_info}
             </span>
