@@ -366,8 +366,12 @@ const AppLayout = () => {
           <main className="flex-1 p-4 md:p-8 pb-8">
             <Outlet />
           </main>
-          {/* HUD Dock — gamified player bar (level / XP / streak / $RHOZE / nav) */}
-          <HudDock />
+        </div>
+        {/* HUD Dock — gamified player bar. Rendered inside SidebarProvider but
+            outside the main content column so its `fixed` positioning is
+            relative to the viewport, while we still offset for the sidebar
+            via a CSS variable below. */}
+        <HudDock />
 
         </div>
       </div>
