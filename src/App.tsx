@@ -239,6 +239,7 @@ const App = () => (
                     Primary CTAs no longer pitch tokens — anyone curious
                     lands here from a quiet "How rewards work" link. */}
                 <Route path="/rewards" element={<RewardsPage />} />
+                <Route path="/swaps" element={<SwapHistoryPage />} />
                 {/* Flow Mode — first-class public browser for fingerprinted
                     creative IP. Smartboards / Drop Rooms index routes still
                     redirect into Projects; their detail routes stay live so
