@@ -21,6 +21,18 @@ import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilit
 import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
 import { cn } from "@/lib/utils";
 
+// Human-readable labels + destinations for on-chain reputation tiles.
+// Tiles are clickable when href is set; otherwise rendered as static cards.
+const PROOF_TYPE_META: Record<string, { label: string; href: string | null }> = {
+  reward:           { label: "Rewards earned",   href: "/rewards" },
+  work_register:    { label: "Works registered", href: "/works" },
+  event_attendance: { label: "Events attended",  href: "/spaces?tab=events" },
+  event_manifest:   { label: "Events hosted",    href: "/spaces?tab=events" },
+  milestone:        { label: "Milestones",       href: null },
+  flow_post:        { label: "Flow posts",       href: "/discover" },
+  review:           { label: "Reviews",          href: null },
+};
+
 const ProfileDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -493,19 +505,38 @@ const ProfileDetailPage = () => {
                 )}
               </div>
             </div>
-            {/* Summary stats */}
+            {/* Summary stats — clickable, with human-readable labels */}
             <div className="grid grid-cols-3 gap-3">
               {Object.entries(
                 proofs!.reduce<Record<string, number>>((acc, pr) => {
                   acc[pr.action_type] = (acc[pr.action_type] || 0) + 1;
                   return acc;
                 }, {})
-              ).sort(([, a], [, b]) => b - a).slice(0, 3).map(([type, count]) => (
-                <div key={type} className="rounded-lg border border-border bg-muted/30 p-3 text-center">
-                  <p className="text-2xl font-bold text-foreground">{count}</p>
-                  <p className="text-xs text-muted-foreground capitalize">{type}s</p>
-                </div>
-              ))}
+              ).sort(([, a], [, b]) => b - a).slice(0, 3).map(([type, count]) => {
+                const meta = PROOF_TYPE_META[type] ?? {
+                  label: type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+                  href: null as string | null,
+                };
+                const inner = (
+                  <>
+                    <p className="text-2xl font-bold text-foreground">{count}</p>
+                    <p className="text-xs text-muted-foreground">{meta.label}</p>
+                  </>
+                );
+                return meta.href ? (
+                  <Link
+                    key={type}
+                    to={meta.href}
+                    className="rounded-lg border border-border bg-muted/30 p-3 text-center transition-colors hover:bg-muted/60 hover:border-border/80"
+                  >
+                    {inner}
+                  </Link>
+                ) : (
+                  <div key={type} className="rounded-lg border border-border bg-muted/30 p-3 text-center">
+                    {inner}
+                  </div>
+                );
+              })}
             </div>
             {anchoredCount > 0 && (
               <p className="text-xs text-muted-foreground text-center mt-3 flex items-center justify-center gap-1">
