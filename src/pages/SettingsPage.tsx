@@ -29,6 +29,7 @@ import LaunchpadIdlSettings from "@/components/launchpad/LaunchpadIdlSettings";
 import LaunchpadIdlVersions from "@/components/launchpad/LaunchpadIdlVersions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { REGIONS } from "@/lib/regions";
 
 /* ─── Section nav items ─── */
 const SECTIONS = [
@@ -103,6 +104,7 @@ const SettingsPage = () => {
   const [skills, setSkills] = useState("");
   const [mediums, setMediums] = useState("");
   const [location, setLocation] = useState("");
+  const [regionCode, setRegionCode] = useState<string>("");
   const [available, setAvailable] = useState(true);
   const [isPublic, setIsPublic] = useState(true);
   const [avatarUrl, setAvatarUrl] = useState("");
@@ -166,6 +168,7 @@ const SettingsPage = () => {
       setSkills(p.skills?.join(", ") ?? "");
       setMediums(p.mediums?.join(", ") ?? "");
       setLocation(p.location ?? "");
+      setRegionCode(p.region_code ?? "");
       setAvailable(p.available ?? true);
       setIsPublic(p.is_public !== false);
       setAvatarUrl(p.avatar_url ?? "");
@@ -240,6 +243,7 @@ const SettingsPage = () => {
         skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
         mediums: mediums.split(",").map((s) => s.trim()).filter(Boolean),
         location: location || null,
+        region_code: regionCode || null,
         available, is_public: isPublic,
         banner_gradient: bannerGradient || null,
         profile_background: profileBackground || null,
@@ -357,10 +361,24 @@ const SettingsPage = () => {
           <Input value={mediums} onChange={(e) => setMediums(e.target.value)} placeholder="Digital, Oil, Acrylic, Photography" />
         </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label>Location</Label>
           <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City, State or Country" />
+        </div>
+        <div className="space-y-2">
+          <Label>Region</Label>
+          <select
+            value={regionCode}
+            onChange={(e) => setRegionCode(e.target.value)}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <option value="">— Pick your market —</option>
+            {REGIONS.map((r) => (
+              <option key={r.code} value={r.code}>{r.flag} {r.label} ({r.code})</option>
+            ))}
+          </select>
+          <p className="text-[10px] text-muted-foreground">Helps fans discover you across markets (East ↔ West).</p>
         </div>
         <div className="space-y-2">
           <Label>Portfolio URL</Label>

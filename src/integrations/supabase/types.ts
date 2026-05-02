@@ -1915,6 +1915,7 @@ export type Database = {
           portfolio_url: string | null
           profile_background: string | null
           profile_layout: Json | null
+          region_code: string | null
           shipping_address_line1: string | null
           shipping_address_line2: string | null
           shipping_city: string | null
@@ -1965,6 +1966,7 @@ export type Database = {
           portfolio_url?: string | null
           profile_background?: string | null
           profile_layout?: Json | null
+          region_code?: string | null
           shipping_address_line1?: string | null
           shipping_address_line2?: string | null
           shipping_city?: string | null
@@ -2015,6 +2017,7 @@ export type Database = {
           portfolio_url?: string | null
           profile_background?: string | null
           profile_layout?: Json | null
+          region_code?: string | null
           shipping_address_line1?: string | null
           shipping_address_line2?: string | null
           shipping_city?: string | null

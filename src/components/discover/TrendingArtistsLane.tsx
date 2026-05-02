@@ -16,6 +16,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
+import RegionChip from "@/components/profile/RegionChip";
+import { getRegion, type RegionMarket } from "@/lib/regions";
 import { ArrowRight, Coins, TrendingUp, Users } from "lucide-react";
 
 const initials = (name?: string | null) =>
@@ -27,7 +29,11 @@ const initials = (name?: string | null) =>
     .join("")
     .toUpperCase() || "·";
 
-const TrendingArtistsLane = () => {
+interface TrendingArtistsLaneProps {
+  marketFilter?: RegionMarket | "All";
+}
+
+const TrendingArtistsLane = ({ marketFilter = "All" }: TrendingArtistsLaneProps) => {
   const { data: items = [] } = useQuery({
     queryKey: ["discover-trending-artists-v2"],
     queryFn: async () => {
@@ -89,7 +95,7 @@ const TrendingArtistsLane = () => {
       const creatorIds = [...new Set(coins.map((c) => c.creator_id))];
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, display_name, username, avatar_url, headline, verification_status")
+        .select("user_id, display_name, username, avatar_url, headline, verification_status, region_code")
         .in("user_id", creatorIds);
       const verified = new Map(
         (profiles ?? [])
@@ -127,12 +133,38 @@ const TrendingArtistsLane = () => {
         );
       });
 
-      return scored.slice(0, 6);
+      return scored;
     },
     staleTime: 60_000,
   });
 
-  if (!items.length) return null;
+  // Apply market filter client-side so the lane re-filters instantly
+  // without re-querying when the user clicks a region chip.
+  const filtered = items
+    .filter(({ profile }: any) => {
+      if (marketFilter === "All") return true;
+      const region = getRegion(profile?.region_code);
+      return region?.market === marketFilter;
+    })
+    .slice(0, 6);
+
+  if (!filtered.length) {
+    if (marketFilter !== "All") {
+      return (
+        <section className="space-y-4">
+          <div>
+            <h2 className="font-display text-xl text-foreground flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-primary" /> Trending artists
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              No verified artists in <span className="font-medium">{marketFilter}</span> are trending right now. Try another region.
+            </p>
+          </div>
+        </section>
+      );
+    }
+    return null;
+  }
 
   return (
     <section className="space-y-4">
@@ -148,7 +180,7 @@ const TrendingArtistsLane = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {items.map(({ coin, profile, price, volume, buyers24h, holders }) => (
+        {filtered.map(({ coin, profile, price, volume, buyers24h, holders }) => (
           <div
             key={coin.id}
             className="rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm p-4 flex flex-col gap-3"
@@ -159,11 +191,12 @@ const TrendingArtistsLane = () => {
                 <AvatarFallback>{initials(profile.display_name ?? profile.username)}</AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <p className="text-sm font-medium text-foreground truncate">
                     {profile.display_name ?? profile.username ?? "Artist"}
                   </p>
                   <VerifiedArtistBadge status="verified" size="xs" showLabel={false} />
+                  <RegionChip code={profile.region_code} />
                 </div>
                 {profile.headline && (
                   <p className="text-xs text-muted-foreground truncate">{profile.headline}</p>

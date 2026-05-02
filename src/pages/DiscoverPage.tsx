@@ -15,6 +15,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -22,10 +23,13 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
+import RegionChip from "@/components/profile/RegionChip";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
+import { MARKETS, type RegionMarket } from "@/lib/regions";
+import { cn } from "@/lib/utils";
 import {
   ArrowRight, Compass, Sparkles, Calendar as CalendarIcon, Coins,
-  Flame, TrendingUp, MapPin, Music, FileText, Image as ImageIcon,
+  Flame, TrendingUp, MapPin, Music, FileText, Image as ImageIcon, Globe2,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -49,13 +53,15 @@ const DiscoverPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
+
   // ─── 1. Featured artist (newest public profile w/ avatar + bio) ───
   const { data: featured } = useQuery({
     queryKey: ["discover-featured-artist"],
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, display_name, headline, bio, avatar_url, banner_url, location, mediums")
+        .select("user_id, display_name, headline, bio, avatar_url, banner_url, location, mediums, region_code")
         .eq("is_public", true)
         .not("avatar_url", "is", null)
         .not("bio", "is", null)
@@ -224,6 +230,7 @@ const DiscoverPage = () => {
                   </p>
                 )}
                 <div className="flex flex-wrap items-center gap-2 mt-4">
+                  {featured.region_code && <RegionChip code={featured.region_code} size="sm" showLabel />}
                   {featured.location && (
                     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                       <MapPin className="h-3 w-3" /> {featured.location}
@@ -385,8 +392,39 @@ const DiscoverPage = () => {
         </section>
       )}
 
+      {/* ─── Cross-market region strip ─────────────────────────────── */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-sm uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-1.5">
+            <Globe2 className="h-3.5 w-3.5" /> By region
+          </h2>
+          <p className="text-[11px] text-muted-foreground hidden sm:block">
+            East ↔ West — discover across markets.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {MARKETS.map((m) => {
+            const active = marketFilter === m.id;
+            return (
+              <button
+                key={m.id}
+                onClick={() => setMarketFilter(m.id)}
+                className={cn(
+                  "rounded-full border px-3 py-1.5 text-xs transition-colors",
+                  active
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border/60 bg-card hover:border-foreground/40 text-foreground",
+                )}
+              >
+                {m.label}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       {/* ─── Trending Verified Artists (fan→artist swap funnel) ────── */}
-      <TrendingArtistsLane />
+      <TrendingArtistsLane marketFilter={marketFilter} />
 
       {/* ─── 5. Coins moving today ──────────────────────────────────── */}
       {coins && coins.length > 0 && (
