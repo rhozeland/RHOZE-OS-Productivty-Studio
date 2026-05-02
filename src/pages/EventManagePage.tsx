@@ -77,9 +77,33 @@ const EventManagePage = () => {
         .eq("event_id", id!)
         .order("issued_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      const rows = data ?? [];
+      const ids = Array.from(new Set(rows.map((t: any) => t.holder_id)));
+      if (ids.length === 0) return rows;
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, username, avatar_url")
+        .in("user_id", ids);
+      const profMap = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
+      return rows.map((t: any) => ({ ...t, holder: profMap.get(t.holder_id) ?? null }));
     },
     enabled: !!id,
+  });
+
+  // Is the current user allowed to manage this event? (host or collaborator)
+  const { data: isManager } = useQuery({
+    queryKey: ["event-can-manage", id, user?.id],
+    enabled: !!id && !!user,
+    queryFn: async () => {
+      if (!user) return false;
+      const { data } = await supabase
+        .from("event_collaborators")
+        .select("id")
+        .eq("event_id", id!)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return !!data;
+    },
   });
 
   const [tierName, setTierName] = useState("");
