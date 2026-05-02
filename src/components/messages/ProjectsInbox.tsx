@@ -19,7 +19,7 @@
  *     if the table is empty or the user can't read it).
  */
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
@@ -31,11 +31,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -44,19 +39,14 @@ import {
 import {
   ArrowLeft,
   ArrowRight,
-  ChevronDown,
   Plus,
   FolderKanban,
   CheckCircle2,
   Clock,
   PauseCircle,
   Send,
-  MapPin,
   ListTree,
-  Wallet,
-  Users,
   Loader2,
-  ExternalLink,
   Link as LinkIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
