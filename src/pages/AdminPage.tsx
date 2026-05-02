@@ -14,9 +14,10 @@ import AdminUnderwritingRules from "@/components/admin/AdminUnderwritingRules";
 import AdminUnderwritingRulesAudit from "@/components/admin/AdminUnderwritingRulesAudit";
 import AdminWorkVerifications from "@/components/admin/AdminWorkVerifications";
 import AdminArtistVerifications from "@/components/admin/AdminArtistVerifications";
+import AdminRewardCaps from "@/components/admin/AdminRewardCaps";
 
 const VALID_TABS = new Set([
-  "overview", "rewards", "users", "badges", "studios", "ip",
+  "overview", "rewards", "caps", "users", "badges", "studios", "ip",
   "artists", "disputes", "withdrawals", "moderation", "capital",
 ]);
 
