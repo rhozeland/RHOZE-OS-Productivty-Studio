@@ -39,45 +39,25 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  // v6 front door — feed-led discovery for guests AND signed-in users.
-  // Replaces the old "Home → Dashboard" framing as the dock pillar.
-  // /dashboard remains routable as the user's private control room.
+  // v8: Discover is the unified front door — absorbs Hub + Stream + Spaces
+  // index. Personal greeting + composer + mosaic all live here. Legacy
+  // /dashboard, /stream, /hub, /spaces, /studios, /marketplace, /creators,
+  // /people, /launchpad all redirect into /discover via App.tsx.
   {
     id: "discover",
     label: "Discover",
     icon: Compass,
     path: "/discover",
-    matchPaths: ["/dashboard"],
+    matchPaths: ["/dashboard", "/stream", "/hub"],
   },
-  // v7: Stream — the unified social pillar. Conversations, offerings,
-  // opportunities, events, spaces, works, project inquiries — everything
-  // that used to live in Hub + Spaces + Projects now scrolls here as
-  // typed posts. Bare-root legacy redirects (/hub, /spaces, /studios,
-  // /marketplace, /creators, /people, /projects) are handled by explicit
-  // <Navigate> in App.tsx so their sub-routes (/spaces/events/:id,
-  // /studios/:id, /projects/:id, etc.) keep resolving. matchPaths is
-  // intentionally empty here.
-  {
-    id: "stream",
-    label: "Stream",
-    icon: Waves,
-    path: "/stream",
-  },
-  // Inbox — DMs + inquiries + (next pass) inline-expanded project work.
-  // Sits next to Stream so "did the artist reply?" is always one tap away.
-  { id: "messages", label: "Inbox", icon: MessageSquare, path: "/messages" },
-  // Hub/Studios/Spaces nav ids retired in v7. Their explicit routes in
-  // App.tsx redirect into /stream; their sub-routes (/spaces/events/:id,
-  // /studios/:id, etc.) stay live until a future pass re-homes them.
-  // ─── Secondary destinations (still routable; not in default dock) ─────
-  // Projects demoted out of the dock as part of v6. Lives as a tab on
-  // the artist's own profile ("Building"). Route + nav id stay so deep
-  // links and the Tools-tab back-references keep working.
+  // Conversations — DMs · Projects · Inquiries · Listings. Renamed from
+  // "Inbox" since this is now the canonical place for every back-and-forth
+  // (incl. group DMs that absorbed Circles).
+  { id: "messages", label: "Conversations", icon: MessageSquare, path: "/messages" },
+  // Projects bare-root redirects into Conversations → Projects tab.
   { id: "projects", label: "Projects", icon: FolderKanban, path: "/projects" },
-  // Profile — user's own profile.
   { id: "profile", label: "Profile", icon: User, path: "/profile" },
-  // Legacy / utility entries — kept registered so dock customization,
-  // active-state, and deep-link pages still work.
+  // Legacy / utility entries
   { id: "boards", label: "Boards", icon: Palette, path: "/smartboards" },
   {
     id: "droprooms",
@@ -89,8 +69,6 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "calendar", label: "Calendar", icon: Calendar, path: "/calendar" },
   { id: "bookings", label: "Bookings", icon: Calendar, path: "/bookings" },
   { id: "credits", label: "Credits", icon: CreditCard, path: "/credits" },
-  // Launchpad nav id removed — coins are now profile-bound.
-  // Flow Mode — fully merged into Projects.
   { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
   { id: "services", label: "Services", icon: Store, path: "/services" },
 ];
@@ -103,13 +81,10 @@ export const NAV_ITEMS_BY_ID: Record<string, NavItem> = NAV_ITEMS.reduce(
   {} as Record<string, NavItem>,
 );
 
-// v7 dock: Discover · Stream · Inbox · Profile.
-// Stream absorbed Hub + Spaces + Projects into one scroll-and-respond
-// surface. Profile takes the 4th slot so artists' Verified IP / coins /
-// identity are always one tap away — that's the point of the network.
+// v8 dock: Discover · Conversations · Profile.
+// Hub/Stream merged into Discover; My Studio (dashboard) deleted entirely.
 export const DEFAULT_DOCK_IDS = [
   "discover",
-  "stream",
   "messages",
   "profile",
 ];

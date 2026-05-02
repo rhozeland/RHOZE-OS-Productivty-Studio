@@ -4,7 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRhozeBalance } from "@/hooks/useRhozeBalance";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { motion } from "framer-motion";
-import { Flame, Star, Trophy, Crown, Zap, Award, Coins, Shield, TrendingUp, Download } from "lucide-react";
+import { Link } from "react-router-dom";
+import {
+  Flame, Star, Trophy, Crown, Zap, Award, Coins, Shield, TrendingUp, Download,
+  FolderKanban, MessageSquare, Calendar,
+} from "lucide-react";
 import ClaimRhozeButton from "@/components/ClaimRhozeButton";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -86,6 +90,36 @@ const CreatorPassCard = () => {
     queryFn: async () => {
       const { count } = await supabase.from("contribution_proofs").select("id", { count: "exact", head: true }).eq("user_id", user!.id).not("solana_signature", "is", null);
       return count ?? 0;
+    },
+    enabled: !!user,
+  });
+
+  // ─── Personal "Studio activity" metrics — relocated here from the
+  // retired My Studio dashboard. Surfaces the live counts for a creator's
+  // private workspace without needing a separate page.
+  const { data: studioStats } = useQuery({
+    queryKey: ["studio-stats-pass", user?.id],
+    queryFn: async () => {
+      const sb = supabase as any;
+      const [activeProj, unread, upcoming] = await Promise.all([
+        sb.from("projects")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user!.id)
+          .neq("status", "completed"),
+        sb.from("messages")
+          .select("id", { count: "exact", head: true })
+          .eq("receiver_id", user!.id)
+          .eq("read", false),
+        sb.from("events")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user!.id)
+          .gte("starts_at", new Date().toISOString()),
+      ]);
+      return {
+        activeProjects: (activeProj?.count as number) ?? 0,
+        unread: (unread?.count as number) ?? 0,
+        upcoming: (upcoming?.count as number) ?? 0,
+      };
     },
     enabled: !!user,
   });
@@ -203,6 +237,26 @@ const CreatorPassCard = () => {
             </div>
           </div>
         </div>
+      </motion.div>
+
+      {/* ── Studio activity (relocated from My Studio) ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="grid grid-cols-3 gap-[1px] bg-border rounded-2xl overflow-hidden"
+      >
+        {[
+          { icon: FolderKanban, label: "Active Projects", value: studioStats?.activeProjects ?? 0, path: "/projects" },
+          { icon: MessageSquare, label: "Unread", value: studioStats?.unread ?? 0, path: "/messages" },
+          { icon: Calendar, label: "Upcoming", value: studioStats?.upcoming ?? 0, path: "/calendar" },
+        ].map((s) => (
+          <Link key={s.label} to={s.path} className="bg-card p-4 hover:bg-muted/50 transition-colors group">
+            <s.icon className="h-4 w-4 text-muted-foreground mb-2 group-hover:text-foreground transition-colors" />
+            <p className="font-display text-2xl text-foreground">{s.value}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider font-body">{s.label}</p>
+          </Link>
+        ))}
       </motion.div>
 
       {/* ── Token Balance + Claim ── */}

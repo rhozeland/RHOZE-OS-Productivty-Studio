@@ -34,21 +34,18 @@ import {
 } from "@/components/ui/sidebar";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-// v7 (post phase-2): primary pillars in the side nav.
-// Spaces + Projects removed — Spaces folded into Discover/Stream lanes;
-// Projects now lives as a tab inside Inbox (/messages?tab=projects).
+// v8: primary pillars in the side nav. Hub + My Studio retired —
+// Discover is the unified front door, Conversations holds every back-
+// and-forth (DMs + Projects + Inquiries + Listings).
 const pillarItems = [
   { icon: Compass, label: "Discover", path: "/discover" },
-  { icon: Sparkles, label: "Hub", path: "/hub" },
-  { icon: MessageSquare, label: "Inbox", path: "/messages" },
+  { icon: MessageSquare, label: "Conversations", path: "/messages" },
   { icon: UserIcon, label: "Profile", path: "/profile" },
 ];
 
-// Personal workspace + creator perks. "My Studio" is the artist's own
-// private control room (drafts, drops, bookings, what's next) — not a
-// public discovery surface anymore.
+// Personal perks. My Studio removed — its metric strip lives in Creator
+// Pass now, and the personal greeting moved into Discover.
 const secondaryItems = [
-  { icon: Box, label: "My Studio", path: "/dashboard" },
   { icon: CreditCard, label: "Creator Pass", path: "/credits" },
 ];
 
@@ -152,7 +149,7 @@ const AppSidebar = () => {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
-      <Link to="/dashboard" className={cn(
+      <Link to="/discover" className={cn(
         "flex h-16 items-center gap-3 px-4 border-b border-sidebar-border hover:opacity-80 transition-opacity",
         collapsed && "justify-center px-2"
       )}>

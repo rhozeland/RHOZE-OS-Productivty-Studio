@@ -11,7 +11,7 @@ import { AuthGateProvider } from "@/components/AuthGateDialog";
 import AppLayout from "@/components/AppLayout";
 import AuthPage from "@/pages/AuthPage";
 import LandingPage from "@/pages/LandingPage";
-import DashboardPage from "@/pages/DashboardPage";
+// DashboardPage retired in v8 — /dashboard now redirects to /discover.
 import ProjectsPage from "@/pages/ProjectsPage";
 import ProjectDetailPage from "@/pages/ProjectDetailPage";
 import CalendarPage from "@/pages/CalendarPage";
@@ -45,8 +45,8 @@ import InfrastructurePage from "@/pages/InfrastructurePage";
 // WorksPage is no longer routed here — it's mounted inside SettingsPage
 // (Provenance section). /works redirects to /settings#provenance below.
 // /spaces is the Luma-inspired hub: Events timeline · Spaces marketplace · Discover.
-// PeoplePage retained but unrouted — /people redirects to /hub.
-import HubPage from "@/pages/HubPage";
+// PeoplePage retained but unrouted — /people redirects to /discover.
+// HubPage retired in v8 — /stream + /hub redirect to /discover.
 import SpacesHubPage from "@/pages/SpacesHubPage";
 import EventCreatePage from "@/pages/EventCreatePage";
 import EventDetailPage from "@/pages/EventDetailPage";
@@ -207,23 +207,22 @@ const App = () => (
 
               {/* Main app — browsable by everyone, auth-gated actions inside */}
               <Route element={<AppLayout />}>
-                <Route path="/dashboard" element={<DashboardPage />} />
+                {/* v8: My Studio retired. /dashboard → Discover. */}
+                <Route path="/dashboard" element={<Navigate to="/discover" replace />} />
                 <Route path="/discover" element={<DiscoverPage />} />
-                {/* v7 Stream — unified social pillar. For phase 1 it
-                    renders the existing HubPage so behavior matches what
-                    users already know; phase 2 will merge Spaces lanes
-                    in. Legacy bare roots redirect here; sub-routes stay
-                    live (e.g. /spaces/events/:id, /studios/:id). */}
-                <Route path="/stream" element={<HubPage />} />
-                <Route path="/hub" element={<Navigate to="/stream" replace />} />
-                <Route path="/spaces" element={<Navigate to="/stream?tab=spaces" replace />} />
+                {/* v8: Hub/Stream retired — Discover is the unified front
+                    door. Mosaic + composer + flow toggle all live there.
+                    Legacy roots redirect; sub-routes stay live. */}
+                <Route path="/stream" element={<Navigate to="/discover" replace />} />
+                <Route path="/hub" element={<Navigate to="/discover" replace />} />
+                <Route path="/spaces" element={<Navigate to="/discover?kind=space" replace />} />
                 <Route path="/spaces/events/new" element={<ProtectedRoute><EventCreatePage /></ProtectedRoute>} />
                 <Route path="/spaces/events/:id" element={<EventDetailPage />} />
                 <Route path="/spaces/events/:id/manage" element={<ProtectedRoute><EventManagePage /></ProtectedRoute>} />
                 <Route path="/tickets/:id" element={<ProtectedRoute><TicketDetailPage /></ProtectedRoute>} />
-                <Route path="/people" element={<Navigate to="/stream" replace />} />
+                <Route path="/people" element={<Navigate to="/discover" replace />} />
                 <Route path="/profile" element={<ProfileRedirect />} />
-                <Route path="/studios" element={<Navigate to="/stream?tab=spaces" replace />} />
+                <Route path="/studios" element={<Navigate to="/discover?kind=space" replace />} />
                 <Route path="/studios/:id" element={<StudioDetailPage />} />
                 <Route path="/studios/apply" element={<StudioApplicationPage />} />
                 <Route path="/studios/:id/manage" element={<StudioManagePage />} />
@@ -254,21 +253,21 @@ const App = () => (
                 {/* Launchpad page is gone — coins are now profile-bound.
                     /launchpad redirects to the Hub; /launchpad/:id resolves
                     the coin's creator and forwards to their profile Coin tab. */}
-                <Route path="/launchpad" element={<Navigate to="/stream" replace />} />
+                <Route path="/launchpad" element={<Navigate to="/discover" replace />} />
                 <Route path="/launchpad/:id" element={<LaunchRedirect />} />
                 <Route path="/smartboards" element={<Navigate to="/projects" replace />} />
                 <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
                 <Route path="/drop-rooms" element={<Navigate to="/projects" replace />} />
                 <Route path="/drop-rooms/:id" element={<DropRoomDetailPage />} />
-                {/* Legacy Creators Hub → Hub */}
-                <Route path="/creators" element={<Navigate to="/stream" replace />} />
+                {/* Legacy Creators Hub → Discover */}
+                <Route path="/creators" element={<Navigate to="/discover" replace />} />
                 <Route path="/creators/:id" element={<ListingDetailPage />} />
-                {/* Legacy Marketplace → Hub (detail pages still resolve) */}
-                <Route path="/marketplace" element={<Navigate to="/stream" replace />} />
+                {/* Legacy Marketplace → Discover (detail pages still resolve) */}
+                <Route path="/marketplace" element={<Navigate to="/discover?kind=offering" replace />} />
                 <Route path="/marketplace/:id" element={<ListingDetailPage />} />
                 <Route path="/seller" element={<Navigate to="/settings" replace />} />
                 <Route path="/inquiries" element={<Navigate to="/messages?tab=inquiries" replace />} />
-                <Route path="/profiles" element={<Navigate to="/stream" replace />} />
+                <Route path="/profiles" element={<Navigate to="/discover" replace />} />
                 <Route path="/profiles/:id" element={<ProfileDetailPage />} />
                 {/* Centralized legacy aliases — generated from NAV_ALIASES.
                     Add a new redirect by adding a `matchPaths` entry to a
