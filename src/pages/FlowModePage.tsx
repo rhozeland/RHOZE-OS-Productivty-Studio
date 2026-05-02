@@ -1513,7 +1513,7 @@ const FlowModePage = () => {
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
                 <span className="flex flex-col items-center gap-1 text-white/90">
                   <ChevronUp className="h-6 w-6" />
-                  <span className="text-sm font-medium">Save</span>
+                  <span className="text-sm font-medium">Like</span>
                 </span>
               </motion.div>
               {/* Middle row: Left + Center + Right */}
@@ -1539,7 +1539,7 @@ const FlowModePage = () => {
               {/* Down */}
               <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
                 <span className="flex flex-col items-center gap-1 text-white/90">
-                  <span className="text-sm font-medium">Share</span>
+                  <span className="text-sm font-medium">Comment</span>
                   <ChevronDown className="h-6 w-6" />
                 </span>
               </motion.div>
@@ -1569,7 +1569,7 @@ const FlowModePage = () => {
               className="pointer-events-none absolute left-0 right-0 top-16 z-40 flex justify-center"
             >
               <span className="flex items-center gap-1 rounded-full bg-card/80 border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm" style={{ textShadow: "0 1px 2px hsl(var(--background) / 0.5)" }}>
-                <ChevronUp className="h-3 w-3" /> Save
+                <ChevronUp className="h-3 w-3" /> Like
               </span>
             </motion.div>
             {/* Bottom — Share (centered in the card area, above dock) */}
@@ -1581,7 +1581,7 @@ const FlowModePage = () => {
               className="pointer-events-none absolute left-0 right-0 bottom-28 z-40 flex justify-center md:bottom-32"
             >
               <span className="flex items-center gap-1 rounded-full bg-card/80 border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm" style={{ textShadow: "0 1px 2px hsl(var(--background) / 0.5)" }}>
-                <ChevronDown className="h-3 w-3" /> Share
+                <ChevronDown className="h-3 w-3" /> Comment
               </span>
             </motion.div>
             {/* Left — Pass (constrained inside content, not overlapping sidebar) */}
@@ -1612,32 +1612,13 @@ const FlowModePage = () => {
         )}
       </AnimatePresence>
 
-      {/* Save to Board picker */}
-      <Dialog open={savePickerOpen} onOpenChange={setSavePickerOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="font-display text-lg">Save to board</DialogTitle>
-            <DialogDescription>Choose a Smartboard to save this content to.</DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto">
-            {smartboards?.map((board) => (
-              <button
-                key={board.id}
-                onClick={() => performAction("save", board.id, shareItem)}
-                className="rounded-xl border border-border bg-card p-4 text-left hover:shadow-md hover:border-primary/30 transition-all group"
-              >
-                <div className="h-16 rounded-lg mb-2" style={{ backgroundColor: board.cover_color || "hsl(var(--muted))" }} />
-                <h4 className="font-display font-semibold text-foreground text-sm truncate group-hover:text-primary transition-colors">
-                  {board.title}
-                </h4>
-              </button>
-            ))}
-            {(!smartboards || smartboards.length === 0) && (
-              <p className="col-span-2 text-center text-sm text-muted-foreground py-6">No boards yet. Create one first!</p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Comment thread sheet (replaces the old Save→Smartboard picker). */}
+      <FlowCommentSheet
+        open={commentSheetOpen}
+        onOpenChange={(o) => { setCommentSheetOpen(o); if (!o) setCommentItem(null); }}
+        flowItemId={commentItem?.id ?? null}
+        itemTitle={commentItem?.title}
+      />
 
       {/* Add content dialog */}
       <Dialog open={addOpen} onOpenChange={(open) => { if (!open) { cancelUpload(); resetPendingFiles(); setShareStep("compose"); } setAddOpen(open); }}>
