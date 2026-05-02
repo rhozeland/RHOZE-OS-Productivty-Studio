@@ -33,7 +33,8 @@ import OnChainBalancesCard from "@/components/launchpad/OnChainBalancesCard";
 import PriceChartCard from "@/components/launchpad/PriceChartCard";
 import HoldersList from "@/components/launchpad/HoldersList";
 import { Button } from "@/components/ui/button";
-import { deriveLaunchPda, LAUNCHPAD_NETWORK } from "@/lib/launchpad-onchain";
+import { deriveLaunchPda, isLaunchpadOnChainEnabled, LAUNCHPAD_NETWORK } from "@/lib/launchpad-onchain";
+import MintAddressChip from "@/components/launchpad/MintAddressChip";
 import { toast } from "sonner";
 
 type Launch = {
