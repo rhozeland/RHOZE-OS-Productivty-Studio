@@ -3664,6 +3664,7 @@ export type Database = {
           file_name: string | null
           file_size: number | null
           file_url: string | null
+          gating: Json | null
           id: string
           kind: string
           mime_type: string | null
@@ -3681,6 +3682,7 @@ export type Database = {
           file_name?: string | null
           file_size?: number | null
           file_url?: string | null
+          gating?: Json | null
           id?: string
           kind?: string
           mime_type?: string | null
@@ -3698,6 +3700,7 @@ export type Database = {
           file_name?: string | null
           file_size?: number | null
           file_url?: string | null
+          gating?: Json | null
           id?: string
           kind?: string
           mime_type?: string | null
@@ -3884,6 +3887,10 @@ export type Database = {
           youtube_url: string
         }[]
       }
+      get_user_token_holding: {
+        Args: { _launch_id: string; _user_id: string }
+        Returns: number
+      }
       has_event_ticket: {
         Args: { _event_id: string; _user_id: string }
         Returns: boolean
@@ -3990,6 +3997,7 @@ export type Database = {
         }
         Returns: string
       }
+      request_work_unlock: { Args: { _work_id: string }; Returns: Json }
       simulate_coin_trade: {
         Args: { _amount: number; _launch_id: string; _side: string }
         Returns: Json
