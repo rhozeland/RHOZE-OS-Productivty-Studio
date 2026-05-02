@@ -102,6 +102,7 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/credits",
   "/purchases",
   "/rewards",
+  "/swaps",
   "/smartboards",
   "/smartboards/:id",
   "/flow",
