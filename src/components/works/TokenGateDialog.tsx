@@ -37,6 +37,7 @@ type Props = {
   /** Existing gating config so the dialog can hydrate. */
   current?: {
     enabled?: boolean;
+    pool_type?: "launch" | "rhoze_pool";
     launch_id?: string;
     min_tokens?: number;
     gated_path?: string;
@@ -54,6 +55,9 @@ export const TokenGateDialog = ({
   const { user } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [poolType, setPoolType] = useState<"launch" | "rhoze_pool">(
+    current?.pool_type ?? "launch",
+  );
   const [launchId, setLaunchId] = useState<string>(current?.launch_id ?? "");
   const [minTokens, setMinTokens] = useState<string>(
     current?.min_tokens != null ? String(current.min_tokens) : "1000",
@@ -79,7 +83,7 @@ export const TokenGateDialog = ({
   const saveMut = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Sign in required");
-      if (!launchId) throw new Error("Pick a coin");
+      if (poolType === "launch" && !launchId) throw new Error("Pick a coin");
       const threshold = Number(minTokens);
       if (!Number.isFinite(threshold) || threshold < 0) {
         throw new Error("Threshold must be a positive number");
@@ -103,16 +107,17 @@ export const TokenGateDialog = ({
 
       if (!gatedPath) throw new Error("Upload the gated file");
 
+      const gating: Record<string, unknown> = {
+        enabled: true,
+        pool_type: poolType,
+        min_tokens: threshold,
+        gated_path: gatedPath,
+      };
+      if (poolType === "launch") gating.launch_id = launchId;
+
       const { error: updErr } = await supabase
         .from("works")
-        .update({
-          gating: {
-            enabled: true,
-            launch_id: launchId,
-            min_tokens: threshold,
-            gated_path: gatedPath,
-          },
-        })
+        .update({ gating: gating as never })
         .eq("id", workId);
       if (updErr) throw updErr;
     },
@@ -166,13 +171,48 @@ export const TokenGateDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        {(launches?.length ?? 0) === 0 ? (
-          <div className="rounded-lg border border-border/50 bg-muted/30 p-4 text-sm text-muted-foreground">
-            You need an active coin launch first. Head to the Launchpad to
-            create one, then come back.
+        <div className="space-y-4">
+          {/* Pool type toggle */}
+          <div className="space-y-1.5">
+            <Label>Who can unlock?</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setPoolType("launch")}
+                className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors text-left ${
+                  poolType === "launch"
+                    ? "border-primary bg-primary/5 text-foreground"
+                    : "border-border/60 text-muted-foreground hover:bg-muted/30"
+                }`}
+              >
+                Holders of my coin
+                <span className="block text-[10px] font-normal text-muted-foreground/80">
+                  Requires an active launch
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPoolType("rhoze_pool")}
+                className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors text-left ${
+                  poolType === "rhoze_pool"
+                    ? "border-primary bg-primary/5 text-foreground"
+                    : "border-border/60 text-muted-foreground hover:bg-muted/30"
+                }`}
+              >
+                $RHOZE holders
+                <span className="block text-[10px] font-normal text-muted-foreground/80">
+                  Live wallet balance
+                </span>
+              </button>
+            </div>
           </div>
-        ) : (
-          <div className="space-y-4">
+
+          {poolType === "launch" && ((launches?.length ?? 0) === 0 ? (
+            <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-xs text-muted-foreground">
+              You need an active coin launch to use this pool. Head to the
+              Launchpad to create one — or switch to $RHOZE holders above.
+            </div>
+          ) : (
             <div className="space-y-1.5">
               <Label>Coin</Label>
               <Select value={launchId} onValueChange={setLaunchId}>
@@ -188,21 +228,25 @@ export const TokenGateDialog = ({
                 </SelectContent>
               </Select>
             </div>
+          ))}
 
-            <div className="space-y-1.5">
-              <Label>Minimum tokens to unlock</Label>
-              <Input
-                type="number"
-                min={0}
-                step="any"
-                value={minTokens}
-                onChange={(e) => setMinTokens(e.target.value)}
-              />
-              <p className="text-[11px] text-muted-foreground">
-                Holdings are read from the simulated bonding curve until the
-                on-chain mint ships.
-              </p>
-            </div>
+          <div className="space-y-1.5">
+            <Label>
+              Minimum {poolType === "rhoze_pool" ? "$RHOZE" : "tokens"} to unlock
+            </Label>
+            <Input
+              type="number"
+              min={0}
+              step="any"
+              value={minTokens}
+              onChange={(e) => setMinTokens(e.target.value)}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              {poolType === "rhoze_pool"
+                ? "Read from the holder's connected Solana wallet on each unlock."
+                : "Holdings are read from the simulated bonding curve until the on-chain mint ships."}
+            </p>
+          </div>
 
             <div className="space-y-1.5">
               <Label>Gated file</Label>
@@ -243,7 +287,10 @@ export const TokenGateDialog = ({
               )}
               <Button
                 onClick={() => saveMut.mutate()}
-                disabled={saveMut.isPending || !launchId}
+                disabled={
+                  saveMut.isPending ||
+                  (poolType === "launch" && !launchId)
+                }
                 className="gap-1.5"
               >
                 {saveMut.isPending && (
@@ -253,7 +300,6 @@ export const TokenGateDialog = ({
               </Button>
             </div>
           </div>
-        )}
       </DialogContent>
     </Dialog>
   );

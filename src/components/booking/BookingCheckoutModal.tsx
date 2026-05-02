@@ -34,12 +34,17 @@ import { format, setHours, setMinutes, addHours } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import PaySolAndVerify from "@/components/PaySolAndVerify";
+import PayWithRhozeButton from "@/components/PayWithRhozeButton";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
 
 type Step = "datetime" | "payment" | "confirm";
-type PaymentMethod = "credits" | "card" | "crypto";
+type PaymentMethod = "credits" | "card" | "crypto" | "rhoze";
+
+// Server-side rate is 100 $RHOZE ≈ $1 (see verify-rhoze-payment).
+// Mirror it here so the displayed price matches what the backend expects.
+const RHOZE_PER_USD = 100;
 
 type StaffMember = {
   id: string;
@@ -115,6 +120,7 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
 
   const usdPrice = service.credits_cost * CREDIT_RATE;
   const solPrice = +(usdPrice / 150).toFixed(4); // rough SOL estimate
+  const rhozePrice = Math.max(1, Math.round(usdPrice * RHOZE_PER_USD));
   const hasEnoughCredits = userCredits >= service.credits_cost;
 
   const canProceedFromDatetime = selectedDate && selectedTime;
@@ -207,7 +213,11 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
           time: timeSlot?.label || selectedTime,
           duration_hours: service.duration_hours,
           payment_method: paymentMethod,
-          payment_amount: paymentMethod === "credits" ? `${service.credits_cost} credits` : paymentMethod === "card" ? `$${usdPrice}` : `~${solPrice} SOL`,
+          payment_amount:
+            paymentMethod === "credits" ? `${service.credits_cost} credits`
+            : paymentMethod === "card" ? `$${usdPrice}`
+            : paymentMethod === "rhoze" ? `${rhozePrice.toLocaleString()} $RHOZE`
+            : `~${solPrice} SOL`,
           notes: notes || undefined,
         },
       }).catch((err) => console.error("Confirmation email failed:", err));
@@ -419,6 +429,26 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
                 </div>
                 {paymentMethod === "crypto" && <Check className="h-5 w-5 text-primary" />}
               </button>
+
+              {/* $RHOZE */}
+              <button
+                onClick={() => setPaymentMethod("rhoze")}
+                className={cn(
+                  "flex items-center gap-4 rounded-xl border p-4 transition-all text-left",
+                  paymentMethod === "rhoze" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+                )}
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-500/10">
+                  <Coins className="h-5 w-5 text-pink-500" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-foreground">Pay with $RHOZE</p>
+                  <p className="text-xs text-muted-foreground">
+                    {rhozePrice.toLocaleString()} $RHOZE • on-chain payment to treasury
+                  </p>
+                </div>
+                {paymentMethod === "rhoze" && <Check className="h-5 w-5 text-primary" />}
+              </button>
             </div>
 
             <div>
@@ -481,6 +511,7 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
                   {paymentMethod === "credits" && <><Coins className="h-3.5 w-3.5 text-primary" /> {service.credits_cost} credits</>}
                   {paymentMethod === "card" && <><CreditCard className="h-3.5 w-3.5 text-blue-500" /> ${usdPrice}</>}
                   {paymentMethod === "crypto" && <><Wallet className="h-3.5 w-3.5 text-orange-500" /> ~{solPrice} SOL</>}
+                  {paymentMethod === "rhoze" && <><Coins className="h-3.5 w-3.5 text-pink-500" /> {rhozePrice.toLocaleString()} $RHOZE</>}
                 </span>
               </div>
               {notes && (
@@ -520,6 +551,17 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
                   type="usage"
                   label={`Pay ${solPrice} SOL & Book`}
                   className="flex-1"
+                  onSuccess={() => handleConfirm()}
+                />
+              ) : paymentMethod === "rhoze" ? (
+                <PayWithRhozeButton
+                  tokenAmount={rhozePrice}
+                  description={`Booking: ${service.title}`}
+                  type="usage"
+                  intent="subscription"
+                  label={`Pay ${rhozePrice.toLocaleString()} $RHOZE & Book`}
+                  className="flex-1"
+                  variant="default"
                   onSuccess={() => handleConfirm()}
                 />
               ) : paymentMethod === "credits" ? (
