@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      artist_verification_requests: {
+        Row: {
+          bio: string | null
+          contact_email: string
+          created_at: string
+          decided_at: string | null
+          id: string
+          review_note: string | null
+          reviewer_id: string | null
+          social_links: Json
+          status: string
+          updated_at: string
+          user_id: string
+          video_url: string
+          wallet_address: string | null
+        }
+        Insert: {
+          bio?: string | null
+          contact_email: string
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          review_note?: string | null
+          reviewer_id?: string | null
+          social_links?: Json
+          status?: string
+          updated_at?: string
+          user_id: string
+          video_url: string
+          wallet_address?: string | null
+        }
+        Update: {
+          bio?: string | null
+          contact_email?: string
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          review_note?: string | null
+          reviewer_id?: string | null
+          social_links?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string
+          video_url?: string
+          wallet_address?: string | null
+        }
+        Relationships: []
+      }
       badges: {
         Row: {
           auto_criteria: Json | null
@@ -1883,6 +1931,8 @@ export type Database = {
           updated_at: string
           user_id: string
           username: string | null
+          verification_status: string
+          verified_at: string | null
           wallet_address: string | null
           wallet_locked: boolean
           youtube_url: string | null
@@ -1931,6 +1981,8 @@ export type Database = {
           updated_at?: string
           user_id: string
           username?: string | null
+          verification_status?: string
+          verified_at?: string | null
           wallet_address?: string | null
           wallet_locked?: boolean
           youtube_url?: string | null
@@ -1979,6 +2031,8 @@ export type Database = {
           updated_at?: string
           user_id?: string
           username?: string | null
+          verification_status?: string
+          verified_at?: string | null
           wallet_address?: string | null
           wallet_locked?: boolean
           youtube_url?: string | null
@@ -3767,6 +3821,7 @@ export type Database = {
           file_url: string | null
           gating: Json | null
           id: string
+          is_unverified: boolean
           kind: string
           mime_type: string | null
           solana_signature: string | null
@@ -3785,6 +3840,7 @@ export type Database = {
           file_url?: string | null
           gating?: Json | null
           id?: string
+          is_unverified?: boolean
           kind?: string
           mime_type?: string | null
           solana_signature?: string | null
@@ -3803,6 +3859,7 @@ export type Database = {
           file_url?: string | null
           gating?: Json | null
           id?: string
+          is_unverified?: boolean
           kind?: string
           mime_type?: string | null
           solana_signature?: string | null
@@ -4020,6 +4077,7 @@ export type Database = {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
       }
+      is_verified_artist: { Args: { _user_id: string }; Returns: boolean }
       lock_escrow_credits: {
         Args: { _amount: number; _client_id: string; _contract_id: string }
         Returns: undefined

@@ -13,6 +13,7 @@ import AdminContentModeration from "@/components/admin/AdminContentModeration";
 import AdminUnderwritingRules from "@/components/admin/AdminUnderwritingRules";
 import AdminUnderwritingRulesAudit from "@/components/admin/AdminUnderwritingRulesAudit";
 import AdminWorkVerifications from "@/components/admin/AdminWorkVerifications";
+import AdminArtistVerifications from "@/components/admin/AdminArtistVerifications";
 
 const AdminPage = () => {
   const { isAdmin, loading } = useAdminCheck();
@@ -56,6 +57,9 @@ const AdminPage = () => {
           <TabsTrigger value="ip" className="gap-1.5 text-xs shrink-0">
             <ShieldCheck className="h-3.5 w-3.5" /> IP Verifications
           </TabsTrigger>
+          <TabsTrigger value="artists" className="gap-1.5 text-xs shrink-0">
+            <ShieldCheck className="h-3.5 w-3.5" /> Artist Verification
+          </TabsTrigger>
           <TabsTrigger value="disputes" className="gap-1.5 text-xs shrink-0">
             <AlertTriangle className="h-3.5 w-3.5" /> Disputes
           </TabsTrigger>
@@ -76,6 +80,7 @@ const AdminPage = () => {
         <TabsContent value="badges"><AdminBadges /></TabsContent>
         <TabsContent value="studios"><AdminStudioApplications /></TabsContent>
         <TabsContent value="ip"><AdminWorkVerifications /></TabsContent>
+        <TabsContent value="artists"><AdminArtistVerifications /></TabsContent>
         <TabsContent value="disputes"><AdminDisputes /></TabsContent>
         <TabsContent value="withdrawals"><AdminWithdrawals /></TabsContent>
         <TabsContent value="moderation"><AdminContentModeration /></TabsContent>

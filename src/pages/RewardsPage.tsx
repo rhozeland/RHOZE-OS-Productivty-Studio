@@ -11,8 +11,9 @@
  */
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Coins, Sparkles, Shield, HelpCircle } from "lucide-react";
+import { ArrowLeft, Coins, Sparkles, Shield, HelpCircle, ShoppingBag, Heart, Trophy } from "lucide-react";
 import RewardsDashboard from "@/components/creators/RewardsDashboard";
+import { REWARDS_BY_CATEGORY } from "@/lib/rewards-catalog";
 import {
   Accordion,
   AccordionContent,
@@ -258,7 +259,46 @@ const RewardsPage = () => {
           </p>
         </section>
 
-        {/* Existing RewardsDashboard — full catalog, balance, claim, history */}
+        {/* How you earn — canonical hybrid catalog */}
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h2 className="font-display text-lg font-semibold text-foreground">How you earn</h2>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Engagement keeps you active. Commerce drives the economy. All earnings route through admin approval before they hit your wallet.
+          </p>
+
+          {[
+            { key: "engagement" as const, icon: Heart, title: "Engagement", subtitle: "Small + capped — keep showing up." },
+            { key: "commerce" as const, icon: ShoppingBag, title: "Commerce", subtitle: "Bigger — back artists, get rewarded." },
+            { key: "milestone" as const, icon: Trophy, title: "Milestones", subtitle: "One-time unlocks." },
+          ].map(({ key, icon: Icon, title, subtitle }) => (
+            <div key={key} className="rounded-2xl border border-border/50 bg-card/60 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <Icon className="h-4 w-4 text-primary" />
+                <h3 className="font-display text-sm font-semibold">{title}</h3>
+                <span className="text-[11px] text-muted-foreground">· {subtitle}</span>
+              </div>
+              <ul className="divide-y divide-border/40">
+                {REWARDS_BY_CATEGORY[key].map((r) => (
+                  <li key={r.action} className="flex items-start justify-between gap-3 py-2">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{r.label}</p>
+                      <p className="text-xs text-muted-foreground">{r.description}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-semibold text-primary">{r.amount}</p>
+                      {r.cap && <p className="text-[10px] text-muted-foreground">{r.cap}</p>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </section>
+
+        {/* Existing RewardsDashboard — balance, claim, history */}
         <section>
           <RewardsDashboard />
         </section>

@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
+import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import {
   ArrowRight, Compass, Sparkles, Calendar as CalendarIcon, Coins,
@@ -383,6 +384,9 @@ const DiscoverPage = () => {
           </div>
         </section>
       )}
+
+      {/* ─── Trending Verified Artists (fan→artist swap funnel) ────── */}
+      <TrendingArtistsLane />
 
       {/* ─── 5. Coins moving today ──────────────────────────────────── */}
       {coins && coins.length > 0 && (

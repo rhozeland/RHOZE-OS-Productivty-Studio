@@ -8,9 +8,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Coins, ArrowRight } from "lucide-react";
+import { Coins, ArrowRight, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LaunchCoinDialog from "./LaunchCoinDialog";
+import { useAuth } from "@/contexts/AuthContext";
+import { useArtistVerification } from "@/hooks/useArtistVerification";
 
 interface Props {
   workId: string;
@@ -29,6 +31,9 @@ const LaunchCoinButton = ({
   workImage,
   size = "sm",
 }: Props) => {
+  const { user } = useAuth();
+  const { data: verif } = useArtistVerification(isOwner ? user?.id : null);
+  const isVerifiedArtist = verif?.verified ?? false;
   const [open, setOpen] = useState(false);
   const [existing, setExisting] = useState<{ id: string; ticker: string } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,6 +71,17 @@ const LaunchCoinButton = ({
   }
 
   if (!isOwner) return null;
+
+  if (!isVerifiedArtist) {
+    return (
+      <Button asChild variant="outline" size={size} className="gap-1.5">
+        <Link to="/settings/verification">
+          <BadgeCheck className="h-3.5 w-3.5" />
+          Verify to launch a coin
+        </Link>
+      </Button>
+    );
+  }
 
   return (
     <>

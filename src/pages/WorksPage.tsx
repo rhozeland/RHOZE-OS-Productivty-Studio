@@ -554,6 +554,14 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
         .from("flow-uploads")
         .getPublicUrl(path);
 
+      // Tag with verification state so UI can mark unverified work clearly.
+      const { data: profileRow } = await supabase
+        .from("profiles")
+        .select("verification_status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const isUnverified = profileRow?.verification_status !== "verified";
+
       const { error: insertErr } = await supabase.from("works").insert({
         user_id: user.id,
         title: title.trim(),
@@ -565,6 +573,7 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
         mime_type: file.type || null,
         file_size: file.size,
         visibility,
+        is_unverified: isUnverified,
       });
       if (insertErr) throw insertErr;
 
