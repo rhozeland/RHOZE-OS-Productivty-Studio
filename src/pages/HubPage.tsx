@@ -24,10 +24,8 @@ import {
   Layers,
   Flame,
   Briefcase,
-  Megaphone,
   CalendarDays,
   Building2,
-  Shield,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import StreamComposer from "@/components/stream/StreamComposer";
@@ -36,14 +34,15 @@ import ConversationsMosaic, { type MosaicKindFilter } from "@/components/hub/Con
 
 // Filter chips. Order = how readers scan: "All" first, then content
 // kinds in roughly creation-frequency order.
+// "Open Calls" + "Works" intentionally removed — open calls now live under
+// Offerings (one marketplace), and verified Works show as a badge on Drops
+// (no standalone lane needed).
 const FILTERS: { key: MosaicKindFilter; label: string; Icon: typeof Flame }[] = [
   { key: "all",         label: "All",        Icon: Layers },
   { key: "drop",        label: "Drops",      Icon: Flame },
   { key: "offering",    label: "Offerings",  Icon: Briefcase },
-  { key: "opportunity", label: "Open Calls", Icon: Megaphone },
   { key: "event",       label: "Events",     Icon: CalendarDays },
   { key: "space",       label: "Spaces",     Icon: Building2 },
-  { key: "work",        label: "Works",      Icon: Shield },
 ];
 
 const VALID_KINDS = new Set<MosaicKindFilter>(FILTERS.map((f) => f.key));

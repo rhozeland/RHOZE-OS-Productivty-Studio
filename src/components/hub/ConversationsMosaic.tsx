@@ -22,36 +22,48 @@ import { motion } from "framer-motion";
 import { format } from "date-fns";
 import {
   Briefcase,
-  Megaphone,
   CalendarDays,
   Building2,
-  Shield,
   Flame,
   MapPin,
   Globe2,
   ArrowRight,
   Sparkles,
+  Music,
+  Palette,
+  Camera,
+  Video,
+  PenTool,
+  Theater,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 
 // ─── Tile shape ────────────────────────────────────────────────────────
-type TileKind = "drop" | "offering" | "opportunity" | "event" | "space" | "work";
+// Note: "work" + "opportunity" no longer exist as standalone tile kinds.
+//   - Verified Works are surfaced as a `verifiedSignature` badge on a Drop.
+//   - Open Calls (project_request listings) are folded into "offering" with
+//     an "Open Call" sub-label, since they live in the same marketplace.
+type TileKind = "drop" | "offering" | "event" | "space";
 
 interface MosaicTile {
   id: string;
   kind: TileKind;
+  /** Sub-classification within a kind (e.g. "Open Call" for offerings). */
+  variant?: string | null;
   title: string;
   subtitle?: string | null;
   description?: string | null;
+  category?: string | null;
   href: string;
   cover?: string | null;
   fileUrl?: string | null;
   linkUrl?: string | null;
   meta?: string | null;
   badge?: string | null;
-  signature?: string | null;
+  /** When set on a drop, surfaces the green Verified IP shield. */
+  verifiedSignature?: string | null;
   createdAt: string;
 }
 
@@ -88,12 +100,6 @@ const KIND_META: Record<
     tint: "from-sky-500/15 via-cyan-500/10 to-transparent",
     chipBg: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
   },
-  opportunity: {
-    label: "Open Call",
-    Icon: Megaphone,
-    tint: "from-violet-500/15 via-fuchsia-500/10 to-transparent",
-    chipBg: "bg-violet-500/15 text-violet-600 dark:text-violet-300",
-  },
   event: {
     label: "Event",
     Icon: CalendarDays,
@@ -106,13 +112,28 @@ const KIND_META: Record<
     tint: "from-emerald-500/15 via-teal-500/10 to-transparent",
     chipBg: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
   },
-  work: {
-    label: "Verified IP",
-    Icon: Shield,
-    tint: "from-emerald-500/15 via-lime-500/10 to-transparent",
-    chipBg: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
-  },
 };
+
+// Visual identity per offering category — drives the big icon + accent
+// color used on text-only offering/opportunity tiles. Kept in sync with
+// MarketplacePage's CATEGORIES.
+const CATEGORY_VISUAL: Record<string, { Icon: typeof Briefcase; accent: string; label: string }> = {
+  audio:   { Icon: Music,   accent: "hsl(280 60% 55%)", label: "Audio" },
+  music:   { Icon: Music,   accent: "hsl(280 60% 55%)", label: "Music" },
+  design:  { Icon: Palette, accent: "hsl(160 60% 50%)", label: "Design" },
+  photo:   { Icon: Camera,  accent: "hsl(35 90% 55%)",  label: "Photo" },
+  video:   { Icon: Video,   accent: "hsl(340 70% 55%)", label: "Video" },
+  writing: { Icon: PenTool, accent: "hsl(210 60% 55%)", label: "Writing" },
+  talent:  { Icon: Theater, accent: "hsl(50 80% 50%)",  label: "Talent" },
+};
+
+const getCategoryVisual = (cat?: string | null) =>
+  CATEGORY_VISUAL[(cat ?? "").toLowerCase()] ?? {
+    Icon: Briefcase,
+    accent: "hsl(var(--foreground))",
+    label: cat ?? "Offering",
+  };
+
 
 // Deterministic shuffle (Mulberry32 seeded by length) so order feels mixed
 // but doesn't dance on every render.
@@ -150,25 +171,20 @@ const ConversationsMosaic = ({
 
       const drops = supabase
         .from("flow_items")
-        .select("id, title, description, category, file_url, link_url, created_at, user_id")
+        .select("id, title, description, category, file_url, link_url, created_at, user_id, solana_signature")
         .order("created_at", { ascending: false })
         .limit(12);
 
+      // Offerings + Open Calls now share one bucket — they're all
+      // marketplace listings, just with different listing_types. The tile
+      // surfaces "Open Call" as a sub-label when relevant.
       const offerings = supabase
         .from("marketplace_listings")
         .select("id, title, description, category, price, credits_price, listing_type, created_at, user_id")
         .eq("is_active", true)
-        .in("listing_type", ["service", "digital_product", "collaboration"])
+        .in("listing_type", ["service", "digital_product", "collaboration", "project_request"])
         .order("created_at", { ascending: false })
-        .limit(8);
-
-      const opps = supabase
-        .from("marketplace_listings")
-        .select("id, title, description, category, price, credits_price, created_at, user_id")
-        .eq("is_active", true)
-        .eq("listing_type", "project_request")
-        .order("created_at", { ascending: false })
-        .limit(6);
+        .limit(14);
 
       const events = supabase
         .from("events")
@@ -185,14 +201,7 @@ const ConversationsMosaic = ({
         .order("created_at", { ascending: false })
         .limit(6);
 
-      const works = supabase
-        .from("contribution_proofs")
-        .select("id, action_type, metadata, solana_signature, anchored_at, created_at, user_id")
-        .not("solana_signature", "is", null)
-        .order("anchored_at", { ascending: false, nullsFirst: false })
-        .limit(6);
-
-      const [dr, of, op, ev, sp, wk] = await Promise.all([drops, offerings, opps, events, spaces, works]);
+      const [dr, of, ev, sp] = await Promise.all([drops, offerings, events, spaces]);
 
       const tiles: MosaicTile[] = [];
 
@@ -203,39 +212,29 @@ const ConversationsMosaic = ({
           kind: "drop",
           title: d.title ?? "Drop",
           description: d.description,
+          category: d.category,
           fileUrl: d.file_url,
           linkUrl: d.link_url,
           href: `/flow`,
           meta: d.category,
+          // Verified Works are no longer a separate lane — when a drop has
+          // an on-chain signature, we surface the Verified IP shield on
+          // the tile itself. "Works = a badge on a Drop."
+          verifiedSignature: d.solana_signature ?? null,
           createdAt: d.created_at,
         });
       });
 
       (of.data ?? []).forEach((l: any) => {
         if (ilike && !`${l.title} ${l.description} ${l.category}`.toLowerCase().includes(term.toLowerCase())) return;
+        const isOpenCall = l.listing_type === "project_request";
         tiles.push({
           id: `off-${l.id}`,
           kind: "offering",
+          variant: isOpenCall ? "Open Call" : null,
           title: l.title,
           description: l.description,
-          href: `/marketplace/${l.id}`,
-          meta: l.category,
-          badge: l.credits_price
-            ? `${l.credits_price} ◊`
-            : l.price
-              ? `$${Number(l.price).toFixed(0)}`
-              : null,
-          createdAt: l.created_at,
-        });
-      });
-
-      (op.data ?? []).forEach((l: any) => {
-        if (ilike && !`${l.title} ${l.description} ${l.category}`.toLowerCase().includes(term.toLowerCase())) return;
-        tiles.push({
-          id: `opp-${l.id}`,
-          kind: "opportunity",
-          title: l.title,
-          description: l.description,
+          category: l.category,
           href: `/marketplace/${l.id}`,
           meta: l.category,
           badge: l.credits_price
@@ -275,20 +274,6 @@ const ConversationsMosaic = ({
         });
       });
 
-      (wk.data ?? []).forEach((w: any) => {
-        const desc = (w.metadata as Record<string, unknown> | null)?.description as string | undefined;
-        if (ilike && !`${w.action_type} ${desc ?? ""}`.toLowerCase().includes(term.toLowerCase())) return;
-        tiles.push({
-          id: `wk-${w.id}`,
-          kind: "work",
-          title: desc ?? w.action_type,
-          href: `/works`,
-          meta: w.action_type,
-          signature: w.solana_signature,
-          createdAt: w.anchored_at ?? w.created_at,
-        });
-      });
-
       return seededShuffle(tiles, tiles.length);
     },
     staleTime: 30_000,
@@ -299,7 +284,7 @@ const ConversationsMosaic = ({
   // Per-kind counts power the badge numbers in HubPage's filter chips.
   const counts = useMemo(() => {
     const c: Record<MosaicKindFilter, number> = {
-      all: allTiles.length, drop: 0, offering: 0, opportunity: 0, event: 0, space: 0, work: 0,
+      all: allTiles.length, drop: 0, offering: 0, event: 0, space: 0,
     };
     for (const t of allTiles) c[t.kind]++;
     return c;
@@ -379,6 +364,19 @@ const MosaicTileCard = ({
   const { Icon, label, tint, chipBg } = KIND_META[tile.kind];
   const hasImage = !!(tile.cover || tile.fileUrl || tile.linkUrl);
   const isLarge = sizeClass.includes("row-span-2") || sizeClass.includes("col-span-2");
+  // Offerings without a cover image lean on a bold category icon + theme
+  // color so they stop reading as "empty white space". The big icon does
+  // the visual lifting; copy fills in the rest.
+  const isIconHero = !hasImage && tile.kind === "offering";
+  const catVisual = getCategoryVisual(tile.category);
+  // The category accent overrides the kind tint for offerings — gives
+  // each craft (Music / Design / Photo / etc.) a distinct color identity
+  // even when no media is attached.
+  const accentStyle = isIconHero
+    ? {
+        background: `radial-gradient(circle at 30% 20%, ${catVisual.accent}22, transparent 60%), radial-gradient(circle at 80% 90%, ${catVisual.accent}1a, transparent 55%)`,
+      }
+    : undefined;
 
   const tileButton = (
     <motion.button
@@ -392,7 +390,7 @@ const MosaicTileCard = ({
       className={`${sizeClass} group relative w-full h-full overflow-hidden rounded-2xl border border-border bg-card text-left transition-all duration-300 hover:border-foreground/40 hover:shadow-lg cursor-pointer`}
       aria-label={`${label}: ${tile.title}. Click to open.`}
     >
-      {/* Background — image or gradient tint */}
+      {/* Background — image, gradient tint, or category-tinted icon hero */}
       {tile.cover ? (
         <img
           src={tile.cover}
@@ -408,6 +406,25 @@ const MosaicTileCard = ({
           description={tile.description}
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
+      ) : isIconHero ? (
+        // Category-driven hero: subtle dual-radial wash + huge soft icon
+        // floating off-axis. Reads as designed, not empty.
+        <>
+          <div
+            className="absolute inset-0 transition-transform duration-700 group-hover:scale-105"
+            style={accentStyle}
+          />
+          <catVisual.Icon
+            className="absolute -right-4 -bottom-6 transition-all duration-500 group-hover:-rotate-6 group-hover:scale-110"
+            style={{
+              color: catVisual.accent,
+              opacity: 0.22,
+              width: isLarge ? "11rem" : "7.5rem",
+              height: isLarge ? "11rem" : "7.5rem",
+            }}
+            strokeWidth={1.25}
+          />
+        </>
       ) : (
         <div className={`absolute inset-0 bg-gradient-to-br ${tint} transition-transform duration-700 group-hover:scale-110`} />
       )}
@@ -417,30 +434,38 @@ const MosaicTileCard = ({
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
       )}
 
-      {/* Hover scrim — extra contrast on hover so the preview handoff
-          feels intentional. */}
+      {/* Hover scrim */}
       <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/5 transition-colors duration-300 pointer-events-none" />
 
       {/* Top chip row */}
       <div className="absolute top-2.5 left-2.5 right-2.5 flex items-start justify-between gap-2 z-10">
-        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider backdrop-blur-md ${chipBg}`}>
-          <Icon className="h-2.5 w-2.5" />
-          {label}
-        </span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider backdrop-blur-md ${chipBg}`}>
+            <Icon className="h-2.5 w-2.5" />
+            {tile.variant ?? label}
+          </span>
+          {/* Verified IP shield on drops — replaces the standalone "Works" lane */}
+          {tile.kind === "drop" && tile.verifiedSignature && (
+            <VerifiedIPBadge signature={tile.verifiedSignature} size="xs" />
+          )}
+        </div>
         {tile.badge && (
           <span className="inline-flex items-center rounded-full bg-background/90 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-foreground shadow-sm">
             {tile.badge}
           </span>
         )}
-        {tile.kind === "work" && tile.signature && (
-          <VerifiedIPBadge signature={tile.signature} size="xs" />
-        )}
       </div>
 
       {/* Content footer */}
       <div className={`absolute inset-x-0 bottom-0 p-3 ${hasImage ? "text-white" : "text-foreground"} z-10`}>
+        {/* Category eyebrow — colored for offerings so the craft is obvious at a glance */}
         {tile.meta && (
-          <p className={`text-[10px] uppercase tracking-wider mb-1 ${hasImage ? "text-white/80" : "text-muted-foreground"}`}>
+          <p
+            className={`text-[10px] uppercase tracking-wider mb-1 font-semibold ${
+              hasImage ? "text-white/80" : isIconHero ? "" : "text-muted-foreground"
+            }`}
+            style={isIconHero ? { color: catVisual.accent } : undefined}
+          >
             {tile.meta}
           </p>
         )}
@@ -457,13 +482,17 @@ const MosaicTileCard = ({
             {tile.subtitle}
           </p>
         )}
-        {!tile.subtitle && tile.description && isLarge && !hasImage && (
-          <p className="text-xs mt-1 text-muted-foreground line-clamp-2 leading-relaxed">
+        {/* Short description — now also shown on icon-hero offering tiles
+            (not just large ones) so they're never just an icon + title. */}
+        {!tile.subtitle && tile.description && (isLarge || isIconHero) && !hasImage && (
+          <p className={`text-xs mt-1 line-clamp-2 leading-relaxed ${isIconHero ? "text-foreground/70" : "text-muted-foreground"}`}>
             {tile.description}
           </p>
         )}
-        {isLarge && (
-          <span className={`inline-flex items-center gap-1 text-[11px] font-semibold mt-2 opacity-80 group-hover:opacity-100 group-hover:gap-1.5 transition-all ${hasImage ? "text-white" : "text-foreground"}`}>
+        {(isLarge || isIconHero) && (
+          <span
+            className={`inline-flex items-center gap-1 text-[11px] font-semibold mt-2 opacity-80 group-hover:opacity-100 group-hover:gap-1.5 transition-all ${hasImage ? "text-white" : "text-foreground"}`}
+          >
             Open <ArrowRight className="h-3 w-3" />
           </span>
         )}
