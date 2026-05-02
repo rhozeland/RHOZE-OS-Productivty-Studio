@@ -2759,6 +2759,39 @@ export type Database = {
           },
         ]
       }
+      reward_daily_caps: {
+        Row: {
+          action_type: string
+          amount: number
+          created_at: string
+          description: string | null
+          enabled: boolean
+          per_day_amount_cap: number | null
+          per_day_cap: number
+          updated_at: string
+        }
+        Insert: {
+          action_type: string
+          amount: number
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          per_day_amount_cap?: number | null
+          per_day_cap: number
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          amount?: number
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          per_day_amount_cap?: number | null
+          per_day_cap?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       rhoze_booking_ledger: {
         Row: {
           booking_id: string | null
@@ -3920,6 +3953,15 @@ export type Database = {
           _solana_signature: string
         }
         Returns: undefined
+      }
+      award_engagement_reward: {
+        Args: {
+          _action_type: string
+          _description?: string
+          _reference_id?: string
+          _user_id: string
+        }
+        Returns: Json
       }
       award_rhoze: {
         Args: { _amount: number; _description: string; _user_id: string }
