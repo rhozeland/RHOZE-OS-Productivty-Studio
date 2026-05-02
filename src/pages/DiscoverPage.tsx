@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
+import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import {
   ArrowRight, Compass, Sparkles, Calendar as CalendarIcon, Coins,
   Flame, TrendingUp, MapPin, Music, FileText, Image as ImageIcon,
@@ -102,7 +103,7 @@ const DiscoverPage = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("flow_items")
-        .select("id, title, file_url, category, content_type, verification_status, work_id, user_id, creator_name, solana_signature, created_at")
+        .select("id, title, description, file_url, link_url, category, content_type, verification_status, work_id, user_id, creator_name, solana_signature, created_at")
         .order("created_at", { ascending: false })
         .limit(40);
       const order = (s?: string | null) =>
@@ -289,28 +290,38 @@ const DiscoverPage = () => {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {works.map((w: any) => {
-              const Icon = categoryIcon(w.category);
-              const isImage = w.file_url && (w.category === "photo" || w.category === "design" || w.content_type === "image");
-              const isVideo = w.file_url && (w.category === "video" || w.content_type === "video");
+              // Audio/video uploads can have either a playable file or just a
+              // link (Spotify, SoundCloud, YouTube). FlowThumbnail handles all
+              // three: direct image file_url → YouTube poster → og:image →
+              // typographic fallback. This matches Hub behavior so cards
+              // don't read as "missing image" on Discover only.
+              const isVideo =
+                w.file_url &&
+                (w.category === "video" || w.content_type === "video");
               return (
                 <button
                   key={w.id}
                   onClick={() => navigate(`/profiles/${w.user_id}?tab=works`)}
                   className="group text-left rounded-xl border border-border/60 bg-card overflow-hidden hover:border-foreground/30 transition-colors"
                 >
-                  {isImage ? (
-                    <div className="aspect-square bg-muted overflow-hidden">
-                      <img src={w.file_url} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    </div>
-                  ) : isVideo ? (
-                    <div className="aspect-square bg-muted overflow-hidden">
-                      <video src={w.file_url} className="h-full w-full object-cover" muted preload="metadata" />
-                    </div>
-                  ) : (
-                    <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5">
-                      <Icon className="h-8 w-8 text-muted-foreground/40" />
-                    </div>
-                  )}
+                  <div className="aspect-square bg-muted overflow-hidden">
+                    {isVideo ? (
+                      <video
+                        src={w.file_url}
+                        className="h-full w-full object-cover"
+                        muted
+                        preload="metadata"
+                      />
+                    ) : (
+                      <FlowThumbnail
+                        fileUrl={w.file_url}
+                        linkUrl={w.link_url}
+                        title={w.title || "Untitled"}
+                        description={w.description}
+                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    )}
+                  </div>
                   <div className="p-3 space-y-1.5">
                     <p className="text-xs font-medium text-foreground truncate">{w.title || "Untitled"}</p>
                     <div className="flex items-center justify-between gap-1">
