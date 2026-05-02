@@ -29,6 +29,7 @@ import RichMessageCard, { isRichMessage } from "@/components/messages/RichMessag
 import CirclesTab from "@/components/messages/CirclesTab";
 import BuddyList from "@/components/messages/BuddyList";
 import GuestMessagesPreview from "@/components/guest/GuestMessagesPreview";
+import ProjectsInbox from "@/components/messages/ProjectsInbox";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pending", color: "bg-amber-500/15 text-amber-600", icon: Clock },
@@ -425,6 +426,9 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
         <TabsList>
           <TabsTrigger value="messages" className="gap-1.5">
             <MessageSquare className="h-3.5 w-3.5" /> DMs
+          </TabsTrigger>
+          <TabsTrigger value="projects" className="gap-1.5">
+            <FolderKanban className="h-3.5 w-3.5" /> Projects
           </TabsTrigger>
           <TabsTrigger value="circles" className="gap-1.5">
             <Users className="h-3.5 w-3.5" /> Circles
