@@ -25,6 +25,7 @@ import { format } from "date-fns";
 import { Link, useSearchParams } from "react-router-dom";
 import CreatorPassCard from "@/components/creators/CreatorPassCard";
 import TierMatrix from "@/components/creators/TierMatrix";
+import CoinPortfolio from "@/components/creators/CoinPortfolio";
 import { StreakCard } from "@/components/creators/StreakCard";
 import { REWARDS_BY_CATEGORY } from "@/lib/rewards-catalog";
 import {
@@ -158,6 +159,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
         <TabsContent value="pass" className="mt-4 space-y-4">
           <CreatorPassCard />
           <StreakCard />
+          <CoinPortfolio />
         </TabsContent>
 
         {/* ═══════ Tiers (replaces old paid Plans) ═══════ */}
