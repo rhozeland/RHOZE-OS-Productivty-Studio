@@ -231,21 +231,6 @@ const CreatorAvailabilityCalendar = ({
     });
     return map;
   }, [availability, recurring, weekDays]);
-    const map: Record<number, Array<{ id: string; startMin: number; endMin: number }>> = {};
-    weekDays.forEach((d, i) => (map[i] = []));
-    availability?.forEach((a) => {
-      const s = new Date(a.start_time);
-      const e = new Date(a.end_time);
-      const idx = weekDays.findIndex((d) => isSameDay(d, s));
-      if (idx === -1) return;
-      map[idx].push({
-        id: a.id,
-        startMin: s.getHours() * 60 + s.getMinutes(),
-        endMin: e.getHours() * 60 + e.getMinutes(),
-      });
-    });
-    return map;
-  }, [availability, weekDays]);
 
   const bookingsByDay = useMemo(() => {
     const map: Record<number, Array<{ startMin: number; endMin: number }>> = {};
