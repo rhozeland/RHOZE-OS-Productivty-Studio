@@ -464,15 +464,8 @@ const FlowModePage = () => {
     retry: 1,
   });
 
-  const { data: smartboards } = useQuery({
-    queryKey: ["smartboards-for-flow", user?.id ?? "guest"],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data } = await supabase.from("smartboards").select("id, title, cover_color").eq("user_id", user.id);
-      return data ?? [];
-    },
-    enabled: calibrated && !!user,
-  });
+  // Note: Smartboards query removed — Flow no longer saves to boards.
+  // Saves are replaced by Likes (per-item heart) and Comments (sheet).
 
   const interact = useMutation({
     mutationFn: async ({ itemId, action, smartboardId }: { itemId: string; action: string; smartboardId?: string }) => {
