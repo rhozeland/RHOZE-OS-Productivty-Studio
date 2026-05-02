@@ -1,5 +1,5 @@
 import { useAdminCheck } from "@/hooks/useAdminCheck";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, Users, Award, Building2, Coins, AlertTriangle, Wallet, Eye, Sliders, ShieldCheck } from "lucide-react";
 import AdminOverview from "@/components/admin/AdminOverview";
@@ -15,8 +15,23 @@ import AdminUnderwritingRulesAudit from "@/components/admin/AdminUnderwritingRul
 import AdminWorkVerifications from "@/components/admin/AdminWorkVerifications";
 import AdminArtistVerifications from "@/components/admin/AdminArtistVerifications";
 
+const VALID_TABS = new Set([
+  "overview", "rewards", "users", "badges", "studios", "ip",
+  "artists", "disputes", "withdrawals", "moderation", "capital",
+]);
+
 const AdminPage = () => {
   const { isAdmin, loading } = useAdminCheck();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  // Accept ?tab=verifications as an alias for the artists queue (used by
+  // admin verification-request notifications).
+  const initialTab =
+    tabParam === "verifications"
+      ? "artists"
+      : tabParam && VALID_TABS.has(tabParam)
+        ? tabParam
+        : "overview";
 
   if (loading) {
     return (
@@ -37,7 +52,16 @@ const AdminPage = () => {
         <p className="text-sm text-muted-foreground">Platform administration</p>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs
+        value={initialTab}
+        onValueChange={(v) => {
+          const next = new URLSearchParams(searchParams);
+          if (v === "overview") next.delete("tab");
+          else next.set("tab", v);
+          setSearchParams(next, { replace: true });
+        }}
+        className="space-y-4"
+      >
         <TabsList className="bg-muted/50 w-full justify-start overflow-x-auto overflow-y-hidden scrollbar-none">
           <TabsTrigger value="overview" className="gap-1.5 text-xs shrink-0">
             <BarChart3 className="h-3.5 w-3.5" /> Overview
