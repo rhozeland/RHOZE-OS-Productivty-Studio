@@ -11,8 +11,9 @@
  */
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Coins, Sparkles, Shield, HelpCircle, ShoppingBag, Heart, Trophy } from "lucide-react";
+import { ArrowLeft, Coins, Sparkles, Shield, HelpCircle, ShoppingBag, Heart, Trophy, Star } from "lucide-react";
 import RewardsDashboard from "@/components/creators/RewardsDashboard";
+import TierMatrix from "@/components/creators/TierMatrix";
 import { REWARDS_BY_CATEGORY } from "@/lib/rewards-catalog";
 import {
   Accordion,
