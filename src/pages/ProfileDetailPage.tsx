@@ -675,10 +675,10 @@ const ProfileDetailPage = () => {
                 </button>
               )}
 
-              {/* Book / availability */}
+              {/* Book / availability — opens calendar in modal */}
               {profile.available && (
                 <button
-                  onClick={() => handleTabChange("availability")}
+                  onClick={() => user ? setBookingOpen(true) : navigate("/auth")}
                   className="group text-left rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-4 hover:border-foreground/30 transition-colors"
                 >
                   <div className="flex items-start justify-between">
@@ -694,6 +694,34 @@ const ProfileDetailPage = () => {
                 </button>
               )}
             </div>
+
+            {/* Listings inline — what they're offering, right next to Book a session */}
+            {hasSellerContent && (
+              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
+                <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
+                  <ShoppingBag className="h-4 w-4 text-primary" /> Offerings
+                </h3>
+                <div className="space-y-2">
+                  {sellerListings!.slice(0, 5).map((listing: any) => (
+                    <button
+                      key={listing.id}
+                      onClick={() => navigate(`/creators/${listing.id}`)}
+                      className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{listing.title}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <Badge variant="outline" className="text-[9px] capitalize">{listing.category}</Badge>
+                          {listing.credits_price && <span className="text-[10px] font-semibold text-primary">{listing.credits_price} $RHOZE</span>}
+                          {listing.price && <span className="text-[10px] text-muted-foreground">${listing.price}</span>}
+                        </div>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Upcoming events */}
             {upcomingEvents && upcomingEvents.length > 0 && (
