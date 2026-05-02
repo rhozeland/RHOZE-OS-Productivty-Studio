@@ -694,46 +694,6 @@ const ProfileDetailPage = () => {
               )}
             </div>
 
-            {/* Top offerings to buy */}
-            {hasSellerContent && (
-              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
-                    <ShoppingBag className="h-4 w-4 text-primary" /> Buy something
-                  </h3>
-                  <button
-                    onClick={() => handleTabChange("listings")}
-                    className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-                  >
-                    All <ArrowRight className="h-3 w-3" />
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {sellerListings!.slice(0, 3).map((listing: any) => (
-                    <button
-                      key={listing.id}
-                      onClick={() => navigate(`/creators/${listing.id}`)}
-                      className="group text-left rounded-xl border border-border/60 bg-card/60 overflow-hidden hover:border-foreground/30 transition-colors"
-                    >
-                      {(listing.cover_url || listing.image_url) ? (
-                        <div className="aspect-[4/3] bg-muted overflow-hidden">
-                          <img src={listing.cover_url || listing.image_url} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        </div>
-                      ) : (
-                        <div className="aspect-[4/3] flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
-                          <Store className="h-5 w-5 text-muted-foreground/40" />
-                        </div>
-                      )}
-                      <div className="p-2.5">
-                        <p className="text-xs font-medium text-foreground truncate">{listing.title}</p>
-                        <Badge variant="outline" className="text-[9px] mt-1 capitalize">{listing.category}</Badge>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Upcoming events */}
             {upcomingEvents && upcomingEvents.length > 0 && (
               <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
