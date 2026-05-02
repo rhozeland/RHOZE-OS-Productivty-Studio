@@ -2658,6 +2658,60 @@ export type Database = {
           },
         ]
       }
+      rhoze_booking_ledger: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          description: string | null
+          entry_kind: string
+          host_id: string | null
+          id: string
+          metadata: Json
+          payer_wallet: string | null
+          rate_rhoze_per_usd: number
+          rhoze_amount: number
+          service_id: string | null
+          solana_signature: string | null
+          space_id: string | null
+          usd_value: number
+          user_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          description?: string | null
+          entry_kind?: string
+          host_id?: string | null
+          id?: string
+          metadata?: Json
+          payer_wallet?: string | null
+          rate_rhoze_per_usd?: number
+          rhoze_amount: number
+          service_id?: string | null
+          solana_signature?: string | null
+          space_id?: string | null
+          usd_value: number
+          user_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          description?: string | null
+          entry_kind?: string
+          host_id?: string | null
+          id?: string
+          metadata?: Json
+          payer_wallet?: string | null
+          rate_rhoze_per_usd?: number
+          rhoze_amount?: number
+          service_id?: string | null
+          solana_signature?: string | null
+          space_id?: string | null
+          usd_value?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           category: string
