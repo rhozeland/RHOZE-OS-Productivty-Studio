@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Globe, CheckCircle, UserPlus, UserCheck, MessageSquare, MapPin, Clock,
   EyeOff, Loader2, Settings, Store, Star, ExternalLink, ShoppingBag,
