@@ -430,6 +430,8 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
         <p className="text-muted-foreground">Messages, projects, and listings — all in one place.</p>
       </div>
 
+      <CreatorPassUpgradeCta />
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="messages" className="gap-1.5">
