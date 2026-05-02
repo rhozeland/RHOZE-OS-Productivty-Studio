@@ -12,8 +12,8 @@ import { Lock, KeyRound, Loader2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { useAuthGate } from "@/hooks/useAuthGate";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAuthGate } from "@/components/AuthGateDialog";
 import { Button } from "@/components/ui/button";
 
 type UnlockResult =
@@ -70,8 +70,8 @@ export const UnlockButton = ({
       if (error) throw error;
       return data as unknown as UnlockResult;
     },
-    onSuccess: (res) => {
-      if (res.allowed) {
+    onSuccess: (res: UnlockResult) => {
+      if (res.allowed === true) {
         setLastDenied(null);
         // Open the signed URL in a new tab. It expires in 5 min.
         window.open(res.signed_url, "_blank", "noopener,noreferrer");
@@ -79,19 +79,26 @@ export const UnlockButton = ({
           res.is_owner ? "Unlocked (owner)" : "Unlocked",
           { description: "Your link is valid for 5 minutes." },
         );
-      } else if (res.reason === "insufficient_holdings") {
-        setLastDenied({
-          balance: res.balance ?? 0,
-          threshold: res.threshold ?? 0,
-          ticker: res.ticker ?? null,
-          launchId: res.launch_id ?? null,
-        });
-      } else if (res.reason === "auth_required") {
-        requireAuth("unlock this work");
-      } else if (res.reason === "not_gated") {
-        toast.info("This work is open — no unlock needed.");
-      } else {
-        toast.error("Could not unlock");
+        return;
+      }
+      // res.allowed === false → narrow on reason
+      switch (res.reason) {
+        case "insufficient_holdings":
+          setLastDenied({
+            balance: res.balance ?? 0,
+            threshold: res.threshold ?? 0,
+            ticker: res.ticker ?? null,
+            launchId: res.launch_id ?? null,
+          });
+          break;
+        case "auth_required":
+          requireAuth("Sign in to unlock this work.");
+          break;
+        case "not_gated":
+          toast.info("This work is open — no unlock needed.");
+          break;
+        default:
+          toast.error("Could not unlock");
       }
     },
     onError: (e: any) =>
@@ -128,7 +135,7 @@ export const UnlockButton = ({
       className="gap-1.5"
       onClick={() => {
         if (!user) {
-          requireAuth("unlock this work");
+          requireAuth("Sign in to unlock this work.");
           return;
         }
         mut.mutate();
