@@ -16,7 +16,7 @@ import {
 import {
   Search, Send, User, MessageSquare, ArrowLeft,
   Inbox, FolderKanban, CheckCircle, XCircle, Clock, ArrowRight, Loader2,
-  DollarSign, Video, Phone, Plus, Users,
+  DollarSign, Video, Phone, Plus, Users, Store,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
@@ -30,6 +30,7 @@ import CirclesTab from "@/components/messages/CirclesTab";
 import BuddyList from "@/components/messages/BuddyList";
 import GuestMessagesPreview from "@/components/guest/GuestMessagesPreview";
 import ProjectsInbox from "@/components/messages/ProjectsInbox";
+import ListingsTab from "@/components/messages/ListingsTab";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pending", color: "bg-amber-500/15 text-amber-600", icon: Clock },
@@ -418,8 +419,8 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-bold text-foreground">Messages</h1>
-        <p className="text-muted-foreground">Connect with creators & manage inquiries</p>
+        <h1 className="font-display text-3xl font-bold text-foreground">Conversations</h1>
+        <p className="text-muted-foreground">DMs, projects, inquiries, and listings — all in one place.</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -430,9 +431,6 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
           <TabsTrigger value="projects" className="gap-1.5">
             <FolderKanban className="h-3.5 w-3.5" /> Projects
           </TabsTrigger>
-          <TabsTrigger value="circles" className="gap-1.5">
-            <Users className="h-3.5 w-3.5" /> Circles
-          </TabsTrigger>
           <TabsTrigger value="inquiries" className="gap-1.5">
             <Inbox className="h-3.5 w-3.5" /> Inquiries
             {pendingCount > 0 && (
@@ -441,6 +439,18 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="listings" className="gap-1.5">
+            <Store className="h-3.5 w-3.5" /> Listings
+          </TabsTrigger>
+          {/* Circles is hidden from primary tabs in v8 — group chats are
+              accessed via the "+ Group" action inside DMs. The Groups tab
+              stays mounted only when ?tab=groups is set, so legacy links
+              still resolve. */}
+          {activeTab === "groups" && (
+            <TabsTrigger value="groups" className="gap-1.5">
+              <Users className="h-3.5 w-3.5" /> Groups
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="messages" className="mt-4">
@@ -637,8 +647,12 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
           <ProjectsInbox userId={user.id} />
         </TabsContent>
 
-        <TabsContent value="circles" className="mt-4">
+        <TabsContent value="groups" className="mt-4">
           <CirclesTab />
+        </TabsContent>
+
+        <TabsContent value="listings" className="mt-4">
+          <ListingsTab userId={user.id} />
         </TabsContent>
 
         <TabsContent value="inquiries" className="mt-4 space-y-3">
