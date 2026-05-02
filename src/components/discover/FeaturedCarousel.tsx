@@ -16,6 +16,7 @@ import RegionChip from "@/components/profile/RegionChip";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { FeaturedSlide } from "./useDiscoverFeatured";
+import { ROLE_BY_ID } from "@/lib/creator-roles";
 
 const initials = (name?: string | null) =>
   (name ?? "")
@@ -111,9 +112,17 @@ const FeaturedCarousel = ({ slides }: FeaturedCarouselProps) => {
                 <h3 className="font-display text-2xl sm:text-3xl font-semibold text-foreground line-clamp-1">
                   {current.title}
                 </h3>
+                {current.kind === "artist" && current.creator_roles?.length ? (
+                  <p className="text-[11px] font-medium text-foreground/80 mt-0.5 line-clamp-1">
+                    {current.creator_roles.slice(0, 2).map((id) => {
+                      const role = ROLE_BY_ID.get(id);
+                      return role ? `${role.emoji} ${role.label}` : id;
+                    }).join(" · ")}
+                  </p>
+                ) : null}
                 {current.subtitle && (
-                  <p className="text-sm text-foreground/80 line-clamp-2 mt-1 max-w-2xl">
-                    {current.subtitle}
+                  <p className="text-sm text-foreground/80 line-clamp-2 mt-1 max-w-2xl italic">
+                    {current.kind === "artist" ? `"${current.subtitle}"` : current.subtitle}
                   </p>
                 )}
                 <span className="mt-3 inline-flex items-center text-xs font-medium text-foreground gap-1 group-hover:gap-2 transition-all">

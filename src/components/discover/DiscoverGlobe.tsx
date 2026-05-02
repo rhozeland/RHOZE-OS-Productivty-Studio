@@ -17,6 +17,7 @@ import { MARKETS, REGIONS, type RegionMarket } from "@/lib/regions";
 import { cn } from "@/lib/utils";
 import { MARKET_COLORS } from "./market-colors";
 import type { FeaturedSlide } from "./useDiscoverFeatured";
+import { ROLE_BY_ID } from "@/lib/creator-roles";
 
 const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
   KR: { lat: 37.55, lng: 126.99 },
@@ -645,7 +646,14 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                           </Avatar>
                           <div className="min-w-0">
                             <h3 className="truncate font-display text-2xl leading-none text-foreground">{activeSpotlight.title}</h3>
-                            {activeSpotlight.mediums?.length ? (
+                            {activeSpotlight.creator_roles?.length ? (
+                              <p className="mt-1 text-[11px] font-medium text-foreground/80 line-clamp-1">
+                                {activeSpotlight.creator_roles.slice(0, 2).map((id) => {
+                                  const role = ROLE_BY_ID.get(id);
+                                  return role ? `${role.emoji} ${role.label}` : id;
+                                }).join(" · ")}
+                              </p>
+                            ) : activeSpotlight.mediums?.length ? (
                               <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{activeSpotlight.mediums.slice(0, 3).join(" · ")}</p>
                             ) : null}
                           </div>
