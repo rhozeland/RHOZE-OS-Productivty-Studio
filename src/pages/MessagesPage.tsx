@@ -265,7 +265,8 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
   const [convertDialog, setConvertDialog] = useState<any>(null);
   const [totalCredits, setTotalCredits] = useState("");
 
-  const activeTab = searchParams.get("tab") || "messages";
+  const rawTab = searchParams.get("tab");
+  const activeTab = rawTab === "inquiries" || !rawTab ? "messages" : rawTab;
   const setActiveTab = (tab: string) => {
     if (tab === "messages") {
       searchParams.delete("tab");
