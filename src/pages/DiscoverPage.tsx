@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 
-// Globe lazily imported — react-globe.gl drags in three.js (~150KB gz).
+// Globe hero lazily imported to keep Discover lightweight on first load.
 const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
 
 const DiscoverPage = () => {
