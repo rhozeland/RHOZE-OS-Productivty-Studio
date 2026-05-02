@@ -508,6 +508,16 @@ const BookingsPage = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
+                    {(booking as any).meeting_url && (
+                      <a
+                        href={(booking as any).meeting_url}
+                        target="_blank"
+                        rel="noopener"
+                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-sky-500/40 bg-sky-500/10 text-sky-700 dark:text-sky-300 hover:bg-sky-500/20 transition-colors font-semibold"
+                      >
+                        <Video className="h-3.5 w-3.5" /> Join call
+                      </a>
+                    )}
                     {(booking as any).project_id && (
                       <Button
                         variant="outline"
