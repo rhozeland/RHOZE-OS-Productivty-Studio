@@ -1,22 +1,15 @@
 /**
- * DiscoverGlobe — interactive 3D globe hero for the Discover page.
+ * DiscoverGlobe — build-safe interactive world explorer for Discover.
  *
- * Aggregates artist counts per `profiles.region_code` and renders a pulsing
- * pin per region. Clicking a pin sets the active market filter, which the
- * parent page uses to scope downstream sections (featured carousel, future
- * region-aware lanes).
- *
- * Lazy-loadable: react-globe.gl pulls in three.js (~150KB gz). This module
- * is dynamically imported by `DiscoverPage` so the bundle stays small for
- * users who never reach Discover.
- *
- * Falls back to a SSR-safe placeholder when WebGL is unavailable.
+ * Replaces the unstable WebGL dependency chain with a lightweight SVG globe
+ * that still feels interactive: slow orbital motion, clickable region markers,
+ * hover states, and live artist counts per region.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Globe from "react-globe.gl";
+import { motion, useMotionTemplate, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { REGIONS, getRegion, type RegionMarket } from "@/lib/regions";
+import { REGIONS, type RegionMarket } from "@/lib/regions";
 import { MARKET_COLORS } from "./market-colors";
 
 // Approximate lat/lng for each region (good enough for a stylized pin).
@@ -58,12 +51,27 @@ interface DiscoverGlobeProps {
   height?: number;
 }
 
-const DiscoverGlobe = ({ marketFilter, onSelectMarket, height = 360 }: DiscoverGlobeProps) => {
-  const globeRef = useRef<any>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [width, setWidth] = useState(600);
+const cx = 50;
+const cy = 50;
+const radius = 37;
 
-  // Fit globe to container width.
+const latLngToXY = (lat: number, lng: number) => {
+  const phi = (90 - lat) * (Math.PI / 180);
+  const theta = (lng + 180) * (Math.PI / 180);
+  const x = cx + radius * Math.sin(phi) * Math.cos(theta);
+  const y = cy - radius * Math.cos(phi);
+  return { x, y };
+};
+
+const DiscoverGlobe = ({ marketFilter, onSelectMarket, height = 360 }: DiscoverGlobeProps) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [hoveredCode, setHoveredCode] = useState<string | null>(null);
+  const [width, setWidth] = useState(600);
+  const rotate = useMotionValue(-14);
+  const rotateSpring = useSpring(rotate, { stiffness: 40, damping: 18, mass: 1.2 });
+  const glowX = useTransform(rotateSpring, [-30, 30], [36, 64]);
+  const glowBackground = useMotionTemplate`radial-gradient(circle at ${glowX}% 36%, hsl(var(--primary) / 0.30), transparent 24%), radial-gradient(circle at 50% 70%, hsl(var(--accent) / 0.14), transparent 36%)`;
+
   useEffect(() => {
     if (!containerRef.current) return;
     const ro = new ResizeObserver((entries) => {
@@ -74,18 +82,14 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, height = 360 }: DiscoverG
     return () => ro.disconnect();
   }, []);
 
-  // Auto-rotate until first interaction.
   useEffect(() => {
-    const g = globeRef.current;
-    if (!g) return;
-    const controls = g.controls?.();
-    if (!controls) return;
-    controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.4;
-    controls.enableZoom = false;
-    const stop = () => { controls.autoRotate = false; };
-    controls.addEventListener?.("start", stop);
-    return () => controls.removeEventListener?.("start", stop);
+    let direction = 1;
+    const interval = window.setInterval(() => {
+      const next = rotate.get() + direction * 6;
+      if (next >= 18 || next <= -18) direction *= -1;
+      rotate.set(next);
+    }, 2400);
+    return () => window.clearInterval(interval);
   }, []);
 
   const { data: counts } = useQuery({
@@ -110,47 +114,140 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, height = 360 }: DiscoverG
   const points = useMemo(() => {
     return REGIONS.filter((r) => REGION_COORDS[r.code]).map((r) => {
       const count = counts?.get(r.code) ?? 0;
-      // Show a small "pulse" pin even for empty regions so the globe
-      // never reads as empty; size scales with actual artist count.
-      const baseSize = 0.18;
-      const sizeBoost = Math.min(0.6, count * 0.06);
       const dim = marketFilter !== "All" && r.market !== marketFilter;
+      const selected = marketFilter !== "All" && r.market === marketFilter;
+      const hovered = hoveredCode === r.code;
+      const coords = REGION_COORDS[r.code];
+      const { x, y } = latLngToXY(coords.lat, coords.lng);
       return {
         ...r,
-        ...REGION_COORDS[r.code],
         count,
-        size: baseSize + sizeBoost,
-        color: dim ? "rgba(255,255,255,0.18)" : MARKET_COLORS[r.market],
+        x,
+        y,
+        size: 4 + Math.min(12, count * 1.15),
+        ring: 12 + Math.min(22, count * 1.5),
+        selected,
+        hovered,
+        dim,
+        color: dim ? "hsl(0 0% 100% / 0.18)" : MARKET_COLORS[r.market],
       };
     });
-  }, [counts, marketFilter]);
+  }, [counts, hoveredCode, marketFilter]);
 
   return (
-    <div ref={containerRef} className="relative w-full" style={{ height }}>
-      <Globe
-        ref={globeRef}
-        width={width}
-        height={height}
-        backgroundColor="rgba(0,0,0,0)"
-        showAtmosphere
-        atmosphereColor="hsl(280, 70%, 70%)"
-        atmosphereAltitude={0.18}
-        globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
-        pointsData={points}
-        pointAltitude={(d: any) => d.size}
-        pointRadius={0.55}
-        pointColor={(d: any) => d.color}
-        pointLabel={(d: any) =>
-          `<div style="font-family:Inter,sans-serif;background:hsl(0 0% 5%);color:white;padding:6px 10px;border-radius:8px;font-size:12px;border:1px solid hsl(0 0% 25%)">
-            <strong>${d.flag} ${d.label}</strong><br/>
-            <span style="opacity:.7">${d.count} ${d.count === 1 ? "artist" : "artists"} · ${d.market}</span>
-          </div>`
-        }
-        onPointClick={(d: any) => {
-          onSelectMarket(d.market as RegionMarket);
+    <div
+      ref={containerRef}
+      className="relative w-full overflow-hidden"
+      style={{ height }}
+      onMouseLeave={() => setHoveredCode(null)}
+    >
+      <motion.div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 45%, hsl(var(--primary) / 0.18), transparent 38%), radial-gradient(circle at 50% 70%, hsl(var(--accent) / 0.12), transparent 45%)",
         }}
-        animateIn
+        animate={{ opacity: [0.72, 1, 0.78] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       />
+
+      <div className="absolute inset-0 flex items-center justify-center px-4 py-5">
+        <motion.div
+          className="relative aspect-square w-full max-w-[360px] sm:max-w-[420px]"
+          style={{ rotateY: rotateSpring, transformStyle: "preserve-3d" }}
+        >
+          <div className="absolute inset-0 rounded-full border border-border/40 bg-background/10 backdrop-blur-sm shadow-[0_0_0_1px_hsl(var(--border)/0.18),0_30px_90px_hsl(var(--background)/0.6)]" />
+          <motion.div className="absolute inset-[7%] rounded-full" style={{ background: glowBackground }} />
+          <svg viewBox="0 0 100 100" className="absolute inset-[8%] h-[84%] w-[84%] overflow-visible">
+            <defs>
+              <radialGradient id="discover-globe-fill" cx="45%" cy="38%" r="70%">
+                <stop offset="0%" stopColor="hsl(var(--background))" stopOpacity="0.22" />
+                <stop offset="45%" stopColor="hsl(var(--card))" stopOpacity="0.92" />
+                <stop offset="100%" stopColor="hsl(var(--background))" stopOpacity="1" />
+              </radialGradient>
+            </defs>
+
+            <circle cx={cx} cy={cy} r={radius} fill="url(#discover-globe-fill)" stroke="hsl(var(--border) / 0.5)" strokeWidth="0.5" />
+
+            {[0.28, 0.5, 0.72].map((ratio) => (
+              <ellipse
+                key={`lat-${ratio}`}
+                cx={cx}
+                cy={cy}
+                rx={radius}
+                ry={Math.max(7, radius * Math.abs(0.5 - ratio) * 1.1)}
+                fill="none"
+                stroke="hsl(var(--foreground) / 0.10)"
+                strokeWidth="0.3"
+              />
+            ))}
+
+            {[0.26, 0.5, 0.74].map((ratio) => (
+              <ellipse
+                key={`lon-${ratio}`}
+                cx={cx}
+                cy={cy}
+                rx={Math.max(8, radius * Math.abs(0.5 - ratio) * 1.05)}
+                ry={radius}
+                fill="none"
+                stroke="hsl(var(--foreground) / 0.08)"
+                strokeWidth="0.3"
+              />
+            ))}
+
+            {points.map((point) => (
+              <g key={point.code}>
+                <motion.circle
+                  cx={point.x}
+                  cy={point.y}
+                  r={point.ring / 10}
+                  fill={point.color}
+                  opacity={point.selected || point.hovered ? 0.22 : 0.12}
+                  animate={{ scale: [0.85, 1.18, 0.92], opacity: [0.12, 0.26, 0.14] }}
+                  transition={{ duration: 2.8 + point.count * 0.08, repeat: Infinity, ease: "easeInOut" }}
+                  style={{ transformOrigin: `${point.x}px ${point.y}px` }}
+                />
+                <motion.circle
+                  cx={point.x}
+                  cy={point.y}
+                  r={Math.max(1.9, point.size / 4.8)}
+                  fill={point.color}
+                  stroke={point.selected || point.hovered ? "hsl(var(--foreground) / 0.9)" : "hsl(var(--background) / 0.8)"}
+                  strokeWidth={point.selected || point.hovered ? 0.75 : 0.45}
+                  animate={point.selected ? { scale: [1, 1.18, 1] } : { scale: 1 }}
+                  transition={{ duration: 1.6, repeat: point.selected ? Infinity : 0, ease: "easeInOut" }}
+                  style={{ transformOrigin: `${point.x}px ${point.y}px`, cursor: "pointer" }}
+                  onMouseEnter={() => setHoveredCode(point.code)}
+                  onFocus={() => setHoveredCode(point.code)}
+                  onClick={() => onSelectMarket(point.market)}
+                />
+              </g>
+            ))}
+          </svg>
+        </motion.div>
+      </div>
+
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background via-background/55 to-transparent" />
+
+      <div className="absolute left-4 top-4 max-w-[14rem]">
+        <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Verified IP markets</p>
+        <p className="mt-2 text-sm text-foreground/80">
+          Tap a pulse to narrow the feed by region.
+        </p>
+      </div>
+
+      {hoveredCode && (() => {
+        const active = points.find((point) => point.code === hoveredCode);
+        if (!active) return null;
+        return (
+          <div className="absolute right-4 top-4 max-w-[13rem] rounded-2xl border border-border/60 bg-background/85 px-3 py-2 backdrop-blur-md shadow-lg">
+            <p className="text-sm font-medium text-foreground">{active.flag} {active.label}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {active.count} {active.count === 1 ? "artist" : "artists"} · {active.market}
+            </p>
+          </div>
+        );
+      })()}
     </div>
   );
 };
