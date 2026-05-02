@@ -124,7 +124,7 @@ const VerificationPage = () => {
       if (insertErr) throw insertErr;
 
       toast({ title: "Submitted", description: "We'll review and notify you within a few days." });
-      await refetch();
+      await Promise.all([refetch(), loadLatest()]);
     } catch (e: any) {
       toast({ title: "Submission failed", description: e.message ?? "Please try again", variant: "destructive" });
     } finally {
