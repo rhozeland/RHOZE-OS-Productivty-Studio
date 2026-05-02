@@ -347,15 +347,28 @@ const RewardsExplainer = () => (
           </div>
           <ul className="divide-y divide-border/40">
             {REWARDS_BY_CATEGORY[key].map((r) => (
-              <li key={r.action} className="flex items-start justify-between gap-3 py-2">
-                <div>
-                  <p className="text-sm font-medium text-foreground">{r.label}</p>
-                  <p className="text-xs text-muted-foreground">{r.description}</p>
+              <li key={r.action} className="py-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">{r.label}</p>
+                    <p className="text-xs text-muted-foreground">{r.description}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-semibold text-primary whitespace-nowrap">{r.amount}</p>
+                    {r.cap && <p className="text-[10px] text-muted-foreground whitespace-nowrap">{r.cap}</p>}
+                  </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-semibold text-primary">{r.amount}</p>
-                  {r.cap && <p className="text-[10px] text-muted-foreground">{r.cap}</p>}
-                </div>
+                {r.detail && (
+                  <details className="mt-1 group">
+                    <summary className="text-[11px] text-muted-foreground/80 hover:text-foreground cursor-pointer list-none select-none inline-flex items-center gap-1">
+                      <span className="group-open:hidden underline underline-offset-2">Learn more</span>
+                      <span className="hidden group-open:inline underline underline-offset-2">Hide</span>
+                    </summary>
+                    <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed border-l-2 border-border/60 pl-2">
+                      {r.detail}
+                    </p>
+                  </details>
+                )}
               </li>
             ))}
           </ul>

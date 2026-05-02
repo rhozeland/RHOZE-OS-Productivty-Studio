@@ -1,13 +1,15 @@
 /**
  * rewards-catalog.ts — single source of truth for fan/creator $RHOZE rewards.
  *
- * v7 hybrid model: small daily-capped rewards for engagement, bigger commerce
- * rewards that align fan spending with artist payouts.
+ * v8 expanded model — three lanes:
+ *   • Engagement  — small, daily-capped, keeps the network alive
+ *   • Commerce    — bigger, aligns fan spend + artist payout
+ *   • Milestone   — one-time unlocks (profile, verification, growth tiers)
  *
  * Every reward routes through `pending_rewards` and waits for admin approval
  * before being credited to `user_credits` (the existing Admin Reward Gate).
- * This file only describes the *intent*; the on-DB triggers and edge functions
- * remain the actual enforcement layer.
+ * This file describes the *intent*; on-DB triggers + edge functions remain
+ * the actual enforcement layer.
  */
 
 export type RewardCategory = "engagement" | "commerce" | "milestone";
@@ -24,10 +26,14 @@ export interface RewardEntry {
   category: RewardCategory;
   /** Per-day or lifetime cap copy */
   cap?: string;
+  /** Optional longer "learn more" copy surfaced on hover/expand */
+  detail?: string;
 }
 
 export const REWARDS_CATALOG: RewardEntry[] = [
-  // —— Engagement (small, capped) ——
+  // ─────────────────────────────────────────────────────────────
+  // ENGAGEMENT — small, capped. Keep the network alive.
+  // ─────────────────────────────────────────────────────────────
   {
     action: "like_work",
     label: "Like a work",
@@ -35,6 +41,16 @@ export const REWARDS_CATALOG: RewardEntry[] = [
     amount: "0.5 $RHOZE",
     category: "engagement",
     cap: "Cap 20/day",
+    detail: "Likes signal taste. Capped to prevent spam farming.",
+  },
+  {
+    action: "comment_work",
+    label: "Comment on a work",
+    description: "Leave a thoughtful comment (min 8 chars).",
+    amount: "0.5 $RHOZE",
+    category: "engagement",
+    cap: "Cap 20/day",
+    detail: "Empty or template comments are flagged and rejected by the gate.",
   },
   {
     action: "follow_artist",
@@ -45,31 +61,34 @@ export const REWARDS_CATALOG: RewardEntry[] = [
     cap: "Cap 10/day",
   },
   {
-    action: "comment_work",
-    label: "Comment on a work",
-    description: "Leave a thoughtful comment.",
-    amount: "0.5 $RHOZE",
+    action: "send_dm",
+    label: "Start a real conversation",
+    description: "First DM that gets a reply.",
+    amount: "2 $RHOZE",
     category: "engagement",
-    cap: "Cap 20/day",
+    cap: "Cap 5/day",
+    detail: "Counted only when the other side replies — kills cold-DM farming.",
   },
   {
-    action: "attend_space",
-    label: "Attend a free Space",
-    description: "Show up to a free event.",
+    action: "review_received",
+    label: "Receive a review",
+    description: "A buyer leaves a public review on your offering.",
+    amount: "3 $RHOZE",
+    category: "engagement",
+    cap: "Per review",
+  },
+  {
+    action: "daily_streak",
+    label: "Daily streak",
+    description: "Sign in + post or interact, 7 days running.",
     amount: "5 $RHOZE",
     category: "engagement",
-    cap: "Per event",
-  },
-  {
-    action: "complete_profile",
-    label: "Complete your profile",
-    description: "Display name, bio, avatar, and at least one social link.",
-    amount: "25 $RHOZE",
-    category: "milestone",
-    cap: "One-time",
+    cap: "Per 7-day cycle",
   },
 
-  // —— Commerce (bigger, drives the loop) ——
+  // ─────────────────────────────────────────────────────────────
+  // COMMERCE — bigger. The loop that funds the platform.
+  // ─────────────────────────────────────────────────────────────
   {
     action: "buy_work",
     label: "Buy a work",
@@ -78,12 +97,69 @@ export const REWARDS_CATALOG: RewardEntry[] = [
     category: "commerce",
   },
   {
-    action: "hold_artist_coin_7d",
-    label: "Hold an artist coin for 7 days",
-    description: "Reward fans who back creators they believe in.",
+    action: "sell_work",
+    label: "Sell a work",
+    description: "Earn 2% of your sale price as $RHOZE on top of the 75% payout.",
+    amount: "2% of sale",
+    category: "commerce",
+    detail: "Stacks with the 75/15/10 split — the artist's reward, not the buyer's.",
+  },
+  {
+    action: "publish_listing",
+    label: "Publish a listing or offering",
+    description: "Put a service, product, or request live.",
+    amount: "5 $RHOZE",
+    category: "commerce",
+    cap: "Cap 3/week",
+    detail: "Counts both offerings (you provide) and requests (you're hiring).",
+  },
+  {
+    action: "listing_inquiry_received",
+    label: "Listing inquiry received",
+    description: "Someone connects to your listing or offering.",
+    amount: "3 $RHOZE",
+    category: "commerce",
+    cap: "Cap 10/week",
+  },
+  {
+    action: "listing_sale",
+    label: "Listing sale closed",
+    description: "An inquiry converts into a paid booking or purchase.",
+    amount: "15 $RHOZE",
+    category: "commerce",
+    cap: "Per sale",
+  },
+  {
+    action: "book_space",
+    label: "Book a Space",
+    description: "Reserve a studio or venue Space (any duration).",
     amount: "10 $RHOZE",
     category: "commerce",
-    cap: "Per coin per week",
+    cap: "Per booking",
+  },
+  {
+    action: "host_paid_space",
+    label: "Host a paid Space",
+    description: "Run a ticketed event with at least one attendee.",
+    amount: "25 $RHOZE",
+    category: "commerce",
+    cap: "Per event",
+  },
+  {
+    action: "attend_space",
+    label: "Attend a free Space",
+    description: "Show up to a free event (check-in required).",
+    amount: "5 $RHOZE",
+    category: "commerce",
+    cap: "Per event",
+  },
+  {
+    action: "attend_paid_space",
+    label: "Attend a paid Space",
+    description: "Buy a ticket and check in.",
+    amount: "25 $RHOZE",
+    category: "commerce",
+    cap: "Per event",
   },
   {
     action: "swap_into_artist_coin",
@@ -94,12 +170,21 @@ export const REWARDS_CATALOG: RewardEntry[] = [
     cap: "Once per coin",
   },
   {
-    action: "attend_paid_space",
-    label: "Attend a paid Space",
-    description: "Buy a ticket and show up.",
-    amount: "25 $RHOZE",
+    action: "hold_artist_coin_7d",
+    label: "Hold an artist coin (7 days)",
+    description: "Weekly reward for holding any artist coin in your wallet.",
+    amount: "10 $RHOZE",
     category: "commerce",
-    cap: "Per event",
+    cap: "Per coin per week",
+  },
+  {
+    action: "hold_artist_coin_30d",
+    label: "Hold an artist coin (30 days)",
+    description: "Diamond-hand bonus on top of the weekly hold reward.",
+    amount: "50 $RHOZE",
+    category: "commerce",
+    cap: "Per coin per month",
+    detail: "Resets if you sell more than 25% of your position before day 30.",
   },
   {
     action: "refer_paying_user",
@@ -108,6 +193,106 @@ export const REWARDS_CATALOG: RewardEntry[] = [
     amount: "100 $RHOZE",
     category: "commerce",
     cap: "Per referral",
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // MILESTONE — one-time unlocks. Growth + verification.
+  // ─────────────────────────────────────────────────────────────
+  {
+    action: "complete_profile",
+    label: "Complete your profile",
+    description: "Display name, bio, avatar, and at least one social link.",
+    amount: "25 $RHOZE",
+    category: "milestone",
+    cap: "One-time",
+  },
+  {
+    action: "first_work_uploaded",
+    label: "Upload your first work",
+    description: "Post any creative file to your profile.",
+    amount: "10 $RHOZE",
+    category: "milestone",
+    cap: "One-time",
+  },
+  {
+    action: "ten_works_uploaded",
+    label: "10 works uploaded",
+    description: "Build a real portfolio.",
+    amount: "50 $RHOZE",
+    category: "milestone",
+    cap: "One-time",
+  },
+  {
+    action: "first_work_anchored",
+    label: "Anchor your first work as Verified IP",
+    description: "Fingerprint + on-chain timestamp on Solana.",
+    amount: "25 $RHOZE",
+    category: "milestone",
+    cap: "One-time",
+  },
+  {
+    action: "ten_works_anchored",
+    label: "10 works anchored",
+    description: "Real provenance, real volume.",
+    amount: "100 $RHOZE",
+    category: "milestone",
+    cap: "One-time",
+  },
+  {
+    action: "verified_artist",
+    label: "Become a Verified Artist",
+    description: "Pass identity review — unlocks paid services and coin launches.",
+    amount: "150 $RHOZE",
+    category: "milestone",
+    cap: "One-time",
+  },
+  {
+    action: "first_coin_launch",
+    label: "Launch your first artist coin",
+    description: "Verified Artists only. One-time bonus on launch.",
+    amount: "100 $RHOZE",
+    category: "milestone",
+    cap: "One-time",
+  },
+  {
+    action: "followers_100",
+    label: "100 followers",
+    description: "Cross your first follower milestone.",
+    amount: "25 $RHOZE",
+    category: "milestone",
+    cap: "One-time",
+  },
+  {
+    action: "followers_1k",
+    label: "1,000 followers",
+    description: "Real audience traction.",
+    amount: "150 $RHOZE",
+    category: "milestone",
+    cap: "One-time",
+  },
+  {
+    action: "work_views_1k",
+    label: "1,000 views on a single work",
+    description: "Cumulative views across Discover, Flow, and your profile.",
+    amount: "30 $RHOZE",
+    category: "milestone",
+    cap: "Per work",
+  },
+  {
+    action: "work_views_10k",
+    label: "10,000 views on a single work",
+    description: "Breakout-level reach.",
+    amount: "200 $RHOZE",
+    category: "milestone",
+    cap: "Per work",
+  },
+  {
+    action: "milestone_approved",
+    label: "Project milestone approved",
+    description: "Both sides sign off on a stage in a paid project.",
+    amount: "20 $RHOZE",
+    category: "milestone",
+    cap: "Per milestone",
   },
 ];
 
