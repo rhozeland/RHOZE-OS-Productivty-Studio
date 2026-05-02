@@ -366,11 +366,12 @@ const AppLayout = () => {
           <main className="flex-1 p-4 md:p-8 pb-8">
             <Outlet />
           </main>
-          {/* Bottom dock retired in v7 (post phase-2): navigation happens via the
-              left side nav + global ⌘K search. DockBar.tsx kept on disk for revert. */}
+          {/* HUD Dock — gamified player bar (level / XP / streak / $RHOZE / nav) */}
+          <HudDock />
 
         </div>
       </div>
+
 
       {/* Command palette search */}
       {/* Command palette search — Pages always visible; studios/listings/creators
