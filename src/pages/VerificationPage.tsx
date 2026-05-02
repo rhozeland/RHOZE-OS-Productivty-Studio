@@ -22,8 +22,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { useArtistVerification } from "@/hooks/useArtistVerification";
-import { ArrowLeft, BadgeCheck, Clock, Loader2, ShieldAlert, Upload, X } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Check, Clock, Loader2, ShieldAlert, Upload, X } from "lucide-react";
 import { z } from "zod";
+import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
+
+type LatestRequest = {
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+  decided_at: string | null;
+  review_note: string | null;
+};
 
 const submitSchema = z.object({
   contact_email: z.string().trim().email().max(255),
