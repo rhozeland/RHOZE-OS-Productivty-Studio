@@ -1964,6 +1964,7 @@ export type Database = {
           banner_url: string | null
           bio: string | null
           created_at: string
+          creator_roles: string[]
           dashboard_layout: Json | null
           display_name: string | null
           dock_config: Json | null
@@ -2015,6 +2016,7 @@ export type Database = {
           banner_url?: string | null
           bio?: string | null
           created_at?: string
+          creator_roles?: string[]
           dashboard_layout?: Json | null
           display_name?: string | null
           dock_config?: Json | null
@@ -2066,6 +2068,7 @@ export type Database = {
           banner_url?: string | null
           bio?: string | null
           created_at?: string
+          creator_roles?: string[]
           dashboard_layout?: Json | null
           display_name?: string | null
           dock_config?: Json | null
