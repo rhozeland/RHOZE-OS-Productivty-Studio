@@ -515,6 +515,44 @@ export type Database = {
         }
         Relationships: []
       }
+      coin_hold_snapshots: {
+        Row: {
+          last_30d_reward_at: string | null
+          last_7d_reward_at: string | null
+          launch_id: string
+          snapshot_balance: number
+          updated_at: string
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          last_30d_reward_at?: string | null
+          last_7d_reward_at?: string | null
+          launch_id: string
+          snapshot_balance: number
+          updated_at?: string
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          last_30d_reward_at?: string | null
+          last_7d_reward_at?: string | null
+          launch_id?: string
+          snapshot_balance?: number
+          updated_at?: string
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coin_hold_snapshots_launch_id_fkey"
+            columns: ["launch_id"]
+            isOneToOne: false
+            referencedRelation: "coin_launches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coin_holdings: {
         Row: {
           balance: number
@@ -3756,6 +3794,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_streaks: {
+        Row: {
+          current_streak: number
+          last_active_at: string | null
+          last_milestone_at: string | null
+          longest_streak: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          current_streak?: number
+          last_active_at?: string | null
+          last_milestone_at?: string | null
+          longest_streak?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          current_streak?: number
+          last_active_at?: string | null
+          last_milestone_at?: string | null
+          longest_streak?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       waitlist: {
         Row: {
           created_at: string
@@ -4286,6 +4351,7 @@ export type Database = {
         }
         Returns: number
       }
+      process_streaks_and_holds: { Args: never; Returns: Json }
       process_wallet_change: {
         Args: {
           _admin_id: string
@@ -4379,6 +4445,7 @@ export type Database = {
         }
         Returns: Json
       }
+      touch_user_activity: { Args: { _user_id: string }; Returns: undefined }
       update_underwriting_rules: {
         Args: { _payload: Json }
         Returns: undefined
