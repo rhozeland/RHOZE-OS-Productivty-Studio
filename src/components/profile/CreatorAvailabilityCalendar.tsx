@@ -26,6 +26,8 @@ import {
   Trash2,
   Minus,
   Plus,
+  Repeat,
+  Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -77,6 +79,14 @@ interface BookingRow {
   status: string;
 }
 
+interface RecurringRow {
+  id: string;
+  user_id: string;
+  weekday: number; // 0 = Mon (matches our weekStartsOn:1 layout)
+  start_minute: number;
+  end_minute: number;
+}
+
 const snap = (m: number) => Math.round(m / SNAP_MIN) * SNAP_MIN;
 const clamp = (m: number) => Math.max(DAY_START_MIN, Math.min(DAY_END_MIN, m));
 
@@ -106,6 +116,7 @@ const CreatorAvailabilityCalendar = ({
   const isOwner = user?.id === creatorId;
 
   const [mode, setMode] = useState<Mode>("view");
+  const [addType, setAddType] = useState<"once" | "weekly">("once");
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [saving, setSaving] = useState(false);
 
@@ -177,9 +188,21 @@ const CreatorAvailabilityCalendar = ({
     },
   });
 
+  const { data: recurring } = useQuery({
+    queryKey: ["creator-recurring-availability", creatorId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("creator_availability_recurring")
+        .select("*")
+        .eq("user_id", creatorId);
+      if (error) throw error;
+      return (data ?? []) as RecurringRow[];
+    },
+  });
+
   // Per-day intervals (minutes-from-midnight) for fast hit-testing
   const availabilityByDay = useMemo(() => {
-    const map: Record<number, Array<{ id: string; startMin: number; endMin: number }>> = {};
+    const map: Record<number, Array<{ id: string; startMin: number; endMin: number; recurring?: boolean }>> = {};
     weekDays.forEach((d, i) => (map[i] = []));
     availability?.forEach((a) => {
       const s = new Date(a.start_time);
@@ -192,8 +215,23 @@ const CreatorAvailabilityCalendar = ({
         endMin: e.getHours() * 60 + e.getMinutes(),
       });
     });
+    // Merge recurring template (only on days that have no one-off block at that time)
+    recurring?.forEach((r) => {
+      const dayIdx = r.weekday;
+      if (dayIdx < 0 || dayIdx > 6) return;
+      const overlaps = map[dayIdx].some(
+        (iv) => r.start_minute < iv.endMin && r.end_minute > iv.startMin
+      );
+      if (overlaps) return;
+      map[dayIdx].push({
+        id: `recurring-${r.id}`,
+        startMin: r.start_minute,
+        endMin: r.end_minute,
+        recurring: true,
+      });
+    });
     return map;
-  }, [availability, weekDays]);
+  }, [availability, recurring, weekDays]);
 
   const bookingsByDay = useMemo(() => {
     const map: Record<number, Array<{ startMin: number; endMin: number }>> = {};
@@ -375,13 +413,45 @@ const CreatorAvailabilityCalendar = ({
   // ─── Persist availability ───
   const persistAvailability = async (day: Date, startMin: number, endMin: number) => {
     if (!user || !isOwner) return;
-    const start = addMinutes(startOfDay(day), startMin);
-    const end = addMinutes(startOfDay(day), endMin);
 
     setSaving(true);
     try {
+      if (addType === "weekly") {
+        // weekday matches our weekStartsOn:1 layout (0 = Mon … 6 = Sun)
+        const weekday = weekDays.findIndex((d) => isSameDay(d, day));
+        if (weekday < 0) {
+          toast.error("Could not resolve weekday");
+          return;
+        }
+        // Check for existing recurring overlap on the same weekday
+        const { data: clashes } = await supabase
+          .from("creator_availability_recurring")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("weekday", weekday)
+          .lt("start_minute", endMin)
+          .gt("end_minute", startMin)
+          .limit(1);
+        if (clashes && clashes.length > 0) {
+          toast.error("That weekly slot overlaps an existing recurring block");
+          return;
+        }
+        const { error } = await supabase.from("creator_availability_recurring").insert({
+          user_id: user.id,
+          weekday,
+          start_minute: startMin,
+          end_minute: endMin,
+        });
+        if (error) throw error;
+        await queryClient.invalidateQueries({ queryKey: ["creator-recurring-availability", creatorId] });
+        toast.success(`Repeats every ${format(day, "EEEE")} ${formatTime(day, startMin)}–${formatTime(day, endMin)}`);
+        return;
+      }
+
+      const start = addMinutes(startOfDay(day), startMin);
+      const end = addMinutes(startOfDay(day), endMin);
+
       // Final-pass overlap check against the live database — guards against races
-      // where another tab/device added a block while we were dragging.
       const { data: clashes, error: checkErr } = await supabase
         .from("creator_availability")
         .select("id")
@@ -412,6 +482,14 @@ const CreatorAvailabilityCalendar = ({
 
   const removeAvailabilityWindow = async (id: string) => {
     try {
+      if (id.startsWith("recurring-")) {
+        const realId = id.replace(/^recurring-/, "");
+        const { error } = await supabase.from("creator_availability_recurring").delete().eq("id", realId);
+        if (error) throw error;
+        await queryClient.invalidateQueries({ queryKey: ["creator-recurring-availability", creatorId] });
+        toast.success("Removed weekly slot");
+        return;
+      }
       const { error } = await supabase.from("creator_availability").delete().eq("id", id);
       if (error) throw error;
       await queryClient.invalidateQueries({ queryKey: ["creator-availability", creatorId] });
@@ -486,6 +564,7 @@ const CreatorAvailabilityCalendar = ({
     edge: "top" | "bottom",
     e: React.PointerEvent
   ) => {
+    if (iv.id.startsWith("recurring-")) return; // recurring slots are managed by delete + re-add
     e.stopPropagation();
     e.preventDefault();
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
@@ -607,30 +686,38 @@ const CreatorAvailabilityCalendar = ({
 
     setSaving(true);
     try {
+      // Generate a free in-app Jitsi room — no account or external service required.
+      // Cap session at 60 min (clamp end if longer).
+      const cappedEnd =
+        differenceInMinutes(end, start) > 60 ? addMinutes(start, 60) : end;
+      const room = `rhozeland-${(creatorName ?? "creator").toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Math.random().toString(36).slice(2, 8)}`;
+      const meetingUrl = `https://meet.jit.si/${room}`;
+
       const { error } = await supabase.from("bookings").insert({
         user_id: user.id,
         staff_member_id: creatorId,
         title: `Session with ${creatorName ?? "creator"}`,
         start_time: start.toISOString(),
-        end_time: end.toISOString(),
-        duration_hours: +(differenceInMinutes(end, start) / 60).toFixed(2),
+        end_time: cappedEnd.toISOString(),
+        duration_hours: +(differenceInMinutes(cappedEnd, start) / 60).toFixed(2),
         status: "upcoming",
         notes: bookingNotes || null,
+        meeting_url: meetingUrl,
       });
       if (error) throw error;
 
       await supabase.from("calendar_events").insert({
         user_id: user.id,
         title: `📅 ${creatorName ?? "Creator"} session`,
-        description: bookingNotes || null,
+        description: `${bookingNotes ? bookingNotes + "\n\n" : ""}Join: ${meetingUrl}`,
         start_time: start.toISOString(),
-        end_time: end.toISOString(),
+        end_time: cappedEnd.toISOString(),
         color: "#7c3aed",
       });
 
       await queryClient.invalidateQueries({ queryKey: ["creator-bookings", creatorId] });
       toast.success(
-        `Booked ${format(day, "MMM d")} · ${formatTime(day, startMin)}–${formatTime(day, endMin)}`
+        `Booked ${format(day, "MMM d")} · ${formatTime(day, startMin)}–${formatTime(day, Math.min(endMin, startMin + 60))} · video room ready`
       );
       setBookingOpen(false);
       setBookingNotes("");
@@ -675,7 +762,31 @@ const CreatorAvailabilityCalendar = ({
         <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
           <CalendarIcon className="h-4 w-4 text-primary" /> Availability
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {isOwner && mode === "edit" && (
+            <div className="inline-flex rounded-md border border-border overflow-hidden text-[11px]">
+              <button
+                type="button"
+                onClick={() => setAddType("once")}
+                className={cn(
+                  "px-2.5 py-1 transition-colors",
+                  addType === "once" ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold" : "text-muted-foreground hover:bg-muted/40"
+                )}
+              >
+                Just this week
+              </button>
+              <button
+                type="button"
+                onClick={() => setAddType("weekly")}
+                className={cn(
+                  "px-2.5 py-1 inline-flex items-center gap-1 transition-colors border-l border-border",
+                  addType === "weekly" ? "bg-sky-500/20 text-sky-700 dark:text-sky-300 font-semibold" : "text-muted-foreground hover:bg-muted/40"
+                )}
+              >
+                <Repeat className="h-3 w-3" /> Every week
+              </button>
+            </div>
+          )}
           {isOwner && mode === "view" && (
             <Button
               size="sm"
@@ -875,17 +986,27 @@ const CreatorAvailabilityCalendar = ({
                     const height = (liveEnd - liveStart) * PX_PER_MIN;
                     const editable = mode === "edit";
 
+                    const isRecurring = !!iv.recurring;
                     const blockEl = (
                       <div
                         className={cn(
-                          "absolute left-0.5 right-0.5 rounded-md bg-emerald-500/25 border border-emerald-500/40",
+                          "absolute left-0.5 right-0.5 rounded-md border",
+                          isRecurring
+                            ? "bg-sky-500/20 border-sky-500/40"
+                            : "bg-emerald-500/25 border-emerald-500/40",
                           !editable && "pointer-events-none",
-                          editable && "cursor-pointer hover:bg-emerald-500/35 group",
+                          editable && !isRecurring && "cursor-pointer hover:bg-emerald-500/35 group",
+                          editable && isRecurring && "cursor-pointer hover:bg-sky-500/30 group",
                           isBeingResized && "bg-emerald-500/40 border-emerald-500 shadow-lg z-20"
                         )}
                         style={{ top, height }}
                       >
-                        {editable && (
+                        {isRecurring && height >= 18 && (
+                          <div className="absolute top-0.5 right-0.5 z-10">
+                            <Repeat className="h-2.5 w-2.5 text-sky-700 dark:text-sky-300" />
+                          </div>
+                        )}
+                        {editable && !isRecurring && (
                           <>
                             <div
                               role="button"
@@ -1116,6 +1237,9 @@ const CreatorAvailabilityCalendar = ({
           <span className="inline-block h-3 w-3 rounded bg-emerald-500/40" /> Available
         </span>
         <span className="flex items-center gap-1.5">
+          <span className="inline-block h-3 w-3 rounded bg-sky-500/30" /> <Repeat className="h-2.5 w-2.5" /> Weekly
+        </span>
+        <span className="flex items-center gap-1.5">
           <span className="inline-block h-3 w-3 rounded bg-destructive/30" /> Booked
         </span>
         {!isOwner && (
@@ -1169,6 +1293,17 @@ const CreatorAvailabilityCalendar = ({
                 <p className="text-sm text-primary font-semibold mt-1">
                   {formatDuration(pendingSelection.endMin - pendingSelection.startMin)} session
                 </p>
+              </div>
+
+              {/* In-app video room note */}
+              <div className="rounded-lg border border-sky-500/30 bg-sky-500/5 p-3 flex items-start gap-2.5">
+                <Video className="h-4 w-4 text-sky-600 dark:text-sky-400 mt-0.5 shrink-0" />
+                <div className="text-xs text-foreground/80">
+                  <p className="font-semibold text-foreground">In-app video room included</p>
+                  <p className="text-muted-foreground mt-0.5">
+                    A free video meeting link is generated automatically. Sessions cap at 60 minutes.
+                  </p>
+                </div>
               </div>
 
               {/* Fine-tune controls */}

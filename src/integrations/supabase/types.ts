@@ -107,6 +107,7 @@ export type Database = {
           duration_hours: number
           end_time: string
           id: string
+          meeting_url: string | null
           notes: string | null
           project_id: string | null
           service_id: string | null
@@ -122,6 +123,7 @@ export type Database = {
           duration_hours?: number
           end_time: string
           id?: string
+          meeting_url?: string | null
           notes?: string | null
           project_id?: string | null
           service_id?: string | null
@@ -137,6 +139,7 @@ export type Database = {
           duration_hours?: number
           end_time?: string
           id?: string
+          meeting_url?: string | null
           notes?: string | null
           project_id?: string | null
           service_id?: string | null
@@ -814,6 +817,36 @@ export type Database = {
           start_time?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      creator_availability_recurring: {
+        Row: {
+          created_at: string
+          end_minute: number
+          id: string
+          start_minute: number
+          updated_at: string
+          user_id: string
+          weekday: number
+        }
+        Insert: {
+          created_at?: string
+          end_minute: number
+          id?: string
+          start_minute: number
+          updated_at?: string
+          user_id: string
+          weekday: number
+        }
+        Update: {
+          created_at?: string
+          end_minute?: number
+          id?: string
+          start_minute?: number
+          updated_at?: string
+          user_id?: string
+          weekday?: number
         }
         Relationships: []
       }
