@@ -35,6 +35,11 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 // ─── Tile shape ────────────────────────────────────────────────────────
 type TileKind = "drop" | "offering" | "opportunity" | "event" | "space" | "work";
