@@ -390,6 +390,21 @@ const ProjectThread = ({
           </div>
         </div>
         <Button
+          variant="ghost"
+          size="sm"
+          className="rounded-full gap-1.5 text-xs"
+          onClick={() => {
+            const url = `${window.location.origin}/messages?tab=projects&p=${project.id}`;
+            navigator.clipboard
+              .writeText(url)
+              .then(() => toast.success("Link copied"))
+              .catch(() => toast.error("Couldn't copy link"));
+          }}
+          title="Copy a shareable link to this project thread"
+        >
+          <LinkIcon className="h-3 w-3" /> Copy link
+        </Button>
+        <Button
           variant="outline"
           size="sm"
           className="rounded-full gap-1.5 text-xs"
