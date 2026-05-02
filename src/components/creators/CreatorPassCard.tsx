@@ -239,6 +239,26 @@ const CreatorPassCard = () => {
         </div>
       </motion.div>
 
+      {/* ── Studio activity (relocated from My Studio) ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="grid grid-cols-3 gap-[1px] bg-border rounded-2xl overflow-hidden"
+      >
+        {[
+          { icon: FolderKanban, label: "Active Projects", value: studioStats?.activeProjects ?? 0, path: "/projects" },
+          { icon: MessageSquare, label: "Unread", value: studioStats?.unread ?? 0, path: "/messages" },
+          { icon: Calendar, label: "Upcoming", value: studioStats?.upcoming ?? 0, path: "/calendar" },
+        ].map((s) => (
+          <Link key={s.label} to={s.path} className="bg-card p-4 hover:bg-muted/50 transition-colors group">
+            <s.icon className="h-4 w-4 text-muted-foreground mb-2 group-hover:text-foreground transition-colors" />
+            <p className="font-display text-2xl text-foreground">{s.value}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider font-body">{s.label}</p>
+          </Link>
+        ))}
+      </motion.div>
+
       {/* ── Token Balance + Claim ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* On-chain balance */}
