@@ -34,12 +34,17 @@ import { format, setHours, setMinutes, addHours } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import PaySolAndVerify from "@/components/PaySolAndVerify";
+import PayWithRhozeButton from "@/components/PayWithRhozeButton";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
 
 type Step = "datetime" | "payment" | "confirm";
-type PaymentMethod = "credits" | "card" | "crypto";
+type PaymentMethod = "credits" | "card" | "crypto" | "rhoze";
+
+// Server-side rate is 100 $RHOZE ≈ $1 (see verify-rhoze-payment).
+// Mirror it here so the displayed price matches what the backend expects.
+const RHOZE_PER_USD = 100;
 
 type StaffMember = {
   id: string;
@@ -115,6 +120,7 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
 
   const usdPrice = service.credits_cost * CREDIT_RATE;
   const solPrice = +(usdPrice / 150).toFixed(4); // rough SOL estimate
+  const rhozePrice = Math.max(1, Math.round(usdPrice * RHOZE_PER_USD));
   const hasEnoughCredits = userCredits >= service.credits_cost;
 
   const canProceedFromDatetime = selectedDate && selectedTime;
