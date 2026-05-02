@@ -14,7 +14,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, CalendarDays, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, CalendarDays, Sparkles, Loader2, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -58,6 +58,33 @@ const EventCreatePage = () => {
   const [venueAddress, setVenueAddress] = useState("");
   const [onlineUrl, setOnlineUrl] = useState("");
   const [capacity, setCapacity] = useState<string>("");
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
+
+  const handleCoverUpload = async (file: File) => {
+    if (!user) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image too large", { description: "Max 5 MB." });
+      return;
+    }
+    setCoverUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/events/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("listing-media")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("listing-media").getPublicUrl(path);
+      setCoverUrl(data.publicUrl);
+    } catch (err) {
+      toast.error("Upload failed", {
+        description: err instanceof Error ? err.message : "Try a different image.",
+      });
+    } finally {
+      setCoverUploading(false);
+    }
+  };
 
   // Free RSVP tier (always created). Paid tiers can be added in /manage later.
   const [rsvpTierName, setRsvpTierName] = useState("RSVP");
@@ -126,6 +153,7 @@ const EventCreatePage = () => {
           manifest_hash,
           manifest_json: manifest as any,
           ticket_currency_modes: ["rsvp"],
+          cover_url: coverUrl,
         })
         .select()
         .single();
