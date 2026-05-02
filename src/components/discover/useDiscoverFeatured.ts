@@ -167,7 +167,7 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
   const { data: artists } = useQuery({
     queryKey: ["discover-featured-artists"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: profileRows } = await supabase
         .from("profiles")
         .select("user_id, display_name, headline, bio, avatar_url, banner_url, region_code, mediums")
         .eq("is_public", true)
@@ -176,7 +176,36 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
         .order("updated_at", { ascending: false })
         .limit(20);
 
-      return (data ?? []) as FeaturedArtistRow[];
+      const profiles = (profileRows ?? []) as FeaturedArtistRow[];
+      if (profiles.length === 0) return profiles;
+
+      // Backfill missing banner_url with the artist's most recent visual work,
+      // so the Featured panel never renders an empty grey box.
+      const needsBanner = profiles.filter((p) => !p.banner_url).map((p) => p.user_id);
+      if (needsBanner.length > 0) {
+        const { data: workRows } = await supabase
+          .from("works")
+          .select("user_id, file_url, mime_type, created_at")
+          .in("user_id", needsBanner)
+          .eq("visibility", "public")
+          .not("file_url", "is", null)
+          .like("mime_type", "image/%")
+          .order("created_at", { ascending: false })
+          .limit(80);
+
+        const fallbackByUser = new Map<string, string>();
+        (workRows ?? []).forEach((row: any) => {
+          if (!fallbackByUser.has(row.user_id) && row.file_url) {
+            fallbackByUser.set(row.user_id, row.file_url);
+          }
+        });
+
+        return profiles.map((p) =>
+          p.banner_url ? p : { ...p, banner_url: fallbackByUser.get(p.user_id) ?? null },
+        );
+      }
+
+      return profiles;
     },
     staleTime: 60_000,
   });

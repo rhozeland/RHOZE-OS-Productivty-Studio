@@ -604,10 +604,6 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
 
         <div className="flex flex-col gap-3 lg:gap-4">
           <div className="rounded-[1.7rem] border border-border/50 bg-background/58 p-4 backdrop-blur-xl sm:p-5">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Featured</p>
-              <Sparkles className="h-4 w-4 text-foreground/50" />
-            </div>
 
             <AnimatePresence mode="wait">
               {activeSpotlight ? (
@@ -617,7 +613,6 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.28, ease: "easeOut" }}
-                  className="mt-4"
                 >
                   <div className="overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75">
                     <div className="relative aspect-[16/6] overflow-hidden border-b border-border/40 bg-muted/70">
@@ -688,7 +683,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                   </div>
                 </motion.div>
               ) : (
-                <div className="mt-4 rounded-[1.5rem] border border-dashed border-border/50 bg-card/35 p-6 text-sm text-muted-foreground">
+                <div className="rounded-[1.5rem] border border-dashed border-border/50 bg-card/35 p-6 text-sm text-muted-foreground">
                   Featured orbit is warming up.
                 </div>
               )}
