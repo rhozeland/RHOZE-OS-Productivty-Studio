@@ -42,13 +42,13 @@ import { Archive, Fingerprint } from "lucide-react";
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { canManage: canManageProject, isOwner: isProjectOwner } = useProjectRole(id);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [editingHeader, setEditingHeader] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
-  const [listingDialogOpen, setListingDialogOpen] = useState(false);
 
   const { data: project } = useQuery({
     queryKey: ["project", id],
