@@ -18,9 +18,8 @@ import {
 } from "@/components/ui/dialog";
 import {
   Plus, Trash2, LayoutGrid, Link2, X, FileDown, Pencil, Check,
-  Milestone, ListTodo, CalendarDays, Lock, Unlock, ShoppingBag,
+  Milestone, ListTodo, CalendarDays, Lock, Unlock, ArrowLeft,
 } from "lucide-react";
-import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import { exportProjectPDF } from "@/lib/export-project-pdf";
 import { useState } from "react";
 import { toast } from "sonner";
