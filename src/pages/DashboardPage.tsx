@@ -75,6 +75,10 @@ const DEFAULT_LAYOUT: DashboardLayout = {
   showCalendar: false,
 };
 
+// v7 (post phase-2): public discovery (Spaces grid, Hub pulse, People,
+// City lists) is unmounted from the Studio page. Flip to `true` to revive.
+const SHOW_PUBLIC_NETWORK = false;
+
 const DashboardPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
