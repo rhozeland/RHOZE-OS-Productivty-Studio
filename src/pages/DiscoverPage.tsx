@@ -15,37 +15,22 @@
  * lifted from HubPage and Fresh Works is removed (the mosaic IS the
  * fresh feed now — drops, works, offerings, events, spaces all in one).
  */
-import { Suspense, lazy, useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Suspense, lazy, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import RegionPromptBanner from "@/components/discover/RegionPromptBanner";
 import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import StreamComposer from "@/components/stream/StreamComposer";
-import ConversationsMosaic, { type MosaicKindFilter } from "@/components/hub/ConversationsMosaic";
+import ConversationsMosaic from "@/components/hub/ConversationsMosaic";
 import type { RegionMarket } from "@/lib/regions";
-import {
-  ArrowRight, Coins, Loader2, Search, X, Layers, Flame, Briefcase,
-  CalendarDays, Building2, Waves,
-} from "lucide-react";
+import { ArrowRight, Coins, Loader2 } from "lucide-react";
 
 const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
-
-// Filter chips for the unified mosaic. Open Calls live under Offerings;
-// Verified Works are a badge on Drops (no standalone lane).
-const FILTERS: { key: MosaicKindFilter; label: string; Icon: typeof Flame }[] = [
-  { key: "all",      label: "All",       Icon: Layers },
-  { key: "drop",     label: "Drops",     Icon: Flame },
-  { key: "offering", label: "Offerings", Icon: Briefcase },
-  { key: "event",    label: "Events",    Icon: CalendarDays },
-  { key: "space",    label: "Spaces",    Icon: Building2 },
-];
-const VALID_KINDS = new Set<MosaicKindFilter>(FILTERS.map((f) => f.key));
 
 const getGreeting = () => {
   const h = new Date().getHours();
@@ -58,36 +43,6 @@ const DiscoverPage = () => {
   const { user } = useAuth();
   const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
   const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
-
-  // ─── URL-synced search + kind for the mosaic ────────────────────
-  const [params, setParams] = useSearchParams();
-  const [search, setSearch] = useState(params.get("q") ?? "");
-  const initialKind = (params.get("kind") as MosaicKindFilter) ?? "all";
-  const [kind, setKind] = useState<MosaicKindFilter>(
-    VALID_KINDS.has(initialKind) ? initialKind : "all",
-  );
-  const [counts, setCounts] = useState<Record<MosaicKindFilter, number> | null>(null);
-
-  useEffect(() => {
-    const next = new URLSearchParams(params);
-    if (search.trim()) next.set("q", search.trim());
-    else next.delete("q");
-    if (kind && kind !== "all") next.set("kind", kind);
-    else next.delete("kind");
-    setParams(next, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, kind]);
-
-  useEffect(() => {
-    const handler = (e: Event) => {
-      setCounts((e as CustomEvent).detail as Record<MosaicKindFilter, number>);
-    };
-    window.addEventListener("hub-mosaic-counts", handler);
-    return () => window.removeEventListener("hub-mosaic-counts", handler);
-  }, []);
-
-  const activeFilter = useMemo(() => FILTERS.find((f) => f.key === kind)!, [kind]);
-  const hasFilter = kind !== "all" || search.trim().length > 0;
 
   // ─── Personal greeting (signed-in only) ─────────────────────────
   const { data: profile } = useQuery({
