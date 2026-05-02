@@ -341,22 +341,6 @@ const CreatorPassCard = () => {
         </motion.div>
       </div>
 
-      {/* ── Tier eligibility matrix — v7 hold OR activity ── */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="space-y-3">
-        <div className="flex items-baseline justify-between gap-2 px-1">
-          <h3 className="text-sm font-body font-semibold text-foreground flex items-center gap-2">
-            <Star className="h-4 w-4 text-primary" />
-            Tier perks — hold or earn
-          </h3>
-          <Link to="/credits?tab=how" className="text-[11px] text-muted-foreground hover:text-foreground underline underline-offset-2">
-            How rewards work →
-          </Link>
-        </div>
-        <p className="text-xs text-muted-foreground font-body px-1">
-          Tier auto-upgrades when you hold enough $RHOZE <em>or</em> hit any single activity bar — posts, projects, listings, events hosted, or successful interactions.
-        </p>
-        <TierMatrix activeTier={effectiveTier} />
-      </motion.div>
     </div>
   );
 };
