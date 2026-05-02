@@ -84,12 +84,12 @@ const FeaturedCarousel = ({ marketFilter }: FeaturedCarouselProps) => {
     queryFn: async () => {
       const { data } = await supabase
         .from("studios")
-        .select("id, slug, name, headline, hero_url, location")
-        .eq("is_published", true)
+        .select("id, name, short_description, cover_image_url, location")
+        .eq("is_active", true)
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      return data;
+      return data as { id: string; name: string; short_description: string | null; cover_image_url: string | null; location: string | null } | null;
     },
   });
 
@@ -114,9 +114,9 @@ const FeaturedCarousel = ({ marketFilter }: FeaturedCarouselProps) => {
     }
     if (space) {
       out.push({
-        kind: "space", id: space.id, href: `/studios/${space.slug || space.id}`,
-        title: space.name, subtitle: space.headline,
-        banner: space.hero_url, location: space.location,
+        kind: "space", id: space.id, href: `/studios/${space.id}`,
+        title: space.name, subtitle: space.short_description,
+        banner: space.cover_image_url, location: space.location,
       });
     }
     return out;
