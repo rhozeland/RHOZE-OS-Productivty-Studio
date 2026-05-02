@@ -287,6 +287,7 @@ const HudDock = () => {
           </div>
         </div>
       </motion.nav>
+      </div>
     </TooltipProvider>
   );
 };
