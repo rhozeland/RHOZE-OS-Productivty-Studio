@@ -270,26 +270,17 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
     return () => window.clearInterval(interval);
   }, [featuredSlides, isDragging]);
 
+  // Idle auto-spin only — never snap back to the active spotlight, that
+  // fights the user's drag and feels broken. Spin pauses while dragging.
   useEffect(() => {
     if (isDragging) return;
 
     const interval = window.setInterval(() => {
-      setRotation((current) => {
-        const active = spotlightMarkersRef.current.find((marker) => marker.key === activeSpotlightKey);
-        if (active) {
-          const target = normalizeRotation(-active.lng);
-          const delta = shortestAngle(current, target);
-          if (Math.abs(delta) > 1) {
-            return normalizeRotation(current + delta * 0.11);
-          }
-        }
-
-        return normalizeRotation(current + 0.28);
-      });
+      setRotation((current) => normalizeRotation(current + 0.18));
     }, 40);
 
     return () => window.clearInterval(interval);
-  }, [activeSpotlightKey, isDragging]);
+  }, [isDragging]);
 
   const { data: counts } = useQuery({
     queryKey: ["discover-region-counts"],
@@ -443,9 +434,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
         <div className="relative overflow-hidden rounded-[1.7rem] border border-border/50 bg-background/45 backdrop-blur-xl">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_46%,hsl(var(--background)/0)_0%,hsl(var(--primary)/0.12)_32%,transparent_54%),radial-gradient(circle_at_50%_86%,hsl(var(--accent)/0.18),transparent_30%)]" />
 
-          <div className="absolute left-4 top-4 z-20 max-w-[12rem] rounded-full border border-border/50 bg-background/72 px-3 py-1.5 backdrop-blur-md">
-            <p className="text-[11px] font-medium text-foreground/80">Spin the world →</p>
-          </div>
+          {/* spin hint pill removed — globe affords drag visually */}
 
           {hoveredRegion && (
             <div className="absolute right-4 top-4 z-20 max-w-[14rem] rounded-[1.3rem] border border-border/50 bg-background/80 px-3 py-2.5 shadow-lg backdrop-blur-md">
@@ -458,7 +447,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
             </div>
           )}
 
-          <div className="relative flex min-h-[360px] items-center justify-center px-3 py-5 sm:px-6 lg:min-h-[460px]">
+          <div className="relative flex min-h-[300px] items-center justify-center px-3 py-2 sm:px-4 lg:min-h-[380px]">
             <div
               className="relative aspect-square w-full max-w-[560px] touch-none select-none"
               onPointerDown={handlePointerDown}

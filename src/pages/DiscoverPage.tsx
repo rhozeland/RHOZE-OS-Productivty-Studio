@@ -48,18 +48,18 @@ const DiscoverPage = () => {
   });
 
   return (
-    <div className="max-w-6xl mx-auto pb-20 space-y-8">
+    <div className="max-w-6xl mx-auto pb-20 space-y-5">
       {/* ─── Header ─────────────────────────────────────────────────── */}
       <motion.header
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="pt-1"
+        transition={{ duration: 0.4 }}
+        className="pt-1 text-center"
       >
-        <p className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-1.5 flex items-center gap-1.5">
+        <p className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-1 inline-flex items-center gap-1.5 justify-center">
           <Compass className="h-3 w-3" /> Discover
         </p>
-        <h1 className="font-display text-2xl sm:text-3xl md:text-4xl leading-[1.1] text-foreground">
+        <h1 className="font-display text-2xl sm:text-3xl leading-[1.1] text-foreground">
           The world is{" "}
           <span
             className="inline-block"
@@ -72,8 +72,8 @@ const DiscoverPage = () => {
             making.
           </span>
         </h1>
-        <p className="text-xs sm:text-sm text-muted-foreground mt-2 max-w-xl">
-          Spin the globe. Find an artist, an event, a space.
+        <p className="text-xs text-muted-foreground mt-1.5">
+          Find an artist, an event, a space.
         </p>
       </motion.header>
 
@@ -81,14 +81,14 @@ const DiscoverPage = () => {
 
       {/* ─── Globe-led featured orbit ──────────────────────────────── */}
       <motion.section
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.05 }}
+        transition={{ duration: 0.4, delay: 0.05 }}
         className="grid grid-cols-1"
       >
         <Suspense
           fallback={
-            <div className="flex h-[520px] w-full items-center justify-center rounded-[2rem] border border-border/60 bg-card/40">
+            <div className="flex h-[420px] w-full items-center justify-center rounded-[2rem] border border-border/60 bg-card/40">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           }
@@ -97,7 +97,7 @@ const DiscoverPage = () => {
             marketFilter={marketFilter}
             onSelectMarket={setMarketFilter}
             featuredSlides={featuredSlides}
-            height={480}
+            height={400}
           />
         </Suspense>
       </motion.section>
