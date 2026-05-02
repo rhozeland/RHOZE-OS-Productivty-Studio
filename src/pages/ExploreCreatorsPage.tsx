@@ -67,6 +67,10 @@ const ExploreCreatorsPage = () => {
       l.description?.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Bulk Verified IP lookup so guest creator cards surface on-chain proof.
+  const filteredIds = (filtered ?? []).map((l: any) => l.id);
+  const { data: verifiedIpMap } = useListingVerifiedIp(filteredIds);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Nav */}
@@ -147,9 +151,16 @@ const ExploreCreatorsPage = () => {
                 <div className="p-4 space-y-1.5">
                   <h3 className="font-display font-semibold text-foreground text-base group-hover:text-primary transition-colors line-clamp-1">{listing.title}</h3>
                   {listing.description && <p className="text-xs text-muted-foreground line-clamp-2">{listing.description}</p>}
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground capitalize pt-1">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground capitalize pt-1 flex-wrap">
                     <span className="bg-muted rounded-full px-2 py-0.5">{listing.category}</span>
                     <span className="bg-muted rounded-full px-2 py-0.5">{listing.listing_type?.replace("_", " ")}</span>
+                    {verifiedIpMap?.get(listing.id) && (
+                      <VerifiedIPBadge
+                        signature={verifiedIpMap.get(listing.id)!.signature}
+                        size="xs"
+                        showLabel={false}
+                      />
+                    )}
                   </div>
                 </div>
               </Link>
