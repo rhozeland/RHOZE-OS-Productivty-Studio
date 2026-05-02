@@ -97,7 +97,7 @@ const DiscoverPage = () => {
             marketFilter={marketFilter}
             onSelectMarket={setMarketFilter}
             featuredSlides={featuredSlides}
-            height={540}
+            height={480}
           />
         </Suspense>
       </motion.section>
