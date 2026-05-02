@@ -230,6 +230,7 @@ const DiscoverPage = () => {
                   </p>
                 )}
                 <div className="flex flex-wrap items-center gap-2 mt-4">
+                  {featured.region_code && <RegionChip code={featured.region_code} size="sm" showLabel />}
                   {featured.location && (
                     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                       <MapPin className="h-3 w-3" /> {featured.location}
