@@ -14,9 +14,10 @@ import AdminUnderwritingRules from "@/components/admin/AdminUnderwritingRules";
 import AdminUnderwritingRulesAudit from "@/components/admin/AdminUnderwritingRulesAudit";
 import AdminWorkVerifications from "@/components/admin/AdminWorkVerifications";
 import AdminArtistVerifications from "@/components/admin/AdminArtistVerifications";
+import AdminRewardCaps from "@/components/admin/AdminRewardCaps";
 
 const VALID_TABS = new Set([
-  "overview", "rewards", "users", "badges", "studios", "ip",
+  "overview", "rewards", "caps", "users", "badges", "studios", "ip",
   "artists", "disputes", "withdrawals", "moderation", "capital",
 ]);
 
@@ -69,6 +70,9 @@ const AdminPage = () => {
           <TabsTrigger value="rewards" className="gap-1.5 text-xs shrink-0">
             <Coins className="h-3.5 w-3.5" /> Rewards
           </TabsTrigger>
+          <TabsTrigger value="caps" className="gap-1.5 text-xs shrink-0">
+            <Sliders className="h-3.5 w-3.5" /> Reward Caps
+          </TabsTrigger>
           <TabsTrigger value="users" className="gap-1.5 text-xs shrink-0">
             <Users className="h-3.5 w-3.5" /> Users
           </TabsTrigger>
@@ -100,6 +104,7 @@ const AdminPage = () => {
 
         <TabsContent value="overview"><AdminOverview /></TabsContent>
         <TabsContent value="rewards"><AdminPendingRewards /></TabsContent>
+        <TabsContent value="caps"><AdminRewardCaps /></TabsContent>
         <TabsContent value="users"><AdminUsers /></TabsContent>
         <TabsContent value="badges"><AdminBadges /></TabsContent>
         <TabsContent value="studios"><AdminStudioApplications /></TabsContent>
