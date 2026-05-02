@@ -30,6 +30,7 @@ import LaunchpadIdlVersions from "@/components/launchpad/LaunchpadIdlVersions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { REGIONS } from "@/lib/regions";
+import { RolePicker, SkillPicker } from "@/components/profile/RolePicker";
 
 /* ─── Section nav items ─── */
 const SECTIONS = [
@@ -98,11 +99,12 @@ const SettingsPage = () => {
   // Profile fields
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
-  const [headline, setHeadline] = useState("");
+  const [headline, setHeadline] = useState(""); // Slogan / ethos one-liner
   const [bio, setBio] = useState("");
   const [portfolioUrl, setPortfolioUrl] = useState("");
-  const [skills, setSkills] = useState("");
-  const [mediums, setMediums] = useState("");
+  const [creatorRoles, setCreatorRoles] = useState<string[]>([]);
+  const [skillsList, setSkillsList] = useState<string[]>([]);
+  const [mediumsList, setMediumsList] = useState<string[]>([]);
   const [location, setLocation] = useState("");
   const [regionCode, setRegionCode] = useState<string>("");
   const [available, setAvailable] = useState(true);
@@ -165,8 +167,9 @@ const SettingsPage = () => {
       setHeadline(p.headline ?? "");
       setBio(p.bio ?? "");
       setPortfolioUrl(p.portfolio_url ?? "");
-      setSkills(p.skills?.join(", ") ?? "");
-      setMediums(p.mediums?.join(", ") ?? "");
+      setCreatorRoles(Array.isArray(p.creator_roles) ? p.creator_roles : []);
+      setSkillsList(Array.isArray(p.skills) ? p.skills : []);
+      setMediumsList(Array.isArray(p.mediums) ? p.mediums : []);
       setLocation(p.location ?? "");
       setRegionCode(p.region_code ?? "");
       setAvailable(p.available ?? true);
@@ -240,8 +243,9 @@ const SettingsPage = () => {
         username: username.toLowerCase() || null,
         headline, bio,
         portfolio_url: portfolioUrl || null,
-        skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
-        mediums: mediums.split(",").map((s) => s.trim()).filter(Boolean),
+        creator_roles: creatorRoles,
+        skills: skillsList,
+        mediums: mediumsList,
         location: location || null,
         region_code: regionCode || null,
         available, is_public: isPublic,
