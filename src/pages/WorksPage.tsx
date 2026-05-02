@@ -60,8 +60,17 @@ import {
   shortHash,
 } from "@/lib/content-hash";
 import { InlineFormPanel } from "@/components/ui/inline-form-panel";
+import TokenGateDialog from "@/components/works/TokenGateDialog";
+import UnlockButton from "@/components/works/UnlockButton";
 
 type WorkKind = "audio" | "image" | "video" | "text" | "other";
+
+interface WorkGating {
+  enabled?: boolean;
+  launch_id?: string;
+  min_tokens?: number;
+  gated_path?: string;
+}
 
 interface Work {
   id: string;
@@ -78,6 +87,7 @@ interface Work {
   solana_signature: string | null;
   anchored_at: string | null;
   created_at: string;
+  gating?: WorkGating | null;
 }
 
 const KIND_ICON: Record<WorkKind, typeof Music> = {
@@ -407,6 +417,24 @@ function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
         <span className="truncate">sha256:{shortHash(work.content_hash)}</span>
       </div>
 
+      {work.gating?.enabled && (
+        <div className="flex items-center justify-between gap-2 rounded-md border border-border/50 bg-muted/30 px-2.5 py-1.5">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Lock className="h-3 w-3" />
+            Token-gated
+            {work.gating.min_tokens != null && (
+              <span>· ≥ {work.gating.min_tokens.toLocaleString()}</span>
+            )}
+          </div>
+          {!isOwner && (
+            <UnlockButton
+              workId={work.id}
+              threshold={work.gating.min_tokens ?? null}
+            />
+          )}
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-2 pt-1">
         {work.solana_signature ? (
           <a
@@ -439,16 +467,25 @@ function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
           <span className="text-xs text-muted-foreground">Not yet anchored</span>
         )}
 
-        {work.file_url && (
-          <a
-            href={work.file_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-          >
-            File <ExternalLink className="h-3 w-3" />
-          </a>
-        )}
+        <div className="flex items-center gap-2">
+          {isOwner && (
+            <TokenGateDialog
+              workId={work.id}
+              workTitle={work.title}
+              current={work.gating ?? null}
+            />
+          )}
+          {work.file_url && !work.gating?.enabled && (
+            <a
+              href={work.file_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+            >
+              File <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+        </div>
       </div>
     </article>
   );
