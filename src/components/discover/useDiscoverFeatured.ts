@@ -16,6 +16,7 @@ export type FeaturedSlide =
       avatar?: string | null;
       region_code?: string | null;
       mediums?: string[] | null;
+      creator_roles?: string[] | null;
     }
   | {
       kind: "event";
@@ -58,6 +59,7 @@ interface FeaturedArtistRow {
   banner_url: string | null;
   region_code: string | null;
   mediums: string[] | null;
+  creator_roles: string[] | null;
 }
 
 interface EventSpaceRelation {
@@ -169,10 +171,9 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
     queryFn: async () => {
       const { data: profileRows } = await supabase
         .from("profiles")
-        .select("user_id, display_name, headline, bio, avatar_url, banner_url, region_code, mediums")
+        .select("user_id, display_name, headline, bio, avatar_url, banner_url, region_code, mediums, creator_roles")
         .eq("is_public", true)
         .not("avatar_url", "is", null)
-        .not("bio", "is", null)
         .order("updated_at", { ascending: false })
         .limit(20);
 
@@ -271,6 +272,7 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
         avatar: artist.avatar_url,
         region_code: artist.region_code,
         mediums: artist.mediums,
+        creator_roles: artist.creator_roles,
       });
     }
 
