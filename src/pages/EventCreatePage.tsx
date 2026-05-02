@@ -332,7 +332,10 @@ const EventCreatePage = () => {
           )}
         </div>
 
-
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>Category</Label>
+            <select
               value={category}
               onChange={(e) => setCategory(e.target.value as any)}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm capitalize"
