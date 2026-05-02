@@ -684,6 +684,12 @@ const DashboardPage = () => {
         </p>
       </motion.div>
 
+      {/* ─── First-run checklist ─────────────────────────────────────────
+          Slim onboarding card. Only renders for users who look new
+          (missing avatar/bio, no Flow posts). Auto-hides once they
+          have a profile + at least one post, or on dismiss. */}
+      {user && <FirstRunChecklist />}
+
       {/* ════════════════════════════════════════════════════════════════
           ACT 1 — Split-screen duo + shared search
           Studios on the left (physical), Hub on the right (digital).
