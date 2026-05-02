@@ -954,16 +954,26 @@ const CreatorAvailabilityCalendar = ({
                     const height = (liveEnd - liveStart) * PX_PER_MIN;
                     const editable = mode === "edit";
 
+                    const isRecurring = !!iv.recurring;
                     const blockEl = (
                       <div
                         className={cn(
-                          "absolute left-0.5 right-0.5 rounded-md bg-emerald-500/25 border border-emerald-500/40",
+                          "absolute left-0.5 right-0.5 rounded-md border",
+                          isRecurring
+                            ? "bg-sky-500/20 border-sky-500/40"
+                            : "bg-emerald-500/25 border-emerald-500/40",
                           !editable && "pointer-events-none",
-                          editable && "cursor-pointer hover:bg-emerald-500/35 group",
+                          editable && !isRecurring && "cursor-pointer hover:bg-emerald-500/35 group",
+                          editable && isRecurring && "cursor-pointer hover:bg-sky-500/30 group",
                           isBeingResized && "bg-emerald-500/40 border-emerald-500 shadow-lg z-20"
                         )}
                         style={{ top, height }}
                       >
+                        {isRecurring && height >= 18 && (
+                          <div className="absolute top-0.5 right-0.5 z-10">
+                            <Repeat className="h-2.5 w-2.5 text-sky-700 dark:text-sky-300" />
+                          </div>
+                        )}
                         {editable && (
                           <>
                             <div
