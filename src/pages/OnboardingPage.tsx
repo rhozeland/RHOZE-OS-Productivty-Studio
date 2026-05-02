@@ -345,7 +345,7 @@ const OnboardingPage = () => {
           )}
 
           {/* Step 2: Quick Tour */}
-          {step === 2 && (
+          {step === 3 && (
             <motion.div
               key="tour"
               initial={{ opacity: 0, y: 30 }}
@@ -400,7 +400,7 @@ const OnboardingPage = () => {
           )}
 
           {/* Step 3: Ready */}
-          {step === 3 && (
+          {step === 4 && (
             <motion.div
               key="ready"
               initial={{ opacity: 0, y: 30 }}
