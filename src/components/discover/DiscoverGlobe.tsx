@@ -330,7 +330,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
         }}
       />
 
-      <div className="relative grid min-h-[inherit] gap-4 p-4 sm:p-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(300px,0.92fr)] lg:p-6">
+      <div className="relative grid gap-4 p-4 sm:p-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(300px,0.92fr)] lg:p-6">
         <div className="relative overflow-hidden rounded-[1.7rem] border border-border/50 bg-background/45 backdrop-blur-xl">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_46%,hsl(var(--background)/0)_0%,hsl(var(--primary)/0.12)_32%,transparent_54%),radial-gradient(circle_at_50%_86%,hsl(var(--accent)/0.18),transparent_30%)]" />
 
@@ -445,10 +445,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                           borderColor: active ? marker.color : "hsl(var(--border) / 0.65)",
                         }}
                       >
-                        <span
-                          className="absolute inset-0 rounded-full blur-md"
-                          style={{ backgroundColor: `${marker.color.replace('hsl(', 'hsla(').replace(')', ', 0.18)')}` }}
-                        />
+                        <span className="absolute inset-0 rounded-full blur-md opacity-50" style={{ backgroundColor: marker.color }} />
                         <span className="relative h-2.5 w-2.5 rounded-full" style={{ backgroundColor: marker.color }} />
                         <span className="relative max-w-[5.7rem] truncate text-[10px] font-medium text-foreground">
                           {marker.title}
