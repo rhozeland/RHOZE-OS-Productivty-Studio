@@ -772,12 +772,46 @@ const SettingsPage = () => {
     </div>
   );
 
+  const { data: verifData } = useArtistVerification(user?.id);
+  const renderVerification = () => {
+    const status = verifData?.status ?? "none";
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-foreground">Identity status</p>
+            <p className="text-xs text-muted-foreground">
+              Verification unlocks Verified IP, coin launches, paid services, and paid Spaces.
+            </p>
+          </div>
+          {status === "verified" ? (
+            <VerifiedArtistBadge status="verified" size="md" />
+          ) : (
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">{status}</span>
+          )}
+        </div>
+        <Link
+          to="/settings/verification"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+        >
+          {status === "verified"
+            ? "View submission"
+            : status === "pending"
+            ? "View pending review"
+            : "Start verification"}
+          <ChevronRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+    );
+  };
+
   const sectionRenderers: Record<SectionId, () => JSX.Element> = {
     profile: renderProfile,
     avatar: renderAvatar,
     banner: renderBanner,
     wallet: renderWallet,
     provenance: renderProvenance,
+    verification: renderVerification,
     shipping: renderShipping,
     notifications: renderNotifications,
     security: renderSecurity,
