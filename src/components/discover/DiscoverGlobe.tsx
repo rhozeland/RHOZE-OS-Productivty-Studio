@@ -364,7 +364,24 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
   const spotlightMarkersRef = useRef<SpotlightMarker[]>([]);
   spotlightMarkersRef.current = spotlightMarkers;
 
-  const activeSpotlight = spotlightMarkers.find((marker) => marker.key === activeSpotlightKey) ?? spotlightMarkers[0] ?? null;
+  const allSpotlights = useMemo(() => {
+    return featuredSlides.map((slide) => {
+      const code = slide.region_code?.toUpperCase() ?? null;
+      return {
+        ...slide,
+        key: `${slide.kind}-${slide.id}`,
+        region_code: code,
+        color: typeColorMap[slide.kind],
+      };
+    });
+  }, [featuredSlides]);
+
+  const activeSpotlight =
+    spotlightMarkers.find((marker) => marker.key === activeSpotlightKey) ??
+    (allSpotlights.find((s) => s.key === activeSpotlightKey) as any) ??
+    spotlightMarkers[0] ??
+    (allSpotlights[0] as any) ??
+    null;
   const hoveredRegion = points.find((point) => point.code === hoveredCode) ?? null;
 
   const latitudePaths = useMemo(
