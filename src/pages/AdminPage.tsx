@@ -104,6 +104,7 @@ const AdminPage = () => {
 
         <TabsContent value="overview"><AdminOverview /></TabsContent>
         <TabsContent value="rewards"><AdminPendingRewards /></TabsContent>
+        <TabsContent value="caps"><AdminRewardCaps /></TabsContent>
         <TabsContent value="users"><AdminUsers /></TabsContent>
         <TabsContent value="badges"><AdminBadges /></TabsContent>
         <TabsContent value="studios"><AdminStudioApplications /></TabsContent>
