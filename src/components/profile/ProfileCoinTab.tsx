@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import PriceChartCard from "@/components/launchpad/PriceChartCard";
 import TradePanel from "@/components/launchpad/TradePanel";
 import LaunchCoinDialog from "@/components/launchpad/LaunchCoinDialog";
+import MintAddressChip from "@/components/launchpad/MintAddressChip";
 import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
 
 interface Props {
