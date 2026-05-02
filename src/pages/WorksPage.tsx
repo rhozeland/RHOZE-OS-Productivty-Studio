@@ -88,6 +88,7 @@ interface Work {
   anchored_at: string | null;
   created_at: string;
   gating?: WorkGating | null;
+  is_unverified?: boolean;
 }
 
 const KIND_ICON: Record<WorkKind, typeof Music> = {
