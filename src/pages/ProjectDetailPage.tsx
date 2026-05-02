@@ -211,8 +211,19 @@ const ProjectDetailPage = () => {
 
   return (
     <div className="space-y-6">
+      {/* Back link — projects are usually opened from the messages inbox or
+          a profile, so a real back affordance saves a confused round-trip
+          through the side nav. */}
+      <button
+        onClick={() => navigate(-1)}
+        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" /> Back
+      </button>
+
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
+
         <div className="flex-1 min-w-0">
           {editingHeader ? (
             <div className="space-y-2">
