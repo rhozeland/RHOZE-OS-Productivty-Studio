@@ -60,6 +60,8 @@ import {
   shortHash,
 } from "@/lib/content-hash";
 import { InlineFormPanel } from "@/components/ui/inline-form-panel";
+import TokenGateDialog from "@/components/works/TokenGateDialog";
+import UnlockButton from "@/components/works/UnlockButton";
 
 type WorkKind = "audio" | "image" | "video" | "text" | "other";
 
