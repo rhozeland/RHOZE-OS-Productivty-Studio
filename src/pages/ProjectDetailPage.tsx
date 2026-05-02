@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,9 +18,8 @@ import {
 } from "@/components/ui/dialog";
 import {
   Plus, Trash2, LayoutGrid, Link2, X, FileDown, Pencil, Check,
-  Milestone, ListTodo, CalendarDays, Lock, Unlock, ShoppingBag,
+  Milestone, ListTodo, CalendarDays, Lock, Unlock, ArrowLeft,
 } from "lucide-react";
-import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import { exportProjectPDF } from "@/lib/export-project-pdf";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -43,13 +42,13 @@ import { Archive, Fingerprint } from "lucide-react";
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { canManage: canManageProject, isOwner: isProjectOwner } = useProjectRole(id);
+  const { canManage: canManageProject } = useProjectRole(id);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [editingHeader, setEditingHeader] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
-  const [listingDialogOpen, setListingDialogOpen] = useState(false);
 
   const { data: project } = useQuery({
     queryKey: ["project", id],
@@ -212,8 +211,19 @@ const ProjectDetailPage = () => {
 
   return (
     <div className="space-y-6">
+      {/* Back link — projects are usually opened from the messages inbox or
+          a profile, so a real back affordance saves a confused round-trip
+          through the side nav. */}
+      <button
+        onClick={() => navigate(-1)}
+        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" /> Back
+      </button>
+
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
+
         <div className="flex-1 min-w-0">
           {editingHeader ? (
             <div className="space-y-2">
@@ -274,17 +284,6 @@ const ProjectDetailPage = () => {
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {isProjectOwner && (
-            <Button
-              variant="default"
-              size="sm"
-              className="gap-1.5"
-              onClick={() => setListingDialogOpen(true)}
-            >
-              <ShoppingBag className="h-4 w-4" />
-              List on Marketplace
-            </Button>
-          )}
           <Button
             variant="outline"
             size="sm"
@@ -315,17 +314,6 @@ const ProjectDetailPage = () => {
           </Button>
         </div>
       </div>
-
-      <CreateListingDialog
-        open={listingDialogOpen}
-        onOpenChange={setListingDialogOpen}
-        prefill={{
-          title: project.title,
-          description: project.description ?? undefined,
-          listing_type: "project_request",
-          category: project.categories?.[0] ?? "design",
-        }}
-      />
 
       {/* Progress Overview */}
       <ProgressChart goals={goals} />

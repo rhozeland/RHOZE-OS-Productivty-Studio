@@ -21,6 +21,7 @@ import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilit
 import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
 import { cn } from "@/lib/utils";
 import { ROLE_BY_ID } from "@/lib/creator-roles";
+import FlowThumbnail from "@/components/flow/FlowThumbnail";
 
 // Human-readable labels + destinations for on-chain reputation tiles.
 // Tiles are clickable when href is set; otherwise rendered as static cards.
@@ -694,46 +695,6 @@ const ProfileDetailPage = () => {
               )}
             </div>
 
-            {/* Top offerings to buy */}
-            {hasSellerContent && (
-              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
-                    <ShoppingBag className="h-4 w-4 text-primary" /> Buy something
-                  </h3>
-                  <button
-                    onClick={() => handleTabChange("listings")}
-                    className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-                  >
-                    All <ArrowRight className="h-3 w-3" />
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {sellerListings!.slice(0, 3).map((listing: any) => (
-                    <button
-                      key={listing.id}
-                      onClick={() => navigate(`/creators/${listing.id}`)}
-                      className="group text-left rounded-xl border border-border/60 bg-card/60 overflow-hidden hover:border-foreground/30 transition-colors"
-                    >
-                      {(listing.cover_url || listing.image_url) ? (
-                        <div className="aspect-[4/3] bg-muted overflow-hidden">
-                          <img src={listing.cover_url || listing.image_url} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        </div>
-                      ) : (
-                        <div className="aspect-[4/3] flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
-                          <Store className="h-5 w-5 text-muted-foreground/40" />
-                        </div>
-                      )}
-                      <div className="p-2.5">
-                        <p className="text-xs font-medium text-foreground truncate">{listing.title}</p>
-                        <Badge variant="outline" className="text-[9px] mt-1 capitalize">{listing.category}</Badge>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Upcoming events */}
             {upcomingEvents && upcomingEvents.length > 0 && (
               <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
@@ -823,33 +784,34 @@ const ProfileDetailPage = () => {
             />
           </TabsContent>
 
-          {/* ─── Works (Flow Posts) tab ─── */}
+          {/* ─── Works (Posts) tab ─── */}
+          {/* Anything they've shared on Flow — uploads, links (YouTube/Spotify/SoundCloud),
+              writing. Thumbnails are resolved by <FlowThumbnail/> so audio/link posts
+              get a proper preview image instead of a generic icon. */}
           <TabsContent value="works" className="mt-5">
             {flowPosts && flowPosts.length > 0 ? (
               <div className="space-y-3">
-                <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" /> Flow Posts
-                </h2>
+                <div>
+                  <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" /> Posts
+                  </h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Everything they've shared on Flow — uploads, tracks, videos and links.
+                  </p>
+                </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {flowPosts.map((post: any) => (
                     <div key={post.id} onClick={() => navigate("/flow")}
                       className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer">
-                      {post.file_url && (post.category === "photo" || post.category === "design" || post.content_type === "image") ? (
-                        <div className="aspect-square overflow-hidden bg-muted">
-                          <img src={post.file_url} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                        </div>
-                      ) : post.file_url && (post.category === "video" || post.content_type === "video") ? (
-                        <div className="aspect-square overflow-hidden bg-muted">
-                          <video src={post.file_url} className="h-full w-full object-cover" muted preload="metadata" />
-                        </div>
-                      ) : (
-                        <div className="aspect-square flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5 p-3">
-                          {post.category === "music" ? <Music className="h-6 w-6 text-muted-foreground/40" /> :
-                           post.category === "writing" ? <FileText className="h-6 w-6 text-muted-foreground/40" /> :
-                           <ImageIcon className="h-6 w-6 text-muted-foreground/40" />}
-                          <p className="text-xs text-muted-foreground mt-2 text-center line-clamp-2">{post.title}</p>
-                        </div>
-                      )}
+                      <div className="aspect-square overflow-hidden bg-muted">
+                        <FlowThumbnail
+                          fileUrl={post.file_url}
+                          linkUrl={post.link_url}
+                          title={post.title}
+                          description={post.description}
+                          className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
                       <div className="p-2.5">
                         <p className="text-xs font-medium text-foreground truncate">{post.title}</p>
                         <Badge variant="outline" className="text-[8px] mt-1 capitalize">{post.category}</Badge>
@@ -865,7 +827,6 @@ const ProfileDetailPage = () => {
             )}
           </TabsContent>
 
-          {/* ─── Listings tab ─── */}
           <TabsContent value="listings" className="mt-5">
             {hasSellerContent ? (
               <div className="space-y-3">
