@@ -15,6 +15,7 @@ import { Coins, Flame, GraduationCap, TrendingUp } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import LaunchpadModeBanner from "@/components/launchpad/LaunchpadModeBanner";
 import LaunchpadEarnPanel from "@/components/launchpad/LaunchpadEarnPanel";
+import MintAddressChip from "@/components/launchpad/MintAddressChip";
 import { isLaunchpadOnChainEnabled } from "@/lib/launchpad-onchain";
 
 type Launch = {
@@ -28,6 +29,7 @@ type Launch = {
   graduation_sol_target: number;
   creator_id: string;
   created_at: string;
+  mint_address: string | null;
 };
 
 const useLaunches = (status: "live" | "graduated") => {
