@@ -63,6 +63,13 @@ import { InlineFormPanel } from "@/components/ui/inline-form-panel";
 
 type WorkKind = "audio" | "image" | "video" | "text" | "other";
 
+interface WorkGating {
+  enabled?: boolean;
+  launch_id?: string;
+  min_tokens?: number;
+  gated_path?: string;
+}
+
 interface Work {
   id: string;
   user_id: string;
@@ -78,6 +85,7 @@ interface Work {
   solana_signature: string | null;
   anchored_at: string | null;
   created_at: string;
+  gating?: WorkGating | null;
 }
 
 const KIND_ICON: Record<WorkKind, typeof Music> = {
