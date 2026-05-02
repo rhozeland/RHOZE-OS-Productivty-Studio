@@ -79,7 +79,8 @@ const HudDock = () => {
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 28, delay: 0.3 }}
-        className="hud-dock fixed bottom-4 left-1/2 -translate-x-1/2 z-40 pointer-events-none"
+        className="hud-dock fixed bottom-4 z-40 pointer-events-none"
+        style={{ left: `calc(50% + ${sidebarOffset})`, transform: "translateX(-50%)" }}
       >
         <div
           className={cn(
