@@ -18,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import FreshWorksGrid from "@/components/discover/FreshWorksGrid";
+import RegionPromptBanner from "@/components/discover/RegionPromptBanner";
 import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import type { RegionMarket } from "@/lib/regions";
 import {
@@ -76,6 +77,8 @@ const DiscoverPage = () => {
           {user ? " Pick a thread." : " Have a look around."}
         </p>
       </motion.header>
+
+      <RegionPromptBanner />
 
       {/* ─── Globe-led featured orbit ──────────────────────────────── */}
       <motion.section

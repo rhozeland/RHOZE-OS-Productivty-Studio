@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft, Sparkles, Palette, Layout, Users, CheckCircle2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, Sparkles, Palette, Layout, Users, CheckCircle2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LogoCustomizer } from "@/components/onboarding/LogoCustomizer";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { REGIONS, MARKETS } from "@/lib/regions";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
 const STEPS = [
   { id: "welcome", icon: Sparkles, title: "Welcome to Rhozeland" },
   { id: "logo", icon: Palette, title: "Create Your Toybox" },
+  { id: "region", icon: MapPin, title: "Where are you based?" },
   { id: "tour", icon: Layout, title: "Quick Tour" },
   { id: "ready", icon: CheckCircle2, title: "You're All Set" },
 ];
@@ -37,6 +39,7 @@ const TOUR_SLIDES = [
 const OnboardingPage = () => {
   const [step, setStep] = useState(0);
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+  const [regionCode, setRegionCode] = useState<string>("");
   const [tourSlide, setTourSlide] = useState(0);
   const [saving, setSaving] = useState(false);
   const [showExportHint, setShowExportHint] = useState(false);
@@ -77,6 +80,13 @@ const OnboardingPage = () => {
             .update({ avatar_url: publicUrl.publicUrl })
             .eq("user_id", user.id);
         }
+      }
+
+      if (regionCode) {
+        await supabase
+          .from("profiles")
+          .update({ region_code: regionCode })
+          .eq("user_id", user.id);
       }
 
       toast.success("Welcome aboard! 🎉");
@@ -334,8 +344,80 @@ const OnboardingPage = () => {
             </motion.div>
           )}
 
-          {/* Step 2: Quick Tour */}
+          {/* Step 2: Region */}
           {step === 2 && (
+            <motion.div
+              key="region"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-8 sm:p-10">
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/5 border border-border/50 mb-3">
+                    <MapPin className="h-5 w-5 text-foreground/70" />
+                  </div>
+                  <h2 className="font-display text-2xl font-bold text-foreground mb-1.5">
+                    Where are you based?
+                  </h2>
+                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                    Pin yourself on the globe so fans across markets can find you.
+                  </p>
+                </div>
+
+                <div className="space-y-4 max-h-[55vh] overflow-y-auto pr-1">
+                  {MARKETS.filter((m) => m.id !== "All").map((market) => {
+                    const regionsInMarket = REGIONS.filter((r) => r.market === market.id);
+                    return (
+                      <div key={market.id}>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-2 px-1">
+                          {market.label}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {regionsInMarket.map((r) => {
+                            const active = regionCode === r.code;
+                            return (
+                              <button
+                                key={r.code}
+                                type="button"
+                                onClick={() => setRegionCode(r.code)}
+                                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
+                                  active
+                                    ? "border-foreground bg-foreground text-background"
+                                    : "border-border bg-background/60 text-foreground hover:bg-background"
+                                }`}
+                              >
+                                <span>{r.flag}</span>
+                                {r.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="flex justify-between mt-8">
+                  <Button variant="ghost" onClick={prev} className="rounded-xl gap-1.5">
+                    <ArrowLeft className="w-4 h-4" /> Back
+                  </Button>
+                  <Button
+                    onClick={next}
+                    disabled={!regionCode}
+                    className="rounded-xl gap-1.5"
+                  >
+                    Continue
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 3: Quick Tour */}
+          {step === 3 && (
             <motion.div
               key="tour"
               initial={{ opacity: 0, y: 30 }}
@@ -390,7 +472,7 @@ const OnboardingPage = () => {
           )}
 
           {/* Step 3: Ready */}
-          {step === 3 && (
+          {step === 4 && (
             <motion.div
               key="ready"
               initial={{ opacity: 0, y: 30 }}
