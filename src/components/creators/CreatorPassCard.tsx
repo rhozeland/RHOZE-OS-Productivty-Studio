@@ -4,7 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRhozeBalance } from "@/hooks/useRhozeBalance";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { motion } from "framer-motion";
-import { Flame, Star, Trophy, Crown, Zap, Award, Coins, Shield, TrendingUp, Download } from "lucide-react";
+import { Link } from "react-router-dom";
+import {
+  Flame, Star, Trophy, Crown, Zap, Award, Coins, Shield, TrendingUp, Download,
+  FolderKanban, MessageSquare, Calendar,
+} from "lucide-react";
 import ClaimRhozeButton from "@/components/ClaimRhozeButton";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -86,6 +90,38 @@ const CreatorPassCard = () => {
     queryFn: async () => {
       const { count } = await supabase.from("contribution_proofs").select("id", { count: "exact", head: true }).eq("user_id", user!.id).not("solana_signature", "is", null);
       return count ?? 0;
+    },
+    enabled: !!user,
+  });
+
+  // ─── Personal "Studio activity" metrics — relocated here from the
+  // retired My Studio dashboard. Surfaces the live counts for a creator's
+  // private workspace without needing a separate page.
+  const { data: studioStats } = useQuery({
+    queryKey: ["studio-stats-pass", user?.id],
+    queryFn: async () => {
+      const [activeProj, unread, upcoming] = await Promise.all([
+        supabase
+          .from("projects")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user!.id)
+          .neq("status", "completed"),
+        supabase
+          .from("messages")
+          .select("id", { count: "exact", head: true })
+          .eq("receiver_id", user!.id)
+          .eq("read", false),
+        supabase
+          .from("events")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user!.id)
+          .gte("starts_at", new Date().toISOString()),
+      ]);
+      return {
+        activeProjects: activeProj.count ?? 0,
+        unread: unread.count ?? 0,
+        upcoming: upcoming.count ?? 0,
+      };
     },
     enabled: !!user,
   });
