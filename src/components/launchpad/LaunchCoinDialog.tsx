@@ -194,23 +194,6 @@ const LaunchCoinDialog = ({
             />
           </div>
 
-          <div>
-            <Label className="flex items-center gap-1.5">
-              <Lock className="h-3 w-3" /> LP lock at graduation
-            </Label>
-            <Select value={lpLock} onValueChange={setLpLock}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {LP_LOCK_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              When the curve fills (85 SOL), liquidity migrates to Raydium and is locked for this duration.
-            </p>
-          </div>
-
           <div className="space-y-2">
             <Label>Coin image (optional)</Label>
             <div className="flex items-start gap-3">
