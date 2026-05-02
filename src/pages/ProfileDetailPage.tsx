@@ -132,7 +132,39 @@ const ProfileDetailPage = () => {
     enabled: !!id,
   });
 
-  // On-chain reputation
+  // ─── Support tab data ───
+  const { data: profileCoin } = useQuery({
+    queryKey: ["profile-coin-ticker", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("coin_launches")
+        .select("id, ticker, name, image_url, status")
+        .eq("creator_id", id!)
+        .neq("status", "cancelled")
+        .order("work_id", { ascending: true, nullsFirst: true })
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!id,
+  });
+
+  const { data: upcomingEvents } = useQuery({
+    queryKey: ["profile-upcoming-events", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("events")
+        .select("id, slug, title, cover_url, starts_at, venue_name, is_online")
+        .eq("host_id", id!)
+        .eq("status", "published")
+        .gte("starts_at", new Date().toISOString())
+        .order("starts_at", { ascending: true })
+        .limit(3);
+      return data ?? [];
+    },
+    enabled: !!id,
+  });
   const { data: proofs } = useQuery({
     queryKey: ["contribution-proofs", id],
     queryFn: async () => {
