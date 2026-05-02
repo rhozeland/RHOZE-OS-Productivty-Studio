@@ -68,12 +68,11 @@ const HudDock = () => {
       <div
         className={cn(
           "pointer-events-auto flex items-center gap-2 sm:gap-3 pl-2 pr-3 py-2 rounded-full",
-          "bg-[hsl(0_0%_8%/0.92)] dark:bg-[hsl(0_0%_5%/0.92)] backdrop-blur-2xl",
-          "border border-white/10 shadow-2xl shadow-black/40",
+          "bg-card/95 backdrop-blur-2xl border border-border shadow-2xl",
         )}
         style={{
           boxShadow:
-            "0 10px 40px -10px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.08)",
+            "0 12px 36px -12px hsl(var(--foreground) / 0.25), inset 0 1px 0 hsl(var(--background) / 0.4)",
         }}
       >
         {/* Gem orb — tier color radial gradient with iridescent shimmer */}
