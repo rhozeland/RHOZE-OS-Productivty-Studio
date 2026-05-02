@@ -1252,6 +1252,41 @@ export type Database = {
           },
         ]
       }
+      event_collaborators: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          invited_by: string
+          role: Database["public"]["Enums"]["event_collaborator_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          invited_by: string
+          role?: Database["public"]["Enums"]["event_collaborator_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          invited_by?: string
+          role?: Database["public"]["Enums"]["event_collaborator_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_collaborators_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_ticket_tiers: {
         Row: {
           created_at: string
@@ -4002,6 +4037,10 @@ export type Database = {
         Args: { _amount: number; _description: string; _user_id: string }
         Returns: undefined
       }
+      can_manage_event: {
+        Args: { _event_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_manage_project: {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
@@ -4286,6 +4325,7 @@ export type Database = {
         | "funded"
         | "rejected"
         | "cancelled"
+      event_collaborator_role: "co_host" | "manager"
       event_purchase_currency: "usd" | "rhoze" | "free"
       event_status: "draft" | "published" | "cancelled" | "completed"
       event_ticket_status: "issued" | "checked_in" | "refunded" | "cancelled"
@@ -4425,6 +4465,7 @@ export const Constants = {
         "rejected",
         "cancelled",
       ],
+      event_collaborator_role: ["co_host", "manager"],
       event_purchase_currency: ["usd", "rhoze", "free"],
       event_status: ["draft", "published", "cancelled", "completed"],
       event_ticket_status: ["issued", "checked_in", "refunded", "cancelled"],
