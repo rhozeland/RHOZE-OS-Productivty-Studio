@@ -49,6 +49,7 @@ import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import StreamComposer, { type StreamPostType } from "@/components/stream/StreamComposer";
+import HubFlowWidget from "@/components/hub/HubFlowWidget";
 
 type Lane = "conversations" | "offerings" | "opportunities" | "works";
 
@@ -69,6 +70,10 @@ const HubPage = () => {
   const [lane, setLane] = useState<Lane>(initialLane);
   const [search, setSearch] = useState(params.get("q") ?? "");
   const [createOpen, setCreateOpen] = useState(false);
+  // View mode — Tile (default lane grid) or Flow (immersive widget).
+  // Persisted to URL as `?view=flow` so the toggle survives sharing/back-button.
+  const initialView = (params.get("view") as "tile" | "flow") === "flow" ? "flow" : "tile";
+  const [viewMode, setViewMode] = useState<"tile" | "flow">(initialView);
 
   // Keep URL in sync (so back-button + sharing land on the same lane)
   useEffect(() => {
