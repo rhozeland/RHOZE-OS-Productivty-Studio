@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
 import { Compass, MessageSquare, User, Flame, Coins } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCreatorXP, getTitleForLevel } from "@/hooks/useCreatorXP";
@@ -14,6 +14,8 @@ const NAV = [
   { to: "/messages", label: "Conversations", icon: MessageSquare },
   { to: "/credits", label: "Pass", icon: User },
 ];
+
+const SCROLL_FADE_THRESHOLD = 10;
 
 /**
  * HUD Dock — persistent gaming-style player bar.
@@ -33,6 +35,11 @@ const HudDock = () => {
   const { data: xp } = useCreatorXP();
   const { celebrate } = useCelebration();
   const { state, isMobile } = useSidebar();
+  const controls = useAnimationControls();
+  const lastScrollPositions = useRef(new Map<EventTarget, number>());
+  const isFaded = useRef(false);
+  const ticking = useRef(false);
+  const hasMounted = useRef(false);
   // Offset half the sidebar width so the dock visually centers within the
   // main content column (not the full viewport). On mobile the sidebar is
   // an overlay, so no offset is needed.
@@ -56,6 +63,81 @@ const HudDock = () => {
     }
     lastLevel.current = xp.level;
   }, [xp, celebrate]);
+
+  const getScrollTop = useCallback((target: EventTarget | null) => {
+    if (
+      target === document ||
+      target === document.documentElement ||
+      target === document.body ||
+      target === null
+    ) {
+      return window.scrollY;
+    }
+
+    if (target instanceof HTMLElement) {
+      return target.scrollTop;
+    }
+
+    return window.scrollY;
+  }, []);
+
+  const handleScroll = useCallback(
+    (event: Event) => {
+      if (ticking.current) return;
+      ticking.current = true;
+
+      requestAnimationFrame(() => {
+        const target = event.target;
+        const currentY = getScrollTop(target);
+        const previousY = lastScrollPositions.current.get(target ?? document) ?? currentY;
+        const delta = currentY - previousY;
+
+        if (delta > SCROLL_FADE_THRESHOLD && !isFaded.current && currentY > 48) {
+          isFaded.current = true;
+          controls.start({
+            opacity: 0.36,
+            y: 18,
+            scale: 0.985,
+            transition: { duration: 0.22, ease: "easeOut" },
+          });
+        } else if (delta < -SCROLL_FADE_THRESHOLD && isFaded.current) {
+          isFaded.current = false;
+          controls.start({
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            transition: { type: "spring", stiffness: 320, damping: 28 },
+          });
+        }
+
+        lastScrollPositions.current.set(target ?? document, currentY);
+        ticking.current = false;
+      });
+    },
+    [controls, getScrollTop],
+  );
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll, { passive: true, capture: true });
+    return () => window.removeEventListener("scroll", handleScroll, { capture: true });
+  }, [handleScroll]);
+
+  useEffect(() => {
+    isFaded.current = false;
+    lastScrollPositions.current.clear();
+    lastScrollPositions.current.set(document, window.scrollY);
+
+    controls.start({
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: hasMounted.current
+        ? { duration: 0.2, ease: "easeOut" }
+        : { type: "spring", stiffness: 260, damping: 28, delay: 0.3 },
+    });
+
+    hasMounted.current = true;
+  }, [pathname, controls]);
 
   if (!user) return null;
 
@@ -81,8 +163,7 @@ const HudDock = () => {
       <motion.nav
         aria-label="Player HUD"
         initial={{ y: 80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 260, damping: 28, delay: 0.3 }}
+        animate={controls}
       >
         <div
           className={cn(
