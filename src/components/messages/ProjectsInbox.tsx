@@ -31,8 +31,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -48,6 +56,10 @@ import {
   ListTree,
   Loader2,
   Link as LinkIcon,
+  Briefcase,
+  Users,
+  Banknote,
+  Repeat,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -71,6 +83,30 @@ const STATUS_META: Record<string, { label: string; icon: typeof Clock; color: st
   completed: { label: "Completed",   icon: CheckCircle2,  color: "bg-emerald-500/10 text-emerald-600" },
   paused:    { label: "Paused",      icon: PauseCircle,   color: "bg-amber-500/10 text-amber-600" },
 };
+
+const PROJECT_INTENTS = [
+  {
+    value: "service",
+    label: "Service / client work",
+    hint: "Start the thread now, add budget later inside the project.",
+    icon: Briefcase,
+  },
+  {
+    value: "collaboration",
+    label: "Creative collaboration",
+    hint: "Shared working space for ideas, files, and execution.",
+    icon: Users,
+  },
+] as const;
+
+const COVER_COLORS = [
+  "#7c3aed",
+  "#2563eb",
+  "#0f766e",
+  "#ca8a04",
+  "#be123c",
+  "#1f2937",
+];
 
 const ProjectsInbox = ({ userId }: { userId: string }) => {
   const queryClient = useQueryClient();
