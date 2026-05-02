@@ -250,11 +250,10 @@ const LaunchCoinDialog = ({
             </div>
           </div>
 
-          <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-[11px] text-muted-foreground space-y-1">
-            <div className="flex justify-between"><span>Trade fee</span><span className="font-mono">3% (2% creator · 1% platform)</span></div>
-            <div className="flex justify-between"><span>Total supply</span><span className="font-mono">1,000,000,000</span></div>
-            <div className="flex justify-between"><span>Graduation target</span><span className="font-mono">85 SOL</span></div>
+          <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-[11px] text-muted-foreground">
+            Simulated launch — no real liquidity yet. Tokenomics (supply, fees, graduation) lock in once the on-chain mint ships.
           </div>
+
         </div>
 
         <DialogFooter>
