@@ -467,32 +467,8 @@ const FlowModePage = () => {
   // Note: Smartboards query removed — Flow no longer saves to boards.
   // Saves are replaced by Likes (per-item heart) and Comments (sheet).
 
-  // Aggregated like + comment counts for the visible feed, plus the set of
-  // items the current user has already liked (drives heart fill state).
-  const visibleIds = (allItems ?? []).map((i: any) => i.id);
-  const { data: engagement } = useQuery({
-    queryKey: ["flow-engagement", visibleIds.join(",") || "none", user?.id ?? "guest"],
-    enabled: calibrated && visibleIds.length > 0,
-    queryFn: async () => {
-      const [likes, comments, mine] = await Promise.all([
-        supabase.from("flow_interactions").select("flow_item_id").eq("action", "like").in("flow_item_id", visibleIds),
-        supabase.from("flow_comments").select("flow_item_id").in("flow_item_id", visibleIds),
-        user
-          ? supabase.from("flow_interactions").select("flow_item_id").eq("action", "like").eq("user_id", user.id).in("flow_item_id", visibleIds)
-          : Promise.resolve({ data: [] as any[] }),
-      ]);
-      const tally = (rows: any[] | null | undefined) => {
-        const m = new Map<string, number>();
-        (rows ?? []).forEach((r: any) => m.set(r.flow_item_id, (m.get(r.flow_item_id) ?? 0) + 1));
-        return m;
-      };
-      return {
-        likes: tally(likes.data),
-        comments: tally(comments.data),
-        liked: new Set((mine.data ?? []).map((r: any) => r.flow_item_id)),
-      };
-    },
-  });
+  // Engagement counts (likes + comments) and per-user liked set are
+  // computed below, after `allItems` is declared. See `engagement` query.
 
   const interact = useMutation({
     mutationFn: async ({ itemId, action, smartboardId }: { itemId: string; action: string; smartboardId?: string }) => {
