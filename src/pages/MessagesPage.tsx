@@ -30,6 +30,7 @@ import CirclesTab from "@/components/messages/CirclesTab";
 import BuddyList from "@/components/messages/BuddyList";
 import GuestMessagesPreview from "@/components/guest/GuestMessagesPreview";
 import ProjectsInbox from "@/components/messages/ProjectsInbox";
+import ListingsTab from "@/components/messages/ListingsTab";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pending", color: "bg-amber-500/15 text-amber-600", icon: Clock },
@@ -444,6 +445,9 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="listings" className="gap-1.5">
+            <Store className="h-3.5 w-3.5" /> Listings
+          </TabsTrigger>
           {activeTab === "groups" && (
             <TabsTrigger value="groups" className="gap-1.5">
               <Users className="h-3.5 w-3.5" /> Groups
@@ -643,6 +647,10 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
 
         <TabsContent value="projects" className="mt-4">
           <ProjectsInbox userId={user.id} />
+        </TabsContent>
+
+        <TabsContent value="listings" className="mt-4">
+          <ListingsTab userId={user.id} />
         </TabsContent>
 
         <TabsContent value="groups" className="mt-4">

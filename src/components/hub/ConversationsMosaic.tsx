@@ -148,7 +148,7 @@ const seededShuffle = <T,>(arr: T[], seed: number): T[] => {
   return a;
 };
 
-// Public type for the filter chips on HubPage. Keep in sync with TileKind.
+// Public type kept for any external consumers (no longer used for filtering).
 export type MosaicKindFilter = "all" | TileKind;
 
 const ConversationsMosaic = ({
@@ -157,34 +157,23 @@ const ConversationsMosaic = ({
 }: {
   search?: string;
   kind?: MosaicKindFilter;
-}) => {
+} = {}) => {
   const navigate = useNavigate();
 
-  // Fetch every kind in parallel — keep limits tight so the mosaic stays
-  // browseable on a single screen. We always fetch all kinds (so the
-  // filter chips can show live counts) and filter client-side.
+  // Mosaic now focuses on content + IP + seasonal events:
+  // Drops (with Verified IP badge), Events, Spaces. Offerings live on
+  // the Conversations page (Listings tab) — not here.
   const { data, isLoading } = useQuery({
     queryKey: ["hub-mosaic", search],
     queryFn: async () => {
       const term = search.trim();
-      const ilike = term ? `%${term}%` : null;
+      const ilike = term ? term.toLowerCase() : null;
 
       const drops = supabase
         .from("flow_items")
         .select("id, title, description, category, file_url, link_url, created_at, user_id, solana_signature")
         .order("created_at", { ascending: false })
-        .limit(12);
-
-      // Offerings + Open Calls now share one bucket — they're all
-      // marketplace listings, just with different listing_types. The tile
-      // surfaces "Open Call" as a sub-label when relevant.
-      const offerings = supabase
-        .from("marketplace_listings")
-        .select("id, title, description, category, price, credits_price, listing_type, created_at, user_id")
-        .eq("is_active", true)
-        .in("listing_type", ["service", "digital_product", "collaboration", "project_request"])
-        .order("created_at", { ascending: false })
-        .limit(14);
+        .limit(16);
 
       const events = supabase
         .from("events")
@@ -192,7 +181,7 @@ const ConversationsMosaic = ({
         .eq("status", "published")
         .gte("starts_at", new Date().toISOString())
         .order("starts_at", { ascending: true })
-        .limit(6);
+        .limit(8);
 
       const spaces = supabase
         .from("studios")
@@ -201,12 +190,12 @@ const ConversationsMosaic = ({
         .order("created_at", { ascending: false })
         .limit(6);
 
-      const [dr, of, ev, sp] = await Promise.all([drops, offerings, events, spaces]);
+      const [dr, ev, sp] = await Promise.all([drops, events, spaces]);
 
       const tiles: MosaicTile[] = [];
 
       (dr.data ?? []).forEach((d: any) => {
-        if (ilike && !`${d.title} ${d.description} ${d.category}`.toLowerCase().includes(term.toLowerCase())) return;
+        if (ilike && !`${d.title} ${d.description} ${d.category}`.toLowerCase().includes(ilike)) return;
         tiles.push({
           id: `drop-${d.id}`,
           kind: "drop",
@@ -217,37 +206,13 @@ const ConversationsMosaic = ({
           linkUrl: d.link_url,
           href: `/flow`,
           meta: d.category,
-          // Verified Works are no longer a separate lane — when a drop has
-          // an on-chain signature, we surface the Verified IP shield on
-          // the tile itself. "Works = a badge on a Drop."
           verifiedSignature: d.solana_signature ?? null,
           createdAt: d.created_at,
         });
       });
 
-      (of.data ?? []).forEach((l: any) => {
-        if (ilike && !`${l.title} ${l.description} ${l.category}`.toLowerCase().includes(term.toLowerCase())) return;
-        const isOpenCall = l.listing_type === "project_request";
-        tiles.push({
-          id: `off-${l.id}`,
-          kind: "offering",
-          variant: isOpenCall ? "Open Call" : null,
-          title: l.title,
-          description: l.description,
-          category: l.category,
-          href: `/marketplace/${l.id}`,
-          meta: l.category,
-          badge: l.credits_price
-            ? `${l.credits_price} ◊`
-            : l.price
-              ? `$${Number(l.price).toFixed(0)}`
-              : null,
-          createdAt: l.created_at,
-        });
-      });
-
       (ev.data ?? []).forEach((e: any) => {
-        if (ilike && !`${e.title} ${e.venue_name ?? ""}`.toLowerCase().includes(term.toLowerCase())) return;
+        if (ilike && !`${e.title} ${e.venue_name ?? ""}`.toLowerCase().includes(ilike)) return;
         tiles.push({
           id: `ev-${e.id}`,
           kind: "event",
@@ -261,7 +226,7 @@ const ConversationsMosaic = ({
       });
 
       (sp.data ?? []).forEach((s: any) => {
-        if (ilike && !`${s.name} ${s.description ?? ""}`.toLowerCase().includes(term.toLowerCase())) return;
+        if (ilike && !`${s.name} ${s.description ?? ""}`.toLowerCase().includes(ilike)) return;
         tiles.push({
           id: `sp-${s.id}`,
           kind: "space",
@@ -280,22 +245,6 @@ const ConversationsMosaic = ({
   });
 
   const allTiles = data ?? [];
-
-  // Per-kind counts power the badge numbers in HubPage's filter chips.
-  const counts = useMemo(() => {
-    const c: Record<MosaicKindFilter, number> = {
-      all: allTiles.length, drop: 0, offering: 0, event: 0, space: 0,
-    };
-    for (const t of allTiles) c[t.kind]++;
-    return c;
-  }, [allTiles]);
-
-  // Broadcast counts upward so HubPage chips can show them.
-  // We use a module-level event so we don't have to thread props back up.
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent("hub-mosaic-counts", { detail: counts }));
-  }, [counts]);
-
   const tiles = useMemo(() => {
     const filtered = kind === "all" ? allTiles : allTiles.filter((t) => t.kind === kind);
     return filtered.slice(0, 24);
