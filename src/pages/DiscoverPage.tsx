@@ -48,18 +48,18 @@ const DiscoverPage = () => {
   });
 
   return (
-    <div className="max-w-6xl mx-auto pb-24 space-y-12">
+    <div className="max-w-6xl mx-auto pb-20 space-y-8">
       {/* ─── Header ─────────────────────────────────────────────────── */}
       <motion.header
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="pt-2"
+        className="pt-1"
       >
-        <p className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-2 flex items-center gap-1.5">
+        <p className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-1.5 flex items-center gap-1.5">
           <Compass className="h-3 w-3" /> Discover
         </p>
-        <h1 className="font-display text-3xl sm:text-4xl md:text-5xl leading-[1.1] text-foreground">
+        <h1 className="font-display text-2xl sm:text-3xl md:text-4xl leading-[1.1] text-foreground">
           The world is{" "}
           <span
             className="inline-block"
@@ -72,9 +72,8 @@ const DiscoverPage = () => {
             making.
           </span>
         </h1>
-        <p className="text-sm text-muted-foreground mt-3 max-w-xl">
-          Spin the globe, find an artist, an event, or a space.
-          {user ? " Pick a thread." : " Have a look around."}
+        <p className="text-xs sm:text-sm text-muted-foreground mt-2 max-w-xl">
+          Spin the globe. Find an artist, an event, a space.
         </p>
       </motion.header>
 
