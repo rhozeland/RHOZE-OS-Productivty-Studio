@@ -575,7 +575,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
             </div>
           </div>
 
-          <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-wrap gap-2">
+          <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-wrap justify-center gap-2">
             {MARKETS.map((market) => {
               const active = marketFilter === market.id;
               return (
