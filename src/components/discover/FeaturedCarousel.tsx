@@ -33,7 +33,9 @@ const FeaturedCarousel = ({ slides }: FeaturedCarouselProps) => {
 
   useEffect(() => {
     if (paused || slides.length < 2) return;
-    const t = setTimeout(() => setIndex((i) => (i + 1) % slides.length), 6000);
+    // 9s dwell — long enough to actually read the slogan + role tags
+    // before it shuffles. Was 6s; felt jumpy.
+    const t = setTimeout(() => setIndex((i) => (i + 1) % slides.length), 9000);
     return () => clearTimeout(t);
   }, [index, paused, slides.length]);
 
