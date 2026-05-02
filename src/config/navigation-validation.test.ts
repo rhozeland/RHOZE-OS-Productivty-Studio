@@ -33,8 +33,8 @@ describe("partitionDockIds", () => {
   });
 
   it("classifies known ids as valid", () => {
-    const { valid, unknown } = partitionDockIds(["discover", "studios", "messages"]);
-    expect(valid).toEqual(["discover", "studios", "messages"]);
+    const { valid, unknown } = partitionDockIds(["discover", "stream", "messages"]);
+    expect(valid).toEqual(["discover", "stream", "messages"]);
     expect(unknown).toEqual([]);
   });
 
@@ -47,25 +47,25 @@ describe("partitionDockIds", () => {
   it("preserves order within each partition", () => {
     const { valid, unknown } = partitionDockIds([
       "old-1",
-      "studios",
+      "stream",
       "old-2",
       "messages",
       "old-3",
     ]);
-    expect(valid).toEqual(["studios", "messages"]);
+    expect(valid).toEqual(["stream", "messages"]);
     expect(unknown).toEqual(["old-1", "old-2", "old-3"]);
   });
 
   it("silently drops non-string entries", () => {
     // Mirrors what could appear if Postgres returns mixed jsonb data.
     const { valid, unknown } = partitionDockIds([
-      "studios",
+      "stream",
       null,
       42,
       "messages",
       undefined,
     ]);
-    expect(valid).toEqual(["studios", "messages"]);
+    expect(valid).toEqual(["stream", "messages"]);
     expect(unknown).toEqual([]);
   });
 });
