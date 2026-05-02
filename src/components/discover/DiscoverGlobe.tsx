@@ -613,7 +613,6 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.28, ease: "easeOut" }}
-                  className="mt-4"
                 >
                   <div className="overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75">
                     <div className="relative aspect-[16/6] overflow-hidden border-b border-border/40 bg-muted/70">
