@@ -6,7 +6,7 @@
  * clickable and styled per type; region pin via the active globe selection
  * passes through here so an artist slide can show a region chip.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Calendar, MapPin, Sparkles, Users } from "lucide-react";
