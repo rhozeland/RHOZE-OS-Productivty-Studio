@@ -619,85 +619,49 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.28, ease: "easeOut" }}
                 >
-                  <div className="overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75">
-                    <div className="relative aspect-[16/6] overflow-hidden border-b border-border/40 bg-muted/70">
-                      {activeSpotlight.banner ? (
-                        <img src={activeSpotlight.banner} alt={activeSpotlight.title} className="h-full w-full object-cover" />
-                      ) : (
-                        <>
-                          <div
-                            className="absolute inset-0"
-                            style={{ background: avatarGradientFor(activeSpotlight.id).background }}
-                          />
-                          {activeSpotlight.kind === "artist" && activeSpotlight.avatar && (
-                            <img
-                              src={activeSpotlight.avatar}
-                              alt=""
-                              aria-hidden
-                              className="absolute inset-0 h-full w-full object-cover opacity-40 blur-2xl scale-125"
+                  {activeSpotlight.kind === "artist" ? (
+                    <ArtistSpotlightCard
+                      id={activeSpotlight.id}
+                      href={activeSpotlight.href}
+                      title={activeSpotlight.title}
+                      subtitle={activeSpotlight.subtitle}
+                      avatar={activeSpotlight.avatar}
+                      region_code={activeSpotlight.region_code}
+                      creator_roles={activeSpotlight.creator_roles}
+                      mediums={activeSpotlight.mediums}
+                      verification_status={activeSpotlight.verification_status}
+                      works_count={activeSpotlight.works_count}
+                      followers_count={activeSpotlight.followers_count}
+                    />
+                  ) : (
+                    <div className="overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75">
+                      <div className="relative aspect-[16/6] overflow-hidden border-b border-border/40 bg-muted/70">
+                        {activeSpotlight.banner ? (
+                          <img src={activeSpotlight.banner} alt={activeSpotlight.title} className="h-full w-full object-cover" />
+                        ) : (
+                          <>
+                            <div
+                              className="absolute inset-0"
+                              style={{ background: avatarGradientFor(activeSpotlight.id).background }}
                             />
-                          )}
-                          {activeSpotlight.kind !== "artist" && (
                             <div className="absolute inset-0 flex items-center justify-center text-foreground/30">
                               <ImageIcon className="h-8 w-8" />
                             </div>
+                          </>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/35 to-transparent" />
+                        <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-border/45 bg-background/72 px-2 py-1 text-[10px] uppercase tracking-[0.14em] text-foreground backdrop-blur-md">
+                            {activeSpotlight.kind === "event" && <><Calendar className="h-3 w-3" /> Featured event</>}
+                            {activeSpotlight.kind === "space" && <><Users className="h-3 w-3" /> Featured space</>}
+                          </span>
+                          {activeSpotlight.region_code && (
+                            <RegionChip code={activeSpotlight.region_code} size="sm" showLabel />
                           )}
-                        </>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/35 to-transparent" />
-                      <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center gap-1 rounded-full border border-border/45 bg-background/72 px-2 py-1 text-[10px] uppercase tracking-[0.14em] text-foreground backdrop-blur-md">
-                          {activeSpotlight.kind === "artist" && <><Sparkles className="h-3 w-3" /> Featured artist</>}
-                          {activeSpotlight.kind === "event" && <><Calendar className="h-3 w-3" /> Featured event</>}
-                          {activeSpotlight.kind === "space" && <><Users className="h-3 w-3" /> Featured space</>}
-                        </span>
-                        {activeSpotlight.region_code && (
-                          <RegionChip code={activeSpotlight.region_code} size="sm" showLabel />
-                        )}
-                        {activeSpotlight.kind === "artist" && activeSpotlight.verification_status === "verified" && (
-                          <VerifiedArtistBadge status="verified" size="xs" showLabel={false} />
-                        )}
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="space-y-3 p-4">
-                      {activeSpotlight.kind === "artist" ? (
-                        <>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-12 w-12 border border-border/50 shadow-sm">
-                              <AvatarImage src={activeSpotlight.avatar ?? undefined} />
-                              <AvatarFallback>{initials(activeSpotlight.title)}</AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0 flex-1">
-                              <h3 className="truncate font-display text-2xl leading-none text-foreground">{activeSpotlight.title}</h3>
-                              {activeSpotlight.creator_roles?.length ? (
-                                <p className="mt-1 text-[11px] font-medium text-foreground/80 line-clamp-1">
-                                  {activeSpotlight.creator_roles.slice(0, 2).map((id) => {
-                                    const role = ROLE_BY_ID.get(id);
-                                    return role ? `${role.emoji} ${role.label}` : id;
-                                  }).join(" · ")}
-                                </p>
-                              ) : activeSpotlight.mediums?.length ? (
-                                <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{activeSpotlight.mediums.slice(0, 3).join(" · ")}</p>
-                              ) : null}
-                            </div>
-                          </div>
-
-                          {((activeSpotlight.works_count ?? 0) > 0 || (activeSpotlight.followers_count ?? 0) > 0) && (
-                            <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-                              {(activeSpotlight.works_count ?? 0) > 0 && (
-                                <span><span className="font-semibold text-foreground">{activeSpotlight.works_count}</span> {activeSpotlight.works_count === 1 ? "work" : "works"}</span>
-                              )}
-                              {(activeSpotlight.followers_count ?? 0) > 0 && (
-                                <>
-                                  <span className="text-border">·</span>
-                                  <span><span className="font-semibold text-foreground">{activeSpotlight.followers_count}</span> {activeSpotlight.followers_count === 1 ? "follower" : "followers"}</span>
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </>
-                      ) : (
+                      <div className="space-y-3 p-4">
                         <div>
                           <h3 className="font-display text-2xl leading-tight text-foreground">{activeSpotlight.title}</h3>
                           <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
@@ -714,25 +678,22 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                             )}
                           </div>
                         </div>
-                      )}
 
-                      {activeSpotlight.subtitle && (
-                        <p className={cn(
-                          "text-sm leading-6 text-foreground/74 line-clamp-3",
-                          activeSpotlight.kind === "artist" && "italic",
-                        )}>
-                          {activeSpotlight.kind === "artist" ? `"${activeSpotlight.subtitle}"` : activeSpotlight.subtitle}
-                        </p>
-                      )}
+                        {activeSpotlight.subtitle && (
+                          <p className="text-sm leading-6 text-foreground/74 line-clamp-3">
+                            {activeSpotlight.subtitle}
+                          </p>
+                        )}
 
-                      <Link
-                        to={activeSpotlight.href}
-                        className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-transform hover:translate-x-0.5"
-                      >
-                        Open detail <ArrowUpRight className="h-4 w-4" />
-                      </Link>
+                        <Link
+                          to={activeSpotlight.href}
+                          className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-transform hover:translate-x-0.5"
+                        >
+                          Open detail <ArrowUpRight className="h-4 w-4" />
+                        </Link>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </motion.div>
               ) : (
                 <div className="rounded-[1.5rem] border border-dashed border-border/50 bg-card/35 p-6 text-sm text-muted-foreground">
