@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
-  Home,
+  Box,
   Settings,
   LogOut,
   LogIn,
@@ -9,10 +9,9 @@ import {
   CreditCard,
   MessageSquare,
   UserPlus,
-  FolderKanban,
   Sparkles,
-  Building2,
   Compass,
+  User as UserIcon,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -35,22 +34,21 @@ import {
 } from "@/components/ui/sidebar";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-// v6 dock pillars (Discover · Hub · Spaces · Inbox). Discover is the
-// feed-led front door; Inbox replaces Projects in the dock. Projects
-// is still routable and surfaced as a tab on the user's profile.
+// v7 (post phase-2): primary pillars in the side nav.
+// Spaces + Projects removed — Spaces folded into Discover/Stream lanes;
+// Projects now lives as a tab inside Inbox (/messages?tab=projects).
 const pillarItems = [
   { icon: Compass, label: "Discover", path: "/discover" },
   { icon: Sparkles, label: "Hub", path: "/hub" },
-  { icon: Building2, label: "Spaces", path: "/spaces" },
   { icon: MessageSquare, label: "Inbox", path: "/messages" },
+  { icon: UserIcon, label: "Profile", path: "/profile" },
 ];
 
-// Side-nav-only destinations. Works is intentionally absent — it's
-// surfaced ambiently via <VerifiedIPBadge /> wherever a creation lives,
-// and the personal vault now lives at /settings#provenance.
+// Personal workspace + creator perks. "My Studio" is the artist's own
+// private control room (drafts, drops, bookings, what's next) — not a
+// public discovery surface anymore.
 const secondaryItems = [
-  { icon: Home, label: "Studio", path: "/dashboard" },
-  { icon: FolderKanban, label: "Projects", path: "/projects" },
+  { icon: Box, label: "My Studio", path: "/dashboard" },
   { icon: CreditCard, label: "Creator Pass", path: "/credits" },
 ];
 

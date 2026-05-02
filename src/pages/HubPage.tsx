@@ -49,6 +49,7 @@ import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import StreamComposer, { type StreamPostType } from "@/components/stream/StreamComposer";
+import HubFlowWidget from "@/components/hub/HubFlowWidget";
 
 type Lane = "conversations" | "offerings" | "opportunities" | "works";
 
@@ -69,16 +70,22 @@ const HubPage = () => {
   const [lane, setLane] = useState<Lane>(initialLane);
   const [search, setSearch] = useState(params.get("q") ?? "");
   const [createOpen, setCreateOpen] = useState(false);
+  // View mode — Tile (default lane grid) or Flow (immersive widget).
+  // Persisted to URL as `?view=flow` so the toggle survives sharing/back-button.
+  const initialView = (params.get("view") as "tile" | "flow") === "flow" ? "flow" : "tile";
+  const [viewMode, setViewMode] = useState<"tile" | "flow">(initialView);
 
-  // Keep URL in sync (so back-button + sharing land on the same lane)
+  // Keep URL in sync (so back-button + sharing land on the same lane/view)
   useEffect(() => {
     const next = new URLSearchParams(params);
     next.set("lane", lane);
     if (search.trim()) next.set("q", search.trim());
     else next.delete("q");
+    if (viewMode === "flow") next.set("view", "flow");
+    else next.delete("view");
     setParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lane, search]);
+  }, [lane, search, viewMode]);
 
   // ─── Conversations: Flow feed ───────────────────────────────────────
   const { data: flowItems, isLoading: loadingFlow } = useQuery({
@@ -298,34 +305,73 @@ const HubPage = () => {
         </div>
       </header>
 
-      {/* ─── Lane-aware composer (the new "Drop" surface) ─────────────── */}
-      <StreamComposer defaultType={composerDefault} />
-
-      {/* ─── Lane tabs ──────────────────────────────────────────────── */}
-      <div className="space-y-3">
-        <div className="flex gap-2 flex-wrap">
-          {LANES.map((l) => {
-            const Icon = l.icon;
-            const active = lane === l.key;
+      {/* ─── View toggle: Tile (lane grid) vs Flow (immersive widget) ─── */}
+      <div className="flex items-center justify-between gap-3">
+        <div
+          className="inline-flex items-center rounded-full border border-border bg-card p-0.5"
+          role="tablist"
+          aria-label="Hub view mode"
+        >
+          {(["tile", "flow"] as const).map((mode) => {
+            const active = viewMode === mode;
             return (
               <button
-                key={l.key}
+                key={mode}
                 type="button"
-                onClick={() => setLane(l.key)}
-                className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all ${
+                role="tab"
+                aria-selected={active}
+                onClick={() => setViewMode(mode)}
+                className={`px-4 py-1.5 text-xs font-medium rounded-full transition-all ${
                   active
                     ? "bg-foreground text-background shadow-sm"
-                    : "bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <Icon className="h-3.5 w-3.5" />
-                {l.label}
+                {mode === "tile" ? "Tile" : "Flow"}
               </button>
             );
           })}
         </div>
-        <p className="text-xs text-muted-foreground italic">{activeLane.tagline}</p>
       </div>
+
+      {viewMode === "flow" ? (
+        /* Flow view: enlarged HubFlowWidget. The full swipe stack lives at /flow. */
+        <HubFlowWidget expanded />
+      ) : (
+        <>
+          {/* ─── Lane-aware composer (the new "Drop" surface) ─────────────── */}
+          <StreamComposer defaultType={composerDefault} />
+
+          {/* ─── Embedded Flow teaser (3-card widget) ───────────────────── */}
+          <HubFlowWidget />
+
+          {/* ─── Lane tabs ──────────────────────────────────────────────── */}
+          <div className="space-y-3">
+            <div className="flex gap-2 flex-wrap">
+              {LANES.map((l) => {
+                const Icon = l.icon;
+                const active = lane === l.key;
+                return (
+                  <button
+                    key={l.key}
+                    type="button"
+                    onClick={() => setLane(l.key)}
+                    className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all ${
+                      active
+                        ? "bg-foreground text-background shadow-sm"
+                        : "bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    }`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {l.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground italic">{activeLane.tagline}</p>
+          </div>
+
+          {/* Tile-mode lane content (search + Happenings + lane grids) follows. */}
 
       {/* ─── Search ─────────────────────────────────────────────────── */}
       <div className="relative max-w-md">
@@ -808,6 +854,8 @@ const HubPage = () => {
             </div>
           )}
         </section>
+      )}
+        </>
       )}
 
       <CreateListingDialog open={createOpen} onOpenChange={setCreateOpen} />

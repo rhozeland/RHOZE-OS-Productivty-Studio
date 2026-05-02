@@ -75,6 +75,10 @@ const DEFAULT_LAYOUT: DashboardLayout = {
   showCalendar: false,
 };
 
+// v7 (post phase-2): public discovery (Spaces grid, Hub pulse, People,
+// City lists) is unmounted from the Studio page. Flip to `true` to revive.
+const SHOW_PUBLIC_NETWORK = false;
+
 const DashboardPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -679,8 +683,8 @@ const DashboardPage = () => {
           {user
             ? (unreadCount ?? 0) > 0
               ? `${unreadCount} unread.`
-              : "Open a Space, tune into the Hub, or start a new project."
-            : "Step into Spaces or tune into the Hub."}
+              : "Your workspace. Drafts, drops, bookings, and what's next."
+            : "Your workspace. Drafts, drops, bookings, and what's next."}
         </p>
       </motion.div>
 
@@ -691,10 +695,13 @@ const DashboardPage = () => {
       {user && <FirstRunChecklist />}
 
       {/* ════════════════════════════════════════════════════════════════
-          ACT 1 — Split-screen duo + shared search
-          Studios on the left (physical), Hub on the right (digital).
-          Equal weight. Mirrored language. Shared search above.
+          v7 (post phase-2): Studio is now "My Studio" — the artist's
+          private workspace. Public discovery (Spaces grid, Hub pulse,
+          People, City lists) lives in /discover and /hub now. The four
+          ACT sections below are unmounted via SHOW_PUBLIC_NETWORK to
+          keep the code on disk for revert.
           ════════════════════════════════════════════════════════════════ */}
+      {SHOW_PUBLIC_NETWORK && (<>
       <section>
         <form onSubmit={handleNetworkSearch} className="relative max-w-2xl mx-auto mb-6">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -1279,6 +1286,7 @@ const DashboardPage = () => {
           </div>
         </section>
       )}
+      </>)}
 
       {/* Guests stop here (preview shown above already covers the personal view) */}
       {!user && <GuestDashboardPreview />}

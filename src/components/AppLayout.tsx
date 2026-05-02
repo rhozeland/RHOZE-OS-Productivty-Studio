@@ -2,13 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link, NavLink, useLocation } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import AppSidebar from "@/components/AppSidebar";
-import DockBar from "@/components/DockBar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import WalletButton from "@/components/WalletButton";
 import NotificationBell from "@/components/NotificationBell";
 import UsernamePrompt from "@/components/UsernamePrompt";
-// FlowLauncher (floating FAB) retired — Flow is now reachable from the top search bar.
-import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Sun, Moon, Settings as SettingsIcon, LogOut, Flame } from "lucide-react";
+// FlowLauncher (floating FAB) retired — Flow is now reachable via the Hub view toggle + HubFlowWidget.
+// DockBar retired in v7 (post phase-2) — navigation happens via the left side nav + global ⌘K search.
+import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Sun, Moon, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -264,31 +264,12 @@ const AppLayout = () => {
               </nav>
             </div>
 
-            {/* Search trigger with Flow mode launcher (replaces "browse spaces") */}
+            {/* Search trigger — flame/Flow launcher retired (Flow now lives via Hub view toggle + HubFlowWidget). */}
             <div className="hidden md:flex flex-1 max-w-lg justify-center">
               <div className="relative w-full max-w-md">
-                {user && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => navigate("/flow")}
-                        aria-label="Enter Flow"
-                        className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-foreground text-background flex items-center justify-center transition-opacity hover:opacity-80 active:opacity-70 z-10"
-                      >
-                        <Flame className="h-3.5 w-3.5 fill-amber-400/40 text-amber-400" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs font-body">
-                      Enter Flow
-                    </TooltipContent>
-                  </Tooltip>
-                )}
                 <button
                   onClick={() => setSearchOpen(true)}
-                  className={cn(
-                    "w-full h-9 rounded-full bg-card border border-border text-sm font-body text-muted-foreground text-left hover:bg-muted/50 transition-colors flex items-center pr-3",
-                    user ? "pl-11" : "pl-4",
-                  )}
+                  className="w-full h-9 rounded-full bg-card border border-border text-sm font-body text-muted-foreground text-left hover:bg-muted/50 transition-colors flex items-center pr-3 pl-4"
                 >
                   Search Rhozeland...
                   <kbd className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded font-mono text-muted-foreground">⌘K</kbd>
@@ -379,11 +360,11 @@ const AppLayout = () => {
               )}
             </div>
           </header>
-          <main className={`flex-1 p-4 md:p-8 ${user ? "pb-32" : "pb-8"}`}>
+          <main className="flex-1 p-4 md:p-8 pb-8">
             <Outlet />
           </main>
-          {user && !location.pathname.startsWith("/flow") && <DockBar />}
-          {/* Flow launcher now lives in the top search bar (replaces "browse spaces") */}
+          {/* Bottom dock retired in v7 (post phase-2): navigation happens via the
+              left side nav + global ⌘K search. DockBar.tsx kept on disk for revert. */}
 
         </div>
       </div>
