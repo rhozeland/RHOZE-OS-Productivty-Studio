@@ -7,7 +7,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion, useMotionTemplate, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { REGIONS, type RegionMarket } from "@/lib/regions";
 import { MARKET_COLORS } from "./market-colors";
@@ -70,6 +70,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, height = 360 }: DiscoverG
   const rotate = useMotionValue(-14);
   const rotateSpring = useSpring(rotate, { stiffness: 40, damping: 18, mass: 1.2 });
   const glowX = useTransform(rotateSpring, [-30, 30], [36, 64]);
+  const glowBackground = useMotionTemplate`radial-gradient(circle at ${glowX}% 36%, hsl(var(--primary) / 0.30), transparent 24%), radial-gradient(circle at 50% 70%, hsl(var(--accent) / 0.14), transparent 36%)`;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -156,14 +157,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, height = 360 }: DiscoverG
           style={{ rotateY: rotateSpring, transformStyle: "preserve-3d" }}
         >
           <div className="absolute inset-0 rounded-full border border-border/40 bg-background/10 backdrop-blur-sm shadow-[0_0_0_1px_hsl(var(--border)/0.18),0_30px_90px_hsl(var(--background)/0.6)]" />
-          <motion.div
-            className="absolute inset-[7%] rounded-full"
-            style={{
-              background: glowX.to((x) =>
-                `radial-gradient(circle at ${x}% 36%, hsl(var(--primary) / 0.30), transparent 24%), radial-gradient(circle at 50% 70%, hsl(var(--accent) / 0.14), transparent 36%)`
-              ),
-            }}
-          />
+          <motion.div className="absolute inset-[7%] rounded-full" style={{ background: glowBackground }} />
           <svg viewBox="0 0 100 100" className="absolute inset-[8%] h-[84%] w-[84%] overflow-visible">
             <defs>
               <radialGradient id="discover-globe-fill" cx="45%" cy="38%" r="70%">
