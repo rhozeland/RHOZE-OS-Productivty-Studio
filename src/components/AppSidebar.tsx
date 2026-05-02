@@ -40,14 +40,11 @@ import rhozelandLogo from "@/assets/rhozeland-logo.png";
 const pillarItems = [
   { icon: Compass, label: "Discover", path: "/discover" },
   { icon: MessageSquare, label: "Conversations", path: "/messages" },
-  { icon: UserIcon, label: "Profile", path: "/profile" },
-];
-
-// Personal perks. My Studio removed — its metric strip lives in Creator
-// Pass now, and the personal greeting moved into Discover.
-const secondaryItems = [
   { icon: CreditCard, label: "Creator Pass", path: "/credits" },
 ];
+
+// Profile is reachable via the account row at the bottom of the sidebar.
+const secondaryItems: { icon: typeof UserIcon; label: string; path: string }[] = [];
 
 const AppSidebar = () => {
   const location = useLocation();
@@ -167,7 +164,7 @@ const AppSidebar = () => {
 
       <SidebarContent className="px-2 pt-3 space-y-2">
         {renderGroup(pillarItems, { label: "Pillars" })}
-        {renderGroup(secondaryItems)}
+        {secondaryItems.length > 0 && renderGroup(secondaryItems)}
       </SidebarContent>
 
       <SidebarFooter className="px-2 pb-4 mt-auto">
