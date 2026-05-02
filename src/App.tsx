@@ -57,6 +57,7 @@ import FlowModePage from "@/pages/FlowModePage";
 import LaunchRedirect from "@/pages/LaunchRedirect";
 import RewardsPage from "@/pages/RewardsPage";
 import SwapHistoryPage from "@/pages/SwapHistoryPage";
+import UnsubscribePage from "@/pages/UnsubscribePage";
 import VerificationPage from "@/pages/VerificationPage";
 import NotFound from "./pages/NotFound";
 
@@ -103,6 +104,7 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/purchases",
   "/rewards",
   "/swaps",
+  "/unsubscribe",
   "/smartboards",
   "/smartboards/:id",
   "/flow",
@@ -190,6 +192,9 @@ const App = () => (
 
               {/* Public infrastructure thesis page (S33R-aligned framing) */}
               <Route path="/infrastructure" element={<InfrastructurePage />} />
+
+              {/* Email unsubscribe — fully public, accessible from email links */}
+              <Route path="/unsubscribe" element={<UnsubscribePage />} />
 
               {/* Explore pages — fully public */}
               <Route path="/explore/studios" element={<ExploreStudiosPage />} />
