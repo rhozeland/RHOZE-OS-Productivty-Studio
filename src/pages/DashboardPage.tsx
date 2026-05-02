@@ -694,10 +694,10 @@ const DashboardPage = () => {
           v7 (post phase-2): Studio is now "My Studio" — the artist's
           private workspace. Public discovery (Spaces grid, Hub pulse,
           People, City lists) lives in /discover and /hub now. The four
-          ACT sections below are hidden behind `false &&` to preserve the
-          code on disk for revert without ripping it out.
+          ACT sections below are unmounted via SHOW_PUBLIC_NETWORK to
+          keep the code on disk for revert.
           ════════════════════════════════════════════════════════════════ */}
-      {false && (
+      {SHOW_PUBLIC_NETWORK && (<>
       <section>
         <form onSubmit={handleNetworkSearch} className="relative max-w-2xl mx-auto mb-6">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -1282,7 +1282,7 @@ const DashboardPage = () => {
           </div>
         </section>
       )}
-      )}
+      </>)}
 
       {/* Guests stop here (preview shown above already covers the personal view) */}
       {!user && <GuestDashboardPreview />}
