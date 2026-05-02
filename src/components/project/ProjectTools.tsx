@@ -264,24 +264,6 @@ const ProjectTools = ({ projectId, projectTitle, smartboardDetails, onLinkSmartb
         )}
       </section>
 
-      {/* ─── Flow (least priority — jumps to global feed scoped) ──────── */}
-      <button
-        onClick={openFlowScoped}
-        className="group w-full text-left rounded-2xl border border-border bg-card p-4 hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3"
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <Flame className="h-4 w-4 text-primary" />
-          </div>
-          <div className="min-w-0">
-            <p className="font-display text-sm font-semibold text-foreground">Open Flow</p>
-            <p className="text-[11px] text-muted-foreground line-clamp-1">
-              Discover Verified IP and references tagged like this project.
-            </p>
-          </div>
-        </div>
-        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0" />
-      </button>
 
       {/* ─── Create Drop Room dialog ─────────────────────────────────── */}
       <Dialog open={roomOpen} onOpenChange={setRoomOpen}>
