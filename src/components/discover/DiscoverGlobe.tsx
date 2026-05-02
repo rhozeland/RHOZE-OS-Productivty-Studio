@@ -17,6 +17,7 @@ import { MARKETS, REGIONS, type RegionMarket } from "@/lib/regions";
 import { cn } from "@/lib/utils";
 import { MARKET_COLORS } from "./market-colors";
 import type { FeaturedSlide } from "./useDiscoverFeatured";
+import { ROLE_BY_ID } from "@/lib/creator-roles";
 
 const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
   KR: { lat: 37.55, lng: 126.99 },
