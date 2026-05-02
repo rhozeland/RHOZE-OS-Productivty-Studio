@@ -1,47 +1,51 @@
 /**
- * DiscoverGlobe — build-safe interactive world explorer for Discover.
+ * DiscoverGlobe — editorial interactive world explorer for Discover.
  *
- * Replaces the unstable WebGL dependency chain with a lightweight SVG globe
- * that still feels interactive: slow orbital motion, clickable region markers,
- * hover states, and live artist counts per region.
+ * Uses a projected SVG sphere instead of CSS 3D transforms so drag-to-spin
+ * feels stable, keeps the globe circular, and lets featured artist / event /
+ * space spotlights orbit as part of the same surface.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { motion, useMotionTemplate, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowUpRight, Calendar, MapPin, Sparkles, Users } from "lucide-react";
+import { format } from "date-fns";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
-import { REGIONS, type RegionMarket } from "@/lib/regions";
+import { MARKETS, REGIONS, type RegionMarket } from "@/lib/regions";
+import { cn } from "@/lib/utils";
 import { MARKET_COLORS } from "./market-colors";
-import type { FeaturedSpotlight } from "./useDiscoverFeatured";
+import type { FeaturedSlide } from "./useDiscoverFeatured";
 
-// Approximate lat/lng for each region (good enough for a stylized pin).
 const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
   KR: { lat: 37.55, lng: 126.99 },
   JP: { lat: 35.68, lng: 139.69 },
-  CN: { lat: 39.90, lng: 116.40 },
+  CN: { lat: 39.9, lng: 116.4 },
   TW: { lat: 25.03, lng: 121.56 },
   HK: { lat: 22.32, lng: 114.17 },
   PH: { lat: 14.59, lng: 120.98 },
-  ID: { lat: -6.20, lng: 106.85 },
-  TH: { lat: 13.75, lng: 100.50 },
+  ID: { lat: -6.2, lng: 106.85 },
+  TH: { lat: 13.75, lng: 100.5 },
   VN: { lat: 21.03, lng: 105.85 },
-  SG: { lat: 1.35,  lng: 103.82 },
-  MY: { lat: 3.14,  lng: 101.69 },
-  US: { lat: 38.90, lng: -77.04 },
-  CA: { lat: 45.42, lng: -75.70 },
+  SG: { lat: 1.35, lng: 103.82 },
+  MY: { lat: 3.14, lng: 101.69 },
+  US: { lat: 38.9, lng: -77.04 },
+  CA: { lat: 45.42, lng: -75.7 },
   GB: { lat: 51.51, lng: -0.13 },
-  DE: { lat: 52.52, lng: 13.40 },
+  DE: { lat: 52.52, lng: 13.4 },
   FR: { lat: 48.86, lng: 2.35 },
-  ES: { lat: 40.42, lng: -3.70 },
-  IT: { lat: 41.90, lng: 12.50 },
-  NL: { lat: 52.37, lng: 4.90 },
+  ES: { lat: 40.42, lng: -3.7 },
+  IT: { lat: 41.9, lng: 12.5 },
+  NL: { lat: 52.37, lng: 4.9 },
   BR: { lat: -15.79, lng: -47.88 },
   MX: { lat: 19.43, lng: -99.13 },
-  AR: { lat: -34.60, lng: -58.38 },
+  AR: { lat: -34.6, lng: -58.38 },
   CL: { lat: -33.45, lng: -70.66 },
-  NG: { lat: 9.07,  lng: 7.49 },
+  NG: { lat: 9.07, lng: 7.49 },
   ZA: { lat: -25.75, lng: 28.19 },
   KE: { lat: -1.29, lng: 36.82 },
-  GH: { lat: 5.60,  lng: -0.19 },
+  GH: { lat: 5.6, lng: -0.19 },
   AU: { lat: -35.28, lng: 149.13 },
   NZ: { lat: -41.29, lng: 174.78 },
 };
@@ -49,54 +53,155 @@ const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
 interface DiscoverGlobeProps {
   marketFilter: RegionMarket | "All";
   onSelectMarket: (m: RegionMarket | "All") => void;
-  featuredSpotlights?: FeaturedSpotlight[];
+  featuredSlides?: FeaturedSlide[];
   height?: number;
 }
 
-const cx = 50;
-const cy = 50;
-const radius = 37;
-
-const latLngToXY = (lat: number, lng: number) => {
-  const phi = (90 - lat) * (Math.PI / 180);
-  const theta = (lng + 180) * (Math.PI / 180);
-  const x = cx + radius * Math.sin(phi) * Math.cos(theta);
-  const y = cy - radius * Math.cos(phi);
-  return { x, y };
+type SpotlightMarker = FeaturedSlide & {
+  key: string;
+  region_code: string;
+  lat: number;
+  lng: number;
+  x: number;
+  y: number;
+  depth: number;
+  market: RegionMarket | null;
+  color: string;
 };
 
-const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSpotlights = [], height = 360 }: DiscoverGlobeProps) => {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const dragState = useRef<{ startX: number; startRotation: number } | null>(null);
+const cx = 50;
+const cy = 50;
+const radius = 36;
+const marketByCode = new Map(REGIONS.map((region) => [region.code, region.market]));
+const typeColorMap = {
+  artist: "hsl(330 81% 60%)",
+  event: "hsl(38 92% 55%)",
+  space: "hsl(200 85% 60%)",
+} as const;
+
+const initials = (name?: string | null) =>
+  (name ?? "")
+    .split(/\s+/)
+    .map((chunk) => chunk[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "·";
+
+const normalizeRotation = (angle: number) => {
+  let normalized = angle % 360;
+  if (normalized > 180) normalized -= 360;
+  if (normalized < -180) normalized += 360;
+  return normalized;
+};
+
+const shortestAngle = (from: number, to: number) => {
+  let delta = normalizeRotation(to - from);
+  if (delta > 180) delta -= 360;
+  if (delta < -180) delta += 360;
+  return delta;
+};
+
+const projectPoint = (lat: number, lng: number, rotation: number) => {
+  const latRad = (lat * Math.PI) / 180;
+  const lngRad = ((lng + rotation) * Math.PI) / 180;
+  const cosLat = Math.cos(latRad);
+  const x3 = cosLat * Math.sin(lngRad);
+  const y3 = Math.sin(latRad);
+  const z3 = cosLat * Math.cos(lngRad);
+
+  return {
+    x: cx + radius * x3,
+    y: cy - radius * y3,
+    depth: z3,
+  };
+};
+
+const buildLatitudePath = (latitude: number, rotation: number) => {
+  let path = "";
+  let drawing = false;
+
+  for (let lng = -180; lng <= 180; lng += 5) {
+    const point = projectPoint(latitude, lng, rotation);
+    if (point.depth > 0.02) {
+      path += `${drawing ? " L" : "M"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`;
+      drawing = true;
+    } else {
+      drawing = false;
+    }
+  }
+
+  return path;
+};
+
+const buildLongitudePath = (longitude: number, rotation: number) => {
+  let path = "";
+  let drawing = false;
+
+  for (let lat = -88; lat <= 88; lat += 4) {
+    const point = projectPoint(lat, longitude, rotation);
+    if (point.depth > 0.02) {
+      path += `${drawing ? " L" : "M"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`;
+      drawing = true;
+    } else {
+      drawing = false;
+    }
+  }
+
+  return path;
+};
+
+const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], height = 520 }: DiscoverGlobeProps) => {
+  const dragState = useRef<{ pointerId: number; startX: number; startRotation: number } | null>(null);
+  const [rotation, setRotation] = useState(-22);
   const [hoveredCode, setHoveredCode] = useState<string | null>(null);
+  const [activeSpotlightKey, setActiveSpotlightKey] = useState<string | null>(featuredSlides[0] ? `${featuredSlides[0].kind}-${featuredSlides[0].id}` : null);
   const [isDragging, setIsDragging] = useState(false);
-  const [hasDragged, setHasDragged] = useState(false);
-  const [width, setWidth] = useState(600);
-  const rotate = useMotionValue(-14);
-  const rotateSpring = useSpring(rotate, { stiffness: 40, damping: 18, mass: 1.2 });
-  const glowX = useTransform(rotateSpring, [-30, 30], [36, 64]);
-  const glowBackground = useMotionTemplate`radial-gradient(circle at ${glowX}% 36%, hsl(var(--primary) / 0.30), transparent 24%), radial-gradient(circle at 50% 70%, hsl(var(--accent) / 0.14), transparent 36%)`;
 
   useEffect(() => {
-    if (!containerRef.current) return;
-    const ro = new ResizeObserver((entries) => {
-      const w = entries[0]?.contentRect.width ?? 600;
-      setWidth(Math.max(280, Math.floor(w)));
-    });
-    ro.observe(containerRef.current);
-    return () => ro.disconnect();
-  }, []);
+    if (!featuredSlides.length) {
+      setActiveSpotlightKey(null);
+      return;
+    }
+
+    setActiveSpotlightKey((current) => current ?? `${featuredSlides[0].kind}-${featuredSlides[0].id}`);
+  }, [featuredSlides]);
 
   useEffect(() => {
-    if (hasDragged) return;
-    let direction = 1;
+    if (isDragging || featuredSlides.length < 2) return;
+
     const interval = window.setInterval(() => {
-      const next = rotate.get() + direction * 6;
-      if (next >= 18 || next <= -18) direction *= -1;
-      rotate.set(next);
-    }, 2400);
+      setActiveSpotlightKey((current) => {
+        const items = featuredSlides.map((slide) => `${slide.kind}-${slide.id}`);
+        const currentIndex = current ? items.indexOf(current) : 0;
+        const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % items.length : 0;
+        return items[nextIndex];
+      });
+    }, 5200);
+
     return () => window.clearInterval(interval);
-  }, [hasDragged]);
+  }, [featuredSlides, isDragging]);
+
+  useEffect(() => {
+    if (isDragging) return;
+
+    const interval = window.setInterval(() => {
+      setRotation((current) => {
+        const active = spotlightMarkersRef.current.find((marker) => marker.key === activeSpotlightKey);
+        if (active) {
+          const target = normalizeRotation(-active.lng);
+          const delta = shortestAngle(current, target);
+          if (Math.abs(delta) > 1) {
+            return normalizeRotation(current + delta * 0.11);
+          }
+        }
+
+        return normalizeRotation(current + 0.28);
+      });
+    }, 40);
+
+    return () => window.clearInterval(interval);
+  }, [activeSpotlightKey, isDragging]);
 
   const { data: counts } = useQuery({
     queryKey: ["discover-region-counts"],
@@ -106,9 +211,10 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSpotlights = [], 
         .select("region_code")
         .eq("is_public", true)
         .not("region_code", "is", null);
+
       const map = new Map<string, number>();
-      (data ?? []).forEach((r: any) => {
-        const code = (r.region_code || "").toUpperCase();
+      (data ?? []).forEach((row: { region_code?: string | null }) => {
+        const code = row.region_code?.toUpperCase() ?? "";
         if (!REGION_COORDS[code]) return;
         map.set(code, (map.get(code) ?? 0) + 1);
       });
@@ -118,219 +224,425 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSpotlights = [], 
   });
 
   const points = useMemo(() => {
-    return REGIONS.filter((r) => REGION_COORDS[r.code]).map((r) => {
-      const count = counts?.get(r.code) ?? 0;
-      const dim = marketFilter !== "All" && r.market !== marketFilter;
-      const selected = marketFilter !== "All" && r.market === marketFilter;
-      const hovered = hoveredCode === r.code;
-      const coords = REGION_COORDS[r.code];
-      const { x, y } = latLngToXY(coords.lat, coords.lng);
-      return {
-        ...r,
-        count,
-        x,
-        y,
-        size: 4 + Math.min(12, count * 1.15),
-        ring: 12 + Math.min(22, count * 1.5),
-        selected,
-        hovered,
-        dim,
-        color: dim ? "hsl(0 0% 100% / 0.18)" : MARKET_COLORS[r.market],
-      };
-    });
-  }, [counts, hoveredCode, marketFilter]);
-
-  const spotlightMarkers = useMemo(() => {
-    const seenByCode = new Map<string, number>();
-
-    return featuredSpotlights
-      .map((spotlight) => {
-        const code = spotlight.region_code?.toUpperCase();
-        if (!code || !REGION_COORDS[code]) return null;
-
-        const coords = REGION_COORDS[code];
-        const { x, y } = latLngToXY(coords.lat, coords.lng);
-        const offsetIndex = seenByCode.get(code) ?? 0;
-        seenByCode.set(code, offsetIndex + 1);
+    return REGIONS.filter((region) => REGION_COORDS[region.code])
+      .map((region) => {
+        const count = counts?.get(region.code) ?? 0;
+        const projected = projectPoint(REGION_COORDS[region.code].lat, REGION_COORDS[region.code].lng, rotation);
+        const dim = marketFilter !== "All" && region.market !== marketFilter;
+        const selected = marketFilter !== "All" && region.market === marketFilter;
+        const hovered = hoveredCode === region.code;
+        const visibility = Math.max(0.16, ((projected.depth + 1) / 2) * (dim ? 0.36 : 1));
+        const scale = 0.72 + Math.max(0, projected.depth) * 0.55;
 
         return {
-          ...spotlight,
-          x: x + offsetIndex * 5,
-          y: y - 6 - offsetIndex * 5,
+          ...region,
+          count,
+          ...projected,
+          dim,
+          hovered,
+          selected,
+          scale,
+          visibility,
+          size: (3.4 + Math.min(10, count * 1.05)) * scale,
+          ring: (10 + Math.min(18, count * 1.4)) * scale,
+          color: dim ? "hsl(var(--foreground) / 0.18)" : MARKET_COLORS[region.market],
         };
       })
-      .filter(Boolean) as Array<FeaturedSpotlight & { x: number; y: number }>;
-  }, [featuredSpotlights]);
+      .sort((a, b) => a.depth - b.depth);
+  }, [counts, hoveredCode, marketFilter, rotation]);
 
-  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    dragState.current = { startX: event.clientX, startRotation: rotate.get() };
+  const spotlightMarkers = useMemo<SpotlightMarker[]>(() => {
+    return featuredSlides
+      .map((slide) => {
+        const code = slide.region_code?.toUpperCase();
+        if (!code || !REGION_COORDS[code]) return null;
+
+        const projected = projectPoint(REGION_COORDS[code].lat, REGION_COORDS[code].lng, rotation);
+        return {
+          ...slide,
+          key: `${slide.kind}-${slide.id}`,
+          region_code: code,
+          lat: REGION_COORDS[code].lat,
+          lng: REGION_COORDS[code].lng,
+          ...projected,
+          market: marketByCode.get(code) ?? null,
+          color: typeColorMap[slide.kind],
+        } satisfies SpotlightMarker;
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.depth - b.depth) as SpotlightMarker[];
+  }, [featuredSlides, rotation]);
+
+  const spotlightMarkersRef = useRef<SpotlightMarker[]>([]);
+  spotlightMarkersRef.current = spotlightMarkers;
+
+  const activeSpotlight = spotlightMarkers.find((marker) => marker.key === activeSpotlightKey) ?? spotlightMarkers[0] ?? null;
+  const hoveredRegion = points.find((point) => point.code === hoveredCode) ?? null;
+
+  const latitudePaths = useMemo(
+    () => [-52, -24, 0, 24, 52].map((latitude) => buildLatitudePath(latitude, rotation)).filter(Boolean),
+    [rotation],
+  );
+  const longitudePaths = useMemo(
+    () => [-90, -45, 0, 45, 90].map((longitude) => buildLongitudePath(longitude, rotation)).filter(Boolean),
+    [rotation],
+  );
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    dragState.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startRotation: rotation,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
     setIsDragging(true);
   };
 
-  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!dragState.current) return;
+  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!dragState.current || dragState.current.pointerId !== event.pointerId) return;
     const delta = event.clientX - dragState.current.startX;
-    const next = Math.max(-42, Math.min(42, dragState.current.startRotation + delta * 0.14));
-    rotate.set(next);
+    setRotation(normalizeRotation(dragState.current.startRotation + delta * 0.38));
   };
 
-  const handlePointerUp = () => {
-    if (!dragState.current) return;
+  const handlePointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!dragState.current || dragState.current.pointerId !== event.pointerId) return;
     dragState.current = null;
+    event.currentTarget.releasePointerCapture(event.pointerId);
     setIsDragging(false);
-    setHasDragged(true);
   };
 
   return (
     <div
-      ref={containerRef}
-      className="relative w-full overflow-hidden"
-      style={{ height }}
+      className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-card/55"
+      style={{ minHeight: height }}
       onMouseLeave={() => setHoveredCode(null)}
     >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_18%,hsl(var(--accent)/0.16),transparent_28%),radial-gradient(circle_at_72%_22%,hsl(var(--primary)/0.22),transparent_26%),radial-gradient(circle_at_52%_82%,hsl(var(--foreground)/0.06),transparent_30%)]" />
       <motion.div
-        className="absolute inset-0"
+        className="absolute inset-0 opacity-80"
+        animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+        transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
         style={{
-          background:
-            "radial-gradient(circle at 50% 45%, hsl(var(--primary) / 0.18), transparent 38%), radial-gradient(circle at 50% 70%, hsl(var(--accent) / 0.12), transparent 45%)",
+          backgroundImage:
+            "linear-gradient(135deg, hsl(var(--background) / 0.96), hsl(var(--background) / 0.7), hsl(var(--card) / 0.9), hsl(var(--background) / 0.96))",
+          backgroundSize: "180% 180%",
         }}
-        animate={{ opacity: [0.72, 1, 0.78] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      <div className="absolute inset-0 flex items-center justify-center px-4 py-5">
-        <motion.div
-          className="relative aspect-square w-full max-w-[340px] sm:max-w-[390px] cursor-grab active:cursor-grabbing"
-          style={{ rotateY: rotateSpring, transformStyle: "preserve-3d" }}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerLeave={handlePointerUp}
-        >
-          <div className="absolute inset-0 rounded-full border border-border/40 bg-background/10 backdrop-blur-sm shadow-[0_0_0_1px_hsl(var(--border)/0.18),0_30px_90px_hsl(var(--background)/0.6)]" />
-          <motion.div className="absolute inset-[7%] rounded-full" style={{ background: glowBackground }} />
-          <svg viewBox="0 0 100 100" className="absolute inset-[8%] h-[84%] w-[84%] overflow-visible">
-            <defs>
-              <radialGradient id="discover-globe-fill" cx="45%" cy="38%" r="70%">
-                <stop offset="0%" stopColor="hsl(var(--background))" stopOpacity="0.22" />
-                <stop offset="45%" stopColor="hsl(var(--card))" stopOpacity="0.92" />
-                <stop offset="100%" stopColor="hsl(var(--background))" stopOpacity="1" />
-              </radialGradient>
-            </defs>
+      <div className="relative grid gap-4 p-4 sm:p-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(300px,0.92fr)] lg:p-6">
+        <div className="relative overflow-hidden rounded-[1.7rem] border border-border/50 bg-background/45 backdrop-blur-xl">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_46%,hsl(var(--background)/0)_0%,hsl(var(--primary)/0.12)_32%,transparent_54%),radial-gradient(circle_at_50%_86%,hsl(var(--accent)/0.18),transparent_30%)]" />
 
-            <circle cx={cx} cy={cy} r={radius} fill="url(#discover-globe-fill)" stroke="hsl(var(--border) / 0.5)" strokeWidth="0.5" />
-
-            {[0.28, 0.5, 0.72].map((ratio) => (
-              <ellipse
-                key={`lat-${ratio}`}
-                cx={cx}
-                cy={cy}
-                rx={radius}
-                ry={Math.max(7, radius * Math.abs(0.5 - ratio) * 1.1)}
-                fill="none"
-                stroke="hsl(var(--foreground) / 0.10)"
-                strokeWidth="0.3"
-              />
-            ))}
-
-            {[0.26, 0.5, 0.74].map((ratio) => (
-              <ellipse
-                key={`lon-${ratio}`}
-                cx={cx}
-                cy={cy}
-                rx={Math.max(8, radius * Math.abs(0.5 - ratio) * 1.05)}
-                ry={radius}
-                fill="none"
-                stroke="hsl(var(--foreground) / 0.08)"
-                strokeWidth="0.3"
-              />
-            ))}
-
-            {points.map((point) => (
-              <g key={point.code}>
-                <motion.circle
-                  cx={point.x}
-                  cy={point.y}
-                  r={point.ring / 10}
-                  fill={point.color}
-                  opacity={point.selected || point.hovered ? 0.22 : 0.12}
-                  animate={{ scale: [0.85, 1.18, 0.92], opacity: [0.12, 0.26, 0.14] }}
-                  transition={{ duration: 2.8 + point.count * 0.08, repeat: Infinity, ease: "easeInOut" }}
-                  style={{ transformOrigin: `${point.x}px ${point.y}px` }}
-                />
-                <motion.circle
-                  cx={point.x}
-                  cy={point.y}
-                  r={Math.max(1.9, point.size / 4.8)}
-                  fill={point.color}
-                  stroke={point.selected || point.hovered ? "hsl(var(--foreground) / 0.9)" : "hsl(var(--background) / 0.8)"}
-                  strokeWidth={point.selected || point.hovered ? 0.75 : 0.45}
-                  animate={point.selected ? { scale: [1, 1.18, 1] } : { scale: 1 }}
-                  transition={{ duration: 1.6, repeat: point.selected ? Infinity : 0, ease: "easeInOut" }}
-                  style={{ transformOrigin: `${point.x}px ${point.y}px`, cursor: "pointer" }}
-                  onMouseEnter={() => setHoveredCode(point.code)}
-                  onFocus={() => setHoveredCode(point.code)}
-                  onClick={() => onSelectMarket(point.market)}
-                />
-              </g>
-            ))}
-          </svg>
-
-          <div className="absolute inset-[8%]">
-            {spotlightMarkers.map((spotlight) => (
-              <a
-                key={`${spotlight.kind}-${spotlight.id}`}
-                href={spotlight.href}
-                className="absolute -translate-x-1/2 -translate-y-1/2"
-                style={{ left: `${spotlight.x}%`, top: `${spotlight.y}%` }}
-              >
-                <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background/88 px-2 py-1 text-[10px] font-medium text-foreground shadow-md backdrop-blur-md">
-                  <span
-                    className="h-2.5 w-2.5 rounded-full"
-                    style={{
-                      backgroundColor:
-                        spotlight.kind === "artist"
-                          ? "hsl(330 81% 60%)"
-                          : spotlight.kind === "event"
-                            ? "hsl(38 92% 50%)"
-                            : "hsl(200 85% 60%)",
-                    }}
-                  />
-                  <span className="max-w-[7rem] truncate">{spotlight.title}</span>
-                </span>
-              </a>
-            ))}
-          </div>
-        </motion.div>
-      </div>
-
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background via-background/55 to-transparent" />
-
-      <div className="absolute left-4 top-4 z-10 max-w-[13rem] rounded-2xl border border-border/50 bg-background/72 px-3 py-2 backdrop-blur-md">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Verified IP markets</p>
-        <p className="mt-1.5 text-sm text-foreground/80">
-          Drag to spin. Tap a pulse to narrow the feed.
-        </p>
-      </div>
-
-      {hoveredCode && (() => {
-        const active = points.find((point) => point.code === hoveredCode);
-        if (!active) return null;
-        return (
-          <div className="absolute right-4 top-4 z-10 max-w-[13rem] rounded-2xl border border-border/60 bg-background/85 px-3 py-2 backdrop-blur-md shadow-lg">
-            <p className="text-sm font-medium text-foreground">{active.flag} {active.label}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {active.count} {active.count === 1 ? "artist" : "artists"} · {active.market}
+          <div className="absolute left-4 top-4 z-20 max-w-[15rem] rounded-[1.4rem] border border-border/50 bg-background/72 px-3.5 py-3 backdrop-blur-md">
+            <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Verified IP markets</p>
+            <p className="mt-2 text-sm leading-6 text-foreground/85">
+              Drag to spin. Tap a pulse to narrow the feed. Featured artists, events, and spaces orbit on the same surface.
             </p>
           </div>
-        );
-      })()}
 
-      {isDragging && (
-        <div className="absolute bottom-16 left-1/2 z-10 -translate-x-1/2 rounded-full border border-border/60 bg-background/80 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground backdrop-blur-md">
-          Spinning
+          {hoveredRegion && (
+            <div className="absolute right-4 top-4 z-20 max-w-[14rem] rounded-[1.3rem] border border-border/50 bg-background/80 px-3 py-2.5 shadow-lg backdrop-blur-md">
+              <p className="text-sm font-medium text-foreground">
+                {hoveredRegion.flag} {hoveredRegion.label}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {hoveredRegion.count} {hoveredRegion.count === 1 ? "artist" : "artists"} · {hoveredRegion.market}
+              </p>
+            </div>
+          )}
+
+          <div className="relative flex min-h-[360px] items-center justify-center px-3 py-5 sm:px-6 lg:min-h-[460px]">
+            <div
+              className="relative aspect-square w-full max-w-[560px] touch-none select-none"
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
+            >
+              <div className="absolute inset-[7%] rounded-full border border-border/30 bg-background/15 shadow-[0_0_0_1px_hsl(var(--border)/0.12),0_28px_70px_hsl(var(--background)/0.55)] backdrop-blur-sm" />
+              <div className="absolute inset-[2%] rounded-full border border-border/20" />
+              <div className="absolute inset-[17%] rounded-full bg-[radial-gradient(circle_at_45%_30%,hsl(var(--primary)/0.22),transparent_30%),radial-gradient(circle_at_60%_75%,hsl(var(--accent)/0.18),transparent_32%)] blur-2xl" />
+
+              <svg viewBox="0 0 100 100" className="absolute inset-[8%] h-[84%] w-[84%] overflow-visible">
+                <defs>
+                  <radialGradient id="discover-globe-surface" cx="42%" cy="34%" r="74%">
+                    <stop offset="0%" stopColor="hsl(var(--background))" stopOpacity="0.2" />
+                    <stop offset="34%" stopColor="hsl(var(--card))" stopOpacity="0.95" />
+                    <stop offset="78%" stopColor="hsl(var(--background))" stopOpacity="0.98" />
+                    <stop offset="100%" stopColor="hsl(var(--background))" stopOpacity="1" />
+                  </radialGradient>
+                  <radialGradient id="discover-globe-highlight" cx="50%" cy="38%" r="65%">
+                    <stop offset="0%" stopColor="hsl(var(--foreground))" stopOpacity="0.12" />
+                    <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity="0" />
+                  </radialGradient>
+                </defs>
+
+                <ellipse cx={cx} cy={cy + 36} rx={22} ry={6} fill="hsl(var(--primary) / 0.12)" />
+                <circle cx={cx} cy={cy} r={radius} fill="url(#discover-globe-surface)" stroke="hsl(var(--border) / 0.44)" strokeWidth="0.55" />
+                <circle cx={cx} cy={cy} r={radius} fill="url(#discover-globe-highlight)" />
+
+                {latitudePaths.map((path, index) => (
+                  <path key={`lat-${index}`} d={path} fill="none" stroke="hsl(var(--foreground) / 0.13)" strokeWidth="0.34" />
+                ))}
+                {longitudePaths.map((path, index) => (
+                  <path key={`lng-${index}`} d={path} fill="none" stroke="hsl(var(--foreground) / 0.1)" strokeWidth="0.3" />
+                ))}
+
+                {points.map((point) => {
+                  const front = point.depth > 0;
+                  return (
+                    <g key={point.code} opacity={point.visibility}>
+                      <motion.circle
+                        cx={point.x}
+                        cy={point.y}
+                        r={Math.max(1.5, point.ring / 7.5)}
+                        fill={point.color}
+                        animate={{ scale: front ? [0.86, 1.22, 0.9] : [0.94, 1.08, 0.96], opacity: front ? [0.12, 0.3, 0.14] : [0.04, 0.1, 0.05] }}
+                        transition={{ duration: 3 + point.count * 0.08, repeat: Infinity, ease: "easeInOut" }}
+                        style={{ transformOrigin: `${point.x}px ${point.y}px` }}
+                      />
+                      <circle
+                        cx={point.x}
+                        cy={point.y}
+                        r={Math.max(1.5, point.size / 4.8)}
+                        fill={point.color}
+                        stroke={point.selected || point.hovered ? "hsl(var(--foreground) / 0.9)" : "hsl(var(--background) / 0.9)"}
+                        strokeWidth={point.selected || point.hovered ? 0.7 : 0.45}
+                        style={{ cursor: "pointer" }}
+                        onPointerDown={(event) => event.stopPropagation()}
+                        onMouseEnter={() => setHoveredCode(point.code)}
+                        onFocus={() => setHoveredCode(point.code)}
+                        onClick={() => onSelectMarket(point.market)}
+                      />
+                    </g>
+                  );
+                })}
+              </svg>
+
+              <div className="absolute inset-[8%]">
+                {spotlightMarkers.map((marker) => {
+                  const active = marker.key === activeSpotlight?.key;
+                  const front = marker.depth > -0.12;
+                  const left = `${marker.x}%`;
+                  const top = `${marker.y}%`;
+
+                  return (
+                    <button
+                      key={marker.key}
+                      type="button"
+                      className="absolute -translate-x-1/2 -translate-y-1/2"
+                      style={{ left, top, opacity: front ? 1 : 0.4, zIndex: active ? 30 : marker.depth > 0 ? 20 : 10 }}
+                      onPointerDown={(event) => event.stopPropagation()}
+                      onClick={() => setActiveSpotlightKey(marker.key)}
+                    >
+                      <motion.span
+                        className="relative flex items-center gap-1.5 rounded-full border px-2 py-1 shadow-lg backdrop-blur-xl"
+                        animate={{ scale: active ? [1, 1.05, 1] : 1, y: active ? [0, -1.5, 0] : 0 }}
+                        transition={{ duration: 2.2, repeat: active ? Infinity : 0, ease: "easeInOut" }}
+                        style={{
+                          backgroundColor: active ? "hsl(var(--background) / 0.94)" : "hsl(var(--background) / 0.8)",
+                          borderColor: active ? marker.color : "hsl(var(--border) / 0.65)",
+                        }}
+                      >
+                        <span className="absolute inset-0 rounded-full blur-md opacity-50" style={{ backgroundColor: marker.color }} />
+                        <span className="relative h-2.5 w-2.5 rounded-full" style={{ backgroundColor: marker.color }} />
+                        <span className="relative max-w-[5.7rem] truncate text-[10px] font-medium text-foreground">
+                          {marker.title}
+                        </span>
+                      </motion.span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => onSelectMarket("All")}
+              className={cn(
+                "rounded-full border px-3 py-1.5 text-[11px] font-medium backdrop-blur transition-colors",
+                marketFilter === "All"
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border/45 bg-background/68 text-foreground hover:bg-background/84",
+              )}
+            >
+              All regions
+            </button>
+            {MARKETS.map((market) => {
+              const active = marketFilter === market.id;
+              return (
+                <button
+                  key={market.id}
+                  type="button"
+                  onClick={() => onSelectMarket(market.id)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-[11px] font-medium backdrop-blur transition-colors",
+                    active
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border/45 bg-background/68 text-foreground hover:bg-background/84",
+                  )}
+                >
+                  {market.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {isDragging && (
+            <div className="absolute bottom-16 left-1/2 z-20 -translate-x-1/2 rounded-full border border-border/55 bg-background/82 px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-muted-foreground backdrop-blur-md">
+              Spin mode
+            </div>
+          )}
         </div>
-      )}
+
+        <div className="flex flex-col gap-3 lg:gap-4">
+          <div className="rounded-[1.7rem] border border-border/50 bg-background/58 p-4 backdrop-blur-xl sm:p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Orbiting now</p>
+                <p className="mt-1 text-sm text-foreground/70">Featured artist, event, and space stay synced to the globe.</p>
+              </div>
+              <div className="hidden h-9 w-9 items-center justify-center rounded-full border border-border/50 bg-background/70 text-foreground/70 sm:flex">
+                <Sparkles className="h-4 w-4" />
+              </div>
+            </div>
+
+            <AnimatePresence mode="wait">
+              {activeSpotlight ? (
+                <motion.div
+                  key={activeSpotlight.key}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.28, ease: "easeOut" }}
+                  className="mt-4"
+                >
+                  <div className="overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75">
+                    <div className="relative aspect-[16/10] overflow-hidden border-b border-border/40 bg-muted/70">
+                      {activeSpotlight.banner ? (
+                        <img src={activeSpotlight.banner} alt={activeSpotlight.title} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full bg-[radial-gradient(circle_at_24%_26%,hsl(var(--primary)/0.24),transparent_26%),radial-gradient(circle_at_70%_30%,hsl(var(--accent)/0.18),transparent_28%),linear-gradient(135deg,hsl(var(--background)),hsl(var(--card)))]" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/35 to-transparent" />
+                      <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-border/45 bg-background/72 px-2 py-1 text-[10px] uppercase tracking-[0.14em] text-foreground backdrop-blur-md">
+                          {activeSpotlight.kind === "artist" && <><Sparkles className="h-3 w-3" /> Featured artist</>}
+                          {activeSpotlight.kind === "event" && <><Calendar className="h-3 w-3" /> Featured event</>}
+                          {activeSpotlight.kind === "space" && <><Users className="h-3 w-3" /> Featured space</>}
+                        </span>
+                        {activeSpotlight.region_code && (
+                          <span className="inline-flex rounded-full border border-border/45 bg-background/68 px-2 py-1 text-[10px] text-foreground/80 backdrop-blur-md">
+                            {activeSpotlight.region_code}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 p-4">
+                      {activeSpotlight.kind === "artist" ? (
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-12 w-12 border border-border/50 shadow-sm">
+                            <AvatarImage src={activeSpotlight.avatar ?? undefined} />
+                            <AvatarFallback>{initials(activeSpotlight.title)}</AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <h3 className="truncate font-display text-2xl leading-none text-foreground">{activeSpotlight.title}</h3>
+                            {activeSpotlight.mediums?.length ? (
+                              <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{activeSpotlight.mediums.slice(0, 3).join(" · ")}</p>
+                            ) : null}
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <h3 className="font-display text-2xl leading-tight text-foreground">{activeSpotlight.title}</h3>
+                          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                            {activeSpotlight.kind === "event" && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-border/40 bg-background/65 px-2 py-1">
+                                <Calendar className="h-3 w-3" />
+                                {format(new Date(activeSpotlight.starts_at), "MMM d · h:mm a")}
+                              </span>
+                            )}
+                            {activeSpotlight.kind === "space" && activeSpotlight.location && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-border/40 bg-background/65 px-2 py-1">
+                                <MapPin className="h-3 w-3" /> {activeSpotlight.location}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {activeSpotlight.subtitle && (
+                        <p className="text-sm leading-6 text-foreground/74 line-clamp-3">{activeSpotlight.subtitle}</p>
+                      )}
+
+                      <Link
+                        to={activeSpotlight.href}
+                        className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-transform hover:translate-x-0.5"
+                      >
+                        Open detail <ArrowUpRight className="h-4 w-4" />
+                      </Link>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                <div className="mt-4 rounded-[1.5rem] border border-dashed border-border/50 bg-card/35 p-6 text-sm text-muted-foreground">
+                  Featured orbit is warming up.
+                </div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-1">
+            {spotlightMarkers.map((marker) => {
+              const active = marker.key === activeSpotlight?.key;
+              return (
+                <button
+                  key={marker.key}
+                  type="button"
+                  onClick={() => setActiveSpotlightKey(marker.key)}
+                  className={cn(
+                    "group flex items-center gap-3 rounded-[1.35rem] border p-2.5 text-left backdrop-blur-xl transition-all",
+                    active
+                      ? "border-foreground/20 bg-background/78 shadow-[0_12px_32px_hsl(var(--background)/0.16)]"
+                      : "border-border/45 bg-background/56 hover:bg-background/72",
+                  )}
+                >
+                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[1rem] border border-border/45 bg-muted/70">
+                    {marker.kind === "artist" ? (
+                      <div className="flex h-full w-full items-center justify-center bg-card">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={marker.avatar ?? undefined} />
+                          <AvatarFallback>{initials(marker.title)}</AvatarFallback>
+                        </Avatar>
+                      </div>
+                    ) : marker.banner ? (
+                      <img src={marker.banner} alt={marker.title} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="h-full w-full bg-[linear-gradient(135deg,hsl(var(--primary)/0.2),hsl(var(--accent)/0.16),hsl(var(--background)))]" />
+                    )}
+                    <span className="absolute left-1.5 top-1.5 h-2.5 w-2.5 rounded-full ring-2 ring-background" style={{ backgroundColor: marker.color }} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-sm font-medium text-foreground">{marker.title}</p>
+                      <span className="rounded-full border border-border/40 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
+                        {marker.kind}
+                      </span>
+                    </div>
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                      {marker.subtitle || "Open the orbit to see more."}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

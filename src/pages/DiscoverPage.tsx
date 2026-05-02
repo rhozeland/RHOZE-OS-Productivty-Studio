@@ -17,11 +17,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import FeaturedCarousel from "@/components/discover/FeaturedCarousel";
 import FreshWorksGrid from "@/components/discover/FreshWorksGrid";
 import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
-import { MARKETS, type RegionMarket } from "@/lib/regions";
-import { cn } from "@/lib/utils";
+import type { RegionMarket } from "@/lib/regions";
 import {
   ArrowRight, Compass, Coins, Loader2,
 } from "lucide-react";
@@ -32,7 +30,7 @@ const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
 const DiscoverPage = () => {
   const { user } = useAuth();
   const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
-  const { slides: featuredSlides, spotlights } = useDiscoverFeatured(marketFilter);
+  const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
 
   // ─── Coins moving today ──────────────────────────────────────────
   const { data: coins } = useQuery({
@@ -79,52 +77,27 @@ const DiscoverPage = () => {
         </p>
       </motion.header>
 
-      {/* ─── Globe + Featured carousel ─────────────────────────────── */}
+      {/* ─── Globe-led featured orbit ──────────────────────────────── */}
       <motion.section
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.05 }}
-        className="grid grid-cols-1 lg:grid-cols-2 gap-4"
+        className="grid grid-cols-1"
       >
-        <div className="relative rounded-3xl overflow-hidden border border-border/60 bg-gradient-to-br from-background via-background to-card h-[390px] sm:h-[420px]">
-          <Suspense
-            fallback={
-              <div className="h-full w-full flex items-center justify-center">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              </div>
-            }
-          >
-            <DiscoverGlobe
-              marketFilter={marketFilter}
-              onSelectMarket={setMarketFilter}
-              featuredSpotlights={spotlights}
-              height={420}
-            />
-          </Suspense>
-
-          {/* Region pills overlay (also acts as fallback for non-WebGL users) */}
-          <div className="absolute bottom-3 left-3 right-3 flex flex-wrap gap-1.5 z-10 pointer-events-none">
-            {MARKETS.map((m) => {
-              const active = marketFilter === m.id;
-              return (
-                <button
-                  key={m.id}
-                  onClick={() => setMarketFilter(m.id)}
-                  className={cn(
-                    "rounded-full border px-2.5 py-1 text-[10px] font-medium backdrop-blur transition-colors pointer-events-auto",
-                    active
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border/40 bg-background/60 hover:bg-background/80 text-foreground",
-                  )}
-                >
-                  {m.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <FeaturedCarousel slides={featuredSlides} />
+        <Suspense
+          fallback={
+            <div className="flex h-[520px] w-full items-center justify-center rounded-[2rem] border border-border/60 bg-card/40">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          }
+        >
+          <DiscoverGlobe
+            marketFilter={marketFilter}
+            onSelectMarket={setMarketFilter}
+            featuredSlides={featuredSlides}
+            height={540}
+          />
+        </Suspense>
       </motion.section>
 
       {/* ─── Fresh works (infinite) ─────────────────────────────────── */}
