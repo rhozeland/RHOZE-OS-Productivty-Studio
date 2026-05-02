@@ -152,6 +152,7 @@ const EventDetailPage = () => {
   }
 
   const isHost = user?.id === ev.host_id;
+  const canManage = isHost || isCollaborator;
   const start = new Date(ev.starts_at);
   const end = new Date(ev.ends_at);
 
