@@ -19,7 +19,7 @@
  *     if the table is empty or the user can't read it).
  */
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
@@ -31,11 +31,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -44,19 +39,14 @@ import {
 import {
   ArrowLeft,
   ArrowRight,
-  ChevronDown,
   Plus,
   FolderKanban,
   CheckCircle2,
   Clock,
   PauseCircle,
   Send,
-  MapPin,
   ListTree,
-  Wallet,
-  Users,
   Loader2,
-  ExternalLink,
   Link as LinkIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -84,7 +74,6 @@ const STATUS_META: Record<string, { label: string; icon: typeof Clock; color: st
 
 const ProjectsInbox = ({ userId }: { userId: string }) => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const selectedId = params.get("p");
   const showNew = params.get("new") === "1";
@@ -274,7 +263,6 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
               project={selectedProject}
               userId={userId}
               onBack={() => setSelected(null)}
-              onOpenFull={() => navigate(`/projects/${selectedProject.id}`)}
             />
           )}
         </div>
@@ -304,12 +292,10 @@ const ProjectThread = ({
   project,
   userId,
   onBack,
-  onOpenFull,
 }: {
   project: Project;
   userId: string;
   onBack: () => void;
-  onOpenFull: () => void;
 }) => {
   const queryClient = useQueryClient();
   const [text, setText] = useState("");
@@ -405,15 +391,23 @@ const ProjectThread = ({
         >
           <LinkIcon className="h-3 w-3" /> Copy link
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="rounded-full gap-1.5 text-xs"
-          onClick={onOpenFull}
-        >
-          Open full <ExternalLink className="h-3 w-3" />
-        </Button>
       </div>
+
+      {/* Pinned roadmap shortcut — sits right under the status row so the
+          full project surface (roadmap, vault, splits, tools) is always one
+          tap away without cluttering the thread with collapsible panels. */}
+      <Link
+        to={`/projects/${project.id}`}
+        className="flex items-center justify-between gap-3 border-b border-border bg-muted/30 px-4 md:px-6 py-2.5 hover:bg-muted/50 transition-colors"
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <ListTree className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <span className="text-xs text-muted-foreground truncate">
+            Open project workspace — roadmap, vault, splits, tools
+          </span>
+        </div>
+        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+      </Link>
 
       <ScrollArea className="flex-1">
         <div className="p-4 md:p-6 space-y-4">
@@ -465,28 +459,6 @@ const ProjectThread = ({
             </div>
           )}
 
-          {/* ─── Inline panels ─── */}
-          <div className="space-y-2 pt-3">
-            <ProjectPanel
-              icon={ListTree}
-              title="Roadmap"
-              description="Milestones · stages · approvals"
-              defaultOpen
-              actionHref={`/projects/${project.id}#roadmap`}
-            />
-            <ProjectPanel
-              icon={Wallet}
-              title="Vault"
-              description="Refs · finals · Verified IP"
-              actionHref={`/projects/${project.id}#vault`}
-            />
-            <ProjectPanel
-              icon={Users}
-              title="Splits"
-              description="Revenue split config + payout log"
-              actionHref={`/projects/${project.id}#splits`}
-            />
-          </div>
         </div>
       </ScrollArea>
 
@@ -524,64 +496,6 @@ const ProjectThread = ({
         </Button>
       </form>
     </>
-  );
-};
-
-/* ─── Collapsible inline panel (Roadmap / Vault / Splits) ─── */
-const ProjectPanel = ({
-  icon: Icon,
-  title,
-  description,
-  defaultOpen = false,
-  actionHref,
-}: {
-  icon: typeof ListTree;
-  title: string;
-  description: string;
-  defaultOpen?: boolean;
-  actionHref: string;
-}) => {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <CollapsibleTrigger asChild>
-          <button
-            type="button"
-            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors text-left"
-          >
-            <div className="h-8 w-8 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
-              <Icon className="h-4 w-4 text-foreground" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground">{title}</p>
-              <p className="text-[11px] text-muted-foreground truncate">
-                {description}
-              </p>
-            </div>
-            <ChevronDown
-              className={cn(
-                "h-4 w-4 text-muted-foreground transition-transform",
-                open && "rotate-180",
-              )}
-            />
-          </button>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <div className="px-4 pb-4 pt-1 border-t border-border/60">
-            <p className="text-xs text-muted-foreground mb-3">
-              Manage this from the full project view — keeps actions, history,
-              and signatures in one place.
-            </p>
-            <Link to={actionHref}>
-              <Button variant="outline" size="sm" className="rounded-full gap-1.5">
-                Open {title.toLowerCase()} <ArrowRight className="h-3 w-3" />
-              </Button>
-            </Link>
-          </div>
-        </CollapsibleContent>
-      </div>
-    </Collapsible>
   );
 };
 

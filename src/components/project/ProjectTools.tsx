@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Palette, Flame, Radio, Plus, ExternalLink, Clock, ArrowRight, Link2, X } from "lucide-react";
+import { Palette, Radio, Plus, ExternalLink, Clock, Link2, X } from "lucide-react";
 
 const ROOM_DURATIONS = [
   { label: "1 hour", hours: 1 },
@@ -59,18 +59,7 @@ const ProjectTools = ({ projectId, projectTitle, smartboardDetails, onLinkSmartb
   const [roomHours, setRoomHours] = useState(24);
   const [creatingRoom, setCreatingRoom] = useState(false);
 
-  // Project meta — used to tag the Flow jump.
-  const { data: projectMeta } = useQuery({
-    queryKey: ["project-tools-meta", projectId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("projects")
-        .select("categories")
-        .eq("id", projectId)
-        .single();
-      return data;
-    },
-  });
+  // (Flow shortcut removed from Tools — keeps the panel focused on rooms + boards.)
 
   const boards = smartboardDetails ?? [];
 
@@ -122,12 +111,6 @@ const ProjectTools = ({ projectId, projectTitle, smartboardDetails, onLinkSmartb
     onError: (e: any) => toast.error(e.message),
   });
 
-  const openFlowScoped = () => {
-    const tags = (projectMeta?.categories ?? []) as string[];
-    const qs = tags.length ? `?tags=${encodeURIComponent(tags.join(","))}` : "";
-    navigate(`/flow${qs}`);
-  };
-
   return (
     <div className="space-y-6">
       <div>
@@ -138,8 +121,7 @@ const ProjectTools = ({ projectId, projectTitle, smartboardDetails, onLinkSmartb
           Build it your way
         </h3>
         <p className="text-sm text-muted-foreground mt-1">
-          Spin up live rooms, peek your linked smartboards, or jump into the
-          Flow feed — all scoped to <span className="text-foreground font-medium">{projectTitle}</span>.
+          Spin up live rooms or pin mood boards — all scoped to <span className="text-foreground font-medium">{projectTitle}</span>.
         </p>
       </div>
 
@@ -215,7 +197,7 @@ const ProjectTools = ({ projectId, projectTitle, smartboardDetails, onLinkSmartb
           )}
         </div>
         <p className="text-xs text-muted-foreground mb-3">
-          Visual reference boards pinned to this project. Link existing ones or create new from the Smartboards page.
+          Visual mood boards pinned to this project — drop in images, video, audio, links, or notes for the team to riff on.
         </p>
         {boards && boards.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
@@ -265,24 +247,6 @@ const ProjectTools = ({ projectId, projectTitle, smartboardDetails, onLinkSmartb
         )}
       </section>
 
-      {/* ─── Flow (least priority — jumps to global feed scoped) ──────── */}
-      <button
-        onClick={openFlowScoped}
-        className="group w-full text-left rounded-2xl border border-border bg-card p-4 hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3"
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <Flame className="h-4 w-4 text-primary" />
-          </div>
-          <div className="min-w-0">
-            <p className="font-display text-sm font-semibold text-foreground">Open Flow</p>
-            <p className="text-[11px] text-muted-foreground line-clamp-1">
-              Discover Verified IP and references tagged like this project.
-            </p>
-          </div>
-        </div>
-        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0" />
-      </button>
 
       {/* ─── Create Drop Room dialog ─────────────────────────────────── */}
       <Dialog open={roomOpen} onOpenChange={setRoomOpen}>
