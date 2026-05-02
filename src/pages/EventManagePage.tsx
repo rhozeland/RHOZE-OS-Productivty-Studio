@@ -346,8 +346,10 @@ const EventManagePage = () => {
   }
 
   if (!ev) return <Navigate to="/spaces?tab=events" replace />;
-  if (ev.host_id !== user?.id)
+  const isHost = ev.host_id === user?.id;
+  if (!isHost && !isManager) {
     return <Navigate to={`/spaces/events/${ev.id}`} replace />;
+  }
 
   const issued = (tickets ?? []).length;
   const checkedIn = (tickets ?? []).filter((t: any) => t.status === "checked_in")
