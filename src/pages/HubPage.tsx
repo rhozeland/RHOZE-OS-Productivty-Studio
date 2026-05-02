@@ -100,8 +100,42 @@ const HubPage = () => {
     enabled: lane === "conversations",
   });
 
-  // ─── Offerings: services + digital goods + collaboration ─────────────
-  const { data: offerings, isLoading: loadingOfferings } = useQuery({
+  // ─── Conversations sub-strip: upcoming Events ────────────────────────
+  // v7 phase 2 — Spaces lanes are inlined into the social Stream rather
+  // than living as a separate pillar. We surface a thin strip of
+  // upcoming/published events so people see "what's happening" without
+  // leaving the feed.
+  const { data: upcomingEvents } = useQuery({
+    queryKey: ["stream-upcoming-events"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("events")
+        .select("id, title, cover_url, starts_at, category, venue_name, is_online, manifest_hash")
+        .eq("status", "published")
+        .gte("starts_at", new Date().toISOString())
+        .order("starts_at", { ascending: true })
+        .limit(4);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: lane === "conversations",
+  });
+
+  // ─── Conversations sub-strip: featured Spaces (studios) ─────────────
+  const { data: featuredSpaces } = useQuery({
+    queryKey: ["stream-featured-spaces"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("studios")
+        .select("id, name, cover_image_url, city, country")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(4);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: lane === "conversations",
+  });
     queryKey: ["hub-offerings", search],
     queryFn: async () => {
       let q = supabase
