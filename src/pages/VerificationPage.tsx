@@ -148,6 +148,8 @@ const VerificationPage = () => {
         </p>
       </header>
 
+      {latest && <SubmissionTimeline latest={latest} status={status} />}
+
       {status === "verified" ? (
         <Card className="border-sky-500/30 bg-sky-500/5">
           <CardHeader>
