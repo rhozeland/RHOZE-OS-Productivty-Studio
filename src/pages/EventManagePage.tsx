@@ -422,6 +422,9 @@ const EventManagePage = () => {
         </div>
       )}
 
+      {/* Team — host + collaborators */}
+      {isHost && <EventCollaborators eventId={ev.id} hostId={ev.host_id} />}
+
       {/* Tiers */}
       <section className="space-y-3">
         <h2 className="font-display text-lg font-bold tracking-tight">
