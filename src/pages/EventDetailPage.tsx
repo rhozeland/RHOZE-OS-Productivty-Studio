@@ -158,12 +158,22 @@ const EventDetailPage = () => {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <Link
-        to="/spaces?tab=events"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back to Events
-      </Link>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <Link
+          to="/spaces?tab=events"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to Events
+        </Link>
+
+        {canManage && (
+          <Link to={`/spaces/events/${ev.id}/manage`}>
+            <Button variant="outline" size="sm" className="rounded-full gap-1.5">
+              <Settings className="h-3.5 w-3.5" /> Manage Event
+            </Button>
+          </Link>
+        )}
+      </div>
 
       {/* Hero */}
       <motion.div
@@ -250,16 +260,6 @@ const EventDetailPage = () => {
                   Pending anchor
                 </span>
               )}
-            </div>
-          )}
-
-          {canManage && (
-            <div className="pt-2">
-              <Link to={`/spaces/events/${ev.id}/manage`}>
-                <Button variant="outline" size="sm" className="rounded-full gap-1.5">
-                  <Settings className="h-3.5 w-3.5" /> Manage
-                </Button>
-              </Link>
             </div>
           )}
         </div>
