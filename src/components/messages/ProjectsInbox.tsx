@@ -146,6 +146,21 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
     [projects, selectedId],
   );
 
+  // If the URL points at a project that isn't in our list (stale share link
+  // or no access), surface a one-time toast and clean the param so the empty
+  // state doesn't silently mislead the user. We wait until the project list
+  // has actually loaded before deciding it's missing.
+  const projectsLoaded = ownedProjects !== undefined && (collabProjectIds === undefined || collabProjectIds.length === 0 || collabProjects !== undefined);
+  useEffect(() => {
+    if (!selectedId || selectedProject || !projectsLoaded) return;
+    toast.error("That project link isn't available to you.");
+    const next = new URLSearchParams(params);
+    next.delete("p");
+    next.set("tab", "projects");
+    setParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, selectedProject, projectsLoaded]);
+
   // Update URL when selecting a project. We `push` (not `replace`) so each
   // selection is its own history entry — back button restores the previous
   // thread, and the URL is fully shareable (e.g. /messages?tab=projects&p=…).
