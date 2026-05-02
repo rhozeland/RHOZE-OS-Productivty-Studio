@@ -117,7 +117,7 @@ export const TokenGateDialog = ({
 
       const { error: updErr } = await supabase
         .from("works")
-        .update({ gating })
+        .update({ gating: gating as never })
         .eq("id", workId);
       if (updErr) throw updErr;
     },
