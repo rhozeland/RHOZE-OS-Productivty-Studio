@@ -59,18 +59,7 @@ const ProjectTools = ({ projectId, projectTitle, smartboardDetails, onLinkSmartb
   const [roomHours, setRoomHours] = useState(24);
   const [creatingRoom, setCreatingRoom] = useState(false);
 
-  // Project meta — used to tag the Flow jump.
-  const { data: projectMeta } = useQuery({
-    queryKey: ["project-tools-meta", projectId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("projects")
-        .select("categories")
-        .eq("id", projectId)
-        .single();
-      return data;
-    },
-  });
+  // (Flow shortcut removed from Tools — keeps the panel focused on rooms + boards.)
 
   const boards = smartboardDetails ?? [];
 
