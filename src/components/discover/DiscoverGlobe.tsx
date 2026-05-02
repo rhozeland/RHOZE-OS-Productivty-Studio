@@ -426,11 +426,8 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
         <div className="relative overflow-hidden rounded-[1.7rem] border border-border/50 bg-background/45 backdrop-blur-xl">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_46%,hsl(var(--background)/0)_0%,hsl(var(--primary)/0.12)_32%,transparent_54%),radial-gradient(circle_at_50%_86%,hsl(var(--accent)/0.18),transparent_30%)]" />
 
-          <div className="absolute left-4 top-4 z-20 max-w-[15rem] rounded-[1.4rem] border border-border/50 bg-background/72 px-3.5 py-3 backdrop-blur-md">
-            <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Verified IP markets</p>
-            <p className="mt-2 text-sm leading-6 text-foreground/85">
-              Drag to spin. Tap a pulse to narrow the feed. Featured artists, events, and spaces orbit on the same surface.
-            </p>
+          <div className="absolute left-4 top-4 z-20 max-w-[12rem] rounded-full border border-border/50 bg-background/72 px-3 py-1.5 backdrop-blur-md">
+            <p className="text-[11px] font-medium text-foreground/80">Spin the world →</p>
           </div>
 
           {hoveredRegion && (
