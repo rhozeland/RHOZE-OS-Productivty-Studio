@@ -15,7 +15,7 @@
  *    opportunities lead with the brief, works show the verified badge.
  *  - Staggered framer-motion entrance + subtle hover lift for tactility.
  */
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -132,11 +132,21 @@ const seededShuffle = <T,>(arr: T[], seed: number): T[] => {
   return a;
 };
 
-const ConversationsMosaic = ({ search = "" }: { search?: string }) => {
+// Public type for the filter chips on HubPage. Keep in sync with TileKind.
+export type MosaicKindFilter = "all" | TileKind;
+
+const ConversationsMosaic = ({
+  search = "",
+  kind = "all",
+}: {
+  search?: string;
+  kind?: MosaicKindFilter;
+}) => {
   const navigate = useNavigate();
 
   // Fetch every kind in parallel — keep limits tight so the mosaic stays
-  // browseable on a single screen.
+  // browseable on a single screen. We always fetch all kinds (so the
+  // filter chips can show live counts) and filter client-side.
   const { data, isLoading } = useQuery({
     queryKey: ["hub-mosaic", search],
     queryFn: async () => {
@@ -284,12 +294,32 @@ const ConversationsMosaic = ({ search = "" }: { search?: string }) => {
         });
       });
 
-      return seededShuffle(tiles, tiles.length).slice(0, 24);
+      return seededShuffle(tiles, tiles.length);
     },
     staleTime: 30_000,
   });
 
-  const tiles = data ?? [];
+  const allTiles = data ?? [];
+
+  // Per-kind counts power the badge numbers in HubPage's filter chips.
+  const counts = useMemo(() => {
+    const c: Record<MosaicKindFilter, number> = {
+      all: allTiles.length, drop: 0, offering: 0, opportunity: 0, event: 0, space: 0, work: 0,
+    };
+    for (const t of allTiles) c[t.kind]++;
+    return c;
+  }, [allTiles]);
+
+  // Broadcast counts upward so HubPage chips can show them.
+  // We use a module-level event so we don't have to thread props back up.
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("hub-mosaic-counts", { detail: counts }));
+  }, [counts]);
+
+  const tiles = useMemo(() => {
+    const filtered = kind === "all" ? allTiles : allTiles.filter((t) => t.kind === kind);
+    return filtered.slice(0, 24);
+  }, [allTiles, kind]);
 
   if (isLoading) {
     return (
@@ -305,11 +335,16 @@ const ConversationsMosaic = ({ search = "" }: { search?: string }) => {
   }
 
   if (tiles.length === 0) {
+    const hasSearch = search.trim().length > 0;
     return (
       <div className="rounded-3xl border border-dashed border-border bg-card/50 p-12 text-center">
         <Sparkles className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-        <p className="text-sm text-foreground font-medium">The Stream is quiet.</p>
-        <p className="text-xs text-muted-foreground mt-1">Be the first to drop something above.</p>
+        <p className="text-sm text-foreground font-medium">
+          {hasSearch ? "Nothing matches that search." : kind !== "all" ? "Nothing here yet." : "The Stream is quiet."}
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          {hasSearch ? "Try a different word, or clear the filter." : "Be the first to drop something above."}
+        </p>
       </div>
     );
   }
