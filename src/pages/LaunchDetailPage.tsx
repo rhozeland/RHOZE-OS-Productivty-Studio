@@ -187,6 +187,7 @@ const LaunchDetailPage = () => {
                 )}
                 {launch.status === "cancelled" && <Badge variant="destructive">Cancelled</Badge>}
                 <VerifiedIPBadge signature={workSig} size="xs" />
+                {launch.mint_address && <MintAddressChip address={launch.mint_address} size="xs" />}
               </div>
               <p className="text-sm text-muted-foreground truncate">{launch.name}</p>
             </div>
