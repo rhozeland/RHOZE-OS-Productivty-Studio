@@ -10,28 +10,76 @@
  *     events, spaces, verified works.
  *   - Flow widget stays as an embedded teaser into /flow.
  *
- * URL: ?q=... pre-fills search.
+ * URL state:
+ *   ?q=...     — search query
+ *   ?kind=...  — type filter (all|drop|offering|opportunity|event|space|work)
+ *
+ * Both survive refresh + share.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search } from "lucide-react";
+import {
+  Search,
+  X,
+  Layers,
+  Flame,
+  Briefcase,
+  Megaphone,
+  CalendarDays,
+  Building2,
+  Shield,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import StreamComposer from "@/components/stream/StreamComposer";
 import HubFlowWidget from "@/components/hub/HubFlowWidget";
-import ConversationsMosaic from "@/components/hub/ConversationsMosaic";
+import ConversationsMosaic, { type MosaicKindFilter } from "@/components/hub/ConversationsMosaic";
+
+// Filter chips. Order = how readers scan: "All" first, then content
+// kinds in roughly creation-frequency order.
+const FILTERS: { key: MosaicKindFilter; label: string; Icon: typeof Flame }[] = [
+  { key: "all",         label: "All",        Icon: Layers },
+  { key: "drop",        label: "Drops",      Icon: Flame },
+  { key: "offering",    label: "Offerings",  Icon: Briefcase },
+  { key: "opportunity", label: "Open Calls", Icon: Megaphone },
+  { key: "event",       label: "Events",     Icon: CalendarDays },
+  { key: "space",       label: "Spaces",     Icon: Building2 },
+  { key: "work",        label: "Works",      Icon: Shield },
+];
+
+const VALID_KINDS = new Set<MosaicKindFilter>(FILTERS.map((f) => f.key));
 
 const HubPage = () => {
   const [params, setParams] = useSearchParams();
   const [search, setSearch] = useState(params.get("q") ?? "");
+  const initialKind = (params.get("kind") as MosaicKindFilter) ?? "all";
+  const [kind, setKind] = useState<MosaicKindFilter>(
+    VALID_KINDS.has(initialKind) ? initialKind : "all",
+  );
+  const [counts, setCounts] = useState<Record<MosaicKindFilter, number> | null>(null);
 
-  // Keep ?q= in sync so the search survives refresh + share.
+  // Keep ?q= and ?kind= in sync so URL = source of truth for sharing.
   useEffect(() => {
     const next = new URLSearchParams(params);
     if (search.trim()) next.set("q", search.trim());
     else next.delete("q");
+    if (kind && kind !== "all") next.set("kind", kind);
+    else next.delete("kind");
     setParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
+  }, [search, kind]);
+
+  // Listen for the mosaic's count broadcasts so chips can show live tallies.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as Record<MosaicKindFilter, number>;
+      setCounts(detail);
+    };
+    window.addEventListener("hub-mosaic-counts", handler);
+    return () => window.removeEventListener("hub-mosaic-counts", handler);
+  }, []);
+
+  const activeFilter = useMemo(() => FILTERS.find((f) => f.key === kind)!, [kind]);
+  const hasFilter = kind !== "all" || search.trim().length > 0;
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-12">
@@ -72,15 +120,71 @@ const HubPage = () => {
           <div className="relative w-full sm:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search the Stream…"
-              className="pl-10 h-10 rounded-full"
+              placeholder={`Search ${activeFilter.label.toLowerCase()}…`}
+              className="pl-10 pr-9 h-10 rounded-full"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                aria-label="Clear search"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         </div>
 
-        <ConversationsMosaic search={search} />
+        {/* Filter chips — horizontally scrollable on small screens */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+          {FILTERS.map((f) => {
+            const FIcon = f.Icon;
+            const active = kind === f.key;
+            const count = counts?.[f.key];
+            return (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setKind(f.key)}
+                aria-pressed={active}
+                className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${
+                  active
+                    ? "bg-foreground text-background shadow-sm"
+                    : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                }`}
+              >
+                <FIcon className="h-3 w-3" />
+                {f.label}
+                {typeof count === "number" && count > 0 && (
+                  <span
+                    className={`ml-0.5 rounded-full px-1.5 py-0 text-[10px] font-bold tabular-nums ${
+                      active ? "bg-background/20 text-background" : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+          {hasFilter && (
+            <button
+              type="button"
+              onClick={() => {
+                setKind("all");
+                setSearch("");
+              }}
+              className="shrink-0 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground ml-1 px-2 py-1 transition-colors"
+            >
+              <X className="h-3 w-3" /> Clear
+            </button>
+          )}
+        </div>
+
+        <ConversationsMosaic search={search} kind={kind} />
       </section>
     </div>
   );
