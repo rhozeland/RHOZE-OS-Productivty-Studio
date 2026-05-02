@@ -294,10 +294,45 @@ const EventCreatePage = () => {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label>Category</Label>
-            <select
+        <div className="space-y-1.5">
+          <Label>Cover image</Label>
+          {coverUrl ? (
+            <div className="relative overflow-hidden rounded-xl border border-border aspect-[16/9] bg-muted">
+              <img src={coverUrl} alt="Event cover" className="h-full w-full object-cover" />
+              <button
+                type="button"
+                onClick={() => setCoverUrl(null)}
+                className="absolute top-2 right-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-background/85 backdrop-blur border border-border hover:bg-background"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <label className="relative flex aspect-[16/9] w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/40 text-center text-muted-foreground hover:bg-muted/60 transition-colors">
+              {coverUploading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <>
+                  <ImagePlus className="h-6 w-6" />
+                  <p className="text-xs">Click to upload (16:9, max 5 MB)</p>
+                </>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                className="absolute inset-0 cursor-pointer opacity-0"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleCoverUpload(f);
+                  e.target.value = "";
+                }}
+                disabled={coverUploading}
+              />
+            </label>
+          )}
+        </div>
+
+
               value={category}
               onChange={(e) => setCategory(e.target.value as any)}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm capitalize"
