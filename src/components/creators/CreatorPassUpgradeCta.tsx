@@ -28,7 +28,7 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
     queryFn: async () => {
       const { data } = await supabase
         .from("user_credits")
-        .select("subscription_tier")
+        .select("tier")
         .eq("user_id", user!.id)
         .maybeSingle();
       return data;
@@ -37,7 +37,7 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
   });
 
   if (!user) return null;
-  const currentTier = (tierRow?.subscription_tier ?? "spark").toLowerCase();
+  const currentTier = (tierRow?.tier ?? "spark").toLowerCase();
   if (currentTier === "play") return null;
   const target = TIER_NEXT[currentTier] ?? TIER_NEXT.spark;
 
