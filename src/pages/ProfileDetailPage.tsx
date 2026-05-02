@@ -20,6 +20,7 @@ import ProfileBadges from "@/components/profile/ProfileBadges";
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
 import { cn } from "@/lib/utils";
+import { ROLE_BY_ID } from "@/lib/creator-roles";
 
 // Human-readable labels + destinations for on-chain reputation tiles.
 // Tiles are clickable when href is set; otherwise rendered as static cards.
@@ -341,9 +342,25 @@ const ProfileDetailPage = () => {
                 )}
               </div>
 
-              {/* Username + headline + location */}
+              {/* Username + roles + slogan */}
               {p.username && <p className="text-xs text-muted-foreground mt-0.5">@{p.username}</p>}
-              {p.headline && <p className="text-sm text-muted-foreground mt-0.5">{p.headline}</p>}
+              {Array.isArray(p.creator_roles) && p.creator_roles.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {p.creator_roles.map((id: string) => {
+                    const role = ROLE_BY_ID.get(id);
+                    return (
+                      <span
+                        key={id}
+                        className="rounded-full bg-foreground/5 border border-border px-2 py-0.5 text-[11px] font-medium text-foreground/80 flex items-center gap-1"
+                      >
+                        {role?.emoji && <span aria-hidden>{role.emoji}</span>}
+                        {role?.label ?? id}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+              {p.headline && <p className="text-sm text-foreground/80 italic mt-1.5 leading-snug">"{p.headline}"</p>}
 
               <div className="flex items-center gap-3 flex-wrap mt-1.5">
                 {p.location && (
