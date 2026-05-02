@@ -51,6 +51,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import GuestDashboardPreview from "@/components/guest/GuestDashboardPreview";
+import FirstRunChecklist from "@/components/dashboard/FirstRunChecklist";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { format } from "date-fns";
 
@@ -682,6 +683,12 @@ const DashboardPage = () => {
             : "Step into Spaces or tune into the Hub."}
         </p>
       </motion.div>
+
+      {/* ─── First-run checklist ─────────────────────────────────────────
+          Slim onboarding card. Only renders for users who look new
+          (missing avatar/bio, no Flow posts). Auto-hides once they
+          have a profile + at least one post, or on dismiss. */}
+      {user && <FirstRunChecklist />}
 
       {/* ════════════════════════════════════════════════════════════════
           ACT 1 — Split-screen duo + shared search
