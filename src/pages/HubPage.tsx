@@ -136,6 +136,9 @@ const HubPage = () => {
     },
     enabled: lane === "conversations",
   });
+
+  // ─── Offerings: services + digital goods + collaboration ─────────────
+  const { data: offerings, isLoading: loadingOfferings } = useQuery({
     queryKey: ["hub-offerings", search],
     queryFn: async () => {
       let q = supabase
