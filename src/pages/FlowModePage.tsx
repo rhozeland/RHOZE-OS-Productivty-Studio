@@ -738,6 +738,32 @@ const FlowModePage = () => {
   // briefly render a card from the previous scope (which would "mix" the
   // sequence the user sees). The skeleton/empty state below renders instead.
   const allItems = flowItemsFetching ? [] : flowItems ?? [];
+
+  // Engagement counts (likes + comments) and per-user liked set for visible items.
+  const visibleIds = allItems.map((i: any) => i.id);
+  const { data: engagement } = useQuery({
+    queryKey: ["flow-engagement", visibleIds.join(",") || "none", user?.id ?? "guest"],
+    enabled: calibrated && visibleIds.length > 0,
+    queryFn: async () => {
+      const [likes, comments, mine] = await Promise.all([
+        supabase.from("flow_interactions").select("flow_item_id").eq("action", "like").in("flow_item_id", visibleIds),
+        supabase.from("flow_comments").select("flow_item_id").in("flow_item_id", visibleIds),
+        user
+          ? supabase.from("flow_interactions").select("flow_item_id").eq("action", "like").eq("user_id", user.id).in("flow_item_id", visibleIds)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+      const tally = (rows: any[] | null | undefined) => {
+        const m = new Map<string, number>();
+        (rows ?? []).forEach((r: any) => m.set(r.flow_item_id, (m.get(r.flow_item_id) ?? 0) + 1));
+        return m;
+      };
+      return {
+        likes: tally(likes.data),
+        comments: tally(comments.data),
+        liked: new Set((mine.data ?? []).map((r: any) => r.flow_item_id)),
+      };
+    },
+  });
   const currentItem = allItems.length > 0 ? allItems[currentIndex % allItems.length] : null;
 
   // Batched coin lookup keyed by uploader (creator_id). Coins are now
@@ -1310,8 +1336,12 @@ const FlowModePage = () => {
                       item={currentItem}
                       expanded={expandedCard}
                       onToggleExpand={() => setExpandedCard(!expandedCard)}
-                      onSave={() => performAction("save")}
+                      onLike={() => performAction("like")}
+                      onComment={() => performAction("comment")}
                       onShare={() => performAction("share")}
+                      liked={engagement?.liked.has(currentItem.id)}
+                      likeCount={engagement?.likes.get(currentItem.id) ?? 0}
+                      commentCount={engagement?.comments.get(currentItem.id) ?? 0}
                       onDelete={() => deleteFlowItem.mutate(currentItem.id)}
                       isOwner={currentItem.user_id === user?.id}
                       isAdmin={isAdmin}
@@ -1403,8 +1433,12 @@ const FlowModePage = () => {
                           item={item}
                           expanded={false}
                           onToggleExpand={() => {}}
-                          onSave={() => performAction("save", undefined, item)}
+                          onLike={() => performAction("like", undefined, item)}
+                          onComment={() => performAction("comment", undefined, item)}
                           onShare={() => performAction("share", undefined, item)}
+                          liked={engagement?.liked.has(item.id)}
+                          likeCount={engagement?.likes.get(item.id) ?? 0}
+                          commentCount={engagement?.comments.get(item.id) ?? 0}
                           onDelete={() => deleteFlowItem.mutate(item.id)}
                           isOwner={item.user_id === user?.id}
                           isAdmin={isAdmin}
