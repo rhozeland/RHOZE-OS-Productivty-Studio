@@ -37,6 +37,7 @@ type Props = {
   /** Existing gating config so the dialog can hydrate. */
   current?: {
     enabled?: boolean;
+    pool_type?: "launch" | "rhoze_pool";
     launch_id?: string;
     min_tokens?: number;
     gated_path?: string;
@@ -54,6 +55,9 @@ export const TokenGateDialog = ({
   const { user } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [poolType, setPoolType] = useState<"launch" | "rhoze_pool">(
+    current?.pool_type ?? "launch",
+  );
   const [launchId, setLaunchId] = useState<string>(current?.launch_id ?? "");
   const [minTokens, setMinTokens] = useState<string>(
     current?.min_tokens != null ? String(current.min_tokens) : "1000",
@@ -79,7 +83,7 @@ export const TokenGateDialog = ({
   const saveMut = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Sign in required");
-      if (!launchId) throw new Error("Pick a coin");
+      if (poolType === "launch" && !launchId) throw new Error("Pick a coin");
       const threshold = Number(minTokens);
       if (!Number.isFinite(threshold) || threshold < 0) {
         throw new Error("Threshold must be a positive number");
@@ -103,16 +107,17 @@ export const TokenGateDialog = ({
 
       if (!gatedPath) throw new Error("Upload the gated file");
 
+      const gating: Record<string, unknown> = {
+        enabled: true,
+        pool_type: poolType,
+        min_tokens: threshold,
+        gated_path: gatedPath,
+      };
+      if (poolType === "launch") gating.launch_id = launchId;
+
       const { error: updErr } = await supabase
         .from("works")
-        .update({
-          gating: {
-            enabled: true,
-            launch_id: launchId,
-            min_tokens: threshold,
-            gated_path: gatedPath,
-          },
-        })
+        .update({ gating })
         .eq("id", workId);
       if (updErr) throw updErr;
     },
