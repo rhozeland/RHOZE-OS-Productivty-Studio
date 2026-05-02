@@ -51,6 +51,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import GuestDashboardPreview from "@/components/guest/GuestDashboardPreview";
+import FirstRunChecklist from "@/components/dashboard/FirstRunChecklist";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { format } from "date-fns";
 
