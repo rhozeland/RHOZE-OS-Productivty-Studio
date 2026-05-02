@@ -1,0 +1,2 @@
+REVOKE ALL ON FUNCTION public.create_project_with_owner(text, text, text, text, text, text, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.create_project_with_owner(text, text, text, text, text, text, text) TO authenticated;

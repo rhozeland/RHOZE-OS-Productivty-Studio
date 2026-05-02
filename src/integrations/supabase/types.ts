@@ -4128,6 +4128,42 @@ export type Database = {
         }
         Returns: string
       }
+      create_project_with_owner: {
+        Args: {
+          _cover_color?: string
+          _description?: string
+          _project_type?: string
+          _scope_of_work?: string
+          _status?: string
+          _title: string
+          _vision?: string
+        }
+        Returns: {
+          categories: string[] | null
+          client_name: string | null
+          cover_color: string | null
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          is_estimate: boolean
+          project_type: string | null
+          runtime_notes: string | null
+          scope_of_work: string | null
+          status: string
+          title: string
+          total_budget: number
+          updated_at: string
+          user_id: string
+          vision: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "projects"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean

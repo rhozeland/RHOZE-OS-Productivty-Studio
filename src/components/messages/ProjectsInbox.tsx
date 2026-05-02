@@ -31,8 +31,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -48,6 +56,10 @@ import {
   ListTree,
   Loader2,
   Link as LinkIcon,
+  Briefcase,
+  Users,
+  Banknote,
+  Repeat,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -71,6 +83,30 @@ const STATUS_META: Record<string, { label: string; icon: typeof Clock; color: st
   completed: { label: "Completed",   icon: CheckCircle2,  color: "bg-emerald-500/10 text-emerald-600" },
   paused:    { label: "Paused",      icon: PauseCircle,   color: "bg-amber-500/10 text-amber-600" },
 };
+
+const PROJECT_INTENTS = [
+  {
+    value: "service",
+    label: "Service / client work",
+    hint: "Start the thread now, add budget later inside the project.",
+    icon: Briefcase,
+  },
+  {
+    value: "collaboration",
+    label: "Creative collaboration",
+    hint: "Shared working space for ideas, files, and execution.",
+    icon: Users,
+  },
+] as const;
+
+const COVER_COLORS = [
+  "#7c3aed",
+  "#2563eb",
+  "#0f766e",
+  "#ca8a04",
+  "#be123c",
+  "#1f2937",
+];
 
 const ProjectsInbox = ({ userId }: { userId: string }) => {
   const queryClient = useQueryClient();
@@ -513,28 +549,35 @@ const NewProjectDialog = ({
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [vision, setVision] = useState("");
+  const [scope, setScope] = useState("");
+  const [projectIntent, setProjectIntent] = useState<(typeof PROJECT_INTENTS)[number]["value"]>("service");
+  const [coverColor, setCoverColor] = useState(COVER_COLORS[0]);
 
   const create = useMutation({
     mutationFn: async () => {
       if (!title.trim()) throw new Error("Title required.");
-      const { data, error } = await supabase
-        .from("projects")
-        .insert({
-          title: title.trim(),
-          description: description.trim() || null,
-          user_id: userId,
-          project_type: "collaborative",
-          status: "active",
-          cover_color: "#7c3aed",
-        })
-        .select()
-        .single();
+      const { data, error } = await (supabase.rpc as any)("create_project_with_owner", {
+        _title: title.trim(),
+        _description: description.trim() || null,
+        _vision: vision.trim() || null,
+        _scope_of_work: scope.trim() || null,
+        _project_type: projectIntent === "service" ? "standard" : "collaborative",
+        _status: "active",
+        _cover_color: coverColor,
+      });
       if (error) throw error;
-      return data;
+      const project = Array.isArray(data) ? data[0] : data;
+      if (!project?.id) throw new Error("Project creation returned no project.");
+      return project;
     },
     onSuccess: (p: any) => {
       setTitle("");
       setDescription("");
+      setVision("");
+      setScope("");
+      setProjectIntent("service");
+      setCoverColor(COVER_COLORS[0]);
       onOpenChange(false);
       onCreated(p.id);
     },
@@ -543,29 +586,160 @@ const NewProjectDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl border-border/70 p-0 overflow-hidden">
+        <DialogHeader className="border-b border-border/70 px-6 py-5">
           <DialogTitle className="font-display">New project</DialogTitle>
+          <DialogDescription>
+            Start with the brief. Budget and deeper project controls live inside the workspace after this.
+          </DialogDescription>
         </DialogHeader>
         <form
           onSubmit={(e) => {
             e.preventDefault();
             create.mutate();
           }}
-          className="space-y-3"
+          className="space-y-6 px-6 py-5"
         >
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Project title"
-            autoFocus
-          />
-          <Textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="What's this project about? (optional)"
-            rows={3}
-          />
+          <div className="grid gap-6 md:grid-cols-[1.15fr_0.85fr]">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  Project name
+                </label>
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Name the project"
+                  autoFocus
+                  className="h-12 rounded-2xl"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  One-line summary
+                </label>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="What is this project for?"
+                  rows={3}
+                  className="min-h-[96px] rounded-2xl resize-none"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  Vision
+                </label>
+                <Textarea
+                  value={vision}
+                  onChange={(e) => setVision(e.target.value)}
+                  placeholder="What should this become once it lands well?"
+                  rows={4}
+                  className="min-h-[120px] rounded-2xl resize-none"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  Scope for now
+                </label>
+                <Textarea
+                  value={scope}
+                  onChange={(e) => setScope(e.target.value)}
+                  placeholder="Deliverables, constraints, references, timing — anything the thread should remember."
+                  rows={5}
+                  className="min-h-[140px] rounded-2xl resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 space-y-3">
+                <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  <Repeat className="h-3.5 w-3.5" /> Project mode
+                </div>
+                <div className="space-y-2">
+                  {PROJECT_INTENTS.map((intent) => {
+                    const Icon = intent.icon;
+                    const active = projectIntent === intent.value;
+                    return (
+                      <button
+                        key={intent.value}
+                        type="button"
+                        onClick={() => setProjectIntent(intent.value)}
+                        className={cn(
+                          "w-full rounded-2xl border px-3 py-3 text-left transition-colors",
+                          active
+                            ? "border-primary bg-primary/10"
+                            : "border-border bg-background hover:bg-muted/40",
+                        )}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={cn("mt-0.5 rounded-full p-2", active ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground")}>
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium text-foreground">{intent.label}</p>
+                            <p className="text-xs text-muted-foreground leading-relaxed">{intent.hint}</p>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 space-y-3">
+                <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  <Banknote className="h-3.5 w-3.5" /> Budget timing
+                </div>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  No budget is required here. Open the workspace first, then add pricing only if the project actually needs it.
+                </p>
+                <div className="rounded-xl border border-dashed border-border/80 bg-background/60 px-3 py-2 text-xs text-muted-foreground">
+                  This keeps paid and collaborative work in one flow instead of splitting them too early.
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 space-y-3">
+                <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground block">
+                  Accent color
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {COVER_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setCoverColor(color)}
+                      className={cn(
+                        "h-9 w-9 rounded-full border-2 transition-transform",
+                        coverColor === color ? "scale-110 border-foreground" : "border-transparent",
+                      )}
+                      style={{ backgroundColor: color }}
+                      aria-label={`Choose project color ${color}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  Status on create
+                </label>
+                <Select value="active" disabled>
+                  <SelectTrigger className="h-11 rounded-2xl">
+                    <SelectValue placeholder="In progress" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">In progress</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
           <Button
             type="submit"
             className="w-full rounded-full gap-1.5"
