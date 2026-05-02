@@ -1,97 +1,102 @@
+# v7 Phase 4 — Two Audiences, One Loop
 
-Five connected changes, all frontend-only — no DB, no edge functions.
+Sharpen Rhozeland into a **two-sided market** with one currency bridging it:
 
-## 1. Strip Settings modules
+- **Fans / Traders** consume, support, speculate. Earn $RHOZE through engagement + commerce. Swap into artist coins to back creators they believe in.
+- **Verified Artists** upload IP, launch coins, monetize. Their badge = trust signal that protects against impersonation.
 
-`src/pages/SettingsPage.tsx`
+This phase introduces the **Verified Artist tier**, **tiered upload gating**, a **rebalanced hybrid rewards model**, and surfaces the **fan → artist coin swap** as a first-class funnel.
 
-- Remove from the `SECTIONS` array: `appearance`, `dock`, `flow-cards`.
-- Delete the `renderAppearance`, `renderDock`, `renderFlowCards` functions and their entries in the section dispatcher map (`appearance`, `dock`, `"flow-cards"`).
-- Delete the now-unused imports: `DockCustomizer`, `FlowCardCustomizer`, `Palette` (if unused elsewhere in the file), `LayoutDashboard`, `Sparkles` (if only used by these sections).
-- If theme toggle lived in Appearance, fold its contents into the existing top-of-page or into Account (theme toggle already exists in the header so we can drop it cleanly).
-- Keep the component files (`DockCustomizer.tsx`, `FlowCardCustomizer.tsx`) on disk — they're not deleted, just unmounted. Reduces blast radius and keeps the option to revive.
+---
 
-## 2. Hide the bottom dock globally
+## 1. Verified Artist tier (identity layer)
 
-`src/components/AppLayout.tsx`
+**New profile state:** `verification_status` = `none | pending | verified | revoked` (default `none`).
 
-- Replace the conditional `{user && !location.pathname.startsWith("/flow") && <DockBar />}` with nothing.
-- Leave `DockBar.tsx` and `DockCustomizer.tsx` files untouched on disk — same rationale as above (revertable).
-- Remove the `pb-32` padding bump on `<main>` since the dock no longer occupies the bottom: change `${user ? "pb-32" : "pb-8"}` → just `pb-8`.
+**What changes for unverified users (Fans):**
+- Full consumer experience: browse, buy works, hold $RHOZE, swap into artist coins, comment, follow, attend Spaces.
+- Can still upload, but uploads are flagged `unverified_work` — visually watermarked with an **"Unverified"** chip on cards and detail pages.
+- Cannot mint Verified IP, launch a coin, list paid services, or host paid Spaces.
 
-## 3. Move Flow Mode into Hub (toggle + widget, kill flame button)
+**What unlocks at Verified:**
+- **Verified Artist** badge (new `<VerifiedArtistBadge />`, distinct from per-work `<VerifiedIPBadge />`) on profile, cards, and authored content.
+- Mint Verified IP, launch a coin, list paid offerings, host paid Spaces.
 
-### Kill the search-bar flame
-`src/components/AppLayout.tsx` — remove the entire `{user && (<Tooltip>…flame…</Tooltip>)}` block above the search button. Adjust the search button's left padding back to `pl-4` always (drop the `user ? "pl-11" : "pl-4"` ternary).
+**Verification flow (manual now):**
+- New page `/settings/verification` → submission form: 30-second selfie video, 2+ social links, contact email, connected wallet (already required), brief artist bio.
+- Stores into new `artist_verification_requests` table.
+- New `AdminArtistVerifications` panel (mirrors existing `AdminWorkVerifications`) → review queue with approve/reject + note.
+- Approval flips `profiles.verification_status` to `verified` and fires a notification + email.
 
-### Add Tile/Flow view toggle on Hub
-`src/pages/HubPage.tsx` — at the top of the page (near the Lane chips row) add a small segmented control: `Tile · Flow`. State lives in component (`viewMode: "tile" | "flow"`), persisted to URL as `?view=flow`.
+## 2. Tiered upload gating (anti-impersonation)
 
-- `view=tile` (default) renders the existing lane grid unchanged.
-- `view=flow` renders the embedded Flow widget (see next bullet) in fullscreen-within-page mode (replaces the lane grid, keeps Hub header + lane chips).
+**Universal upload paths** (works, drops, posts) gain a server-side check:
+- If `verification_status !== 'verified'` and the user attempts to mark a work as Verified IP → blocked with a CTA modal pointing to `/settings/verification`.
+- Unverified uploads are saved with `is_unverified = true` on the work row; UI surfaces an **Unverified** chip everywhere the work appears.
+- Coin launch + paid services + paid Spaces creation paths get a hard gate (button disabled, tooltip → "Become a Verified Artist to unlock").
 
-### Embedded Flow widget on Hub homepage
-New file `src/components/hub/HubFlowWidget.tsx`:
+## 3. Hybrid rewards rebalance
 
-- Compact card showing the top 3 Flow items (poster image + creator name + verified badge) using the existing `loadFlowFeed` helper. Keep it lazy/cheap.
-- Click → navigates to `/hub?view=flow` (which renders the same widget enlarged).
-- When `expanded` prop is true: renders the actual `<FlowModePage />` content full-bleed inside a card, OR — simpler — just `navigate("/flow")` for the enlarged experience and keep the widget as a teaser.
+Update `src/lib/rewards-catalog.ts` (or create if missing) — single source of truth for action → $RHOZE amounts. All credits continue to go through the existing **Admin Reward Gate** (`pending_rewards` → admin approves → `user_credits`).
 
-**Decision for v1**: Widget on the Conversations lane top, plus the toggle. The toggle's `flow` mode navigates to `/flow` (we don't try to embed the heavy swipe stack inside Hub yet — too much state). The widget is purely a 3-card teaser that links into either tile feed or `/flow` when "Open Flow" is tapped. This honours "both — toggle + widget" without rewriting FlowModePage.
+**Engagement (small, daily-capped):**
+- like_work: 0.5 $RHOZE (cap 20/day)
+- follow_artist: 1 $RHOZE (cap 10/day)
+- comment_work: 0.5 $RHOZE (cap 20/day)
+- attend_space: 5 $RHOZE (per event)
+- complete_profile: 25 $RHOZE (one-time)
 
-### Side nav usage trace
-- Update memory: Flow Mode now lives at `/flow` (still routable) AND as widget+toggle entry point on Hub. Remove the "/flow redirects to /projects" line in the Flow Mode memory (it's stale and incorrect).
+**Commerce (bigger, the real driver):**
+- buy_work: 5% of fiat spend converted to $RHOZE
+- hold_artist_coin_7d: 10 $RHOZE per coin held continuously 7 days
+- refer_paying_user: 100 $RHOZE
+- attend_paid_space: 25 $RHOZE
+- swap_into_artist_coin: 2% rebate on first swap per coin
 
-## 4. Side nav rework + reframe Studio as "My Studio"
+A new `/rewards` page section ("How you earn") visualizes the full catalog so fans see the loop clearly.
 
-### `src/components/AppSidebar.tsx`
-Replace `pillarItems` with the v7 IA (Spaces + Projects removed from primary nav):
+## 4. Fan → artist coin swap funnel
 
-```
-[Discover, Hub, Inbox, Profile]
-```
+**Discover page** — new lane **"Trending Artists"** showing top 6 verified artists with active coins. Each card has:
+- Verified artist badge, recent work thumbnail, coin price + 24h delta sparkline, **"Swap $RHOZE →"** quick CTA opening the existing `TradePanel` modal.
 
-Replace `secondaryItems` with:
+**Profile (Coin tab)** stays canonical — already wired to `swap_rhoze_for_coin` RPC. Promote the swap CTA above the chart so it's the first thing a fan sees on a verified artist's profile.
 
-```
-[My Studio (/dashboard), Creator Pass (/credits)]
-```
+**Landing page hero** — refresh subcopy to name the loop: *"Discover artists. Earn $RHOZE by supporting them. Swap into their coin and grow together."* (Keeps the v7 ownership pitch, clarifies the two-audience flywheel.)
 
-- Drop `Spaces` from pillarItems.
-- Drop `Projects` from secondaryItems (still routable via Inbox tab).
-- Rename the Studio entry icon from `Home` to `Box` or `LayoutGrid` (something that reads as "your workspace") and label "My Studio".
+---
 
-### `src/pages/DashboardPage.tsx` — strip the dual-network framing
+## Technical plan
 
-- Delete ACT 1 (split-screen Studios | Hub duo hero with shared search), ACT 2 (Nearby studios + Hub pulse stacked previews), ACT 3 (unified pulse feed Studios/Hub toggle), ACT 4 (Spaces by city + People grid).
-- Replace with a clean "My Studio" header: greeting (kept) + tagline like "Your workspace. Drafts, drops, bookings, and what's next."
-- Keep: FirstRunChecklist, the personal sections (Projects, Schedule, Messages), Customizer for those personal sections, GuestDashboardPreview branch.
-- Remove the giant Hub/Spaces lane copy — "My Studio" is private and personal, not a public discovery surface.
-- Anything pulling from `studios` table or "hub pulse" queries inside this page can be dropped (cuts a lot of code and queries).
+**Database (one migration):**
+1. `ALTER TABLE profiles ADD COLUMN verification_status text DEFAULT 'none' CHECK (verification_status IN ('none','pending','verified','revoked'))`.
+2. `ALTER TABLE profiles ADD COLUMN verified_at timestamptz`.
+3. `CREATE TABLE artist_verification_requests` (id, user_id, video_url, social_links jsonb, contact_email, bio, wallet_address, status, reviewer_id, review_note, decided_at, created_at, updated_at) + RLS (owner read/write own pending; admins via `has_role` read/update all).
+4. `ALTER TABLE works ADD COLUMN is_unverified boolean DEFAULT false`.
+5. New storage bucket `artist-verification` (private) for selfie videos with owner-folder policies.
+6. Trigger: when `artist_verification_requests.status` flips to `approved`, set `profiles.verification_status='verified'` + `verified_at=now()` + insert notification.
+7. Server-side `before insert` trigger on `coin_launches`, `services`, paid Spaces tables → reject if author not verified.
 
-### `src/components/AppLayout.tsx` header
-- Keep the search and command palette as-is — it's still the global ⌘K. Studios remain searchable there.
+**Frontend (new + edited):**
+- `src/components/profile/VerifiedArtistBadge.tsx` — new (distinct visual from VerifiedIPBadge).
+- `src/components/works/UnverifiedWorkChip.tsx` — new.
+- `src/pages/settings/VerificationPage.tsx` — new, mounted at `/settings/verification`.
+- `src/components/admin/AdminArtistVerifications.tsx` — new admin panel.
+- `src/lib/rewards-catalog.ts` — new/updated single source of truth + `/rewards` page consumes it.
+- `src/components/discover/TrendingArtistsLane.tsx` — new Discover lane.
+- Edits: `DiscoverPage.tsx`, `ProfileDetailPage.tsx` (promote swap CTA), `LandingPage.tsx` (subcopy), `SettingsPage.tsx` (add Verification module → 9 modules total), upload modals (gate Verified IP toggle), coin launch + service create + paid Space create flows (gate behind verified).
 
-## 5. Memory + verify
+**Memory updates:**
+- `mem://features/verified-artist` — new file documenting tier, gating rules, badge usage.
+- `mem://features/rewards-catalog` — new file with the canonical action→amount table.
+- Update `mem://arch/pillars-v7` to mark Phase 4 shipped + add two-audience framing.
+- Update `mem://index.md` Core: add "Verified Artist tier gates IP/coin/paid surfaces; unverified can still consume + swap + upload as Unverified."
 
-- Update `mem://arch/pillars-v7`: dock hidden globally, Stream is the only feed pillar, side nav now Discover · Hub · Inbox · Profile + My Studio + Creator Pass, Settings stripped to 8 modules, Flow accessible via Hub widget + toggle.
-- Update `mem://arch/navigation`: dock removed; nav happens via side nav + header.
-- Update `mem://features/user-settings`: 8 modules now (was 10): Profile · Display Picture · Banner & Background · Wallet · Verified IP · Shipping · Notifications · Security · Account. Removed Appearance, Dock Menu, Flow Cards.
-- Update `mem://features/flow-mode`: `/flow` is a first-class page again; entered via Hub toggle (`/hub?view=flow`) and the HubFlowWidget. Search-bar flame button removed.
-- Update `mem://features/dashboard`: reframed as "My Studio" personal workspace, dual-network Spaces/Hub framing removed.
-- Update Core in `mem://index.md`: drop "Flow launcher lives in the top search bar (flame icon)." line, replace with "Flow Mode = entered via the Hub view toggle (`/hub?view=flow`) and the embedded HubFlowWidget; standalone /flow still routable."
-- Update Core: dock = HIDDEN globally; nav happens via side nav (Discover · Hub · Inbox · Profile · My Studio · Creator Pass) + header search.
-- Run `bunx tsc --noEmit` to verify zero type errors.
+**Out of scope (deferred):**
+- Automated verification (social OAuth proof, ID checks) — manual queue only for now.
+- On-chain verification proof — future Anchor program work.
+- Reward farming defenses beyond per-action daily caps — revisit if abuse appears.
 
-## Out of scope (not touched this pass)
+---
 
-- Routing aliases for `/spaces`, `/studios`, `/projects`, `/marketplace`, `/creators`, `/people` stay as-is — they already redirect to `/stream`. We're not deleting routes, just removing them from the primary nav.
-- StudiosPage, SpacesPage, etc. remain on disk and routable (deep links survive).
-- Stream composer and ProjectsInbox stay as shipped in v7 phases 1-2.
-- DockBar.tsx + DockCustomizer.tsx + FlowCardCustomizer.tsx files stay on disk (just unmounted from UI). Easy to revive if user changes mind.
-
-## Technical notes
-
-- **Why keep `/flow` as a routable page** instead of embedding inside Hub? FlowModePage is 2000+ lines with its own swipe-state machine, file upload pipeline, calibration, and idle hints. Embedding would either crash or require a major refactor. Toggle+widget is the right pragmatic compromise.
-- **Risk**: The DockBar tests (`nav-surface-parity.test.tsx`, `dock-active-parity.test.ts`) may fail if the dock is hidden globally. Either (a) update them to assert dock is hidden, or (b) leave them — they test the component's render parity, not whether AppLayout mounts it. They'll still pass since DockBar.tsx itself is unchanged.
-- **Risk**: Removing `pb-32` could surface FAB-overlap issues on pages that assumed dock was there. Quick visual check after build.
+Approve and I'll execute in this order: migration → badge components → verification flow → upload gating → rewards catalog → Discover Trending lane → memory updates → typecheck.
