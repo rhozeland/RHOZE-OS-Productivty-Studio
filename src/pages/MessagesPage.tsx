@@ -31,6 +31,7 @@ import BuddyList from "@/components/messages/BuddyList";
 import GuestMessagesPreview from "@/components/guest/GuestMessagesPreview";
 import ProjectsInbox from "@/components/messages/ProjectsInbox";
 import ListingsTab from "@/components/messages/ListingsTab";
+import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pending", color: "bg-amber-500/15 text-amber-600", icon: Clock },
@@ -429,6 +430,8 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
         <h1 className="font-display text-3xl font-bold text-foreground">Conversations</h1>
         <p className="text-muted-foreground">Messages, projects, and listings — all in one place.</p>
       </div>
+
+      <CreatorPassUpgradeCta />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
