@@ -53,6 +53,7 @@ import { playSwipeSound } from "@/lib/swipe-sound";
 import FlowCard from "@/components/flow/FlowCard";
 import FlowCardBackground from "@/components/flow/FlowCardBackground";
 import FlowShareDialog from "@/components/flow/FlowShareDialog";
+import FlowCommentSheet from "@/components/flow/FlowCommentSheet";
 import LinkPreviewCard from "@/components/flow/LinkPreviewCard";
 import { cn } from "@/lib/utils";
 import { loadFlowFeed } from "@/lib/flow-feed";
@@ -146,7 +147,8 @@ const FlowModePage = () => {
   const [expandedCard, setExpandedCard] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"swipe" | "browse">("swipe");
-  const [savePickerOpen, setSavePickerOpen] = useState(false);
+  const [commentSheetOpen, setCommentSheetOpen] = useState(false);
+  const [commentItem, setCommentItem] = useState<any>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareItem, setShareItem] = useState<any>(null);
   const [newTitle, setNewTitle] = useState("");
@@ -199,8 +201,8 @@ const FlowModePage = () => {
     return saved !== null ? saved === "true" : true;
   });
   const [swipeMap] = useState({
-    up: "save",
-    down: "share",
+    up: "like",
+    down: "comment",
     left: "dislike",
     right: "skip",
   });
