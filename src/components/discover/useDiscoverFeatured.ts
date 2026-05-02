@@ -124,7 +124,7 @@ const PLACE_TO_REGION_CODE: Record<string, string> = {
   GREAT BRITAIN: "GB",
   UNITED STATES: "US",
   USA: "US",
-  U.S.A.: "US",
+  "U.S.A.": "US",
   VIETNAM: "VN",
 };
 
