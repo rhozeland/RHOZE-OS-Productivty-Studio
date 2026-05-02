@@ -310,118 +310,101 @@ const ProfileDetailPage = () => {
             )}
           </div>
 
-          <div className="px-5 sm:px-8 pb-6 pt-3">
-            {/* Avatar */}
-            <div className="-mt-14 sm:-mt-16 relative z-10">
-              <div className="flex h-24 w-24 sm:h-28 sm:w-28 items-center justify-center rounded-full border-4 border-card bg-muted shadow-xl overflow-hidden shrink-0 ring-2 ring-background/50">
-                {profile.avatar_url ? (
-                  <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <span className="font-display text-2xl font-bold text-muted-foreground">{initials}</span>
-                )}
+          <div className="px-5 sm:px-8 pb-5 pt-3">
+            {/* Avatar + Name row — handle sits tight beside name */}
+            <div className="flex items-end gap-4 sm:gap-5">
+              <div className="-mt-14 sm:-mt-16 relative z-10 shrink-0">
+                <div className="flex h-24 w-24 sm:h-28 sm:w-28 items-center justify-center rounded-full border-4 border-card bg-muted shadow-xl overflow-hidden ring-2 ring-background/50">
+                  {profile.avatar_url ? (
+                    <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="font-display text-2xl font-bold text-muted-foreground">{initials}</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex-1 min-w-0 pb-1">
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground tracking-tight break-words leading-none">
+                    {p.display_name || p.username || "Creator"}
+                  </h1>
+                  {p.username && (
+                    <span className="text-sm text-muted-foreground leading-none">@{p.username}</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                  <ProfileBadges userId={id!} compact />
+                  {reviewStats && reviewStats.count > 0 && (
+                    <Badge variant="outline" className="text-[10px] gap-1 font-medium">
+                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {reviewStats.avg} ({reviewStats.count})
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Name + Identity Row */}
-            <div className="mt-3">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground tracking-tight break-words">
-                  {p.display_name || p.username || "Creator"}
-                </h1>
-                {/* Creator Pass tier badge */}
-                <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold", tier.bg, tier.color)}>
-                  <Zap className="h-3 w-3" /> {tier.label}
-                </span>
-                {profile.available && (
-                  <Badge variant="secondary" className="text-[10px] gap-1 font-medium">
-                    <CheckCircle className="h-3 w-3 text-emerald-500" /> Available
-                  </Badge>
-                )}
-                <ProfileBadges userId={id!} compact />
-                {reviewStats && reviewStats.count > 0 && (
-                  <Badge variant="outline" className="text-[10px] gap-1 font-medium">
-                    <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {reviewStats.avg} ({reviewStats.count})
-                  </Badge>
-                )}
-              </div>
-
-              {/* Username + roles + slogan */}
-              {p.username && <p className="text-xs text-muted-foreground mt-0.5">@{p.username}</p>}
+            {/* Roles + meta — compact, no emojis, no italics */}
+            <div className="mt-4 space-y-2.5">
               {Array.isArray(p.creator_roles) && p.creator_roles.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-1.5">
-                  {p.creator_roles.map((id: string) => {
-                    const role = ROLE_BY_ID.get(id);
+                <div className="flex flex-wrap gap-1.5">
+                  {p.creator_roles.map((rid: string) => {
+                    const role = ROLE_BY_ID.get(rid);
                     return (
                       <span
-                        key={id}
-                        className="rounded-full bg-foreground/5 border border-border px-2 py-0.5 text-[11px] font-medium text-foreground/80 flex items-center gap-1"
+                        key={rid}
+                        className="rounded-full bg-foreground/5 border border-border/60 px-2.5 py-0.5 text-[11px] font-medium text-foreground/80"
                       >
-                        {role?.emoji && <span aria-hidden>{role.emoji}</span>}
-                        {role?.label ?? id}
+                        {role?.label ?? rid}
                       </span>
                     );
                   })}
                 </div>
               )}
-              {p.headline && <p className="text-sm text-foreground/80 italic mt-1.5 leading-snug">"{p.headline}"</p>}
+              {p.headline && (
+                <p className="text-sm text-foreground/80 leading-snug">{p.headline}</p>
+              )}
 
-              <div className="flex items-center gap-3 flex-wrap mt-1.5">
+              <div className="flex items-center gap-x-4 gap-y-1 flex-wrap text-xs text-muted-foreground">
                 {p.location && (
-                  <span className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> {p.location}</span>
+                  <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {p.location}</span>
                 )}
-                {p.wallet_address && (
-                  <span className="text-xs text-muted-foreground flex items-center gap-1 font-mono">
-                    💳 {p.wallet_address.slice(0, 4)}...{p.wallet_address.slice(-4)}
-                  </span>
-                )}
-                {/* Verified earnings badge — subtle inline */}
                 {totalProofs > 0 && (
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <span className="flex items-center gap-1">
                     <Shield className="h-3 w-3 text-primary" />
                     {anchoredCount > 0 ? `${anchoredCount} verified earnings` : `${totalProofs} earnings`}
                   </span>
                 )}
+                {hasSellerContent && (
+                  <span className="flex items-center gap-1">
+                    <Sparkles className="h-3 w-3" /> {sellerListings?.length ?? 0} listings
+                  </span>
+                )}
               </div>
+            </div>
 
-              {/* Action buttons for visitors */}
-              {!isOwnProfile && user && (
-                <div className="flex gap-2 mt-3 flex-wrap">
-                  <Button variant={isFollowing ? "outline" : "default"} size="sm" onClick={() => followMutation.mutate()} disabled={followMutation.isPending}>
-                    {isFollowing ? <><UserCheck className="mr-1.5 h-4 w-4" /> Following</> : <><UserPlus className="mr-1.5 h-4 w-4" /> Follow</>}
+            {/* Action buttons for visitors */}
+            {!isOwnProfile && user && (
+              <div className="flex gap-2 mt-4 flex-wrap">
+                <Button variant={isFollowing ? "outline" : "default"} size="sm" onClick={() => followMutation.mutate()} disabled={followMutation.isPending}>
+                  {isFollowing ? <><UserCheck className="mr-1.5 h-4 w-4" /> Following</> : <><UserPlus className="mr-1.5 h-4 w-4" /> Follow</>}
+                </Button>
+                {receivedConnectRequest ? (
+                  <Button size="sm" onClick={() => acceptConnectMutation.mutate()} disabled={acceptConnectMutation.isPending}>
+                    <UserCheck className="mr-1.5 h-4 w-4" /> Accept
                   </Button>
-                  {receivedConnectRequest ? (
-                    <Button size="sm" onClick={() => acceptConnectMutation.mutate()} disabled={acceptConnectMutation.isPending}>
-                      <UserCheck className="mr-1.5 h-4 w-4" /> Accept
-                    </Button>
-                  ) : (
-                    <Button variant={isConnected ? "outline" : "secondary"} size="sm" onClick={() => connectMutation.mutate()}
-                      disabled={connectMutation.isPending || (hasPendingConnect && !receivedConnectRequest)}>
-                      {isConnected ? "Connected" : hasPendingConnect ? "Pending…" : "Connect"}
-                    </Button>
-                  )}
-                  {isConnected && (
-                    <Button variant="outline" size="sm" onClick={() => navigate(`/messages?to=${id}`)}>
-                      <MessageSquare className="mr-1.5 h-4 w-4" /> Message
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Stats bar */}
-            <div className="flex items-center gap-6 mt-5 pt-4 border-t border-border/50">
-              {[
-                { value: followerCount ?? 0, label: "Followers" },
-                { value: followingCount ?? 0, label: "Following" },
-                ...(hasSellerContent ? [{ value: sellerListings?.length ?? 0, label: "Listings" }] : []),
-                ...(totalProofs > 0 ? [{ value: totalProofs, label: "Proofs" }] : []),
-              ].map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <p className="font-bold text-foreground text-lg">{stat.value}</p>
-                  <p className="text-[11px] text-muted-foreground tracking-wide">{stat.label}</p>
-                </div>
-              ))}
-            </div>
+                ) : (
+                  <Button variant={isConnected ? "outline" : "secondary"} size="sm" onClick={() => connectMutation.mutate()}
+                    disabled={connectMutation.isPending || (hasPendingConnect && !receivedConnectRequest)}>
+                    {isConnected ? "Connected" : hasPendingConnect ? "Pending…" : "Connect"}
+                  </Button>
+                )}
+                {isConnected && (
+                  <Button variant="outline" size="sm" onClick={() => navigate(`/messages?to=${id}`)}>
+                    <MessageSquare className="mr-1.5 h-4 w-4" /> Message
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </motion.div>
 
