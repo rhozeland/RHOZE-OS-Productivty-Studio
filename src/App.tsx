@@ -55,6 +55,7 @@ import TicketDetailPage from "@/pages/TicketDetailPage";
 import { ProfileRedirect } from "@/components/ProfileRedirect";
 import FlowModePage from "@/pages/FlowModePage";
 import LaunchRedirect from "@/pages/LaunchRedirect";
+import RewardsPage from "@/pages/RewardsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -97,6 +98,7 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/bookings",
   "/credits",
   "/purchases",
+  "/rewards",
   "/smartboards",
   "/smartboards/:id",
   "/flow",
@@ -223,6 +225,10 @@ const App = () => (
                 <Route path="/bookings" element={<CalendarPage />} />
                 <Route path="/credits" element={<CreditShopPage />} />
                 <Route path="/purchases" element={<Navigate to="/credits?tab=purchases" replace />} />
+                {/* v6: single explainer for the $RHOZE reward layer.
+                    Primary CTAs no longer pitch tokens — anyone curious
+                    lands here from a quiet "How rewards work" link. */}
+                <Route path="/rewards" element={<RewardsPage />} />
                 {/* Flow Mode — first-class public browser for fingerprinted
                     creative IP. Smartboards / Drop Rooms index routes still
                     redirect into Projects; their detail routes stay live so

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -550,7 +550,14 @@ const ProfileDetailPage = () => {
                 </h2>
               </div>
               <p className="text-sm text-muted-foreground">
-                Pick whatever fits — every action helps and most of them earn you $RHOZE for showing up early.
+                Pick whatever fits — every action helps. Curious about the
+                token layer?{" "}
+                <Link
+                  to="/rewards"
+                  className="underline-offset-2 hover:underline text-foreground/80"
+                >
+                  How rewards work →
+                </Link>
               </p>
             </div>
 

@@ -425,14 +425,20 @@ const DiscoverPage = () => {
       )}
 
       {!user && (featured || works?.length) && (
-        <section className="text-center pt-4">
+        <section className="text-center pt-4 space-y-2">
           <Link to="/auth">
             <Button size="lg" className="rounded-full gap-1.5">
               Join the network <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
-          <p className="text-[11px] text-muted-foreground mt-2">
-            Free to start. Earn $RHOZE for showing up early.
+          <p className="text-[11px] text-muted-foreground">
+            Free to start. Built for independent artists.{" "}
+            <Link
+              to="/rewards"
+              className="underline-offset-2 hover:underline text-foreground/70"
+            >
+              How rewards work →
+            </Link>
           </p>
         </section>
       )}

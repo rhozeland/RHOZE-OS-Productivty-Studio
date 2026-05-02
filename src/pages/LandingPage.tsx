@@ -109,15 +109,15 @@ const LandingPage = () => {
               </div>
 
               <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold leading-[1.1] text-foreground mb-4">
-                Productivity
+                Get discovered.
                 <br />
-                rewarded.
+                Get supported.
               </h1>
 
               <p className="text-sm sm:text-base text-muted-foreground mb-8 leading-relaxed">
-                Book studios. Hire talent. Ship projects.
+                A discovery + support network for independent artists.
                 <br />
-                Every action earns $RHOZE — unlocking exclusive spaces, networking, and more.
+                Share your work, find your people, and get backed on-chain.
               </p>
 
               <div className="flex items-center gap-3 flex-wrap justify-center lg:justify-start">
