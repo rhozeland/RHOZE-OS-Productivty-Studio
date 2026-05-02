@@ -752,7 +752,7 @@ const ListingDetailPage = () => {
                       </p>
                     )}
                   </div>
-                  <RevenueSplitConfig listingId={listing.id} />
+                  
                 </div>
               )}
 
