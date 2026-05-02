@@ -26,23 +26,23 @@ const LEVELS = [
   { level: 10, title: "Founder", xp: 1500, icon: Crown, color: "hsl(40 80% 50%)" },
 ];
 
-const TIER_GRADIENTS: Record<string, string> = {
-  spark: "linear-gradient(135deg, hsl(205 75% 65%), hsl(220 55% 42%))",
-  bloom: "linear-gradient(135deg, hsl(330 65% 72%), hsl(345 55% 48%))",
-  glow: "linear-gradient(135deg, hsl(30 90% 60%), hsl(20 80% 42%))",
-  play: "linear-gradient(135deg, hsl(50 90% 58%), hsl(38 80% 40%))",
-};
+import {
+  TIERS,
+  TIER_RANK,
+  getHoldTier,
+  getActivityTier,
+  getEffectiveTier,
+  type TierId,
+} from "@/lib/tier-matrix";
+import TierMatrix from "@/components/creators/TierMatrix";
 
-/** Token thresholds that unlock tiers without paying monthly */
-const TOKEN_TIER_MAP = [
-  { tier: "play", min: 50_000_000 },
-  { tier: "glow", min: 25_000_000 },
-  { tier: "bloom", min: 1_000_000 },
-  { tier: "spark", min: 0 },
-];
+const TIER_GRADIENTS: Record<string, string> = Object.fromEntries(
+  TIERS.map((t) => [t.id, t.gradient]),
+);
 
+/** Back-compat: existing imports rely on this name. */
 export function getTokenTier(balance: number): string {
-  return (TOKEN_TIER_MAP.find((t) => balance >= t.min) ?? TOKEN_TIER_MAP[TOKEN_TIER_MAP.length - 1]).tier;
+  return getHoldTier(balance);
 }
 
 const CreatorPassCard = () => {
