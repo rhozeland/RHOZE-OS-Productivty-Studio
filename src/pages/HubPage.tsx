@@ -305,34 +305,73 @@ const HubPage = () => {
         </div>
       </header>
 
-      {/* ─── Lane-aware composer (the new "Drop" surface) ─────────────── */}
-      <StreamComposer defaultType={composerDefault} />
-
-      {/* ─── Lane tabs ──────────────────────────────────────────────── */}
-      <div className="space-y-3">
-        <div className="flex gap-2 flex-wrap">
-          {LANES.map((l) => {
-            const Icon = l.icon;
-            const active = lane === l.key;
+      {/* ─── View toggle: Tile (lane grid) vs Flow (immersive widget) ─── */}
+      <div className="flex items-center justify-between gap-3">
+        <div
+          className="inline-flex items-center rounded-full border border-border bg-card p-0.5"
+          role="tablist"
+          aria-label="Hub view mode"
+        >
+          {(["tile", "flow"] as const).map((mode) => {
+            const active = viewMode === mode;
             return (
               <button
-                key={l.key}
+                key={mode}
                 type="button"
-                onClick={() => setLane(l.key)}
-                className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all ${
+                role="tab"
+                aria-selected={active}
+                onClick={() => setViewMode(mode)}
+                className={`px-4 py-1.5 text-xs font-medium rounded-full transition-all ${
                   active
                     ? "bg-foreground text-background shadow-sm"
-                    : "bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <Icon className="h-3.5 w-3.5" />
-                {l.label}
+                {mode === "tile" ? "Tile" : "Flow"}
               </button>
             );
           })}
         </div>
-        <p className="text-xs text-muted-foreground italic">{activeLane.tagline}</p>
       </div>
+
+      {viewMode === "flow" ? (
+        /* Flow view: enlarged HubFlowWidget. The full swipe stack lives at /flow. */
+        <HubFlowWidget expanded />
+      ) : (
+        <>
+          {/* ─── Lane-aware composer (the new "Drop" surface) ─────────────── */}
+          <StreamComposer defaultType={composerDefault} />
+
+          {/* ─── Embedded Flow teaser (3-card widget) ───────────────────── */}
+          <HubFlowWidget />
+
+          {/* ─── Lane tabs ──────────────────────────────────────────────── */}
+          <div className="space-y-3">
+            <div className="flex gap-2 flex-wrap">
+              {LANES.map((l) => {
+                const Icon = l.icon;
+                const active = lane === l.key;
+                return (
+                  <button
+                    key={l.key}
+                    type="button"
+                    onClick={() => setLane(l.key)}
+                    className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all ${
+                      active
+                        ? "bg-foreground text-background shadow-sm"
+                        : "bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    }`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {l.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground italic">{activeLane.tagline}</p>
+          </div>
+        </>
+      )}
 
       {/* ─── Search ─────────────────────────────────────────────────── */}
       <div className="relative max-w-md">
