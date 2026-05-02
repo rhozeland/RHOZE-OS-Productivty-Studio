@@ -413,13 +413,45 @@ const CreatorAvailabilityCalendar = ({
   // ─── Persist availability ───
   const persistAvailability = async (day: Date, startMin: number, endMin: number) => {
     if (!user || !isOwner) return;
-    const start = addMinutes(startOfDay(day), startMin);
-    const end = addMinutes(startOfDay(day), endMin);
 
     setSaving(true);
     try {
+      if (addType === "weekly") {
+        // weekday matches our weekStartsOn:1 layout (0 = Mon … 6 = Sun)
+        const weekday = weekDays.findIndex((d) => isSameDay(d, day));
+        if (weekday < 0) {
+          toast.error("Could not resolve weekday");
+          return;
+        }
+        // Check for existing recurring overlap on the same weekday
+        const { data: clashes } = await supabase
+          .from("creator_availability_recurring")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("weekday", weekday)
+          .lt("start_minute", endMin)
+          .gt("end_minute", startMin)
+          .limit(1);
+        if (clashes && clashes.length > 0) {
+          toast.error("That weekly slot overlaps an existing recurring block");
+          return;
+        }
+        const { error } = await supabase.from("creator_availability_recurring").insert({
+          user_id: user.id,
+          weekday,
+          start_minute: startMin,
+          end_minute: endMin,
+        });
+        if (error) throw error;
+        await queryClient.invalidateQueries({ queryKey: ["creator-recurring-availability", creatorId] });
+        toast.success(`Repeats every ${format(day, "EEEE")} ${formatTime(day, startMin)}–${formatTime(day, endMin)}`);
+        return;
+      }
+
+      const start = addMinutes(startOfDay(day), startMin);
+      const end = addMinutes(startOfDay(day), endMin);
+
       // Final-pass overlap check against the live database — guards against races
-      // where another tab/device added a block while we were dragging.
       const { data: clashes, error: checkErr } = await supabase
         .from("creator_availability")
         .select("id")
@@ -450,6 +482,14 @@ const CreatorAvailabilityCalendar = ({
 
   const removeAvailabilityWindow = async (id: string) => {
     try {
+      if (id.startsWith("recurring-")) {
+        const realId = id.replace(/^recurring-/, "");
+        const { error } = await supabase.from("creator_availability_recurring").delete().eq("id", realId);
+        if (error) throw error;
+        await queryClient.invalidateQueries({ queryKey: ["creator-recurring-availability", creatorId] });
+        toast.success("Removed weekly slot");
+        return;
+      }
       const { error } = await supabase.from("creator_availability").delete().eq("id", id);
       if (error) throw error;
       await queryClient.invalidateQueries({ queryKey: ["creator-availability", creatorId] });
