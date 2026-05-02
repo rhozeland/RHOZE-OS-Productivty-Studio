@@ -26,23 +26,23 @@ const LEVELS = [
   { level: 10, title: "Founder", xp: 1500, icon: Crown, color: "hsl(40 80% 50%)" },
 ];
 
-const TIER_GRADIENTS: Record<string, string> = {
-  spark: "linear-gradient(135deg, hsl(205 75% 65%), hsl(220 55% 42%))",
-  bloom: "linear-gradient(135deg, hsl(330 65% 72%), hsl(345 55% 48%))",
-  glow: "linear-gradient(135deg, hsl(30 90% 60%), hsl(20 80% 42%))",
-  play: "linear-gradient(135deg, hsl(50 90% 58%), hsl(38 80% 40%))",
-};
+import {
+  TIERS,
+  TIER_RANK,
+  getHoldTier,
+  getActivityTier,
+  getEffectiveTier,
+  type TierId,
+} from "@/lib/tier-matrix";
+import TierMatrix from "@/components/creators/TierMatrix";
 
-/** Token thresholds that unlock tiers without paying monthly */
-const TOKEN_TIER_MAP = [
-  { tier: "play", min: 50_000_000 },
-  { tier: "glow", min: 25_000_000 },
-  { tier: "bloom", min: 1_000_000 },
-  { tier: "spark", min: 0 },
-];
+const TIER_GRADIENTS: Record<string, string> = Object.fromEntries(
+  TIERS.map((t) => [t.id, t.gradient]),
+);
 
+/** Back-compat: existing imports rely on this name. */
 export function getTokenTier(balance: number): string {
-  return (TOKEN_TIER_MAP.find((t) => balance >= t.min) ?? TOKEN_TIER_MAP[TOKEN_TIER_MAP.length - 1]).tier;
+  return getHoldTier(balance);
 }
 
 const CreatorPassCard = () => {
@@ -144,6 +144,29 @@ const CreatorPassCard = () => {
     enabled: !!user,
   });
 
+  // ─── Activity counts → activity-based tier eligibility ───
+  const { data: activityCounts } = useQuery({
+    queryKey: ["tier-activity", user?.id],
+    queryFn: async () => {
+      const sb = supabase as any;
+      const [posts, projects, listings, events] = await Promise.all([
+        sb.from("works").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
+        sb.from("projects").select("id", { count: "exact", head: true }).eq("user_id", user!.id).eq("status", "completed"),
+        sb.from("listings").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
+        sb.from("events").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
+      ]);
+      return {
+        posts: (posts?.count as number) ?? 0,
+        projects: (projects?.count as number) ?? 0,
+        listings: (listings?.count as number) ?? 0,
+        events: (events?.count as number) ?? 0,
+        // Successful interactions: approved reward txns proxy (bookings, support, milestones all flow through rewards)
+        interactions: xpData?.txCount ?? 0,
+      };
+    },
+    enabled: !!user && xpData !== undefined,
+  });
+
   const totalXP = xpData?.totalXP ?? 0;
   const currentLevel = LEVELS.reduce((acc, l) => (totalXP >= l.xp ? l : acc), LEVELS[0]);
   const nextLevel = LEVELS.find((l) => l.xp > totalXP) ?? LEVELS[LEVELS.length - 1];
@@ -151,12 +174,12 @@ const CreatorPassCard = () => {
     ? Math.min(100, ((totalXP - currentLevel.xp) / (nextLevel.xp - currentLevel.xp)) * 100)
     : 100;
 
-  // Determine effective tier: max of subscription tier and token-holding tier
-  const LEGACY_MAP: Record<string, string> = { bronze: "spark", gold: "bloom", diamond: "glow", prism: "play" };
-  const subTier = credits?.tier ? (LEGACY_MAP[credits.tier] || credits.tier) : "spark";
-  const holdTier = tokenInfo ? getTokenTier(tokenInfo.balance) : "spark";
-  const TIER_RANK: Record<string, number> = { spark: 0, bloom: 1, glow: 2, play: 3 };
-  const effectiveTier = (TIER_RANK[holdTier] ?? 0) >= (TIER_RANK[subTier] ?? 0) ? holdTier : subTier;
+  // Effective tier = max(subscription, $RHOZE hold, activity)
+  const LEGACY_MAP: Record<string, TierId> = { bronze: "spark", gold: "bloom", diamond: "glow", prism: "play" };
+  const subTier: TierId = credits?.tier ? ((LEGACY_MAP[credits.tier] || credits.tier) as TierId) : "spark";
+  const holdTier: TierId = tokenInfo ? (getHoldTier(tokenInfo.balance) as TierId) : "spark";
+  const activityTier: TierId = activityCounts ? getActivityTier(activityCounts) : "spark";
+  const effectiveTier = getEffectiveTier(subTier, holdTier, activityTier);
   const gradient = TIER_GRADIENTS[effectiveTier] || TIER_GRADIENTS.spark;
 
   if (!user) return null;
@@ -318,76 +341,21 @@ const CreatorPassCard = () => {
         </motion.div>
       </div>
 
-      {/* ── Tier Benefits — v7: rewards for time in the ecosystem ── */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="surface-card p-5 space-y-3">
-        <h3 className="text-sm font-body font-semibold text-foreground flex items-center gap-2">
-          <Star className="h-4 w-4 text-primary" />
-          Tier Perks — Earned by Holding $RHOZE
-        </h3>
-        <p className="text-xs text-muted-foreground font-body">
-          The longer you hold and the more you contribute, the more the ecosystem rewards you back — bigger reward multipliers, lower fees, and earlier access to artist coin launches. No subscription needed.
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            {
-              tier: "Spark", hold: "0+",
-              benefits: ["1× reward multiplier", "Standard marketplace fees", "Public coin launches"],
-              active: effectiveTier === "spark",
-              gradient: "linear-gradient(135deg, hsl(205 75% 65%), hsl(220 55% 42%))",
-              glowColor: "hsl(210, 70%, 55%)",
-            },
-            {
-              tier: "Bloom", hold: "1M–24M",
-              benefits: ["1.25× reward multiplier", "5% off Spaces & services", "2 free IP anchors / mo", "24h early coin access"],
-              active: effectiveTier === "bloom",
-              gradient: "linear-gradient(135deg, hsl(330 65% 72%), hsl(345 55% 48%))",
-              glowColor: "hsl(335, 60%, 65%)",
-            },
-            {
-              tier: "Glow", hold: "25M–49M",
-              benefits: ["1.5× reward multiplier", "10% off Spaces & services", "Unlimited IP anchors", "48h early coin access", "Discover boost"],
-              active: effectiveTier === "glow",
-              gradient: "linear-gradient(135deg, hsl(30 90% 60%), hsl(20 80% 42%))",
-              glowColor: "hsl(28, 85%, 55%)",
-            },
-            {
-              tier: "Play", hold: "50M+",
-              benefits: ["2× reward multiplier", "15% off Spaces & services", "Free coin launch (no platform fee)", "72h early coin access", "Featured artist placement", "Verified Artist fast-track"],
-              active: effectiveTier === "play",
-              gradient: "linear-gradient(135deg, hsl(50 90% 58%), hsl(38 80% 40%))",
-              glowColor: "hsl(45, 85%, 52%)",
-            },
-          ].map((t) => (
-            <motion.div
-              key={t.tier}
-              whileHover={{ y: -4, scale: 1.02 }}
-              className={`rounded-2xl overflow-hidden border transition-all ${t.active ? "border-2 border-white/50 shadow-xl" : "border border-border shadow-md hover:shadow-lg"}`}
-              style={{ boxShadow: t.active ? `0 8px 30px -6px ${t.glowColor}50` : undefined }}
-            >
-              {/* Colored header */}
-              <div
-                className="px-3 py-3 text-white relative overflow-hidden"
-                style={{ background: t.gradient }}
-              >
-                <div className="absolute inset-0 opacity-20" style={{ background: "radial-gradient(circle at 30% 20%, rgba(255,255,255,0.4) 0%, transparent 60%)" }} />
-                <div className="relative z-10 flex items-center justify-between">
-                  <span className="text-sm font-display font-bold drop-shadow-sm">{t.tier}</span>
-                  {t.active && <span className="text-[9px] bg-white/25 backdrop-blur-sm px-1.5 py-0.5 rounded-full font-bold">ACTIVE</span>}
-                </div>
-                <p className="text-[10px] opacity-80 font-body mt-0.5 relative z-10">Hold {t.hold}</p>
-              </div>
-              {/* Benefits body */}
-              <div className="p-3 bg-card space-y-1">
-                {t.benefits.map((b) => (
-                  <p key={b} className="text-[10px] text-muted-foreground font-body flex items-center gap-1.5">
-                    <span className="h-1 w-1 rounded-full shrink-0" style={{ background: t.glowColor }} />
-                    {b}
-                  </p>
-                ))}
-              </div>
-            </motion.div>
-          ))}
+      {/* ── Tier eligibility matrix — v7 hold OR activity ── */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="space-y-3">
+        <div className="flex items-baseline justify-between gap-2 px-1">
+          <h3 className="text-sm font-body font-semibold text-foreground flex items-center gap-2">
+            <Star className="h-4 w-4 text-primary" />
+            Tier perks — hold or earn
+          </h3>
+          <Link to="/rewards" className="text-[11px] text-muted-foreground hover:text-foreground underline underline-offset-2">
+            How rewards work →
+          </Link>
         </div>
+        <p className="text-xs text-muted-foreground font-body px-1">
+          Tier auto-upgrades when you hold enough $RHOZE <em>or</em> hit any single activity bar — posts, projects, listings, events hosted, or successful interactions.
+        </p>
+        <TierMatrix activeTier={effectiveTier} />
       </motion.div>
     </div>
   );

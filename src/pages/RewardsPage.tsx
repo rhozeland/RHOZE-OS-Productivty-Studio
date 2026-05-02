@@ -11,8 +11,9 @@
  */
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Coins, Sparkles, Shield, HelpCircle, ShoppingBag, Heart, Trophy } from "lucide-react";
+import { ArrowLeft, Coins, Sparkles, Shield, HelpCircle, ShoppingBag, Heart, Trophy, Star } from "lucide-react";
 import RewardsDashboard from "@/components/creators/RewardsDashboard";
+import TierMatrix from "@/components/creators/TierMatrix";
 import { REWARDS_BY_CATEGORY } from "@/lib/rewards-catalog";
 import {
   Accordion,
@@ -257,6 +258,18 @@ const RewardsPage = () => {
             </Link>{" "}
             — we read everything.
           </p>
+        </section>
+
+        {/* Tier matrix — eligibility at a glance */}
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Star className="h-4 w-4 text-primary" />
+            <h2 className="font-display text-lg font-semibold text-foreground">Tier perks</h2>
+          </div>
+          <p className="text-xs text-muted-foreground max-w-2xl">
+            Two ways to climb: hold $RHOZE long-term, <em>or</em> hit any single activity bar — posts, completed projects, listings, events hosted, or successful interactions. Whichever is higher wins.
+          </p>
+          <TierMatrix />
         </section>
 
         {/* How you earn — canonical hybrid catalog */}
