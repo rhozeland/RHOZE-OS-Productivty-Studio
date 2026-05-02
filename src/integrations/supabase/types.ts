@@ -4346,7 +4346,15 @@ export type Database = {
         Returns: string
       }
       request_work_unlock: { Args: { _work_id: string }; Returns: Json }
+      reward_already_granted: {
+        Args: { _action_type: string; _reference_id?: string; _user_id: string }
+        Returns: boolean
+      }
       reward_daily_cap_hit: {
+        Args: { _action_type: string; _cap: number; _user_id: string }
+        Returns: boolean
+      }
+      reward_weekly_cap_hit: {
         Args: { _action_type: string; _cap: number; _user_id: string }
         Returns: boolean
       }
