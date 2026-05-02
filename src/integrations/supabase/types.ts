@@ -585,6 +585,53 @@ export type Database = {
           },
         ]
       }
+      coin_swap_ledger: {
+        Row: {
+          created_at: string
+          id: string
+          launch_id: string
+          price_per_token: number
+          rhoze_amount: number
+          rhoze_balance_after: number
+          rhoze_fee: number
+          side: string
+          token_amount: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          launch_id: string
+          price_per_token: number
+          rhoze_amount: number
+          rhoze_balance_after: number
+          rhoze_fee?: number
+          side: string
+          token_amount: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          launch_id?: string
+          price_per_token?: number
+          rhoze_amount?: number
+          rhoze_balance_after?: number
+          rhoze_fee?: number
+          side?: string
+          token_amount?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coin_swap_ledger_launch_id_fkey"
+            columns: ["launch_id"]
+            isOneToOne: false
+            referencedRelation: "coin_launches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coin_trades: {
         Row: {
           created_at: string
@@ -4064,6 +4111,15 @@ export type Database = {
           _work_id: string
         }
         Returns: string
+      }
+      swap_rhoze_for_coin: {
+        Args: {
+          _amount: number
+          _launch_id: string
+          _min_out?: number
+          _side: string
+        }
+        Returns: Json
       }
       update_underwriting_rules: {
         Args: { _payload: Json }

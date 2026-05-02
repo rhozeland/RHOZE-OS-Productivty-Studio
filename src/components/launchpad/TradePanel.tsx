@@ -1,11 +1,11 @@
 /**
- * TradePanel — buy/sell UI on the bonding curve.
+ * TradePanel — simulated $RHOZE ↔ coin swap on the bonding curve.
  *
- * Two modes:
- *   - Simulation (4a): server RPC `simulate_coin_trade` (no real SOL moved).
- *   - On-chain (4b):   wallet-signed tx via `onChainBuy` / `onChainSell`.
- *                      Surfaces the full lifecycle: sending → sent → confirmed
- *                      → finalized, plus decoded program errors.
+ * Buy:  spend $RHOZE → receive tokens
+ * Sell: spend tokens → receive $RHOZE (net of fees)
+ *
+ * On-chain mode (4b) is left in place behind the flag for future migration,
+ * but the default path is the simulated $RHOZE swap RPC `swap_rhoze_for_coin`.
  */
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Radio,
+  Wallet,
 } from "lucide-react";
 import {
   isLaunchpadOnChainEnabled,
@@ -37,7 +38,7 @@ interface Props {
   launchId: string;
   ticker: string;
   status: string;
-  virtualSol: number;
+  virtualSol: number;     // reused as virtual $RHOZE reserves on the curve
   virtualToken: number;
   onTraded: () => void;
 }
@@ -51,16 +52,21 @@ type TxPhase =
   | { kind: "finalized"; signature: string }
   | { kind: "error"; decoded: DecodedTradeError; signature?: string; logs?: string[] };
 
+const SLIPPAGE_OPTIONS = [0.5, 1, 3] as const;
+
 const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTraded }: Props) => {
   const { user } = useAuth();
   const [side, setSide] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
   const [holdings, setHoldings] = useState<number>(0);
+  const [rhozeBalance, setRhozeBalance] = useState<number>(0);
+  const [slippagePct, setSlippagePct] = useState<number>(1); // 1% default
   const [phase, setPhase] = useState<TxPhase>({ kind: "idle" });
 
   const onChainEnabled = isLaunchpadOnChainEnabled();
 
+  // Load holdings + $RHOZE balance
   useEffect(() => {
     if (!user) return;
     supabase
@@ -70,27 +76,61 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
       .eq("trader_id", user.id)
       .maybeSingle()
       .then(({ data }) => setHoldings(Number(data?.balance ?? 0)));
+
+    supabase
+      .from("user_credits")
+      .select("balance")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => setRhozeBalance(Number(data?.balance ?? 0)));
   }, [launchId, user, busy]);
 
-  // Quote (preview only — server is source of truth)
   const num = Number(amount);
-  let preview: string | null = null;
-  if (num > 0 && status === "live") {
+
+  // Live quote (preview only — server is source of truth)
+  // Curve units are abstract and treated 1:1 with $RHOZE.
+  const TOTAL_FEE_BPS = 300; // 3% (creator + platform combined, mirrors server default)
+  const quote = useMemo(() => {
+    if (!num || num <= 0 || status !== "live") return null;
     const k = virtualSol * virtualToken;
     if (side === "buy") {
-      const net = num * 0.97;
+      const fee = (num * TOTAL_FEE_BPS) / 10000;
+      const net = num - fee;
       const newSol = virtualSol + net;
       const newTok = k / newSol;
-      const out = virtualToken - newTok;
-      preview = `${out.toLocaleString(undefined, { maximumFractionDigits: 2 })} $${ticker}`;
+      const tokensOut = virtualToken - newTok;
+      const spotPrice = virtualSol / virtualToken;        // $RHOZE per token before
+      const execPrice = net / Math.max(tokensOut, 1e-9);  // after fees
+      const priceImpactPct = ((execPrice - spotPrice) / spotPrice) * 100;
+      const minOut = tokensOut * (1 - slippagePct / 100);
+      return {
+        receive: tokensOut,
+        receiveLabel: `${tokensOut.toLocaleString(undefined, { maximumFractionDigits: 2 })} $${ticker}`,
+        fee,
+        priceImpactPct,
+        minOut,
+        minOutLabel: `${minOut.toLocaleString(undefined, { maximumFractionDigits: 2 })} $${ticker}`,
+      };
     } else {
       const newTok = virtualToken + num;
       const newSol = k / newTok;
       const grossOut = virtualSol - newSol;
-      const netOut = grossOut * 0.97;
-      preview = `${netOut.toFixed(6)} SOL`;
+      const fee = (grossOut * TOTAL_FEE_BPS) / 10000;
+      const netOut = grossOut - fee;
+      const spotPrice = virtualSol / virtualToken;
+      const execPrice = netOut / num;
+      const priceImpactPct = ((spotPrice - execPrice) / spotPrice) * 100;
+      const minOut = netOut * (1 - slippagePct / 100);
+      return {
+        receive: netOut,
+        receiveLabel: `${netOut.toLocaleString(undefined, { maximumFractionDigits: 4 })} $RHOZE`,
+        fee,
+        priceImpactPct,
+        minOut,
+        minOutLabel: `${minOut.toLocaleString(undefined, { maximumFractionDigits: 4 })} $RHOZE`,
+      };
     }
-  }
+  }, [num, side, status, virtualSol, virtualToken, slippagePct, ticker]);
 
   const explorerUrl = useMemo(() => {
     if (phase.kind === "idle" || phase.kind === "building" || phase.kind === "signing") return null;
@@ -102,22 +142,30 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
 
   const submitSimulated = async () => {
     setBusy(true);
-    const { data, error } = await supabase.rpc("simulate_coin_trade", {
+    const minOut = quote?.minOut ?? 0;
+    const { data, error } = await supabase.rpc("swap_rhoze_for_coin", {
       _launch_id: launchId,
       _side: side,
       _amount: num,
+      _min_out: minOut,
     });
     setBusy(false);
     if (error) {
-      toast({ title: "Trade failed", description: error.message, variant: "destructive" });
+      toast({ title: "Swap failed", description: error.message, variant: "destructive" });
       return;
     }
-    const result = data as { graduated?: boolean } | null;
+    const result = (data ?? {}) as {
+      graduated?: boolean;
+      tokens_out?: number;
+      rhoze_out?: number;
+    };
     toast({
-      title: side === "buy" ? "Bought" : "Sold",
-      description: result?.graduated
+      title: side === "buy" ? `Bought $${ticker}` : `Sold $${ticker}`,
+      description: result.graduated
         ? "🎓 Curve filled — coin graduated to Raydium queue!"
-        : `Trade settled on the curve.`,
+        : side === "buy"
+          ? `+${Number(result.tokens_out ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} $${ticker}`
+          : `+${Number(result.rhoze_out ?? 0).toLocaleString(undefined, { maximumFractionDigits: 4 })} $RHOZE`,
     });
     setAmount("");
     onTraded();
@@ -162,7 +210,6 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
     const signature = result.data.signature;
     setPhase({ kind: "sent", signature });
 
-    // Poll confirmation → finalization. Stop early on error.
     try {
       const conn = getLaunchpadConnection();
       const status1 = await conn.confirmTransaction(signature, "confirmed");
@@ -178,7 +225,6 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
       }
       setPhase({ kind: "confirmed", signature });
 
-      // Finalization is best-effort; UI works fine with confirmed.
       conn
         .confirmTransaction(signature, "finalized")
         .then((s) => {
@@ -204,11 +250,27 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
 
   const submit = async () => {
     if (!user) {
-      toast({ title: "Sign in to trade", variant: "destructive" });
+      toast({ title: "Sign in to swap", variant: "destructive" });
       return;
     }
     if (!num || num <= 0) {
       toast({ title: "Enter an amount", variant: "destructive" });
+      return;
+    }
+    if (side === "buy" && num > rhozeBalance && !onChainEnabled) {
+      toast({
+        title: "Insufficient $RHOZE",
+        description: `You have ${rhozeBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} $RHOZE`,
+        variant: "destructive",
+      });
+      return;
+    }
+    if (side === "sell" && num > holdings && !onChainEnabled) {
+      toast({
+        title: `Insufficient $${ticker}`,
+        description: `You hold ${holdings.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+        variant: "destructive",
+      });
       return;
     }
     if (onChainEnabled) await submitOnChain();
@@ -225,9 +287,26 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
     );
   }
 
+  const impactColor =
+    !quote ? "" :
+    Math.abs(quote.priceImpactPct) < 1 ? "text-emerald-500" :
+    Math.abs(quote.priceImpactPct) < 5 ? "text-amber-500" :
+    "text-destructive";
+
   return (
     <div className="rounded-lg border border-border/60 bg-card/40 backdrop-blur p-4 space-y-3">
-      <Tabs value={side} onValueChange={(v) => setSide(v as "buy" | "sell")}>
+      {/* Wallet strip */}
+      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <Wallet className="h-3 w-3" />
+          {rhozeBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} $RHOZE
+        </span>
+        <span>
+          {holdings.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${ticker}
+        </span>
+      </div>
+
+      <Tabs value={side} onValueChange={(v) => { setSide(v as "buy" | "sell"); setAmount(""); }}>
         <TabsList className="grid grid-cols-2 w-full">
           <TabsTrigger value="buy">Buy</TabsTrigger>
           <TabsTrigger value="sell">Sell</TabsTrigger>
@@ -235,19 +314,28 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
 
         <TabsContent value="buy" className="space-y-3 pt-3">
           <div>
-            <label className="text-xs text-muted-foreground">SOL to spend</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="text-xs text-muted-foreground">$RHOZE to spend</label>
+              <button
+                type="button"
+                onClick={() => setAmount(String(rhozeBalance))}
+                className="text-[11px] text-primary hover:underline"
+              >
+                Max
+              </button>
+            </div>
             <Input
               type="number"
               min="0"
               step="0.01"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.5"
+              placeholder="100"
             />
           </div>
           <div className="flex justify-center"><ArrowDown className="h-4 w-4 text-muted-foreground" /></div>
           <div className="rounded-md bg-muted/40 p-3 text-sm font-mono text-center min-h-[2.5rem] flex items-center justify-center">
-            {preview ?? <span className="text-muted-foreground text-xs">Receive</span>}
+            {quote ? quote.receiveLabel : <span className="text-muted-foreground text-xs">Receive ${ticker}</span>}
           </div>
         </TabsContent>
 
@@ -259,7 +347,7 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
               onClick={() => setAmount(String(holdings))}
               className="text-[11px] text-primary hover:underline"
             >
-              Max: {holdings.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              Max
             </button>
           </div>
           <Input
@@ -271,14 +359,58 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
           />
           <div className="flex justify-center"><ArrowDown className="h-4 w-4 text-muted-foreground" /></div>
           <div className="rounded-md bg-muted/40 p-3 text-sm font-mono text-center min-h-[2.5rem] flex items-center justify-center">
-            {preview ?? <span className="text-muted-foreground text-xs">Receive</span>}
+            {quote ? quote.receiveLabel : <span className="text-muted-foreground text-xs">Receive $RHOZE</span>}
           </div>
         </TabsContent>
       </Tabs>
 
+      {/* Slippage selector */}
+      <div className="flex items-center justify-between text-[11px]">
+        <span className="text-muted-foreground">Max slippage</span>
+        <div className="flex gap-1">
+          {SLIPPAGE_OPTIONS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setSlippagePct(s)}
+              className={`px-2 py-0.5 rounded border transition-colors ${
+                slippagePct === s
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border/60 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {s}%
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Quote breakdown */}
+      {quote && (
+        <div className="rounded-md border border-border/40 bg-muted/20 px-3 py-2 text-[11px] space-y-1">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Price impact</span>
+            <span className={`font-mono ${impactColor}`}>
+              {quote.priceImpactPct >= 0 ? "+" : ""}{quote.priceImpactPct.toFixed(2)}%
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Fee (3%)</span>
+            <span className="font-mono">
+              {quote.fee.toLocaleString(undefined, { maximumFractionDigits: 4 })}{" "}
+              {side === "buy" ? "$RHOZE" : "$RHOZE"}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Min received</span>
+            <span className="font-mono">{quote.minOutLabel}</span>
+          </div>
+        </div>
+      )}
+
       <Button onClick={submit} disabled={busy} className="w-full">
         {busy && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}
-        {side === "buy" ? `Buy $${ticker}` : `Sell $${ticker}`}
+        {side === "buy" ? `Swap $RHOZE → $${ticker}` : `Swap $${ticker} → $RHOZE`}
       </Button>
 
       {/* On-chain transaction lifecycle — only renders in 4b mode */}
@@ -289,11 +421,11 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
       <p className="text-[10px] text-muted-foreground text-center">
         {onChainEnabled
           ? `Live on Solana ${LAUNCHPAD_NETWORK} · 3% fee · wallet signature required`
-          : "Simulated curve · 3% fee · no real SOL is moved"}
+          : "Simulated swap · 3% fee · no real on-chain settlement yet"}
       </p>
       <p className="text-[10px] text-emerald-500/80 text-center flex items-center justify-center gap-1">
         <Radio className="h-2.5 w-2.5" />
-        Active traders earn $RHOZE — every trade builds your reputation.
+        Active traders earn $RHOZE — every swap builds your reputation.
       </p>
     </div>
   );
@@ -339,7 +471,6 @@ const TxStatus = ({ phase, explorerUrl }: { phase: TxPhase; explorerUrl: string 
         </Badge>
       </div>
 
-      {/* Step pips */}
       {!isError && (
         <div className="flex gap-1">
           {PHASE_STEPS.map((step, i) => (
