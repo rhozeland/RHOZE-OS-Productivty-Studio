@@ -111,6 +111,13 @@
     "vitest": "^3.2.4"
   },
   "overrides": {
-    "three-globe": "2.33.0"
+    "three-globe": "2.33.0",
+    "globe.gl": "2.32.5",
+    "three": "0.160.1"
+  },
+  "resolutions": {
+    "three-globe": "2.33.0",
+    "globe.gl": "2.32.5",
+    "three": "0.160.1"
   }
 }
