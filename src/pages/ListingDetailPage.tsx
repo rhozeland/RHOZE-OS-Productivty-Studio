@@ -776,14 +776,6 @@ const ListingDetailPage = () => {
                 </div>
               )}
 
-              {/* Linked Works — visible to everyone, owner can manage.
-                  Carries the IP's content hash + Solana anchor into the
-                  listing surface (Phase 3 of the infra stack). */}
-              <AttachedWorks
-                targetType="listing"
-                targetId={listing.id}
-                canManage={isOwner}
-              />
 
               {/* Seller info */}
               {sellerProfile && (
