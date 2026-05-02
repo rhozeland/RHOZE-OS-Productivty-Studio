@@ -855,43 +855,6 @@ const ProfileDetailPage = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="listings" className="mt-5">
-            {hasSellerContent ? (
-              <div className="space-y-3">
-                <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-                  <ShoppingBag className="h-4 w-4 text-primary" /> Offerings
-                </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {sellerListings!.map((listing: any) => (
-                    <div key={listing.id} onClick={() => navigate(`/creators/${listing.id}`)}
-                      className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden cursor-pointer hover:shadow-md hover:border-primary/30 transition-all duration-200">
-                      {(listing.cover_url || listing.image_url) ? (
-                        <div className="aspect-[4/3] overflow-hidden bg-muted">
-                          <img src={listing.cover_url || listing.image_url} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        </div>
-                      ) : (
-                        <div className="aspect-[4/3] flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
-                          <Store className="h-6 w-6 text-muted-foreground/40" />
-                        </div>
-                      )}
-                      <div className="p-3">
-                        <p className="text-sm font-medium text-foreground truncate">{listing.title}</p>
-                        <div className="flex items-center justify-between mt-1">
-                          <Badge variant="outline" className="text-[9px] capitalize">{listing.category}</Badge>
-                          {listing.credits_price && <span className="text-[10px] font-semibold text-primary">{listing.credits_price} ◊</span>}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-8 text-center text-sm text-muted-foreground">
-                No active listings.
-              </div>
-            )}
-          </TabsContent>
-
           {/* ─── Building (Projects) tab ─── */}
           <TabsContent value="building" className="mt-5">
             {buildingProjects && buildingProjects.length > 0 ? (
