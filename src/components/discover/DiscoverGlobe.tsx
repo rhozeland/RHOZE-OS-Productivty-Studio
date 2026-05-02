@@ -611,13 +611,8 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
         <div className="flex flex-col gap-3 lg:gap-4">
           <div className="rounded-[1.7rem] border border-border/50 bg-background/58 p-4 backdrop-blur-xl sm:p-5">
             <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Orbiting now</p>
-                <p className="mt-1 text-sm text-foreground/70">Featured artist, event, and space stay synced to the globe.</p>
-              </div>
-              <div className="hidden h-9 w-9 items-center justify-center rounded-full border border-border/50 bg-background/70 text-foreground/70 sm:flex">
-                <Sparkles className="h-4 w-4" />
-              </div>
+              <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Featured</p>
+              <Sparkles className="h-4 w-4 text-foreground/50" />
             </div>
 
             <AnimatePresence mode="wait">
