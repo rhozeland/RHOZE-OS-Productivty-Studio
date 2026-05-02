@@ -701,7 +701,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
             </AnimatePresence>
           </div>
 
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-1">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-1 items-stretch">
             {allSpotlights.map((marker: any) => {
               const active = marker.key === activeSpotlight?.key;
               return (
@@ -710,7 +710,9 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                   type="button"
                   onClick={() => setActiveSpotlightKey(marker.key)}
                   className={cn(
-                    "group flex items-center gap-3 rounded-[1.35rem] border p-2.5 text-left backdrop-blur-xl transition-all",
+                    // min-h keeps every card the exact same height regardless
+                    // of subtitle length so the strip reads as a clean grid.
+                    "group flex h-full min-h-[5.25rem] w-full items-center gap-3 rounded-[1.35rem] border p-2.5 text-left backdrop-blur-xl transition-all",
                     active
                       ? "border-foreground/20 bg-background/78 shadow-[0_12px_32px_hsl(var(--background)/0.16)]"
                       : "border-border/45 bg-background/56 hover:bg-background/72",
@@ -734,7 +736,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <p className="truncate text-sm font-medium text-foreground">{marker.title}</p>
-                      <span className="rounded-full border border-border/40 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
+                      <span className="shrink-0 rounded-full border border-border/40 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
                         {marker.kind}
                       </span>
                     </div>
