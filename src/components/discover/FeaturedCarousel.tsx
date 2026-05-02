@@ -60,13 +60,15 @@ const FeaturedCarousel = ({ slides }: FeaturedCarouselProps) => {
       onMouseLeave={() => setPaused(false)}
       className="relative h-[360px] rounded-3xl overflow-hidden border border-border/60 bg-card group"
     >
-      <AnimatePresence mode="wait">
+      {/* Crossfade (no `mode="wait"` so the next slide fades in over the
+          previous one — eliminates the brief blank flash). */}
+      <AnimatePresence initial={false}>
         <motion.div
           key={`${current.kind}-${current.id}`}
-          initial={{ opacity: 0, scale: 1.02 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          transition={{ duration: 0.9, ease: "easeInOut" }}
           className="absolute inset-0"
         >
           {current.banner ? (
