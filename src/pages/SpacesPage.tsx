@@ -4,6 +4,7 @@
  * drop_rooms tables; no schema changes.
  */
 import { useState, useMemo } from "react";
+import { rewriteShortDescription } from "@/lib/studio-copy";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
