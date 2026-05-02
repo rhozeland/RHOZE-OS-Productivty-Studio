@@ -669,18 +669,6 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
         <TabsContent value="groups" className="mt-4">
           <CirclesTab />
         </TabsContent>
-
-
-        <TabsContent value="inquiries" className="mt-4 space-y-3">
-          {!allInquiries?.length ? (
-            <div className="text-center py-16">
-              <Inbox className="h-10 w-10 mx-auto text-muted-foreground/30" />
-              <p className="text-sm text-muted-foreground mt-3">No inquiries yet</p>
-            </div>
-          ) : (
-            allInquiries.map((i) => renderInquiry(i))
-          )}
-        </TabsContent>
       </Tabs>
 
       {/* New Conversation Dialog */}
