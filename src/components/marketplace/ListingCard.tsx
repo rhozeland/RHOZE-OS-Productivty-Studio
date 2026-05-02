@@ -113,6 +113,16 @@ const ListingCard = ({
               {typeMeta.label}
             </Badge>
           </div>
+          {verifiedIp && (
+            <div className="absolute top-2 right-2">
+              <VerifiedIPBadge
+                signature={verifiedIp.signature}
+                size="xs"
+                showLabel={false}
+                className="shadow-sm"
+              />
+            </div>
+          )}
         </div>
       ) : hasInlinePreview ? (
         // Compact header strip when audio/video preview will render below.
