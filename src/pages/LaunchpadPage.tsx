@@ -15,6 +15,7 @@ import { Coins, Flame, GraduationCap, TrendingUp } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import LaunchpadModeBanner from "@/components/launchpad/LaunchpadModeBanner";
 import LaunchpadEarnPanel from "@/components/launchpad/LaunchpadEarnPanel";
+import MintAddressChip from "@/components/launchpad/MintAddressChip";
 import { isLaunchpadOnChainEnabled } from "@/lib/launchpad-onchain";
 
 type Launch = {
@@ -28,6 +29,7 @@ type Launch = {
   graduation_sol_target: number;
   creator_id: string;
   created_at: string;
+  mint_address: string | null;
 };
 
 const useLaunches = (status: "live" | "graduated") => {
@@ -37,7 +39,7 @@ const useLaunches = (status: "live" | "graduated") => {
     let cancelled = false;
     supabase
       .from("coin_launches")
-      .select("id,ticker,name,description,image_url,status,real_sol_reserves,graduation_sol_target,creator_id,created_at")
+      .select("id,ticker,name,description,image_url,status,real_sol_reserves,graduation_sol_target,creator_id,created_at,mint_address")
       .eq("status", status)
       .order(status === "live" ? "real_sol_reserves" : "graduated_at", { ascending: false })
       .limit(60)
@@ -78,6 +80,8 @@ const LaunchCard = ({ l }: { l: Launch }) => {
           {l.description && (
             <p className="text-[11px] text-muted-foreground line-clamp-2">{l.description}</p>
           )}
+
+          {l.mint_address && <MintAddressChip address={l.mint_address} size="xs" />}
 
           <div className="space-y-1">
             <div className="flex justify-between text-[10px] text-muted-foreground font-mono">

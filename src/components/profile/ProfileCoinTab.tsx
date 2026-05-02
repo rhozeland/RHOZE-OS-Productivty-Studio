@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import PriceChartCard from "@/components/launchpad/PriceChartCard";
 import TradePanel from "@/components/launchpad/TradePanel";
 import LaunchCoinDialog from "@/components/launchpad/LaunchCoinDialog";
+import MintAddressChip from "@/components/launchpad/MintAddressChip";
 import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
 
 interface Props {
@@ -110,13 +111,14 @@ const ProfileCoinTab = ({ creatorId, isOwnProfile, defaultName, defaultImage, me
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="font-mono font-bold text-base">${coin.ticker}</span>
             {coin.status === "graduated" && (
               <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500">
                 Graduated
               </span>
             )}
+            {coin.mint_address && <MintAddressChip address={coin.mint_address} size="xs" />}
           </div>
           <p className="text-xs text-muted-foreground truncate">{coin.name}</p>
         </div>

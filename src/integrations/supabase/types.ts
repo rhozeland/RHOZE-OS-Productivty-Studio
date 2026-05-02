@@ -3880,6 +3880,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      generate_rhoze_vanity_address: { Args: never; Returns: string }
       get_active_underwriting_rules: {
         Args: never
         Returns: {

@@ -33,7 +33,8 @@ import OnChainBalancesCard from "@/components/launchpad/OnChainBalancesCard";
 import PriceChartCard from "@/components/launchpad/PriceChartCard";
 import HoldersList from "@/components/launchpad/HoldersList";
 import { Button } from "@/components/ui/button";
-import { deriveLaunchPda, LAUNCHPAD_NETWORK } from "@/lib/launchpad-onchain";
+import { deriveLaunchPda, isLaunchpadOnChainEnabled, LAUNCHPAD_NETWORK } from "@/lib/launchpad-onchain";
+import MintAddressChip from "@/components/launchpad/MintAddressChip";
 import { toast } from "sonner";
 
 type Launch = {
@@ -186,6 +187,7 @@ const LaunchDetailPage = () => {
                 )}
                 {launch.status === "cancelled" && <Badge variant="destructive">Cancelled</Badge>}
                 <VerifiedIPBadge signature={workSig} size="xs" />
+                {launch.mint_address && <MintAddressChip address={launch.mint_address} size="xs" />}
               </div>
               <p className="text-sm text-muted-foreground truncate">{launch.name}</p>
             </div>
@@ -448,32 +450,72 @@ const OnChainAddressesCard = ({
   launchPda: string | null;
   raydiumPool: string | null;
 }) => {
+  const onChain = isLaunchpadOnChainEnabled();
   const hasAny = mint || launchPda || raydiumPool;
   return (
     <Card className="bg-card/40 backdrop-blur">
       <CardContent className="p-4 space-y-1">
         <div className="flex items-center justify-between mb-1">
-          <h2 className="text-sm font-semibold">On-chain addresses</h2>
+          <h2 className="text-sm font-semibold">
+            {onChain ? "On-chain addresses" : "Contract address"}
+          </h2>
           <Badge variant="outline" className="text-[10px] font-mono">
-            {LAUNCHPAD_NETWORK === "devnet" ? "Devnet" : "Mainnet"}
+            {onChain ? (LAUNCHPAD_NETWORK === "devnet" ? "Devnet" : "Mainnet") : "Simulated"}
           </Badge>
         </div>
         {!hasAny ? (
           <p className="text-xs text-muted-foreground py-2">
-            No on-chain addresses yet. Once the Anchor program is deployed and this launch
-            is initialized, the mint and launch PDA will appear here.
+            No address yet.
           </p>
         ) : (
           <>
-            {launchPda && <AddressRow label="Launch PDA" address={launchPda} kind="account" />}
-            {mint && <AddressRow label="Mint" address={mint} kind="token" />}
-            {raydiumPool && (
+            {mint && (
+              onChain
+                ? <AddressRow label="Mint" address={mint} kind="token" />
+                : <SimulatedAddressRow label="Mint (CA)" address={mint} />
+            )}
+            {onChain && launchPda && <AddressRow label="Launch PDA" address={launchPda} kind="account" />}
+            {onChain && raydiumPool && (
               <AddressRow label="Raydium pool" address={raydiumPool} kind="account" />
+            )}
+            {!onChain && (
+              <p className="text-[10px] text-muted-foreground pt-2 leading-relaxed">
+                Vanity address ending in <span className="font-mono">RHOZE</span>. Trades are
+                simulated against the bonding curve and stay on the platform. When the on-chain
+                program ships, holdings migrate 1:1 and this becomes a real Solana mint.
+              </p>
             )}
           </>
         )}
       </CardContent>
     </Card>
+  );
+};
+
+const SimulatedAddressRow = ({ label, address }: { label: string; address: string }) => {
+  const copy = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigator.clipboard.writeText(address);
+    toast.success(`${label} copied`);
+  };
+  return (
+    <div className="flex items-center justify-between gap-2 py-1.5 border-b border-border/30 last:border-0">
+      <span className="text-[10px] uppercase tracking-wide text-muted-foreground shrink-0">
+        {label}
+      </span>
+      <div className="flex items-center gap-1 min-w-0">
+        <span className="font-mono text-xs truncate" title={address}>
+          {address.slice(0, 6)}…{address.slice(-8)}
+        </span>
+        <button
+          onClick={copy}
+          className="text-muted-foreground hover:text-foreground shrink-0"
+          aria-label={`Copy ${label}`}
+        >
+          <Copy className="h-3 w-3" />
+        </button>
+      </div>
+    </div>
   );
 };
 
