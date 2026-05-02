@@ -517,7 +517,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                         cy={point.y}
                         r={Math.max(1.5, point.size / 4.8)}
                         fill={point.color}
-                        stroke={point.selected || point.hovered ? "hsl(var(--foreground) / 0.9)" : "hsl(var(--background) / 0.9)"}
+                        stroke={point.selected || point.hovered ? "hsl(0 0% 100% / 0.95)" : "hsl(0 0% 100% / 0.7)"}
                         strokeWidth={point.selected || point.hovered ? 0.7 : 0.45}
                         style={{ cursor: "pointer" }}
                         onPointerDown={(event) => event.stopPropagation()}
