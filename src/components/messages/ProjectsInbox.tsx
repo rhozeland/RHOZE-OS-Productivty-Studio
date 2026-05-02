@@ -510,64 +510,6 @@ const ProjectThread = ({
   );
 };
 
-/* ─── Collapsible inline panel (Roadmap / Vault / Splits) ─── */
-const ProjectPanel = ({
-  icon: Icon,
-  title,
-  description,
-  defaultOpen = false,
-  actionHref,
-}: {
-  icon: typeof ListTree;
-  title: string;
-  description: string;
-  defaultOpen?: boolean;
-  actionHref: string;
-}) => {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <CollapsibleTrigger asChild>
-          <button
-            type="button"
-            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors text-left"
-          >
-            <div className="h-8 w-8 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
-              <Icon className="h-4 w-4 text-foreground" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground">{title}</p>
-              <p className="text-[11px] text-muted-foreground truncate">
-                {description}
-              </p>
-            </div>
-            <ChevronDown
-              className={cn(
-                "h-4 w-4 text-muted-foreground transition-transform",
-                open && "rotate-180",
-              )}
-            />
-          </button>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <div className="px-4 pb-4 pt-1 border-t border-border/60">
-            <p className="text-xs text-muted-foreground mb-3">
-              Manage this from the full project view — keeps actions, history,
-              and signatures in one place.
-            </p>
-            <Link to={actionHref}>
-              <Button variant="outline" size="sm" className="rounded-full gap-1.5">
-                Open {title.toLowerCase()} <ArrowRight className="h-3 w-3" />
-              </Button>
-            </Link>
-          </div>
-        </CollapsibleContent>
-      </div>
-    </Collapsible>
-  );
-};
-
 /* ─── Lightweight create dialog ─── */
 const NewProjectDialog = ({
   open,
