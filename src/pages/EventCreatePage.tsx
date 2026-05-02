@@ -14,7 +14,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, CalendarDays, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, CalendarDays, Sparkles, Loader2, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -58,6 +58,33 @@ const EventCreatePage = () => {
   const [venueAddress, setVenueAddress] = useState("");
   const [onlineUrl, setOnlineUrl] = useState("");
   const [capacity, setCapacity] = useState<string>("");
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
+
+  const handleCoverUpload = async (file: File) => {
+    if (!user) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image too large", { description: "Max 5 MB." });
+      return;
+    }
+    setCoverUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/events/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("listing-media")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("listing-media").getPublicUrl(path);
+      setCoverUrl(data.publicUrl);
+    } catch (err) {
+      toast.error("Upload failed", {
+        description: err instanceof Error ? err.message : "Try a different image.",
+      });
+    } finally {
+      setCoverUploading(false);
+    }
+  };
 
   // Free RSVP tier (always created). Paid tiers can be added in /manage later.
   const [rsvpTierName, setRsvpTierName] = useState("RSVP");
@@ -126,6 +153,7 @@ const EventCreatePage = () => {
           manifest_hash,
           manifest_json: manifest as any,
           ticket_currency_modes: ["rsvp"],
+          cover_url: coverUrl,
         })
         .select()
         .single();
@@ -264,6 +292,44 @@ const EventCreatePage = () => {
             rows={4}
             placeholder="What's the vibe? What should attendees expect? Any house rules?"
           />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>Cover image</Label>
+          {coverUrl ? (
+            <div className="relative overflow-hidden rounded-xl border border-border aspect-[16/9] bg-muted">
+              <img src={coverUrl} alt="Event cover" className="h-full w-full object-cover" />
+              <button
+                type="button"
+                onClick={() => setCoverUrl(null)}
+                className="absolute top-2 right-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-background/85 backdrop-blur border border-border hover:bg-background"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <label className="relative flex aspect-[16/9] w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/40 text-center text-muted-foreground hover:bg-muted/60 transition-colors">
+              {coverUploading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <>
+                  <ImagePlus className="h-6 w-6" />
+                  <p className="text-xs">Click to upload (16:9, max 5 MB)</p>
+                </>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                className="absolute inset-0 cursor-pointer opacity-0"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleCoverUpload(f);
+                  e.target.value = "";
+                }}
+                disabled={coverUploading}
+              />
+            </label>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">

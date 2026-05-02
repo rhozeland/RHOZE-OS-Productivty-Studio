@@ -50,6 +50,74 @@ const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
   NZ: { lat: -41.29, lng: 174.78 },
 };
 
+// Low-poly continent outlines (lat, lng pairs). Hand-tuned to evoke real
+// landmasses without shipping a full topojson. Painter ordering only —
+// back-facing polygons hide via depth check during projection.
+const CONTINENTS: { name: string; points: [number, number][] }[] = [
+  {
+    name: "North America",
+    points: [
+      [70, -168], [72, -140], [74, -110], [70, -82], [62, -64], [50, -56],
+      [44, -64], [42, -72], [32, -80], [25, -80], [18, -92], [15, -98],
+      [22, -106], [30, -116], [40, -124], [49, -125], [55, -132], [60, -148],
+      [66, -162],
+    ],
+  },
+  {
+    name: "South America",
+    points: [
+      [12, -72], [10, -62], [5, -52], [-2, -48], [-12, -38], [-22, -40],
+      [-32, -52], [-42, -64], [-52, -70], [-54, -72], [-46, -74], [-36, -72],
+      [-22, -70], [-10, -78], [0, -80], [8, -78],
+    ],
+  },
+  {
+    name: "Europe",
+    points: [
+      [70, -8], [70, 24], [68, 40], [60, 50], [54, 38], [44, 40], [38, 28],
+      [36, 14], [38, -2], [44, -10], [50, -4], [58, -6], [64, -10],
+    ],
+  },
+  {
+    name: "Africa",
+    points: [
+      [36, -8], [36, 12], [32, 24], [30, 34], [16, 42], [10, 50], [-4, 42],
+      [-18, 38], [-30, 32], [-34, 22], [-32, 18], [-26, 14], [-20, 12],
+      [-12, 12], [-2, 8], [4, -2], [10, -14], [16, -16], [22, -16], [28, -10],
+    ],
+  },
+  {
+    name: "Asia",
+    points: [
+      [78, 60], [80, 100], [76, 140], [70, 170], [60, 168], [54, 156],
+      [50, 142], [42, 132], [34, 134], [22, 120], [10, 108], [4, 100],
+      [10, 92], [22, 88], [22, 72], [30, 60], [38, 50], [44, 46], [54, 44],
+      [60, 50], [70, 56],
+    ],
+  },
+  {
+    name: "Oceania",
+    points: [
+      [-12, 130], [-10, 140], [-12, 152], [-22, 154], [-32, 152], [-38, 146],
+      [-36, 138], [-32, 128], [-26, 120], [-18, 122],
+    ],
+  },
+  {
+    name: "Antarctica",
+    points: [
+      [-70, -160], [-68, -120], [-66, -80], [-68, -40], [-70, 0], [-66, 40],
+      [-64, 80], [-66, 120], [-70, 160], [-78, 160], [-82, 100], [-84, 0],
+      [-82, -80], [-78, -160],
+    ],
+  },
+  {
+    name: "Greenland",
+    points: [
+      [82, -32], [80, -18], [70, -22], [62, -42], [70, -52], [78, -50],
+    ],
+  },
+];
+
 interface DiscoverGlobeProps {
   marketFilter: RegionMarket | "All";
   onSelectMarket: (m: RegionMarket | "All") => void;
@@ -148,6 +216,26 @@ const buildLongitudePath = (longitude: number, rotation: number) => {
     }
   }
 
+  return path;
+};
+
+// Build a closed polygon for a continent. Skips polygons that are
+// fully on the back hemisphere; partially-visible polygons clip points
+// crossing the horizon so shapes hug the sphere.
+const buildContinentPath = (points: [number, number][], rotation: number) => {
+  const projected = points.map(([lat, lng]) => projectPoint(lat, lng, rotation));
+  if (!projected.some((p) => p.depth > 0)) return "";
+  let path = "";
+  let drawing = false;
+  for (const p of projected) {
+    if (p.depth > -0.05) {
+      path += `${drawing ? " L" : "M"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`;
+      drawing = true;
+    } else {
+      drawing = false;
+    }
+  }
+  if (drawing) path += " Z";
   return path;
 };
 
@@ -287,6 +375,10 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
     () => [-90, -45, 0, 45, 90].map((longitude) => buildLongitudePath(longitude, rotation)).filter(Boolean),
     [rotation],
   );
+  const continentPaths = useMemo(
+    () => CONTINENTS.map((c) => ({ name: c.name, d: buildContinentPath(c.points, rotation) })).filter((c) => c.d),
+    [rotation],
+  );
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -334,11 +426,8 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
         <div className="relative overflow-hidden rounded-[1.7rem] border border-border/50 bg-background/45 backdrop-blur-xl">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_46%,hsl(var(--background)/0)_0%,hsl(var(--primary)/0.12)_32%,transparent_54%),radial-gradient(circle_at_50%_86%,hsl(var(--accent)/0.18),transparent_30%)]" />
 
-          <div className="absolute left-4 top-4 z-20 max-w-[15rem] rounded-[1.4rem] border border-border/50 bg-background/72 px-3.5 py-3 backdrop-blur-md">
-            <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Verified IP markets</p>
-            <p className="mt-2 text-sm leading-6 text-foreground/85">
-              Drag to spin. Tap a pulse to narrow the feed. Featured artists, events, and spaces orbit on the same surface.
-            </p>
+          <div className="absolute left-4 top-4 z-20 max-w-[12rem] rounded-full border border-border/50 bg-background/72 px-3 py-1.5 backdrop-blur-md">
+            <p className="text-[11px] font-medium text-foreground/80">Spin the world →</p>
           </div>
 
           {hoveredRegion && (
@@ -362,32 +451,53 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
             >
               <div className="absolute inset-[7%] rounded-full border border-border/30 bg-background/15 shadow-[0_0_0_1px_hsl(var(--border)/0.12),0_28px_70px_hsl(var(--background)/0.55)] backdrop-blur-sm" />
               <div className="absolute inset-[2%] rounded-full border border-border/20" />
-              <div className="absolute inset-[17%] rounded-full bg-[radial-gradient(circle_at_45%_30%,hsl(var(--primary)/0.22),transparent_30%),radial-gradient(circle_at_60%_75%,hsl(var(--accent)/0.18),transparent_32%)] blur-2xl" />
+              <div className="absolute inset-[17%] rounded-full bg-[radial-gradient(circle_at_45%_30%,hsl(200_85%_60%/0.3),transparent_40%),radial-gradient(circle_at_60%_75%,hsl(220_70%_45%/0.25),transparent_40%)] blur-2xl" />
 
               <svg viewBox="0 0 100 100" className="absolute inset-[8%] h-[84%] w-[84%] overflow-visible">
                 <defs>
-                  <radialGradient id="discover-globe-surface" cx="42%" cy="34%" r="74%">
-                    <stop offset="0%" stopColor="hsl(var(--background))" stopOpacity="0.2" />
-                    <stop offset="34%" stopColor="hsl(var(--card))" stopOpacity="0.95" />
-                    <stop offset="78%" stopColor="hsl(var(--background))" stopOpacity="0.98" />
-                    <stop offset="100%" stopColor="hsl(var(--background))" stopOpacity="1" />
+                  <radialGradient id="discover-globe-ocean" cx="38%" cy="30%" r="78%">
+                    <stop offset="0%"  stopColor="hsl(200 85% 72%)" />
+                    <stop offset="40%" stopColor="hsl(210 75% 52%)" />
+                    <stop offset="78%" stopColor="hsl(220 70% 32%)" />
+                    <stop offset="100%" stopColor="hsl(225 65% 18%)" />
                   </radialGradient>
-                  <radialGradient id="discover-globe-highlight" cx="50%" cy="38%" r="65%">
-                    <stop offset="0%" stopColor="hsl(var(--foreground))" stopOpacity="0.12" />
-                    <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity="0" />
+                  <radialGradient id="discover-globe-land" cx="42%" cy="32%" r="80%">
+                    <stop offset="0%"  stopColor="hsl(85 55% 62%)" />
+                    <stop offset="55%" stopColor="hsl(120 40% 42%)" />
+                    <stop offset="100%" stopColor="hsl(150 45% 22%)" />
                   </radialGradient>
+                  <radialGradient id="discover-globe-highlight" cx="38%" cy="28%" r="55%">
+                    <stop offset="0%"  stopColor="hsl(0 0% 100%)" stopOpacity="0.35" />
+                    <stop offset="60%" stopColor="hsl(0 0% 100%)" stopOpacity="0.05" />
+                    <stop offset="100%" stopColor="hsl(0 0% 100%)" stopOpacity="0" />
+                  </radialGradient>
+                  <radialGradient id="discover-globe-shadow" cx="70%" cy="78%" r="60%">
+                    <stop offset="0%"  stopColor="hsl(225 70% 8%)" stopOpacity="0" />
+                    <stop offset="100%" stopColor="hsl(225 70% 8%)" stopOpacity="0.55" />
+                  </radialGradient>
+                  <clipPath id="discover-globe-clip">
+                    <circle cx={cx} cy={cy} r={radius} />
+                  </clipPath>
                 </defs>
 
-                <ellipse cx={cx} cy={cy + 36} rx={22} ry={6} fill="hsl(var(--primary) / 0.12)" />
-                <circle cx={cx} cy={cy} r={radius} fill="url(#discover-globe-surface)" stroke="hsl(var(--border) / 0.44)" strokeWidth="0.55" />
-                <circle cx={cx} cy={cy} r={radius} fill="url(#discover-globe-highlight)" />
+                <ellipse cx={cx} cy={cy + 38} rx={24} ry={5} fill="hsl(225 60% 12% / 0.35)" />
+                <circle cx={cx} cy={cy} r={radius + 1.2} fill="hsl(200 85% 70% / 0.18)" />
+                <circle cx={cx} cy={cy} r={radius} fill="url(#discover-globe-ocean)" stroke="hsl(225 65% 22%)" strokeWidth="0.5" />
 
-                {latitudePaths.map((path, index) => (
-                  <path key={`lat-${index}`} d={path} fill="none" stroke="hsl(var(--foreground) / 0.13)" strokeWidth="0.34" />
-                ))}
-                {longitudePaths.map((path, index) => (
-                  <path key={`lng-${index}`} d={path} fill="none" stroke="hsl(var(--foreground) / 0.1)" strokeWidth="0.3" />
-                ))}
+                <g clipPath="url(#discover-globe-clip)">
+                  {continentPaths.map((c) => (
+                    <path key={c.name} d={c.d} fill="url(#discover-globe-land)" stroke="hsl(150 50% 18% / 0.6)" strokeWidth="0.25" strokeLinejoin="round" />
+                  ))}
+                  {latitudePaths.map((path, index) => (
+                    <path key={`lat-${index}`} d={path} fill="none" stroke="hsl(0 0% 100% / 0.12)" strokeWidth="0.28" />
+                  ))}
+                  {longitudePaths.map((path, index) => (
+                    <path key={`lng-${index}`} d={path} fill="none" stroke="hsl(0 0% 100% / 0.1)" strokeWidth="0.26" />
+                  ))}
+                  <circle cx={cx} cy={cy} r={radius} fill="url(#discover-globe-shadow)" />
+                  <circle cx={cx} cy={cy} r={radius} fill="url(#discover-globe-highlight)" />
+                </g>
+
 
                 {points.map((point) => {
                   const front = point.depth > 0;
@@ -407,7 +517,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                         cy={point.y}
                         r={Math.max(1.5, point.size / 4.8)}
                         fill={point.color}
-                        stroke={point.selected || point.hovered ? "hsl(var(--foreground) / 0.9)" : "hsl(var(--background) / 0.9)"}
+                        stroke={point.selected || point.hovered ? "hsl(0 0% 100% / 0.95)" : "hsl(0 0% 100% / 0.7)"}
                         strokeWidth={point.selected || point.hovered ? 0.7 : 0.45}
                         style={{ cursor: "pointer" }}
                         onPointerDown={(event) => event.stopPropagation()}
@@ -501,13 +611,8 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
         <div className="flex flex-col gap-3 lg:gap-4">
           <div className="rounded-[1.7rem] border border-border/50 bg-background/58 p-4 backdrop-blur-xl sm:p-5">
             <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Orbiting now</p>
-                <p className="mt-1 text-sm text-foreground/70">Featured artist, event, and space stay synced to the globe.</p>
-              </div>
-              <div className="hidden h-9 w-9 items-center justify-center rounded-full border border-border/50 bg-background/70 text-foreground/70 sm:flex">
-                <Sparkles className="h-4 w-4" />
-              </div>
+              <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Featured</p>
+              <Sparkles className="h-4 w-4 text-foreground/50" />
             </div>
 
             <AnimatePresence mode="wait">
@@ -521,7 +626,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                   className="mt-4"
                 >
                   <div className="overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75">
-                    <div className="relative aspect-[16/10] overflow-hidden border-b border-border/40 bg-muted/70">
+                    <div className="relative aspect-[16/6] overflow-hidden border-b border-border/40 bg-muted/70">
                       {activeSpotlight.banner ? (
                         <img src={activeSpotlight.banner} alt={activeSpotlight.title} className="h-full w-full object-cover" />
                       ) : (
