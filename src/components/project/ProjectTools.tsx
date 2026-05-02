@@ -215,7 +215,7 @@ const ProjectTools = ({ projectId, projectTitle, smartboardDetails, onLinkSmartb
           )}
         </div>
         <p className="text-xs text-muted-foreground mb-3">
-          Visual reference boards pinned to this project. Link existing ones or create new from the Smartboards page.
+          Visual mood boards pinned to this project — drop in images, video, audio, links, or notes for the team to riff on.
         </p>
         {boards && boards.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
