@@ -610,8 +610,30 @@ const ProfileDetailPage = () => {
               </p>
             </div>
 
-            {/* Action grid */}
+            {/* Action grid — Book a session is full-width when present */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Book / availability — full width, opens calendar in modal */}
+              {profile.available && (
+                <button
+                  onClick={() => user ? setBookingOpen(true) : navigate("/auth")}
+                  className="sm:col-span-2 group text-left rounded-2xl bg-gradient-to-br from-primary/5 via-card/80 to-accent/5 backdrop-blur-sm border border-border/60 p-5 hover:border-foreground/30 transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                        <CalendarIcon className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Book a session</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Open to work — pick a time, drop a meeting link, get on a call.
+                        </p>
+                      </div>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0" />
+                  </div>
+                </button>
+              )}
               {/* Follow */}
               {!isOwnProfile && (
                 <button
