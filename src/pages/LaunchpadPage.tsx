@@ -81,6 +81,8 @@ const LaunchCard = ({ l }: { l: Launch }) => {
             <p className="text-[11px] text-muted-foreground line-clamp-2">{l.description}</p>
           )}
 
+          {l.mint_address && <MintAddressChip address={l.mint_address} size="xs" />}
+
           <div className="space-y-1">
             <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
               <span>{Number(l.real_sol_reserves).toFixed(2)} SOL</span>
