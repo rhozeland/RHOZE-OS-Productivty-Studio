@@ -550,7 +550,14 @@ const ProfileDetailPage = () => {
                 </h2>
               </div>
               <p className="text-sm text-muted-foreground">
-                Pick whatever fits — every action helps and most of them earn you $RHOZE for showing up early.
+                Pick whatever fits — every action helps. Curious about the
+                token layer?{" "}
+                <Link
+                  to="/rewards"
+                  className="underline-offset-2 hover:underline text-foreground/80"
+                >
+                  How rewards work →
+                </Link>
               </p>
             </div>
 
