@@ -186,9 +186,10 @@ const StudioDetailPage = () => {
               )}
             </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
-              {studio.location && (
+              {(studio.city || studio.country) && (
                 <span className="flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5" /> {studio.city ? `${studio.city}, ${studio.state}` : studio.location}
+                  <MapPin className="h-3.5 w-3.5" />
+                  {[studio.city, studio.state, studio.country].filter(Boolean).join(", ")}
                 </span>
               )}
               <span className="flex items-center gap-1 capitalize">
