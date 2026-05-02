@@ -17,6 +17,9 @@ export type FeaturedSlide =
       region_code?: string | null;
       mediums?: string[] | null;
       creator_roles?: string[] | null;
+      verification_status?: string | null;
+      works_count?: number;
+      followers_count?: number;
     }
   | {
       kind: "event";
@@ -60,6 +63,9 @@ interface FeaturedArtistRow {
   region_code: string | null;
   mediums: string[] | null;
   creator_roles: string[] | null;
+  verification_status?: string | null;
+  works_count?: number;
+  followers_count?: number;
 }
 
 interface EventSpaceRelation {
@@ -171,7 +177,7 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
     queryFn: async () => {
       const { data: profileRows } = await supabase
         .from("profiles")
-        .select("user_id, display_name, headline, bio, avatar_url, banner_url, region_code, mediums, creator_roles")
+        .select("user_id, display_name, headline, bio, avatar_url, banner_url, region_code, mediums, creator_roles, verification_status")
         .eq("is_public", true)
         .not("avatar_url", "is", null)
         .order("updated_at", { ascending: false })
@@ -180,33 +186,53 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
       const profiles = (profileRows ?? []) as FeaturedArtistRow[];
       if (profiles.length === 0) return profiles;
 
+      const userIds = profiles.map((p) => p.user_id);
+
       // Backfill missing banner_url with the artist's most recent visual work,
       // so the Featured panel never renders an empty grey box.
       const needsBanner = profiles.filter((p) => !p.banner_url).map((p) => p.user_id);
-      if (needsBanner.length > 0) {
-        const { data: workRows } = await supabase
-          .from("works")
-          .select("user_id, file_url, mime_type, created_at")
-          .in("user_id", needsBanner)
-          .eq("visibility", "public")
-          .not("file_url", "is", null)
-          .like("mime_type", "image/%")
-          .order("created_at", { ascending: false })
-          .limit(80);
+      const bannerFallback = new Map<string, string>();
+      const worksCount = new Map<string, number>();
 
-        const fallbackByUser = new Map<string, string>();
-        (workRows ?? []).forEach((row: any) => {
-          if (!fallbackByUser.has(row.user_id) && row.file_url) {
-            fallbackByUser.set(row.user_id, row.file_url);
-          }
-        });
+      const { data: workRows } = await supabase
+        .from("works")
+        .select("user_id, file_url, mime_type, created_at")
+        .in("user_id", userIds)
+        .eq("visibility", "public")
+        .order("created_at", { ascending: false })
+        .limit(200);
 
-        return profiles.map((p) =>
-          p.banner_url ? p : { ...p, banner_url: fallbackByUser.get(p.user_id) ?? null },
-        );
-      }
+      (workRows ?? []).forEach((row: any) => {
+        worksCount.set(row.user_id, (worksCount.get(row.user_id) ?? 0) + 1);
+        if (
+          needsBanner.includes(row.user_id) &&
+          !bannerFallback.has(row.user_id) &&
+          row.file_url &&
+          typeof row.mime_type === "string" &&
+          row.mime_type.startsWith("image/")
+        ) {
+          bannerFallback.set(row.user_id, row.file_url);
+        }
+      });
 
-      return profiles;
+      // Followers count (connections.following_id = artist, accepted).
+      const followersCount = new Map<string, number>();
+      const { data: followerRows } = await supabase
+        .from("connections")
+        .select("following_id")
+        .in("following_id", userIds)
+        .eq("status", "accepted");
+
+      (followerRows ?? []).forEach((row: any) => {
+        followersCount.set(row.following_id, (followersCount.get(row.following_id) ?? 0) + 1);
+      });
+
+      return profiles.map((p) => ({
+        ...p,
+        banner_url: p.banner_url ?? bannerFallback.get(p.user_id) ?? null,
+        works_count: worksCount.get(p.user_id) ?? 0,
+        followers_count: followersCount.get(p.user_id) ?? 0,
+      }));
     },
     staleTime: 60_000,
   });
@@ -273,6 +299,9 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
         region_code: artist.region_code,
         mediums: artist.mediums,
         creator_roles: artist.creator_roles,
+        verification_status: artist.verification_status ?? null,
+        works_count: artist.works_count ?? 0,
+        followers_count: artist.followers_count ?? 0,
       });
     }
 
