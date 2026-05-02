@@ -146,12 +146,17 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
     [projects, selectedId],
   );
 
+  // Update URL when selecting a project. We `push` (not `replace`) so each
+  // selection is its own history entry — back button restores the previous
+  // thread, and the URL is fully shareable (e.g. /messages?tab=projects&p=…).
+  // Deselecting (e.g. mobile back arrow) replaces, so we don't pollute
+  // history with empty-selection entries.
   const setSelected = (id: string | null) => {
     const next = new URLSearchParams(params);
+    next.set("tab", "projects");
     if (id) next.set("p", id);
     else next.delete("p");
-    next.set("tab", "projects");
-    setParams(next, { replace: true });
+    setParams(next, { replace: !id });
   };
 
   return (
