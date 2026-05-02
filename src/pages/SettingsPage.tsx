@@ -348,21 +348,40 @@ const SettingsPage = () => {
         </div>
       </div>
       <div className="space-y-2">
-        <Label>Headline</Label>
-        <Input value={headline} onChange={(e) => setHeadline(e.target.value)} placeholder="e.g. Music Producer & Visual Artist" />
+        <Label>What you are</Label>
+        <p className="text-[11px] text-muted-foreground">
+          Pick from the list — fans use these to find you. You can pick a few if you wear multiple hats.
+        </p>
+        <div className="rounded-xl border border-border bg-card/40 p-3">
+          <RolePicker
+            selectedRoles={creatorRoles}
+            onChangeRoles={setCreatorRoles}
+            selectedSpecialties={mediumsList}
+            onChangeSpecialties={setMediumsList}
+          />
+        </div>
       </div>
       <div className="space-y-2">
-        <Label>Bio</Label>
-        <Textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell the world about your creative journey..." rows={3} />
+        <Label>Slogan</Label>
+        <Input
+          value={headline}
+          onChange={(e) => setHeadline(e.target.value)}
+          placeholder="Your one-line ethos — e.g. Building worlds out of sound."
+          maxLength={120}
+        />
+        <p className="text-[10px] text-muted-foreground">{headline.length}/120</p>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Skills (comma-separated)</Label>
-          <Input value={skills} onChange={(e) => setSkills(e.target.value)} placeholder="Illustration, 3D, Motion Design" />
-        </div>
-        <div className="space-y-2">
-          <Label>Mediums (comma-separated)</Label>
-          <Input value={mediums} onChange={(e) => setMediums(e.target.value)} placeholder="Digital, Oil, Acrylic, Photography" />
+      <div className="space-y-2">
+        <Label>Bio (optional)</Label>
+        <Textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="A longer story — your background, what you're working on, who you collaborate with…" rows={3} />
+      </div>
+      <div className="space-y-2">
+        <Label>Skills</Label>
+        <p className="text-[11px] text-muted-foreground">
+          Tap the ones you bring to a project. Add a custom skill if it's not listed.
+        </p>
+        <div className="rounded-xl border border-border bg-card/40 p-3">
+          <SkillPicker value={skillsList} onChange={setSkillsList} />
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
