@@ -171,13 +171,48 @@ export const TokenGateDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        {(launches?.length ?? 0) === 0 ? (
-          <div className="rounded-lg border border-border/50 bg-muted/30 p-4 text-sm text-muted-foreground">
-            You need an active coin launch first. Head to the Launchpad to
-            create one, then come back.
+        <div className="space-y-4">
+          {/* Pool type toggle */}
+          <div className="space-y-1.5">
+            <Label>Who can unlock?</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setPoolType("launch")}
+                className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors text-left ${
+                  poolType === "launch"
+                    ? "border-primary bg-primary/5 text-foreground"
+                    : "border-border/60 text-muted-foreground hover:bg-muted/30"
+                }`}
+              >
+                Holders of my coin
+                <span className="block text-[10px] font-normal text-muted-foreground/80">
+                  Requires an active launch
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPoolType("rhoze_pool")}
+                className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors text-left ${
+                  poolType === "rhoze_pool"
+                    ? "border-primary bg-primary/5 text-foreground"
+                    : "border-border/60 text-muted-foreground hover:bg-muted/30"
+                }`}
+              >
+                $RHOZE holders
+                <span className="block text-[10px] font-normal text-muted-foreground/80">
+                  Live wallet balance
+                </span>
+              </button>
+            </div>
           </div>
-        ) : (
-          <div className="space-y-4">
+
+          {poolType === "launch" && ((launches?.length ?? 0) === 0 ? (
+            <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-xs text-muted-foreground">
+              You need an active coin launch to use this pool. Head to the
+              Launchpad to create one — or switch to $RHOZE holders above.
+            </div>
+          ) : (
             <div className="space-y-1.5">
               <Label>Coin</Label>
               <Select value={launchId} onValueChange={setLaunchId}>
@@ -193,21 +228,25 @@ export const TokenGateDialog = ({
                 </SelectContent>
               </Select>
             </div>
+          ))}
 
-            <div className="space-y-1.5">
-              <Label>Minimum tokens to unlock</Label>
-              <Input
-                type="number"
-                min={0}
-                step="any"
-                value={minTokens}
-                onChange={(e) => setMinTokens(e.target.value)}
-              />
-              <p className="text-[11px] text-muted-foreground">
-                Holdings are read from the simulated bonding curve until the
-                on-chain mint ships.
-              </p>
-            </div>
+          <div className="space-y-1.5">
+            <Label>
+              Minimum {poolType === "rhoze_pool" ? "$RHOZE" : "tokens"} to unlock
+            </Label>
+            <Input
+              type="number"
+              min={0}
+              step="any"
+              value={minTokens}
+              onChange={(e) => setMinTokens(e.target.value)}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              {poolType === "rhoze_pool"
+                ? "Read from the holder's connected Solana wallet on each unlock."
+                : "Holdings are read from the simulated bonding curve until the on-chain mint ships."}
+            </p>
+          </div>
 
             <div className="space-y-1.5">
               <Label>Gated file</Label>
