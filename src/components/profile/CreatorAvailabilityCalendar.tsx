@@ -1295,6 +1295,17 @@ const CreatorAvailabilityCalendar = ({
                 </p>
               </div>
 
+              {/* In-app video room note */}
+              <div className="rounded-lg border border-sky-500/30 bg-sky-500/5 p-3 flex items-start gap-2.5">
+                <Video className="h-4 w-4 text-sky-600 dark:text-sky-400 mt-0.5 shrink-0" />
+                <div className="text-xs text-foreground/80">
+                  <p className="font-semibold text-foreground">In-app video room included</p>
+                  <p className="text-muted-foreground mt-0.5">
+                    A free video meeting link is generated automatically. Sessions cap at 60 minutes.
+                  </p>
+                </div>
+              </div>
+
               {/* Fine-tune controls */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg border border-border p-3">
