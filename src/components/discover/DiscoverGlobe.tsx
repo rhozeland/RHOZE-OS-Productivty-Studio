@@ -604,10 +604,6 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
 
         <div className="flex flex-col gap-3 lg:gap-4">
           <div className="rounded-[1.7rem] border border-border/50 bg-background/58 p-4 backdrop-blur-xl sm:p-5">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Featured</p>
-              <Sparkles className="h-4 w-4 text-foreground/50" />
-            </div>
 
             <AnimatePresence mode="wait">
               {activeSpotlight ? (
