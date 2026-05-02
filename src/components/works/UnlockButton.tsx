@@ -64,9 +64,14 @@ export const UnlockButton = ({
 
   const mut = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.rpc("request_work_unlock", {
-        _work_id: workId,
-      });
+      // Edge function re-runs the gating check under the caller's JWT, then
+      // mints a 5-minute signed URL with the service role. Direct RPC + JS
+      // signed-URL would fail for non-owners because the bucket's RLS only
+      // grants owners SELECT on their own folder.
+      const { data, error } = await supabase.functions.invoke(
+        "mint-work-unlock",
+        { body: { work_id: workId } },
+      );
       if (error) throw error;
       return data as unknown as UnlockResult;
     },
