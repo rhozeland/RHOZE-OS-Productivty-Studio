@@ -754,7 +754,31 @@ const CreatorAvailabilityCalendar = ({
         <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
           <CalendarIcon className="h-4 w-4 text-primary" /> Availability
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {isOwner && mode === "edit" && (
+            <div className="inline-flex rounded-md border border-border overflow-hidden text-[11px]">
+              <button
+                type="button"
+                onClick={() => setAddType("once")}
+                className={cn(
+                  "px-2.5 py-1 transition-colors",
+                  addType === "once" ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold" : "text-muted-foreground hover:bg-muted/40"
+                )}
+              >
+                Just this week
+              </button>
+              <button
+                type="button"
+                onClick={() => setAddType("weekly")}
+                className={cn(
+                  "px-2.5 py-1 inline-flex items-center gap-1 transition-colors border-l border-border",
+                  addType === "weekly" ? "bg-sky-500/20 text-sky-700 dark:text-sky-300 font-semibold" : "text-muted-foreground hover:bg-muted/40"
+                )}
+              >
+                <Repeat className="h-3 w-3" /> Every week
+              </button>
+            </div>
+          )}
           {isOwner && mode === "view" && (
             <Button
               size="sm"
