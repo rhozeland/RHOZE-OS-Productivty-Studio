@@ -1,0 +1,1 @@
+DELETE FROM public.projects WHERE id = '596c22bc-f760-4a2e-88b0-1e4410ba51ac';
