@@ -52,27 +52,24 @@ export const NAV_ITEMS: NavItem[] = [
   // v7: Stream — the unified social pillar. Conversations, offerings,
   // opportunities, events, spaces, works, project inquiries — everything
   // that used to live in Hub + Spaces + Projects now scrolls here as
-  // typed posts. /hub and /spaces collapse in via matchPaths so legacy
-  // URLs and the active state both keep working.
+  // typed posts. Legacy /hub /spaces /studios /marketplace /creators
+  // /people redirect to /stream via explicit <Navigate> in App.tsx
+  // (NOT via matchPaths — those paths still have valid sub-routes like
+  // /spaces/events/:id that must keep resolving). matchPaths only lists
+  // bare legacy roots that have no live sub-routes.
   {
     id: "stream",
     label: "Stream",
     icon: Waves,
     path: "/stream",
-    matchPaths: [
-      "/hub",
-      "/spaces",
-      "/marketplace",
-      "/creators",
-      "/people",
-      "/studios",
-    ],
+    matchPaths: ["/hub", "/spaces", "/marketplace", "/creators", "/people"],
   },
   // Inbox — DMs + inquiries + (next pass) inline-expanded project work.
   // Sits next to Stream so "did the artist reply?" is always one tap away.
   { id: "messages", label: "Inbox", icon: MessageSquare, path: "/messages" },
-  // Hub/Studios/Spaces nav ids retired in v7. The legacy aliases above
-  // keep their URLs alive (they redirect into /stream).
+  // Hub/Studios/Spaces nav ids retired in v7. Their explicit routes in
+  // App.tsx redirect into /stream; their sub-routes (/spaces/events/:id,
+  // /studios/:id, etc.) stay live until a future pass re-homes them.
   // ─── Secondary destinations (still routable; not in default dock) ─────
   // Projects demoted out of the dock as part of v6. Lives as a tab on
   // the artist's own profile ("Building"). Route + nav id stay so deep
