@@ -32,6 +32,15 @@ const HudDock = () => {
   const { pathname } = useLocation();
   const { data: xp } = useCreatorXP();
   const { celebrate } = useCelebration();
+  const { state, isMobile } = useSidebar();
+  // Offset half the sidebar width so the dock visually centers within the
+  // main content column (not the full viewport). On mobile the sidebar is
+  // an overlay, so no offset is needed.
+  const sidebarOffset = isMobile
+    ? "0px"
+    : state === "expanded"
+      ? "8rem" // half of 16rem sidebar width
+      : "1.5rem"; // half of 3rem icon-collapsed width
 
   // Detect level-up by tracking last-seen level.
   const lastLevel = useRef<number | null>(null);
