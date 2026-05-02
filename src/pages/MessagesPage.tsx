@@ -30,7 +30,6 @@ import CirclesTab from "@/components/messages/CirclesTab";
 import BuddyList from "@/components/messages/BuddyList";
 import GuestMessagesPreview from "@/components/guest/GuestMessagesPreview";
 import ProjectsInbox from "@/components/messages/ProjectsInbox";
-import ListingsTab from "@/components/messages/ListingsTab";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pending", color: "bg-amber-500/15 text-amber-600", icon: Clock },
@@ -363,7 +362,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
       <div key={inquiry.id} className="surface-card p-4 space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <Badge className={`${statusMeta.color} border-0 gap-1 text-xs`}>
                 <StatusIcon className="h-3 w-3" />
                 {statusMeta.label}
@@ -373,20 +372,26 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
               </Badge>
               <span className="text-xs text-muted-foreground">{format(new Date(inquiry.created_at), "MMM d, yyyy")}</span>
             </div>
-            <Link to={`/creators/${inquiry.listing_id}`} className="font-semibold text-foreground hover:text-primary transition-colors text-sm">
+            <Link
+              to={`/profiles/${otherUserId}`}
+              className="text-xs text-foreground/80 hover:text-primary"
+            >
+              {isSender ? `To: ${otherName}` : `From: ${otherName}`}
+            </Link>
+            <Link to={`/creators/${inquiry.listing_id}`} className="block font-semibold text-foreground hover:text-primary transition-colors text-sm mt-0.5">
               {listing?.title ?? "Listing"}
             </Link>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {isSender ? `To: ${otherName}` : `From: ${otherName}`}
-            </p>
           </div>
-          {inquiry.status === "accepted" && inquiry.project_id && (
-            <Link to={`/projects/${inquiry.project_id}`}>
-              <Button variant="outline" size="sm" className="gap-1 rounded-full text-xs">
-                <FolderKanban className="h-3 w-3" /> View Project
-              </Button>
-            </Link>
-          )}
+          <button
+            onClick={() => {
+              setActiveTab("messages");
+              navigate(`/messages?to=${otherUserId}`);
+            }}
+            className="shrink-0 h-9 w-9 rounded-full border border-border hover:border-foreground/40 flex items-center justify-center"
+            title="Open conversation"
+          >
+            <ArrowRight className="h-4 w-4" />
+          </button>
         </div>
         <div className="bg-muted/50 rounded-lg p-3">
           <p className="text-sm text-foreground whitespace-pre-wrap">{inquiry.message}</p>
@@ -420,7 +425,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl font-bold text-foreground">Conversations</h1>
-        <p className="text-muted-foreground">DMs, projects, inquiries, and listings — all in one place.</p>
+        <p className="text-muted-foreground">DMs, projects, and inquiries — all in one place.</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -439,13 +444,6 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="listings" className="gap-1.5">
-            <Store className="h-3.5 w-3.5" /> Listings
-          </TabsTrigger>
-          {/* Circles is hidden from primary tabs in v8 — group chats are
-              accessed via the "+ Group" action inside DMs. The Groups tab
-              stays mounted only when ?tab=groups is set, so legacy links
-              still resolve. */}
           {activeTab === "groups" && (
             <TabsTrigger value="groups" className="gap-1.5">
               <Users className="h-3.5 w-3.5" /> Groups
@@ -651,9 +649,6 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
           <CirclesTab />
         </TabsContent>
 
-        <TabsContent value="listings" className="mt-4">
-          <ListingsTab userId={user.id} />
-        </TabsContent>
 
         <TabsContent value="inquiries" className="mt-4 space-y-3">
           {!allInquiries?.length ? (

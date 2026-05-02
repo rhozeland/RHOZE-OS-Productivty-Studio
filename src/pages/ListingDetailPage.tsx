@@ -52,8 +52,6 @@ import { format } from "date-fns";
 import AudioPreview from "@/components/marketplace/AudioPreview";
 import StarRating from "@/components/marketplace/StarRating";
 import QuickMessageDialog from "@/components/messages/QuickMessageDialog";
-import RevenueSplitConfig from "@/components/revenue/RevenueSplitConfig";
-import AttachedWorks from "@/components/works/AttachedWorks";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 const CATEGORIES: Record<string, { label: string; icon: any; color: string }> = {
@@ -428,14 +426,7 @@ const ListingDetailPage = () => {
             <div className="rounded-2xl overflow-hidden bg-muted aspect-[16/10]">
               <img src={listing.cover_url} alt={listing.title} className="w-full h-full object-cover" />
             </div>
-          ) : (
-            <div
-              className="rounded-2xl aspect-[16/10] flex items-center justify-center"
-              style={{ background: `linear-gradient(135deg, ${catMeta.color}22, ${catMeta.color}11)` }}
-            >
-              <CatIcon className="h-16 w-16" style={{ color: catMeta.color, opacity: 0.3 }} />
-            </div>
-          )}
+          ) : null}
 
           {/* Thumbnail strip */}
           {images.length > 1 && (
@@ -504,75 +495,6 @@ const ListingDetailPage = () => {
             </div>
           )}
 
-          {/* Reviews Section */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-foreground">
-                Reviews {reviews?.length ? `(${reviews.length})` : ""}
-              </h3>
-              {avgRating && (
-                <div className="flex items-center gap-2">
-                  <StarRating rating={avgRating} />
-                  <span className="text-sm font-bold text-foreground">{avgRating}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Write review (only if purchased and not already reviewed and not owner) */}
-            {!isOwner && !!(existingPurchase as any)?.id && !myReview && (
-              <form
-                onSubmit={(e) => { e.preventDefault(); submitReview.mutate(); }}
-                className="bg-muted/50 rounded-xl p-4 space-y-3"
-              >
-                <p className="text-xs font-medium text-foreground">Leave a review</p>
-                <StarRating rating={reviewRating} interactive onRate={setReviewRating} size="md" />
-                <Textarea
-                  placeholder="How was your experience? (optional)"
-                  value={reviewComment}
-                  onChange={(e) => setReviewComment(e.target.value)}
-                  rows={2}
-                  className="text-sm"
-                />
-                <Button type="submit" size="sm" className="rounded-full" disabled={submitReview.isPending}>
-                  {submitReview.isPending ? "Submitting..." : "Submit Review"}
-                </Button>
-              </form>
-            )}
-
-            {/* Review list */}
-            {reviews && reviews.length > 0 ? (
-              <div className="space-y-3">
-                {reviews.map((review: any) => {
-                  const reviewer = reviewersMap.get(review.reviewer_id);
-                  return (
-                    <div key={review.id} className="bg-muted/30 rounded-lg p-3 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">
-                            {(reviewer?.display_name || "?")[0].toUpperCase()}
-                          </div>
-                          <span className="text-xs font-medium text-foreground">
-                            {reviewer?.display_name || "Anonymous"}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <StarRating rating={review.rating} />
-                          <span className="text-[10px] text-muted-foreground">
-                            {format(new Date(review.created_at), "MMM d, yyyy")}
-                          </span>
-                        </div>
-                      </div>
-                      {review.comment && (
-                        <p className="text-xs text-muted-foreground leading-relaxed">{review.comment}</p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">No reviews yet</p>
-            )}
-          </div>
         </div>
 
         {/* Right: Info sidebar */}
@@ -619,14 +541,6 @@ const ListingDetailPage = () => {
                 {listing.title}
               </h1>
 
-              {/* Rating summary */}
-              {avgRating && (
-                <div className="flex items-center gap-2">
-                  <StarRating rating={avgRating} />
-                  <span className="text-sm font-bold text-foreground">{avgRating}</span>
-                  <span className="text-xs text-muted-foreground">({reviews?.length} review{reviews?.length !== 1 ? "s" : ""})</span>
-                </div>
-              )}
 
               {/* Price / Budget — context-aware label */}
               {(listing.credits_price != null || listing.price != null) && (
@@ -836,7 +750,7 @@ const ListingDetailPage = () => {
                       </p>
                     )}
                   </div>
-                  <RevenueSplitConfig listingId={listing.id} />
+                  
                 </div>
               )}
 
@@ -860,14 +774,6 @@ const ListingDetailPage = () => {
                 </div>
               )}
 
-              {/* Linked Works — visible to everyone, owner can manage.
-                  Carries the IP's content hash + Solana anchor into the
-                  listing surface (Phase 3 of the infra stack). */}
-              <AttachedWorks
-                targetType="listing"
-                targetId={listing.id}
-                canManage={isOwner}
-              />
 
               {/* Seller info */}
               {sellerProfile && (

@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Globe, CheckCircle, UserPlus, UserCheck, MessageSquare, MapPin, Clock,
   EyeOff, Loader2, Settings, Store, Star, ExternalLink, ShoppingBag,
@@ -48,6 +49,7 @@ const ProfileDetailPage = () => {
   // ?tab=coin etc. deep-links from Flow speculate pills + Hub coins strip.
   const tabFromUrl = searchParams.get("tab") || "overview";
   const [activeTab, setActiveTab] = useState(tabFromUrl);
+  const [bookingOpen, setBookingOpen] = useState(false);
   const handleTabChange = (v: string) => {
     setActiveTab(v);
     const next = new URLSearchParams(searchParams);
@@ -425,14 +427,12 @@ const ProfileDetailPage = () => {
 
         {/* ─── Tabbed sections ─── */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="w-full grid grid-cols-7 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
+          <TabsList className="w-full grid grid-cols-5 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
             <TabsTrigger value="overview" className="text-xs gap-1.5"><UserIcon className="h-3 w-3" />Overview</TabsTrigger>
             <TabsTrigger value="support" className="text-xs gap-1.5"><Heart className="h-3 w-3" />Support</TabsTrigger>
             <TabsTrigger value="coin" className="text-xs gap-1.5"><Coins className="h-3 w-3" />Coin</TabsTrigger>
             <TabsTrigger value="works" className="text-xs gap-1.5"><Sparkles className="h-3 w-3" />Works</TabsTrigger>
-            <TabsTrigger value="listings" className="text-xs gap-1.5"><ShoppingBag className="h-3 w-3" />Listings</TabsTrigger>
             <TabsTrigger value="building" className="text-xs gap-1.5"><FolderKanban className="h-3 w-3" />Building</TabsTrigger>
-            <TabsTrigger value="availability" className="text-xs gap-1.5"><CalendarIcon className="h-3 w-3" />Availability</TabsTrigger>
           </TabsList>
 
           {/* ─── Overview tab ─── */}
@@ -675,10 +675,10 @@ const ProfileDetailPage = () => {
                 </button>
               )}
 
-              {/* Book / availability */}
+              {/* Book / availability — opens calendar in modal */}
               {profile.available && (
                 <button
-                  onClick={() => handleTabChange("availability")}
+                  onClick={() => user ? setBookingOpen(true) : navigate("/auth")}
                   className="group text-left rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-4 hover:border-foreground/30 transition-colors"
                 >
                   <div className="flex items-start justify-between">
@@ -694,6 +694,34 @@ const ProfileDetailPage = () => {
                 </button>
               )}
             </div>
+
+            {/* Listings inline — what they're offering, right next to Book a session */}
+            {hasSellerContent && (
+              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
+                <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
+                  <ShoppingBag className="h-4 w-4 text-primary" /> Offerings
+                </h3>
+                <div className="space-y-2">
+                  {sellerListings!.slice(0, 5).map((listing: any) => (
+                    <button
+                      key={listing.id}
+                      onClick={() => navigate(`/creators/${listing.id}`)}
+                      className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{listing.title}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <Badge variant="outline" className="text-[9px] capitalize">{listing.category}</Badge>
+                          {listing.credits_price && <span className="text-[10px] font-semibold text-primary">{listing.credits_price} $RHOZE</span>}
+                          {listing.price && <span className="text-[10px] text-muted-foreground">${listing.price}</span>}
+                        </div>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Upcoming events */}
             {upcomingEvents && upcomingEvents.length > 0 && (
@@ -827,43 +855,6 @@ const ProfileDetailPage = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="listings" className="mt-5">
-            {hasSellerContent ? (
-              <div className="space-y-3">
-                <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-                  <ShoppingBag className="h-4 w-4 text-primary" /> Offerings
-                </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {sellerListings!.map((listing: any) => (
-                    <div key={listing.id} onClick={() => navigate(`/creators/${listing.id}`)}
-                      className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden cursor-pointer hover:shadow-md hover:border-primary/30 transition-all duration-200">
-                      {(listing.cover_url || listing.image_url) ? (
-                        <div className="aspect-[4/3] overflow-hidden bg-muted">
-                          <img src={listing.cover_url || listing.image_url} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        </div>
-                      ) : (
-                        <div className="aspect-[4/3] flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
-                          <Store className="h-6 w-6 text-muted-foreground/40" />
-                        </div>
-                      )}
-                      <div className="p-3">
-                        <p className="text-sm font-medium text-foreground truncate">{listing.title}</p>
-                        <div className="flex items-center justify-between mt-1">
-                          <Badge variant="outline" className="text-[9px] capitalize">{listing.category}</Badge>
-                          {listing.credits_price && <span className="text-[10px] font-semibold text-primary">{listing.credits_price} ◊</span>}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-8 text-center text-sm text-muted-foreground">
-                No active listings.
-              </div>
-            )}
-          </TabsContent>
-
           {/* ─── Building (Projects) tab ─── */}
           <TabsContent value="building" className="mt-5">
             {buildingProjects && buildingProjects.length > 0 ? (
@@ -907,14 +898,23 @@ const ProfileDetailPage = () => {
             )}
           </TabsContent>
 
-          {/* ─── Availability tab ─── */}
-          <TabsContent value="availability" className="mt-5">
+        </Tabs>
+
+        {/* Booking modal — opened from the "Book a session" support card */}
+        <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="font-display flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4 text-primary" />
+                Book a session with {p.display_name || p.username}
+              </DialogTitle>
+            </DialogHeader>
             <CreatorAvailabilityCalendar
               creatorId={id!}
               creatorName={p.display_name || p.username}
             />
-          </TabsContent>
-        </Tabs>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
