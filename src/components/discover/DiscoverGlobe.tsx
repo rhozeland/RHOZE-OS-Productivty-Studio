@@ -626,7 +626,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                   className="mt-4"
                 >
                   <div className="overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75">
-                    <div className="relative aspect-[16/10] overflow-hidden border-b border-border/40 bg-muted/70">
+                    <div className="relative aspect-[16/6] overflow-hidden border-b border-border/40 bg-muted/70">
                       {activeSpotlight.banner ? (
                         <img src={activeSpotlight.banner} alt={activeSpotlight.title} className="h-full w-full object-cover" />
                       ) : (
