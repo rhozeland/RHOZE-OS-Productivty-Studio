@@ -302,7 +302,7 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
           {rhozeBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} $RHOZE
         </span>
         <span>
-          {holdings.toLocaleString(undefined, { maximumFractionDigits: 2 })} $${ticker}
+          {holdings.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${ticker}
         </span>
       </div>
 
@@ -335,7 +335,7 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
           </div>
           <div className="flex justify-center"><ArrowDown className="h-4 w-4 text-muted-foreground" /></div>
           <div className="rounded-md bg-muted/40 p-3 text-sm font-mono text-center min-h-[2.5rem] flex items-center justify-center">
-            {quote ? quote.receiveLabel : <span className="text-muted-foreground text-xs">Receive $${ticker}</span>}
+            {quote ? quote.receiveLabel : <span className="text-muted-foreground text-xs">Receive ${ticker}</span>}
           </div>
         </TabsContent>
 
