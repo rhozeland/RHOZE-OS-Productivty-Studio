@@ -211,6 +211,36 @@
   animation: iridescent-flow 8s ease-in-out infinite;
 }
 
+/* HUD Dock — high-contrast / forced-colors fallbacks.
+   Windows High Contrast Mode (and other forced-colors UAs) strips background
+   gradients and box-shadows. Re-establish a visible outline + solid fills
+   using the system color keywords so the HUD remains usable. */
+@media (forced-colors: active) {
+  .hud-dock__pill {
+    background: Canvas !important;
+    border: 2px solid CanvasText !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  .hud-dock__gem {
+    background: Highlight !important;
+    box-shadow: none !important;
+    border: 2px solid CanvasText !important;
+  }
+  .hud-dock__gem span { color: HighlightText !important; text-shadow: none !important; }
+  .hud-dock__shimmer { display: none !important; }
+  .hud-dock__bar { background: Canvas !important; border: 1px solid CanvasText !important; }
+  .hud-dock__bar-fill { background: Highlight !important; box-shadow: none !important; }
+}
+
+/* Reduced motion — kill the dock's looping shimmer + bar sweep. */
+@media (prefers-reduced-motion: reduce) {
+  .hud-dock__shimmer,
+  .hud-dock__bar-fill > div {
+    animation: none !important;
+  }
+}
+
 @keyframes aurora-drift {
   0% { transform: translate(0%, 0%) scale(1); }
   25% { transform: translate(5%, -3%) scale(1.05); }
