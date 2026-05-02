@@ -270,26 +270,17 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
     return () => window.clearInterval(interval);
   }, [featuredSlides, isDragging]);
 
+  // Idle auto-spin only — never snap back to the active spotlight, that
+  // fights the user's drag and feels broken. Spin pauses while dragging.
   useEffect(() => {
     if (isDragging) return;
 
     const interval = window.setInterval(() => {
-      setRotation((current) => {
-        const active = spotlightMarkersRef.current.find((marker) => marker.key === activeSpotlightKey);
-        if (active) {
-          const target = normalizeRotation(-active.lng);
-          const delta = shortestAngle(current, target);
-          if (Math.abs(delta) > 1) {
-            return normalizeRotation(current + delta * 0.11);
-          }
-        }
-
-        return normalizeRotation(current + 0.28);
-      });
+      setRotation((current) => normalizeRotation(current + 0.18));
     }, 40);
 
     return () => window.clearInterval(interval);
-  }, [activeSpotlightKey, isDragging]);
+  }, [isDragging]);
 
   const { data: counts } = useQuery({
     queryKey: ["discover-region-counts"],
