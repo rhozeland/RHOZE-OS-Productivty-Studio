@@ -299,6 +299,9 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
         region_code: artist.region_code,
         mediums: artist.mediums,
         creator_roles: artist.creator_roles,
+        verification_status: artist.verification_status ?? null,
+        works_count: artist.works_count ?? 0,
+        followers_count: artist.followers_count ?? 0,
       });
     }
 
