@@ -265,7 +265,8 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
   const [convertDialog, setConvertDialog] = useState<any>(null);
   const [totalCredits, setTotalCredits] = useState("");
 
-  const activeTab = searchParams.get("tab") || "messages";
+  const rawTab = searchParams.get("tab");
+  const activeTab = rawTab === "inquiries" || !rawTab ? "messages" : rawTab;
   const setActiveTab = (tab: string) => {
     if (tab === "messages") {
       searchParams.delete("tab");
@@ -426,24 +427,21 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl font-bold text-foreground">Conversations</h1>
-        <p className="text-muted-foreground">DMs, projects, and inquiries — all in one place.</p>
+        <p className="text-muted-foreground">Messages, projects, and listings — all in one place.</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="messages" className="gap-1.5">
-            <MessageSquare className="h-3.5 w-3.5" /> DMs
-          </TabsTrigger>
-          <TabsTrigger value="projects" className="gap-1.5">
-            <FolderKanban className="h-3.5 w-3.5" /> Projects
-          </TabsTrigger>
-          <TabsTrigger value="inquiries" className="gap-1.5">
-            <Inbox className="h-3.5 w-3.5" /> Inquiries
+            <MessageSquare className="h-3.5 w-3.5" /> Messages
             {pendingCount > 0 && (
               <span className="ml-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
                 {pendingCount}
               </span>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="projects" className="gap-1.5">
+            <FolderKanban className="h-3.5 w-3.5" /> Projects
           </TabsTrigger>
           <TabsTrigger value="listings" className="gap-1.5">
             <Store className="h-3.5 w-3.5" /> Listings
@@ -455,7 +453,23 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
           )}
         </TabsList>
 
-        <TabsContent value="messages" className="mt-4">
+        <TabsContent value="messages" className="mt-4 space-y-4">
+          {!!allInquiries?.length && (
+            <details className="surface-card p-4" open={pendingCount > 0}>
+              <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-foreground">
+                <Inbox className="h-4 w-4" /> Inquiries
+                <span className="text-xs text-muted-foreground">({allInquiries.length})</span>
+                {pendingCount > 0 && (
+                  <span className="ml-1 h-5 px-2 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center">
+                    {pendingCount} pending
+                  </span>
+                )}
+              </summary>
+              <div className="mt-3 space-y-3">
+                {allInquiries.map((i) => renderInquiry(i))}
+              </div>
+            </details>
+          )}
           <div className="surface-card flex h-[calc(100vh-22rem)] min-h-[480px] overflow-hidden">
             {/* Sidebar - Conversations only */}
             <div className={cn(
@@ -655,18 +669,6 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
 
         <TabsContent value="groups" className="mt-4">
           <CirclesTab />
-        </TabsContent>
-
-
-        <TabsContent value="inquiries" className="mt-4 space-y-3">
-          {!allInquiries?.length ? (
-            <div className="text-center py-16">
-              <Inbox className="h-10 w-10 mx-auto text-muted-foreground/30" />
-              <p className="text-sm text-muted-foreground mt-3">No inquiries yet</p>
-            </div>
-          ) : (
-            allInquiries.map((i) => renderInquiry(i))
-          )}
         </TabsContent>
       </Tabs>
 
