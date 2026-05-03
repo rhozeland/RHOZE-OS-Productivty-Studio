@@ -860,7 +860,7 @@ const ProfileDetailPage = () => {
                   {flowPosts.map((post: any) => (
                     <div key={post.id} onClick={() => navigate("/flow")}
                       className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer">
-                      <div className="aspect-square overflow-hidden bg-muted">
+                      <div className="relative aspect-square overflow-hidden bg-muted">
                         <FlowThumbnail
                           fileUrl={post.file_url}
                           linkUrl={post.link_url}
@@ -868,9 +868,21 @@ const ProfileDetailPage = () => {
                           description={post.description}
                           className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
+                        {post.solana_signature && (
+                          <div className="absolute top-1.5 right-1.5">
+                            <VerifiedIPBadge
+                              signature={post.solana_signature}
+                              size="xs"
+                              showLabel={false}
+                              className="shadow-sm"
+                            />
+                          </div>
+                        )}
                       </div>
                       <div className="p-2.5">
-                        <p className="text-xs font-medium text-foreground truncate">{post.title}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-medium text-foreground truncate flex-1">{post.title}</p>
+                        </div>
                         <Badge variant="outline" className="text-[8px] mt-1 capitalize">{post.category}</Badge>
                       </div>
                     </div>
