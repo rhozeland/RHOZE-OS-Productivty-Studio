@@ -14,7 +14,6 @@ import { Plus, Store, ArrowRight, Loader2 } from "lucide-react";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 
 const ListingsTab = ({ userId }: { userId: string }) => {
-  const qc = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
 
   const { data: listings, isLoading } = useQuery({
@@ -28,21 +27,6 @@ const ListingsTab = ({ userId }: { userId: string }) => {
       if (error) throw error;
       return data ?? [];
     },
-  });
-
-  const toggleActive = useMutation({
-    mutationFn: async ({ id, next }: { id: string; next: boolean }) => {
-      const { error } = await supabase
-        .from("marketplace_listings")
-        .update({ is_active: next })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: (_, vars) => {
-      qc.invalidateQueries({ queryKey: ["my-listings", userId] });
-      toast.success(vars.next ? "Listing live" : "Listing hidden");
-    },
-    onError: (e: any) => toast.error(e.message),
   });
 
   return (
