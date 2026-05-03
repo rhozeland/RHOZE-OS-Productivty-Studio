@@ -259,12 +259,7 @@ const LaunchDetailPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* LEFT: chart + tabs */}
         <div className="lg:col-span-2 space-y-4">
-          <PriceChartCard
-            launchId={launch.id}
-            ticker={launch.ticker}
-            realSolReserves={Number(launch.real_sol_reserves)}
-            graduationTarget={Number(launch.graduation_sol_target)}
-          />
+          <PriceChartCard launchId={launch.id} ticker={launch.ticker} />
 
           <Card className="bg-card/40 backdrop-blur">
             <CardContent className="p-3">
