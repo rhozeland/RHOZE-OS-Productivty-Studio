@@ -32,6 +32,7 @@ import TicketCheckoutDialog from "@/components/events/TicketCheckoutDialog";
 import EventInviteBanner from "@/components/events/EventInviteBanner";
 import EventMediaCarousel from "@/components/events/EventMediaCarousel";
 import LaunchCoinDialog from "@/components/launchpad/LaunchCoinDialog";
+import DropCoinCard from "@/components/launchpad/DropCoinCard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const EventDetailPage = () => {
@@ -101,7 +102,7 @@ const EventDetailPage = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("coin_launches")
-        .select("id, ticker, name, image_url, status, real_sol_reserves, graduation_sol_target")
+        .select("id, ticker, name, image_url, status, virtual_sol_reserves, virtual_token_reserves, total_supply")
         .eq("event_id", id!)
         .neq("status", "cancelled")
         .order("created_at", { ascending: false });
@@ -627,37 +628,9 @@ const EventDetailPage = () => {
                 </div>
                 {hasCoins ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {eventCoins!.map((c: any) => {
-                      const real = Number(c.real_sol_reserves) * 100;
-                      const goal = Number(c.graduation_sol_target) * 100;
-                      const progress = Math.min(100, goal > 0 ? (real / goal) * 100 : 0);
-                      return (
-                        <Link key={c.id} to={`/coin/${c.ticker}`} className="group block rounded-2xl border border-border bg-card hover:border-emerald-500/40 hover:-translate-y-0.5 transition-all p-4">
-                          <div className="flex items-start gap-3 mb-3">
-                            {c.image_url ? (
-                              <img src={c.image_url} alt={c.name} className="h-11 w-11 rounded-md object-cover shrink-0" />
-                            ) : (
-                              <div className="h-11 w-11 rounded-md bg-gradient-to-br from-emerald-500/30 to-fuchsia-500/30 flex items-center justify-center shrink-0">
-                                <Coins className="h-5 w-5 text-emerald-500" />
-                              </div>
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-mono font-bold text-sm group-hover:text-emerald-500 transition-colors">${c.ticker}</span>
-                              </div>
-                              <p className="text-[11px] text-muted-foreground truncate">{c.name}</p>
-                            </div>
-                          </div>
-                          <div className="flex justify-between text-[10px] font-mono text-muted-foreground mb-1">
-                            <span>{real.toFixed(0)} $RHOZE</span>
-                            <span>{goal.toFixed(0)} goal</span>
-                          </div>
-                          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-emerald-500 to-fuchsia-500" style={{ width: `${progress}%` }} />
-                          </div>
-                        </Link>
-                      );
-                    })}
+                    {eventCoins!.map((c: any) => (
+                      <DropCoinCard key={c.id} coin={c} hideContext />
+                    ))}
                   </div>
                 ) : (
                   <div className="rounded-2xl border border-dashed border-border/60 p-6 text-center text-xs text-muted-foreground">
