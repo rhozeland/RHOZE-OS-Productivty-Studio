@@ -104,8 +104,6 @@ export const TIERS: TierRow[] = [
       "2× reward multiplier",
       "15% off Spaces & services",
       "Unlimited coin drops",
-      "Free coin launch (no platform fee)",
-      "72h early coin access",
       "Featured artist placement",
       "Verified Artist fast-track",
     ],
