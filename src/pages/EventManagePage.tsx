@@ -114,12 +114,13 @@ const EventManagePage = () => {
   });
 
   const [tierName, setTierName] = useState("");
-  const [tierUsd, setTierUsd] = useState("");
-  const [tierRhoze, setTierRhoze] = useState("");
+  const [tierPrice, setTierPrice] = useState("");
   const [tierQty, setTierQty] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
   const [lookupQuery, setLookupQuery] = useState("");
   const [lookupBusy, setLookupBusy] = useState(false);
+
+  const eventCurrency = (ev as any)?.currency_code || "USD";
 
   // Live attendee list — reflect check-ins from any device instantly.
   useEffect(() => {
@@ -147,22 +148,23 @@ const EventManagePage = () => {
   const addTier = useMutation({
     mutationFn: async () => {
       if (!tierName.trim()) throw new Error("Name required");
+      const price = tierPrice ? Number(tierPrice) : 0;
       const { error } = await supabase.from("event_ticket_tiers").insert({
         event_id: id!,
         name: tierName.trim(),
-        price_usd: tierUsd ? Number(tierUsd) : 0,
-        price_rhoze: tierRhoze ? Number(tierRhoze) : 0,
+        price_usd: price, // stored in event currency
+        price_rhoze: price > 0 ? fiatToRhoze(price) : 0,
+        currency_code: eventCurrency,
         quantity_total: tierQty ? Number(tierQty) : null,
         sort_order: (tiers?.length ?? 0) + 1,
         is_active: true,
-      });
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Tier added");
       setTierName("");
-      setTierUsd("");
-      setTierRhoze("");
+      setTierPrice("");
       setTierQty("");
       qc.invalidateQueries({ queryKey: ["event-tiers-manage", id] });
     },
