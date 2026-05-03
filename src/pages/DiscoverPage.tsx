@@ -16,7 +16,7 @@
  * fresh feed now — drops, works, offerings, events, spaces all in one).
  */
 import { Suspense, lazy, useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,21 +26,26 @@ import { Badge } from "@/components/ui/badge";
 import RegionPromptBanner from "@/components/discover/RegionPromptBanner";
 import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import StreamComposer from "@/components/stream/StreamComposer";
-import ConversationsMosaic from "@/components/hub/ConversationsMosaic";
-import ConversationsEventsBrowser from "@/components/messages/ConversationsEventsBrowser";
-import HubFlowWidget from "@/components/hub/HubFlowWidget";
+import ConversationsMosaic, { type MosaicKindFilter } from "@/components/hub/ConversationsMosaic";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { RegionMarket } from "@/lib/regions";
-import { ArrowRight, Coins, Loader2, Sparkles, CalendarDays, Flame } from "lucide-react";
+import { ArrowRight, Coins, Loader2, Sparkles, CalendarDays, Flame, MapPin, FileText, ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
 
 const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
 
-type DiscoverView = "mosaic" | "events" | "flow";
-const VIEW_OPTIONS: { value: DiscoverView; label: string; icon: any }[] = [
-  { value: "mosaic", label: "All", icon: Sparkles },
-  { value: "events", label: "Events", icon: CalendarDays },
-  { value: "flow", label: "Flow", icon: Flame },
+type DiscoverView = "all" | "events" | "spaces" | "works";
+const VIEW_OPTIONS: { value: DiscoverView; label: string; icon: any; kind: MosaicKindFilter }[] = [
+  { value: "all", label: "All", icon: Sparkles, kind: "all" },
+  { value: "events", label: "Events", icon: CalendarDays, kind: "event" },
+  { value: "spaces", label: "Spaces", icon: MapPin, kind: "space" },
+  { value: "works", label: "Works", icon: FileText, kind: "drop" },
 ];
 
 const getGreeting = () => {
