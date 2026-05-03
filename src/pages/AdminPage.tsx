@@ -1,7 +1,7 @@
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Users, Award, Building2, Coins, AlertTriangle, Wallet, Eye, Sliders, ShieldCheck, Percent } from "lucide-react";
+import { BarChart3, Users, Award, Building2, Coins, AlertTriangle, Wallet, Eye, Sliders, ShieldCheck, Percent, Film } from "lucide-react";
 import AdminOverview from "@/components/admin/AdminOverview";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminBadges from "@/components/admin/AdminBadges";
@@ -10,6 +10,7 @@ import AdminPendingRewards from "@/components/admin/AdminPendingRewards";
 import AdminDisputes from "@/components/admin/AdminDisputes";
 import AdminWithdrawals from "@/components/admin/AdminWithdrawals";
 import AdminContentModeration from "@/components/admin/AdminContentModeration";
+import AdminFlowModeration from "@/components/admin/AdminFlowModeration";
 import AdminUnderwritingRules from "@/components/admin/AdminUnderwritingRules";
 import AdminUnderwritingRulesAudit from "@/components/admin/AdminUnderwritingRulesAudit";
 import AdminWorkVerifications from "@/components/admin/AdminWorkVerifications";
@@ -19,7 +20,7 @@ import AdminPlatformFees from "@/components/admin/AdminPlatformFees";
 
 const VALID_TABS = new Set([
   "overview", "rewards", "caps", "users", "badges", "studios", "ip",
-  "artists", "disputes", "withdrawals", "moderation", "capital", "fees",
+  "artists", "disputes", "withdrawals", "moderation", "flow", "capital", "fees",
 ]);
 
 const AdminPage = () => {
