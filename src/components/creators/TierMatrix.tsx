@@ -1,14 +1,12 @@
 /**
- * TierMatrix — compact table breakdown of v7 tier eligibility + perks.
+ * TierMatrix — editorial tier breakdown.
  *
- * Two ways to qualify per row:
- *   • Hold $RHOZE (long-term)
- *   • Or hit any one of the activity thresholds (posts / projects / listings / events / interactions)
- *
- * Used on both /rewards and the Creator Pass card.
+ * Three columns: Tier · Hold $RHOZE · Perks (coin drops folded into perks).
+ * Used on Creator Pass (My Pass + Tiers tab) and the guest preview.
  */
 import { cn } from "@/lib/utils";
 import { TIERS, type TierId } from "@/lib/tier-matrix";
+import { Check } from "lucide-react";
 
 interface Props {
   /** Optional: highlight the user's current tier */
@@ -16,87 +14,92 @@ interface Props {
   className?: string;
 }
 
-const fmt = (n: number) =>
-  n >= 1_000_000 ? `${n / 1_000_000}M` : n >= 1_000 ? `${n / 1_000}K` : `${n}`;
-
 export const TierMatrix = ({ activeTier, className }: Props) => {
   return (
-    <div className={cn("rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm overflow-hidden", className)}>
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs">
-          <thead className="bg-muted/40 text-muted-foreground">
-            <tr>
-              <th className="text-left font-medium px-3 py-2.5">Tier</th>
-              <th className="text-left font-medium px-3 py-2.5 whitespace-nowrap">Hold $RHOZE</th>
-              <th className="text-left font-medium px-3 py-2.5">Or any one of</th>
-              <th className="text-left font-medium px-3 py-2.5 whitespace-nowrap">Coin drops / 30d</th>
-              <th className="text-left font-medium px-3 py-2.5">Perks</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border/40">
-            {TIERS.map((t) => {
-              const isActive = activeTier === t.id;
-              const reqs: string[] = [];
-              if (t.activity.posts) reqs.push(`${fmt(t.activity.posts)} posts`);
-              if (t.activity.projects) reqs.push(`${fmt(t.activity.projects)} projects`);
-              if (t.activity.listings) reqs.push(`${fmt(t.activity.listings)} listings`);
-              if (t.activity.events) reqs.push(`${fmt(t.activity.events)} events hosted`);
-              if (t.activity.interactions) reqs.push(`${fmt(t.activity.interactions)} interactions`);
-              return (
-                <tr key={t.id} className={cn("align-top", isActive && "bg-primary/5")}>
-                  <td className="px-3 py-3">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="h-6 w-6 rounded-md shrink-0"
-                        style={{ background: t.gradient }}
-                        aria-hidden
-                      />
-                      <div className="flex flex-col">
-                        <span className="font-display font-bold text-foreground">{t.label}</span>
-                        {isActive && (
-                          <span className="text-[9px] text-primary font-semibold tracking-wide">YOU</span>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-3 py-3 text-foreground/80 font-medium whitespace-nowrap">
-                    {t.holdLabel}
-                  </td>
-                  <td className="px-3 py-3 text-muted-foreground">
-                    {reqs.length === 0 ? (
-                      <span className="text-foreground/60">Default — anyone signed in</span>
-                    ) : (
-                      <ul className="space-y-0.5">
-                        {reqs.map((r) => (
-                          <li key={r} className="leading-snug">{r}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </td>
-                  <td className="px-3 py-3 text-foreground/80 font-medium whitespace-nowrap">
-                    {t.coinDropsPerMonth === null ? "Unlimited" : t.coinDropsPerMonth}
-                  </td>
-                  <td className="px-3 py-3 text-muted-foreground">
-                    <ul className="space-y-0.5">
-                      {t.benefits.map((b) => (
-                        <li key={b} className="leading-snug flex gap-1.5">
-                          <span
-                            className="h-1 w-1 rounded-full mt-1.5 shrink-0"
-                            style={{ background: t.glowColor }}
-                          />
-                          <span>{b}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+    <div
+      className={cn(
+        "rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm overflow-hidden",
+        className,
+      )}
+    >
+      {/* Header */}
+      <div className="grid grid-cols-[minmax(120px,1fr)_minmax(110px,1fr)_2fr] gap-4 px-4 py-2.5 bg-muted/40 text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
+        <span>Tier</span>
+        <span>Hold $RHOZE</span>
+        <span>Perks</span>
       </div>
+
+      <ul className="divide-y divide-border/40">
+        {TIERS.map((t) => {
+          const isActive = activeTier === t.id;
+          const dropsLine =
+            t.coinDropsPerMonth === null
+              ? "Unlimited coin drops"
+              : `${t.coinDropsPerMonth} coin drop${t.coinDropsPerMonth === 1 ? "" : "s"} / 30 days`;
+          // Fold coin drops into perks (dedupe if already mentioned)
+          const perks = t.benefits.some((b) => /coin drop/i.test(b))
+            ? t.benefits
+            : [...t.benefits, dropsLine];
+
+          return (
+            <li
+              key={t.id}
+              className={cn(
+                "grid grid-cols-[minmax(120px,1fr)_minmax(110px,1fr)_2fr] gap-4 px-4 py-4 items-start transition-colors",
+                isActive && "bg-primary/5",
+              )}
+            >
+              {/* Tier */}
+              <div className="flex items-center gap-3 min-w-0">
+                <span
+                  className="h-9 w-9 rounded-xl shrink-0 ring-1 ring-white/20 shadow-sm"
+                  style={{ background: t.gradient }}
+                  aria-hidden
+                />
+                <div className="min-w-0">
+                  <p className="font-display text-base font-bold text-foreground leading-none">
+                    {t.label}
+                  </p>
+                  {isActive && (
+                    <span className="text-[9px] font-semibold tracking-wider text-primary uppercase">
+                      You
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Hold */}
+              <div className="flex flex-col justify-center">
+                <p className="font-display text-sm font-semibold text-foreground tabular-nums">
+                  {t.holdLabel}
+                </p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">
+                  $RHOZE
+                </p>
+              </div>
+
+              {/* Perks */}
+              <ul className="space-y-1.5">
+                {perks.map((b) => (
+                  <li
+                    key={b}
+                    className="flex items-start gap-2 text-xs text-foreground/80 leading-snug"
+                  >
+                    <Check
+                      className="h-3 w-3 mt-[3px] shrink-0"
+                      style={{ color: t.glowColor }}
+                    />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          );
+        })}
+      </ul>
+
       <p className="text-[11px] text-muted-foreground/80 px-4 py-2.5 border-t border-border/40 bg-muted/20">
-        Tier auto-upgrades as soon as you hit a hold threshold or any single activity bar — whichever comes first. Successful interactions = bookings, support sent + received, and approved milestones.
+        Tier auto-upgrades the moment your $RHOZE balance crosses a threshold. No subscription, no application.
       </p>
     </div>
   );
