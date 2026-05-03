@@ -674,13 +674,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
           <ListingsTab userId={user.id} />
         </TabsContent>
 
-        <TabsContent value="events" className="mt-4">
-          <ConversationsEventsBrowser />
-        </TabsContent>
-
-        <TabsContent value="flow" className="mt-4">
-          <HubFlowWidget expanded />
-        </TabsContent>
+        {/* Events + Flow live on Discover now (toggles on the mosaic). */}
 
         <TabsContent value="groups" className="mt-4">
           <CirclesTab />
