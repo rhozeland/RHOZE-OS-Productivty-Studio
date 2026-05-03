@@ -88,6 +88,7 @@ interface FeaturedEventRow {
   title: string;
   description: string | null;
   cover_url: string | null;
+  cover_url_poster: string | null;
   starts_at: string;
   venue_name: string | null;
   venue_address: string | null;
@@ -209,6 +210,7 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
       const needsBanner = profiles.filter((p) => !p.banner_url).map((p) => p.user_id);
       const bannerFallback = new Map<string, string>();
       const worksCount = new Map<string, number>();
+      const flowCount = new Map<string, number>();
 
       // Count ALL works owned by the artist (not just `visibility=public`),
       // so that creators see their real total in the Featured stat strip.
@@ -235,6 +237,20 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
         }
       });
 
+      // Public-facing "Works" on profiles map to Flow posts, so prefer that
+      // count when available. Fall back to registered Works for creators who
+      // use the registry but have not posted on Flow yet.
+      const { data: flowRows } = await supabase
+        .from("flow_items")
+        .select("user_id, created_at")
+        .in("user_id", userIds)
+        .order("created_at", { ascending: false })
+        .limit(400);
+
+      (flowRows ?? []).forEach((row: any) => {
+        flowCount.set(row.user_id, (flowCount.get(row.user_id) ?? 0) + 1);
+      });
+
       // Followers count (connections.following_id = artist, accepted).
       const followersCount = new Map<string, number>();
       const { data: followerRows } = await supabase
@@ -250,7 +266,7 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
       return profiles.map((p) => ({
         ...p,
         banner_url: p.banner_url ?? bannerFallback.get(p.user_id) ?? null,
-        works_count: worksCount.get(p.user_id) ?? 0,
+        works_count: Math.max(flowCount.get(p.user_id) ?? 0, worksCount.get(p.user_id) ?? 0),
         followers_count: followersCount.get(p.user_id) ?? 0,
       }));
     },
@@ -262,7 +278,7 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
     queryFn: async () => {
       const { data } = await supabase
         .from("events")
-        .select("id, slug, title, description, cover_url, starts_at, venue_name, venue_address, is_online, space:studios(location, city, country)")
+        .select("id, slug, title, description, cover_url, cover_url_poster, starts_at, venue_name, venue_address, is_online, space:studios(location, city, country)")
         .eq("status", "published")
         .gte("starts_at", new Date().toISOString())
         .order("starts_at", { ascending: true })
@@ -355,7 +371,7 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
         href: `/spaces/events/${event.id}`,
         title: event.title,
         subtitle: event.description,
-        banner: event.cover_url,
+        banner: event.cover_url_poster || event.cover_url,
         starts_at: event.starts_at,
         venue: event.venue_name,
         is_online: event.is_online,
