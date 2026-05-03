@@ -283,14 +283,37 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
     queryFn: async () => {
       const { data } = await supabase
         .from("studios")
-        .select("id, name, short_description, cover_image_url, location, city, state, country")
+        .select("id, name, short_description, cover_image_url, location, city, state, country, category, hourly_rate, currency, max_guests, amenities, rating_avg, review_count")
         .eq("is_active", true)
         .order("updated_at", { ascending: false })
         .limit(12);
 
-      return ((data ?? []) as FeaturedSpaceRow[]).map((space) => ({
+      const rows = (data ?? []) as FeaturedSpaceRow[];
+      const ids = rows.map((r) => r.id);
+      const availDays = new Map<string, number>();
+      if (ids.length) {
+        const { data: avail } = await supabase
+          .from("studio_availability")
+          .select("studio_id, day_of_week, is_available")
+          .in("studio_id", ids);
+        for (const a of (avail ?? []) as any[]) {
+          if (a.is_available) {
+            const key = `${a.studio_id}:${a.day_of_week}`;
+            // @ts-ignore
+            if (!availDays.has(key)) availDays.set(key, 1);
+          }
+        }
+      }
+      const dayCount = new Map<string, number>();
+      for (const k of availDays.keys()) {
+        const sid = k.split(":")[0];
+        dayCount.set(sid, (dayCount.get(sid) ?? 0) + 1);
+      }
+
+      return rows.map((space) => ({
         ...space,
         region_code: resolveRegionCodeFromPlace([space.country, space.city, space.location]),
+        available_days: dayCount.get(space.id) ?? 0,
       }));
     },
     staleTime: 60_000,
