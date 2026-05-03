@@ -83,20 +83,22 @@ const StudioDetailPage = () => {
     enabled: !!id,
   });
 
-  // Coins tied to this space — surfaced only on the space detail page.
-  // Currently scoped to launches by the studio owner (the host's Verified IP coins).
-  const { data: spaceCoins } = useQuery({
-    queryKey: ["studio-detail-coins", studio?.owner_id],
+  // Coin drops attached to this space (any creator can drop a coin here in
+  // future; today we surface all coins where space_id matches OR — for back-
+  // compat with legacy data — the studio owner is the creator).
+  const { data: spaceCoins, refetch: refetchSpaceCoins } = useQuery({
+    queryKey: ["studio-detail-coins", id, studio?.owner_id],
     queryFn: async () => {
       const { data } = await supabase
         .from("coin_launches")
-        .select("id, name, ticker, image_url, status, real_sol_reserves, graduation_sol_target")
-        .eq("creator_id", studio!.owner_id)
+        .select("id, name, ticker, image_url, status, real_sol_reserves, graduation_sol_target, space_id")
+        .or(`space_id.eq.${id},and(space_id.is.null,creator_id.eq.${studio!.owner_id})`)
+        .neq("status", "cancelled")
         .order("created_at", { ascending: false })
-        .limit(6);
+        .limit(8);
       return (data as any[]) ?? [];
     },
-    enabled: !!studio?.owner_id,
+    enabled: !!studio?.owner_id && !!id,
   });
 
   const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
