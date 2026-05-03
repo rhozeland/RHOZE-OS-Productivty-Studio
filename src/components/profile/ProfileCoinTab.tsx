@@ -134,12 +134,7 @@ const ProfileCoinTab = ({ creatorId, isOwnProfile, defaultName, defaultImage, me
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
-          <PriceChartCard
-            launchId={coin.id}
-            ticker={coin.ticker}
-            realSolReserves={Number(coin.real_sol_reserves)}
-            graduationTarget={Number(coin.graduation_sol_target)}
-          />
+          <PriceChartCard launchId={coin.id} ticker={coin.ticker} />
         </div>
         <div>
           <TradePanel
