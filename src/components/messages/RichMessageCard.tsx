@@ -28,6 +28,7 @@ export const isRichMessage = (content: string) =>
   content.startsWith("[PROFILE:") ||
   content.startsWith("[LISTING:") ||
   content.startsWith("[LINK:") ||
+  content.startsWith("[EVENT:") ||
   content.startsWith("[STAFF_INVITE:");
 
 const parseRich = (content: string, prefix: string) => {
