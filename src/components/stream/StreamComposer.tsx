@@ -56,13 +56,11 @@ interface TypeMeta {
 }
 
 const TYPES: TypeMeta[] = [
-  { key: "text",        label: "Drop",         icon: Flame,         inline: true,  cta: "Drop" },
-  { key: "offering",    label: "Offering",     icon: Briefcase,     inline: false, href: "/marketplace?compose=service",      cta: "Post Offering" },
-  { key: "opportunity", label: "Opportunity",  icon: Megaphone,     inline: false, href: "/marketplace?compose=project_request", cta: "Post Opportunity" },
-  { key: "event",       label: "Event",        icon: CalendarDays,  inline: false, href: "/spaces/events/new",                cta: "Host Event" },
-  { key: "space",       label: "Space",        icon: Building2,     inline: false, href: "/studios/apply",                    cta: "List Space" },
-  { key: "work",        label: "Work",         icon: Shield,        inline: false, href: "/works",                            cta: "Anchor Work" },
-  { key: "project",     label: "Project",      icon: FolderKanban,  inline: false, href: "/messages?tab=projects&new=1",      cta: "Open Project" },
+  { key: "text",     label: "Update",   icon: Flame,         inline: true,  cta: "Post Update" },
+  { key: "offering", label: "Offering", icon: Briefcase,     inline: false, href: "/marketplace?compose=service", cta: "Post Offering" },
+  { key: "event",    label: "Event",    icon: CalendarDays,  inline: false, href: "/spaces/events/new",           cta: "Host Event" },
+  { key: "space",    label: "Space",    icon: Building2,     inline: false, href: "/studios/apply",               cta: "List Space" },
+  { key: "work",     label: "Work",     icon: Shield,        inline: false, href: "/works",                       cta: "Anchor Work" },
 ];
 
 interface Props {
