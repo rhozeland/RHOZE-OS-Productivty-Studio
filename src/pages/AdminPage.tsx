@@ -1,7 +1,7 @@
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Users, Award, Building2, Coins, AlertTriangle, Wallet, Eye, Sliders, ShieldCheck } from "lucide-react";
+import { BarChart3, Users, Award, Building2, Coins, AlertTriangle, Wallet, Eye, Sliders, ShieldCheck, Percent } from "lucide-react";
 import AdminOverview from "@/components/admin/AdminOverview";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminBadges from "@/components/admin/AdminBadges";
@@ -15,10 +15,11 @@ import AdminUnderwritingRulesAudit from "@/components/admin/AdminUnderwritingRul
 import AdminWorkVerifications from "@/components/admin/AdminWorkVerifications";
 import AdminArtistVerifications from "@/components/admin/AdminArtistVerifications";
 import AdminRewardCaps from "@/components/admin/AdminRewardCaps";
+import AdminPlatformFees from "@/components/admin/AdminPlatformFees";
 
 const VALID_TABS = new Set([
   "overview", "rewards", "caps", "users", "badges", "studios", "ip",
-  "artists", "disputes", "withdrawals", "moderation", "capital",
+  "artists", "disputes", "withdrawals", "moderation", "capital", "fees",
 ]);
 
 const AdminPage = () => {
