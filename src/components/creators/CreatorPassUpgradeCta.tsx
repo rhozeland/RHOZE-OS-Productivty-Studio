@@ -67,7 +67,7 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
     enabled: !!user,
   });
 
-  const { data: activity } = useQuery({
+  const { data: activity, isLoading: activityLoading } = useQuery({
     queryKey: ["creator-pass-cta-activity", user?.id],
     queryFn: async () => {
       const sb = supabase as any;
