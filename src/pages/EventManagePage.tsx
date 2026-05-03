@@ -416,6 +416,11 @@ const EventManagePage = () => {
           <TabsTrigger value="attendees" className="gap-1.5">
             <Radio className="h-3.5 w-3.5" /> Attendees
           </TabsTrigger>
+          {isHost && (
+            <TabsTrigger value="earnings" className="gap-1.5">
+              <CircleDollarSign className="h-3.5 w-3.5" /> Earnings
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="details" className="space-y-4 mt-4">
