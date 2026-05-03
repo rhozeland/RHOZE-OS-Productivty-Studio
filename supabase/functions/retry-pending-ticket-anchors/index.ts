@@ -34,15 +34,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Allow either service role or a configured CRON_SECRET.
-    const cronSecret = Deno.env.get("CRON_SECRET");
-    const headerSecret = req.headers.get("x-cron-secret");
-    const authHeader = req.headers.get("Authorization") ?? "";
+    // This endpoint is intentionally callable without auth: it only retries
+    // anchoring for tickets that are ALREADY checked in by the host. The
+    // worst an attacker can do is trigger retries that would happen anyway.
+    // Work is bounded (LIMIT 25, max 8 attempts, 2-min cooldown).
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const ok =
-      (cronSecret && headerSecret === cronSecret) ||
-      authHeader === `Bearer ${serviceKey}`;
-    if (!ok) return respond(401, { error: "Unauthorized" });
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, serviceKey);
 
