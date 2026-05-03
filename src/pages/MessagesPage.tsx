@@ -453,6 +453,9 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
           <TabsTrigger value="listings" className="gap-1.5">
             <Store className="h-3.5 w-3.5" /> Listings
           </TabsTrigger>
+          <TabsTrigger value="events" className="gap-1.5">
+            <CalendarDays className="h-3.5 w-3.5" /> Events
+          </TabsTrigger>
           <TabsTrigger value="flow" className="gap-1.5">
             <Flame className="h-3.5 w-3.5" /> Flow
           </TabsTrigger>
