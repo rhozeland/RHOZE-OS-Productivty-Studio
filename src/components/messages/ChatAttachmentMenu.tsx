@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadAndGetUrl } from "@/lib/storage-utils";
@@ -23,11 +23,15 @@ import {
   Loader2,
   Link2,
   FileText,
+  Mic,
+  Square,
+  Send,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-type ShareType = "menu" | "smartboards" | "profiles" | "listings" | "link";
+type ShareType = "menu" | "smartboards" | "profiles" | "listings" | "link" | "voice";
 
 interface ChatAttachmentMenuProps {
   onSendMessage: (content: string) => void;
@@ -194,9 +198,94 @@ const ChatAttachmentMenu = ({ onSendMessage, onSendQuote, disabled }: ChatAttach
   // Quotes, smartboards, creator profiles, listings were removed in v8.2 —
   // those flows live in their own surfaces (Projects budget, Roadmap, etc.).
   const menuItems = [
+    { icon: Mic, label: "Voice Note", description: "Record and send a quick voice message", action: () => setView("voice") },
     { icon: Paperclip, label: "Upload File", description: "Share images, docs, audio", action: () => fileInputRef.current?.click() },
     { icon: Link2, label: "Share Link", description: "Google Drive, Dropbox, any URL", action: () => setView("link") },
   ];
+
+  // ── Voice note recording ──
+  const [recording, setRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [duration, setDuration] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<number | null>(null);
+
+  const resetVoice = () => {
+    setRecording(false);
+    setAudioBlob(null);
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    setAudioUrl(null);
+    setDuration(0);
+    if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      try { mediaRecorderRef.current.stop(); } catch {}
+    }
+    mediaRecorderRef.current?.stream?.getTracks().forEach((t) => t.stop());
+    mediaRecorderRef.current = null;
+    chunksRef.current = [];
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      chunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      mr.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" });
+        setAudioBlob(blob);
+        setAudioUrl(URL.createObjectURL(blob));
+        stream.getTracks().forEach((t) => t.stop());
+      };
+      mediaRecorderRef.current = mr;
+      mr.start();
+      setRecording(true);
+      setDuration(0);
+      timerRef.current = window.setInterval(() => setDuration((d) => d + 1), 1000);
+    } catch (err: any) {
+      toast.error("Microphone access denied");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
+    setRecording(false);
+    if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
+  };
+
+  const sendVoiceNote = async () => {
+    if (!audioBlob || !user) return;
+    setUploading(true);
+    try {
+      const filePath = `chat/${user.id}/voice-${crypto.randomUUID()}.webm`;
+      const file = new File([audioBlob], "voice-note.webm", { type: audioBlob.type || "audio/webm" });
+      const { url: signedUrl, error: uploadErrMsg } = await uploadAndGetUrl("smartboard-files", filePath, file);
+      if (uploadErrMsg) { toast.error("Failed to upload voice note"); return; }
+      const fileMsg = `[FILE:${JSON.stringify({
+        name: `Voice note · ${duration}s`,
+        url: signedUrl,
+        type: "audio/webm",
+        size: audioBlob.size,
+      })}]`;
+      onSendMessage(fileMsg);
+      toast.success("Voice note sent");
+      resetVoice();
+      setOpen(false);
+      setView("menu");
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  useEffect(() => () => { resetVoice(); }, []);
+
+  const fmtDur = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
   return (
     <>
@@ -408,6 +497,52 @@ const ChatAttachmentMenu = ({ onSendMessage, onSendQuote, disabled }: ChatAttach
                   ))
                 )}
               </ScrollArea>
+            </div>
+          )}
+
+          {view === "voice" && (
+            <div>
+              <div className="flex items-center gap-2 p-2 border-b border-border">
+                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => { resetVoice(); setView("menu"); }}>
+                  <span className="text-lg">←</span>
+                </Button>
+                <p className="text-sm font-medium text-foreground">Voice Note</p>
+              </div>
+              <div className="p-4 flex flex-col items-center gap-3">
+                {!audioUrl ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={recording ? stopRecording : startRecording}
+                      className={cn(
+                        "h-16 w-16 rounded-full flex items-center justify-center transition-all",
+                        recording
+                          ? "bg-destructive text-destructive-foreground animate-pulse shadow-lg shadow-destructive/30"
+                          : "bg-primary text-primary-foreground hover:scale-105"
+                      )}
+                    >
+                      {recording ? <Square className="h-6 w-6" fill="currentColor" /> : <Mic className="h-7 w-7" />}
+                    </button>
+                    <p className="text-xs text-muted-foreground">
+                      {recording ? `Recording · ${fmtDur(duration)}` : "Tap to start recording"}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <audio src={audioUrl} controls className="w-full" />
+                    <p className="text-[10px] text-muted-foreground">{fmtDur(duration)}</p>
+                    <div className="flex gap-2 w-full">
+                      <Button variant="ghost" size="sm" className="flex-1 gap-1.5" onClick={resetVoice} disabled={uploading}>
+                        <Trash2 className="h-3.5 w-3.5" /> Discard
+                      </Button>
+                      <Button size="sm" className="flex-1 gap-1.5" onClick={sendVoiceNote} disabled={uploading}>
+                        {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                        Send
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </PopoverContent>
