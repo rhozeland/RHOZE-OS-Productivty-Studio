@@ -94,55 +94,13 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
     const LEGACY_MAP: Record<string, TierId> = { bronze: "spark", gold: "bloom", diamond: "glow", prism: "play" };
     const subTier: TierId = credits?.tier ? ((LEGACY_MAP[credits.tier] || credits.tier) as TierId) : "spark";
     const holdTier: TierId = getHoldTier(balance);
-    const activityTier: TierId = getActivityTier(activity);
-    const effective = getEffectiveTier(subTier, holdTier, activityTier);
+    const effective = getEffectiveTier(subTier, holdTier);
 
     const nextTier = TIERS.find((t) => TIER_RANK[t.id] === TIER_RANK[effective] + 1);
     if (!nextTier) return { effective, next: null as null };
 
-    // Build candidate thresholds: hold + each activity req.
-    type Candidate = { kind: "hold" | "activity"; key: string; current: number; need: number; ratio: number };
-    const candidates: Candidate[] = [];
-
-    if (nextTier.hold > 0) {
-      candidates.push({
-        kind: "hold",
-        key: "hold",
-        current: balance,
-        need: nextTier.hold,
-        ratio: balance / nextTier.hold,
-      });
-    }
-
-    (Object.keys(nextTier.activity) as Array<keyof typeof nextTier.activity>).forEach((k) => {
-      const need = nextTier.activity[k];
-      if (!need) return;
-      const current = (activity as any)[k] ?? 0;
-      candidates.push({
-        kind: "activity",
-        key: k as string,
-        current,
-        need,
-        ratio: current / need,
-      });
-    });
-
-    // Closest = highest ratio that's still < 1.
-    const closest = candidates
-      .filter((c) => c.ratio < 1)
-      .sort((a, b) => b.ratio - a.ratio)[0] ?? candidates[0];
-
-    let hint: string;
-    if (!closest) {
-      hint = `Climb to ${nextTier.label} for bigger rewards.`;
-    } else if (closest.kind === "hold") {
-      const remaining = Math.max(0, closest.need - closest.current);
-      hint = `${formatRhoze(closest.current)} / ${formatRhoze(closest.need)} $RHOZE held — ${formatRhoze(remaining)} to ${nextTier.label}.`;
-    } else {
-      const noun = ACTIVITY_LABELS[closest.key as keyof typeof ACTIVITY_LABELS] ?? closest.key;
-      const remaining = Math.max(0, closest.need - closest.current);
-      hint = `${closest.current} / ${closest.need} ${noun}${closest.need === 1 ? "" : "s"} — ${remaining} more to ${nextTier.label}.`;
-    }
+    const remaining = Math.max(0, nextTier.hold - balance);
+    const hint = `${formatRhoze(balance)} / ${formatRhoze(nextTier.hold)} $RHOZE held — ${formatRhoze(remaining)} more to ${nextTier.label}.`;
 
     return { effective, next: nextTier, hint };
   }, [activity, credits]);
