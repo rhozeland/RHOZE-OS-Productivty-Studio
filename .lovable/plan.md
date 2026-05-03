@@ -1,64 +1,70 @@
-# Tiers, Events Pivot & Coin-Launch Fee
 
-## 1. Tier matrix cleanup (`src/lib/tier-matrix.ts`, `TierMatrix.tsx`)
+## Goal
 
-- Remove all "Xh early coin access" perks (24h / 48h / 72h) — never landed as a real feature.
-- Remove "Free coin launch (no platform fee)" from Play. Replace concept with a flat **coin-launch fee** that everyone pays (see §2).
-- Keep the rest of the perks intact (multipliers, % off, IP anchors, coin drops, Discover boost, Featured placement, Verified Artist fast-track).
+Two intertwined features:
 
-## 2. Coin launch transaction fee
+1. **Notes** — Instagram-style thought bubbles (≤60 words, expire in 24h) shown above the DM inbox and as a chip on the creator's profile avatar. The Stream composer's **Update** kind stops posting to Stream and writes a Note instead.
+2. **Buddies** — bidirectional friend connections. The DM inbox's "Recent" section becomes "Buddies" (your active connections + their notes). You add buddies from someone's profile.
 
-- New constant `COIN_LAUNCH_FEE_RHOZE = 500` (≈ $5 at 100 $RHOZE/$1) in `src/lib/rewards-catalog.ts`.
-- Surface it inline in the launchpad creation flow as "One-time launch fee: 500 $RHOZE". Deduct from `user_credits.balance` on submit (client-side optimistic, no DB schema change — uses existing credits ledger pattern).
-- No tier discount on the fee for now (kept simple — can revisit).
+Notes and Buddies plug together: only buddies see your Note in their DM inbox; anyone visiting your profile sees the Note bubble on your avatar.
 
-## 3. CreatorPassUpgradeCta arrow fix
+---
 
-- Remove the standalone `→` arrow rendered under the body copy in `CreatorPassUpgradeCta.tsx`. The card already has the close X; the arrow was awkward and felt unfinished.
+## Backend (one migration)
 
-## 4. Conversations right-rail tabs (Events · Spaces · Artists)
+**Table `user_notes`**
+- `user_id`, `body` (text, ≤300 chars ≈ 60 words, validated by trigger), `expires_at` (default `now() + interval '24 hours'`)
+- One active note per user — unique partial index `where expires_at > now()`
+- RLS: owner can insert/update/delete; SELECT visible to (a) the owner and (b) any user who is a confirmed buddy of the owner OR has the owner as a buddy. Profile-page reads are intentionally also allowed (notes are public-on-profile, mirroring Instagram).
+- View `active_user_notes` filtering `expires_at > now()` for cheap reads.
 
-- Add a right-side panel to `MessagesPage.tsx` (visible ≥lg) with three tabs: **Events**, **Spaces**, **Artists**.
-- Each tab is a vertical scrollable list of compact discovery cards. Clicking a card deep-links to its detail page.
-- Pulls from existing tables: `events` (upcoming, status=published), `studios` (active), `profiles` (verified artists).
+**Table `user_buddies`**
+- `requester_id`, `addressee_id`, `status` enum (`pending`, `accepted`, `blocked`), unique pair
+- RLS: either party can read; requester can insert (pending); addressee can update status; either can delete (unfriend)
+- Helper RPC `are_buddies(a uuid, b uuid) returns boolean` (security definer) used by the notes RLS policy.
 
-## 5. Luma-style Events explore page
+**Cleanup**: nightly cron isn't required — `expires_at` filter is enough. Optionally a `pg_cron` sweep that hard-deletes rows > 7 days old.
 
-- New route `/events` rendering `EventsExplorePage.tsx`:
-  - Hero strip: featured upcoming event(s).
-  - **Browse by Category** grid (Tech, Food & Drink, AI, Arts & Culture, Climate, Fitness, Wellness, Crypto, Music, Community) with icons + event counts. Categories map to existing `events.category` field.
-  - Region/date filter chips.
-  - Grid of event cards below.
-- Add `/events` to nav aliases; Conversations Events tab links here for "see all".
+---
 
-## 6. Event detail redesign (`EventDetailPage.tsx`)
+## Frontend changes
 
-Two-column Luma-style layout (≥md):
-- **Left**: cover image, "Presented by" host card (links to profile), Hosted By collaborator list, attendee avatars + count, contact host link.
-- **Right** (sticky): date/time block, location block (or "Register to See Address" for approval-required events), Registration card with status (Free / Approval Required / Paid) + primary CTA, About Event description below.
+### Stream composer (`src/components/stream/StreamComposer.tsx`)
+- The **Update** kind no longer creates a stream post. Selecting Update now opens the Note composer (small modal: textarea capped at 60 words live counter, "Post note · expires in 24h"). Posting writes to `user_notes` and toasts.
+- Other kinds (Offering / Event / Space / Work) unchanged.
 
-## 7. Paid events via Square
+### New components
+- `src/components/notes/NoteComposer.tsx` — modal with word counter, post + delete
+- `src/components/notes/NoteBubble.tsx` — small chip used on avatars (rounded, "speech-bubble" tail)
+- `src/components/notes/BuddyNotesRow.tsx` — horizontal scroller of buddy avatars + their notes, mounted at the top of the DM inbox (matches the user's screenshot)
 
-- Reuse existing `TicketCheckoutDialog` + `square-payment` edge function. Verify the dialog handles USD tier prices (it already does for $RHOZE; extend the Square branch).
-- On successful payment, edge fn issues ticket with `purchase_currency='usd'`, `amount_paid=tier.price_usd`. Host's seller dashboard already aggregates `credit_transactions` — extend `square-payment` callback to credit the host (75% after 10% platform + 15% reserve, matching the existing 75/15/10 split).
+### Profile (`src/pages/ProfileDetailPage.tsx`)
+- Render `<NoteBubble />` over the top-right of the avatar when an active note exists.
+- Add **Add buddy / Pending / Buddies** button next to Follow/Message/Book in the Support tab actions row. Reuses existing follow-button styling.
 
-## 8. Memory updates
+### Conversations (`src/pages/MessagesPage.tsx`, DMs tab)
+- Replace the "Recent contacts" section with `<BuddyNotesRow />` at the top: first tile is "Your note" (composer trigger), then each buddy with their note bubble.
+- "Buddies" sub-list under it with online indicator + last message preview (existing DM list, but filtered to confirmed buddies — non-buddy threads stay accessible via search/Requests).
 
-- Update `mem://index.md` Core: note coin-launch fee, `/events` route, Conversations right-rail.
-- Add `mem://features/events` summarizing the new structure.
+### Hooks
+- `useUserNote(userId)` — fetch active note for a user
+- `useMyNote()` — current user's note + post/delete mutations
+- `useBuddies()` — list of accepted buddies + counts of pending requests
+- `useBuddyStatus(otherUserId)` — `none | pending_out | pending_in | accepted | blocked` for the profile button
 
-## Out of scope for this pass
-- Subscribing to hosts (Luma "Subscribe" pill) — placeholder only.
-- Calendar integrations beyond existing google-calendar fn.
-- Per-event custom registration questions (the Luma "Your Info" form). Tracked as future work.
+---
 
-## Files touched (estimate)
-- `src/lib/tier-matrix.ts`, `src/lib/rewards-catalog.ts`
-- `src/components/creators/TierMatrix.tsx`, `CreatorPassUpgradeCta.tsx`
-- `src/components/launchpad/*` (fee surface)
-- `src/pages/MessagesPage.tsx` (+ new `ConversationsRightRail.tsx`)
-- new `src/pages/EventsExplorePage.tsx`
-- `src/pages/EventDetailPage.tsx` (redesign)
-- `src/components/events/TicketCheckoutDialog.tsx` + `supabase/functions/square-payment` (paid event branch)
-- `src/App.tsx` route registration, `src/config/navigation.ts` alias
-- `mem://index.md`, `mem://features/events`
+## Memory updates
+
+Add core-line: *"Notes (v8.9): Instagram-style 60-word, 24h thought bubbles. Update composer writes a Note (not a Stream post). Visible on owner's avatar (profile + DM inbox) and to buddies in DM inbox via `<BuddyNotesRow />`. Backed by `user_notes` + `user_buddies` tables."*
+
+Add memory file `mem://features/notes-and-buddies` with the schema + visibility rules.
+
+---
+
+## Out of scope (this pass)
+
+- Push/email notifications when a buddy posts a note
+- Reactions / replies on notes (Instagram-style ❤️ reply) — leave as a follow-up
+- Block list UI (RLS supports it, no surface yet)
+- Migrating any historical "update" stream posts — they stay where they are; only future Update clicks route to Notes
