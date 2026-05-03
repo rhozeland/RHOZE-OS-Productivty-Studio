@@ -110,17 +110,8 @@ const ListingsTab = ({ userId }: { userId: string }) => {
                 </p>
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 rounded-full"
-                  onClick={() => toggleActive.mutate({ id: l.id, next: !l.is_active })}
-                  title={l.is_active ? "Hide" : "Show"}
-                >
-                  {l.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                </Button>
                 <Link to={`/marketplace/${l.id}`}>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" title="Open">
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
