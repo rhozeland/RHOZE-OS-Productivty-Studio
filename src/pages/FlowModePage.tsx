@@ -19,6 +19,12 @@ import {
   AlertTriangle,
   RotateCcw,
   Loader2,
+  Palette,
+  Music,
+  Camera,
+  Video,
+  PenLine,
+  Link as LinkIcon,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -63,15 +69,24 @@ import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
 import SignUpToPostPrompt from "@/components/flow/SignUpToPostPrompt";
 import FlowFeedErrorState from "@/components/flow/FlowFeedErrorState";
 import { useFlowCoinsByCreator } from "@/hooks/useFlowCoinsByWork";
+import { awardEngagementReward } from "@/lib/award-engagement-reward";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
+const CATEGORY_ICONS: Record<string, { Icon: typeof Palette; label: string; tint: string }> = {
+  design: { Icon: Palette, label: "Design", tint: "from-fuchsia-500/20 to-pink-500/20 text-fuchsia-500" },
+  music: { Icon: Music, label: "Music", tint: "from-violet-500/20 to-indigo-500/20 text-violet-500" },
+  photo: { Icon: Camera, label: "Photo", tint: "from-amber-500/20 to-orange-500/20 text-amber-500" },
+  video: { Icon: Video, label: "Video", tint: "from-rose-500/20 to-red-500/20 text-rose-500" },
+  writing: { Icon: PenLine, label: "Writing", tint: "from-emerald-500/20 to-teal-500/20 text-emerald-500" },
+};
+
 const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; linkHint: string }> = {
-  design: { accept: "image/*,.pdf,.ai,.psd,.fig", hint: "JPG, PNG, PDF, or design files", linkHint: "Behance, Dribbble, Figma link" },
-  music: { accept: "audio/*,.mp3,.wav,.flac,.aac", hint: "MP3, WAV, FLAC, or audio files", linkHint: "Spotify, YouTube Music, SoundCloud link" },
-  photo: { accept: "image/*,.raw,.cr2,.nef", hint: "JPG, PNG, TIFF, or RAW files", linkHint: "Flickr, 500px, or direct image link" },
-  video: { accept: "video/*,.mp4,.mov,.webm", hint: "MP4, MOV, WebM, or video files", linkHint: "YouTube, Vimeo link" },
-  writing: { accept: ".txt,.md,.pdf,.doc,.docx", hint: "TXT, PDF, DOC, or text files", linkHint: "Medium, Substack, or blog link" },
+  design: { accept: "image/*,.pdf,.ai,.psd,.fig", hint: "JPG, PNG, PDF, or design files", linkHint: "Paste a link (optional)" },
+  music: { accept: "audio/*,.mp3,.wav,.flac,.aac", hint: "MP3, WAV, FLAC, or audio files", linkHint: "Paste a link (optional)" },
+  photo: { accept: "image/*,.raw,.cr2,.nef", hint: "JPG, PNG, TIFF, or RAW files", linkHint: "Paste a link (optional)" },
+  video: { accept: "video/*,.mp4,.mov,.webm", hint: "MP4, MOV, WebM, or video files", linkHint: "Paste a link (optional)" },
+  writing: { accept: ".txt,.md,.pdf,.doc,.docx", hint: "TXT, PDF, DOC, or text files", linkHint: "Paste a link (optional)" },
 };
 
 const FlowModePage = () => {
@@ -706,11 +721,13 @@ const FlowModePage = () => {
             content_hash: pf.contentHash,
           }));
 
-      const { error } = await supabase.from("flow_items").insert(rows as any);
+      const { data: inserted, error } = await supabase.from("flow_items").insert(rows as any).select("id");
       if (error) throw error;
+      return inserted ?? [];
     },
-    onSuccess: () => {
+    onSuccess: async (inserted) => {
       queryClient.invalidateQueries({ queryKey: ["flow-items"] });
+      const count = pendingFiles.length;
       setAddOpen(false);
       setNewTitle("");
       setNewDesc("");
@@ -718,7 +735,25 @@ const FlowModePage = () => {
       setNewCreatorName("");
       setShareStep("compose");
       resetPendingFiles();
-      toast.success(pendingFiles.length > 1 ? `Shared ${pendingFiles.length} items to Flow!` : "Content shared to Flow!");
+
+      // Reward: 1 $RHOZE per share (capped at 5/day server-side).
+      let earned = 0;
+      try {
+        for (const row of inserted as Array<{ id: string }>) {
+          const r = await awardEngagementReward({
+            userId: user!.id,
+            action: "post_flow_item",
+            referenceId: row.id,
+            description: "Shared a post to Flow",
+          });
+          if (r.status === "awarded") earned += r.amount;
+        }
+      } catch {
+        // Reward is best-effort; never block the share UX.
+      }
+
+      const base = count > 1 ? `Shared ${count} items to Flow!` : "Shared to Flow!";
+      toast.success(earned > 0 ? `${base} +${earned} $RHOZE` : base);
     },
     onError: (e: any) => {
       setPublishingIndex(null);
@@ -1661,8 +1696,8 @@ const FlowModePage = () => {
             <DialogTitle>{shareStep === "confirm" ? "Confirm & publish" : "Share to Flow"}</DialogTitle>
             <DialogDescription>
               {shareStep === "confirm"
-                ? "Review your post below. Once everything looks right, publish it to the Flow."
-                : "Upload one or more files for others to discover."}
+                ? "Looks good? Publish to Flow and earn $RHOZE."
+                : "Drop something visual. Pick a vibe. Earn $RHOZE."}
             </DialogDescription>
           </DialogHeader>
           {(() => {
@@ -1878,17 +1913,52 @@ const FlowModePage = () => {
 
                 {shareStep === "compose" && (
                   <>
-                    <Input placeholder="Title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
-                    <Input placeholder="Creator / Artist name (optional)" value={newCreatorName} onChange={(e) => setNewCreatorName(e.target.value)} />
-                    <Textarea placeholder="Description (optional)" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={2} />
-                    <Select value={newCategory} onValueChange={(val) => { setNewCategory(val); resetPendingFiles(); }}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {CATEGORIES.map((cat) => (
-                          <SelectItem key={cat} value={cat} className="capitalize">{cat}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {/* Visual icon picker — replaces the boring dropdown */}
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-2 px-0.5">
+                        Pick a vibe
+                      </p>
+                      <div className="grid grid-cols-5 gap-1.5">
+                        {CATEGORIES.map((cat) => {
+                          const meta = CATEGORY_ICONS[cat];
+                          const Icon = meta.Icon;
+                          const active = newCategory === cat;
+                          return (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => { setNewCategory(cat); resetPendingFiles(); }}
+                              aria-pressed={active}
+                              aria-label={meta.label}
+                              className={cn(
+                                "group flex flex-col items-center justify-center gap-1 rounded-xl py-2.5 transition-all",
+                                "border bg-gradient-to-br",
+                                active
+                                  ? `border-primary/60 ${meta.tint} shadow-sm scale-[1.02]`
+                                  : "border-border bg-muted/30 hover:bg-muted/60 text-muted-foreground"
+                              )}
+                            >
+                              <Icon className={cn("h-5 w-5 transition-transform group-hover:scale-110", active ? "" : "")} strokeWidth={active ? 2.25 : 1.75} />
+                              <span className="text-[10px] font-medium capitalize">{meta.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <Input
+                      placeholder="Title"
+                      value={newTitle}
+                      onChange={(e) => setNewTitle(e.target.value)}
+                      className="rounded-xl"
+                    />
+                    <Textarea
+                      placeholder="Add a caption (optional)"
+                      value={newDesc}
+                      onChange={(e) => setNewDesc(e.target.value)}
+                      rows={2}
+                      className="rounded-xl resize-none"
+                    />
 
                     <div>
                       <input
@@ -1959,11 +2029,22 @@ const FlowModePage = () => {
                       )}
                     </div>
 
-                    <Input
-                      placeholder={CATEGORY_UPLOAD_HINTS[newCategory]?.linkHint || "Link URL (optional)"}
-                      value={newLink}
-                      onChange={(e) => setNewLink(e.target.value)}
-                    />
+                    {/* Optional link — collapsed behind a tiny toggle so it doesn't clutter the form */}
+                    <div className="relative">
+                      <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
+                      <Input
+                        placeholder="Paste a link (optional)"
+                        value={newLink}
+                        onChange={(e) => setNewLink(e.target.value)}
+                        className="rounded-xl pl-9 text-sm"
+                      />
+                    </div>
+
+                    {/* Reward nudge */}
+                    <div className="flex items-center gap-2 rounded-xl bg-primary/5 border border-primary/15 px-3 py-2 text-[11px] text-foreground/80">
+                      <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
+                      <span>Earn <strong className="text-primary">+1 $RHOZE</strong> per share · adds to your XP and Creator Pass progress.</span>
+                    </div>
                   </>
                 )}
 
