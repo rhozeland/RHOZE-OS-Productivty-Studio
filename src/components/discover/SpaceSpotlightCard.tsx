@@ -88,19 +88,19 @@ const SpaceSpotlightCard = ({
 
       {/* Body — portrait photo on the LEFT, info on the RIGHT */}
       <div className="grid grid-cols-[auto_1fr] gap-4 px-4 pt-4 pb-4 items-start">
-        {/* Portrait photo (9:16) */}
-        <div className="relative w-[120px] sm:w-[140px] aspect-[9/16] shrink-0 overflow-hidden rounded-2xl border border-border/45 bg-muted">
+        {/* Portrait photo — 9:16 frame, object-contain so we never crop the
+            uploaded image. Gradient passe-partout fills the bars. */}
+        <div
+          className="relative w-[120px] sm:w-[140px] aspect-[9/16] shrink-0 overflow-hidden rounded-2xl border border-border/45"
+          style={{ background: grad.background }}
+        >
           {banner ? (
             <img
               src={banner}
               alt={title}
-              className="h-full w-full object-cover"
-              style={{ objectPosition: "center" }}
+              className="absolute inset-0 h-full w-full object-contain"
             />
-          ) : (
-            <div className="absolute inset-0" style={{ background: grad.background }} />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/30 to-transparent pointer-events-none" />
+          ) : null}
           {rate && (
             <div className="absolute bottom-2 left-2 right-2 rounded-full border border-border/60 bg-background/85 px-2.5 py-1 text-center text-[11px] font-semibold backdrop-blur-md">
               {rate}<span className="text-muted-foreground font-normal"> /hr</span>
