@@ -418,6 +418,8 @@ const EventDetailPage = () => {
                   (Number(t.price_usd) || 0) === 0 && (Number(t.price_rhoze) || 0) === 0;
                 const soldOut =
                   t.quantity_total != null && t.quantity_sold >= t.quantity_total;
+                const cur = t.currency_code || (ev as any).currency_code || "USD";
+                const price = Number(t.price_usd) || 0;
                 return (
                   <div
                     key={t.id}
@@ -429,9 +431,7 @@ const EventDetailPage = () => {
                         <p className="text-xs text-muted-foreground">
                           {isFree
                             ? "Free RSVP"
-                            : `${t.price_usd ? `$${t.price_usd}` : ""}${
-                                t.price_usd && t.price_rhoze ? " · " : ""
-                              }${t.price_rhoze ? `${t.price_rhoze} $RHOZE` : ""}`}
+                            : `${new Intl.NumberFormat(undefined, { style: "currency", currency: cur, maximumFractionDigits: price % 1 === 0 ? 0 : 2 }).format(price)} · or pay with $RHOZE`}
                           {t.quantity_total != null && (
                             <> · {Math.max(0, t.quantity_total - t.quantity_sold)} left</>
                           )}
@@ -511,7 +511,7 @@ const EventDetailPage = () => {
         <TicketCheckoutDialog
           open={!!checkoutTier}
           onOpenChange={(o) => !o && setCheckoutTier(null)}
-          event={{ id: ev.id, title: ev.title, host_id: ev.host_id }}
+          event={{ id: ev.id, title: ev.title, host_id: ev.host_id, currency_code: (ev as any).currency_code }}
           tier={checkoutTier}
           onIssued={() => {
             qc.invalidateQueries({ queryKey: ["event-my-ticket", id] });

@@ -9,9 +9,9 @@
  * reference, increments the tier's quantity_sold, and bounces the user
  * to /tickets/:id.
  */
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Coins, CreditCard, Loader2, Ticket } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -27,13 +27,16 @@ import PayWithRhozeButton from "@/components/PayWithRhozeButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { getPlatformFeeFromBalance } from "@/lib/platform-fee";
+import { fiatToRhoze, formatMoney, rhozeDiscount } from "@/lib/event-currency";
+import { getHoldTier, type TierId } from "@/lib/tier-matrix";
 
 interface Tier {
   id: string;
   name: string;
   description?: string | null;
-  price_usd?: number | null;
+  price_usd?: number | null; // stored in event currency (legacy column name)
   price_rhoze?: number | null;
+  currency_code?: string | null;
   quantity_total?: number | null;
   quantity_sold: number;
 }
@@ -42,6 +45,7 @@ interface Event {
   id: string;
   title: string;
   host_id?: string;
+  currency_code?: string | null;
 }
 
 interface TicketCheckoutDialogProps {
@@ -62,13 +66,32 @@ const TicketCheckoutDialog = ({
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const usd = Number(tier.price_usd) || 0;
-  const rhoze = Number(tier.price_rhoze) || 0;
-  const hasUsd = usd > 0;
+  const fiatPrice = Number(tier.price_usd) || 0;
+  const currency = tier.currency_code || event.currency_code || "USD";
+  const hasFiat = fiatPrice > 0;
+
+  // Buyer's $RHOZE balance → tier → discount
+  const { data: buyerBalance } = useQuery({
+    queryKey: ["buyer-rhoze-balance", user?.id],
+    enabled: !!user && hasFiat,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_credits")
+        .select("balance")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return Number(data?.balance) || 0;
+    },
+  });
+
+  const buyerTier: TierId = getHoldTier(buyerBalance ?? 0);
+  const discountPct = rhozeDiscount(buyerTier);
+  const rhoze = hasFiat ? fiatToRhoze(fiatPrice, buyerTier) : Number(tier.price_rhoze) || 0;
   const hasRhoze = rhoze > 0;
 
-  const defaultTab = useMemo(() => (hasUsd ? "usd" : "rhoze"), [hasUsd]);
+  const defaultTab = useMemo(() => (hasFiat ? "usd" : "rhoze"), [hasFiat]);
   const [tab, setTab] = useState<"usd" | "rhoze">(defaultTab);
+  useEffect(() => setTab(defaultTab), [defaultTab]);
 
   const issueTicket = useMutation({
     mutationFn: async (args: {
@@ -152,8 +175,8 @@ const TicketCheckoutDialog = ({
     }
     const { data, error } = await supabase.functions.invoke("square-payment", {
       body: {
-        amount_cents: Math.round(usd * 100),
-        currency: "USD",
+        amount_cents: Math.round(fiatPrice * 100),
+        currency,
         description: `Rhozeland Event: ${event.title} — ${tier.name}`,
         source_id: token,
         location_id: "DDWDTXBFW3T4R",
@@ -164,13 +187,11 @@ const TicketCheckoutDialog = ({
     await issueTicket.mutateAsync({
       currency: "usd",
       reference: data.payment_id ?? data.id ?? "square",
-      amount: usd,
+      amount: fiatPrice,
     });
   };
 
   const handleRhozeSuccess = async () => {
-    // PayWithRhozeButton already verified the on-chain transfer server-side.
-    // We don't have the signature returned, so use a synthetic ref scoped to user/tier/time.
     const reference = `rhoze:${user?.id}:${tier.id}:${Date.now()}`;
     await issueTicket.mutateAsync({
       currency: "rhoze",
@@ -178,6 +199,9 @@ const TicketCheckoutDialog = ({
       amount: rhoze,
     });
   };
+
+  const fiatLabel = formatMoney(fiatPrice, currency);
+  const rhozeLabel = `${rhoze.toLocaleString()} $RHOZE`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -192,51 +216,59 @@ const TicketCheckoutDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        {hasUsd && hasRhoze ? (
+        {hasFiat && hasRhoze ? (
           <Tabs value={tab} onValueChange={(v) => setTab(v as "usd" | "rhoze")}>
             <TabsList className="grid grid-cols-2 w-full">
               <TabsTrigger value="usd" className="gap-1.5">
-                <CreditCard className="h-3.5 w-3.5" /> ${usd.toFixed(2)} USD
+                <CreditCard className="h-3.5 w-3.5" /> {fiatLabel}
               </TabsTrigger>
               <TabsTrigger value="rhoze" className="gap-1.5">
-                <Coins className="h-3.5 w-3.5" /> {rhoze} $RHOZE
+                <Coins className="h-3.5 w-3.5" /> {rhozeLabel}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="usd" className="pt-4">
               <SquareCardForm
-                amount={usd}
+                amount={fiatPrice}
                 onTokenize={handleSquareToken}
                 disabled={issueTicket.isPending}
               />
             </TabsContent>
             <TabsContent value="rhoze" className="pt-4 space-y-3">
-              <p className="text-xs text-muted-foreground">
-                Pay {rhoze} $RHOZE from your connected wallet. Your transfer is
-                verified on-chain before the ticket is issued.
-              </p>
+              {discountPct > 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  Pay <strong className="text-foreground">{rhozeLabel}</strong> from your wallet —
+                  <span className="text-primary"> {Math.round(discountPct * 100)}% {buyerTier} discount</span> applied
+                  ({fiatLabel} → {fiatToRhoze(fiatPrice)} $RHOZE without discount).
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Pay {rhozeLabel} from your wallet. Hold more $RHOZE to unlock tier discounts
+                  (Bloom 5% · Glow 10% · Play 15%).
+                </p>
+              )}
               <PayWithRhozeButton
                 tokenAmount={rhoze}
                 description={`Event ticket: ${event.title} — ${tier.name}`}
                 type="event_ticket"
                 intent="subscription"
                 onSuccess={handleRhozeSuccess}
-                label={`Pay ${rhoze} $RHOZE`}
+                label={`Pay ${rhozeLabel}`}
                 className="w-full"
                 variant="default"
                 disabled={issueTicket.isPending}
               />
             </TabsContent>
           </Tabs>
-        ) : hasUsd ? (
+        ) : hasFiat ? (
           <SquareCardForm
-            amount={usd}
+            amount={fiatPrice}
             onTokenize={handleSquareToken}
             disabled={issueTicket.isPending}
           />
         ) : (
           <div className="space-y-3">
             <p className="text-xs text-muted-foreground">
-              Pay {rhoze} $RHOZE from your connected wallet. Your transfer is
+              Pay {rhozeLabel} from your connected wallet. Your transfer is
               verified on-chain before the ticket is issued.
             </p>
             <PayWithRhozeButton
@@ -245,7 +277,7 @@ const TicketCheckoutDialog = ({
               type="event_ticket"
               intent="subscription"
               onSuccess={handleRhozeSuccess}
-              label={`Pay ${rhoze} $RHOZE`}
+              label={`Pay ${rhozeLabel}`}
               className="w-full"
               variant="default"
               disabled={issueTicket.isPending}

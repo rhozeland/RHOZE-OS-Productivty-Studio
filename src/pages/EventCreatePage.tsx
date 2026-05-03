@@ -489,6 +489,97 @@ const EventCreatePage = () => {
             </div>
           </div>
         </div>
+
+        {/* Paid tiers (optional) */}
+        <div className="rounded-xl border border-dashed border-border p-4 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Plus className="h-4 w-4 text-primary" />
+              <p className="text-sm font-medium">Paid tiers (optional)</p>
+            </div>
+            <span className="text-[11px] text-muted-foreground">
+              Currency: <strong className="text-foreground">{currencyCode}</strong>
+              {detectedCountry ? ` · auto-detected (${detectedCountry})` : " · default"}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Price is in your local currency. Buyers paying with $RHOZE get a tier-based discount
+            (Bloom 5% · Glow 10% · Play 15%) — no separate token price needed.
+          </p>
+
+          {paidTiers.map((t, i) => (
+            <div key={i} className="grid grid-cols-12 gap-2 items-end">
+              <div className="col-span-5 space-y-1">
+                <Label className="text-[11px]">Name</Label>
+                <Input
+                  value={t.name}
+                  onChange={(e) => {
+                    const next = [...paidTiers];
+                    next[i] = { ...next[i], name: e.target.value };
+                    setPaidTiers(next);
+                  }}
+                  placeholder="GA / VIP"
+                />
+              </div>
+              <div className="col-span-3 space-y-1">
+                <Label className="text-[11px]">Price ({currencyCode})</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={t.price}
+                  onChange={(e) => {
+                    const next = [...paidTiers];
+                    next[i] = { ...next[i], price: e.target.value };
+                    setPaidTiers(next);
+                  }}
+                />
+              </div>
+              <div className="col-span-3 space-y-1">
+                <Label className="text-[11px]">Qty</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={t.quantity}
+                  onChange={(e) => {
+                    const next = [...paidTiers];
+                    next[i] = { ...next[i], quantity: e.target.value };
+                    setPaidTiers(next);
+                  }}
+                  placeholder="∞"
+                />
+              </div>
+              <div className="col-span-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={() => setPaidTiers(paidTiers.filter((_, j) => j !== i))}
+                >
+                  <Trash2 className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </div>
+              {Number(t.price) > 0 && (
+                <p className="col-span-12 -mt-1 text-[11px] text-muted-foreground">
+                  ≈ {fiatToRhoze(Number(t.price))} $RHOZE before tier discount
+                </p>
+              )}
+            </div>
+          ))}
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="rounded-full gap-1.5"
+            onClick={() =>
+              setPaidTiers([...paidTiers, { name: "", price: "", quantity: "" }])
+            }
+          >
+            <Plus className="h-3.5 w-3.5" /> Add paid tier
+          </Button>
+        </div>
       </motion.div>
 
       <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">

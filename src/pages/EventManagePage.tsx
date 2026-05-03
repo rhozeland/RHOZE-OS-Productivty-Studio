@@ -36,6 +36,9 @@ import { shortHash } from "@/lib/content-hash";
 import QrCheckInScanner from "@/components/events/QrCheckInScanner";
 import EventCollaborators from "@/components/events/EventCollaborators";
 import EventMediaManager from "@/components/events/EventMediaManager";
+import HostFiatPayoutPanel from "@/components/seller/HostFiatPayoutPanel";
+import { fiatToRhoze, formatMoney } from "@/lib/event-currency";
+import { CircleDollarSign } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -111,12 +114,13 @@ const EventManagePage = () => {
   });
 
   const [tierName, setTierName] = useState("");
-  const [tierUsd, setTierUsd] = useState("");
-  const [tierRhoze, setTierRhoze] = useState("");
+  const [tierPrice, setTierPrice] = useState("");
   const [tierQty, setTierQty] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
   const [lookupQuery, setLookupQuery] = useState("");
   const [lookupBusy, setLookupBusy] = useState(false);
+
+  const eventCurrency = (ev as any)?.currency_code || "USD";
 
   // Live attendee list — reflect check-ins from any device instantly.
   useEffect(() => {
@@ -144,22 +148,23 @@ const EventManagePage = () => {
   const addTier = useMutation({
     mutationFn: async () => {
       if (!tierName.trim()) throw new Error("Name required");
+      const price = tierPrice ? Number(tierPrice) : 0;
       const { error } = await supabase.from("event_ticket_tiers").insert({
         event_id: id!,
         name: tierName.trim(),
-        price_usd: tierUsd ? Number(tierUsd) : 0,
-        price_rhoze: tierRhoze ? Number(tierRhoze) : 0,
+        price_usd: price, // stored in event currency
+        price_rhoze: price > 0 ? fiatToRhoze(price) : 0,
+        currency_code: eventCurrency,
         quantity_total: tierQty ? Number(tierQty) : null,
         sort_order: (tiers?.length ?? 0) + 1,
         is_active: true,
-      });
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Tier added");
       setTierName("");
-      setTierUsd("");
-      setTierRhoze("");
+      setTierPrice("");
       setTierQty("");
       qc.invalidateQueries({ queryKey: ["event-tiers-manage", id] });
     },
@@ -411,6 +416,11 @@ const EventManagePage = () => {
           <TabsTrigger value="attendees" className="gap-1.5">
             <Radio className="h-3.5 w-3.5" /> Attendees
           </TabsTrigger>
+          {isHost && (
+            <TabsTrigger value="earnings" className="gap-1.5">
+              <CircleDollarSign className="h-3.5 w-3.5" /> Earnings
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="details" className="space-y-4 mt-4">
@@ -444,44 +454,42 @@ const EventManagePage = () => {
           <section className="space-y-3">
             <h2 className="font-display text-lg font-bold tracking-tight">Ticket tiers</h2>
             <div className="space-y-2">
-              {(tiers ?? []).map((t: any) => (
-                <div
-                  key={t.id}
-                  className="rounded-xl bg-card border border-border p-4 flex items-center justify-between gap-3"
-                >
-                  <div>
-                    <p className="font-medium">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {Number(t.price_usd) > 0 && `$${t.price_usd} USD`}
-                      {Number(t.price_usd) > 0 && Number(t.price_rhoze) > 0 && " · "}
-                      {Number(t.price_rhoze) > 0 && `${t.price_rhoze} $RHOZE`}
-                      {!Number(t.price_usd) && !Number(t.price_rhoze) && "Free"}
-                      {" · "}
-                      {t.quantity_sold}
-                      {t.quantity_total ? ` / ${t.quantity_total}` : ""} sold
-                    </p>
+              {(tiers ?? []).map((t: any) => {
+                const cur = t.currency_code || eventCurrency;
+                const price = Number(t.price_usd) || 0;
+                return (
+                  <div
+                    key={t.id}
+                    className="rounded-xl bg-card border border-border p-4 flex items-center justify-between gap-3"
+                  >
+                    <div>
+                      <p className="font-medium">{t.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {price > 0 ? formatMoney(price, cur) : "Free"}
+                        {price > 0 && " · also payable in $RHOZE (tier discount)"}
+                        {" · "}
+                        {t.quantity_sold}
+                        {t.quantity_total ? ` / ${t.quantity_total}` : ""} sold
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="rounded-xl border border-dashed border-border p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <Plus className="h-4 w-4 text-primary" />
-                <p className="font-medium text-sm">Add a paid tier</p>
+                <p className="font-medium text-sm">Add a paid tier ({eventCurrency})</p>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                <div className="space-y-1.5 col-span-2 sm:col-span-2">
                   <Label className="text-xs">Name</Label>
                   <Input value={tierName} onChange={(e) => setTierName(e.target.value)} placeholder="GA / VIP" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">USD</Label>
-                  <Input type="number" min="0" value={tierUsd} onChange={(e) => setTierUsd(e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">$RHOZE</Label>
-                  <Input type="number" min="0" value={tierRhoze} onChange={(e) => setTierRhoze(e.target.value)} />
+                  <Label className="text-xs">Price ({eventCurrency})</Label>
+                  <Input type="number" min="0" step="0.01" value={tierPrice} onChange={(e) => setTierPrice(e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Quantity</Label>
@@ -497,7 +505,7 @@ const EventManagePage = () => {
                 Add tier
               </Button>
               <p className="text-[11px] text-muted-foreground">
-                Pricing is saved now. Paid checkout (USD via Square, $RHOZE on-chain) ships in the next pass.
+                Buyers paying with $RHOZE get a tier-based discount (Bloom 5% · Glow 10% · Play 15%).
               </p>
             </div>
           </section>
@@ -602,6 +610,12 @@ const EventManagePage = () => {
             )}
           </section>
         </TabsContent>
+
+        {isHost && (
+          <TabsContent value="earnings" className="space-y-4 mt-4">
+            <HostFiatPayoutPanel />
+          </TabsContent>
+        )}
       </Tabs>
 
       <QrCheckInScanner
