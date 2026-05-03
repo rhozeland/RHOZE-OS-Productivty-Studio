@@ -142,6 +142,26 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
     );
   }, [ownedProjects, collabProjects]);
 
+  // Per-project member counts (owner + collaborators) for the list indicator.
+  const { data: memberCounts } = useQuery({
+    queryKey: ["inbox-project-member-counts", projects.map((p) => p.id).join(",")],
+    enabled: projects.length > 0,
+    queryFn: async () => {
+      const ids = projects.map((p) => p.id);
+      const { data, error } = await supabase
+        .from("project_collaborators")
+        .select("project_id")
+        .in("project_id", ids);
+      if (error) return {} as Record<string, number>;
+      const counts: Record<string, number> = {};
+      for (const id of ids) counts[id] = 1; // owner counts as 1
+      (data ?? []).forEach((r: any) => {
+        counts[r.project_id] = (counts[r.project_id] ?? 1) + 1;
+      });
+      return counts;
+    },
+  });
+
   const selectedProject = useMemo(
     () => projects.find((p) => p.id === selectedId) ?? null,
     [projects, selectedId],
