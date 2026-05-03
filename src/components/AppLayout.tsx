@@ -185,12 +185,13 @@ const AppLayout = () => {
   const { data: profiles } = useQuery({
     queryKey: ["search-profiles", trimmedQuery],
     queryFn: async () => {
+      // Match either display name OR @username so handles are findable.
+      const q = trimmedQuery.replace(/^@/, "");
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, display_name")
+        .select("user_id, display_name, username")
         .eq("is_public", true)
-        .not("display_name", "is", null)
-        .ilike("display_name", `%${trimmedQuery}%`)
+        .or(`display_name.ilike.%${q}%,username.ilike.%${q}%`)
         .limit(5);
       return data ?? [];
     },
