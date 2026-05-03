@@ -154,13 +154,6 @@ const ExploreCreatorsPage = () => {
                   <div className="flex items-center gap-2 text-xs text-muted-foreground capitalize pt-1 flex-wrap">
                     <span className="bg-muted rounded-full px-2 py-0.5">{listing.category}</span>
                     <span className="bg-muted rounded-full px-2 py-0.5">{listing.listing_type?.replace("_", " ")}</span>
-                    {verifiedIpMap?.get(listing.id) && (
-                      <VerifiedIPBadge
-                        signature={verifiedIpMap.get(listing.id)!.signature}
-                        size="xs"
-                        showLabel={false}
-                      />
-                    )}
                   </div>
                 </div>
               </Link>
