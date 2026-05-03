@@ -24,7 +24,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Link } from "react-router-dom";
-import { detectCountryFromAddress, currencyFromCountry, formatMoney, fiatToRhoze } from "@/lib/event-currency";
+import { detectCountryFromAddress, currencyFromCountry, formatMoney, fiatToRhoze, COUNTRY_CURRENCY } from "@/lib/event-currency";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 async function sha256Hex(text: string): Promise<string> {
   const buf = new TextEncoder().encode(text);
