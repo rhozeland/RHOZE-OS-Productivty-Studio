@@ -186,8 +186,9 @@ const DiscoverPage = () => {
                 Real spaces. Real moments.
               </span>
             </h1>
-            <p className="text-sm text-muted-foreground mt-2 max-w-md">
-              Spin the globe. No account needed.
+            <p className="text-sm sm:text-base text-muted-foreground mt-3 max-w-xl leading-relaxed">
+              Spin the globe to meet verified artists, step inside their spaces,
+              and catch what's happening tonight — anywhere in the world.
             </p>
           </div>
         </motion.header>
