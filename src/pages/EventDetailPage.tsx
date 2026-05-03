@@ -94,6 +94,19 @@ const EventDetailPage = () => {
     },
   });
 
+  const { data: hostProfile } = useQuery({
+    queryKey: ["event-host-profile", ev?.host_id],
+    enabled: !!ev?.host_id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, username, avatar_url")
+        .eq("user_id", ev!.host_id)
+        .maybeSingle();
+      return data;
+    },
+  });
+
   const rsvpMutation = useMutation({
     mutationFn: async (tierId: string) => {
       if (!user) throw new Error("Sign in to RSVP");
@@ -142,9 +155,9 @@ const EventDetailPage = () => {
     return (
       <div className="max-w-xl mx-auto py-20 text-center">
         <h1 className="font-display text-2xl font-bold mb-2">Event not found</h1>
-        <Link to="/spaces?tab=events">
+        <Link to="/discover">
           <Button variant="outline" className="rounded-full">
-            <ArrowLeft className="h-4 w-4 mr-1.5" /> Back to Events
+            <ArrowLeft className="h-4 w-4 mr-1.5" /> Back to Discover
           </Button>
         </Link>
       </div>
@@ -160,10 +173,10 @@ const EventDetailPage = () => {
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <Link
-          to="/spaces?tab=events"
+          to="/discover"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" /> Back to Events
+          <ArrowLeft className="h-4 w-4" /> Back to Discover
         </Link>
 
         {canManage && (
@@ -229,6 +242,28 @@ const EventDetailPage = () => {
               </span>
             )}
           </div>
+
+          {/* Hosted by — links to host profile (mirrors Studio detail) */}
+          {hostProfile && (
+            <Link
+              to={`/profiles/${hostProfile.user_id}`}
+              className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:bg-muted/40 transition-colors"
+            >
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm overflow-hidden shrink-0">
+                {hostProfile.avatar_url ? (
+                  <img src={hostProfile.avatar_url} className="h-10 w-10 rounded-full object-cover" />
+                ) : (
+                  hostProfile.display_name?.[0]?.toUpperCase() ?? "?"
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  Hosted by {hostProfile.display_name ?? hostProfile.username ?? "Creator"}
+                </p>
+                <p className="text-xs text-muted-foreground">View profile →</p>
+              </div>
+            </Link>
+          )}
 
           {ev.description && (
             <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-wrap">

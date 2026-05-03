@@ -8,7 +8,6 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
   Building2,
-  Star,
   MapPin,
   Users,
   Clock,
@@ -48,26 +47,12 @@ const StudioDetailPage = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, avatar_url")
+        .select("user_id, display_name, username, avatar_url")
         .eq("user_id", studio!.owner_id)
         .maybeSingle();
       return data;
     },
     enabled: !!studio?.owner_id,
-  });
-
-  const { data: reviews } = useQuery({
-    queryKey: ["studio-reviews", id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("studio_reviews")
-        .select("*")
-        .eq("studio_id", id!)
-        .order("created_at", { ascending: false })
-        .limit(10);
-      return data ?? [];
-    },
-    enabled: !!id,
   });
 
   // Studio-specific services
@@ -131,9 +116,9 @@ const StudioDetailPage = () => {
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <Building2 className="h-12 w-12 text-muted-foreground/40 mb-4" />
         <h3 className="font-display text-lg font-semibold text-foreground mb-1">Studio not found</h3>
-        <Link to="/studios" className="mt-4">
+        <Link to="/discover?kind=space" className="mt-4">
           <Button variant="outline" className="rounded-full">
-            <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Studios
+            <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Discover
           </Button>
         </Link>
       </div>
@@ -144,8 +129,8 @@ const StudioDetailPage = () => {
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Back + Manage */}
       <div className="flex items-center justify-between">
-        <Link to="/studios" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-4 w-4" /> Back to Studios
+        <Link to="/discover?kind=space" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-4 w-4" /> Back to Discover
         </Link>
         {user && studio.owner_id === user.id && (
           <Link to={`/studios/${studio.id}/manage`}>
@@ -178,13 +163,6 @@ const StudioDetailPage = () => {
           <div>
             <div className="flex items-start justify-between gap-3 mb-2">
               <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">{studio.name}</h1>
-              {(studio.review_count ?? 0) > 0 && (
-                <div className="flex items-center gap-1 shrink-0 mt-1">
-                  <Star className="h-4 w-4 text-warm fill-warm" />
-                  <span className="font-bold text-foreground">{Number(studio.rating_avg).toFixed(1)}</span>
-                  <span className="text-sm text-muted-foreground">({studio.review_count} ratings)</span>
-                </div>
-              )}
             </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
               {(studio.city || studio.country) && (
@@ -204,21 +182,26 @@ const StudioDetailPage = () => {
             </div>
           </div>
 
-          {/* Hosted by */}
+          {/* Hosted by — links to host profile */}
           {ownerProfile && (
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+            <Link
+              to={`/profiles/${ownerProfile.user_id}`}
+              className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border hover:bg-muted/40 transition-colors"
+            >
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm overflow-hidden shrink-0">
                 {ownerProfile.avatar_url ? (
                   <img src={ownerProfile.avatar_url} className="h-10 w-10 rounded-full object-cover" />
                 ) : (
                   ownerProfile.display_name?.[0]?.toUpperCase() ?? "?"
                 )}
               </div>
-              <div>
-                <p className="text-sm font-medium text-foreground">Hosted by {ownerProfile.display_name}</p>
-                <p className="text-xs text-muted-foreground">Studio Owner</p>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  Hosted by {ownerProfile.display_name ?? ownerProfile.username ?? "Creator"}
+                </p>
+                <p className="text-xs text-muted-foreground">View profile →</p>
               </div>
-            </div>
+            </Link>
           )}
 
           {/* Description */}
@@ -410,48 +393,7 @@ const StudioDetailPage = () => {
             </div>
           )}
 
-          {/* Ratings */}
-          {reviews && reviews.length > 0 && (
-            <div>
-              <h2 className="font-display text-lg font-semibold text-foreground mb-3">Ratings</h2>
-              <div className="flex items-center gap-6 p-4 rounded-xl bg-muted/40 border border-border/50">
-                <div className="text-center shrink-0">
-                  <p className="font-display text-3xl font-bold text-foreground">
-                    {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
-                  </p>
-                  <div className="flex items-center gap-0.5 mt-1">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`h-3.5 w-3.5 ${
-                          i < Math.round(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length)
-                            ? "text-warm fill-warm"
-                            : "text-muted-foreground/20"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">{reviews.length} rating{reviews.length !== 1 ? "s" : ""}</p>
-                </div>
-                <div className="flex-1 space-y-1.5">
-                  {[5, 4, 3, 2, 1].map((star) => {
-                    const count = reviews.filter((r) => r.rating === star).length;
-                    const pct = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
-                    return (
-                      <div key={star} className="flex items-center gap-2 text-xs">
-                        <span className="w-3 text-muted-foreground text-right">{star}</span>
-                        <Star className="h-2.5 w-2.5 text-warm fill-warm shrink-0" />
-                        <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                          <div className="h-full rounded-full bg-warm transition-all" style={{ width: `${pct}%` }} />
-                        </div>
-                        <span className="w-6 text-muted-foreground text-right">{count}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Ratings hidden for now — surface as a metric later. */}
         </div>
 
         {/* Right — booking card */}
