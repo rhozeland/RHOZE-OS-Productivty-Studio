@@ -27,11 +27,14 @@ import {
   Square,
   Send,
   Trash2,
+  CalendarDays,
+  MapPin,
+  Globe2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-type ShareType = "menu" | "smartboards" | "profiles" | "listings" | "link" | "voice";
+type ShareType = "menu" | "smartboards" | "profiles" | "listings" | "link" | "voice" | "events";
 
 interface ChatAttachmentMenuProps {
   onSendMessage: (content: string) => void;
