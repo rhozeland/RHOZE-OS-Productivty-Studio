@@ -248,7 +248,7 @@ const CreateListingDialog = ({ open, onOpenChange, prefill, editListing }: Creat
         {/* Step 1: Details */}
         {step === 1 && (
           <form
-            onSubmit={(e) => { e.preventDefault(); if (title.trim()) setStep(2); }}
+            onSubmit={(e) => { e.preventDefault(); if (!title.trim()) return; if (isEdit) updateListing.mutate(); else setStep(2); }}
             className="space-y-4"
           >
             <Input
