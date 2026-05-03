@@ -150,6 +150,37 @@ const DiscoverPage = () => {
         </motion.header>
       )}
 
+      {/* ─── Guest intro — never let Discover feel empty for first-timers ─── */}
+      {!user && (
+        <motion.header
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="pt-1"
+        >
+          <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 mb-2">
+            Discover
+          </p>
+          <h1 className="font-display text-3xl sm:text-4xl leading-[1.05] text-foreground tracking-tight max-w-2xl">
+            Real artists.{" "}
+            <span
+              className="inline-block"
+              style={{
+                backgroundImage:
+                  "linear-gradient(to right, hsl(330 81% 60%), hsl(292 84% 61%), hsl(38 92% 50%))",
+                WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent",
+              }}
+            >
+              Real spaces. Real moments.
+            </span>
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-2 max-w-xl leading-relaxed">
+            Spin the globe to find creators, studios and events near you — or just take a peek
+            at what's happening today. No account needed to look around.
+          </p>
+        </motion.header>
+      )}
+
       <RegionPromptBanner />
 
       {/* ─── Globe-led featured orbit ──────────────────────────────── */}
