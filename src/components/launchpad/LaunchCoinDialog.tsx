@@ -222,8 +222,8 @@ const LaunchCoinDialog = ({
           </DialogTitle>
           <DialogDescription>
             {isProfileCoin
-              ? "Mint a coin tied to your profile so collectors can back you. Trades flow through a bonding curve until graduation, then migrate to Raydium with locked LP."
-              : "Mint a fan coin tied to your Verified IP. Trades flow through a bonding curve until graduation, then migrate to Raydium with locked LP."}
+              ? "Launch a coin so your community can back you and grow with you. Think of it like crowdfunding — supporters buy in early, and as more people join, the value rises. You earn a cut of every trade."
+              : "Launch a coin tied to this work so your community can back it. Supporters buy in early, and you earn a cut of every trade as it grows."}
           </DialogDescription>
         </DialogHeader>
 
