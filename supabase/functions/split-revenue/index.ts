@@ -50,9 +50,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { config_id, total_amount, purchase_id } = await req.json();
-    if (!config_id || !total_amount || total_amount <= 0) {
-      return new Response(JSON.stringify({ error: "config_id and positive total_amount required" }), {
+    const { config_id, purchase_id } = await req.json();
+    // purchase_id here = milestone_id (per MilestoneTracker caller)
+    if (!config_id || !purchase_id) {
+      return new Response(JSON.stringify({ error: "config_id and purchase_id required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
