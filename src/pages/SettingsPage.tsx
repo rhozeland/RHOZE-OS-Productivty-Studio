@@ -862,13 +862,23 @@ const SettingsPage = () => {
   };
 
   const sectionRenderers: Record<SectionId, () => JSX.Element> = {
-    profile: renderProfile,
-    avatar: renderAvatar,
-    banner: renderBanner,
+    profile: () => (
+      <div className="space-y-8">
+        {renderAvatar()}
+        <Separator />
+        {renderBanner()}
+        <Separator />
+        {renderProfile()}
+      </div>
+    ),
     wallet: renderWallet,
-    provenance: renderProvenance,
-    verification: renderVerification,
-    shipping: renderShipping,
+    provenance: () => (
+      <div className="space-y-8">
+        {renderVerification()}
+        <Separator />
+        {renderProvenance()}
+      </div>
+    ),
     notifications: renderNotifications,
     security: renderSecurity,
     account: renderAccount,
