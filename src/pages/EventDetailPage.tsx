@@ -243,6 +243,28 @@ const EventDetailPage = () => {
             )}
           </div>
 
+          {/* Hosted by — links to host profile (mirrors Studio detail) */}
+          {hostProfile && (
+            <Link
+              to={`/profiles/${hostProfile.user_id}`}
+              className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:bg-muted/40 transition-colors"
+            >
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm overflow-hidden shrink-0">
+                {hostProfile.avatar_url ? (
+                  <img src={hostProfile.avatar_url} className="h-10 w-10 rounded-full object-cover" />
+                ) : (
+                  hostProfile.display_name?.[0]?.toUpperCase() ?? "?"
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  Hosted by {hostProfile.display_name ?? hostProfile.username ?? "Creator"}
+                </p>
+                <p className="text-xs text-muted-foreground">View profile →</p>
+              </div>
+            </Link>
+          )}
+
           {ev.description && (
             <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-wrap">
               {ev.description}
