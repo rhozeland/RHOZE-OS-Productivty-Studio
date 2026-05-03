@@ -79,6 +79,7 @@ const LaunchCoinDialog = ({
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [initialBuy, setInitialBuy] = useState("500");
+  const [step, setStep] = useState<"form" | "confirm">("form");
   const [dropInfo, setDropInfo] = useState<{
     tierLabel: string;
     cap: number | null;
