@@ -9,6 +9,7 @@ import LaunchpadWalletBridge from "@/components/launchpad/LaunchpadWalletBridge"
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthGateProvider } from "@/components/AuthGateDialog";
 import AppLayout from "@/components/AppLayout";
+import FlowAuthGuard from "@/components/FlowAuthGuard";
 import AuthPage from "@/pages/AuthPage";
 import LandingPage from "@/pages/LandingPage";
 // DashboardPage retired in v8 — /dashboard now redirects to /discover.
@@ -253,7 +254,7 @@ const App = () => (
                     creative IP. Smartboards / Drop Rooms index routes still
                     redirect into Projects; their detail routes stay live so
                     the Tools panel can deep-link individual items. */}
-                <Route path="/flow" element={<FlowModePage />} />
+                <Route path="/flow" element={<FlowAuthGuard><FlowModePage /></FlowAuthGuard>} />
                 {/* Launchpad page is gone — coins are now profile-bound.
                     /launchpad redirects to the Hub; /launchpad/:id resolves
                     the coin's creator and forwards to their profile Coin tab. */}

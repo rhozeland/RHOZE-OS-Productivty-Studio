@@ -998,6 +998,20 @@ const FlowModePage = () => {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!calibrated || !currentItem) return;
+      // Maze-style nav: if a sheet is open, ↑ closes it (steps "back" to the
+      // post) and ↓ also closes it. Only when nothing is open do arrows
+      // trigger swipe actions. Prevents the bug where ↑ from comments
+      // immediately opened the profile sheet on top of the comment sheet.
+      if (peekOpen || commentSheetOpen || shareDialogOpen || expandedCard) {
+        if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "Escape") {
+          e.preventDefault();
+          if (peekOpen) setPeekOpen(false);
+          else if (commentSheetOpen) setCommentSheetOpen(false);
+          else if (shareDialogOpen) setShareDialogOpen(false);
+          else if (expandedCard) setExpandedCard(false);
+        }
+        return;
+      }
       if (e.key === "ArrowUp") performAction(swipeMap.up);
       if (e.key === "ArrowDown") performAction(swipeMap.down);
       if (e.key === "ArrowLeft") performAction(swipeMap.left);
@@ -1005,7 +1019,7 @@ const FlowModePage = () => {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [calibrated, currentItem, performAction, swipeMap]);
+  }, [calibrated, currentItem, performAction, swipeMap, peekOpen, commentSheetOpen, shareDialogOpen, expandedCard]);
 
   // ──── ONBOARDING ────
   if (!calibrated) {
