@@ -136,83 +136,27 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
         })}
       </div>
 
-      {/* Inline textarea (text type only, when expanded) */}
-      <AnimatePresence initial={false}>
-        {meta.inline && expanded && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.18 }}
-            className="overflow-hidden"
-          >
-            <Textarea
-              ref={textareaRef}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Share an update — what you're working on, a thought, a link…"
-              className="min-h-[88px] resize-none border-0 bg-muted/40 focus-visible:ring-1"
-              maxLength={500}
-              onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                  e.preventDefault();
-                  if (text.trim()) createDrop.mutate();
-                }
-                if (e.key === "Escape") {
-                  setExpanded(false);
-                  setText("");
-                }
-              }}
-            />
-            <div className="mt-1.5 text-[10px] text-muted-foreground/60 px-1">
-              {text.length}/500 · ⌘↵ to post · Esc to close
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Primary action row */}
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs text-muted-foreground hidden sm:block">
-          {meta.inline
-            ? expanded
-              ? "Updates show up in Conversations and on your profile."
-              : "Quick update — a thought, link, or status."
+          {type === "text"
+            ? "Leave a 60-word note — disappears in 24h, shows on your profile + DMs."
             : `Opens the full ${meta.label.toLowerCase()} flow.`}
         </p>
         <div className="flex items-center gap-2 ml-auto">
-          {meta.inline && expanded && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="rounded-full"
-              onClick={() => {
-                setExpanded(false);
-                setText("");
-              }}
-            >
-              <X className="h-3.5 w-3.5" />
-            </Button>
-          )}
           <Button
             type="button"
             onClick={handlePrimary}
-            disabled={createDrop.isPending}
             className="rounded-full gap-1.5"
             size="sm"
           >
-            {createDrop.isPending ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : meta.inline && expanded ? (
-              <Send className="h-3.5 w-3.5" />
-            ) : (
-              <Plus className="h-3.5 w-3.5" />
-            )}
+            <Plus className="h-3.5 w-3.5" />
             {meta.cta}
           </Button>
         </div>
       </div>
+
+      <NoteComposer open={noteOpen} onOpenChange={setNoteOpen} />
     </div>
   );
 };
