@@ -270,7 +270,15 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
   const [totalCredits, setTotalCredits] = useState("");
 
   const rawTab = searchParams.get("tab");
-  const activeTab = rawTab === "inquiries" || !rawTab ? "messages" : rawTab;
+  // Events + Flow moved to Discover. Quietly redirect any deep-links.
+  useEffect(() => {
+    if (rawTab === "events") navigate("/discover?view=events", { replace: true });
+    else if (rawTab === "flow") navigate("/discover?view=flow", { replace: true });
+  }, [rawTab, navigate]);
+  const activeTab =
+    rawTab === "inquiries" || !rawTab || rawTab === "events" || rawTab === "flow"
+      ? "messages"
+      : rawTab;
   const setActiveTab = (tab: string) => {
     if (tab === "messages") {
       searchParams.delete("tab");
