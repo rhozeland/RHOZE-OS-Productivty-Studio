@@ -432,6 +432,17 @@ const AppLayout = () => {
               ))}
             </CommandGroup>
           )}
+          {queryEnabled && coins && coins.length > 0 && (
+            <CommandGroup heading="Coins">
+              {coins.map((c) => (
+                <CommandItem key={c.id} onSelect={() => goTo(`/coin/${c.ticker}`)}>
+                  <Coins className="mr-2 h-4 w-4 text-emerald-500" />
+                  <span className="font-mono">${c.ticker}</span>
+                  <span className="ml-2 text-xs text-muted-foreground truncate">{c.name}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
         </CommandList>
       </CommandDialog>
       {user && <UsernamePrompt />}
