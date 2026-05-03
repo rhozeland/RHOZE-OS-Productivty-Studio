@@ -15,8 +15,8 @@
  * lifted from HubPage and Fresh Works is removed (the mosaic IS the
  * fresh feed now — drops, works, offerings, events, spaces all in one).
  */
-import { Suspense, lazy, useState } from "react";
-import { Link } from "react-router-dom";
+import { Suspense, lazy, useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,11 +27,21 @@ import RegionPromptBanner from "@/components/discover/RegionPromptBanner";
 import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import StreamComposer from "@/components/stream/StreamComposer";
 import ConversationsMosaic from "@/components/hub/ConversationsMosaic";
+import ConversationsEventsBrowser from "@/components/messages/ConversationsEventsBrowser";
+import HubFlowWidget from "@/components/hub/HubFlowWidget";
 import type { RegionMarket } from "@/lib/regions";
-import { ArrowRight, Coins, Loader2 } from "lucide-react";
+import { ArrowRight, Coins, Loader2, Sparkles, CalendarDays, Flame } from "lucide-react";
+import { cn } from "@/lib/utils";
 import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
 
 const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
+
+type DiscoverView = "mosaic" | "events" | "flow";
+const VIEW_OPTIONS: { value: DiscoverView; label: string; icon: any }[] = [
+  { value: "mosaic", label: "All", icon: Sparkles },
+  { value: "events", label: "Events", icon: CalendarDays },
+  { value: "flow", label: "Flow", icon: Flame },
+];
 
 const getGreeting = () => {
   const h = new Date().getHours();
@@ -44,6 +54,25 @@ const DiscoverPage = () => {
   const { user } = useAuth();
   const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
   const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
+
+  // View toggle (mosaic / events / flow), persisted in ?view= param.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawView = searchParams.get("view");
+  const view: DiscoverView =
+    rawView === "events" || rawView === "flow" ? rawView : "mosaic";
+  const setView = (v: DiscoverView) => {
+    if (v === "mosaic") searchParams.delete("view");
+    else searchParams.set("view", v);
+    setSearchParams(searchParams, { replace: true });
+  };
+  useEffect(() => {
+    if (view === "events" || view === "flow") {
+      // Scroll the toggled section into view on load.
+      requestAnimationFrame(() => {
+        document.getElementById("discover-stream")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }, [view]);
 
   // ─── Personal greeting (signed-in only) ─────────────────────────
   const { data: profile } = useQuery({
@@ -142,18 +171,45 @@ const DiscoverPage = () => {
       {/* ─── Creator Pass upgrade nudge ─────────────────────────────── */}
       <CreatorPassUpgradeCta />
 
-      {/* ─── Conversations mosaic — content + IP + seasonal events ─── */}
-      <section className="space-y-4">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-1">
-            Conversations
-          </p>
-          <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
-            Everything, in one breath.
-          </h2>
+      {/* ─── The Stream — mosaic / events / flow toggle ─────────────── */}
+      <section id="discover-stream" className="space-y-4 scroll-mt-20">
+        <div className="flex items-end justify-between gap-4 flex-wrap">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-1">
+              The Stream
+            </p>
+            <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
+              {view === "events"
+                ? "What's happening."
+                : view === "flow"
+                ? "Tune in."
+                : "Everything, all at once."}
+            </h2>
+          </div>
+
+          <div className="inline-flex items-center gap-1 rounded-full border border-border bg-card p-1">
+            {VIEW_OPTIONS.map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setView(value)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                  view === value
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <ConversationsMosaic />
+        {view === "mosaic" && <ConversationsMosaic />}
+        {view === "events" && <ConversationsEventsBrowser />}
+        {view === "flow" && <HubFlowWidget expanded />}
       </section>
 
       {/* ─── Coins moving today ─────────────────────────────────────── */}

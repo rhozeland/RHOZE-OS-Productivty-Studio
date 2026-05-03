@@ -270,7 +270,15 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
   const [totalCredits, setTotalCredits] = useState("");
 
   const rawTab = searchParams.get("tab");
-  const activeTab = rawTab === "inquiries" || !rawTab ? "messages" : rawTab;
+  // Events + Flow moved to Discover. Quietly redirect any deep-links.
+  useEffect(() => {
+    if (rawTab === "events") navigate("/discover?view=events", { replace: true });
+    else if (rawTab === "flow") navigate("/discover?view=flow", { replace: true });
+  }, [rawTab, navigate]);
+  const activeTab =
+    rawTab === "inquiries" || !rawTab || rawTab === "events" || rawTab === "flow"
+      ? "messages"
+      : rawTab;
   const setActiveTab = (tab: string) => {
     if (tab === "messages") {
       searchParams.delete("tab");
@@ -452,12 +460,6 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
           </TabsTrigger>
           <TabsTrigger value="listings" className="gap-1.5">
             <Store className="h-3.5 w-3.5" /> Listings
-          </TabsTrigger>
-          <TabsTrigger value="events" className="gap-1.5">
-            <CalendarDays className="h-3.5 w-3.5" /> Events
-          </TabsTrigger>
-          <TabsTrigger value="flow" className="gap-1.5">
-            <Flame className="h-3.5 w-3.5" /> Flow
           </TabsTrigger>
           {activeTab === "groups" && (
             <TabsTrigger value="groups" className="gap-1.5">
@@ -680,13 +682,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
           <ListingsTab userId={user.id} />
         </TabsContent>
 
-        <TabsContent value="events" className="mt-4">
-          <ConversationsEventsBrowser />
-        </TabsContent>
-
-        <TabsContent value="flow" className="mt-4">
-          <HubFlowWidget expanded />
-        </TabsContent>
+        {/* Events + Flow live on Discover now (toggles on the mosaic). */}
 
         <TabsContent value="groups" className="mt-4">
           <CirclesTab />

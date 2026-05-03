@@ -77,7 +77,7 @@ const ConversationsRightRail = () => {
         <Link
           to={
             tab === "events"
-              ? "/messages?tab=events"
+              ? "/discover?view=events"
               : tab === "spaces"
                 ? "/discover?kind=space"
                 : "/discover"

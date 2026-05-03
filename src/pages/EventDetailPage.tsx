@@ -201,7 +201,7 @@ const EventDetailPage = () => {
     return (
       <div className="max-w-xl mx-auto py-20 text-center">
         <h1 className="font-display text-2xl font-bold mb-2">Event not found</h1>
-        <Link to="/messages?tab=events">
+        <Link to="/discover?view=events">
           <Button variant="outline" className="rounded-full">
             <ArrowLeft className="h-4 w-4 mr-1.5" /> Back to Events
           </Button>
@@ -222,7 +222,7 @@ const EventDetailPage = () => {
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <Link
-          to="/messages?tab=events"
+          to="/discover?view=events"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" /> All events
