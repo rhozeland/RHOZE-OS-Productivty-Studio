@@ -610,6 +610,12 @@ const EventManagePage = () => {
             )}
           </section>
         </TabsContent>
+
+        {isHost && (
+          <TabsContent value="earnings" className="space-y-4 mt-4">
+            <HostFiatPayoutPanel />
+          </TabsContent>
+        )}
       </Tabs>
 
       <QrCheckInScanner
