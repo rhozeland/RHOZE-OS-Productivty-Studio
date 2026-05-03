@@ -214,12 +214,12 @@ const CreateListingDialog = ({ open, onOpenChange, prefill, editListing }: Creat
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display">
-            {step === 0 ? "What are you posting?" : step === 1 ? "Listing Details" : "Add Media"}
+            {isEdit ? "Edit listing" : step === 0 ? "What are you posting?" : step === 1 ? "Listing Details" : "Add Media"}
           </DialogTitle>
         </DialogHeader>
 
         {/* Step 0: Choose type */}
-        {step === 0 && (
+        {step === 0 && !isEdit && (
           <div className="space-y-3">
             {LISTING_TYPES.map((t) => {
               const Icon = t.icon;
