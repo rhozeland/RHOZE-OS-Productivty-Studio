@@ -52,6 +52,8 @@ const ProfileDetailPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const isOwnProfile = user?.id === id;
+  const { data: profileNote } = useUserNote(id);
+  const buddy = useBuddyStatus(isOwnProfile ? null : id);
 
   // Tabs: Overview · Support · Works · Building.
   // ?tab=coin (legacy) deep-links into Support where the artist token now lives.
