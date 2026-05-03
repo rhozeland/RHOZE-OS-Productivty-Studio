@@ -178,13 +178,6 @@ const StudioDetailPage = () => {
           <div>
             <div className="flex items-start justify-between gap-3 mb-2">
               <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">{studio.name}</h1>
-              {(studio.review_count ?? 0) > 0 && (
-                <div className="flex items-center gap-1 shrink-0 mt-1">
-                  <Star className="h-4 w-4 text-warm fill-warm" />
-                  <span className="font-bold text-foreground">{Number(studio.rating_avg).toFixed(1)}</span>
-                  <span className="text-sm text-muted-foreground">({studio.review_count} ratings)</span>
-                </div>
-              )}
             </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
               {(studio.city || studio.country) && (
