@@ -156,22 +156,6 @@ const ProfileDetailPage = () => {
   });
 
   // ─── Support tab data ───
-  const { data: profileCoin } = useQuery({
-    queryKey: ["profile-coin-ticker", id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("coin_launches")
-        .select("id, ticker, name, image_url, status")
-        .eq("creator_id", id!)
-        .neq("status", "cancelled")
-        .order("work_id", { ascending: true, nullsFirst: true })
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!id,
-  });
 
   const { data: upcomingEvents } = useQuery({
     queryKey: ["profile-upcoming-events", id],
