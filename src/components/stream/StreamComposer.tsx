@@ -39,11 +39,9 @@ import { toast } from "sonner";
 export type StreamPostType =
   | "text"
   | "offering"
-  | "opportunity"
   | "event"
   | "space"
-  | "work"
-  | "project";
+  | "work";
 
 interface TypeMeta {
   key: StreamPostType;
