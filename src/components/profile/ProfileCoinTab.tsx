@@ -105,7 +105,11 @@ const ProfileCoinTab = ({ creatorId, isOwnProfile, defaultName, defaultImage, me
   return (
     <div className="space-y-4">
       {showReadiness && <CreatorReadinessCard creatorId={creatorId} memberSince={memberSince} />}
-      <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-4 flex items-center gap-3">
+      <Link
+        to={`/coin/${coin.ticker}`}
+        className="block rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-4 flex items-center gap-3 hover:border-emerald-500/40 hover:bg-card transition-colors group"
+        aria-label={`Open ${coin.ticker} coin page`}
+      >
         {coin.image_url ? (
           <img src={coin.image_url} alt="" className="h-12 w-12 rounded-md object-cover" />
         ) : (
@@ -115,23 +119,27 @@ const ProfileCoinTab = ({ creatorId, isOwnProfile, defaultName, defaultImage, me
         )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-mono font-bold text-base">${coin.ticker}</span>
+            <span className="font-mono font-bold text-base group-hover:text-emerald-500 transition-colors">${coin.ticker}</span>
             {coin.status === "graduated" && (
               <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500">
                 Graduated
               </span>
             )}
-            {coin.mint_address && <MintAddressChip address={coin.mint_address} size="xs" />}
+            {coin.mint_address && (
+              <span onClick={(e) => e.preventDefault()}>
+                <MintAddressChip address={coin.mint_address} size="xs" />
+              </span>
+            )}
           </div>
           <p className="text-xs text-muted-foreground truncate">{coin.name}</p>
         </div>
         <div className="text-right text-[11px] text-muted-foreground flex items-center gap-1">
           <TrendingUp className="h-3 w-3" />
           <span className="font-mono">
-            {Number(coin.real_sol_reserves).toFixed(2)} / {coin.graduation_sol_target} SOL
+            {(Number(coin.real_sol_reserves) * 100).toFixed(0)} / {Number(coin.graduation_sol_target) * 100} $RHOZE
           </span>
         </div>
-      </div>
+      </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
