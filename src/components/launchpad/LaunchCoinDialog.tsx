@@ -34,14 +34,17 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   /**
-   * Work-coin mode (legacy): pass a workId. The coin is bound to that
-   * Verified IP work and the dialog calls `create_coin_launch`.
-   *
-   * Profile-coin mode (current): omit workId. The dialog calls
-   * `create_profile_coin_launch` and the coin is bound to the signed-in
-   * creator's profile (one active profile coin per creator).
+   * Coins are now free-form "drops" that can optionally attach to an
+   * Event or a Space. Pass `eventId` or `spaceId` to bind the drop to
+   * that surface (server checks ownership). Omit both for a standalone
+   * drop. The legacy `workId` path is kept for back-compat with old
+   * Verified-IP work surfaces.
    */
   workId?: string;
+  eventId?: string;
+  spaceId?: string;
+  /** Where to send the user after launch. Defaults to /coin/<TICKER>. */
+  contextLabel?: string;
   defaultName?: string;
   defaultImage?: string | null;
   /** Optional callback so parents can refetch their coin query on success. */
@@ -60,6 +63,9 @@ const LaunchCoinDialog = ({
   open,
   onOpenChange,
   workId,
+  eventId,
+  spaceId,
+  contextLabel,
   defaultName,
   defaultImage,
   onLaunched,
@@ -141,7 +147,9 @@ const LaunchCoinDialog = ({
     toast({ title: "Image uploaded" });
   };
 
-  const isProfileCoin = !workId;
+  const isWorkCoin = !!workId;
+  const dropContext = contextLabel
+    ?? (eventId ? "this event" : spaceId ? "this space" : null);
 
   const submit = async () => {
     if (ticker.trim().length < 2) {
@@ -166,7 +174,7 @@ const LaunchCoinDialog = ({
     }
     setSubmitting(true);
 
-    const payload = {
+    const basePayload = {
       _ticker: ticker.trim(),
       _name: name.trim(),
       _description: description.trim() || null,
@@ -176,9 +184,13 @@ const LaunchCoinDialog = ({
       _lp_lock_months: Number(lpLock),
     };
 
-    const { data, error } = isProfileCoin
-      ? await supabase.rpc("create_profile_coin_launch", payload)
-      : await supabase.rpc("create_coin_launch", { ...payload, _work_id: workId! });
+    const { data, error } = isWorkCoin
+      ? await supabase.rpc("create_coin_launch", { ...basePayload, _work_id: workId! })
+      : await supabase.rpc("create_drop_coin_launch", {
+          ...basePayload,
+          _event_id: eventId ?? null,
+          _space_id: spaceId ?? null,
+        });
 
     if (error) {
       setSubmitting(false);
@@ -200,15 +212,13 @@ const LaunchCoinDialog = ({
 
     setSubmitting(false);
     toast({
-      title: "Coin launched",
+      title: "Coin dropped",
       description: `$${ticker.toUpperCase()} is live. ${COIN_LAUNCH_FEE_RHOZE} $RHOZE fee deducted.`,
     });
     onOpenChange(false);
     if (data) {
       onLaunched?.(data as string);
-      if (userResp.user) {
-        navigate(`/profiles/${userResp.user.id}?tab=coin`);
-      }
+      navigate(`/coin/${ticker.trim().toUpperCase()}`);
     }
   };
 
@@ -218,12 +228,16 @@ const LaunchCoinDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Coins className="h-4 w-4 text-emerald-500" />
-            {isProfileCoin ? "Launch your profile coin" : "Launch a coin for this work"}
+            {isWorkCoin
+              ? "Launch a coin for this work"
+              : dropContext
+                ? `Drop a coin for ${dropContext}`
+                : "Drop a new coin"}
           </DialogTitle>
           <DialogDescription>
-            {isProfileCoin
-              ? "Launch a coin so your community can back you and grow with you. Think of it like crowdfunding — supporters buy in early, and as more people join, the value rises. You earn a cut of every trade."
-              : "Launch a coin tied to this work so your community can back it. Supporters buy in early, and you earn a cut of every trade as it grows."}
+            {isWorkCoin
+              ? "Launch a coin tied to this work so your community can back it. Supporters buy in early, and you earn a cut of every trade as it grows."
+              : "Drop a coin so your community can back it and grow with you. Think of it like crowdfunding — supporters buy in early, and as more people join, the value rises. You earn a cut of every trade."}
           </DialogDescription>
         </DialogHeader>
 

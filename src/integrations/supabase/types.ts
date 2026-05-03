@@ -592,6 +592,7 @@ export type Database = {
           creator_fees_earned: number
           creator_id: string
           description: string | null
+          event_id: string | null
           graduated_at: string | null
           graduation_sol_target: number
           id: string
@@ -604,6 +605,7 @@ export type Database = {
           raydium_pool: string | null
           real_sol_reserves: number
           real_token_reserves: number
+          space_id: string | null
           status: string
           ticker: string
           total_supply: number
@@ -618,6 +620,7 @@ export type Database = {
           creator_fees_earned?: number
           creator_id: string
           description?: string | null
+          event_id?: string | null
           graduated_at?: string | null
           graduation_sol_target?: number
           id?: string
@@ -630,6 +633,7 @@ export type Database = {
           raydium_pool?: string | null
           real_sol_reserves?: number
           real_token_reserves?: number
+          space_id?: string | null
           status?: string
           ticker: string
           total_supply?: number
@@ -644,6 +648,7 @@ export type Database = {
           creator_fees_earned?: number
           creator_id?: string
           description?: string | null
+          event_id?: string | null
           graduated_at?: string | null
           graduation_sol_target?: number
           id?: string
@@ -656,6 +661,7 @@ export type Database = {
           raydium_pool?: string | null
           real_sol_reserves?: number
           real_token_reserves?: number
+          space_id?: string | null
           status?: string
           ticker?: string
           total_supply?: number
@@ -665,6 +671,20 @@ export type Database = {
           work_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "coin_launches_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coin_launches_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "studios"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "coin_launches_work_id_fkey"
             columns: ["work_id"]
@@ -4471,6 +4491,20 @@ export type Database = {
           _platform_fee_bps?: number
           _ticker: string
           _work_id: string
+        }
+        Returns: string
+      }
+      create_drop_coin_launch: {
+        Args: {
+          _creator_fee_bps?: number
+          _description?: string
+          _event_id?: string
+          _image_url?: string
+          _lp_lock_months?: number
+          _name: string
+          _platform_fee_bps?: number
+          _space_id?: string
+          _ticker: string
         }
         Returns: string
       }
