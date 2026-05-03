@@ -23,6 +23,8 @@ import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
+import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { ROLE_BY_ID } from "@/lib/creator-roles";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
@@ -48,9 +50,10 @@ const ProfileDetailPage = () => {
 
   const isOwnProfile = user?.id === id;
 
-  // Tabs: Overview · Coin · Works · Listings · Availability.
-  // ?tab=coin etc. deep-links from Flow speculate pills + Hub coins strip.
-  const tabFromUrl = searchParams.get("tab") || "overview";
+  // Tabs: Overview · Support · Works · Building.
+  // ?tab=coin (legacy) deep-links into Support where the artist token now lives.
+  const rawTab = searchParams.get("tab") || "overview";
+  const tabFromUrl = rawTab === "coin" ? "support" : rawTab;
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [bookingOpen, setBookingOpen] = useState(false);
   const handleTabChange = (v: string) => {
@@ -153,22 +156,6 @@ const ProfileDetailPage = () => {
   });
 
   // ─── Support tab data ───
-  const { data: profileCoin } = useQuery({
-    queryKey: ["profile-coin-ticker", id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("coin_launches")
-        .select("id, ticker, name, image_url, status")
-        .eq("creator_id", id!)
-        .neq("status", "cancelled")
-        .order("work_id", { ascending: true, nullsFirst: true })
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!id,
-  });
 
   const { data: upcomingEvents } = useQuery({
     queryKey: ["profile-upcoming-events", id],
@@ -416,10 +403,9 @@ const ProfileDetailPage = () => {
 
         {/* ─── Tabbed sections ─── */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="w-full grid grid-cols-5 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
+          <TabsList className="w-full grid grid-cols-4 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
             <TabsTrigger value="overview" className="text-xs gap-1.5"><UserIcon className="h-3 w-3" />Overview</TabsTrigger>
             <TabsTrigger value="support" className="text-xs gap-1.5"><Heart className="h-3 w-3" />Support</TabsTrigger>
-            <TabsTrigger value="coin" className="text-xs gap-1.5"><Coins className="h-3 w-3" />Coin</TabsTrigger>
             <TabsTrigger value="works" className="text-xs gap-1.5"><Sparkles className="h-3 w-3" />Works</TabsTrigger>
             <TabsTrigger value="building" className="text-xs gap-1.5"><FolderKanban className="h-3 w-3" />Building</TabsTrigger>
           </TabsList>
@@ -494,15 +480,15 @@ const ProfileDetailPage = () => {
           </div>
         </motion.div>
 
-        {/* ─── On-Chain Reputation (compact) ─── */}
-        {totalProofs > 0 && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.4 }}
-            className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Award className="h-5 w-5 text-primary" />
-                <h2 className="font-display text-base font-semibold text-foreground">On-Chain Reputation</h2>
-              </div>
+        {/* ─── On-Chain Reputation (Investor Signal + proofs) ─── */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.4 }}
+          className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-primary" />
+              <h2 className="font-display text-base font-semibold text-foreground">On-Chain Reputation</h2>
+            </div>
+            {totalProofs > 0 && (
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="font-mono text-[10px]">
                   {anchoredCount}/{totalProofs} verified
@@ -511,48 +497,55 @@ const ProfileDetailPage = () => {
                   <AnchorButton proofs={proofs!} />
                 )}
               </div>
-            </div>
-            {/* Summary stats — clickable, with human-readable labels */}
-            <div className="grid grid-cols-3 gap-3">
-              {Object.entries(
-                proofs!.reduce<Record<string, number>>((acc, pr) => {
-                  acc[pr.action_type] = (acc[pr.action_type] || 0) + 1;
-                  return acc;
-                }, {})
-              ).sort(([, a], [, b]) => b - a).slice(0, 3).map(([type, count]) => {
-                const meta = PROOF_TYPE_META[type] ?? {
-                  label: type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-                  href: null as string | null,
-                };
-                const inner = (
-                  <>
-                    <p className="text-2xl font-bold text-foreground">{count}</p>
-                    <p className="text-xs text-muted-foreground">{meta.label}</p>
-                  </>
-                );
-                return meta.href ? (
-                  <Link
-                    key={type}
-                    to={meta.href}
-                    className="rounded-lg border border-border bg-muted/30 p-3 text-center transition-colors hover:bg-muted/60 hover:border-border/80"
-                  >
-                    {inner}
-                  </Link>
-                ) : (
-                  <div key={type} className="rounded-lg border border-border bg-muted/30 p-3 text-center">
-                    {inner}
-                  </div>
-                );
-              })}
-            </div>
-            {anchoredCount > 0 && (
-              <p className="text-xs text-muted-foreground text-center mt-3 flex items-center justify-center gap-1">
-                <ExternalLink className="h-3 w-3" />
-                Independently verifiable on the public ledger
-              </p>
             )}
-          </motion.div>
-        )}
+          </div>
+
+          {/* Investor signal — full readiness card (moved from Coin tab) */}
+          <CreatorReadinessCard creatorId={id!} memberSince={p.created_at} />
+
+          {totalProofs > 0 && (
+            <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
+              <div className="grid grid-cols-3 gap-3">
+                {Object.entries(
+                  proofs!.reduce<Record<string, number>>((acc, pr) => {
+                    acc[pr.action_type] = (acc[pr.action_type] || 0) + 1;
+                    return acc;
+                  }, {})
+                ).sort(([, a], [, b]) => b - a).slice(0, 3).map(([type, count]) => {
+                  const meta = PROOF_TYPE_META[type] ?? {
+                    label: type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+                    href: null as string | null,
+                  };
+                  const inner = (
+                    <>
+                      <p className="text-2xl font-bold text-foreground">{count}</p>
+                      <p className="text-xs text-muted-foreground">{meta.label}</p>
+                    </>
+                  );
+                  return meta.href ? (
+                    <Link
+                      key={type}
+                      to={meta.href}
+                      className="rounded-lg border border-border bg-muted/30 p-3 text-center transition-colors hover:bg-muted/60 hover:border-border/80"
+                    >
+                      {inner}
+                    </Link>
+                  ) : (
+                    <div key={type} className="rounded-lg border border-border bg-muted/30 p-3 text-center">
+                      {inner}
+                    </div>
+                  );
+                })}
+              </div>
+              {anchoredCount > 0 && (
+                <p className="text-xs text-muted-foreground text-center mt-3 flex items-center justify-center gap-1">
+                  <ExternalLink className="h-3 w-3" />
+                  Independently verifiable on the public ledger
+                </p>
+              )}
+            </div>
+          )}
+        </motion.div>
 
         {/* Ratings inside Overview */}
         {reviewStats && reviewStats.count > 0 && (
@@ -577,31 +570,41 @@ const ProfileDetailPage = () => {
         )}
           </TabsContent>
 
-          {/* ─── Support tab — single answer to "how do I help this artist?" ─── */}
+          {/* ─── Support tab — back this artist (actions + token) ─── */}
           <TabsContent value="support" className="mt-5 space-y-4">
-            {/* Top intro */}
-            <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-card/80 to-accent/10 backdrop-blur-sm border border-border/50 p-5">
-              <div className="flex items-center gap-2 mb-1">
-                <Heart className="h-4 w-4 text-primary" />
-                <h2 className="font-display text-base font-semibold text-foreground">
-                  Ways to back {p.display_name || p.username || "this artist"}
+            {/* Minimal header — explainer is now a popover, not a banner */}
+            <div className="flex items-center justify-between gap-3 px-1">
+              <div className="flex items-center gap-2 min-w-0">
+                <Heart className="h-4 w-4 text-primary shrink-0" />
+                <h2 className="font-display text-base font-semibold text-foreground truncate">
+                  Back {p.display_name || p.username || "this artist"}
                 </h2>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Pick whatever fits — every action helps. Curious about the
-                token layer?{" "}
-                <Link
-                  to="/rewards"
-                  className="underline-offset-2 hover:underline text-foreground/80"
-                >
-                  How rewards work →
-                </Link>
-              </p>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="text-[11px] text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline whitespace-nowrap">
+                    Why it matters
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-72 text-xs leading-relaxed">
+                  <p className="font-medium text-foreground mb-1">Every action is proof.</p>
+                  <p className="text-muted-foreground">
+                    Following, messaging, booking, or holding their token all
+                    show up as on-chain reputation. Pick whatever fits — there's
+                    no wrong way to back an artist.
+                  </p>
+                  <Link
+                    to="/credits?tab=how"
+                    className="mt-2 inline-block text-foreground/80 hover:underline"
+                  >
+                    How rewards work →
+                  </Link>
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* Action grid — Book a session is full-width when present */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Book / availability — full width, opens calendar in modal */}
               {profile.available && (
                 <button
                   onClick={() => user ? setBookingOpen(true) : navigate("/auth")}
@@ -615,7 +618,7 @@ const ProfileDetailPage = () => {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground">Book a session</p>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          Open to work — pick a time, drop a meeting link, get on a call.
+                          Pick a time and get on a call.
                         </p>
                       </div>
                     </div>
@@ -623,7 +626,6 @@ const ProfileDetailPage = () => {
                   </div>
                 </button>
               )}
-              {/* Follow */}
               {!isOwnProfile && (
                 <button
                   onClick={() => user ? followMutation.mutate() : navigate("/auth")}
@@ -636,14 +638,13 @@ const ProfileDetailPage = () => {
                         {isFollowing ? <UserCheck className="h-4 w-4 text-primary" /> : <UserPlus className="h-4 w-4 text-primary" />}
                         <p className="text-sm font-semibold text-foreground">{isFollowing ? "Following" : "Follow"}</p>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">Show up in their early-supporter list. Free.</p>
+                      <p className="text-xs text-muted-foreground mt-1">Free. You'll see their next move first.</p>
                     </div>
                     <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </button>
               )}
 
-              {/* Message */}
               {!isOwnProfile && (
                 <button
                   onClick={() => user ? navigate(`/messages?to=${id}`) : navigate("/auth")}
@@ -655,38 +656,30 @@ const ProfileDetailPage = () => {
                         <MessageSquare className="h-4 w-4 text-primary" />
                         <p className="text-sm font-semibold text-foreground">Send a message</p>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">Hire, collab, or just say what their work means to you.</p>
+                      <p className="text-xs text-muted-foreground mt-1">Hire, collab, or just say hi.</p>
                     </div>
                     <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </button>
               )}
+            </div>
 
-              {/* Coin */}
-              {profileCoin && (
-                <button
-                  onClick={() => handleTabChange("coin")}
-                  className="group text-left rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-4 hover:border-foreground/30 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <Coins className="h-4 w-4 text-primary" />
-                        <p className="text-sm font-semibold text-foreground">Hold ${profileCoin.ticker}</p>
-                        {profileCoin.status === "graduated" && (
-                          <Badge variant="secondary" className="text-[9px]">Graduated</Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1 truncate">
-                        Skin in the game. Trade their bonding-curve coin and ride the upside.
-                      </p>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0" />
-                  </div>
-                </button>
-              )}
-
-              {/* Book / availability — original slot now removed; Book card lives at top of grid */}
+            {/* ─── Artist token (formerly the Coin tab) ─── */}
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center gap-2 px-1">
+                <Coins className="h-4 w-4 text-primary" />
+                <h3 className="font-display text-sm font-semibold text-foreground">
+                  {isOwnProfile ? "Your artist token" : `${p.display_name || p.username || "Artist"}'s token`}
+                </h3>
+              </div>
+              <ProfileCoinTab
+                creatorId={id!}
+                isOwnProfile={isOwnProfile}
+                defaultName={p.display_name || p.username}
+                defaultImage={p.avatar_url}
+                memberSince={p.created_at}
+                showReadiness={false}
+              />
             </div>
 
             {/* Listings inline — what they're offering OR looking for */}
@@ -824,22 +817,11 @@ const ProfileDetailPage = () => {
             )}
 
             {/* Empty fallback if nothing surfaces */}
-            {isOwnProfile && !hasSellerContent && !profileCoin && !upcomingEvents?.length && (
+            {isOwnProfile && !hasSellerContent && !upcomingEvents?.length && (
               <div className="rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
-                Add an offering, launch your coin, or post an event so people have something to back.
+                Add an offering or post an event so people have something to back.
               </div>
             )}
-          </TabsContent>
-
-          {/* ─── Coin tab ─── */}
-          <TabsContent value="coin" className="mt-5">
-            <ProfileCoinTab
-              creatorId={id!}
-              isOwnProfile={isOwnProfile}
-              defaultName={p.display_name || p.username}
-              defaultImage={p.avatar_url}
-              memberSince={p.created_at}
-            />
           </TabsContent>
 
           {/* ─── Works (Posts) tab ─── */}
