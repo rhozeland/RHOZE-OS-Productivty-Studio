@@ -614,10 +614,10 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
               {activeSpotlight ? (
                 <motion.div
                   key={activeSpotlight.key}
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.28, ease: "easeOut" }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
                 >
                   {activeSpotlight.kind === "artist" ? (
                     <ArtistSpotlightCard
