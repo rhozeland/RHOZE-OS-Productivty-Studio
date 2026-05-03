@@ -13,18 +13,9 @@ import Tilt3D from "@/components/ui/Tilt3D";
 import { useState } from "react";
 import { format } from "date-fns";
 
-const LEVELS = [
-  { level: 1, title: "Newcomer", xp: 0, icon: Zap, color: "hsl(210 60% 55%)" },
-  { level: 2, title: "Contributor", xp: 20, icon: Star, color: "hsl(175 70% 50%)" },
-  { level: 3, title: "Creator", xp: 50, icon: Flame, color: "hsl(40 80% 50%)" },
-  { level: 4, title: "Builder", xp: 100, icon: Flame, color: "hsl(30 90% 60%)" },
-  { level: 5, title: "Pro", xp: 200, icon: Trophy, color: "hsl(280 60% 60%)" },
-  { level: 6, title: "Expert", xp: 350, icon: Trophy, color: "hsl(320 80% 60%)" },
-  { level: 7, title: "Master", xp: 500, icon: Crown, color: "hsl(350 60% 55%)" },
-  { level: 8, title: "Legend", xp: 750, icon: Crown, color: "hsl(150 55% 45%)" },
-  { level: 9, title: "Visionary", xp: 1000, icon: Crown, color: "hsl(280 80% 65%)" },
-  { level: 10, title: "Founder", xp: 1500, icon: Crown, color: "hsl(40 80% 50%)" },
-];
+// Levels/XP removed in v8.7 — Creator Pass surfaces $RHOZE hold + collectible
+// stats only. Level + XP previously double-displayed alongside the tier.
+
 
 import {
   TIERS,
