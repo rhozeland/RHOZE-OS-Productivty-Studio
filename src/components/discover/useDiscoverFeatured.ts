@@ -268,7 +268,7 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
     queryFn: async () => {
       const { data } = await supabase
         .from("studios")
-        .select("id, name, short_description, cover_image_url, location, city, country")
+        .select("id, name, short_description, cover_image_url, location, city, state, country")
         .eq("is_active", true)
         .order("updated_at", { ascending: false })
         .limit(12);
