@@ -702,6 +702,7 @@ const ProfileDetailPage = () => {
                 <div className="space-y-2">
                   {sellerListings!.slice(0, 5).map((listing: any) => {
                     const isRequest = listing.listing_type === "project_request";
+                    const vip = listingVerifiedIp?.get(listing.id);
                     return (
                       <button
                         key={listing.id}
