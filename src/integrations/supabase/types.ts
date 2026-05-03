@@ -1483,6 +1483,10 @@ export type Database = {
       event_tickets: {
         Row: {
           amount_paid: number
+          anchor_attempts: number
+          anchor_last_attempt_at: string | null
+          anchor_last_error: string | null
+          anchor_proof_id: string | null
           anchored_at: string | null
           attendance_hash: string | null
           checked_in_at: string | null
@@ -1500,6 +1504,10 @@ export type Database = {
         }
         Insert: {
           amount_paid?: number
+          anchor_attempts?: number
+          anchor_last_attempt_at?: string | null
+          anchor_last_error?: string | null
+          anchor_proof_id?: string | null
           anchored_at?: string | null
           attendance_hash?: string | null
           checked_in_at?: string | null
@@ -1517,6 +1525,10 @@ export type Database = {
         }
         Update: {
           amount_paid?: number
+          anchor_attempts?: number
+          anchor_last_attempt_at?: string | null
+          anchor_last_error?: string | null
+          anchor_proof_id?: string | null
           anchored_at?: string | null
           attendance_hash?: string | null
           checked_in_at?: string | null
@@ -1533,6 +1545,13 @@ export type Database = {
           tier_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "event_tickets_anchor_proof_id_fkey"
+            columns: ["anchor_proof_id"]
+            isOneToOne: false
+            referencedRelation: "contribution_proofs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "event_tickets_event_id_fkey"
             columns: ["event_id"]
