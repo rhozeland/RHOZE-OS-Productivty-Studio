@@ -281,6 +281,31 @@ const LaunchCoinDialog = ({
             </div>
           </div>
 
+          {dropInfo && (() => {
+            const unlimited = dropInfo.cap === null;
+            const remaining = unlimited
+              ? Infinity
+              : Math.max((dropInfo.cap ?? 0) - dropInfo.used, 0);
+            const blocked = !unlimited && remaining <= 0;
+            return (
+              <div
+                className={`rounded-md border p-3 text-[11px] ${
+                  blocked
+                    ? "border-destructive/50 bg-destructive/10 text-destructive"
+                    : "border-border/60 bg-muted/30 text-muted-foreground"
+                }`}
+              >
+                <span className="font-medium text-foreground">{dropInfo.tierLabel} tier</span>
+                {" — "}
+                {unlimited
+                  ? "unlimited coin drops."
+                  : blocked
+                    ? `you've used ${dropInfo.used}/${dropInfo.cap} drops in the last 30 days. Hold more $RHOZE to raise your cap.`
+                    : `${remaining} of ${dropInfo.cap} coin drops left in the next 30 days.`}
+              </div>
+            );
+          })()}
+
           <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-[11px] text-muted-foreground">
             Simulated launch — no real liquidity yet. Tokenomics (supply, fees, graduation) lock in once the on-chain mint ships.
           </div>
@@ -289,7 +314,15 @@ const LaunchCoinDialog = ({
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>Cancel</Button>
-          <Button onClick={submit} disabled={submitting}>
+          <Button
+            onClick={submit}
+            disabled={
+              submitting ||
+              (dropInfo !== null &&
+                dropInfo.cap !== null &&
+                dropInfo.used >= dropInfo.cap)
+            }
+          >
             {submitting && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}
             Launch coin
           </Button>
