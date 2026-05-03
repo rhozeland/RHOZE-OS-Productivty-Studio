@@ -28,6 +28,7 @@ const StudioDetailPage = () => {
   const { user } = useAuth();
   const [bookingOpen, setBookingOpen] = useState(false);
   const [dmOpen, setDmOpen] = useState(false);
+  const [launchCoinOpen, setLaunchCoinOpen] = useState(false);
 
   const { data: studio, isLoading } = useQuery({
     queryKey: ["studio", id],
