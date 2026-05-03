@@ -472,6 +472,69 @@ const LaunchCoinDialog = ({
           })()}
 
         </div>
+        )}
+
+        {step === "confirm" && (() => {
+          const buyNum = Math.max(0, Number(initialBuy) || 0);
+          const totalSpend = COIN_LAUNCH_FEE_RHOZE + buyNum;
+          // Mirror DB defaults from coin_launches + swap_rhoze_for_coin (buy side).
+          const VIRT_SOL = 30;
+          const VIRT_TOK = 1_073_000_000;
+          const TOTAL_SUPPLY = 1_000_000_000;
+          const FEE_BPS = 200 + 100; // creator + platform
+          const k = VIRT_SOL * VIRT_TOK;
+          const fee = (buyNum * FEE_BPS) / 10000;
+          const net = buyNum - fee;
+          const newVirtSol = VIRT_SOL + net;
+          const tokensOut = VIRT_TOK - k / newVirtSol;
+          const pct = (tokensOut / TOTAL_SUPPLY) * 100;
+          const balanceAfter = (dropInfo?.balance ?? 0) - totalSpend;
+          return (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  {imageUrl && (
+                    <img src={imageUrl} alt="" className="h-12 w-12 rounded-lg object-cover border border-border/60" />
+                  )}
+                  <div className="min-w-0">
+                    <div className="font-mono text-sm font-semibold">${ticker.toUpperCase()}</div>
+                    <div className="text-xs text-muted-foreground truncate">{name}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-4 text-center space-y-1">
+                <div className="text-[10px] uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                  Your day-one share
+                </div>
+                <div className="text-3xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                  {pct.toFixed(2)}%
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  ≈ {Math.floor(tokensOut).toLocaleString()} ${ticker.toUpperCase()} for {buyNum.toLocaleString()} $RHOZE
+                </div>
+              </div>
+
+              <div className="rounded-md border border-border/60 bg-muted/20 p-3 text-xs space-y-1.5">
+                <div className="flex justify-between"><span className="text-muted-foreground">Launch fee</span><span className="font-mono tabular-nums">{COIN_LAUNCH_FEE_RHOZE.toLocaleString()} $RHOZE</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Kickstart buy</span><span className="font-mono tabular-nums">{buyNum.toLocaleString()} $RHOZE</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Trade fee on buy ({(FEE_BPS / 100).toFixed(1)}%)</span><span className="font-mono tabular-nums text-muted-foreground">{fee.toFixed(2)} $RHOZE</span></div>
+                <div className="border-t border-border/60 pt-1.5 flex justify-between font-medium">
+                  <span>Total deducted</span>
+                  <span className="font-mono tabular-nums">{totalSpend.toLocaleString()} $RHOZE</span>
+                </div>
+                <div className="flex justify-between text-[11px] text-muted-foreground">
+                  <span>Balance after</span>
+                  <span className="font-mono tabular-nums">{Math.max(0, Math.floor(balanceAfter)).toLocaleString()} $RHOZE</span>
+                </div>
+              </div>
+
+              <p className="text-[10px] text-muted-foreground leading-relaxed">
+                This share is an estimate based on the bonding curve at launch. Final amount may vary slightly with rounding. The coin goes live the moment you confirm.
+              </p>
+            </div>
+          );
+        })()}
 
         <DialogFooter>
           {step === "form" ? (
