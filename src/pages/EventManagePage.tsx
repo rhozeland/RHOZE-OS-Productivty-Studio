@@ -554,6 +554,50 @@ const EventManagePage = () => {
               {(tiers ?? []).map((t: any) => {
                 const cur = t.currency_code || eventCurrency;
                 const price = Number(t.price_usd) || 0;
+                const isEditing = editId === t.id;
+                const sold = Number(t.quantity_sold) || 0;
+                const isFreeRsvp = price === 0 && (t.sort_order === 0 || /rsvp/i.test(t.name ?? ""));
+                if (isEditing) {
+                  return (
+                    <div key={t.id} className="rounded-xl bg-card border border-primary/40 p-4 space-y-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <div className="space-y-1.5 col-span-2 sm:col-span-2">
+                          <Label className="text-xs">Name</Label>
+                          <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Price ({eventCurrency})</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={editPrice}
+                            onChange={(e) => setEditPrice(e.target.value)}
+                            disabled={isFreeRsvp}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Quantity</Label>
+                          <Input
+                            type="number"
+                            min={sold || 1}
+                            value={editQty}
+                            onChange={(e) => setEditQty(e.target.value)}
+                            placeholder="∞"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" className="rounded-full" disabled={saveTier.isPending} onClick={() => saveTier.mutate()}>
+                          <Check className="h-3.5 w-3.5 mr-1" />Save
+                        </Button>
+                        <Button size="sm" variant="ghost" className="rounded-full" onClick={cancelEdit}>
+                          <X className="h-3.5 w-3.5 mr-1" />Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                }
                 return (
                   <div
                     key={t.id}
@@ -565,9 +609,32 @@ const EventManagePage = () => {
                         {price > 0 ? formatMoney(price, cur) : "Free"}
                         {price > 0 && " · also payable in $RHOZE (tier discount)"}
                         {" · "}
-                        {t.quantity_sold}
+                        {sold}
                         {t.quantity_total ? ` / ${t.quantity_total}` : ""} sold
                       </p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => beginEdit(t)}
+                        title="Edit tier"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        disabled={sold > 0 || deleteTier.isPending}
+                        onClick={() => {
+                          if (confirm(`Remove "${t.name}"?`)) deleteTier.mutate(t.id);
+                        }}
+                        title={sold > 0 ? "Cannot remove — tickets sold" : "Remove tier"}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 );
