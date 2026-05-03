@@ -25,7 +25,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import ListingCard from "@/components/marketplace/ListingCard";
-import { useListingVerifiedIp } from "@/hooks/useListingVerifiedIp";
+
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 
 const CATEGORIES = [
@@ -181,9 +181,6 @@ const MarketplacePage = () => {
     enabled: listingIds.length > 0,
   });
 
-  // Bulk lookup of "Verified IP" proof per listing → drives the badge on
-  // ListingCard so the marketplace surfaces on-chain provenance at a glance.
-  const { data: verifiedIpMap } = useListingVerifiedIp(listingIds);
 
   const getReviewStatsForListing = (listingId: string) => {
     const reviews = reviewStats?.filter((r: any) => r.listing_id === listingId) ?? [];
@@ -431,7 +428,7 @@ const MarketplacePage = () => {
                 listing={listing}
                 media={getMediaForListing(listing.id)}
                 reviewStats={getReviewStatsForListing(listing.id)}
-                verifiedIp={verifiedIpMap?.get(listing.id) ?? null}
+                
                 index={i}
                 isOwner={listing.user_id === user?.id}
                 onInquire={() => {

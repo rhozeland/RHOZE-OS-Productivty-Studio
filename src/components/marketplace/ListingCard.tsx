@@ -20,7 +20,7 @@ import {
 import { motion } from "framer-motion";
 import AudioPreview from "./AudioPreview";
 import StarRating from "./StarRating";
-import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
+
 
 const CATEGORIES: Record<string, { label: string; icon: any; color: string }> = {
   audio: { label: "Audio", icon: Music, color: "hsl(280, 60%, 55%)" },
@@ -44,8 +44,6 @@ interface ListingCardProps {
   listing: any;
   media?: any[];
   reviewStats?: { avg: number; count: number } | null;
-  /** Anchored-work proof for this listing — surfaces the Verified IP badge. */
-  verifiedIp?: { signature: string; count: number } | null;
   index: number;
   isOwner: boolean;
   onInquire: () => void;
@@ -57,7 +55,7 @@ const ListingCard = ({
   listing,
   media,
   reviewStats,
-  verifiedIp,
+  
   index,
   isOwner,
   onInquire,

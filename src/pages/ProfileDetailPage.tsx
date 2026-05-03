@@ -20,7 +20,7 @@ import { format } from "date-fns";
 import ProfileBadges from "@/components/profile/ProfileBadges";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
-import { useListingVerifiedIp } from "@/hooks/useListingVerifiedIp";
+
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
 import { cn } from "@/lib/utils";
@@ -250,10 +250,6 @@ const ProfileDetailPage = () => {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["connection-status"] }); toast.success("Connected!"); },
   });
 
-  // Verified-IP lookup for the listings we render inline. Hook must run
-  // before any early returns to keep hook order stable.
-  const listingIds = (sellerListings ?? []).map((l: any) => l.id);
-  const { data: listingVerifiedIp } = useListingVerifiedIp(listingIds);
 
   // ─── Loading / guards ───
   if (isLoading) {
@@ -702,7 +698,6 @@ const ProfileDetailPage = () => {
                 <div className="space-y-2">
                   {sellerListings!.slice(0, 5).map((listing: any) => {
                     const isRequest = listing.listing_type === "project_request";
-                    const vip = listingVerifiedIp?.get(listing.id);
                     return (
                       <button
                         key={listing.id}
