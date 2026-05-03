@@ -44,6 +44,7 @@ import {
   Eye,
   EyeOff,
   Trash2,
+  Pencil,
   Shield,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
