@@ -68,7 +68,6 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
   const { user } = useAuth();
   const { requireAuth } = useAuthGate();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [type, setType] = useState<StreamPostType>(defaultType);
