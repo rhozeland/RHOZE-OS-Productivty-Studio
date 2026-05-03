@@ -34,17 +34,12 @@ import { RolePicker, SkillPicker } from "@/components/profile/RolePicker";
 
 /* ─── Section nav items ─── */
 const SECTIONS = [
+  // Avatar + banner now folded into Profile (one identity surface).
   { id: "profile", label: "Profile", icon: User },
-  { id: "avatar", label: "Display Picture", icon: Camera },
-  { id: "banner", label: "Banner & Background", icon: Palette },
   { id: "wallet", label: "Wallet", icon: Wallet },
-  // Verified IP vault — full Works registry. Works is ambient elsewhere
-  // (VerifiedIPBadge surfaces it inline on every creation); this is the
-  // dedicated personal vault, intentionally tucked under Settings.
-  // NOTE: id stays "provenance" so existing /settings#provenance links keep working.
-  { id: "provenance", label: "Verified IP", icon: Fingerprint },
-  { id: "verification", label: "Verified Artist", icon: BadgeCheck },
-  { id: "shipping", label: "Shipping", icon: MapPin },
+  // Verified IP vault + Verified Artist identity merged into one "Verification" surface.
+  // id stays "provenance" so existing /settings#provenance links keep working.
+  { id: "provenance", label: "Verification", icon: BadgeCheck },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "security", label: "Security", icon: Lock },
   { id: "account", label: "Account", icon: AlertTriangle },
