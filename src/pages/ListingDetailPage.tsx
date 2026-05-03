@@ -919,6 +919,24 @@ const ListingDetailPage = () => {
           prefillMessage={`Hi! I'm interested in your listing "${listing.title}". Could we discuss the details?`}
         />
       )}
+
+      {isOwner && (
+        <CreateListingDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          editListing={{
+            id: listing.id,
+            title: listing.title,
+            description: listing.description,
+            listing_type: listing.listing_type,
+            category: listing.category,
+            contact_info: (listing as any).contact_info ?? null,
+            delivery_days: listing.delivery_days,
+            revisions: listing.revisions,
+            tags: listing.tags,
+          }}
+        />
+      )}
     </div>
   );
 };
