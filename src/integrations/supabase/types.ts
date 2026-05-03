@@ -3971,6 +3971,33 @@ export type Database = {
           },
         ]
       }
+      user_buddies: {
+        Row: {
+          addressee_id: string
+          created_at: string
+          id: string
+          requester_id: string
+          status: Database["public"]["Enums"]["buddy_status"]
+          updated_at: string
+        }
+        Insert: {
+          addressee_id: string
+          created_at?: string
+          id?: string
+          requester_id: string
+          status?: Database["public"]["Enums"]["buddy_status"]
+          updated_at?: string
+        }
+        Update: {
+          addressee_id?: string
+          created_at?: string
+          id?: string
+          requester_id?: string
+          status?: Database["public"]["Enums"]["buddy_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_credits: {
         Row: {
           balance: number
@@ -4008,6 +4035,33 @@ export type Database = {
           subscription_start?: string | null
           tier?: string
           tier_credits_monthly?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_notes: {
+        Row: {
+          body: string
+          created_at: string
+          expires_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
           updated_at?: string
           user_id?: string
         }
@@ -4363,6 +4417,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      are_buddies: { Args: { _a: string; _b: string }; Returns: boolean }
       award_engagement_reward: {
         Args: {
           _action_type: string
@@ -4583,6 +4638,18 @@ export type Database = {
         Returns: boolean
       }
       is_verified_artist: { Args: { _user_id: string }; Returns: boolean }
+      list_my_buddies: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          buddied_at: string
+          buddy_id: string
+          display_name: string
+          note_body: string
+          note_expires_at: string
+          username: string
+        }[]
+      }
       lock_escrow_credits: {
         Args: { _amount: number; _client_id: string; _contract_id: string }
         Returns: undefined
@@ -4730,6 +4797,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      buddy_status: "pending" | "accepted" | "blocked"
       capital_advance_status:
         | "submitted"
         | "under_review"
@@ -4870,6 +4938,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      buddy_status: ["pending", "accepted", "blocked"],
       capital_advance_status: [
         "submitted",
         "under_review",
