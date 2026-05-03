@@ -167,9 +167,8 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
           <div className="space-y-1.5">
             <h2 className="font-display text-xl font-bold text-foreground">Tier eligibility</h2>
             <p className="text-sm text-muted-foreground max-w-2xl">
-              Two ways to climb: hold $RHOZE long-term, <em>or</em> hit any single
-              activity bar — posts, completed projects, listings, events hosted, or
-              successful interactions. Whichever is higher wins.
+              Hold $RHOZE to climb. Tier upgrades the moment your balance crosses
+              a threshold — no subscriptions, no applications.
             </p>
           </div>
           <TierMatrix activeTier={currentTier as any} />

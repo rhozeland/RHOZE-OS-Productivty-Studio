@@ -6,8 +6,7 @@ import TierMatrix from "@/components/creators/TierMatrix";
 
 /**
  * GuestCreditsPreview — shown to guests at /credits.
- * v8: subscriptions removed. Tiers are earned by holding $RHOZE
- * or by ecosystem activity. Same story as authed users.
+ * v8.3: tiers earned by holding $RHOZE only. Activity qualification removed.
  */
 const GuestCreditsPreview = () => (
   <div className="max-w-5xl mx-auto py-8 space-y-8">
@@ -21,8 +20,7 @@ const GuestCreditsPreview = () => (
       </div>
       <h1 className="font-display text-3xl md:text-4xl text-foreground">Creator Pass</h1>
       <p className="text-muted-foreground font-body max-w-lg mx-auto leading-relaxed">
-        No subscriptions. Tiers unlock by holding $RHOZE or by showing up — posting,
-        completing projects, hosting events.
+        No subscriptions. Tiers unlock the moment you hold enough $RHOZE — earned, bought, or held.
       </p>
     </motion.div>
 
