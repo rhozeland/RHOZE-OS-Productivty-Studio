@@ -368,7 +368,8 @@ const LaunchCoinDialog = ({
               submitting ||
               (dropInfo !== null &&
                 dropInfo.cap !== null &&
-                dropInfo.used >= dropInfo.cap)
+                dropInfo.used >= dropInfo.cap) ||
+              (dropInfo !== null && dropInfo.balance < COIN_LAUNCH_FEE_RHOZE)
             }
           >
             {submitting && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}
