@@ -197,8 +197,8 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
         <p className="text-xs text-muted-foreground hidden sm:block">
           {meta.inline
             ? expanded
-              ? "Drops show up immediately in Conversations."
-              : "Quick text drop — link or image goes a long way."
+              ? "Updates show up in Conversations and on your profile."
+              : "Quick update — a thought, link, or status."
             : `Opens the full ${meta.label.toLowerCase()} flow.`}
         </p>
         <div className="flex items-center gap-2 ml-auto">
