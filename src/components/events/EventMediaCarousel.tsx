@@ -64,7 +64,7 @@ const EventMediaCarousel = ({ eventId }: Props) => {
         {media.map((m: any) => (
           <div
             key={m.id}
-            className="relative h-56 w-72 shrink-0 snap-start overflow-hidden rounded-xl border border-border bg-muted"
+            className="relative h-44 w-60 shrink-0 snap-start overflow-hidden rounded-xl border border-border bg-muted"
           >
             {m.media_type === "video" ? (
               <video
