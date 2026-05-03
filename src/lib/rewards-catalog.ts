@@ -32,7 +32,7 @@ export interface RewardEntry {
   /** Either a fixed $RHOZE amount, a formula string, or "%" rebate copy */
   amount: string;
   category: RewardCategory;
-  lane: RewardLane;
+  lane?: RewardLane;
   /** Per-day or lifetime cap copy */
   cap?: string;
   /** Optional longer "learn more" copy surfaced on hover/expand */
