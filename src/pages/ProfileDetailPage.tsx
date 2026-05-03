@@ -19,6 +19,8 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import ProfileBadges from "@/components/profile/ProfileBadges";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
+import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
+import { useListingVerifiedIp } from "@/hooks/useListingVerifiedIp";
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
 import { cn } from "@/lib/utils";
@@ -110,7 +112,7 @@ const ProfileDetailPage = () => {
     queryKey: ["profile-flow-posts", id],
     queryFn: async () => {
       const { data } = await supabase.from("flow_items")
-        .select("id, title, file_url, link_url, category, content_type, description, created_at")
+        .select("id, title, file_url, link_url, category, content_type, description, solana_signature, anchored_at, created_at")
         .eq("user_id", id!).order("created_at", { ascending: false }).limit(12);
       return data ?? [];
     },
@@ -247,6 +249,11 @@ const ProfileDetailPage = () => {
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["connection-status"] }); toast.success("Connected!"); },
   });
+
+  // Verified-IP lookup for the listings we render inline. Hook must run
+  // before any early returns to keep hook order stable.
+  const listingIds = (sellerListings ?? []).map((l: any) => l.id);
+  const { data: listingVerifiedIp } = useListingVerifiedIp(listingIds);
 
   // ─── Loading / guards ───
   if (isLoading) {
@@ -695,6 +702,7 @@ const ProfileDetailPage = () => {
                 <div className="space-y-2">
                   {sellerListings!.slice(0, 5).map((listing: any) => {
                     const isRequest = listing.listing_type === "project_request";
+                    const vip = listingVerifiedIp?.get(listing.id);
                     return (
                       <button
                         key={listing.id}
@@ -728,6 +736,13 @@ const ProfileDetailPage = () => {
                               <Badge variant="outline" className="text-[9px] capitalize">
                                 {listing.category}
                               </Badge>
+                            )}
+                            {vip && (
+                              <VerifiedIPBadge
+                                signature={vip.signature}
+                                size="xs"
+                                showLabel={false}
+                              />
                             )}
                           </div>
                           <p className="text-sm font-medium text-foreground truncate">{listing.title}</p>
@@ -858,7 +873,7 @@ const ProfileDetailPage = () => {
                   {flowPosts.map((post: any) => (
                     <div key={post.id} onClick={() => navigate("/flow")}
                       className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer">
-                      <div className="aspect-square overflow-hidden bg-muted">
+                      <div className="relative aspect-square overflow-hidden bg-muted">
                         <FlowThumbnail
                           fileUrl={post.file_url}
                           linkUrl={post.link_url}
@@ -866,9 +881,21 @@ const ProfileDetailPage = () => {
                           description={post.description}
                           className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
+                        {post.solana_signature && (
+                          <div className="absolute top-1.5 right-1.5">
+                            <VerifiedIPBadge
+                              signature={post.solana_signature}
+                              size="xs"
+                              showLabel={false}
+                              className="shadow-sm"
+                            />
+                          </div>
+                        )}
                       </div>
                       <div className="p-2.5">
-                        <p className="text-xs font-medium text-foreground truncate">{post.title}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-medium text-foreground truncate flex-1">{post.title}</p>
+                        </div>
                         <Badge variant="outline" className="text-[8px] mt-1 capitalize">{post.category}</Badge>
                       </div>
                     </div>
