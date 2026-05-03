@@ -396,26 +396,74 @@ const LaunchCoinDialog = ({
             );
           })()}
 
+          {/* Kickstart buy — owner gets a % of supply on day one */}
+          <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="initial-buy" className="text-xs font-medium text-foreground">
+                Kickstart buy
+              </Label>
+              <span className="text-[10px] text-muted-foreground">Own a slice from day one</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                id="initial-buy"
+                type="number"
+                min="0"
+                step="1"
+                value={initialBuy}
+                onChange={(e) => setInitialBuy(e.target.value)}
+                className="font-mono"
+              />
+              <span className="text-xs text-muted-foreground shrink-0">$RHOZE</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {["100", "500", "1000", "5000"].map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setInitialBuy(v)}
+                  className={`text-[10px] px-2 py-0.5 rounded-full border transition ${
+                    initialBuy === v
+                      ? "bg-foreground text-background border-foreground"
+                      : "border-border/60 hover:bg-muted/50"
+                  }`}
+                >
+                  {Number(v).toLocaleString()}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              The earlier you buy, the bigger your % of total supply. You can sell anytime from the trade panel.
+            </p>
+          </div>
+
           {(() => {
             const balance = dropInfo?.balance ?? 0;
-            const insufficient = balance < COIN_LAUNCH_FEE_RHOZE;
+            const initialBuyNum = Math.max(0, Number(initialBuy) || 0);
+            const totalSpend = COIN_LAUNCH_FEE_RHOZE + initialBuyNum;
+            const insufficient = balance < totalSpend;
             return (
               <div
-                className={`rounded-md border p-3 text-[11px] flex items-start justify-between gap-3 ${
+                className={`rounded-md border p-3 text-[11px] space-y-1 ${
                   insufficient
                     ? "border-destructive/50 bg-destructive/10 text-destructive"
                     : "border-border/60 bg-muted/30 text-muted-foreground"
                 }`}
               >
-                <div>
-                  <span className="font-medium text-foreground">One-time launch fee</span>
-                  <p className="mt-0.5">
-                    {COIN_LAUNCH_FEE_RHOZE} $RHOZE — covers metadata, vanity address, and platform infra. Same for every tier.
-                  </p>
+                <div className="flex items-start justify-between gap-3">
+                  <span className="font-medium text-foreground">Total to deduct</span>
+                  <span className="font-mono tabular-nums shrink-0 text-foreground">
+                    {totalSpend.toLocaleString()} $RHOZE
+                  </span>
                 </div>
-                <span className="font-mono tabular-nums shrink-0">
-                  Bal: {Math.floor(balance).toLocaleString()}
-                </span>
+                <div className="flex items-center justify-between gap-3 text-[10px]">
+                  <span>
+                    Launch fee {COIN_LAUNCH_FEE_RHOZE} · Kickstart {initialBuyNum.toLocaleString()}
+                  </span>
+                  <span className="font-mono tabular-nums">
+                    Bal: {Math.floor(balance).toLocaleString()}
+                  </span>
+                </div>
               </div>
             );
           })()}
@@ -431,7 +479,8 @@ const LaunchCoinDialog = ({
               (dropInfo !== null &&
                 dropInfo.cap !== null &&
                 dropInfo.used >= dropInfo.cap) ||
-              (dropInfo !== null && dropInfo.balance < COIN_LAUNCH_FEE_RHOZE)
+              (dropInfo !== null &&
+                dropInfo.balance < COIN_LAUNCH_FEE_RHOZE + Math.max(0, Number(initialBuy) || 0))
             }
           >
             {submitting && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}
