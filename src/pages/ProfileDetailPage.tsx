@@ -50,9 +50,10 @@ const ProfileDetailPage = () => {
 
   const isOwnProfile = user?.id === id;
 
-  // Tabs: Overview · Coin · Works · Listings · Availability.
-  // ?tab=coin etc. deep-links from Flow speculate pills + Hub coins strip.
-  const tabFromUrl = searchParams.get("tab") || "overview";
+  // Tabs: Overview · Support · Works · Building.
+  // ?tab=coin (legacy) deep-links into Support where the artist token now lives.
+  const rawTab = searchParams.get("tab") || "overview";
+  const tabFromUrl = rawTab === "coin" ? "support" : rawTab;
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [bookingOpen, setBookingOpen] = useState(false);
   const handleTabChange = (v: string) => {
