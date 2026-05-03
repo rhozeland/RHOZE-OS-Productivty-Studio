@@ -191,6 +191,21 @@ const ChatAttachmentMenu = ({ onSendMessage, onSendQuote, disabled }: ChatAttach
     setView("menu");
   };
 
+  const shareEvent = (ev: any) => {
+    const msg = `[EVENT:${JSON.stringify({
+      id: ev.id,
+      title: ev.title,
+      starts_at: ev.starts_at,
+      ends_at: ev.ends_at,
+      venue_name: ev.venue_name,
+      is_online: ev.is_online,
+      cover_url: ev.cover_url,
+    })}]`;
+    onSendMessage(msg);
+    setOpen(false);
+    setView("menu");
+  };
+
   const filterBySearch = (items: any[] | undefined, fields: string[]) => {
     if (!items) return [];
     if (!search.trim()) return items;
