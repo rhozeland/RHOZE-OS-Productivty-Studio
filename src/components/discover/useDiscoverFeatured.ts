@@ -373,6 +373,14 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
           space.country ||
           null,
         region_code: space.region_code,
+        category: space.category,
+        hourly_rate: space.hourly_rate,
+        currency: space.currency,
+        max_guests: space.max_guests,
+        amenities: space.amenities,
+        rating_avg: space.rating_avg,
+        review_count: space.review_count,
+        available_days: (space as any).available_days ?? 0,
       });
     }
 
