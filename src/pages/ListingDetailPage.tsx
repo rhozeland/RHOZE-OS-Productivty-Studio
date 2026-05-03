@@ -701,25 +701,38 @@ const ListingDetailPage = () => {
                     </Button>
                   )}
 
-                  {/* Primary type-specific CTA (for non-instant-buy listings) */}
+                  {/* Primary CTA — one-click "I'm interested". Pitch is a
+                      lighter secondary action so it doesn't feel like
+                      homework just to raise your hand. */}
                   {!canBuyInstantly && (
-                    <Button
-                      className="w-full rounded-full h-11"
-                      onClick={() => setInquiryOpen(true)}
-                      style={{
-                        background: typeMeta.accent,
-                        color: "white",
-                      }}
-                    >
-                      {listing.listing_type === "project_request" ? (
-                        <Send className="mr-2 h-4 w-4" />
-                      ) : listing.listing_type === "collaboration" ? (
-                        <HandshakeIcon className="mr-2 h-4 w-4" />
-                      ) : (
-                        <Zap className="mr-2 h-4 w-4" />
-                      )}
-                      {typeMeta.primaryCta}
-                    </Button>
+                    <>
+                      <Button
+                        className="w-full rounded-full h-11"
+                        onClick={() => expressInterest.mutate()}
+                        disabled={expressInterest.isPending}
+                        style={{ background: typeMeta.accent, color: "white" }}
+                      >
+                        {expressInterest.isPending ? (
+                          <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending…</>
+                        ) : (
+                          <><Zap className="mr-2 h-4 w-4" />I'm interested</>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full rounded-full"
+                        onClick={() => setInquiryOpen(true)}
+                      >
+                        {listing.listing_type === "project_request" ? (
+                          <Send className="mr-2 h-4 w-4" />
+                        ) : listing.listing_type === "collaboration" ? (
+                          <HandshakeIcon className="mr-2 h-4 w-4" />
+                        ) : (
+                          <Send className="mr-2 h-4 w-4" />
+                        )}
+                        Write a detailed pitch
+                      </Button>
+                    </>
                   )}
 
                   {/* Secondary inquiry button for digital products */}
