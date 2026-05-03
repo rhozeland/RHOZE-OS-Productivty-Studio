@@ -911,8 +911,20 @@ const FlowModePage = () => {
     const targetItem = item || currentItem;
     if (!targetItem) return;
     if (navigator.vibrate) navigator.vibrate(20);
-    if (soundEnabled) playSwipeSound(action === "like" ? "up" : action === "dislike" ? "left" : action === "comment" ? "down" : "right");
+    if (soundEnabled) playSwipeSound(action === "profile" ? "up" : action === "dislike" ? "left" : action === "comment" ? "down" : action === "like" ? "up" : "right");
 
+    if (action === "profile") {
+      // Up-swipe / avatar tap: open the creator peek sheet so the user can
+      // explore who made this work without leaving Flow.
+      if (!targetItem.user_id) return;
+      setPeekCreatorId(targetItem.user_id);
+      setPeekInitial({
+        display_name: targetItem.profiles?.display_name ?? targetItem.creator_name ?? null,
+        avatar_url: targetItem.profiles?.avatar_url ?? null,
+      });
+      setPeekOpen(true);
+      return;
+    }
     if (action === "like") {
       // Like is a non-blocking interaction — record it but don't auto-advance,
       // so the heart fills under the user's thumb and they can keep reading.
