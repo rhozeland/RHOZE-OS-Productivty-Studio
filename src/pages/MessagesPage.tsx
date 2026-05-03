@@ -33,7 +33,7 @@ import ProjectsInbox from "@/components/messages/ProjectsInbox";
 import ListingsTab from "@/components/messages/ListingsTab";
 import HubFlowWidget from "@/components/hub/HubFlowWidget";
 import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
-import ConversationsRightRail from "@/components/messages/ConversationsRightRail";
+
 import ConversationsEventsBrowser from "@/components/messages/ConversationsEventsBrowser";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
@@ -436,8 +436,8 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
   };
 
   return (
-    <div className="flex gap-6 items-start">
-      <div className="flex-1 min-w-0 space-y-6">
+    <div className="w-full">
+      <div className="w-full min-w-0 space-y-6">
       <div>
         <h1 className="font-display text-3xl font-bold text-foreground">Conversations</h1>
         <p className="text-muted-foreground">Messages, projects, and listings — all in one place.</p>
@@ -757,7 +757,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
         </DialogContent>
       </Dialog>
       </div>
-      <ConversationsRightRail />
+      
     </div>
   );
 };
