@@ -221,10 +221,39 @@ const LaunchCoinDialog = ({
         .eq("user_id", userResp.user.id);
     }
 
+    // Kickstart buy — give the creator an initial share of supply so they
+    // own a % of the float from day one.
+    let kickPct: number | null = null;
+    if (data && initialBuyNum > 0) {
+      const { data: buyRes, error: buyErr } = await supabase.rpc("swap_rhoze_for_coin", {
+        _launch_id: data as string,
+        _side: "buy",
+        _amount: initialBuyNum,
+      });
+      if (buyErr) {
+        toast({
+          title: "Coin launched, kickstart buy failed",
+          description: buyErr.message,
+          variant: "destructive",
+        });
+      } else if (buyRes && typeof buyRes === "object") {
+        const tokensOut = Number((buyRes as any).tokens_out ?? 0);
+        const { data: launchRow } = await supabase
+          .from("coin_launches")
+          .select("total_supply")
+          .eq("id", data as string)
+          .maybeSingle();
+        const supply = Number(launchRow?.total_supply ?? 0) || 1;
+        kickPct = (tokensOut / supply) * 100;
+      }
+    }
+
     setSubmitting(false);
     toast({
       title: "Coin dropped",
-      description: `$${ticker.toUpperCase()} is live. ${COIN_LAUNCH_FEE_RHOZE} $RHOZE fee deducted.`,
+      description: kickPct !== null
+        ? `$${ticker.toUpperCase()} is live. You own ${kickPct.toFixed(2)}% of supply.`
+        : `$${ticker.toUpperCase()} is live.`,
     });
     onOpenChange(false);
     if (data) {
