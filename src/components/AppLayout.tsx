@@ -185,12 +185,13 @@ const AppLayout = () => {
   const { data: profiles } = useQuery({
     queryKey: ["search-profiles", trimmedQuery],
     queryFn: async () => {
+      // Match either display name OR @username so handles are findable.
+      const q = trimmedQuery.replace(/^@/, "");
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, display_name")
+        .select("user_id, display_name, username")
         .eq("is_public", true)
-        .not("display_name", "is", null)
-        .ilike("display_name", `%${trimmedQuery}%`)
+        .or(`display_name.ilike.%${q}%,username.ilike.%${q}%`)
         .limit(5);
       return data ?? [];
     },
@@ -371,7 +372,7 @@ const AppLayout = () => {
           only surface once the user has typed (>=2 chars). */}
       <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
         <CommandInput
-          placeholder="Search pages, studios, listings, creators..."
+          placeholder="Search handles, $tickers, contract addresses, studios..."
           value={searchQuery}
           onValueChange={setSearchQuery}
         />
@@ -424,10 +425,17 @@ const AppLayout = () => {
           )}
           {queryEnabled && profiles && profiles.length > 0 && (
             <CommandGroup heading="Creators">
-              {profiles.map((p) => (
-                <CommandItem key={p.user_id} onSelect={() => goTo(`/profiles/${p.user_id}`)}>
+              {profiles.map((p: any) => (
+                <CommandItem
+                  key={p.user_id}
+                  value={`${p.display_name ?? ""} @${p.username ?? ""} ${p.user_id}`}
+                  onSelect={() => goTo(`/profiles/${p.user_id}`)}
+                >
                   <User className="mr-2 h-4 w-4 text-muted-foreground" />
-                  {p.display_name}
+                  <span>{p.display_name || (p.username ? `@${p.username}` : "Untitled")}</span>
+                  {p.username && p.display_name && (
+                    <span className="ml-2 text-xs text-muted-foreground">@{p.username}</span>
+                  )}
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -435,10 +443,19 @@ const AppLayout = () => {
           {queryEnabled && coins && coins.length > 0 && (
             <CommandGroup heading="Coins">
               {coins.map((c) => (
-                <CommandItem key={c.id} onSelect={() => goTo(`/coin/${c.mint_address || c.ticker}`)}>
+                <CommandItem
+                  key={c.id}
+                  value={`$${c.ticker} ${c.name ?? ""} ${c.mint_address ?? ""}`}
+                  onSelect={() => goTo(`/coin/${c.mint_address || c.ticker}`)}
+                >
                   <Coins className="mr-2 h-4 w-4 text-emerald-500" />
                   <span className="font-mono">${c.ticker}</span>
                   <span className="ml-2 text-xs text-muted-foreground truncate">{c.name}</span>
+                  {c.mint_address && (
+                    <span className="ml-auto text-[10px] font-mono text-muted-foreground/70 truncate max-w-[140px]">
+                      {c.mint_address.slice(0, 4)}…{c.mint_address.slice(-6)}
+                    </span>
+                  )}
                 </CommandItem>
               ))}
             </CommandGroup>
