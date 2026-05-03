@@ -329,11 +329,13 @@ const CreateListingDialog = ({ open, onOpenChange, prefill, editListing }: Creat
             </div>
 
             <div className="flex gap-2">
-              <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(0)}>
-                Back
-              </Button>
-              <Button type="submit" className="flex-1" disabled={!title.trim()}>
-                Next: Add Media
+              {!isEdit && (
+                <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(0)}>
+                  Back
+                </Button>
+              )}
+              <Button type="submit" className="flex-1" disabled={!title.trim() || updateListing.isPending}>
+                {isEdit ? (updateListing.isPending ? "Saving..." : "Save changes") : "Next: Add Media"}
               </Button>
             </div>
           </form>
