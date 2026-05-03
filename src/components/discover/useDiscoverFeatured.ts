@@ -94,6 +94,7 @@ interface FeaturedSpaceRow {
   cover_image_url: string | null;
   location: string | null;
   city: string | null;
+  state: string | null;
   country: string | null;
 }
 
@@ -267,7 +268,7 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
     queryFn: async () => {
       const { data } = await supabase
         .from("studios")
-        .select("id, name, short_description, cover_image_url, location, city, country")
+        .select("id, name, short_description, cover_image_url, location, city, state, country")
         .eq("is_active", true)
         .order("updated_at", { ascending: false })
         .limit(12);
@@ -328,7 +329,11 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
         title: space.name,
         subtitle: space.short_description,
         banner: space.cover_image_url,
-        location: space.location,
+        location:
+          [space.city, space.state].filter(Boolean).join(", ") ||
+          space.location ||
+          space.country ||
+          null,
         region_code: space.region_code,
       });
     }
