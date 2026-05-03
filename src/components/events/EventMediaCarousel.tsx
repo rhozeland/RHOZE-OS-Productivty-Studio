@@ -31,10 +31,10 @@ const EventMediaCarousel = ({ eventId }: Props) => {
   const scrollBy = (dx: number) => scrollerRef.current?.scrollBy({ left: dx, behavior: "smooth" });
 
   return (
-    <section className="space-y-3 border-t border-border pt-5">
+    <section className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-lg font-bold tracking-tight flex items-center gap-2">
-          <ImageIcon className="h-4 w-4 text-muted-foreground" /> Gallery
+        <h2 className="text-sm font-semibold flex items-center gap-2">
+          <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" /> Gallery
         </h2>
         {media.length > 2 && (
           <div className="flex gap-1">
