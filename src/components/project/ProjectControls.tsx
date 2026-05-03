@@ -81,7 +81,7 @@ const ProjectControls = ({ projectId, contractId, contractStatus, isClient, isSp
             </DialogTitle>
             <DialogDescription>
               This will end the project immediately. Any remaining escrowed credits will be returned to the client.
-              A 10% platform fee will be deducted from the specialist's released credits.
+              A tier-based platform fee (Spark/Bloom 15% · Glow 10% · Play 7%) will be deducted from the specialist's released credits.
             </DialogDescription>
           </DialogHeader>
 
