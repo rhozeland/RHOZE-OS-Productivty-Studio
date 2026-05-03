@@ -199,6 +199,77 @@ const EventManagePage = () => {
 
   const CURRENCY_OPTIONS = Array.from(new Set(Object.values(COUNTRY_CURRENCY))).sort();
 
+  // ---- Inline edit / delete tier ----
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPrice, setEditPrice] = useState("");
+  const [editQty, setEditQty] = useState("");
+
+  const beginEdit = (t: any) => {
+    setEditId(t.id);
+    setEditName(t.name ?? "");
+    setEditPrice(String(t.price_usd ?? ""));
+    setEditQty(t.quantity_total ? String(t.quantity_total) : "");
+  };
+
+  const cancelEdit = () => {
+    setEditId(null);
+    setEditName("");
+    setEditPrice("");
+    setEditQty("");
+  };
+
+  const saveTier = useMutation({
+    mutationFn: async () => {
+      if (!editId) return;
+      if (!editName.trim()) throw new Error("Name required");
+      const price = editPrice ? Number(editPrice) : 0;
+      const { error } = await supabase
+        .from("event_ticket_tiers")
+        .update({
+          name: editName.trim(),
+          price_usd: price,
+          price_rhoze: price > 0 ? fiatToRhoze(price) : 0,
+          currency_code: eventCurrency,
+          quantity_total: editQty ? Number(editQty) : null,
+        } as any)
+        .eq("id", editId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Tier updated");
+      cancelEdit();
+      qc.invalidateQueries({ queryKey: ["event-tiers-manage", id] });
+    },
+    onError: (err: unknown) =>
+      toast.error("Could not update tier", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      }),
+  });
+
+  const deleteTier = useMutation({
+    mutationFn: async (tierId: string) => {
+      const tier = (tiers ?? []).find((t: any) => t.id === tierId);
+      if (tier && Number(tier.quantity_sold) > 0) {
+        throw new Error("Cannot delete a tier with sold tickets");
+      }
+      const { error } = await supabase
+        .from("event_ticket_tiers")
+        .delete()
+        .eq("id", tierId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Tier removed");
+      qc.invalidateQueries({ queryKey: ["event-tiers-manage", id] });
+    },
+    onError: (err: unknown) =>
+      toast.error("Could not remove tier", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      }),
+  });
+
+
 
   const checkIn = useMutation({
     mutationFn: async (ticketId: string) => {
