@@ -281,8 +281,6 @@ const ProfileDetailPage = () => {
   const bannerGradient = p.banner_gradient || "linear-gradient(135deg, hsl(220,15%,40%), hsl(220,10%,55%), hsl(175,30%,65%))";
   const bannerImageUrl = p.banner_url;
   const hasSellerContent = (sellerListings?.length ?? 0) > 0;
-  const listingIds = (sellerListings ?? []).map((l: any) => l.id);
-  const { data: listingVerifiedIp } = useListingVerifiedIp(listingIds);
 
   const anchoredCount = proofs?.filter((pr) => pr.solana_signature).length ?? 0;
   const totalProofs = proofs?.length ?? 0;
