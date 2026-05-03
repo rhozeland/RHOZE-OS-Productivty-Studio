@@ -222,7 +222,9 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
 
       (workRows ?? []).forEach((row: any) => {
         worksCount.set(row.user_id, (worksCount.get(row.user_id) ?? 0) + 1);
+        // Only public images may be used as banner fallback (no leaking private work).
         if (
+          row.visibility === "public" &&
           needsBanner.includes(row.user_id) &&
           !bannerFallback.has(row.user_id) &&
           row.file_url &&
