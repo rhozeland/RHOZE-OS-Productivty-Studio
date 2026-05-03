@@ -721,11 +721,13 @@ const FlowModePage = () => {
             content_hash: pf.contentHash,
           }));
 
-      const { error } = await supabase.from("flow_items").insert(rows as any);
+      const { data: inserted, error } = await supabase.from("flow_items").insert(rows as any).select("id");
       if (error) throw error;
+      return inserted ?? [];
     },
-    onSuccess: () => {
+    onSuccess: async (inserted) => {
       queryClient.invalidateQueries({ queryKey: ["flow-items"] });
+      const count = pendingFiles.length;
       setAddOpen(false);
       setNewTitle("");
       setNewDesc("");
@@ -733,7 +735,25 @@ const FlowModePage = () => {
       setNewCreatorName("");
       setShareStep("compose");
       resetPendingFiles();
-      toast.success(pendingFiles.length > 1 ? `Shared ${pendingFiles.length} items to Flow!` : "Content shared to Flow!");
+
+      // Reward: 1 $RHOZE per share (capped at 5/day server-side).
+      let earned = 0;
+      try {
+        for (const row of inserted as Array<{ id: string }>) {
+          const r = await awardEngagementReward({
+            userId: user!.id,
+            action: "post_flow_item",
+            referenceId: row.id,
+            description: "Shared a post to Flow",
+          });
+          if (r.status === "awarded") earned += r.amount;
+        }
+      } catch {
+        // Reward is best-effort; never block the share UX.
+      }
+
+      const base = count > 1 ? `Shared ${count} items to Flow!` : "Shared to Flow!";
+      toast.success(earned > 0 ? `${base} +${earned} $RHOZE` : base);
     },
     onError: (e: any) => {
       setPublishingIndex(null);
