@@ -121,6 +121,7 @@ const AdminPage = () => {
         <TabsContent value="disputes"><AdminDisputes /></TabsContent>
         <TabsContent value="withdrawals"><AdminWithdrawals /></TabsContent>
         <TabsContent value="moderation"><AdminContentModeration /></TabsContent>
+        <TabsContent value="flow"><AdminFlowModeration /></TabsContent>
         <TabsContent value="capital" className="space-y-4">
           <AdminUnderwritingRules />
           <AdminUnderwritingRulesAudit />
