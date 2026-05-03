@@ -142,9 +142,9 @@ const EventDetailPage = () => {
     return (
       <div className="max-w-xl mx-auto py-20 text-center">
         <h1 className="font-display text-2xl font-bold mb-2">Event not found</h1>
-        <Link to="/spaces?tab=events">
+        <Link to="/discover">
           <Button variant="outline" className="rounded-full">
-            <ArrowLeft className="h-4 w-4 mr-1.5" /> Back to Events
+            <ArrowLeft className="h-4 w-4 mr-1.5" /> Back to Discover
           </Button>
         </Link>
       </div>
