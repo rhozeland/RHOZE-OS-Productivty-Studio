@@ -208,8 +208,8 @@ const DiscoverPage = () => {
         </div>
 
         {view === "mosaic" && <ConversationsMosaic />}
-        {view === "events" && <ConversationsEventsBrowser />}
-        {view === "flow" && <HubFlowWidget expanded />}
+        {view === "events" && <ConversationsEventsBrowser hideHeading />}
+        {view === "flow" && <HubFlowWidget expanded hideHeading />}
       </section>
 
       {/* ─── Coins moving today ─────────────────────────────────────── */}
