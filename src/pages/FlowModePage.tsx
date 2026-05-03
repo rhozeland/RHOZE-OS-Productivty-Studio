@@ -1696,8 +1696,8 @@ const FlowModePage = () => {
             <DialogTitle>{shareStep === "confirm" ? "Confirm & publish" : "Share to Flow"}</DialogTitle>
             <DialogDescription>
               {shareStep === "confirm"
-                ? "Review your post below. Once everything looks right, publish it to the Flow."
-                : "Upload one or more files for others to discover."}
+                ? "Looks good? Publish to Flow and earn $RHOZE."
+                : "Drop something visual. Pick a vibe. Earn $RHOZE."}
             </DialogDescription>
           </DialogHeader>
           {(() => {
