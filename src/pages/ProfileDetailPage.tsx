@@ -406,6 +406,33 @@ const ProfileDetailPage = () => {
                     <MessageSquare className="mr-1.5 h-4 w-4" /> Message
                   </Button>
                 )}
+                {buddy.status === "none" && (
+                  <Button variant="outline" size="sm" onClick={() => buddy.request.mutate(undefined, {
+                    onSuccess: () => toast.success("Buddy request sent"),
+                    onError: (e: any) => toast.error(e.message ?? "Couldn't send request"),
+                  })} disabled={buddy.request.isPending}>
+                    <UserPlus className="mr-1.5 h-4 w-4" /> Add Buddy
+                  </Button>
+                )}
+                {buddy.status === "pending_out" && (
+                  <Button variant="outline" size="sm" disabled>
+                    <Clock className="mr-1.5 h-4 w-4" /> Buddy pending
+                  </Button>
+                )}
+                {buddy.status === "pending_in" && (
+                  <Button size="sm" onClick={() => buddy.accept.mutate(undefined, {
+                    onSuccess: () => toast.success("You're buddies!"),
+                  })} disabled={buddy.accept.isPending}>
+                    <UserCheck className="mr-1.5 h-4 w-4" /> Accept buddy
+                  </Button>
+                )}
+                {buddy.status === "accepted" && (
+                  <Button variant="outline" size="sm" onClick={() => buddy.remove.mutate(undefined, {
+                    onSuccess: () => toast.success("Buddy removed"),
+                  })}>
+                    <UserCheck className="mr-1.5 h-4 w-4" /> Buddies
+                  </Button>
+                )}
               </div>
             )}
           </div>
