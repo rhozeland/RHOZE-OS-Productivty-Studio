@@ -19,6 +19,8 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import ProfileBadges from "@/components/profile/ProfileBadges";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
+import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
+import { useListingVerifiedIp } from "@/hooks/useListingVerifiedIp";
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
 import { cn } from "@/lib/utils";
