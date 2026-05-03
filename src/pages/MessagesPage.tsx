@@ -674,6 +674,10 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
           <ListingsTab userId={user.id} />
         </TabsContent>
 
+        <TabsContent value="flow" className="mt-4">
+          <HubFlowWidget expanded />
+        </TabsContent>
+
         <TabsContent value="groups" className="mt-4">
           <CirclesTab />
         </TabsContent>
