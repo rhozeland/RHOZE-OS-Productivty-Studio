@@ -1,51 +1,64 @@
-# Streamline Discover composer, project creation, and project detail
+# Tiers, Events Pivot & Coin-Launch Fee
 
-Big consolidation pass across four surfaces. Frontend-only.
+## 1. Tier matrix cleanup (`src/lib/tier-matrix.ts`, `TierMatrix.tsx`)
 
-## 1. Conversations — add a Flow tab
+- Remove all "Xh early coin access" perks (24h / 48h / 72h) — never landed as a real feature.
+- Remove "Free coin launch (no platform fee)" from Play. Replace concept with a flat **coin-launch fee** that everyone pays (see §2).
+- Keep the rest of the perks intact (multipliers, % off, IP anchors, coin drops, Discover boost, Featured placement, Verified Artist fast-track).
 
-In `MessagesPage` tabs (currently DMs · Projects · Inquiries · Listings), add a new **Flow** tab that mounts `<HubFlowWidget />` (the same widget Discover uses). Opens Flow mode in-place; entering full-screen Flow still routes to `/flow`.
+## 2. Coin launch transaction fee
 
-## 2. Discover composer (`StreamComposer`) — fewer, clearer kinds
+- New constant `COIN_LAUNCH_FEE_RHOZE = 500` (≈ $5 at 100 $RHOZE/$1) in `src/lib/rewards-catalog.ts`.
+- Surface it inline in the launchpad creation flow as "One-time launch fee: 500 $RHOZE". Deduct from `user_credits.balance` on submit (client-side optimistic, no DB schema change — uses existing credits ledger pattern).
+- No tier discount on the fee for now (kept simple — can revisit).
 
-Current chips: Drop · Offering · Opportunity · Event · Space · Work · Project.
+## 3. CreatorPassUpgradeCta arrow fix
 
-New chips: **Update · Offering · Event · Space · Work**
+- Remove the standalone `→` arrow rendered under the body copy in `CreatorPassUpgradeCta.tsx`. The card already has the close X; the arrow was awkward and felt unfinished.
 
-- Rename "Drop" → **"Update"** (label + placeholder + button + footer copy: "Updates show up in Conversations and on your profile."). Same underlying `kind="drop"` in DB — pure relabel.
-- **Merge Offering + Opportunity** into a single "Offering" chip. Keep `kind="offering"` and drop the opportunity branch. Any opportunity-only fields fold into offering's form.
-- **Remove Project chip** entirely (creation still possible from Conversations → Projects tab).
+## 4. Conversations right-rail tabs (Events · Spaces · Artists)
 
-## 3. New Project form — minimum viable
+- Add a right-side panel to `MessagesPage.tsx` (visible ≥lg) with three tabs: **Events**, **Spaces**, **Artists**.
+- Each tab is a vertical scrollable list of compact discovery cards. Clicking a card deep-links to its detail page.
+- Pulls from existing tables: `events` (upcoming, status=published), `studios` (active), `profiles` (verified artists).
 
-Condense `NewProjectDialog` (or wherever the form lives — likely `src/components/project/` or `ProjectsPage`) to **just**:
+## 5. Luma-style Events explore page
 
-- Project name (required)
-- Accent color
+- New route `/events` rendering `EventsExplorePage.tsx`:
+  - Hero strip: featured upcoming event(s).
+  - **Browse by Category** grid (Tech, Food & Drink, AI, Arts & Culture, Climate, Fitness, Wellness, Crypto, Music, Community) with icons + event counts. Categories map to existing `events.category` field.
+  - Region/date filter chips.
+  - Grid of event cards below.
+- Add `/events` to nav aliases; Conversations Events tab links here for "see all".
 
-Remove from the create dialog: One-line summary, Project mode (Service vs Collaboration — default to `collaborative`), Vision, Scope for now, Budget timing block, Status on create (default `in_progress`).
+## 6. Event detail redesign (`EventDetailPage.tsx`)
 
-After create → navigate straight to `/projects/:id` where all those fields are already editable in Scope / Roadmap / etc.
+Two-column Luma-style layout (≥md):
+- **Left**: cover image, "Presented by" host card (links to profile), Hosted By collaborator list, attendee avatars + count, contact host link.
+- **Right** (sticky): date/time block, location block (or "Register to See Address" for approval-required events), Registration card with status (Free / Approval Required / Paid) + primary CTA, About Event description below.
 
-## 4. Project detail page — condense tabs
+## 7. Paid events via Square
 
-Current tabs: Roadmap · Tools · Scope · (Budget) · Team · Vault.
+- Reuse existing `TicketCheckoutDialog` + `square-payment` edge function. Verify the dialog handles USD tier prices (it already does for $RHOZE; extend the Square branch).
+- On successful payment, edge fn issues ticket with `purchase_currency='usd'`, `amount_paid=tier.price_usd`. Host's seller dashboard already aggregates `credit_transactions` — extend `square-payment` callback to credit the host (75% after 10% platform + 15% reserve, matching the existing 75/15/10 split).
 
-New tabs: **Roadmap · Scope · (Budget) · Team**
+## 8. Memory updates
 
-- **Remove Tools tab.** Smartboards move *into* Roadmap — when adding an item to a stage/goal you can attach/create a smartboard inline. The link-smartboard dialog and `smartboardDetails` query stay, just triggered from Roadmap.
-- **Remove Vault tab.** (Attached works can resurface later if needed; for now the user wants it gone.)
-- **Drop Room quick-launch in Progress Overview**: above/next to `<ProgressChart />`, add a small "Start a Drop Room" button that creates a room scoped to the project and opens it. Anyone on the project can spin one up anytime.
+- Update `mem://index.md` Core: note coin-launch fee, `/events` route, Conversations right-rail.
+- Add `mem://features/events` summarizing the new structure.
 
-## Out of scope
+## Out of scope for this pass
+- Subscribing to hosts (Luma "Subscribe" pill) — placeholder only.
+- Calendar integrations beyond existing google-calendar fn.
+- Per-event custom registration questions (the Luma "Your Info" form). Tracked as future work.
 
-- The "project creation is buggy / clipping" complaint — I'll inspect the dialog while editing it and fix obvious overflow/clipping I see, but a deeper bug hunt would be a separate pass if issues remain.
-- Memory updates (navigation v8, project tabs canonical list) will be refreshed after the edits land.
-
-## Technical notes
-
-- Files likely touched: `src/pages/MessagesPage.tsx`, `src/components/stream/StreamComposer.tsx`, project create dialog component, `src/pages/ProjectDetailPage.tsx`, plus a small `ProjectDropRoomLauncher` component.
-- No DB migrations. `kind` enum values reused (`drop` relabeled, `opportunity` either deprecated in UI or auto-mapped to `offering`).
-- Memory files to update afterwards: `mem://index.md` (project tabs canonical list, composer kinds), and any pillars-v7 file referencing Tools/Vault.
-
-Confirm and I'll ship it.
+## Files touched (estimate)
+- `src/lib/tier-matrix.ts`, `src/lib/rewards-catalog.ts`
+- `src/components/creators/TierMatrix.tsx`, `CreatorPassUpgradeCta.tsx`
+- `src/components/launchpad/*` (fee surface)
+- `src/pages/MessagesPage.tsx` (+ new `ConversationsRightRail.tsx`)
+- new `src/pages/EventsExplorePage.tsx`
+- `src/pages/EventDetailPage.tsx` (redesign)
+- `src/components/events/TicketCheckoutDialog.tsx` + `supabase/functions/square-payment` (paid event branch)
+- `src/App.tsx` route registration, `src/config/navigation.ts` alias
+- `mem://index.md`, `mem://features/events`
