@@ -355,6 +355,58 @@ const ProjectThread = ({
     },
   });
 
+  // Auto-generated system messages: project kickoff + milestone approvals.
+  // These are derived client-side from project state — no DB writes needed.
+  const { data: approvedMilestones } = useQuery({
+    queryKey: ["project-approved-milestones", project.id],
+    queryFn: async () => {
+      const { data: contracts } = await supabase
+        .from("project_contracts")
+        .select("id")
+        .eq("project_id", project.id);
+      const contractIds = (contracts ?? []).map((c: any) => c.id);
+      if (!contractIds.length) return [] as any[];
+      const { data } = await supabase
+        .from("project_milestones" as any)
+        .select("id, title, approved_at, status")
+        .in("contract_id", contractIds)
+        .eq("status", "approved")
+        .not("approved_at", "is", null);
+      return (data ?? []) as any[];
+    },
+  });
+
+  type SystemMsg = { id: string; system: true; created_at: string; kind: "kickoff" | "milestone"; title: string; body: string };
+  const systemMessages: SystemMsg[] = useMemo(() => {
+    const out: SystemMsg[] = [];
+    out.push({
+      id: `sys-kickoff-${project.id}`,
+      system: true,
+      created_at: project.created_at,
+      kind: "kickoff",
+      title: `${project.title} is live`,
+      body: "Every great project starts with a single thread. Drop the first idea, share what you're after, and let momentum build from here.",
+    });
+    (approvedMilestones ?? []).forEach((m: any) => {
+      out.push({
+        id: `sys-ms-${m.id}`,
+        system: true,
+        created_at: m.approved_at,
+        kind: "milestone",
+        title: `Milestone approved · ${m.title}`,
+        body: "One step closer. The team's signal moved forward.",
+      });
+    });
+    return out;
+  }, [project.id, project.title, project.created_at, approvedMilestones]);
+
+  const allMessages = useMemo(() => {
+    return [...(messages ?? []), ...systemMessages].sort(
+      (a: any, b: any) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
+  }, [messages, systemMessages]);
+
   const sendMessage = useMutation({
     mutationFn: async () => {
       const trimmed = text.trim();
