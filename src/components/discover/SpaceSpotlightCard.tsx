@@ -86,89 +86,96 @@ const SpaceSpotlightCard = ({
         )}
       </div>
 
-      {/* Slim banner ribbon — less dominant than artist/event hero */}
-      <div className="relative mx-4 mt-3 h-[88px] overflow-hidden rounded-2xl border border-border/45 bg-muted">
-        {banner ? (
-          <img src={banner} alt={title} className="h-full w-full object-cover" />
-        ) : (
-          <div className="absolute inset-0" style={{ background: grad.background }} />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
-        {rate && (
-          <div className="absolute bottom-2 right-2 rounded-full border border-border/60 bg-background/85 px-2.5 py-1 text-[11px] font-semibold backdrop-blur-md">
-            {rate}<span className="text-muted-foreground font-normal"> /hr</span>
+      {/* Body — portrait photo on the LEFT, info on the RIGHT */}
+      <div className="grid grid-cols-[auto_1fr] gap-4 px-4 pt-4 pb-4 items-start">
+        {/* Portrait photo (9:16) */}
+        <div className="relative w-[120px] sm:w-[140px] aspect-[9/16] shrink-0 overflow-hidden rounded-2xl border border-border/45 bg-muted">
+          {banner ? (
+            <img
+              src={banner}
+              alt={title}
+              className="h-full w-full object-cover"
+              style={{ objectPosition: "center" }}
+            />
+          ) : (
+            <div className="absolute inset-0" style={{ background: grad.background }} />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-background/30 to-transparent pointer-events-none" />
+          {rate && (
+            <div className="absolute bottom-2 left-2 right-2 rounded-full border border-border/60 bg-background/85 px-2.5 py-1 text-center text-[11px] font-semibold backdrop-blur-md">
+              {rate}<span className="text-muted-foreground font-normal"> /hr</span>
+            </div>
+          )}
+        </div>
+
+        <div className="min-w-0 space-y-3">
+          <div>
+            <h3 className="font-display text-xl md:text-2xl leading-tight text-foreground line-clamp-2">
+              {title}
+            </h3>
+            {location && (
+              <div className="mt-1 flex items-center gap-1.5 text-sm text-foreground">
+                <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <span className="font-medium line-clamp-1">{location}</span>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Title + location */}
-      <div className="px-4 pt-3">
-        <h3 className="font-display text-2xl leading-tight text-foreground line-clamp-1">
-          {title}
-        </h3>
-        {location && (
-          <div className="mt-1 flex items-center gap-1.5 text-sm text-foreground">
-            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="font-medium line-clamp-1">{location}</span>
-          </div>
-        )}
-      </div>
-
-      {/* Stat strip */}
-      <div className="mx-4 mt-3 grid grid-cols-3 divide-x divide-border/40 rounded-2xl border border-border/40 bg-background/40">
-        <div className="flex flex-col items-center justify-center py-2.5">
-          <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
-            Days/wk
-          </span>
-          <span className="text-sm font-semibold text-foreground">
-            {available_days ?? 0}
-          </span>
-        </div>
-        <div className="flex flex-col items-center justify-center py-2.5">
-          <Users className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
-            Capacity
-          </span>
-          <span className="text-sm font-semibold text-foreground">
-            {max_guests ?? "—"}
-          </span>
-        </div>
-        <div className="flex flex-col items-center justify-center py-2.5">
-          <Star className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
-            Rating
-          </span>
-          <span className="text-sm font-semibold text-foreground">
-            {rating_avg && Number(rating_avg) > 0
-              ? `${Number(rating_avg).toFixed(1)}${review_count ? ` (${review_count})` : ""}`
-              : "New"}
-          </span>
-        </div>
-      </div>
-
-      {topAmenities.length > 0 && (
-        <div className="px-4 pt-3">
-          <div className="flex flex-wrap gap-1">
-            {topAmenities.map((a) => (
-              <span
-                key={a}
-                className="inline-flex items-center rounded-full border border-border/45 bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground"
-              >
-                {a}
+          {/* Stat strip */}
+          <div className="grid grid-cols-3 divide-x divide-border/40 rounded-2xl border border-border/40 bg-background/40">
+            <div className="flex flex-col items-center justify-center py-2">
+              <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="mt-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
+                Days/wk
               </span>
-            ))}
+              <span className="text-sm font-semibold text-foreground">
+                {available_days ?? 0}
+              </span>
+            </div>
+            <div className="flex flex-col items-center justify-center py-2">
+              <Users className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="mt-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
+                Capacity
+              </span>
+              <span className="text-sm font-semibold text-foreground">
+                {max_guests ?? "—"}
+              </span>
+            </div>
+            <div className="flex flex-col items-center justify-center py-2">
+              <Star className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="mt-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
+                Rating
+              </span>
+              <span className="text-sm font-semibold text-foreground">
+                {rating_avg && Number(rating_avg) > 0
+                  ? `${Number(rating_avg).toFixed(1)}${review_count ? ` (${review_count})` : ""}`
+                  : "New"}
+              </span>
+            </div>
           </div>
+
+          {topAmenities.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {topAmenities.map((a) => (
+                <span
+                  key={a}
+                  className="inline-flex items-center rounded-full border border-border/45 bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground"
+                >
+                  {a}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {subtitle && (
+            <p className="text-xs leading-5 text-muted-foreground line-clamp-2">
+              {subtitle}
+            </p>
+          )}
         </div>
-      )}
+      </div>
 
-      {subtitle && (
-        <p className="px-4 pt-3 text-xs leading-5 text-muted-foreground line-clamp-2">
-          {subtitle}
-        </p>
-      )}
-
-      <div className="mt-3 border-t border-border/40 px-4 py-3 text-center">
+      <div className="border-t border-border/40 px-4 py-3 text-center">
         <Link
           to={href}
           className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-transform hover:translate-x-0.5"
