@@ -107,7 +107,7 @@ const ChatAttachmentMenu = ({ onSendMessage, onSendQuote, disabled }: ChatAttach
         .from("events")
         .select("id, title, starts_at, ends_at, venue_name, is_online, cover_url, status, host_id")
         .gte("starts_at", nowIso)
-        .in("status", ["published", "live", "draft"])
+        .in("status", ["published", "draft"])
         .order("starts_at", { ascending: true })
         .limit(50);
       if (error) throw error;
