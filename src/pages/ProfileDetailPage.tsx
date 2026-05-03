@@ -419,10 +419,9 @@ const ProfileDetailPage = () => {
 
         {/* ─── Tabbed sections ─── */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="w-full grid grid-cols-5 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
+          <TabsList className="w-full grid grid-cols-4 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
             <TabsTrigger value="overview" className="text-xs gap-1.5"><UserIcon className="h-3 w-3" />Overview</TabsTrigger>
             <TabsTrigger value="support" className="text-xs gap-1.5"><Heart className="h-3 w-3" />Support</TabsTrigger>
-            <TabsTrigger value="coin" className="text-xs gap-1.5"><Coins className="h-3 w-3" />Coin</TabsTrigger>
             <TabsTrigger value="works" className="text-xs gap-1.5"><Sparkles className="h-3 w-3" />Works</TabsTrigger>
             <TabsTrigger value="building" className="text-xs gap-1.5"><FolderKanban className="h-3 w-3" />Building</TabsTrigger>
           </TabsList>
