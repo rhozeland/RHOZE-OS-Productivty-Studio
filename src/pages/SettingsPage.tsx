@@ -879,12 +879,12 @@ const SettingsPage = () => {
   const renderVerification = () => {
     const status = verifData?.status ?? "none";
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="space-y-5">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-foreground">Identity status</p>
+            <p className="text-sm font-semibold text-foreground">Verified Artist</p>
             <p className="text-xs text-muted-foreground">
-              Verification unlocks Verified IP, coin launches, paid services, and paid Spaces.
+              Identity verification unlocks Verified IP, coin launches, paid services, and paid Spaces.
             </p>
           </div>
           {status === "verified" ? (
@@ -904,6 +904,16 @@ const SettingsPage = () => {
             : "Start verification"}
           <ChevronRight className="h-3.5 w-3.5" />
         </Link>
+
+        {/* Investor signal — why verification matters + how it's coming along */}
+        {user && (
+          <div className="pt-2">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">
+              Investor signal
+            </p>
+            <CreatorReadinessCard creatorId={user.id} />
+          </div>
+        )}
       </div>
     );
   };
