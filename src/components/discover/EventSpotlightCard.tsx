@@ -39,7 +39,7 @@ const EventSpotlightCard = ({
 
   return (
     <div className="overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75">
-      {/* Bold header with chip */}
+      {/* Header chips */}
       <div className="flex flex-wrap items-center gap-1.5 px-4 pt-4">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-foreground bg-foreground px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-background">
           <Sparkles className="h-3 w-3" /> Featured event
@@ -47,65 +47,70 @@ const EventSpotlightCard = ({
         {region_code && <RegionChip code={region_code} size="sm" showLabel />}
       </div>
 
-      {/* Hero row: big calendar tile + small thumb */}
-      <div className="flex items-stretch gap-3 px-4 pt-4">
-        {/* Date hero tile */}
-        <div className="flex h-[88px] w-[88px] shrink-0 flex-col items-center justify-center rounded-2xl border border-border/60 bg-gradient-to-br from-background to-background/40 shadow-sm">
-          <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-            {format(start, "MMM")}
-          </span>
-          <span className="mt-0.5 font-display text-3xl font-bold leading-none text-foreground">
-            {format(start, "d")}
-          </span>
-          <span className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
-            {format(start, "EEE")}
-          </span>
+      {/* Body — content on the LEFT, portrait poster on the RIGHT */}
+      <div className="grid grid-cols-[1fr_auto] gap-4 px-4 pt-4 pb-4 items-start">
+        <div className="min-w-0 space-y-3">
+          {/* Date hero tile */}
+          <div className="inline-flex h-[72px] w-[72px] flex-col items-center justify-center rounded-2xl border border-border/60 bg-gradient-to-br from-background to-background/40 shadow-sm">
+            <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+              {format(start, "MMM")}
+            </span>
+            <span className="mt-0.5 font-display text-2xl font-bold leading-none text-foreground">
+              {format(start, "d")}
+            </span>
+            <span className="mt-1 text-[9px] uppercase tracking-wider text-muted-foreground">
+              {format(start, "EEE")}
+            </span>
+          </div>
+
+          <h3 className="font-display text-xl md:text-2xl leading-tight text-foreground line-clamp-2">
+            {title}
+          </h3>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 text-sm text-foreground">
+              <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <span className="font-medium">{format(start, "h:mm a")}</span>
+              <span className="text-muted-foreground">·</span>
+              <span className="text-muted-foreground">{format(start, "EEEE")}</span>
+            </div>
+            <div className="flex items-start gap-2 text-sm text-foreground">
+              {is_online ? (
+                <Globe2 className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+              ) : (
+                <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+              )}
+              <span className="font-medium line-clamp-1">
+                {is_online ? "Online event" : (venue || "Venue TBA")}
+              </span>
+            </div>
+          </div>
+
+          {subtitle && (
+            <p className="text-xs leading-5 text-muted-foreground line-clamp-3">
+              {subtitle}
+            </p>
+          )}
         </div>
 
-        {/* Small thumb */}
-        <div className="relative h-[88px] flex-1 overflow-hidden rounded-2xl border border-border/45 bg-muted">
+        {/* Portrait poster — 9:16, image preserved (object-contain so nothing
+            gets cropped out of the composition). */}
+        <div className="relative w-[120px] sm:w-[140px] aspect-[9/16] shrink-0 overflow-hidden rounded-2xl border border-border/45 bg-muted">
           {banner ? (
-            <img src={banner} alt={title} className="h-full w-full object-cover" />
+            <img
+              src={banner}
+              alt={title}
+              className="h-full w-full object-cover"
+              style={{ objectPosition: "center" }}
+            />
           ) : (
             <div
               className="absolute inset-0"
               style={{ background: grad.background }}
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/25 to-transparent pointer-events-none" />
         </div>
-      </div>
-
-      <div className="space-y-3 px-4 pt-3 pb-4">
-        <h3 className="font-display text-2xl leading-tight text-foreground line-clamp-2">
-          {title}
-        </h3>
-
-        {/* Time + venue rows — typographic priority */}
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2 text-sm text-foreground">
-            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="font-medium">{format(start, "h:mm a")}</span>
-            <span className="text-muted-foreground">·</span>
-            <span className="text-muted-foreground">{format(start, "EEEE")}</span>
-          </div>
-          <div className="flex items-start gap-2 text-sm text-foreground">
-            {is_online ? (
-              <Globe2 className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
-            ) : (
-              <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
-            )}
-            <span className="font-medium line-clamp-1">
-              {is_online ? "Online event" : (venue || "Venue TBA")}
-            </span>
-          </div>
-        </div>
-
-        {subtitle && (
-          <p className="text-xs leading-5 text-muted-foreground line-clamp-2">
-            {subtitle}
-          </p>
-        )}
       </div>
 
       <div className="border-t border-border/40 px-4 py-3 text-center">
