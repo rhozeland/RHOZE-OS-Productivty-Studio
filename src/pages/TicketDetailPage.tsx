@@ -247,10 +247,31 @@ const TicketDetailPage = () => {
 
         <div className="flex items-center justify-between text-[11px] opacity-80">
           <span className="font-mono">#{ticket.qr_token.slice(0, 8).toUpperCase()}</span>
-          <span className="uppercase tracking-wider">{ticket.status.replace("_", " ")}</span>
+          {ticket.solana_signature ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/20 px-2 py-0.5 text-emerald-200 uppercase tracking-wider">
+              <ShieldCheck className="h-3 w-3" /> Proof of attendance
+            </span>
+          ) : (
+            <span className="uppercase tracking-wider">{ticket.status.replace("_", " ")}</span>
+          )}
         </div>
       </motion.div>
       </Tilt3D>
+
+      <Button
+        variant="outline"
+        className="rounded-full w-full gap-1.5"
+        onClick={addToAppleWallet}
+        disabled={walletLoading}
+      >
+        {walletLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Wallet className="h-4 w-4" />
+        )}
+        Add to Apple Wallet
+      </Button>
+
 
       {/* Proof of attendance — host-anchored, fees paid by Rhozeland */}
       <div className="rounded-2xl bg-card border border-border p-5 space-y-3">
