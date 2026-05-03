@@ -103,7 +103,7 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
       setExpanded(false);
       queryClient.invalidateQueries({ queryKey: ["hub-conversations"] });
       queryClient.invalidateQueries({ queryKey: ["stream-conversations"] });
-      toast.success("Dropped to the Stream.");
+      toast.success("Update posted.");
     },
     onError: (e: Error) => toast.error(e.message),
   });
