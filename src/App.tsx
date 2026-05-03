@@ -162,7 +162,7 @@ const AuthGateWrapper = ({ children }: { children: React.ReactNode }) => {
  * landing-style hero copy), authed users see it personalized.
  */
 const RootEntry = () => {
-  const { loading } = useAuth();
+  const { loading, user } = useAuth();
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -170,7 +170,8 @@ const RootEntry = () => {
       </div>
     );
   }
-  return <Navigate to="/discover" replace />;
+  // Guests get the curated one-pager; signed-in users go to the full Discover stream.
+  return <Navigate to={user ? "/discover" : "/landing"} replace />;
 };
 
 const App = () => (
