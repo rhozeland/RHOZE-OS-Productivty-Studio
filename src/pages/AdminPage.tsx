@@ -121,6 +121,7 @@ const AdminPage = () => {
           <AdminUnderwritingRules />
           <AdminUnderwritingRulesAudit />
         </TabsContent>
+        <TabsContent value="fees"><AdminPlatformFees /></TabsContent>
       </Tabs>
     </div>
   );
