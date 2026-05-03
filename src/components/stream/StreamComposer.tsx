@@ -12,27 +12,19 @@
  * primary action button reads naturally ("Drop" on Conversations,
  * "Post Offering" on Offerings, etc.).
  */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAuthGate } from "@/components/AuthGateDialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Flame,
   Briefcase,
   CalendarDays,
   Building2,
   Shield,
-  Send,
-  Loader2,
   Plus,
-  X,
 } from "lucide-react";
-import { toast } from "sonner";
 import NoteComposer from "@/components/notes/NoteComposer";
 
 export type StreamPostType =
