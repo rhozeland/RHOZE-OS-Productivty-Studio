@@ -67,25 +67,25 @@ const ProfileCoinTab = ({ creatorId, isOwnProfile, defaultName, defaultImage, me
   if (!coin) {
     return (
       <div className="space-y-4">
-        <CreatorReadinessCard creatorId={creatorId} memberSince={memberSince} />
-        <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-8 text-center space-y-4">
-          <div className="mx-auto h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
-            <Coins className="h-6 w-6 text-emerald-500" />
+        {showReadiness && <CreatorReadinessCard creatorId={creatorId} memberSince={memberSince} />}
+        <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-6 text-center space-y-3">
+          <div className="mx-auto h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
+            <Coins className="h-5 w-5 text-emerald-500" />
           </div>
           <div>
-            <h3 className="font-display text-lg font-semibold text-foreground">
-              {isOwnProfile ? "Launch your profile coin" : "Not yet investable"}
+            <h3 className="font-display text-base font-semibold text-foreground">
+              {isOwnProfile ? "Launch your artist token" : "No artist token yet"}
             </h3>
-            <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+            <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
               {isOwnProfile
-                ? "Mint a coin tied to your profile so collectors can back your career. The bonding curve and trade panel will live right here."
-                : "This creator hasn't launched a coin yet. Use the signals above to gauge whether they're building toward one."}
+                ? "Mint a token tied to your profile so fans can back your career and share in the upside."
+                : "This artist hasn't issued a token yet."}
             </p>
           </div>
           {isOwnProfile && (
-            <Button onClick={() => setLaunchOpen(true)} className="gap-2">
+            <Button onClick={() => setLaunchOpen(true)} size="sm" className="gap-2">
               <Sparkles className="h-4 w-4" />
-              Launch coin
+              Launch token
             </Button>
           )}
           <LaunchCoinDialog
