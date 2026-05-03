@@ -46,10 +46,7 @@ import { CelebrationProvider } from "@/components/hud/CelebrationProvider";
 
 const PAGES = [
   { name: "Home", path: "/discover", icon: FolderKanban },
-  { name: "Spaces", path: "/spaces", icon: Building2 },
-  { name: "People", path: "/people", icon: User },
   { name: "Projects", path: "/projects", icon: FolderKanban },
-  { name: "Marketplace", path: "/marketplace", icon: ShoppingBag },
   { name: "Messages", path: "/messages", icon: User },
   { name: "Credits", path: "/credits", icon: ShoppingBag },
   { name: "Settings", path: "/settings", icon: SettingsIcon },
