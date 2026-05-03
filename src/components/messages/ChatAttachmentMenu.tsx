@@ -499,6 +499,52 @@ const ChatAttachmentMenu = ({ onSendMessage, onSendQuote, disabled }: ChatAttach
               </ScrollArea>
             </div>
           )}
+
+          {view === "voice" && (
+            <div>
+              <div className="flex items-center gap-2 p-2 border-b border-border">
+                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => { resetVoice(); setView("menu"); }}>
+                  <span className="text-lg">←</span>
+                </Button>
+                <p className="text-sm font-medium text-foreground">Voice Note</p>
+              </div>
+              <div className="p-4 flex flex-col items-center gap-3">
+                {!audioUrl ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={recording ? stopRecording : startRecording}
+                      className={cn(
+                        "h-16 w-16 rounded-full flex items-center justify-center transition-all",
+                        recording
+                          ? "bg-destructive text-destructive-foreground animate-pulse shadow-lg shadow-destructive/30"
+                          : "bg-primary text-primary-foreground hover:scale-105"
+                      )}
+                    >
+                      {recording ? <Square className="h-6 w-6" fill="currentColor" /> : <Mic className="h-7 w-7" />}
+                    </button>
+                    <p className="text-xs text-muted-foreground">
+                      {recording ? `Recording · ${fmtDur(duration)}` : "Tap to start recording"}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <audio src={audioUrl} controls className="w-full" />
+                    <p className="text-[10px] text-muted-foreground">{fmtDur(duration)}</p>
+                    <div className="flex gap-2 w-full">
+                      <Button variant="ghost" size="sm" className="flex-1 gap-1.5" onClick={resetVoice} disabled={uploading}>
+                        <Trash2 className="h-3.5 w-3.5" /> Discard
+                      </Button>
+                      <Button size="sm" className="flex-1 gap-1.5" onClick={sendVoiceNote} disabled={uploading}>
+                        {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                        Send
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </PopoverContent>
       </Popover>
     </>
