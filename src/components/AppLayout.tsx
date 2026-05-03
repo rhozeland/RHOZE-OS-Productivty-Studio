@@ -311,7 +311,7 @@ const AppLayout = () => {
               </Tooltip>
 
               {user && <NotificationBell />}
-              {user && <WalletButton />}
+              {user && <RhozeBalanceChip />}
 
               {/* Profile dropdown — top-right */}
               {user && (
