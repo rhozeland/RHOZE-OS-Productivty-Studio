@@ -198,6 +198,7 @@ const ChatAttachmentMenu = ({ onSendMessage, onSendQuote, disabled }: ChatAttach
   // Quotes, smartboards, creator profiles, listings were removed in v8.2 —
   // those flows live in their own surfaces (Projects budget, Roadmap, etc.).
   const menuItems = [
+    { icon: Mic, label: "Voice Note", description: "Record and send a quick voice message", action: () => setView("voice") },
     { icon: Paperclip, label: "Upload File", description: "Share images, docs, audio", action: () => fileInputRef.current?.click() },
     { icon: Link2, label: "Share Link", description: "Google Drive, Dropbox, any URL", action: () => setView("link") },
   ];
