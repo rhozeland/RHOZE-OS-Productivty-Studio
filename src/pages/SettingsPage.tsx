@@ -751,23 +751,69 @@ const SettingsPage = () => {
   );
 
   const renderSecurity = () => (
-    <form onSubmit={(e) => { e.preventDefault(); changePassword.mutate(); }} className="space-y-4">
-      <div className="space-y-2">
-        <Label>New Password</Label>
-        <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 6 characters" />
-      </div>
-      <div className="space-y-2">
-        <Label>Confirm New Password</Label>
-        <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter new password" />
-      </div>
-      <Button type="submit" disabled={changePassword.isPending}>
-        {changePassword.isPending ? "Updating..." : "Update Password"}
-      </Button>
-    </form>
+    <div className="space-y-8">
+      {/* Change email */}
+      <form onSubmit={(e) => { e.preventDefault(); changeEmail.mutate(); }} className="space-y-3">
+        <div>
+          <p className="text-sm font-semibold text-foreground">Email address</p>
+          <p className="text-xs text-muted-foreground">
+            Currently <span className="font-mono">{user?.email}</span>. We'll send a confirmation
+            link to both addresses before the change takes effect.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Input
+            type="email"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            placeholder="new@email.com"
+            className="sm:max-w-sm"
+          />
+          <Button type="submit" variant="outline" disabled={changeEmail.isPending || !newEmail.trim()}>
+            {changeEmail.isPending ? "Sending…" : "Update email"}
+          </Button>
+        </div>
+      </form>
+
+      <Separator />
+
+      {/* Change password */}
+      <form onSubmit={(e) => { e.preventDefault(); changePassword.mutate(); }} className="space-y-4">
+        <div>
+          <p className="text-sm font-semibold text-foreground">Password</p>
+          <p className="text-xs text-muted-foreground">Choose a strong password — at least 6 characters.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label>New Password</Label>
+            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 6 characters" />
+          </div>
+          <div className="space-y-2">
+            <Label>Confirm New Password</Label>
+            <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter new password" />
+          </div>
+        </div>
+        <Button type="submit" disabled={changePassword.isPending}>
+          {changePassword.isPending ? "Updating..." : "Update Password"}
+        </Button>
+      </form>
+    </div>
   );
 
   const renderAccount = () => (
     <div className="space-y-5">
+      {/* Appearance — moved out of the top bar (v8.7) */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-foreground">Appearance</p>
+          <p className="text-xs text-muted-foreground">Switch between light and dark mode.</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={toggleTheme} className="gap-2">
+          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {theme === "dark" ? "Light mode" : "Dark mode"}
+        </Button>
+      </div>
+      <Separator />
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-foreground">Export Your Data</p>
