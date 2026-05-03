@@ -22,7 +22,7 @@ export const FlowAuthGuard = ({ children }: { children: React.ReactNode }) => {
   }, [loading, user]);
 
   if (loading) return null;
-  if (!user) return <Navigate to="/explore/studios" replace />;
+  if (!user) return <Navigate to="/auth?redirect=/flow" replace />;
   return <>{children}</>;
 };
 
