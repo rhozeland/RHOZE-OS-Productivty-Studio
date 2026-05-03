@@ -48,7 +48,7 @@ const StudioDetailPage = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, avatar_url")
+        .select("user_id, display_name, username, avatar_url")
         .eq("user_id", studio!.owner_id)
         .maybeSingle();
       return data;
