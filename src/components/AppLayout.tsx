@@ -290,25 +290,7 @@ const AppLayout = () => {
                 <Search className="h-4 w-4 text-muted-foreground" />
               </button>
 
-              {/* Theme toggle — visible to everyone */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={toggleTheme}
-                    className="h-8 w-8 rounded-full border border-border bg-card flex items-center justify-center hover:bg-muted/50 transition-colors"
-                    aria-label="Toggle theme"
-                  >
-                    {theme === "dark" ? (
-                      <Sun className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Moon className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs font-body">
-                  {theme === "dark" ? "Light mode" : "Dark mode"}
-                </TooltipContent>
-              </Tooltip>
+              {/* Theme toggle moved to Settings → Account (per v8.7 cleanup). */}
 
               {user && <NotificationBell />}
               {user && <RhozeBalanceChip />}
