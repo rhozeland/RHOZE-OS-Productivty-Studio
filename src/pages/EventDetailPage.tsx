@@ -130,28 +130,35 @@ const EventDetailPage = () => {
     queryKey: ["event-going", id],
     enabled: !!id,
     queryFn: async () => {
-      const { count } = await supabase
+      const { data: rows, count } = await supabase
         .from("event_tickets")
-        .select("id", { count: "exact", head: true })
-        .eq("event_id", id!)
-        .in("status", ["issued", "checked_in"]);
-      const { data: recent } = await supabase
-        .from("event_tickets")
-        .select("holder_id")
+        .select("holder_id, tier_id, status, checked_in_at, created_at", { count: "exact" })
         .eq("event_id", id!)
         .in("status", ["issued", "checked_in"])
-        .order("created_at", { ascending: false })
-        .limit(8);
-      const holderIds = (recent ?? []).map((r: any) => r.holder_id);
-      let avatars: any[] = [];
+        .order("created_at", { ascending: false });
+      const all = rows ?? [];
+      const holderIds = Array.from(new Set(all.map((r: any) => r.holder_id))).slice(0, 12);
+      let profMap = new Map<string, any>();
       if (holderIds.length) {
         const { data: profs } = await supabase
           .from("profiles")
           .select("user_id, display_name, username, avatar_url")
           .in("user_id", holderIds);
-        avatars = profs ?? [];
+        profMap = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
       }
-      return { count: count ?? 0, avatars };
+      const avatars = holderIds.map((uid) => profMap.get(uid)).filter(Boolean);
+      const tierCounts = new Map<string, number>();
+      let checkedIn = 0;
+      for (const r of all as any[]) {
+        if (r.tier_id) tierCounts.set(r.tier_id, (tierCounts.get(r.tier_id) ?? 0) + 1);
+        if (r.status === "checked_in") checkedIn += 1;
+      }
+      return {
+        count: count ?? 0,
+        avatars,
+        tierCounts: Object.fromEntries(tierCounts),
+        checkedIn,
+      };
     },
   });
 
