@@ -104,6 +104,13 @@ interface FeaturedSpaceRow {
   city: string | null;
   state: string | null;
   country: string | null;
+  category: string | null;
+  hourly_rate: number | null;
+  currency: string | null;
+  max_guests: number | null;
+  amenities: string[] | null;
+  rating_avg: number | null;
+  review_count: number | null;
 }
 
 const marketsByCode = new Map(REGIONS.map((region) => [region.code, region.market]));
