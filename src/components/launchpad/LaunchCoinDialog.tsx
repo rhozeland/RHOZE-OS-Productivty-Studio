@@ -259,7 +259,7 @@ const LaunchCoinDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label>Coin image (optional)</Label>
+            <Label>Coin image</Label>
             <div className="flex items-start gap-3">
               {imageUrl ? (
                 <div className="relative shrink-0">
@@ -301,14 +301,10 @@ const LaunchCoinDialog = ({
                   />
                 </label>
               )}
-              <div className="flex-1 min-w-0 space-y-1">
-                <Input
-                  id="image"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="…or paste image URL"
-                  className="text-xs"
-                />
+              <div className="flex-1 min-w-0 space-y-1 pt-1">
+                <p className="text-[11px] text-muted-foreground">
+                  We use your profile picture by default. Tap the image to remove it and upload your own.
+                </p>
                 <p className="text-[10px] text-muted-foreground">PNG/JPG/GIF · max 5 MB</p>
               </div>
             </div>
