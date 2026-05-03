@@ -1632,6 +1632,14 @@ const FlowModePage = () => {
         itemTitle={commentItem?.title}
       />
 
+      {/* Creator peek sheet (up-swipe / avatar tap). */}
+      <FlowCreatorPeek
+        open={peekOpen}
+        onOpenChange={(o) => { setPeekOpen(o); if (!o) { setPeekCreatorId(null); setPeekInitial(null); } }}
+        creatorId={peekCreatorId}
+        initial={peekInitial ?? undefined}
+      />
+
       {/* Add content dialog */}
       <Dialog open={addOpen} onOpenChange={(open) => { if (!open) { cancelUpload(); resetPendingFiles(); setShareStep("compose"); } setAddOpen(open); }}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
