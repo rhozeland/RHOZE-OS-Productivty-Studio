@@ -217,6 +217,7 @@ const App = () => (
                 <Route path="/stream" element={<Navigate to="/discover" replace />} />
                 <Route path="/hub" element={<Navigate to="/discover" replace />} />
                 <Route path="/spaces" element={<Navigate to="/discover?kind=space" replace />} />
+                <Route path="/events" element={<EventsExplorePage />} />
                 <Route path="/spaces/events/new" element={<ProtectedRoute><EventCreatePage /></ProtectedRoute>} />
                 <Route path="/spaces/events/:id" element={<EventDetailPage />} />
                 <Route path="/spaces/events/:id/manage" element={<ProtectedRoute><EventManagePage /></ProtectedRoute>} />
