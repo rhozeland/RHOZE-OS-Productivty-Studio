@@ -99,7 +99,7 @@ const LaunchCoinDialog = ({
       const tier = getHoldTier(balance);
       const cap = getCoinDropsPerMonth(tier);
       const tierLabel = TIERS.find((t) => t.id === tier)?.label ?? "Spark";
-      if (!cancelled) setDropInfo({ tierLabel, cap, used: count ?? 0 });
+      if (!cancelled) setDropInfo({ tierLabel, cap, used: count ?? 0, balance });
     })();
     return () => { cancelled = true; };
   }, [open]);
