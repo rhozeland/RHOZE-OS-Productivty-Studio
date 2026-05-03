@@ -80,60 +80,60 @@ const TicketDetailPage = () => {
     },
   });
 
-  // Holder-side auto-retry: if checked in but no signature yet, ping the
-  // dedicated edge fn once on mount and again every ~30s, with backoff.
-  const [retrying, setRetrying] = useState(false);
-  const [retryError, setRetryError] = useState<string | null>(null);
-  const attemptCountRef = useRef(0);
+  // Holder-side: if checked in but no signature yet, ping the anchor edge
+  // fn ONCE on mount. No interval, no loop. The realtime/poll subscription
+  // on the query itself (refetchInterval above) picks up the signature.
+  const triedRef = useRef(false);
   const ticketStatus = ticket?.status;
   const ticketSig = ticket?.solana_signature;
   const ticketId = ticket?.id;
   useEffect(() => {
     if (!ticketId || ticketStatus !== "checked_in" || ticketSig) return;
-    let cancelled = false;
-    const run = async () => {
-      if (cancelled || attemptCountRef.current >= 5) return;
-      attemptCountRef.current += 1;
-      setRetrying(true);
-      try {
-        const { error } = await supabase.functions.invoke(
-          "anchor-event-ticket",
-          { body: { ticket_id: ticketId } },
-        );
-        if (error) throw error;
-        setRetryError(null);
-        refetch();
-      } catch (err) {
-        setRetryError(err instanceof Error ? err.message : "Retry failed");
-      } finally {
-        if (!cancelled) setRetrying(false);
-      }
-    };
-    // Fire immediately, then every 30s.
-    run();
-    const iv = setInterval(run, 30_000);
-    return () => {
-      cancelled = true;
-      clearInterval(iv);
-    };
+    if (triedRef.current) return;
+    triedRef.current = true;
+    supabase.functions
+      .invoke("anchor-event-ticket", { body: { ticket_id: ticketId } })
+      .then(() => refetch())
+      .catch(() => {
+        /* silent — host-side cron will eventually anchor */
+      });
   }, [ticketId, ticketStatus, ticketSig, refetch]);
 
-  const manualRetry = async () => {
-    if (!ticketId || retrying) return;
-    setRetrying(true);
-    setRetryError(null);
+  // Apple Wallet
+  const [walletLoading, setWalletLoading] = useState(false);
+  const addToAppleWallet = async () => {
+    if (!ticketId) return;
+    setWalletLoading(true);
     try {
-      const { error } = await supabase.functions.invoke(
-        "anchor-event-ticket",
+      const { data, error } = await supabase.functions.invoke(
+        "generate-apple-wallet-pass",
         { body: { ticket_id: ticketId } },
       );
       if (error) throw error;
-      attemptCountRef.current = 0;
-      refetch();
+      if (data?.url) {
+        window.location.href = data.url;
+      } else if (data?.pkpass_base64) {
+        const blob = new Blob(
+          [Uint8Array.from(atob(data.pkpass_base64), (c) => c.charCodeAt(0))],
+          { type: "application/vnd.apple.pkpass" },
+        );
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `rhozeland-ticket-${ticketId}.pkpass`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        toast.error("Apple Wallet pass not ready yet — try again shortly.");
+      }
     } catch (err) {
-      setRetryError(err instanceof Error ? err.message : "Retry failed");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Couldn't generate Apple Wallet pass.",
+      );
     } finally {
-      setRetrying(false);
+      setWalletLoading(false);
     }
   };
 
