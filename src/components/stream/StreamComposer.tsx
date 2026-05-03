@@ -109,7 +109,7 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
   });
 
   const handlePrimary = () => {
-    if (!requireAuth("Sign up to drop posts to the Stream.")) return;
+    if (!requireAuth("Sign up to post updates.")) return;
     if (meta.inline) {
       if (!expanded) {
         setExpanded(true);
