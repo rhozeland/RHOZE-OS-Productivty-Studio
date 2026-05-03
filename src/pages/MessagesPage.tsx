@@ -31,6 +31,7 @@ import BuddyList from "@/components/messages/BuddyList";
 import GuestMessagesPreview from "@/components/guest/GuestMessagesPreview";
 import ProjectsInbox from "@/components/messages/ProjectsInbox";
 import ListingsTab from "@/components/messages/ListingsTab";
+import HubFlowWidget from "@/components/hub/HubFlowWidget";
 import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
