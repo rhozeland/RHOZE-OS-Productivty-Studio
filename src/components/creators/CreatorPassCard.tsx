@@ -28,7 +28,6 @@ import {
   TIERS,
   TIER_RANK,
   getHoldTier,
-  getActivityTier,
   getEffectiveTier,
   type TierId,
 } from "@/lib/tier-matrix";
