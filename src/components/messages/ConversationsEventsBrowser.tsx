@@ -59,7 +59,7 @@ const CATEGORY_DEFS = [
   { slug: "meetup", label: "Community", icon: Users, accent: "text-sky-400" },
 ];
 
-const ConversationsEventsBrowser = () => {
+const ConversationsEventsBrowser = ({ hideHeading = false }: { hideHeading?: boolean }) => {
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
