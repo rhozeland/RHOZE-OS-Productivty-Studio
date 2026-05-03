@@ -397,11 +397,8 @@ const EventDetailPage = () => {
             </div>
 
             <div className="space-y-4 p-5">
-            <h3 className="sr-only">
-              Registration
-            </h3>
 
-            {myTicket && (
+              {myTicket && (
               <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3">
                 <div className="flex min-w-0 items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
@@ -415,8 +412,8 @@ const EventDetailPage = () => {
               </div>
             )}
 
-            <div className="space-y-3">
-              {(tiers ?? []).map((t: any) => {
+              <div className="space-y-3">
+                {(tiers ?? []).map((t: any) => {
                 const isFree =
                   (Number(t.price_usd) || 0) === 0 && (Number(t.price_rhoze) || 0) === 0;
                 const soldOut =
@@ -471,27 +468,27 @@ const EventDetailPage = () => {
                   </div>
                 );
               })}
-              {(tiers ?? []).length === 0 && (
-                <p className="text-xs text-muted-foreground italic">
-                  No ticket tiers yet.
-                </p>
-              )}
-            </div>
+                {(tiers ?? []).length === 0 && (
+                  <p className="text-xs text-muted-foreground italic">
+                    No ticket tiers yet.
+                  </p>
+                )}
+              </div>
 
-            {isHost && hasPaidTier && (
-              <div className="inline-flex items-start gap-1.5 border-t border-border pt-2 text-[11px] text-muted-foreground">
-                <Wallet className="h-3 w-3 mt-0.5 shrink-0" />
-                <span>
-                  Platform fee scales with your tier — <strong className="text-foreground">Spark/Bloom 15% · Glow 10% · Play 7%</strong>.
-                  The rest settles to your wallet. Hold more $RHOZE, keep more.
-                </span>
-              </div>
-            )}
-            {ev.capacity && (
-              <div className="inline-flex items-center gap-2 border-t border-border pt-2 text-xs text-muted-foreground">
-                <Ticket className="h-3.5 w-3.5" /> Capacity {ev.capacity}
-              </div>
-            )}
+              {isHost && hasPaidTier && (
+                <div className="inline-flex items-start gap-1.5 border-t border-border pt-2 text-[11px] text-muted-foreground">
+                  <Wallet className="h-3 w-3 mt-0.5 shrink-0" />
+                  <span>
+                    Platform fee scales with your tier — <strong className="text-foreground">Spark/Bloom 15% · Glow 10% · Play 7%</strong>.
+                    The rest settles to your wallet. Hold more $RHOZE, keep more.
+                  </span>
+                </div>
+              )}
+              {ev.capacity && (
+                <div className="inline-flex items-center gap-2 border-t border-border pt-2 text-xs text-muted-foreground">
+                  <Ticket className="h-3.5 w-3.5" /> Capacity {ev.capacity}
+                </div>
+              )}
             </div>
           </div>
 
