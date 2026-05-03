@@ -13,6 +13,7 @@ export interface DropCoin {
   name: string;
   image_url: string | null;
   status: string;
+  mint_address?: string | null;
   virtual_sol_reserves: number | string;
   virtual_token_reserves: number | string;
   total_supply: number | string;
