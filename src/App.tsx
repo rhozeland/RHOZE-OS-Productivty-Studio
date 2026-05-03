@@ -261,6 +261,9 @@ const App = () => (
                     the coin's creator and forwards to their profile Coin tab. */}
                 <Route path="/launchpad" element={<Navigate to="/discover" replace />} />
                 <Route path="/launchpad/:id" element={<LaunchRedirect />} />
+                {/* Coin detail page — slug = ticker (case-insensitive). */}
+                <Route path="/coin/:slug" element={<LaunchDetailPage />} />
+                <Route path="/coins/:slug" element={<Navigate to="/coin/:slug" replace />} />
                 <Route path="/smartboards" element={<Navigate to="/projects" replace />} />
                 <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
                 <Route path="/drop-rooms" element={<Navigate to="/projects" replace />} />
