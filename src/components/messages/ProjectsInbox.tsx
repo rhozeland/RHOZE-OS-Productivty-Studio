@@ -237,7 +237,7 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
                 const meta = STATUS_META[p.status] ?? STATUS_META.active;
                 const Icon = meta.icon;
                 const active = selectedProject?.id === p.id;
-                const isOwner = p.user_id === userId;
+                const memberCount = memberCounts?.[p.id] ?? 1;
                 return (
                   <button
                     key={p.id}
