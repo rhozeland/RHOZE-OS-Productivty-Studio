@@ -7,9 +7,36 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function parseJwtClaims(token: string): Record<string, unknown> | null {
+  const parts = token.split(".");
+  if (parts.length < 2) return null;
+  try {
+    const padded = parts[1] + "=".repeat((4 - (parts[1].length % 4)) % 4);
+    return JSON.parse(atob(padded.replace(/-/g, "+").replace(/_/g, "/")));
+  } catch {
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Require service-role JWT (cron / internal scheduler only).
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const claims = parseJwtClaims(authHeader.slice("Bearer ".length).trim());
+  if (claims?.role !== "service_role") {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
@@ -42,16 +69,13 @@ serve(async (req) => {
 
     for (const sub of expiredSubs) {
       try {
-        // Calculate new subscription period (1 month from current end)
         const currentEnd = new Date(sub.subscription_end);
         const newStart = new Date(currentEnd);
         const newEnd = new Date(currentEnd);
         newEnd.setMonth(newEnd.getMonth() + 1);
 
-        // Add monthly credits to balance
         const newBalance = Number(sub.balance) + Number(sub.tier_credits_monthly);
 
-        // Update the subscription
         const { error: updateErr } = await supabase
           .from("user_credits")
           .update({
@@ -66,7 +90,6 @@ serve(async (req) => {
           continue;
         }
 
-        // Log the renewal transaction
         const { error: txErr } = await supabase
           .from("credit_transactions")
           .insert({
@@ -83,11 +106,9 @@ serve(async (req) => {
 
         renewed++;
       } catch (e) {
-        errors.push(`User ${sub.user_id}: ${e.message}`);
+        errors.push(`User ${sub.user_id}: ${(e as Error).message}`);
       }
     }
-
-    console.log(`Subscription renewal complete: ${renewed} renewed, ${errors.length} errors`);
 
     return new Response(
       JSON.stringify({ success: true, renewed, errors: errors.length > 0 ? errors : undefined }),
