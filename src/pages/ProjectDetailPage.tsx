@@ -33,11 +33,8 @@ import RoadmapLockFlow from "@/components/project/RoadmapLockFlow";
 import ProjectDisputes from "@/components/project/ProjectDisputes";
 import ProjectControls from "@/components/project/ProjectControls";
 import RevenueSplitConfig from "@/components/revenue/RevenueSplitConfig";
-import AttachedWorks from "@/components/works/AttachedWorks";
 import ProjectTools from "@/components/project/ProjectTools";
 import { useProjectRole } from "@/hooks/useProjectRole";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Archive, Fingerprint } from "lucide-react";
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
