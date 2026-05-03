@@ -308,6 +308,30 @@ const LaunchCoinDialog = ({
             );
           })()}
 
+          {(() => {
+            const balance = dropInfo?.balance ?? 0;
+            const insufficient = balance < COIN_LAUNCH_FEE_RHOZE;
+            return (
+              <div
+                className={`rounded-md border p-3 text-[11px] flex items-start justify-between gap-3 ${
+                  insufficient
+                    ? "border-destructive/50 bg-destructive/10 text-destructive"
+                    : "border-border/60 bg-muted/30 text-muted-foreground"
+                }`}
+              >
+                <div>
+                  <span className="font-medium text-foreground">One-time launch fee</span>
+                  <p className="mt-0.5">
+                    {COIN_LAUNCH_FEE_RHOZE} $RHOZE — covers metadata, vanity address, and platform infra. Same for every tier.
+                  </p>
+                </div>
+                <span className="font-mono tabular-nums shrink-0">
+                  Bal: {Math.floor(balance).toLocaleString()}
+                </span>
+              </div>
+            );
+          })()}
+
           <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-[11px] text-muted-foreground">
             Simulated launch — no real liquidity yet. Tokenomics (supply, fees, graduation) lock in once the on-chain mint ships.
           </div>
