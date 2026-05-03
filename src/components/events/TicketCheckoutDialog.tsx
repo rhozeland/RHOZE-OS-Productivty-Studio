@@ -40,6 +40,7 @@ interface Tier {
 interface Event {
   id: string;
   title: string;
+  host_id?: string;
 }
 
 interface TicketCheckoutDialogProps {
