@@ -175,6 +175,27 @@ const EventManagePage = () => {
       }),
   });
 
+  const updateCurrency = useMutation({
+    mutationFn: async (next: string) => {
+      const { error } = await supabase
+        .from("events")
+        .update({ currency_code: next } as any)
+        .eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Currency updated");
+      qc.invalidateQueries({ queryKey: ["event-manage", id] });
+    },
+    onError: (err: unknown) =>
+      toast.error("Could not update currency", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      }),
+  });
+
+  const CURRENCY_OPTIONS = Array.from(new Set(Object.values(COUNTRY_CURRENCY))).sort();
+
+
   const checkIn = useMutation({
     mutationFn: async (ticketId: string) => {
       const ticket = (tickets ?? []).find((t: any) => t.id === ticketId);
