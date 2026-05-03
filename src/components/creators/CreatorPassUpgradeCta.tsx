@@ -15,7 +15,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRhozeBalance } from "@/hooks/useRhozeBalance";
 import {
   TIERS,
   TIER_RANK,
