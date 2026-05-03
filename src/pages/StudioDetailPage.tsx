@@ -408,48 +408,7 @@ const StudioDetailPage = () => {
             </div>
           )}
 
-          {/* Ratings */}
-          {reviews && reviews.length > 0 && (
-            <div>
-              <h2 className="font-display text-lg font-semibold text-foreground mb-3">Ratings</h2>
-              <div className="flex items-center gap-6 p-4 rounded-xl bg-muted/40 border border-border/50">
-                <div className="text-center shrink-0">
-                  <p className="font-display text-3xl font-bold text-foreground">
-                    {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
-                  </p>
-                  <div className="flex items-center gap-0.5 mt-1">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`h-3.5 w-3.5 ${
-                          i < Math.round(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length)
-                            ? "text-warm fill-warm"
-                            : "text-muted-foreground/20"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">{reviews.length} rating{reviews.length !== 1 ? "s" : ""}</p>
-                </div>
-                <div className="flex-1 space-y-1.5">
-                  {[5, 4, 3, 2, 1].map((star) => {
-                    const count = reviews.filter((r) => r.rating === star).length;
-                    const pct = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
-                    return (
-                      <div key={star} className="flex items-center gap-2 text-xs">
-                        <span className="w-3 text-muted-foreground text-right">{star}</span>
-                        <Star className="h-2.5 w-2.5 text-warm fill-warm shrink-0" />
-                        <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                          <div className="h-full rounded-full bg-warm transition-all" style={{ width: `${pct}%` }} />
-                        </div>
-                        <span className="w-6 text-muted-foreground text-right">{count}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Ratings hidden for now — surface as a metric later. */}
         </div>
 
         {/* Right — booking card */}
