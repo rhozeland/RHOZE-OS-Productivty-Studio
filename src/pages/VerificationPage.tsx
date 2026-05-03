@@ -111,7 +111,6 @@ const VerificationPage = () => {
           social_links: cleaned,
           contact_email: parsed.data.contact_email,
           bio: parsed.data.bio,
-          wallet_address: walletAddress,
           status: "pending",
         });
       if (insertErr) throw insertErr;
