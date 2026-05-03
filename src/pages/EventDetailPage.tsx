@@ -32,6 +32,7 @@ import TicketCheckoutDialog from "@/components/events/TicketCheckoutDialog";
 import EventInviteBanner from "@/components/events/EventInviteBanner";
 import EventMediaCarousel from "@/components/events/EventMediaCarousel";
 import LaunchCoinDialog from "@/components/launchpad/LaunchCoinDialog";
+import DropCoinCard from "@/components/launchpad/DropCoinCard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const EventDetailPage = () => {
