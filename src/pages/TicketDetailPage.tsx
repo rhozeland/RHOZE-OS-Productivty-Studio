@@ -26,6 +26,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { shortHash } from "@/lib/content-hash";
+import Tilt3D from "@/components/ui/Tilt3D";
 
 // Deterministic accent palette mapped from tier sort order / id.
 const TIER_ACCENTS = [
