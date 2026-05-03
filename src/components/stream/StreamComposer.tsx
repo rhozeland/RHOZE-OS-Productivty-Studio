@@ -24,11 +24,9 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Flame,
   Briefcase,
-  Megaphone,
   CalendarDays,
   Building2,
   Shield,
-  FolderKanban,
   Send,
   Loader2,
   Plus,
@@ -39,11 +37,9 @@ import { toast } from "sonner";
 export type StreamPostType =
   | "text"
   | "offering"
-  | "opportunity"
   | "event"
   | "space"
-  | "work"
-  | "project";
+  | "work";
 
 interface TypeMeta {
   key: StreamPostType;
@@ -58,13 +54,11 @@ interface TypeMeta {
 }
 
 const TYPES: TypeMeta[] = [
-  { key: "text",        label: "Drop",         icon: Flame,         inline: true,  cta: "Drop" },
-  { key: "offering",    label: "Offering",     icon: Briefcase,     inline: false, href: "/marketplace?compose=service",      cta: "Post Offering" },
-  { key: "opportunity", label: "Opportunity",  icon: Megaphone,     inline: false, href: "/marketplace?compose=project_request", cta: "Post Opportunity" },
-  { key: "event",       label: "Event",        icon: CalendarDays,  inline: false, href: "/spaces/events/new",                cta: "Host Event" },
-  { key: "space",       label: "Space",        icon: Building2,     inline: false, href: "/studios/apply",                    cta: "List Space" },
-  { key: "work",        label: "Work",         icon: Shield,        inline: false, href: "/works",                            cta: "Anchor Work" },
-  { key: "project",     label: "Project",      icon: FolderKanban,  inline: false, href: "/messages?tab=projects&new=1",      cta: "Open Project" },
+  { key: "text",     label: "Update",   icon: Flame,         inline: true,  cta: "Post Update" },
+  { key: "offering", label: "Offering", icon: Briefcase,     inline: false, href: "/marketplace?compose=service", cta: "Post Offering" },
+  { key: "event",    label: "Event",    icon: CalendarDays,  inline: false, href: "/spaces/events/new",           cta: "Host Event" },
+  { key: "space",    label: "Space",    icon: Building2,     inline: false, href: "/studios/apply",               cta: "List Space" },
+  { key: "work",     label: "Work",     icon: Shield,        inline: false, href: "/works",                       cta: "Anchor Work" },
 ];
 
 interface Props {
@@ -109,13 +103,13 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
       setExpanded(false);
       queryClient.invalidateQueries({ queryKey: ["hub-conversations"] });
       queryClient.invalidateQueries({ queryKey: ["stream-conversations"] });
-      toast.success("Dropped to the Stream.");
+      toast.success("Update posted.");
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const handlePrimary = () => {
-    if (!requireAuth("Sign up to drop posts to the Stream.")) return;
+    if (!requireAuth("Sign up to post updates.")) return;
     if (meta.inline) {
       if (!expanded) {
         setExpanded(true);
@@ -177,7 +171,7 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
               ref={textareaRef}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="What are you working on? Drop a thought, link, or update…"
+              placeholder="Share an update — what you're working on, a thought, a link…"
               className="min-h-[88px] resize-none border-0 bg-muted/40 focus-visible:ring-1"
               maxLength={500}
               onKeyDown={(e) => {
@@ -192,7 +186,7 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
               }}
             />
             <div className="mt-1.5 text-[10px] text-muted-foreground/60 px-1">
-              {text.length}/500 · ⌘↵ to drop · Esc to close
+              {text.length}/500 · ⌘↵ to post · Esc to close
             </div>
           </motion.div>
         )}
@@ -203,8 +197,8 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
         <p className="text-xs text-muted-foreground hidden sm:block">
           {meta.inline
             ? expanded
-              ? "Drops show up immediately in Conversations."
-              : "Quick text drop — link or image goes a long way."
+              ? "Updates show up in Conversations and on your profile."
+              : "Quick update — a thought, link, or status."
             : `Opens the full ${meta.label.toLowerCase()} flow.`}
         </p>
         <div className="flex items-center gap-2 ml-auto">

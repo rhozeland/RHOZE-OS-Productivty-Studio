@@ -16,7 +16,7 @@ import {
 import {
   Search, Send, User, MessageSquare, ArrowLeft,
   Inbox, FolderKanban, CheckCircle, XCircle, Clock, ArrowRight, Loader2,
-  DollarSign, Video, Phone, Plus, Users, Store,
+  DollarSign, Video, Phone, Plus, Users, Store, Flame,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
@@ -31,6 +31,7 @@ import BuddyList from "@/components/messages/BuddyList";
 import GuestMessagesPreview from "@/components/guest/GuestMessagesPreview";
 import ProjectsInbox from "@/components/messages/ProjectsInbox";
 import ListingsTab from "@/components/messages/ListingsTab";
+import HubFlowWidget from "@/components/hub/HubFlowWidget";
 import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
@@ -449,6 +450,9 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
           <TabsTrigger value="listings" className="gap-1.5">
             <Store className="h-3.5 w-3.5" /> Listings
           </TabsTrigger>
+          <TabsTrigger value="flow" className="gap-1.5">
+            <Flame className="h-3.5 w-3.5" /> Flow
+          </TabsTrigger>
           {activeTab === "groups" && (
             <TabsTrigger value="groups" className="gap-1.5">
               <Users className="h-3.5 w-3.5" /> Groups
@@ -668,6 +672,10 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
 
         <TabsContent value="listings" className="mt-4">
           <ListingsTab userId={user.id} />
+        </TabsContent>
+
+        <TabsContent value="flow" className="mt-4">
+          <HubFlowWidget expanded />
         </TabsContent>
 
         <TabsContent value="groups" className="mt-4">
