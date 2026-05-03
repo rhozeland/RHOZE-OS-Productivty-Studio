@@ -19,8 +19,9 @@ import {
   Loader2,
   ShieldCheck,
   Hourglass,
-  RefreshCw,
+  Wallet,
 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -79,60 +80,60 @@ const TicketDetailPage = () => {
     },
   });
 
-  // Holder-side auto-retry: if checked in but no signature yet, ping the
-  // dedicated edge fn once on mount and again every ~30s, with backoff.
-  const [retrying, setRetrying] = useState(false);
-  const [retryError, setRetryError] = useState<string | null>(null);
-  const attemptCountRef = useRef(0);
+  // Holder-side: if checked in but no signature yet, ping the anchor edge
+  // fn ONCE on mount. No interval, no loop. The realtime/poll subscription
+  // on the query itself (refetchInterval above) picks up the signature.
+  const triedRef = useRef(false);
   const ticketStatus = ticket?.status;
   const ticketSig = ticket?.solana_signature;
   const ticketId = ticket?.id;
   useEffect(() => {
     if (!ticketId || ticketStatus !== "checked_in" || ticketSig) return;
-    let cancelled = false;
-    const run = async () => {
-      if (cancelled || attemptCountRef.current >= 5) return;
-      attemptCountRef.current += 1;
-      setRetrying(true);
-      try {
-        const { error } = await supabase.functions.invoke(
-          "anchor-event-ticket",
-          { body: { ticket_id: ticketId } },
-        );
-        if (error) throw error;
-        setRetryError(null);
-        refetch();
-      } catch (err) {
-        setRetryError(err instanceof Error ? err.message : "Retry failed");
-      } finally {
-        if (!cancelled) setRetrying(false);
-      }
-    };
-    // Fire immediately, then every 30s.
-    run();
-    const iv = setInterval(run, 30_000);
-    return () => {
-      cancelled = true;
-      clearInterval(iv);
-    };
+    if (triedRef.current) return;
+    triedRef.current = true;
+    supabase.functions
+      .invoke("anchor-event-ticket", { body: { ticket_id: ticketId } })
+      .then(() => refetch())
+      .catch(() => {
+        /* silent — host-side cron will eventually anchor */
+      });
   }, [ticketId, ticketStatus, ticketSig, refetch]);
 
-  const manualRetry = async () => {
-    if (!ticketId || retrying) return;
-    setRetrying(true);
-    setRetryError(null);
+  // Apple Wallet
+  const [walletLoading, setWalletLoading] = useState(false);
+  const addToAppleWallet = async () => {
+    if (!ticketId) return;
+    setWalletLoading(true);
     try {
-      const { error } = await supabase.functions.invoke(
-        "anchor-event-ticket",
+      const { data, error } = await supabase.functions.invoke(
+        "generate-apple-wallet-pass",
         { body: { ticket_id: ticketId } },
       );
       if (error) throw error;
-      attemptCountRef.current = 0;
-      refetch();
+      if (data?.url) {
+        window.location.href = data.url;
+      } else if (data?.pkpass_base64) {
+        const blob = new Blob(
+          [Uint8Array.from(atob(data.pkpass_base64), (c) => c.charCodeAt(0))],
+          { type: "application/vnd.apple.pkpass" },
+        );
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `rhozeland-ticket-${ticketId}.pkpass`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        toast.error("Apple Wallet pass not ready yet — try again shortly.");
+      }
     } catch (err) {
-      setRetryError(err instanceof Error ? err.message : "Retry failed");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Couldn't generate Apple Wallet pass.",
+      );
     } finally {
-      setRetrying(false);
+      setWalletLoading(false);
     }
   };
 
@@ -246,10 +247,31 @@ const TicketDetailPage = () => {
 
         <div className="flex items-center justify-between text-[11px] opacity-80">
           <span className="font-mono">#{ticket.qr_token.slice(0, 8).toUpperCase()}</span>
-          <span className="uppercase tracking-wider">{ticket.status.replace("_", " ")}</span>
+          {ticket.solana_signature ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/20 px-2 py-0.5 text-emerald-200 uppercase tracking-wider">
+              <ShieldCheck className="h-3 w-3" /> Proof of attendance
+            </span>
+          ) : (
+            <span className="uppercase tracking-wider">{ticket.status.replace("_", " ")}</span>
+          )}
         </div>
       </motion.div>
       </Tilt3D>
+
+      <Button
+        variant="outline"
+        className="rounded-full w-full gap-1.5"
+        onClick={addToAppleWallet}
+        disabled={walletLoading}
+      >
+        {walletLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Wallet className="h-4 w-4" />
+        )}
+        Add to Apple Wallet
+      </Button>
+
 
       {/* Proof of attendance — host-anchored, fees paid by Rhozeland */}
       <div className="rounded-2xl bg-card border border-border p-5 space-y-3">
@@ -282,31 +304,10 @@ const TicketDetailPage = () => {
             <p className="text-xs inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
               <ShieldCheck className="h-3.5 w-3.5" /> Checked in
             </p>
-            {retryError && attemptCountRef.current >= 5 ? (
-              <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
-                <Hourglass className="h-3.5 w-3.5" />
-                Receipt pending — we'll retry automatically.
-              </p>
-            ) : (
-              <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
-                {retrying ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Hourglass className="h-3.5 w-3.5" />
-                )}
-                Receipt minting on Solana — usually a few seconds.
-              </p>
-            )}
-            <Button
-              size="sm"
-              variant="outline"
-              className="rounded-full gap-1.5 h-7 text-xs"
-              onClick={manualRetry}
-              disabled={retrying}
-            >
-              <RefreshCw className={`h-3 w-3 ${retrying ? "animate-spin" : ""}`} />
-              {retrying ? "Retrying…" : "Retry now"}
-            </Button>
+            <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+              <Hourglass className="h-3.5 w-3.5" />
+              Receipt minting on Solana — usually a few seconds.
+            </p>
           </div>
         ) : (
           <>
