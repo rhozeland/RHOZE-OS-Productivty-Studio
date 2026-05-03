@@ -15,3 +15,5 @@ project_id = "puielauovddatgqvgxdy"
     verify_jwt = false
   [functions.handle-email-suppression]
     verify_jwt = false
+  [functions.subscription-renewal]
+    verify_jwt = true
