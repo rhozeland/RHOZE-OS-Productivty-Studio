@@ -31,13 +31,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -56,10 +49,6 @@ import {
   ListTree,
   Loader2,
   Link as LinkIcon,
-  Briefcase,
-  Users,
-  Banknote,
-  Repeat,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
