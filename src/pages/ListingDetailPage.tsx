@@ -346,6 +346,29 @@ const ListingDetailPage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
+  // One-click "I'm interested" — sends a minimal pre-filled note so the
+  // poster knows who to reach out to without forcing a pitch upfront.
+  const expressInterest = useMutation({
+    mutationFn: async () => {
+      if (!user || !listing) throw new Error("Missing data");
+      const note =
+        listing.listing_type === "project_request"
+          ? "I'm interested in this project — happy to share more if it looks like a fit."
+          : listing.listing_type === "collaboration"
+            ? "I'd love to collaborate on this — open to chatting more."
+            : "I'm interested in this — open to chatting more.";
+      const { error } = await supabase.from("listing_inquiries").insert({
+        listing_id: listing.id,
+        sender_id: user.id,
+        receiver_id: listing.user_id,
+        message: note,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => toast.success("Interest sent — they'll see your profile and can reach out."),
+    onError: (e: any) => toast.error(e.message),
+  });
+
   if (!listing) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
