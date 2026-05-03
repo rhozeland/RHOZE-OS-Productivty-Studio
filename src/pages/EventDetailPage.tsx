@@ -332,6 +332,16 @@ const EventDetailPage = () => {
 
         {/* RIGHT — title, date/place, registration, about */}
         <div className="space-y-6 min-w-0">
+          {/* Title block */}
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground font-medium">
+              {format(start, "EEEE, MMMM d")} · {format(start, "h:mm a")}
+            </p>
+            <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight leading-[1.1]">
+              {ev.title}
+            </h1>
+          </div>
+
           {/* When / Where */}
           <div className="rounded-2xl bg-card border border-border p-5 space-y-4">
             <div className="flex items-start gap-3">
