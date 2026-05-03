@@ -15,8 +15,8 @@
  * lifted from HubPage and Fresh Works is removed (the mosaic IS the
  * fresh feed now — drops, works, offerings, events, spaces all in one).
  */
-import { Suspense, lazy, useState } from "react";
-import { Link } from "react-router-dom";
+import { Suspense, lazy, useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,11 +27,21 @@ import RegionPromptBanner from "@/components/discover/RegionPromptBanner";
 import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import StreamComposer from "@/components/stream/StreamComposer";
 import ConversationsMosaic from "@/components/hub/ConversationsMosaic";
+import ConversationsEventsBrowser from "@/components/messages/ConversationsEventsBrowser";
+import HubFlowWidget from "@/components/hub/HubFlowWidget";
 import type { RegionMarket } from "@/lib/regions";
-import { ArrowRight, Coins, Loader2 } from "lucide-react";
+import { ArrowRight, Coins, Loader2, Sparkles, CalendarDays, Flame } from "lucide-react";
+import { cn } from "@/lib/utils";
 import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
 
 const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
+
+type DiscoverView = "mosaic" | "events" | "flow";
+const VIEW_OPTIONS: { value: DiscoverView; label: string; icon: any }[] = [
+  { value: "mosaic", label: "All", icon: Sparkles },
+  { value: "events", label: "Events", icon: CalendarDays },
+  { value: "flow", label: "Flow", icon: Flame },
+];
 
 const getGreeting = () => {
   const h = new Date().getHours();
