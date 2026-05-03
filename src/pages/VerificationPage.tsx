@@ -37,7 +37,7 @@ type LatestRequest = {
 const submitSchema = z.object({
   contact_email: z.string().trim().email().max(255),
   bio: z.string().trim().min(20, "Tell us a bit about your work (min 20 chars)").max(500),
-  socials: z.array(z.string().trim().url()).min(2, "Add at least 2 social links"),
+  socials: z.array(z.string().trim().url()).min(1, "Add at least 1 social link"),
 });
 
 const VerificationPage = () => {
