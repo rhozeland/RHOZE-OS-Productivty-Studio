@@ -257,10 +257,10 @@ const PriceChartCard = ({ launchId, ticker }: Props) => {
             aria-label="Chart timeframe"
             className="inline-flex rounded-full border border-border/60 bg-muted/30 p-0.5 text-[10px] font-mono"
             onKeyDown={(e) =>
-              handleRovingKeyDown<Range>(e, ["1H", "6H", "1D", "ALL"], range, setRange)
+              handleRovingKeyDown<Range>(e, ["1M", "15M", "1H", "6H", "1D", "ALL"], range, setRange)
             }
           >
-            {(["1H", "6H", "1D", "ALL"] as Range[]).map((r) => {
+            {(["1M", "15M", "1H", "6H", "1D", "ALL"] as Range[]).map((r) => {
               const selected = range === r;
               return (
                 <button
