@@ -27,11 +27,14 @@ import {
   Square,
   Send,
   Trash2,
+  CalendarDays,
+  MapPin,
+  Globe2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-type ShareType = "menu" | "smartboards" | "profiles" | "listings" | "link" | "voice";
+type ShareType = "menu" | "smartboards" | "profiles" | "listings" | "link" | "voice" | "events";
 
 interface ChatAttachmentMenuProps {
   onSendMessage: (content: string) => void;
@@ -93,6 +96,24 @@ const ChatAttachmentMenu = ({ onSendMessage, onSendQuote, disabled }: ChatAttach
       return data;
     },
     enabled: open && view === "listings",
+  });
+
+  // Events — upcoming + recent past, hosted by me OR public, so I can drop a link to a session
+  const { data: events } = useQuery({
+    queryKey: ["share-events", user?.id],
+    queryFn: async () => {
+      const nowIso = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { data, error } = await supabase
+        .from("events")
+        .select("id, title, starts_at, ends_at, venue_name, is_online, cover_url, status, host_id")
+        .gte("starts_at", nowIso)
+        .in("status", ["published", "draft"])
+        .order("starts_at", { ascending: true })
+        .limit(50);
+      if (error) throw error;
+      return data;
+    },
+    enabled: open && view === "events",
   });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -170,6 +191,21 @@ const ChatAttachmentMenu = ({ onSendMessage, onSendQuote, disabled }: ChatAttach
     setView("menu");
   };
 
+  const shareEvent = (ev: any) => {
+    const msg = `[EVENT:${JSON.stringify({
+      id: ev.id,
+      title: ev.title,
+      starts_at: ev.starts_at,
+      ends_at: ev.ends_at,
+      venue_name: ev.venue_name,
+      is_online: ev.is_online,
+      cover_url: ev.cover_url,
+    })}]`;
+    onSendMessage(msg);
+    setOpen(false);
+    setView("menu");
+  };
+
   const filterBySearch = (items: any[] | undefined, fields: string[]) => {
     if (!items) return [];
     if (!search.trim()) return items;
@@ -198,6 +234,7 @@ const ChatAttachmentMenu = ({ onSendMessage, onSendQuote, disabled }: ChatAttach
   // Quotes, smartboards, creator profiles, listings were removed in v8.2 —
   // those flows live in their own surfaces (Projects budget, Roadmap, etc.).
   const menuItems = [
+    { icon: CalendarDays, label: "Event Link", description: "Drop a deep link to a scheduled event", action: () => setView("events") },
     { icon: Mic, label: "Voice Note", description: "Record and send a quick voice message", action: () => setView("voice") },
     { icon: Paperclip, label: "Upload File", description: "Share images, docs, audio", action: () => fileInputRef.current?.click() },
     { icon: Link2, label: "Share Link", description: "Google Drive, Dropbox, any URL", action: () => setView("link") },
@@ -543,6 +580,58 @@ const ChatAttachmentMenu = ({ onSendMessage, onSendQuote, disabled }: ChatAttach
                   </>
                 )}
               </div>
+            </div>
+          )}
+          {view === "events" && (
+            <div>
+              <div className="flex items-center gap-2 p-2 border-b border-border">
+                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setView("menu")}>
+                  <span className="text-lg">←</span>
+                </Button>
+                <p className="text-sm font-medium text-foreground">Share Event</p>
+              </div>
+              <div className="p-2">
+                <div className="relative mb-2">
+                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search upcoming events..."
+                    className="pl-8 h-8 text-sm"
+                  />
+                </div>
+              </div>
+              <ScrollArea className="max-h-64">
+                {filterBySearch(events, ["title", "venue_name"]).length === 0 ? (
+                  <p className="text-center text-xs text-muted-foreground py-6">No upcoming events</p>
+                ) : (
+                  filterBySearch(events, ["title", "venue_name"]).map((ev) => {
+                    const dt = ev.starts_at ? new Date(ev.starts_at) : null;
+                    return (
+                      <button
+                        key={ev.id}
+                        onClick={() => shareEvent(ev)}
+                        className="flex w-full items-center gap-3 px-3 py-2 hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                          {ev.cover_url ? (
+                            <img src={ev.cover_url} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            <CalendarDays className="h-4 w-4 text-primary" />
+                          )}
+                        </div>
+                        <div className="min-w-0 text-left flex-1">
+                          <p className="text-sm text-foreground truncate">{ev.title}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">
+                            {dt ? dt.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "TBD"}
+                            {ev.is_online ? " · Online" : ev.venue_name ? ` · ${ev.venue_name}` : ""}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </ScrollArea>
             </div>
           )}
         </PopoverContent>

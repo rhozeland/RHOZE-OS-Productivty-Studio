@@ -14,6 +14,10 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
+  CalendarDays,
+  MapPin,
+  Globe2,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +32,7 @@ export const isRichMessage = (content: string) =>
   content.startsWith("[PROFILE:") ||
   content.startsWith("[LISTING:") ||
   content.startsWith("[LINK:") ||
+  content.startsWith("[EVENT:") ||
   content.startsWith("[STAFF_INVITE:");
 
 const parseRich = (content: string, prefix: string) => {
@@ -228,6 +233,49 @@ const RichMessageCard = ({ content, isMine, timestamp, formatTime, messageId, se
           <p className={cn("px-3 pb-2 text-[10px] text-muted-foreground")}>{formatTime(timestamp)}</p>
         </div>
       </a>
+    );
+  }
+
+  // EVENT
+  if (content.startsWith("[EVENT:")) {
+    const data = parseRich(content, "[EVENT:");
+    if (!data) return null;
+    const dt = data.starts_at ? new Date(data.starts_at) : null;
+    const dateLabel = dt
+      ? dt.toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+      : "Date TBD";
+
+    return (
+      <Link to={`/spaces/events/${data.id}`} className="block">
+        <div className={cn(
+          "max-w-[70%] rounded-2xl overflow-hidden border hover:shadow-md transition-shadow",
+          isMine ? "bg-primary/5 border-primary/20 rounded-br-md" : "bg-muted border-border rounded-bl-md"
+        )}>
+          {data.cover_url && (
+            <img src={data.cover_url} alt={data.title} className="w-full h-28 object-cover" />
+          )}
+          <div className="px-3 py-3">
+            <div className="flex items-center gap-1.5 mb-1">
+              <CalendarDays className="h-3 w-3 text-primary" />
+              <span className="text-[10px] font-medium text-primary uppercase tracking-wider">Event</span>
+            </div>
+            <p className="text-sm font-semibold text-foreground line-clamp-2">{data.title}</p>
+            <div className="mt-1.5 space-y-0.5">
+              <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                <Clock className="h-3 w-3 shrink-0" />
+                <span className="truncate">{dateLabel}</span>
+              </p>
+              {(data.is_online || data.venue_name) && (
+                <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                  {data.is_online ? <Globe2 className="h-3 w-3 shrink-0" /> : <MapPin className="h-3 w-3 shrink-0" />}
+                  <span className="truncate">{data.is_online ? "Online" : data.venue_name}</span>
+                </p>
+              )}
+            </div>
+            <p className={cn("mt-1.5 text-[10px] text-muted-foreground")}>{formatTime(timestamp)}</p>
+          </div>
+        </div>
+      </Link>
     );
   }
 
