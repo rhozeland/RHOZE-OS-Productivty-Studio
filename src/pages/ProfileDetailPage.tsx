@@ -250,6 +250,11 @@ const ProfileDetailPage = () => {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["connection-status"] }); toast.success("Connected!"); },
   });
 
+  // Verified-IP lookup for the listings we render inline. Hook must run
+  // before any early returns to keep hook order stable.
+  const listingIds = (sellerListings ?? []).map((l: any) => l.id);
+  const { data: listingVerifiedIp } = useListingVerifiedIp(listingIds);
+
   // ─── Loading / guards ───
   if (isLoading) {
     return <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
