@@ -3,8 +3,8 @@
  *
  * Left column: cover, title, host, description, manifest/anchor proof.
  * Right column (sticky on lg+): when/where card + ticket tiers + buy CTA.
- * Hosts of paid events see a small note that earnings settle 75/15/10
- * (host / community reserve / platform) per ticket.
+ * Hosts of paid events see a small note that the platform fee scales
+ * with their tier (Spark/Bloom 15% · Glow 10% · Play 7%) — no reserve.
  */
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
