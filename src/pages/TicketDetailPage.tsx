@@ -5,7 +5,7 @@
  * proof-of-attendance on Solana (SHA-256 of ticket+event metadata).
  */
 import { useParams, Link } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import {
@@ -16,32 +16,40 @@ import {
   Sparkles,
   ExternalLink,
   Loader2,
+  ShieldCheck,
+  Hourglass,
 } from "lucide-react";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { shortHash } from "@/lib/content-hash";
 
-async function sha256Hex(text: string): Promise<string> {
-  const buf = new TextEncoder().encode(text);
-  const hashBuf = await crypto.subtle.digest("SHA-256", buf);
-  return Array.from(new Uint8Array(hashBuf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+// Deterministic accent palette mapped from tier sort order / id.
+const TIER_ACCENTS = [
+  "from-rose-500/90 to-fuchsia-500/90",
+  "from-amber-400/90 to-orange-500/90",
+  "from-sky-400/90 to-indigo-500/90",
+  "from-emerald-400/90 to-teal-500/90",
+  "from-violet-500/90 to-purple-600/90",
+];
+function pickAccent(seed: string | number | null | undefined) {
+  const s = String(seed ?? "0");
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return TIER_ACCENTS[h % TIER_ACCENTS.length];
 }
 
 const TicketDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const qc = useQueryClient();
 
   const { data: ticket, isLoading } = useQuery({
     queryKey: ["ticket", id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("event_tickets")
-        .select("*, event:events(*)")
+        .select("*, event:events(*), tier:event_ticket_tiers(id,name,sort_order)")
         .eq("id", id!)
         .single();
       if (error) throw error;
@@ -50,67 +58,16 @@ const TicketDetailPage = () => {
     enabled: !!id,
   });
 
-  const anchorMutation = useMutation({
-    mutationFn: async () => {
-      if (!user || !ticket) throw new Error("Not allowed");
-      const payload = {
-        protocol: "rhozeland",
-        type: "attendance",
-        ticket_id: ticket.id,
-        event_id: ticket.event_id,
-        holder_id: user.id,
-        qr_token: ticket.qr_token,
-        event_manifest_hash: ticket.event?.manifest_hash,
-        ts: new Date().toISOString(),
-      };
-      const attendance_hash = await sha256Hex(JSON.stringify(payload));
-
-      // Persist hash on the ticket
-      await supabase
-        .from("event_tickets")
-        .update({ attendance_hash })
-        .eq("id", ticket.id);
-
-      // Write a contribution_proof and anchor it
-      const { data: proof, error: proofErr } = await supabase
-        .from("contribution_proofs")
-        .insert({
-          user_id: user.id,
-          action_type: "event_attendance",
-          reference_id: ticket.id,
-          metadata: { ...payload, attendance_hash },
-        })
-        .select()
-        .single();
-      if (proofErr) throw proofErr;
-
-      const { data: res, error: anchorErr } = await supabase.functions.invoke(
-        "anchor-contribution",
-        { body: { proof_id: proof.id } },
-      );
-      if (anchorErr) throw anchorErr;
-      const signature = (res as { signature?: string })?.signature ?? null;
-      if (signature) {
-        await supabase
-          .from("event_tickets")
-          .update({
-            solana_signature: signature,
-            anchored_at: new Date().toISOString(),
-          })
-          .eq("id", ticket.id);
-      }
-      return signature;
-    },
-    onSuccess: () => {
-      toast.success("Attendance anchored", {
-        description: "Your proof-of-attendance is on Solana.",
-      });
-      qc.invalidateQueries({ queryKey: ["ticket", id] });
-    },
-    onError: (err: unknown) => {
-      toast.error("Could not anchor attendance", {
-        description: err instanceof Error ? err.message : "Unknown error",
-      });
+  const { data: host } = useQuery({
+    queryKey: ["ticket-host", ticket?.event?.host_id],
+    enabled: !!ticket?.event?.host_id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, username, avatar_url")
+        .eq("user_id", ticket!.event!.host_id)
+        .maybeSingle();
+      return data;
     },
   });
 
@@ -137,9 +94,20 @@ const TicketDetailPage = () => {
 
   const ev = ticket.event;
   const start = ev ? new Date(ev.starts_at) : null;
+  const tier = (ticket as any).tier as { name?: string; sort_order?: number } | null;
+  const accent = pickAccent(tier?.sort_order ?? tier?.name ?? ticket.tier_id);
   const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
     ticket.qr_token,
   )}`;
+  const hostName = host?.display_name || host?.username || "Host";
+  const hostInitials =
+    hostName
+      .split(/\s+/)
+      .map((c) => c[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "·";
 
   return (
     <div className="max-w-md mx-auto space-y-5">
@@ -153,15 +121,37 @@ const TicketDetailPage = () => {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-3xl bg-gradient-to-br from-foreground to-foreground/85 text-background p-6 space-y-5 shadow-xl"
+        className="relative rounded-3xl bg-gradient-to-br from-foreground to-foreground/85 text-background p-6 space-y-5 shadow-xl overflow-hidden"
       >
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.18em] opacity-70 mb-1">
-            Rhozeland · Event ticket
-          </p>
-          <h2 className="font-display text-2xl font-bold leading-tight">
-            {ev?.title}
-          </h2>
+        <div className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${accent}`} aria-hidden />
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.18em] opacity-70 mb-1">
+              Rhozeland · Event ticket
+            </p>
+            <h2 className="font-display text-2xl font-bold leading-tight truncate">
+              {ev?.title}
+            </h2>
+            {tier?.name && (
+              <span
+                className={`inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider bg-gradient-to-r ${accent} text-background`}
+              >
+                {tier.name}
+              </span>
+            )}
+          </div>
+          {host && (
+            <div className="flex items-center gap-2 shrink-0">
+              <Avatar className="h-9 w-9 ring-2 ring-background/30">
+                <AvatarImage src={host.avatar_url ?? undefined} />
+                <AvatarFallback>{hostInitials}</AvatarFallback>
+              </Avatar>
+              <div className="text-right">
+                <p className="text-[9px] uppercase tracking-wider opacity-60">Host</p>
+                <p className="text-xs font-medium truncate max-w-[100px]">{hostName}</p>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="space-y-1 text-sm opacity-90">
@@ -189,21 +179,21 @@ const TicketDetailPage = () => {
         </div>
 
         <div className="flex items-center justify-between text-[11px] opacity-80">
-          <span>Status</span>
-          <span className="uppercase tracking-wider">{ticket.status}</span>
+          <span className="font-mono">#{ticket.qr_token.slice(0, 8).toUpperCase()}</span>
+          <span className="uppercase tracking-wider">{ticket.status.replace("_", " ")}</span>
         </div>
       </motion.div>
 
-      {/* Anchor card */}
+      {/* Proof of attendance — host-anchored, fees paid by Rhozeland */}
       <div className="rounded-2xl bg-card border border-border p-5 space-y-3">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-primary" />
+          <ShieldCheck className="h-4 w-4 text-primary" />
           <p className="font-medium text-sm">Proof of attendance</p>
         </div>
         {ticket.solana_signature ? (
           <>
             <p className="text-xs text-muted-foreground">
-              Anchored on Solana — your attendance hash is verifiable forever.
+              The host anchored your attendance on Solana — your receipt is verifiable forever.
             </p>
             {ticket.attendance_hash && (
               <p className="text-xs">
@@ -220,33 +210,18 @@ const TicketDetailPage = () => {
               View on Solscan <ExternalLink className="h-3 w-3" />
             </a>
           </>
-        ) : ticket.status !== "checked_in" ? (
-          <>
-            <p className="text-xs text-muted-foreground">
-              Proof-of-attendance unlocks once the host scans you in at the
-              event. They'll mint your verifiable receipt automatically.
-            </p>
-            <Button className="rounded-full gap-1.5 w-full" disabled variant="outline">
-              <Sparkles className="h-4 w-4" /> Awaiting check-in
-            </Button>
-          </>
+        ) : ticket.status === "checked_in" ? (
+          <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+            <Hourglass className="h-3.5 w-3.5" />
+            Checked in — anchoring receipt to Solana…
+          </p>
         ) : (
           <>
             <p className="text-xs text-muted-foreground">
-              You're checked in. Mint your SHA-256 attendance hash on Solana
-              for a permanent, verifiable receipt.
+              Show this QR to the host at the event. They'll scan you in and mint your proof-of-attendance on Solana — fees covered by Rhozeland.
             </p>
-            <Button
-              className="rounded-full gap-1.5 w-full"
-              disabled={anchorMutation.isPending}
-              onClick={() => anchorMutation.mutate()}
-            >
-              {anchorMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Sparkles className="h-4 w-4" />
-              )}
-              Anchor my attendance
+            <Button className="rounded-full gap-1.5 w-full" disabled variant="outline">
+              <Sparkles className="h-4 w-4" /> Awaiting host check-in
             </Button>
           </>
         )}
