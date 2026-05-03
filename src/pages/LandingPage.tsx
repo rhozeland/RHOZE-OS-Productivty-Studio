@@ -27,11 +27,37 @@ const HOW_ARTISTS = [
   { icon: Sparkles, title: "Sell access & upside", body: "Open commissions, host Spaces, drop events, and let fans co-own your momentum." },
 ];
 
+// Aligned with the canonical tier matrix swatches:
+// Spark = blue, Bloom = pink, Glow = orange, Play = yellow.
 const TIERS = [
-  { name: "Spark",  hue: "from-rose-300 to-pink-300",      blurb: "Welcome in. Earn rewards just by showing up." },
-  { name: "Bloom",  hue: "from-pink-300 to-fuchsia-300",   blurb: "Hold a little $RHOZE. Unlock more of the network." },
-  { name: "Glow",   hue: "from-fuchsia-300 to-amber-300",  blurb: "Hold more, get lower fees and louder reach." },
-  { name: "Play",   hue: "from-amber-300 to-emerald-300",  blurb: "The top floor — best perks, lowest fees, full studio." },
+  {
+    name: "Spark",
+    hue: "from-sky-400 via-blue-500 to-indigo-600",
+    accent: "text-sky-600",
+    chipBg: "bg-sky-500/10 text-sky-700 border-sky-500/30",
+    blurb: "Welcome in. Earn rewards just by showing up.",
+  },
+  {
+    name: "Bloom",
+    hue: "from-pink-400 via-rose-500 to-fuchsia-600",
+    accent: "text-rose-600",
+    chipBg: "bg-rose-500/10 text-rose-700 border-rose-500/30",
+    blurb: "Hold a little $RHOZE. Unlock more of the network.",
+  },
+  {
+    name: "Glow",
+    hue: "from-amber-400 via-orange-500 to-red-500",
+    accent: "text-orange-600",
+    chipBg: "bg-orange-500/10 text-orange-700 border-orange-500/30",
+    blurb: "Hold more, get lower fees and louder reach.",
+  },
+  {
+    name: "Play",
+    hue: "from-yellow-300 via-amber-400 to-yellow-600",
+    accent: "text-amber-600",
+    chipBg: "bg-amber-500/10 text-amber-700 border-amber-500/30",
+    blurb: "The top floor — best perks, lowest fees, full studio.",
+  },
 ];
 
 /* ─────────────────────── Soft pastel orbs ─────────────────── */
@@ -300,12 +326,24 @@ const LandingPage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.06 }}
-                className="relative rounded-2xl border border-border/60 bg-card/70 backdrop-blur-md p-5 overflow-hidden"
+                className="relative rounded-2xl border border-border/60 bg-card/70 backdrop-blur-md p-5 overflow-hidden group"
               >
-                <div className={`absolute -top-10 -right-10 h-32 w-32 rounded-full bg-gradient-to-br ${t.hue} opacity-50 blur-2xl`} />
+                {/* Big soft tier-colored glow */}
+                <div className={`absolute -top-12 -right-12 h-40 w-40 rounded-full bg-gradient-to-br ${t.hue} opacity-60 blur-2xl group-hover:opacity-80 transition-opacity`} />
+                <div className={`absolute -bottom-16 -left-10 h-32 w-32 rounded-full bg-gradient-to-br ${t.hue} opacity-25 blur-3xl`} />
                 <div className="relative">
-                  <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">Tier {i + 1}</div>
-                  <div className="font-display text-2xl font-bold">{t.name}</div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className={`text-[10px] uppercase tracking-[0.2em] font-semibold px-2 py-0.5 rounded-full border ${t.chipBg}`}>
+                      Tier {i + 1}
+                    </span>
+                    <span
+                      className={`h-8 w-8 rounded-xl shadow-md ring-1 ring-white/40 bg-gradient-to-br ${t.hue}`}
+                      aria-hidden
+                    />
+                  </div>
+                  <div className={`font-display text-2xl font-bold bg-gradient-to-br ${t.hue} bg-clip-text text-transparent`}>
+                    {t.name}
+                  </div>
                   <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{t.blurb}</p>
                 </div>
               </motion.div>
