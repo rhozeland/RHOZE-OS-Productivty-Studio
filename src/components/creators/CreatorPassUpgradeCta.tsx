@@ -2,36 +2,59 @@
  * CreatorPassUpgradeCta — slim editorial CTA encouraging users to climb
  * their Creator Pass tier. Surfaced in Discover + Conversations.
  *
+ * Hint is personalized: pulls the user's current $RHOZE balance and
+ * activity counts (posts / projects / listings / events / interactions),
+ * computes their effective tier, and surfaces whichever next-tier
+ * threshold they're closest to unlocking.
+ *
  * Hidden when the user is already at the top tier (Play), signed-out,
  * or has dismissed the card (persisted per user in localStorage).
  */
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRhozeBalance } from "@/hooks/useRhozeBalance";
+import {
+  TIERS,
+  TIER_RANK,
+  getHoldTier,
+  getActivityTier,
+  getEffectiveTier,
+  type TierId,
+} from "@/lib/tier-matrix";
 import { Sparkles, ArrowRight, X } from "lucide-react";
 
-const TIER_NEXT: Record<string, { next: string; hint: string }> = {
-  spark: { next: "Bloom", hint: "Hold 1M+ $RHOZE or hit any single activity bar." },
-  bloom: { next: "Glow", hint: "Hold 25M+ $RHOZE or scale your posts, projects, or events." },
-  glow: { next: "Play", hint: "Hold 50M+ $RHOZE or push activity past Glow." },
+const dismissKey = (userId: string) => `rhozeland.creator-pass-cta.dismissed.${userId}`;
+
+const ACTIVITY_LABELS: Record<keyof NonNullable<typeof TIERS[number]["activity"]>, string> = {
+  posts: "work post",
+  projects: "completed project",
+  listings: "listing",
+  events: "event",
+  interactions: "interaction",
 };
 
-const dismissKey = (userId: string) => `rhozeland.creator-pass-cta.dismissed.${userId}`;
+const formatRhoze = (n: number) => {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}k`;
+  return `${n}`;
+};
 
 type Props = { variant?: "wide" | "compact" };
 
 const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
   const { user } = useAuth();
+  const { data: tokenInfo } = useRhozeBalance();
 
   const [dismissed, setDismissed] = useState<boolean>(() => {
     if (typeof window === "undefined" || !user) return false;
     return window.localStorage.getItem(dismissKey(user.id)) === "1";
   });
 
-  const { data: tierRow } = useQuery({
-    queryKey: ["creator-pass-cta-tier", user?.id],
+  const { data: credits } = useQuery({
+    queryKey: ["creator-pass-cta-credits", user?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("user_credits")
@@ -43,11 +66,92 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
     enabled: !!user,
   });
 
+  const { data: activity } = useQuery({
+    queryKey: ["creator-pass-cta-activity", user?.id],
+    queryFn: async () => {
+      const sb = supabase as any;
+      const [posts, projects, listings, events, interactions] = await Promise.all([
+        sb.from("works").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
+        sb.from("projects").select("id", { count: "exact", head: true }).eq("user_id", user!.id).eq("status", "completed"),
+        sb.from("listings").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
+        sb.from("events").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
+        sb.from("credit_transactions").select("id", { count: "exact", head: true }).eq("user_id", user!.id).eq("type", "reward"),
+      ]);
+      return {
+        posts: (posts?.count as number) ?? 0,
+        projects: (projects?.count as number) ?? 0,
+        listings: (listings?.count as number) ?? 0,
+        events: (events?.count as number) ?? 0,
+        interactions: (interactions?.count as number) ?? 0,
+      };
+    },
+    enabled: !!user,
+  });
+
+  const personalized = useMemo(() => {
+    if (!activity) return null;
+    const balance = tokenInfo?.balance ?? 0;
+
+    const LEGACY_MAP: Record<string, TierId> = { bronze: "spark", gold: "bloom", diamond: "glow", prism: "play" };
+    const subTier: TierId = credits?.tier ? ((LEGACY_MAP[credits.tier] || credits.tier) as TierId) : "spark";
+    const holdTier: TierId = getHoldTier(balance);
+    const activityTier: TierId = getActivityTier(activity);
+    const effective = getEffectiveTier(subTier, holdTier, activityTier);
+
+    const nextTier = TIERS.find((t) => TIER_RANK[t.id] === TIER_RANK[effective] + 1);
+    if (!nextTier) return { effective, next: null as null };
+
+    // Build candidate thresholds: hold + each activity req.
+    type Candidate = { kind: "hold" | "activity"; key: string; current: number; need: number; ratio: number };
+    const candidates: Candidate[] = [];
+
+    if (nextTier.hold > 0) {
+      candidates.push({
+        kind: "hold",
+        key: "hold",
+        current: balance,
+        need: nextTier.hold,
+        ratio: balance / nextTier.hold,
+      });
+    }
+
+    (Object.keys(nextTier.activity) as Array<keyof typeof nextTier.activity>).forEach((k) => {
+      const need = nextTier.activity[k];
+      if (!need) return;
+      const current = (activity as any)[k] ?? 0;
+      candidates.push({
+        kind: "activity",
+        key: k as string,
+        current,
+        need,
+        ratio: current / need,
+      });
+    });
+
+    // Closest = highest ratio that's still < 1.
+    const closest = candidates
+      .filter((c) => c.ratio < 1)
+      .sort((a, b) => b.ratio - a.ratio)[0] ?? candidates[0];
+
+    let hint: string;
+    if (!closest) {
+      hint = `Climb to ${nextTier.label} for bigger rewards.`;
+    } else if (closest.kind === "hold") {
+      const remaining = Math.max(0, closest.need - closest.current);
+      hint = `${formatRhoze(closest.current)} / ${formatRhoze(closest.need)} $RHOZE held — ${formatRhoze(remaining)} to ${nextTier.label}.`;
+    } else {
+      const noun = ACTIVITY_LABELS[closest.key as keyof typeof ACTIVITY_LABELS] ?? closest.key;
+      const remaining = Math.max(0, closest.need - closest.current);
+      hint = `${closest.current} / ${closest.need} ${noun}${closest.need === 1 ? "" : "s"} — ${remaining} more to ${nextTier.label}.`;
+    }
+
+    return { effective, next: nextTier, hint };
+  }, [activity, credits, tokenInfo]);
+
   if (!user) return null;
   if (dismissed) return null;
-  const currentTier = (tierRow?.tier ?? "spark").toLowerCase();
-  if (currentTier === "play") return null;
-  const target = TIER_NEXT[currentTier] ?? TIER_NEXT.spark;
+  if (!personalized) return null;
+  if (!personalized.next) return null;
 
   const handleDismiss = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -65,7 +169,6 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
         variant === "compact" ? "" : "md:p-5"
       }`}
     >
-      {/* aurora wash */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-60 bg-gradient-to-br from-primary/15 via-transparent to-amber-500/10"
@@ -73,19 +176,19 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
       <div className="relative shrink-0 h-10 w-10 rounded-full bg-gradient-to-br from-primary/30 to-amber-500/30 flex items-center justify-center">
         <Sparkles className="h-5 w-5 text-foreground" />
       </div>
-      <div className="relative flex-1 min-w-0">
+      <div className="relative flex-1 min-w-0 pr-6">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
             Creator Pass
           </span>
           <span className="text-[10px] uppercase tracking-wider text-foreground/60">
-            · {currentTier}
+            · {personalized.effective}
           </span>
         </div>
         <h3 className="font-display text-base md:text-lg font-bold text-foreground leading-tight mt-0.5">
-          Climb to {target.next} for bigger rewards
+          Climb to {personalized.next.label} for bigger rewards
         </h3>
-        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{target.hint}</p>
+        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{personalized.hint}</p>
       </div>
       <ArrowRight className="relative h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition shrink-0 mt-1" />
       <button
