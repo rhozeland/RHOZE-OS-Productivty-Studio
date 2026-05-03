@@ -48,7 +48,7 @@ const EventCollaborators = ({ eventId, hostId }: Props) => {
     queryFn: async () => {
       const { data: rows } = await supabase
         .from("event_collaborators")
-        .select("id, user_id, role, created_at")
+        .select("id, user_id, role, status, created_at")
         .eq("event_id", eventId);
       const ids = (rows ?? []).map((r) => r.user_id);
       if (ids.length === 0) return [];
