@@ -25,6 +25,10 @@ import {
   Search,
   Image as ImageIcon,
   Settings,
+  Pencil,
+  Trash2,
+  X,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -194,6 +198,77 @@ const EventManagePage = () => {
   });
 
   const CURRENCY_OPTIONS = Array.from(new Set(Object.values(COUNTRY_CURRENCY))).sort();
+
+  // ---- Inline edit / delete tier ----
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPrice, setEditPrice] = useState("");
+  const [editQty, setEditQty] = useState("");
+
+  const beginEdit = (t: any) => {
+    setEditId(t.id);
+    setEditName(t.name ?? "");
+    setEditPrice(String(t.price_usd ?? ""));
+    setEditQty(t.quantity_total ? String(t.quantity_total) : "");
+  };
+
+  const cancelEdit = () => {
+    setEditId(null);
+    setEditName("");
+    setEditPrice("");
+    setEditQty("");
+  };
+
+  const saveTier = useMutation({
+    mutationFn: async () => {
+      if (!editId) return;
+      if (!editName.trim()) throw new Error("Name required");
+      const price = editPrice ? Number(editPrice) : 0;
+      const { error } = await supabase
+        .from("event_ticket_tiers")
+        .update({
+          name: editName.trim(),
+          price_usd: price,
+          price_rhoze: price > 0 ? fiatToRhoze(price) : 0,
+          currency_code: eventCurrency,
+          quantity_total: editQty ? Number(editQty) : null,
+        } as any)
+        .eq("id", editId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Tier updated");
+      cancelEdit();
+      qc.invalidateQueries({ queryKey: ["event-tiers-manage", id] });
+    },
+    onError: (err: unknown) =>
+      toast.error("Could not update tier", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      }),
+  });
+
+  const deleteTier = useMutation({
+    mutationFn: async (tierId: string) => {
+      const tier = (tiers ?? []).find((t: any) => t.id === tierId);
+      if (tier && Number(tier.quantity_sold) > 0) {
+        throw new Error("Cannot delete a tier with sold tickets");
+      }
+      const { error } = await supabase
+        .from("event_ticket_tiers")
+        .delete()
+        .eq("id", tierId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Tier removed");
+      qc.invalidateQueries({ queryKey: ["event-tiers-manage", id] });
+    },
+    onError: (err: unknown) =>
+      toast.error("Could not remove tier", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      }),
+  });
+
 
 
   const checkIn = useMutation({
@@ -479,6 +554,50 @@ const EventManagePage = () => {
               {(tiers ?? []).map((t: any) => {
                 const cur = t.currency_code || eventCurrency;
                 const price = Number(t.price_usd) || 0;
+                const isEditing = editId === t.id;
+                const sold = Number(t.quantity_sold) || 0;
+                const isFreeRsvp = price === 0 && (t.sort_order === 0 || /rsvp/i.test(t.name ?? ""));
+                if (isEditing) {
+                  return (
+                    <div key={t.id} className="rounded-xl bg-card border border-primary/40 p-4 space-y-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <div className="space-y-1.5 col-span-2 sm:col-span-2">
+                          <Label className="text-xs">Name</Label>
+                          <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Price ({eventCurrency})</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={editPrice}
+                            onChange={(e) => setEditPrice(e.target.value)}
+                            disabled={isFreeRsvp}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Quantity</Label>
+                          <Input
+                            type="number"
+                            min={sold || 1}
+                            value={editQty}
+                            onChange={(e) => setEditQty(e.target.value)}
+                            placeholder="∞"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" className="rounded-full" disabled={saveTier.isPending} onClick={() => saveTier.mutate()}>
+                          <Check className="h-3.5 w-3.5 mr-1" />Save
+                        </Button>
+                        <Button size="sm" variant="ghost" className="rounded-full" onClick={cancelEdit}>
+                          <X className="h-3.5 w-3.5 mr-1" />Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                }
                 return (
                   <div
                     key={t.id}
@@ -490,9 +609,32 @@ const EventManagePage = () => {
                         {price > 0 ? formatMoney(price, cur) : "Free"}
                         {price > 0 && " · also payable in $RHOZE (tier discount)"}
                         {" · "}
-                        {t.quantity_sold}
+                        {sold}
                         {t.quantity_total ? ` / ${t.quantity_total}` : ""} sold
                       </p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => beginEdit(t)}
+                        title="Edit tier"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        disabled={sold > 0 || deleteTier.isPending}
+                        onClick={() => {
+                          if (confirm(`Remove "${t.name}"?`)) deleteTier.mutate(t.id);
+                        }}
+                        title={sold > 0 ? "Cannot remove — tickets sold" : "Remove tier"}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 );
