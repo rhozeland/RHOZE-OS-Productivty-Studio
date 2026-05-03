@@ -94,17 +94,28 @@ const LaunchDetailPage = () => {
       const { data } = await supabase.from("coin_launches").select("*").eq("id", slugOrId).maybeSingle();
       l = (data as Launch | null) ?? null;
     } else {
-      // Resolve by ticker (slug). Strip a leading "$" if present.
-      const ticker = slugOrId.replace(/^\$/, "");
-      const { data } = await supabase
+      // Slug may be the full mint address (CA) or a ticker (with optional $).
+      const cleaned = slugOrId.replace(/^\$/, "");
+      // Try mint address first (case-sensitive base58).
+      const { data: byMint } = await supabase
         .from("coin_launches")
         .select("*")
-        .ilike("ticker", ticker)
+        .eq("mint_address", cleaned)
         .neq("status", "cancelled")
-        .order("created_at", { ascending: false })
-        .limit(1)
         .maybeSingle();
-      l = (data as Launch | null) ?? null;
+      if (byMint) {
+        l = byMint as Launch;
+      } else {
+        const { data } = await supabase
+          .from("coin_launches")
+          .select("*")
+          .ilike("ticker", cleaned)
+          .neq("status", "cancelled")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        l = (data as Launch | null) ?? null;
+      }
     }
     setLaunch(l);
     if (!l) {
