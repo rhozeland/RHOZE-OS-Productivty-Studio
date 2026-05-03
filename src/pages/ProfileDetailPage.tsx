@@ -310,6 +310,11 @@ const ProfileDetailPage = () => {
             {/* Avatar + Name row — handle sits tight beside name */}
             <div className="flex items-end gap-4 sm:gap-5">
               <div className="-mt-14 sm:-mt-16 relative z-10 shrink-0">
+                {profileNote && (
+                  <div className="absolute left-1/2 -translate-x-1/2 -top-10 z-20">
+                    <NoteBubble body={profileNote.body} size="md" />
+                  </div>
+                )}
                 <div className="flex h-24 w-24 sm:h-28 sm:w-28 items-center justify-center rounded-full border-4 border-card bg-muted shadow-xl overflow-hidden ring-2 ring-background/50">
                   {profile.avatar_url ? (
                     <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
