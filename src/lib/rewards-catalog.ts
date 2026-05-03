@@ -313,6 +313,63 @@ export const REWARDS_BY_CATEGORY: Record<RewardCategory, RewardEntry[]> = {
 };
 
 /**
+ * v8.7 — fan-facing lane mapping. Two modes only:
+ *   • connect — engaging with artists & community
+ *       (likes, comments, follows, DMs, reviews, streaks, attending events,
+ *        backing artist coins, referrals)
+ *   • build   — running Spaces, projects, listings, your creative footprint
+ *       (publishing listings, hosting Spaces, sales, bookings, milestones,
+ *        verification, projects, coin launches)
+ */
+const LANE_BY_ACTION: Record<string, RewardLane> = {
+  // — connect —
+  like_work: "connect",
+  comment_work: "connect",
+  follow_artist: "connect",
+  send_dm: "connect",
+  daily_streak: "connect",
+  attend_space: "connect",
+  attend_paid_space: "connect",
+  swap_into_artist_coin: "connect",
+  hold_artist_coin_7d: "connect",
+  hold_artist_coin_30d: "connect",
+  refer_paying_user: "connect",
+  buy_work: "connect",
+  followers_100: "connect",
+  followers_1k: "connect",
+
+  // — build —
+  review_received: "build",
+  publish_listing: "build",
+  listing_inquiry_received: "build",
+  listing_sale: "build",
+  sell_work: "build",
+  book_space: "build",
+  host_paid_space: "build",
+  complete_profile: "build",
+  first_work_uploaded: "build",
+  ten_works_uploaded: "build",
+  first_work_anchored: "build",
+  ten_works_anchored: "build",
+  verified_artist: "build",
+  first_coin_launch: "build",
+  work_views_1k: "build",
+  work_views_10k: "build",
+  milestone_approved: "build",
+};
+
+// Hydrate `.lane` on each entry so consumers can read it directly.
+REWARDS_CATALOG.forEach((r) => {
+  r.lane = LANE_BY_ACTION[r.action] ?? (r.category === "engagement" ? "connect" : "build");
+});
+
+export const REWARDS_BY_LANE: Record<RewardLane, RewardEntry[]> = {
+  connect: REWARDS_CATALOG.filter((r) => r.lane === "connect"),
+  build: REWARDS_CATALOG.filter((r) => r.lane === "build"),
+};
+
+
+/**
  * Flat coin-launch fee in $RHOZE. Charged to creator on first mint of each
  * coin (covers metadata pinning, vanity CA generation, and platform infra).
  * 100 $RHOZE ≈ $1, so 500 ≈ $5 — intentionally small so it doesn't gate
