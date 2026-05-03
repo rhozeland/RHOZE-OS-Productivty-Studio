@@ -16,10 +16,8 @@ import {
   MapPin,
   Globe2,
   Ticket,
-  Sparkles,
   ArrowLeft,
   Settings,
-  ExternalLink,
   Loader2,
   CheckCircle2,
   Clock,
@@ -29,7 +27,6 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { shortHash } from "@/lib/content-hash";
 import TicketCheckoutDialog from "@/components/events/TicketCheckoutDialog";
 import EventInviteBanner from "@/components/events/EventInviteBanner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
