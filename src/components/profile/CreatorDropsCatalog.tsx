@@ -57,9 +57,28 @@ const CreatorDropsCatalog = ({ creatorId, isOwnProfile }: Props) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {drops.map((c) => {
-        const real = Number(c.real_sol_reserves) * 100;
-        const goal = Number(c.graduation_sol_target) * 100;
-        const progress = Math.min(100, goal > 0 ? (real / goal) * 100 : 0);
+        const vSol = Number(c.virtual_sol_reserves) || 0;
+        const vTok = Number(c.virtual_token_reserves) || 1;
+        const supply = Number(c.total_supply) || 0;
+        // Price in $RHOZE per token (1 SOL ≈ 100 $RHOZE in simulation).
+        const priceRhoze = (vSol / vTok) * 100;
+        const mcapRhoze = priceRhoze * supply;
+        const fmtPrice = (p: number) => {
+          if (p >= 1) return p.toFixed(2);
+          if (p >= 0.0001) return p.toFixed(6);
+          const s = p.toFixed(20);
+          const m = s.match(/^0\.0*(?=\d)/);
+          if (!m) return p.toString();
+          const zeros = m[0].length - 2;
+          const sig = s.slice(m[0].length, m[0].length + 4);
+          const sub = String(zeros).split("").map((d) => "₀₁₂₃₄₅₆₇₈₉"[Number(d)]).join("");
+          return `0.0${sub}${sig}`;
+        };
+        const fmtMcap = (n: number) => {
+          if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
+          if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+          return n.toFixed(0);
+        };
         const ctx = c.events?.title
           ? { icon: Calendar, label: c.events.title }
           : c.studios?.name
@@ -73,11 +92,7 @@ const CreatorDropsCatalog = ({ creatorId, isOwnProfile }: Props) => {
           >
             <div className="flex items-start gap-3 mb-3">
               {c.image_url ? (
-                <img
-                  src={c.image_url}
-                  alt={c.name}
-                  className="h-11 w-11 rounded-md object-cover shrink-0"
-                />
+                <img src={c.image_url} alt={c.name} className="h-11 w-11 rounded-md object-cover shrink-0" />
               ) : (
                 <div className="h-11 w-11 rounded-md bg-gradient-to-br from-emerald-500/30 to-fuchsia-500/30 flex items-center justify-center shrink-0">
                   <Coins className="h-5 w-5 text-emerald-500" />
@@ -102,15 +117,15 @@ const CreatorDropsCatalog = ({ creatorId, isOwnProfile }: Props) => {
               </div>
               <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/50 group-hover:text-foreground transition-colors shrink-0" />
             </div>
-            <div className="flex justify-between text-[10px] font-mono text-muted-foreground mb-1">
-              <span>{real.toFixed(0)} $RHOZE</span>
-              <span>{goal.toFixed(0)} goal</span>
-            </div>
-            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-emerald-500 to-fuchsia-500"
-                style={{ width: `${progress}%` }}
-              />
+            <div className="flex items-end justify-between gap-3 pt-1 border-t border-border/50">
+              <div>
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground/70">Price</p>
+                <p className="text-xs font-mono font-semibold text-foreground">{fmtPrice(priceRhoze)} <span className="text-muted-foreground font-normal">$RHOZE</span></p>
+              </div>
+              <div className="text-right">
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground/70">Mkt cap</p>
+                <p className="text-xs font-mono font-semibold text-foreground">{fmtMcap(mcapRhoze)} <span className="text-muted-foreground font-normal">$RHOZE</span></p>
+              </div>
             </div>
           </Link>
         );
