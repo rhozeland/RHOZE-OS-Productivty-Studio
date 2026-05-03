@@ -96,6 +96,20 @@ const EventDetailPage = () => {
     },
   });
 
+  const { data: eventCoins, refetch: refetchEventCoins } = useQuery({
+    queryKey: ["event-coins", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("coin_launches")
+        .select("id, ticker, name, image_url, status, real_sol_reserves, graduation_sol_target")
+        .eq("event_id", id!)
+        .neq("status", "cancelled")
+        .order("created_at", { ascending: false });
+      return (data as any[]) ?? [];
+    },
+    enabled: !!id,
+  });
+
   const { data: hostProfile } = useQuery({
     queryKey: ["event-host-profile", ev?.host_id],
     enabled: !!ev?.host_id,
