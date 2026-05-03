@@ -197,6 +197,20 @@ const AppLayout = () => {
     enabled: queryEnabled,
   });
 
+  const { data: coins } = useQuery({
+    queryKey: ["search-coins", trimmedQuery],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("coin_launches")
+        .select("id, ticker, name, mint_address")
+        .neq("status", "cancelled")
+        .or(`ticker.ilike.%${trimmedQuery}%,name.ilike.%${trimmedQuery}%,mint_address.ilike.%${trimmedQuery}%`)
+        .limit(5);
+      return data ?? [];
+    },
+    enabled: queryEnabled,
+  });
+
   // Header avatar
   const { data: myProfile } = useQuery({
     queryKey: ["my-profile-header", user?.id],
