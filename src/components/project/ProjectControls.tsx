@@ -68,7 +68,7 @@ const ProjectControls = ({ projectId, contractId, contractStatus, isClient, isSp
           Complete Project Early
         </Button>
         <p className="text-[10px] text-muted-foreground">
-          Ends the project now. Remaining escrow returns to the client. 10% platform cut applies to released credits.
+          Ends the project now. Remaining escrow returns to the client. Platform fee scales with your tier (Spark/Bloom 15% · Glow 10% · Play 7%) on released credits.
         </p>
       </div>
 
@@ -81,7 +81,7 @@ const ProjectControls = ({ projectId, contractId, contractStatus, isClient, isSp
             </DialogTitle>
             <DialogDescription>
               This will end the project immediately. Any remaining escrowed credits will be returned to the client.
-              A 10% platform fee will be deducted from the specialist's released credits.
+              A tier-based platform fee (Spark/Bloom 15% · Glow 10% · Play 7%) will be deducted from the specialist's released credits.
             </DialogDescription>
           </DialogHeader>
 
