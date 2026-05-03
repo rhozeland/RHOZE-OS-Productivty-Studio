@@ -367,10 +367,10 @@ const ListingDetailPage = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Back */}
-      <Link to="/marketplace">
+      {/* Back — return to Conversations › Listings (where the listing was opened from) */}
+      <Link to="/messages?tab=listings">
         <Button variant="ghost" size="sm" className="gap-1 rounded-full">
-          <ArrowLeft className="h-4 w-4" /> Back to Marketplace
+          <ArrowLeft className="h-4 w-4" /> Back to Conversations
         </Button>
       </Link>
 
