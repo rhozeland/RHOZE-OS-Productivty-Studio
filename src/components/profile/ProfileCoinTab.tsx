@@ -29,9 +29,11 @@ interface Props {
   defaultName?: string | null;
   defaultImage?: string | null;
   memberSince?: string | null;
+  /** Hide the embedded readiness card (it now lives in Overview). */
+  showReadiness?: boolean;
 }
 
-const ProfileCoinTab = ({ creatorId, isOwnProfile, defaultName, defaultImage, memberSince }: Props) => {
+const ProfileCoinTab = ({ creatorId, isOwnProfile, defaultName, defaultImage, memberSince, showReadiness = true }: Props) => {
   const [launchOpen, setLaunchOpen] = useState(false);
 
   const { data: coin, isLoading, refetch } = useQuery({
