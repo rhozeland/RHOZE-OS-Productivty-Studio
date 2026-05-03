@@ -1358,6 +1358,66 @@ export type Database = {
           },
         ]
       }
+      event_ticket_settlements: {
+        Row: {
+          buyer_id: string
+          created_at: string
+          currency: string
+          event_id: string
+          gross_amount: number
+          host_amount: number
+          host_id: string
+          id: string
+          payment_reference: string | null
+          platform_amount: number
+          reserve_amount: number
+          ticket_id: string
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string
+          currency: string
+          event_id: string
+          gross_amount: number
+          host_amount: number
+          host_id: string
+          id?: string
+          payment_reference?: string | null
+          platform_amount: number
+          reserve_amount: number
+          ticket_id: string
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string
+          currency?: string
+          event_id?: string
+          gross_amount?: number
+          host_amount?: number
+          host_id?: string
+          id?: string
+          payment_reference?: string | null
+          platform_amount?: number
+          reserve_amount?: number
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_ticket_settlements_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_ticket_settlements_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "event_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_ticket_tiers: {
         Row: {
           created_at: string

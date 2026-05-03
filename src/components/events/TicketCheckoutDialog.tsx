@@ -40,6 +40,7 @@ interface Tier {
 interface Event {
   id: string;
   title: string;
+  host_id?: string;
 }
 
 interface TicketCheckoutDialogProps {
@@ -100,6 +101,26 @@ const TicketCheckoutDialog = ({
         .from("event_ticket_tiers")
         .update({ quantity_sold: tier.quantity_sold + 1 })
         .eq("id", tier.id);
+
+      // Record 75/15/10 settlement (host / reserve / platform).
+      // Reserve = community/treasury share, Platform = Rhozeland.
+      if (event.host_id && args.amount > 0) {
+        const host_amount = +(args.amount * 0.75).toFixed(4);
+        const reserve_amount = +(args.amount * 0.15).toFixed(4);
+        const platform_amount = +(args.amount - host_amount - reserve_amount).toFixed(4);
+        await supabase.from("event_ticket_settlements").insert([{
+          ticket_id: data.id,
+          event_id: event.id,
+          host_id: event.host_id,
+          buyer_id: user.id,
+          currency: args.currency,
+          gross_amount: args.amount,
+          host_amount,
+          reserve_amount,
+          platform_amount,
+          payment_reference: args.reference,
+        }]);
+      }
 
       return data;
     },
