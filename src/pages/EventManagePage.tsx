@@ -449,44 +449,42 @@ const EventManagePage = () => {
           <section className="space-y-3">
             <h2 className="font-display text-lg font-bold tracking-tight">Ticket tiers</h2>
             <div className="space-y-2">
-              {(tiers ?? []).map((t: any) => (
-                <div
-                  key={t.id}
-                  className="rounded-xl bg-card border border-border p-4 flex items-center justify-between gap-3"
-                >
-                  <div>
-                    <p className="font-medium">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {Number(t.price_usd) > 0 && `$${t.price_usd} USD`}
-                      {Number(t.price_usd) > 0 && Number(t.price_rhoze) > 0 && " · "}
-                      {Number(t.price_rhoze) > 0 && `${t.price_rhoze} $RHOZE`}
-                      {!Number(t.price_usd) && !Number(t.price_rhoze) && "Free"}
-                      {" · "}
-                      {t.quantity_sold}
-                      {t.quantity_total ? ` / ${t.quantity_total}` : ""} sold
-                    </p>
+              {(tiers ?? []).map((t: any) => {
+                const cur = t.currency_code || eventCurrency;
+                const price = Number(t.price_usd) || 0;
+                return (
+                  <div
+                    key={t.id}
+                    className="rounded-xl bg-card border border-border p-4 flex items-center justify-between gap-3"
+                  >
+                    <div>
+                      <p className="font-medium">{t.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {price > 0 ? formatMoney(price, cur) : "Free"}
+                        {price > 0 && " · also payable in $RHOZE (tier discount)"}
+                        {" · "}
+                        {t.quantity_sold}
+                        {t.quantity_total ? ` / ${t.quantity_total}` : ""} sold
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="rounded-xl border border-dashed border-border p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <Plus className="h-4 w-4 text-primary" />
-                <p className="font-medium text-sm">Add a paid tier</p>
+                <p className="font-medium text-sm">Add a paid tier ({eventCurrency})</p>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                <div className="space-y-1.5 col-span-2 sm:col-span-2">
                   <Label className="text-xs">Name</Label>
                   <Input value={tierName} onChange={(e) => setTierName(e.target.value)} placeholder="GA / VIP" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">USD</Label>
-                  <Input type="number" min="0" value={tierUsd} onChange={(e) => setTierUsd(e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">$RHOZE</Label>
-                  <Input type="number" min="0" value={tierRhoze} onChange={(e) => setTierRhoze(e.target.value)} />
+                  <Label className="text-xs">Price ({eventCurrency})</Label>
+                  <Input type="number" min="0" step="0.01" value={tierPrice} onChange={(e) => setTierPrice(e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Quantity</Label>
@@ -502,7 +500,7 @@ const EventManagePage = () => {
                 Add tier
               </Button>
               <p className="text-[11px] text-muted-foreground">
-                Pricing is saved now. Paid checkout (USD via Square, $RHOZE on-chain) ships in the next pass.
+                Buyers paying with $RHOZE get a tier-based discount (Bloom 5% · Glow 10% · Play 15%).
               </p>
             </div>
           </section>
