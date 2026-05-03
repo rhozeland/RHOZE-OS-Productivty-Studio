@@ -55,8 +55,9 @@ export const TIERS: TierRow[] = [
     benefits: [
       "1× reward multiplier",
       "Standard marketplace fees",
-      "Public coin launches",
+      "1 coin drop / 30 days",
     ],
+    coinDropsPerMonth: 1,
     gradient: "linear-gradient(135deg, hsl(205 75% 65%), hsl(220 55% 42%))",
     glowColor: "hsl(210, 70%, 55%)",
   },
