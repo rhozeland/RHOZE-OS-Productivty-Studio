@@ -28,6 +28,9 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { ROLE_BY_ID } from "@/lib/creator-roles";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
+import NoteBubble from "@/components/notes/NoteBubble";
+import { useUserNote } from "@/hooks/useNotes";
+import { useBuddyStatus } from "@/hooks/useBuddies";
 
 // Human-readable labels + destinations for on-chain reputation tiles.
 // Tiles are clickable when href is set; otherwise rendered as static cards.
@@ -49,6 +52,8 @@ const ProfileDetailPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const isOwnProfile = user?.id === id;
+  const { data: profileNote } = useUserNote(id);
+  const buddy = useBuddyStatus(isOwnProfile ? null : id);
 
   // Tabs: Overview · Support · Works · Building.
   // ?tab=coin (legacy) deep-links into Support where the artist token now lives.
@@ -305,6 +310,11 @@ const ProfileDetailPage = () => {
             {/* Avatar + Name row — handle sits tight beside name */}
             <div className="flex items-end gap-4 sm:gap-5">
               <div className="-mt-14 sm:-mt-16 relative z-10 shrink-0">
+                {profileNote && (
+                  <div className="absolute left-1/2 -translate-x-1/2 -top-10 z-20">
+                    <NoteBubble body={profileNote.body} size="md" />
+                  </div>
+                )}
                 <div className="flex h-24 w-24 sm:h-28 sm:w-28 items-center justify-center rounded-full border-4 border-card bg-muted shadow-xl overflow-hidden ring-2 ring-background/50">
                   {profile.avatar_url ? (
                     <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
@@ -394,6 +404,33 @@ const ProfileDetailPage = () => {
                 {isConnected && (
                   <Button variant="outline" size="sm" onClick={() => navigate(`/messages?to=${id}`)}>
                     <MessageSquare className="mr-1.5 h-4 w-4" /> Message
+                  </Button>
+                )}
+                {buddy.status === "none" && (
+                  <Button variant="outline" size="sm" onClick={() => buddy.request.mutate(undefined, {
+                    onSuccess: () => toast.success("Buddy request sent"),
+                    onError: (e: any) => toast.error(e.message ?? "Couldn't send request"),
+                  })} disabled={buddy.request.isPending}>
+                    <UserPlus className="mr-1.5 h-4 w-4" /> Add Buddy
+                  </Button>
+                )}
+                {buddy.status === "pending_out" && (
+                  <Button variant="outline" size="sm" disabled>
+                    <Clock className="mr-1.5 h-4 w-4" /> Buddy pending
+                  </Button>
+                )}
+                {buddy.status === "pending_in" && (
+                  <Button size="sm" onClick={() => buddy.accept.mutate(undefined, {
+                    onSuccess: () => toast.success("You're buddies!"),
+                  })} disabled={buddy.accept.isPending}>
+                    <UserCheck className="mr-1.5 h-4 w-4" /> Accept buddy
+                  </Button>
+                )}
+                {buddy.status === "accepted" && (
+                  <Button variant="outline" size="sm" onClick={() => buddy.remove.mutate(undefined, {
+                    onSuccess: () => toast.success("Buddy removed"),
+                  })}>
+                    <UserCheck className="mr-1.5 h-4 w-4" /> Buddies
                   </Button>
                 )}
               </div>
