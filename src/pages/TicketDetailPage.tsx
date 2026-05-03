@@ -78,6 +78,63 @@ const TicketDetailPage = () => {
     },
   });
 
+  // Holder-side auto-retry: if checked in but no signature yet, ping the
+  // dedicated edge fn once on mount and again every ~30s, with backoff.
+  const [retrying, setRetrying] = useState(false);
+  const [retryError, setRetryError] = useState<string | null>(null);
+  const attemptCountRef = useRef(0);
+  const ticketStatus = ticket?.status;
+  const ticketSig = ticket?.solana_signature;
+  const ticketId = ticket?.id;
+  useEffect(() => {
+    if (!ticketId || ticketStatus !== "checked_in" || ticketSig) return;
+    let cancelled = false;
+    const run = async () => {
+      if (cancelled || attemptCountRef.current >= 5) return;
+      attemptCountRef.current += 1;
+      setRetrying(true);
+      try {
+        const { error } = await supabase.functions.invoke(
+          "anchor-event-ticket",
+          { body: { ticket_id: ticketId } },
+        );
+        if (error) throw error;
+        setRetryError(null);
+        refetch();
+      } catch (err) {
+        setRetryError(err instanceof Error ? err.message : "Retry failed");
+      } finally {
+        if (!cancelled) setRetrying(false);
+      }
+    };
+    // Fire immediately, then every 30s.
+    run();
+    const iv = setInterval(run, 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(iv);
+    };
+  }, [ticketId, ticketStatus, ticketSig, refetch]);
+
+  const manualRetry = async () => {
+    if (!ticketId || retrying) return;
+    setRetrying(true);
+    setRetryError(null);
+    try {
+      const { error } = await supabase.functions.invoke(
+        "anchor-event-ticket",
+        { body: { ticket_id: ticketId } },
+      );
+      if (error) throw error;
+      attemptCountRef.current = 0;
+      refetch();
+    } catch (err) {
+      setRetryError(err instanceof Error ? err.message : "Retry failed");
+    } finally {
+      setRetrying(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-xl mx-auto py-20 text-center">
