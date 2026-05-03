@@ -48,9 +48,8 @@ const VerificationPage = () => {
   const [video, setVideo] = useState<File | null>(null);
   const [contactEmail, setContactEmail] = useState(user?.email ?? "");
   const [bio, setBio] = useState("");
-  const [socials, setSocials] = useState<string[]>(["", ""]);
+  const [socials, setSocials] = useState<string[]>([""]);
   const [submitting, setSubmitting] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [latest, setLatest] = useState<LatestRequest | null>(null);
 
   const loadLatest = async () => {
