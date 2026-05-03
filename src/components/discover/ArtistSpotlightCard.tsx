@@ -9,7 +9,7 @@
  * card via the avatar-derived gradient halo.
  */
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Sparkles, Hash, Users as UsersIcon, FileImage } from "lucide-react";
+import { ArrowUpRight, Sparkles, FileImage } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import RegionChip from "@/components/profile/RegionChip";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
