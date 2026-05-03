@@ -98,6 +98,22 @@ const ChatAttachmentMenu = ({ onSendMessage, onSendQuote, disabled }: ChatAttach
     enabled: open && view === "listings",
   });
 
+  // Events — upcoming + recent past, hosted by me OR public, so I can drop a link to a session
+  const { data: events } = useQuery({
+    queryKey: ["share-events", user?.id],
+    queryFn: async () => {
+      const nowIso = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { data, error } = await supabase
+        .from("events")
+        .select("id, title, starts_at, ends_at, venue_name, is_online, cover_url, status, host_id")
+        .gte("starts_at", nowIso)
+        .in("status", ["published", "live", "draft"])
+        .order("starts_at", { ascending: true })
+        .limit(50);
+      if (error) throw error;
+      return data;
+  });
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0 || !user) return;
