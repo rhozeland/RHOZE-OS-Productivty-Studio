@@ -737,6 +737,13 @@ const ProfileDetailPage = () => {
                                 {listing.category}
                               </Badge>
                             )}
+                            {vip && (
+                              <VerifiedIPBadge
+                                signature={vip.signature}
+                                size="xs"
+                                showLabel={false}
+                              />
+                            )}
                           </div>
                           <p className="text-sm font-medium text-foreground truncate">{listing.title}</p>
                           <div className="flex items-center gap-2 mt-0.5">
