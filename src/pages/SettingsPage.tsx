@@ -11,9 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import {
-  Moon, Sun, Upload, Eye, EyeOff, X, Camera, Lock, MapPin, Bell,
-  Trash2, AlertTriangle, Download, User, Box, Wallet, Palette,
-  ChevronRight, Fingerprint, BadgeCheck,
+  Moon, Sun, Upload, Eye, EyeOff, X, Camera, Lock, Bell,
+  Trash2, AlertTriangle, Download, User, Box, Wallet,
+  ChevronRight, BadgeCheck,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useArtistVerification } from "@/hooks/useArtistVerification";
