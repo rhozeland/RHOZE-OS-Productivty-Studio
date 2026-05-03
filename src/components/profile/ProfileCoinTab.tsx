@@ -13,6 +13,7 @@
  * panel are the same components used by the legacy LaunchDetailPage.
  */
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Coins, Loader2, Sparkles, TrendingUp } from "lucide-react";
