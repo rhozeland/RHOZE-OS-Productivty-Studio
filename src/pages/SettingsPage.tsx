@@ -304,7 +304,24 @@ const SettingsPage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const handleDeleteAccount = async () => {
+  const changeEmail = useMutation({
+    mutationFn: async () => {
+      const trimmed = newEmail.trim().toLowerCase();
+      if (!trimmed || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(trimmed)) {
+        throw new Error("Enter a valid email address");
+      }
+      if (trimmed === user?.email) throw new Error("That's already your email");
+      const { error } = await supabase.auth.updateUser({ email: trimmed });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Confirmation sent", {
+        description: "Check both your old and new inbox to confirm the change.",
+      });
+      setNewEmail("");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
     if (deleteConfirm !== "DELETE") { toast.error("Type DELETE to confirm"); return; }
     toast.success("Account deactivated. Signing out...");
     setTimeout(() => signOut(), 1500);
