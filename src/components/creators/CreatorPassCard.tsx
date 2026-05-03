@@ -45,8 +45,6 @@ export function getTokenTier(balance: number): string {
 
 const CreatorPassCard = () => {
   const { user } = useAuth();
-  const { connected } = useWallet();
-  const { data: tokenInfo } = useRhozeBalance();
   const [claimAmount, setClaimAmount] = useState(0);
 
   const { data: credits } = useQuery({
