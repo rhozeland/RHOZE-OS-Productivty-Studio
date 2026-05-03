@@ -55,20 +55,6 @@ const StudioDetailPage = () => {
     enabled: !!studio?.owner_id,
   });
 
-  const { data: reviews } = useQuery({
-    queryKey: ["studio-reviews", id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("studio_reviews")
-        .select("*")
-        .eq("studio_id", id!)
-        .order("created_at", { ascending: false })
-        .limit(10);
-      return data ?? [];
-    },
-    enabled: !!id,
-  });
-
   // Studio-specific services
   const { data: studioServices } = useQuery({
     queryKey: ["studio-detail-services", id],
