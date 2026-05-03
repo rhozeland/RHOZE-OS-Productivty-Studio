@@ -236,6 +236,8 @@ const EventDetailPage = () => {
         )}
       </div>
 
+      <EventInviteBanner eventId={ev.id} eventTitle={ev.title} />
+
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 items-start">
         {/* LEFT — content */}
         <motion.div
