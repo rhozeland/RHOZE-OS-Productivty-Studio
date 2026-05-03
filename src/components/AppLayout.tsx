@@ -8,7 +8,7 @@ import NotificationBell from "@/components/NotificationBell";
 import UsernamePrompt from "@/components/UsernamePrompt";
 // FlowLauncher (floating FAB) retired — Flow is now reachable via the Hub view toggle + HubFlowWidget.
 // DockBar retired in v7 (post phase-2) — navigation happens via the left side nav + global ⌘K search.
-import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Sun, Moon, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useTheme } from "@/contexts/ThemeContext";
+
 import { cn } from "@/lib/utils";
 import {
   CommandDialog,
@@ -114,7 +114,7 @@ const AppLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -290,25 +290,7 @@ const AppLayout = () => {
                 <Search className="h-4 w-4 text-muted-foreground" />
               </button>
 
-              {/* Theme toggle — visible to everyone */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={toggleTheme}
-                    className="h-8 w-8 rounded-full border border-border bg-card flex items-center justify-center hover:bg-muted/50 transition-colors"
-                    aria-label="Toggle theme"
-                  >
-                    {theme === "dark" ? (
-                      <Sun className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Moon className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs font-body">
-                  {theme === "dark" ? "Light mode" : "Dark mode"}
-                </TooltipContent>
-              </Tooltip>
+              {/* Theme toggle moved to Settings → Account (per v8.7 cleanup). */}
 
               {user && <NotificationBell />}
               {user && <RhozeBalanceChip />}

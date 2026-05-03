@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { CREATOR_ROLES, ROLE_BY_ID, SKILL_OPTIONS } from "@/lib/creator-roles";
-import { Check, Plus, X } from "lucide-react";
+import { Check, Plus, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface RolePickerProps {
@@ -12,10 +12,27 @@ interface RolePickerProps {
 }
 
 /**
- * Two-step picker — pick up to N roles, then pick specialties from the union
- * of those roles. Replaces the free-form "headline" + "mediums" inputs so we
- * get clean, matchable data on every profile.
+ * Deterministic accent color per role id. Replaces the old emoji-led chips
+ * with a color dot + clean label so the UI feels editorial, not childish.
  */
+const ROLE_ACCENTS: Record<string, string> = {
+  "music-producer": "bg-rose-500",
+  musician: "bg-fuchsia-500",
+  "visual-artist": "bg-amber-500",
+  illustrator: "bg-orange-500",
+  designer: "bg-emerald-500",
+  photographer: "bg-sky-500",
+  filmmaker: "bg-indigo-500",
+  "3d-artist": "bg-cyan-500",
+  writer: "bg-yellow-500",
+  "fashion-designer": "bg-pink-500",
+  developer: "bg-violet-500",
+  creator: "bg-teal-500",
+  curator: "bg-purple-500",
+  performer: "bg-red-500",
+};
+const accentFor = (id: string) => ROLE_ACCENTS[id] ?? "bg-foreground/40";
+
 export const RolePicker = ({
   selectedRoles,
   onChangeRoles,
@@ -25,9 +42,8 @@ export const RolePicker = ({
 }: RolePickerProps) => {
   const toggleRole = (id: string) => {
     if (selectedRoles.includes(id)) {
-      onChangeRoles(selectedRoles.filter((r) => r !== id));
-      // Also drop any specialties that only belong to the removed role.
       const remaining = selectedRoles.filter((r) => r !== id);
+      onChangeRoles(remaining);
       const stillValid = new Set(
         remaining.flatMap((r) => ROLE_BY_ID.get(r)?.specialties ?? []),
       );
@@ -72,12 +88,15 @@ export const RolePicker = ({
                 className={cn(
                   "rounded-full px-3 py-1.5 text-xs border transition-all flex items-center gap-1.5",
                   active
-                    ? "border-primary bg-primary/10 text-primary"
+                    ? "border-foreground bg-foreground text-background"
                     : "border-border bg-card text-foreground/70 hover:text-foreground hover:border-foreground/30",
                   disabled && "opacity-40 cursor-not-allowed",
                 )}
               >
-                <span aria-hidden>{role.emoji}</span>
+                <span
+                  aria-hidden
+                  className={cn("h-1.5 w-1.5 rounded-full", accentFor(role.id))}
+                />
                 {role.label}
                 {active && <Check className="h-3 w-3" />}
               </button>
@@ -102,7 +121,7 @@ export const RolePicker = ({
                   className={cn(
                     "rounded-full px-2.5 py-1 text-[11px] border transition-all",
                     active
-                      ? "border-accent bg-accent/15 text-foreground"
+                      ? "border-foreground bg-foreground/10 text-foreground"
                       : "border-border bg-card text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -125,23 +144,31 @@ interface SkillPickerProps {
 }
 
 /**
- * Multi-select skill chips. We still allow a free-form add (some skills are
- * niche), but the curated list does most of the work.
+ * Searchable skill picker — type to filter the curated list. Selected
+ * skills surface as removable chips above. Custom skills can still be
+ * added when the search returns no match.
  */
 export const SkillPicker = ({ value, onChange, max = 12 }: SkillPickerProps) => {
-  const [custom, setCustom] = useState("");
+  const [query, setQuery] = useState("");
 
-  const toggle = (s: string) => {
-    if (value.includes(s)) onChange(value.filter((x) => x !== s));
-    else if (value.length < max) onChange([...value, s]);
-  };
-
-  const addCustom = () => {
-    const trimmed = custom.trim();
+  const add = (s: string) => {
+    const trimmed = s.trim();
     if (!trimmed || value.includes(trimmed) || value.length >= max) return;
     onChange([...value, trimmed]);
-    setCustom("");
+    setQuery("");
   };
+  const remove = (s: string) => onChange(value.filter((x) => x !== s));
+
+  const q = query.trim().toLowerCase();
+  const matches = useMemo(() => {
+    const pool = SKILL_OPTIONS.filter((s) => !value.includes(s));
+    if (!q) return pool.slice(0, 0); // show nothing until user types
+    return pool.filter((s) => s.toLowerCase().includes(q)).slice(0, 12);
+  }, [q, value]);
+
+  const exactExists =
+    SKILL_OPTIONS.some((s) => s.toLowerCase() === q) ||
+    value.some((s) => s.toLowerCase() === q);
 
   return (
     <div className="space-y-3">
@@ -150,13 +177,13 @@ export const SkillPicker = ({ value, onChange, max = 12 }: SkillPickerProps) => 
           {value.map((s) => (
             <span
               key={s}
-              className="rounded-full bg-primary/10 text-primary px-2.5 py-1 text-[11px] flex items-center gap-1"
+              className="rounded-full bg-foreground text-background px-2.5 py-1 text-[11px] flex items-center gap-1"
             >
               {s}
               <button
                 type="button"
-                onClick={() => toggle(s)}
-                className="hover:text-foreground"
+                onClick={() => remove(s)}
+                className="opacity-70 hover:opacity-100"
                 aria-label={`Remove ${s}`}
               >
                 <X className="h-3 w-3" />
@@ -165,43 +192,55 @@ export const SkillPicker = ({ value, onChange, max = 12 }: SkillPickerProps) => 
           ))}
         </div>
       )}
-      <div className="flex flex-wrap gap-1.5">
-        {SKILL_OPTIONS.filter((s) => !value.includes(s)).map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => toggle(s)}
-            disabled={value.length >= max}
-            className="rounded-full border border-border bg-card px-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {s}
-          </button>
-        ))}
-      </div>
-      <div className="flex items-center gap-2">
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
         <input
           type="text"
-          value={custom}
-          onChange={(e) => setCustom(e.target.value)}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
+            if (e.key === "Enter" && query.trim()) {
               e.preventDefault();
-              addCustom();
+              if (matches[0] && matches[0].toLowerCase().startsWith(q)) {
+                add(matches[0]);
+              } else if (!exactExists) {
+                add(query);
+              }
             }
           }}
-          placeholder="Add a custom skill…"
-          className="flex-1 h-8 rounded-md border border-input bg-background px-2.5 text-xs"
+          placeholder="Search skills — e.g. mixing, color grading, copywriting…"
+          className="w-full h-9 rounded-md border border-input bg-background pl-9 pr-3 text-xs"
           maxLength={30}
+          disabled={value.length >= max}
         />
+      </div>
+
+      {q && matches.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {matches.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => add(s)}
+              className="rounded-full border border-border bg-card px-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {q && matches.length === 0 && !exactExists && value.length < max && (
         <button
           type="button"
-          onClick={addCustom}
-          disabled={!custom.trim() || value.length >= max}
-          className="h-8 rounded-md border border-border bg-card px-2.5 text-xs flex items-center gap-1 hover:border-foreground/30 disabled:opacity-40"
+          onClick={() => add(query)}
+          className="inline-flex items-center gap-1 text-[11px] text-foreground/80 hover:text-foreground"
         >
-          <Plus className="h-3 w-3" /> Add
+          <Plus className="h-3 w-3" /> Add custom skill "{query.trim()}"
         </button>
-      </div>
+      )}
+
       <p className="text-[10px] text-muted-foreground">
         {value.length}/{max} skills
       </p>

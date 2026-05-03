@@ -11,9 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import {
-  Moon, Sun, Upload, Eye, EyeOff, X, Camera, Lock, MapPin, Bell,
-  Trash2, AlertTriangle, Download, User, Box, Wallet, Palette,
-  ChevronRight, Fingerprint, BadgeCheck,
+  Moon, Sun, Upload, Eye, EyeOff, X, Camera, Lock, Bell,
+  Trash2, AlertTriangle, Download, User, Box, Wallet,
+  ChevronRight, BadgeCheck,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useArtistVerification } from "@/hooks/useArtistVerification";
@@ -27,6 +27,7 @@ import WorksPage from "@/pages/WorksPage";
 import MyVerificationRequests from "@/components/works/MyVerificationRequests";
 import LaunchpadIdlSettings from "@/components/launchpad/LaunchpadIdlSettings";
 import LaunchpadIdlVersions from "@/components/launchpad/LaunchpadIdlVersions";
+import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { REGIONS } from "@/lib/regions";
@@ -34,17 +35,12 @@ import { RolePicker, SkillPicker } from "@/components/profile/RolePicker";
 
 /* ─── Section nav items ─── */
 const SECTIONS = [
+  // Avatar + banner now folded into Profile (one identity surface).
   { id: "profile", label: "Profile", icon: User },
-  { id: "avatar", label: "Display Picture", icon: Camera },
-  { id: "banner", label: "Banner & Background", icon: Palette },
   { id: "wallet", label: "Wallet", icon: Wallet },
-  // Verified IP vault — full Works registry. Works is ambient elsewhere
-  // (VerifiedIPBadge surfaces it inline on every creation); this is the
-  // dedicated personal vault, intentionally tucked under Settings.
-  // NOTE: id stays "provenance" so existing /settings#provenance links keep working.
-  { id: "provenance", label: "Verified IP", icon: Fingerprint },
-  { id: "verification", label: "Verified Artist", icon: BadgeCheck },
-  { id: "shipping", label: "Shipping", icon: MapPin },
+  // Verified IP vault + Verified Artist identity merged into one "Verification" surface.
+  // id stays "provenance" so existing /settings#provenance links keep working.
+  { id: "provenance", label: "Verification", icon: BadgeCheck },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "security", label: "Security", icon: Lock },
   { id: "account", label: "Account", icon: AlertTriangle },
@@ -135,9 +131,10 @@ const SettingsPage = () => {
   const [notifPurchases, setNotifPurchases] = useState(true);
   const [notifReviews, setNotifReviews] = useState(true);
 
-  // Password
+  // Password + email change
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [newEmail, setNewEmail] = useState("");
 
   // Danger zone
   const [deleteConfirm, setDeleteConfirm] = useState("");
@@ -305,6 +302,25 @@ const SettingsPage = () => {
       if (error) throw error;
     },
     onSuccess: () => { setNewPassword(""); setConfirmPassword(""); toast.success("Password changed successfully!"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const changeEmail = useMutation({
+    mutationFn: async () => {
+      const trimmed = newEmail.trim().toLowerCase();
+      if (!trimmed || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(trimmed)) {
+        throw new Error("Enter a valid email address");
+      }
+      if (trimmed === user?.email) throw new Error("That's already your email");
+      const { error } = await supabase.auth.updateUser({ email: trimmed });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Confirmation sent", {
+        description: "Check both your old and new inbox to confirm the change.",
+      });
+      setNewEmail("");
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -736,23 +752,69 @@ const SettingsPage = () => {
   );
 
   const renderSecurity = () => (
-    <form onSubmit={(e) => { e.preventDefault(); changePassword.mutate(); }} className="space-y-4">
-      <div className="space-y-2">
-        <Label>New Password</Label>
-        <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 6 characters" />
-      </div>
-      <div className="space-y-2">
-        <Label>Confirm New Password</Label>
-        <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter new password" />
-      </div>
-      <Button type="submit" disabled={changePassword.isPending}>
-        {changePassword.isPending ? "Updating..." : "Update Password"}
-      </Button>
-    </form>
+    <div className="space-y-8">
+      {/* Change email */}
+      <form onSubmit={(e) => { e.preventDefault(); changeEmail.mutate(); }} className="space-y-3">
+        <div>
+          <p className="text-sm font-semibold text-foreground">Email address</p>
+          <p className="text-xs text-muted-foreground">
+            Currently <span className="font-mono">{user?.email}</span>. We'll send a confirmation
+            link to both addresses before the change takes effect.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Input
+            type="email"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            placeholder="new@email.com"
+            className="sm:max-w-sm"
+          />
+          <Button type="submit" variant="outline" disabled={changeEmail.isPending || !newEmail.trim()}>
+            {changeEmail.isPending ? "Sending…" : "Update email"}
+          </Button>
+        </div>
+      </form>
+
+      <Separator />
+
+      {/* Change password */}
+      <form onSubmit={(e) => { e.preventDefault(); changePassword.mutate(); }} className="space-y-4">
+        <div>
+          <p className="text-sm font-semibold text-foreground">Password</p>
+          <p className="text-xs text-muted-foreground">Choose a strong password — at least 6 characters.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label>New Password</Label>
+            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 6 characters" />
+          </div>
+          <div className="space-y-2">
+            <Label>Confirm New Password</Label>
+            <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter new password" />
+          </div>
+        </div>
+        <Button type="submit" disabled={changePassword.isPending}>
+          {changePassword.isPending ? "Updating..." : "Update Password"}
+        </Button>
+      </form>
+    </div>
   );
 
   const renderAccount = () => (
     <div className="space-y-5">
+      {/* Appearance — moved out of the top bar (v8.7) */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-foreground">Appearance</p>
+          <p className="text-xs text-muted-foreground">Switch between light and dark mode.</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={toggleTheme} className="gap-2">
+          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {theme === "dark" ? "Light mode" : "Dark mode"}
+        </Button>
+      </div>
+      <Separator />
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-foreground">Export Your Data</p>
@@ -817,12 +879,12 @@ const SettingsPage = () => {
   const renderVerification = () => {
     const status = verifData?.status ?? "none";
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="space-y-5">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-foreground">Identity status</p>
+            <p className="text-sm font-semibold text-foreground">Verified Artist</p>
             <p className="text-xs text-muted-foreground">
-              Verification unlocks Verified IP, coin launches, paid services, and paid Spaces.
+              Identity verification unlocks Verified IP, coin launches, paid services, and paid Spaces.
             </p>
           </div>
           {status === "verified" ? (
@@ -842,18 +904,38 @@ const SettingsPage = () => {
             : "Start verification"}
           <ChevronRight className="h-3.5 w-3.5" />
         </Link>
+
+        {/* Investor signal — why verification matters + how it's coming along */}
+        {user && (
+          <div className="pt-2">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">
+              Investor signal
+            </p>
+            <CreatorReadinessCard creatorId={user.id} />
+          </div>
+        )}
       </div>
     );
   };
 
   const sectionRenderers: Record<SectionId, () => JSX.Element> = {
-    profile: renderProfile,
-    avatar: renderAvatar,
-    banner: renderBanner,
+    profile: () => (
+      <div className="space-y-8">
+        {renderAvatar()}
+        <Separator />
+        {renderBanner()}
+        <Separator />
+        {renderProfile()}
+      </div>
+    ),
     wallet: renderWallet,
-    provenance: renderProvenance,
-    verification: renderVerification,
-    shipping: renderShipping,
+    provenance: () => (
+      <div className="space-y-8">
+        {renderVerification()}
+        <Separator />
+        {renderProvenance()}
+      </div>
+    ),
     notifications: renderNotifications,
     security: renderSecurity,
     account: renderAccount,
