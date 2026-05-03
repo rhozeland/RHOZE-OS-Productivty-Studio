@@ -54,7 +54,7 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
     return window.localStorage.getItem(dismissKey(user.id)) === "1";
   });
 
-  const { data: credits } = useQuery({
+  const { data: credits, isLoading: creditsLoading } = useQuery({
     queryKey: ["creator-pass-cta-credits", user?.id],
     queryFn: async () => {
       const { data } = await supabase
