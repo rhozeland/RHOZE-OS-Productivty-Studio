@@ -33,6 +33,7 @@ import ProjectsInbox from "@/components/messages/ProjectsInbox";
 import ListingsTab from "@/components/messages/ListingsTab";
 import HubFlowWidget from "@/components/hub/HubFlowWidget";
 import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
+import ConversationsRightRail from "@/components/messages/ConversationsRightRail";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pending", color: "bg-amber-500/15 text-amber-600", icon: Clock },
