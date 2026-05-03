@@ -14,6 +14,14 @@
 
 export type RewardCategory = "engagement" | "commerce" | "milestone";
 
+/**
+ * v8.7 — fan-facing lanes. We keep `category` for back-compat, but the UI
+ * groups by `lane` because users think in two modes:
+ *   • connect — engaging with artists + the community
+ *   • build   — running Spaces, projects, and your creative footprint
+ */
+export type RewardLane = "connect" | "build";
+
 export interface RewardEntry {
   /** action_type stored on `pending_rewards.action_type` */
   action: string;
@@ -24,11 +32,13 @@ export interface RewardEntry {
   /** Either a fixed $RHOZE amount, a formula string, or "%" rebate copy */
   amount: string;
   category: RewardCategory;
+  lane: RewardLane;
   /** Per-day or lifetime cap copy */
   cap?: string;
   /** Optional longer "learn more" copy surfaced on hover/expand */
   detail?: string;
 }
+
 
 export const REWARDS_CATALOG: RewardEntry[] = [
   // ─────────────────────────────────────────────────────────────
