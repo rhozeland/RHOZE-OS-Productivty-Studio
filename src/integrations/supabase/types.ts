@@ -1373,7 +1373,7 @@ export type Database = {
           id: string
           payment_reference: string | null
           platform_amount: number
-          reserve_amount: number
+          reserve_amount: number | null
           ticket_id: string
         }
         Insert: {
@@ -1387,7 +1387,7 @@ export type Database = {
           id?: string
           payment_reference?: string | null
           platform_amount: number
-          reserve_amount: number
+          reserve_amount?: number | null
           ticket_id: string
         }
         Update: {
@@ -1401,7 +1401,7 @@ export type Database = {
           id?: string
           payment_reference?: string | null
           platform_amount?: number
-          reserve_amount?: number
+          reserve_amount?: number | null
           ticket_id?: string
         }
         Relationships: [
@@ -4341,6 +4341,7 @@ export type Database = {
           tenure_full_months: number
         }[]
       }
+      get_platform_fee_bps: { Args: { _user_id: string }; Returns: number }
       get_profiles_by_ids: {
         Args: { _ids: string[] }
         Returns: {

@@ -26,6 +26,7 @@ import SquareCardForm from "@/components/booking/SquareCardForm";
 import PayWithRhozeButton from "@/components/PayWithRhozeButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { getPlatformFeeFromBalance } from "@/lib/platform-fee";
 
 interface Tier {
   id: string;
@@ -102,12 +103,17 @@ const TicketCheckoutDialog = ({
         .update({ quantity_sold: tier.quantity_sold + 1 })
         .eq("id", tier.id);
 
-      // Record 75/15/10 settlement (host / reserve / platform).
-      // Reserve = community/treasury share, Platform = Rhozeland.
+      // Tier-based platform fee — no reserve.
+      // Spark/Bloom 15% · Glow 10% · Play 7%. Host = gross − platform.
       if (event.host_id && args.amount > 0) {
-        const host_amount = +(args.amount * 0.75).toFixed(4);
-        const reserve_amount = +(args.amount * 0.15).toFixed(4);
-        const platform_amount = +(args.amount - host_amount - reserve_amount).toFixed(4);
+        const { data: hostCredits } = await supabase
+          .from("user_credits")
+          .select("balance")
+          .eq("user_id", event.host_id)
+          .maybeSingle();
+        const fee = getPlatformFeeFromBalance(Number(hostCredits?.balance) || 0);
+        const platform_amount = +(args.amount * fee).toFixed(4);
+        const host_amount = +(args.amount - platform_amount).toFixed(4);
         await supabase.from("event_ticket_settlements").insert([{
           ticket_id: data.id,
           event_id: event.id,
@@ -116,7 +122,7 @@ const TicketCheckoutDialog = ({
           currency: args.currency,
           gross_amount: args.amount,
           host_amount,
-          reserve_amount,
+          reserve_amount: 0,
           platform_amount,
           payment_reference: args.reference,
         }]);
