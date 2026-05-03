@@ -102,7 +102,7 @@ const EventDetailPage = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("coin_launches")
-        .select("id, ticker, name, image_url, status, real_sol_reserves, graduation_sol_target")
+        .select("id, ticker, name, image_url, status, virtual_sol_reserves, virtual_token_reserves, total_supply")
         .eq("event_id", id!)
         .neq("status", "cancelled")
         .order("created_at", { ascending: false });
