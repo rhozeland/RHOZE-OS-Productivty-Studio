@@ -34,14 +34,17 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   /**
-   * Work-coin mode (legacy): pass a workId. The coin is bound to that
-   * Verified IP work and the dialog calls `create_coin_launch`.
-   *
-   * Profile-coin mode (current): omit workId. The dialog calls
-   * `create_profile_coin_launch` and the coin is bound to the signed-in
-   * creator's profile (one active profile coin per creator).
+   * Coins are now free-form "drops" that can optionally attach to an
+   * Event or a Space. Pass `eventId` or `spaceId` to bind the drop to
+   * that surface (server checks ownership). Omit both for a standalone
+   * drop. The legacy `workId` path is kept for back-compat with old
+   * Verified-IP work surfaces.
    */
   workId?: string;
+  eventId?: string;
+  spaceId?: string;
+  /** Where to send the user after launch. Defaults to /coin/<TICKER>. */
+  contextLabel?: string;
   defaultName?: string;
   defaultImage?: string | null;
   /** Optional callback so parents can refetch their coin query on success. */
