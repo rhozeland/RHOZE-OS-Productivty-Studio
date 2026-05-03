@@ -450,6 +450,9 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
           <TabsTrigger value="listings" className="gap-1.5">
             <Store className="h-3.5 w-3.5" /> Listings
           </TabsTrigger>
+          <TabsTrigger value="flow" className="gap-1.5">
+            <Flame className="h-3.5 w-3.5" /> Flow
+          </TabsTrigger>
           {activeTab === "groups" && (
             <TabsTrigger value="groups" className="gap-1.5">
               <Users className="h-3.5 w-3.5" /> Groups
