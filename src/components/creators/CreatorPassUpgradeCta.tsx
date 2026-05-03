@@ -195,7 +195,7 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
       <div className="relative shrink-0 h-10 w-10 rounded-full bg-gradient-to-br from-primary/30 to-amber-500/30 flex items-center justify-center">
         <Sparkles className="h-5 w-5 text-foreground" />
       </div>
-      <div className="relative flex-1 min-w-0 pr-6">
+      <div className="relative flex-1 min-w-0 pr-8">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
             Creator Pass
@@ -208,8 +208,8 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
           Climb to {personalized.next.label} for bigger rewards
         </h3>
         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{personalized.hint}</p>
+        <ArrowRight className="inline-block ml-1 h-3.5 w-3.5 text-muted-foreground/70 align-[-2px] group-hover:text-foreground group-hover:translate-x-0.5 transition" />
       </div>
-      <ArrowRight className="relative h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition shrink-0 mt-1" />
       <button
         type="button"
         onClick={handleDismiss}

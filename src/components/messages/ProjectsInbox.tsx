@@ -49,6 +49,8 @@ import {
   ListTree,
   Loader2,
   Link as LinkIcon,
+  Users,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -142,6 +144,26 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
     );
   }, [ownedProjects, collabProjects]);
 
+  // Per-project member counts (owner + collaborators) for the list indicator.
+  const { data: memberCounts } = useQuery({
+    queryKey: ["inbox-project-member-counts", projects.map((p) => p.id).join(",")],
+    enabled: projects.length > 0,
+    queryFn: async () => {
+      const ids = projects.map((p) => p.id);
+      const { data, error } = await supabase
+        .from("project_collaborators")
+        .select("project_id")
+        .in("project_id", ids);
+      if (error) return {} as Record<string, number>;
+      const counts: Record<string, number> = {};
+      for (const id of ids) counts[id] = 1; // owner counts as 1
+      (data ?? []).forEach((r: any) => {
+        counts[r.project_id] = (counts[r.project_id] ?? 1) + 1;
+      });
+      return counts;
+    },
+  });
+
   const selectedProject = useMemo(
     () => projects.find((p) => p.id === selectedId) ?? null,
     [projects, selectedId],
@@ -215,7 +237,6 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
                 const meta = STATUS_META[p.status] ?? STATUS_META.active;
                 const Icon = meta.icon;
                 const active = selectedProject?.id === p.id;
-                const isOwner = p.user_id === userId;
                 return (
                   <button
                     key={p.id}
@@ -235,10 +256,14 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
                       <span className="text-sm font-medium text-foreground truncate flex-1">
                         {p.title}
                       </span>
-                      {!isOwner && (
-                        <Badge variant="outline" className="text-[9px] py-0 h-4">
-                          Collab
-                        </Badge>
+                      {(memberCounts?.[p.id] ?? 1) > 1 && (
+                        <span
+                          className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground shrink-0"
+                          title={`${memberCounts?.[p.id] ?? 1} members`}
+                        >
+                          <Users className="h-3 w-3" />
+                          {memberCounts?.[p.id] ?? 1}
+                        </span>
                       )}
                     </div>
                     <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
@@ -329,6 +354,58 @@ const ProjectThread = ({
       return (data ?? []) as any[];
     },
   });
+
+  // Auto-generated system messages: project kickoff + milestone approvals.
+  // These are derived client-side from project state — no DB writes needed.
+  const { data: approvedMilestones } = useQuery({
+    queryKey: ["project-approved-milestones", project.id],
+    queryFn: async () => {
+      const { data: contracts } = await supabase
+        .from("project_contracts")
+        .select("id")
+        .eq("project_id", project.id);
+      const contractIds = (contracts ?? []).map((c: any) => c.id);
+      if (!contractIds.length) return [] as any[];
+      const { data } = await supabase
+        .from("project_milestones" as any)
+        .select("id, title, approved_at, status")
+        .in("contract_id", contractIds)
+        .eq("status", "approved")
+        .not("approved_at", "is", null);
+      return (data ?? []) as any[];
+    },
+  });
+
+  type SystemMsg = { id: string; system: true; created_at: string; kind: "kickoff" | "milestone"; title: string; body: string };
+  const systemMessages: SystemMsg[] = useMemo(() => {
+    const out: SystemMsg[] = [];
+    out.push({
+      id: `sys-kickoff-${project.id}`,
+      system: true,
+      created_at: project.created_at,
+      kind: "kickoff",
+      title: `${project.title} is live`,
+      body: "Every great project starts with a single thread. Drop the first idea, share what you're after, and let momentum build from here.",
+    });
+    (approvedMilestones ?? []).forEach((m: any) => {
+      out.push({
+        id: `sys-ms-${m.id}`,
+        system: true,
+        created_at: m.approved_at,
+        kind: "milestone",
+        title: `Milestone approved · ${m.title}`,
+        body: "One step closer. The team's signal moved forward.",
+      });
+    });
+    return out;
+  }, [project.id, project.title, project.created_at, approvedMilestones]);
+
+  const allMessages = useMemo(() => {
+    return [...(messages ?? []), ...systemMessages].sort(
+      (a: any, b: any) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
+  }, [messages, systemMessages]);
 
   const sendMessage = useMutation({
     mutationFn: async () => {
@@ -427,15 +504,42 @@ const ProjectThread = ({
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
-          ) : (messages?.length ?? 0) === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-muted/20 p-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                No messages yet. Kick off the thread below.
-              </p>
-            </div>
           ) : (
             <div className="space-y-2">
-              {messages!.map((m: any) => {
+              {allMessages.map((m: any) => {
+                if (m.system) {
+                  const isKickoff = m.kind === "kickoff";
+                  return (
+                    <div key={m.id} className="flex justify-center py-1">
+                      <div
+                        className={cn(
+                          "max-w-[90%] rounded-2xl border px-4 py-3 text-center",
+                          isKickoff
+                            ? "border-primary/30 bg-gradient-to-br from-primary/10 via-card/60 to-amber-500/10"
+                            : "border-emerald-500/30 bg-emerald-500/5",
+                        )}
+                      >
+                        <div className="flex items-center justify-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                          {isKickoff ? (
+                            <Sparkles className="h-3 w-3 text-primary" />
+                          ) : (
+                            <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                          )}
+                          {isKickoff ? "Kickoff" : "Milestone"}
+                        </div>
+                        <p className="mt-1 font-display text-sm font-semibold text-foreground">
+                          {m.title}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                          {m.body}
+                        </p>
+                        <p className="mt-1.5 text-[10px] text-muted-foreground/70">
+                          {format(new Date(m.created_at), "MMM d · h:mm a")}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
                 const mine = m.sender_id === userId;
                 return (
                   <div
