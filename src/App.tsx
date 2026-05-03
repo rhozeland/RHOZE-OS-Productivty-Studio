@@ -57,6 +57,7 @@ import TicketDetailPage from "@/pages/TicketDetailPage";
 import { ProfileRedirect } from "@/components/ProfileRedirect";
 import FlowModePage from "@/pages/FlowModePage";
 import LaunchRedirect from "@/pages/LaunchRedirect";
+import LaunchDetailPage from "@/pages/LaunchDetailPage";
 // /rewards now redirects to /credits?tab=how — explainer lives inside Creator Pass
 import SwapHistoryPage from "@/pages/SwapHistoryPage";
 import UnsubscribePage from "@/pages/UnsubscribePage";
