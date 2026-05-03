@@ -101,6 +101,9 @@ const AdminPage = () => {
           <TabsTrigger value="capital" className="gap-1.5 text-xs shrink-0">
             <Sliders className="h-3.5 w-3.5" /> Capital
           </TabsTrigger>
+          <TabsTrigger value="fees" className="gap-1.5 text-xs shrink-0">
+            <Percent className="h-3.5 w-3.5" /> Fees
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview"><AdminOverview /></TabsContent>
