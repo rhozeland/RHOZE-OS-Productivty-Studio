@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   Clock,
   Wallet,
+  Coins,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import TicketCheckoutDialog from "@/components/events/TicketCheckoutDialog";
 import EventInviteBanner from "@/components/events/EventInviteBanner";
 import EventMediaCarousel from "@/components/events/EventMediaCarousel";
+import LaunchCoinDialog from "@/components/launchpad/LaunchCoinDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const EventDetailPage = () => {
