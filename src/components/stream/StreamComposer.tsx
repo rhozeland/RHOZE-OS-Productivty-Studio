@@ -12,27 +12,20 @@
  * primary action button reads naturally ("Drop" on Conversations,
  * "Post Offering" on Offerings, etc.).
  */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAuthGate } from "@/components/AuthGateDialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Flame,
   Briefcase,
   CalendarDays,
   Building2,
   Shield,
-  Send,
-  Loader2,
   Plus,
-  X,
 } from "lucide-react";
-import { toast } from "sonner";
+import NoteComposer from "@/components/notes/NoteComposer";
 
 export type StreamPostType =
   | "text"
@@ -54,7 +47,10 @@ interface TypeMeta {
 }
 
 const TYPES: TypeMeta[] = [
-  { key: "text",     label: "Update",   icon: Flame,         inline: true,  cta: "Post Update" },
+  // "Update" no longer posts to Stream — it now opens the Notes composer
+  // (Instagram-style 60-word, 24h thought bubble shown on the user's avatar
+  // and to their buddies in DMs). The composer handles its own write path.
+  { key: "text",     label: "Update",   icon: Flame,         inline: true,  cta: "Leave a note" },
   { key: "offering", label: "Offering", icon: Briefcase,     inline: false, href: "/marketplace?compose=service", cta: "Post Offering" },
   { key: "event",    label: "Event",    icon: CalendarDays,  inline: false, href: "/spaces/events/new",           cta: "Host Event" },
   { key: "space",    label: "Space",    icon: Building2,     inline: false, href: "/studios/apply",               cta: "List Space" },
@@ -78,6 +74,7 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
   const [type, setType] = useState<StreamPostType>(defaultType);
   const [text, setText] = useState("");
   const [expanded, setExpanded] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(false);
 
   // Re-sync default when lane changes (HubPage drives this).
   useEffect(() => setType(defaultType), [defaultType]);
@@ -85,42 +82,16 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
   const meta = TYPES.find((t) => t.key === type)!;
   const Icon = meta.icon;
 
-  const createDrop = useMutation({
-    mutationFn: async () => {
-      if (!user) throw new Error("Sign in to drop a post.");
-      const trimmed = text.trim();
-      if (!trimmed) throw new Error("Say something first.");
-      const { error } = await supabase.from("flow_items").insert({
-        user_id: user.id,
-        title: trimmed.slice(0, 80),
-        description: trimmed,
-        category: defaultCategory ?? "general",
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      setText("");
-      setExpanded(false);
-      queryClient.invalidateQueries({ queryKey: ["hub-conversations"] });
-      queryClient.invalidateQueries({ queryKey: ["stream-conversations"] });
-      toast.success("Update posted.");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  // Update no longer writes to flow_items — it opens the Notes composer.
+  // Kept the mutation shell removed; createDrop is unused now.
 
   const handlePrimary = () => {
-    if (!requireAuth("Sign up to post updates.")) return;
-    if (meta.inline) {
-      if (!expanded) {
-        setExpanded(true);
-        // focus on next tick so the textarea exists
-        setTimeout(() => textareaRef.current?.focus(), 0);
-        return;
-      }
-      createDrop.mutate();
-    } else if (meta.href) {
-      navigate(meta.href);
+    if (!requireAuth("Sign up to leave a note.")) return;
+    if (type === "text") {
+      setNoteOpen(true);
+      return;
     }
+    if (meta.href) navigate(meta.href);
   };
 
   return (
@@ -157,83 +128,27 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
         })}
       </div>
 
-      {/* Inline textarea (text type only, when expanded) */}
-      <AnimatePresence initial={false}>
-        {meta.inline && expanded && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.18 }}
-            className="overflow-hidden"
-          >
-            <Textarea
-              ref={textareaRef}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Share an update — what you're working on, a thought, a link…"
-              className="min-h-[88px] resize-none border-0 bg-muted/40 focus-visible:ring-1"
-              maxLength={500}
-              onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                  e.preventDefault();
-                  if (text.trim()) createDrop.mutate();
-                }
-                if (e.key === "Escape") {
-                  setExpanded(false);
-                  setText("");
-                }
-              }}
-            />
-            <div className="mt-1.5 text-[10px] text-muted-foreground/60 px-1">
-              {text.length}/500 · ⌘↵ to post · Esc to close
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Primary action row */}
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs text-muted-foreground hidden sm:block">
-          {meta.inline
-            ? expanded
-              ? "Updates show up in Conversations and on your profile."
-              : "Quick update — a thought, link, or status."
+          {type === "text"
+            ? "Leave a 60-word note — disappears in 24h, shows on your profile + DMs."
             : `Opens the full ${meta.label.toLowerCase()} flow.`}
         </p>
         <div className="flex items-center gap-2 ml-auto">
-          {meta.inline && expanded && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="rounded-full"
-              onClick={() => {
-                setExpanded(false);
-                setText("");
-              }}
-            >
-              <X className="h-3.5 w-3.5" />
-            </Button>
-          )}
           <Button
             type="button"
             onClick={handlePrimary}
-            disabled={createDrop.isPending}
             className="rounded-full gap-1.5"
             size="sm"
           >
-            {createDrop.isPending ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : meta.inline && expanded ? (
-              <Send className="h-3.5 w-3.5" />
-            ) : (
-              <Plus className="h-3.5 w-3.5" />
-            )}
+            <Plus className="h-3.5 w-3.5" />
             {meta.cta}
           </Button>
         </div>
       </div>
+
+      <NoteComposer open={noteOpen} onOpenChange={setNoteOpen} />
     </div>
   );
 };
