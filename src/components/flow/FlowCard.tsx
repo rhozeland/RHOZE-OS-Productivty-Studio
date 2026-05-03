@@ -445,31 +445,13 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
               <span className="text-[11px] font-medium tabular-nums">{likeCount && likeCount > 0 ? likeCount : "Like"}</span>
             </button>
             <button
-              onClick={(e) => { e.stopPropagation(); onComment(); }}
-              className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group"
-              title="Comments"
-            >
-              <MessageCircle className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
-              <span className="text-[11px] font-medium tabular-nums">{commentCount && commentCount > 0 ? commentCount : "Comment"}</span>
-            </button>
-            <button
               onClick={(e) => { e.stopPropagation(); onShare(); }}
               className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group"
               title="Send to someone"
             >
               <Send className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
+              <span className="text-[11px] font-medium">Send</span>
             </button>
-
-            {(isOwner || isAdmin) && onDelete && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                className="flex items-center gap-1.5 text-muted-foreground hover:text-destructive transition-colors group"
-                title={isAdmin && !isOwner ? "Remove (Admin)" : "Delete"}
-              >
-                <Trash2 className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
-                <span className="text-[11px] font-medium">{isAdmin && !isOwner ? "Remove" : "Delete"}</span>
-              </button>
-            )}
 
             {item.link_url && (
               <a

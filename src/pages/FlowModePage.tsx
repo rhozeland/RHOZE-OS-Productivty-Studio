@@ -58,7 +58,7 @@ import LinkPreviewCard from "@/components/flow/LinkPreviewCard";
 import { cn } from "@/lib/utils";
 import { loadFlowFeed } from "@/lib/flow-feed";
 import { computeContentHash } from "@/lib/content-hash";
-import AdminFlowSeedPanel from "@/components/flow/AdminFlowSeedPanel";
+import FlowCreatorPeek from "@/components/flow/FlowCreatorPeek";
 import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
 import SignUpToPostPrompt from "@/components/flow/SignUpToPostPrompt";
 import FlowFeedErrorState from "@/components/flow/FlowFeedErrorState";
@@ -201,11 +201,14 @@ const FlowModePage = () => {
     return saved !== null ? saved === "true" : true;
   });
   const [swipeMap] = useState({
-    up: "like",
+    up: "profile",
     down: "comment",
     left: "dislike",
     right: "skip",
   });
+  const [peekOpen, setPeekOpen] = useState(false);
+  const [peekCreatorId, setPeekCreatorId] = useState<string | null>(null);
+  const [peekInitial, setPeekInitial] = useState<{ display_name?: string | null; avatar_url?: string | null } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Validate one file against the current category's accept rules. Returns null if OK,
@@ -908,8 +911,20 @@ const FlowModePage = () => {
     const targetItem = item || currentItem;
     if (!targetItem) return;
     if (navigator.vibrate) navigator.vibrate(20);
-    if (soundEnabled) playSwipeSound(action === "like" ? "up" : action === "dislike" ? "left" : action === "comment" ? "down" : "right");
+    if (soundEnabled) playSwipeSound(action === "profile" ? "up" : action === "dislike" ? "left" : action === "comment" ? "down" : action === "like" ? "up" : "right");
 
+    if (action === "profile") {
+      // Up-swipe / avatar tap: open the creator peek sheet so the user can
+      // explore who made this work without leaving Flow.
+      if (!targetItem.user_id) return;
+      setPeekCreatorId(targetItem.user_id);
+      setPeekInitial({
+        display_name: targetItem.profiles?.display_name ?? targetItem.creator_name ?? null,
+        avatar_url: targetItem.profiles?.avatar_url ?? null,
+      });
+      setPeekOpen(true);
+      return;
+    }
     if (action === "like") {
       // Like is a non-blocking interaction — record it but don't auto-advance,
       // so the heart fills under the user's thumb and they can keep reading.
@@ -1253,9 +1268,6 @@ const FlowModePage = () => {
             </SheetContent>
           </Sheet>
 
-          {/* Admin-only seed utility — keeps demo content fresh without
-              dropping into Supabase. Hidden for non-admins. */}
-          {isAdmin && <AdminFlowSeedPanel />}
 
           {/* Compose entry — guests get an inline "Sign up to post" popover
               instead of the upload sheet. SignUpToPostPrompt is a no-op for
@@ -1509,11 +1521,11 @@ const FlowModePage = () => {
           >
             <div className="absolute inset-0 bg-black/50" />
             <div className="relative flex flex-col items-center gap-8">
-              {/* Up */}
+              {/* Up — open creator profile peek */}
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
                 <span className="flex flex-col items-center gap-1 text-white/90">
                   <ChevronUp className="h-6 w-6" />
-                  <span className="text-sm font-medium">Like</span>
+                  <span className="text-sm font-medium">Profile</span>
                 </span>
               </motion.div>
               {/* Middle row: Left + Center + Right */}
@@ -1569,7 +1581,7 @@ const FlowModePage = () => {
               className="pointer-events-none absolute left-0 right-0 top-16 z-40 flex justify-center"
             >
               <span className="flex items-center gap-1 rounded-full bg-card/80 border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm" style={{ textShadow: "0 1px 2px hsl(var(--background) / 0.5)" }}>
-                <ChevronUp className="h-3 w-3" /> Like
+                <ChevronUp className="h-3 w-3" /> Profile
               </span>
             </motion.div>
             {/* Bottom — Share (centered in the card area, above dock) */}
@@ -1618,6 +1630,14 @@ const FlowModePage = () => {
         onOpenChange={(o) => { setCommentSheetOpen(o); if (!o) setCommentItem(null); }}
         flowItemId={commentItem?.id ?? null}
         itemTitle={commentItem?.title}
+      />
+
+      {/* Creator peek sheet (up-swipe / avatar tap). */}
+      <FlowCreatorPeek
+        open={peekOpen}
+        onOpenChange={(o) => { setPeekOpen(o); if (!o) { setPeekCreatorId(null); setPeekInitial(null); } }}
+        creatorId={peekCreatorId}
+        initial={peekInitial ?? undefined}
       />
 
       {/* Add content dialog */}
