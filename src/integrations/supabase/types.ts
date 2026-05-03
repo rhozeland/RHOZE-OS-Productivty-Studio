@@ -2106,6 +2106,57 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_fee_tiers: {
+        Row: {
+          fee_bps: number
+          label: string
+          min_balance: number
+          sort_order: number
+          tier_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          fee_bps: number
+          label: string
+          min_balance: number
+          sort_order: number
+          tier_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          fee_bps?: number
+          label?: string
+          min_balance?: number
+          sort_order?: number
+          tier_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      platform_fee_tiers_audit: {
+        Row: {
+          changed_at: string
+          changed_by: string
+          id: string
+          payload: Json
+        }
+        Insert: {
+          changed_at?: string
+          changed_by: string
+          id?: string
+          payload: Json
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string
+          id?: string
+          payload?: Json
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           available: boolean | null
@@ -4530,6 +4581,10 @@ export type Database = {
         Returns: Json
       }
       touch_user_activity: { Args: { _user_id: string }; Returns: undefined }
+      update_platform_fee_tiers: {
+        Args: { _payload: Json }
+        Returns: undefined
+      }
       update_underwriting_rules: {
         Args: { _payload: Json }
         Returns: undefined
