@@ -130,28 +130,35 @@ const EventDetailPage = () => {
     queryKey: ["event-going", id],
     enabled: !!id,
     queryFn: async () => {
-      const { count } = await supabase
+      const { data: rows, count } = await supabase
         .from("event_tickets")
-        .select("id", { count: "exact", head: true })
-        .eq("event_id", id!)
-        .in("status", ["issued", "checked_in"]);
-      const { data: recent } = await supabase
-        .from("event_tickets")
-        .select("holder_id")
+        .select("holder_id, tier_id, status, checked_in_at, created_at", { count: "exact" })
         .eq("event_id", id!)
         .in("status", ["issued", "checked_in"])
-        .order("created_at", { ascending: false })
-        .limit(8);
-      const holderIds = (recent ?? []).map((r: any) => r.holder_id);
-      let avatars: any[] = [];
+        .order("created_at", { ascending: false });
+      const all = rows ?? [];
+      const holderIds = Array.from(new Set(all.map((r: any) => r.holder_id))).slice(0, 12);
+      let profMap = new Map<string, any>();
       if (holderIds.length) {
         const { data: profs } = await supabase
           .from("profiles")
           .select("user_id, display_name, username, avatar_url")
           .in("user_id", holderIds);
-        avatars = profs ?? [];
+        profMap = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
       }
-      return { count: count ?? 0, avatars };
+      const avatars = holderIds.map((uid) => profMap.get(uid)).filter(Boolean);
+      const tierCounts = new Map<string, number>();
+      let checkedIn = 0;
+      for (const r of all as any[]) {
+        if (r.tier_id) tierCounts.set(r.tier_id, (tierCounts.get(r.tier_id) ?? 0) + 1);
+        if (r.status === "checked_in") checkedIn += 1;
+      }
+      return {
+        count: count ?? 0,
+        avatars,
+        tierCounts: Object.fromEntries(tierCounts),
+        checkedIn,
+      };
     },
   });
 
@@ -308,31 +315,113 @@ const EventDetailPage = () => {
           </section>
 
           {/* Going */}
-          {(goingData?.count ?? 0) > 0 && (
-            <section className="space-y-3">
-              <h2 className="text-sm font-semibold">{goingData!.count} Going</h2>
-              <div className="h-px bg-border" />
-              <div className="flex items-center gap-2.5 pt-1">
-                <div className="flex -space-x-2">
-                  {goingData!.avatars.slice(0, 5).map((p: any) => (
-                    <Avatar key={p.user_id} className="h-7 w-7 border-2 border-background">
-                      <AvatarImage src={p.avatar_url ?? undefined} />
-                      <AvatarFallback className="text-[10px]">
-                        {(p.display_name ?? p.username ?? "?")[0]?.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  ))}
+          {(goingData?.count ?? 0) > 0 && (() => {
+            const capacity = (tiers ?? []).reduce((acc: number | null, t: any) => {
+              if (acc === null) return null;
+              if (t.quantity_total == null) return null;
+              return acc + Number(t.quantity_total);
+            }, 0 as number | null);
+            const pct = capacity && capacity > 0
+              ? Math.min(100, Math.round(((goingData!.count) / capacity) * 100))
+              : null;
+            const tierBreakdown = (tiers ?? [])
+              .map((t: any) => ({
+                name: t.name,
+                count: (goingData as any)!.tierCounts?.[t.id] ?? 0,
+              }))
+              .filter((x) => x.count > 0);
+            const myTier = myTicket
+              ? (tiers ?? []).find((t: any) => t.id === (myTicket as any).tier_id)
+              : null;
+            return (
+              <section className="space-y-3">
+                <div className="flex items-baseline justify-between gap-2">
+                  <h2 className="text-sm font-semibold">{goingData!.count} Going</h2>
+                  {capacity != null && (
+                    <span className="text-[11px] text-muted-foreground">
+                      of {capacity}
+                    </span>
+                  )}
                 </div>
-                <p className="text-xs text-muted-foreground truncate">
-                  {goingData!.avatars
-                    .slice(0, 2)
-                    .map((p: any) => p.display_name ?? p.username ?? "Someone")
-                    .join(", ")}
-                  {goingData!.count > 2 && ` and ${goingData!.count - 2} others`}
-                </p>
-              </div>
-            </section>
-          )}
+                <div className="h-px bg-border" />
+
+                {pct != null && (
+                  <div className="space-y-1.5 pt-1">
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-foreground/80 transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      {pct}% full
+                      {(goingData as any).checkedIn > 0 && (
+                        <> · {(goingData as any).checkedIn} checked in</>
+                      )}
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2.5 pt-1">
+                  <div className="flex -space-x-2">
+                    {goingData!.avatars.slice(0, 5).map((p: any) => (
+                      <Avatar key={p.user_id} className="h-7 w-7 border-2 border-background">
+                        <AvatarImage src={p.avatar_url ?? undefined} />
+                        <AvatarFallback className="text-[10px]">
+                          {(p.display_name ?? p.username ?? "?")[0]?.toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {goingData!.avatars
+                      .slice(0, 2)
+                      .map((p: any) => p.display_name ?? p.username ?? "Someone")
+                      .join(", ")}
+                    {goingData!.count > 2 && ` and ${goingData!.count - 2} others`}
+                  </p>
+                </div>
+
+                {tierBreakdown.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {tierBreakdown.map((b) => (
+                      <span
+                        key={b.name}
+                        className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 text-[10px] text-muted-foreground"
+                      >
+                        <span className="font-semibold text-foreground">{b.count}</span>
+                        {b.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {myTier && (
+                  <div className="mt-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[10px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                        Your tier
+                      </p>
+                      {(myTicket as any).status === "checked_in" && (
+                        <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                          Checked in
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-sm font-semibold text-foreground">{myTier.name}</p>
+                    {myTier.description && (
+                      <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-muted-foreground">
+                        {myTier.description}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </section>
+            );
+          })()}
+
+          {/* Gallery (images + videos) — optional, hides when empty */}
+          <EventMediaCarousel eventId={ev.id} />
         </motion.aside>
 
         {/* RIGHT — title, details, registration, about */}
@@ -502,8 +591,6 @@ const EventDetailPage = () => {
             </div>
           )}
 
-          {/* Gallery (images + videos) */}
-          <EventMediaCarousel eventId={ev.id} />
         </div>
       </div>
 
