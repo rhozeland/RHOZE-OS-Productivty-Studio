@@ -108,6 +108,55 @@ const EventDetailPage = () => {
     },
   });
 
+  const { data: coHosts = [] } = useQuery({
+    queryKey: ["event-cohosts", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data: rows } = await supabase
+        .from("event_collaborators")
+        .select("user_id, role")
+        .eq("event_id", id!)
+        .eq("status", "accepted");
+      const ids = (rows ?? []).map((r: any) => r.user_id);
+      if (!ids.length) return [];
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, username, avatar_url")
+        .in("user_id", ids);
+      const map = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
+      return (rows ?? []).map((r: any) => ({ ...r, profile: map.get(r.user_id) }));
+    },
+  });
+
+  const { data: goingData } = useQuery({
+    queryKey: ["event-going", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("event_tickets")
+        .select("id", { count: "exact", head: true })
+        .eq("event_id", id!)
+        .in("status", ["issued", "checked_in"]);
+      const { data: recent } = await supabase
+        .from("event_tickets")
+        .select("holder_id")
+        .eq("event_id", id!)
+        .in("status", ["issued", "checked_in"])
+        .order("created_at", { ascending: false })
+        .limit(8);
+      const holderIds = (recent ?? []).map((r: any) => r.holder_id);
+      let avatars: any[] = [];
+      if (holderIds.length) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("user_id, display_name, username, avatar_url")
+          .in("user_id", holderIds);
+        avatars = profs ?? [];
+      }
+      return { count: count ?? 0, avatars };
+    },
+  });
+
   const rsvpMutation = useMutation({
     mutationFn: async (tierId: string) => {
       if (!user) throw new Error("Sign in to RSVP");
