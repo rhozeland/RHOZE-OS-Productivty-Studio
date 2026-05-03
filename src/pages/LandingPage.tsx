@@ -27,11 +27,37 @@ const HOW_ARTISTS = [
   { icon: Sparkles, title: "Sell access & upside", body: "Open commissions, host Spaces, drop events, and let fans co-own your momentum." },
 ];
 
+// Aligned with the canonical tier matrix swatches:
+// Spark = blue, Bloom = pink, Glow = orange, Play = yellow.
 const TIERS = [
-  { name: "Spark",  hue: "from-rose-300 to-pink-300",      blurb: "Welcome in. Earn rewards just by showing up." },
-  { name: "Bloom",  hue: "from-pink-300 to-fuchsia-300",   blurb: "Hold a little $RHOZE. Unlock more of the network." },
-  { name: "Glow",   hue: "from-fuchsia-300 to-amber-300",  blurb: "Hold more, get lower fees and louder reach." },
-  { name: "Play",   hue: "from-amber-300 to-emerald-300",  blurb: "The top floor — best perks, lowest fees, full studio." },
+  {
+    name: "Spark",
+    hue: "from-sky-400 via-blue-500 to-indigo-600",
+    accent: "text-sky-600",
+    chipBg: "bg-sky-500/10 text-sky-700 border-sky-500/30",
+    blurb: "Welcome in. Earn rewards just by showing up.",
+  },
+  {
+    name: "Bloom",
+    hue: "from-pink-400 via-rose-500 to-fuchsia-600",
+    accent: "text-rose-600",
+    chipBg: "bg-rose-500/10 text-rose-700 border-rose-500/30",
+    blurb: "Hold a little $RHOZE. Unlock more of the network.",
+  },
+  {
+    name: "Glow",
+    hue: "from-amber-400 via-orange-500 to-red-500",
+    accent: "text-orange-600",
+    chipBg: "bg-orange-500/10 text-orange-700 border-orange-500/30",
+    blurb: "Hold more, get lower fees and louder reach.",
+  },
+  {
+    name: "Play",
+    hue: "from-yellow-300 via-amber-400 to-yellow-600",
+    accent: "text-amber-600",
+    chipBg: "bg-amber-500/10 text-amber-700 border-amber-500/30",
+    blurb: "The top floor — best perks, lowest fees, full studio.",
+  },
 ];
 
 /* ─────────────────────── Soft pastel orbs ─────────────────── */
