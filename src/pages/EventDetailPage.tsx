@@ -487,7 +487,17 @@ const EventDetailPage = () => {
               </div>
             )}
           </div>
-        </aside>
+
+          {/* About */}
+          {ev.description && (
+            <div className="space-y-2">
+              <h2 className="font-display text-lg font-bold tracking-tight">About Event</h2>
+              <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-wrap">
+                {ev.description}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       {checkoutTier && (
