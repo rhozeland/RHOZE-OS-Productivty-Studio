@@ -22,7 +22,7 @@ import {
   getEffectiveTier,
   type TierId,
 } from "@/lib/tier-matrix";
-import { Sparkles, ArrowRight, X } from "lucide-react";
+import { Sparkles, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const dismissKey = (userId: string) => `rhozeland.creator-pass-cta.dismissed.${userId}`;
