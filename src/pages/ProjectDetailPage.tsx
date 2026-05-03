@@ -321,16 +321,23 @@ const ProjectDetailPage = () => {
       <Tabs defaultValue="roadmap" className="w-full">
         <TabsList className="mb-4 w-full justify-start overflow-x-auto flex-nowrap shrink-0">
           <TabsTrigger value="roadmap" className="shrink-0">Roadmap</TabsTrigger>
-          <TabsTrigger value="tools" className="shrink-0">Tools</TabsTrigger>
           <TabsTrigger value="vision" className="shrink-0">Scope</TabsTrigger>
           {isPaid && <TabsTrigger value="budget" className="shrink-0">Budget</TabsTrigger>}
           <TabsTrigger value="team" className="shrink-0">Team</TabsTrigger>
-          <TabsTrigger value="vault" className="shrink-0 gap-1.5">
-            <Archive className="h-3.5 w-3.5" /> Vault
-          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="roadmap" className="space-y-4">
+        <TabsContent value="roadmap" className="space-y-6">
+          {/* Drop Rooms + Smartboards live above the roadmap so they're one
+              click away — anyone on the project can spin up a quick collab
+              space or pin a moodboard without hunting for a separate tab. */}
+          <ProjectTools
+            projectId={id!}
+            projectTitle={project.title}
+            smartboardDetails={smartboardDetails}
+            onLinkSmartboard={() => setLinkDialogOpen(true)}
+            onUnlinkSmartboard={(sbId: string) => unlinkSmartboard.mutate(sbId)}
+          />
+
           <Tabs defaultValue="stages" className="w-full">
             <TabsList className="h-9">
               <TabsTrigger value="stages" className="gap-1.5 text-xs">
