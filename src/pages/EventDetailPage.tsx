@@ -276,27 +276,92 @@ const EventDetailPage = () => {
             </h1>
           </div>
 
-          {/* Hosted by */}
-          {hostProfile && (
-            <Link
-              to={`/profiles/${hostProfile.user_id}`}
-              className="inline-flex items-center gap-3 p-3 pr-5 rounded-full bg-card border border-border hover:bg-muted/40 transition-colors"
-            >
-              <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm overflow-hidden shrink-0">
-                {hostProfile.avatar_url ? (
-                  <img src={hostProfile.avatar_url} className="h-9 w-9 rounded-full object-cover" alt="" />
-                ) : (
-                  hostProfile.display_name?.[0]?.toUpperCase() ?? "?"
-                )}
+          {/* Hosted By — Luma style list */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
+                Hosted By
+              </h2>
+              <div className="h-px flex-1 bg-border ml-3" />
+            </div>
+            <div className="space-y-1">
+              {hostProfile && (
+                <Link
+                  to={`/profiles/${hostProfile.user_id}`}
+                  className="flex items-center justify-between gap-3 py-2 hover:opacity-80 transition-opacity"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar className="h-9 w-9">
+                      <AvatarImage src={hostProfile.avatar_url ?? undefined} />
+                      <AvatarFallback>
+                        {(hostProfile.display_name ?? hostProfile.username ?? "?")[0]?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <p className="text-base font-semibold truncate">
+                      {hostProfile.display_name ?? hostProfile.username ?? "Host"}
+                    </p>
+                  </div>
+                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Host
+                  </span>
+                </Link>
+              )}
+              {coHosts.map((c: any) => (
+                <Link
+                  key={c.user_id}
+                  to={`/profiles/${c.user_id}`}
+                  className="flex items-center justify-between gap-3 py-2 hover:opacity-80 transition-opacity"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar className="h-9 w-9">
+                      <AvatarImage src={c.profile?.avatar_url ?? undefined} />
+                      <AvatarFallback>
+                        {(c.profile?.display_name ?? c.profile?.username ?? "?")[0]?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <p className="text-base font-semibold truncate">
+                      {c.profile?.display_name ?? c.profile?.username ?? "Co-host"}
+                    </p>
+                  </div>
+                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    {c.role === "co_host" ? "Co-host" : "Manager"}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          {/* Going */}
+          {(goingData?.count ?? 0) > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
+                  {goingData!.count} Going
+                </h2>
+                <div className="h-px flex-1 bg-border ml-3" />
               </div>
-              <div className="min-w-0 text-left">
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Hosted by</p>
-                <p className="text-sm font-medium text-foreground truncate">
-                  {hostProfile.display_name ?? hostProfile.username ?? "Creator"}
+              <div className="flex items-center gap-3">
+                <div className="flex -space-x-2">
+                  {goingData!.avatars.slice(0, 6).map((p: any) => (
+                    <Avatar key={p.user_id} className="h-8 w-8 border-2 border-background">
+                      <AvatarImage src={p.avatar_url ?? undefined} />
+                      <AvatarFallback className="text-[10px]">
+                        {(p.display_name ?? p.username ?? "?")[0]?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                </div>
+                <p className="text-sm text-muted-foreground truncate">
+                  {goingData!.avatars
+                    .slice(0, 2)
+                    .map((p: any) => p.display_name ?? p.username ?? "Someone")
+                    .join(", ")}
+                  {goingData!.count > 2 && ` and ${goingData!.count - 2} others`}
                 </p>
               </div>
-            </Link>
+            </section>
           )}
+
 
           {/* About */}
           {ev.description && (
