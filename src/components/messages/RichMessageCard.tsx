@@ -68,6 +68,7 @@ const RichMessageCard = ({ content, isMine, timestamp, formatTime, messageId, se
     if (!data) return null;
     const FileIcon = getFileIcon(data.type);
     const isImage = data.type?.startsWith("image/");
+    const isAudio = data.type?.startsWith("audio/");
 
     return (
       <div className={cn(
@@ -79,17 +80,27 @@ const RichMessageCard = ({ content, isMine, timestamp, formatTime, messageId, se
             <img src={data.url} alt={data.name} className="w-full max-h-64 object-cover" />
           </a>
         )}
-        <div className="flex items-center gap-2.5 px-3 py-2">
-          <FileIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-foreground truncate">{data.name}</p>
-            {data.size && <p className="text-[10px] text-muted-foreground">{formatSize(data.size)}</p>}
+        {isAudio ? (
+          <div className="px-3 py-2 space-y-1.5 min-w-[240px]">
+            <div className="flex items-center gap-2">
+              <Music className="h-4 w-4 text-muted-foreground shrink-0" />
+              <p className="text-xs text-muted-foreground truncate flex-1">{data.name}</p>
+            </div>
+            <audio src={data.url} controls className="w-full h-9" />
           </div>
-          <a href={data.url} download={data.name} target="_blank" rel="noopener noreferrer"
-            className="text-primary hover:text-primary/80 shrink-0">
-            <Download className="h-4 w-4" />
-          </a>
-        </div>
+        ) : (
+          <div className="flex items-center gap-2.5 px-3 py-2">
+            <FileIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-foreground truncate">{data.name}</p>
+              {data.size && <p className="text-[10px] text-muted-foreground">{formatSize(data.size)}</p>}
+            </div>
+            <a href={data.url} download={data.name} target="_blank" rel="noopener noreferrer"
+              className="text-primary hover:text-primary/80 shrink-0">
+              <Download className="h-4 w-4" />
+            </a>
+          </div>
+        )}
         <p className={cn("px-3 pb-2 text-[10px]", isMine ? "text-muted-foreground" : "text-muted-foreground")}>
           {formatTime(timestamp)}
         </p>
