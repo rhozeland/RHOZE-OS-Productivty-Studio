@@ -173,8 +173,8 @@ const LaunchDetailPage = () => {
       <div className="container mx-auto px-4 py-8 max-w-6xl text-center space-y-4">
         <p className="text-muted-foreground">Coin not found.</p>
         <Button asChild variant="outline">
-          <Link to="/launchpad">
-            <ArrowLeft className="h-3 w-3 mr-1" /> Back to Launchpad
+          <Link to="/discover">
+            <ArrowLeft className="h-3 w-3 mr-1" /> Back to Discover
           </Link>
         </Button>
       </div>
@@ -192,8 +192,8 @@ const LaunchDetailPage = () => {
   return (
     <div className="container mx-auto px-4 py-6 max-w-6xl space-y-4">
       <Button asChild variant="ghost" size="sm" className="gap-1">
-        <Link to="/launchpad">
-          <ArrowLeft className="h-3 w-3" /> Launchpad
+        <Link to={`/profiles/${launch.creator_id}`}>
+          <ArrowLeft className="h-3 w-3" /> Back to creator
         </Link>
       </Button>
 
