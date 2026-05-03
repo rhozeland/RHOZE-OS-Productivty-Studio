@@ -55,6 +55,25 @@ const DiscoverPage = () => {
   const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
   const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
 
+  // View toggle (mosaic / events / flow), persisted in ?view= param.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawView = searchParams.get("view");
+  const view: DiscoverView =
+    rawView === "events" || rawView === "flow" ? rawView : "mosaic";
+  const setView = (v: DiscoverView) => {
+    if (v === "mosaic") searchParams.delete("view");
+    else searchParams.set("view", v);
+    setSearchParams(searchParams, { replace: true });
+  };
+  useEffect(() => {
+    if (view === "events" || view === "flow") {
+      // Scroll the toggled section into view on load.
+      requestAnimationFrame(() => {
+        document.getElementById("discover-stream")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }, [view]);
+
   // ─── Personal greeting (signed-in only) ─────────────────────────
   const { data: profile } = useQuery({
     queryKey: ["discover-greeting", user?.id],
