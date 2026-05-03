@@ -138,11 +138,11 @@ const CreatorPassCard = () => {
 
   if (!user) return null;
 
-  const LevelIcon = currentLevel.icon;
-
   return (
     <div className="space-y-6">
-      {/* ── Gym Badge Card ── */}
+      {/* ── Holographic Pass Card (3D tilt + shine) ── */}
+      <Tilt3D maxTilt={10} className="rounded-2xl">
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
