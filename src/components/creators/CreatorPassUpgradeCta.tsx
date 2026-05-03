@@ -19,7 +19,6 @@ import {
   TIERS,
   TIER_RANK,
   getHoldTier,
-  getActivityTier,
   getEffectiveTier,
   type TierId,
 } from "@/lib/tier-matrix";
@@ -27,14 +26,6 @@ import { Sparkles, ArrowRight, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const dismissKey = (userId: string) => `rhozeland.creator-pass-cta.dismissed.${userId}`;
-
-const ACTIVITY_LABELS: Record<keyof NonNullable<typeof TIERS[number]["activity"]>, string> = {
-  posts: "work post",
-  projects: "completed project",
-  listings: "listing",
-  events: "event",
-  interactions: "interaction",
-};
 
 const formatRhoze = (n: number) => {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`;
