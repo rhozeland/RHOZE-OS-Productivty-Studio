@@ -145,7 +145,7 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
     }
 
     return { effective, next: nextTier, hint };
-  }, [activity, credits, tokenInfo]);
+  }, [activity, credits]);
 
   if (!user) return null;
   if (dismissed) return null;
