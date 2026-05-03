@@ -73,6 +73,9 @@ export const TierMatrix = ({ activeTier, className }: Props) => {
                       </ul>
                     )}
                   </td>
+                  <td className="px-3 py-3 text-foreground/80 font-medium whitespace-nowrap">
+                    {t.coinDropsPerMonth === null ? "Unlimited" : t.coinDropsPerMonth}
+                  </td>
                   <td className="px-3 py-3 text-muted-foreground">
                     <ul className="space-y-0.5">
                       {t.benefits.map((b) => (
