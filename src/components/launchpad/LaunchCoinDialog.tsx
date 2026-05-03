@@ -78,6 +78,7 @@ const LaunchCoinDialog = ({
   const [lpLock, setLpLock] = useState("12");
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [initialBuy, setInitialBuy] = useState("500");
   const [dropInfo, setDropInfo] = useState<{
     tierLabel: string;
     cap: number | null;
