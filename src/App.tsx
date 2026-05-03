@@ -89,6 +89,7 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/hub",
   "/profile",
   "/spaces",
+  "/events",
   "/spaces/events/:id",
   "/spaces/events/new",
   "/spaces/events/:id/manage",
