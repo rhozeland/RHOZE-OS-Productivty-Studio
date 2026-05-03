@@ -71,6 +71,36 @@ const LaunchCoinDialog = ({
   const [lpLock, setLpLock] = useState("12");
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [dropInfo, setDropInfo] = useState<{
+    tierLabel: string;
+    cap: number | null;
+    used: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (async () => {
+      const { data: userResp } = await supabase.auth.getUser();
+      const uid = userResp.user?.id;
+      if (!uid) return;
+      const [{ data: credits }, { count }] = await Promise.all([
+        supabase.from("user_credits").select("balance").eq("user_id", uid).maybeSingle(),
+        supabase
+          .from("coin_launches")
+          .select("id", { count: "exact", head: true })
+          .eq("creator_id", uid)
+          .neq("status", "cancelled")
+          .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+      ]);
+      const balance = Number(credits?.balance ?? 0);
+      const tier = getHoldTier(balance);
+      const cap = getCoinDropsPerMonth(tier);
+      const tierLabel = TIERS.find((t) => t.id === tier)?.label ?? "Spark";
+      if (!cancelled) setDropInfo({ tierLabel, cap, used: count ?? 0 });
+    })();
+    return () => { cancelled = true; };
+  }, [open]);
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
