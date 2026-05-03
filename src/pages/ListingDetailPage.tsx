@@ -367,12 +367,23 @@ const ListingDetailPage = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Back — return to Conversations › Listings (where the listing was opened from) */}
-      <Link to="/messages?tab=listings">
-        <Button variant="ghost" size="sm" className="gap-1 rounded-full">
-          <ArrowLeft className="h-4 w-4" /> Back to Conversations
-        </Button>
-      </Link>
+      {/* Back — owners go to their Conversations › Listings; visitors go back in history */}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="gap-1 rounded-full"
+        onClick={() => {
+          if (isOwner) {
+            navigate("/messages?tab=listings");
+          } else if (window.history.length > 1) {
+            navigate(-1);
+          } else {
+            navigate("/discover");
+          }
+        }}
+      >
+        <ArrowLeft className="h-4 w-4" /> {isOwner ? "Back to Conversations" : "Back"}
+      </Button>
 
       <div className="grid gap-6 lg:grid-cols-5">
         {/* Left: Media */}
