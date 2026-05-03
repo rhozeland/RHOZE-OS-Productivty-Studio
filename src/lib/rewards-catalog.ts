@@ -301,3 +301,12 @@ export const REWARDS_BY_CATEGORY: Record<RewardCategory, RewardEntry[]> = {
   commerce: REWARDS_CATALOG.filter((r) => r.category === "commerce"),
   milestone: REWARDS_CATALOG.filter((r) => r.category === "milestone"),
 };
+
+/**
+ * Flat coin-launch fee in $RHOZE. Charged to creator on first mint of each
+ * coin (covers metadata pinning, vanity CA generation, and platform infra).
+ * 100 $RHOZE ≈ $1, so 500 ≈ $5 — intentionally small so it doesn't gate
+ * launches, but real enough to discourage spam mints.
+ */
+export const COIN_LAUNCH_FEE_RHOZE = 500;
+
