@@ -1,14 +1,9 @@
 /**
- * EventsExplorePage — Luma-inspired discovery for upcoming events.
+ * ConversationsEventsBrowser — Luma-style event discovery embedded
+ * inside the Conversations page (Events tab).
  *
- * Sections:
- *   1. Hero strip with the next featured event
- *   2. Browse by Category grid (icon tiles + counts)
- *   3. Filters (category chip + date window)
- *   4. Upcoming events grid
- *
- * Events come from `events` table where status='published' and
- * starts_at >= now(). Categories are derived from the same query.
+ * Replaces the standalone /events page. Same visual language:
+ * Featured strip + Browse by Category grid + Upcoming list.
  */
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -51,12 +46,7 @@ type EventRow = {
   status: string;
 };
 
-const CATEGORY_DEFS: {
-  slug: string;
-  label: string;
-  icon: typeof CalendarDays;
-  accent: string;
-}[] = [
+const CATEGORY_DEFS = [
   { slug: "tech", label: "Tech", icon: Cpu, accent: "text-amber-500" },
   { slug: "food", label: "Food & Drink", icon: Utensils, accent: "text-orange-500" },
   { slug: "ai", label: "AI", icon: Brain, accent: "text-pink-400" },
@@ -69,12 +59,12 @@ const CATEGORY_DEFS: {
   { slug: "meetup", label: "Community", icon: Users, accent: "text-sky-400" },
 ];
 
-const EventsExplorePage = () => {
+const ConversationsEventsBrowser = () => {
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ["events-explore"],
+    queryKey: ["conv-events-browser"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("events")
@@ -104,17 +94,17 @@ const EventsExplorePage = () => {
   const featured = events[0];
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
-            Discover Events
+            Discover events
           </p>
-          <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">
+          <h2 className="font-display text-2xl md:text-3xl font-bold tracking-tight">
             What's happening
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1.5">
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
             Browse upcoming events from creators across Rhozeland.
           </p>
         </div>
@@ -151,10 +141,10 @@ const EventsExplorePage = () => {
               <span className="text-[10px] uppercase tracking-[0.2em] text-primary font-medium">
                 Featured · {format(new Date(featured.starts_at), "MMM d")}
               </span>
-              <h2 className="font-display text-2xl md:text-3xl font-bold leading-tight">
+              <h3 className="font-display text-2xl md:text-3xl font-bold leading-tight">
                 {featured.title}
-              </h2>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              </h3>
+              <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
                 <span className="inline-flex items-center gap-1.5">
                   <CalendarDays className="h-3.5 w-3.5" />
                   {format(new Date(featured.starts_at), "EEE, h:mm a")}
@@ -181,8 +171,8 @@ const EventsExplorePage = () => {
 
       {/* Browse by Category */}
       <section className="space-y-4">
-        <h2 className="font-display text-xl font-bold tracking-tight">Browse by Category</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        <h3 className="font-display text-lg font-bold tracking-tight">Browse by Category</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {CATEGORY_DEFS.map((cat) => {
             const Icon = cat.icon;
             const count = counts.get(cat.slug) ?? 0;
@@ -214,11 +204,11 @@ const EventsExplorePage = () => {
       {/* Upcoming list */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl font-bold tracking-tight">
+          <h3 className="font-display text-lg font-bold tracking-tight">
             {activeCategory
               ? `${CATEGORY_DEFS.find((c) => c.slug === activeCategory)?.label ?? "Events"}`
               : "Upcoming"}
-          </h2>
+          </h3>
           {activeCategory && (
             <button
               onClick={() => setActiveCategory(null)}
@@ -230,8 +220,8 @@ const EventsExplorePage = () => {
         </div>
 
         {isLoading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
+          <div className="grid md:grid-cols-2 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="rounded-2xl border border-border bg-card h-64 animate-pulse" />
             ))}
           </div>
@@ -241,7 +231,7 @@ const EventsExplorePage = () => {
             <p className="text-sm text-muted-foreground">No upcoming events here yet.</p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-2 gap-4">
             {filtered.map((e) => (
               <Link
                 key={e.id}
@@ -268,9 +258,9 @@ const EventsExplorePage = () => {
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
                     {format(new Date(e.starts_at), "EEE, MMM d · h:mm a")}
                   </p>
-                  <h3 className="font-display text-base font-semibold leading-tight line-clamp-2">
+                  <h4 className="font-display text-base font-semibold leading-tight line-clamp-2">
                     {e.title}
-                  </h3>
+                  </h4>
                   <div className="mt-auto pt-2 text-xs text-muted-foreground flex items-center gap-1.5">
                     {e.is_online ? (
                       <>
@@ -293,4 +283,4 @@ const EventsExplorePage = () => {
   );
 };
 
-export default EventsExplorePage;
+export default ConversationsEventsBrowser;

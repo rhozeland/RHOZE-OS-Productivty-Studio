@@ -16,7 +16,7 @@ import {
 import {
   Search, Send, User, MessageSquare, ArrowLeft,
   Inbox, FolderKanban, CheckCircle, XCircle, Clock, ArrowRight, Loader2,
-  DollarSign, Video, Phone, Plus, Users, Store, Flame,
+  DollarSign, Video, Phone, Plus, Users, Store, Flame, CalendarDays,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
@@ -34,6 +34,7 @@ import ListingsTab from "@/components/messages/ListingsTab";
 import HubFlowWidget from "@/components/hub/HubFlowWidget";
 import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
 import ConversationsRightRail from "@/components/messages/ConversationsRightRail";
+import ConversationsEventsBrowser from "@/components/messages/ConversationsEventsBrowser";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pending", color: "bg-amber-500/15 text-amber-600", icon: Clock },
@@ -452,6 +453,9 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
           <TabsTrigger value="listings" className="gap-1.5">
             <Store className="h-3.5 w-3.5" /> Listings
           </TabsTrigger>
+          <TabsTrigger value="events" className="gap-1.5">
+            <CalendarDays className="h-3.5 w-3.5" /> Events
+          </TabsTrigger>
           <TabsTrigger value="flow" className="gap-1.5">
             <Flame className="h-3.5 w-3.5" /> Flow
           </TabsTrigger>
@@ -674,6 +678,10 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
 
         <TabsContent value="listings" className="mt-4">
           <ListingsTab userId={user.id} />
+        </TabsContent>
+
+        <TabsContent value="events" className="mt-4">
+          <ConversationsEventsBrowser />
         </TabsContent>
 
         <TabsContent value="flow" className="mt-4">
