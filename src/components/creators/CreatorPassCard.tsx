@@ -280,27 +280,64 @@ const CreatorPassCard = () => {
 
       {/* ── In-app $RHOZE Balance + Claim ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* In-app balance — drives tier eligibility */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="surface-card p-4 space-y-3">
-          <div className="flex items-center gap-2">
-            <Shield className="h-4 w-4 text-primary" />
-            <span className="text-sm font-body font-semibold text-foreground">$RHOZE Balance</span>
+        {/* In-app balance — bank-statement style, drives tier eligibility */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="surface-card p-5 flex flex-col items-center text-center"
+        >
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Shield className="h-3.5 w-3.5" />
+            <span className="text-[10px] uppercase tracking-[0.2em] font-body font-medium">
+              $RHOZE Balance
+            </span>
           </div>
-          <p className="text-2xl font-display text-foreground">
-            {Number(credits?.balance ?? 0).toLocaleString()} <span className="text-sm text-muted-foreground">$RHOZE</span>
+          <p className="font-display text-4xl md:text-5xl font-bold text-foreground tabular-nums leading-none mt-3">
+            {Number(credits?.balance ?? 0).toLocaleString()}
           </p>
-          {holdTier !== "spark" ? (
-            <p className="text-xs font-body text-muted-foreground">
-              Holding unlocks <span className="font-semibold capitalize text-primary">{holdTier}</span> tier benefits
-            </p>
-          ) : (
-            <p className="text-xs font-body text-muted-foreground">
-              Earn or hold $RHOZE to unlock tier benefits — no wallet needed.
-            </p>
-          )}
-          <div className="text-[10px] text-muted-foreground font-body space-y-0.5">
-            <p>1M–24M → Bloom • 25M–49M → Glow • 50M+ → Play</p>
+          <p className="text-[11px] text-muted-foreground font-body uppercase tracking-widest mt-1.5">
+            $RHOZE
+          </p>
+
+          {/* Tier ladder pills */}
+          <div className="flex items-center justify-center gap-1.5 mt-4 flex-wrap">
+            {TIERS.map((t) => {
+              const isActive = t.id === holdTier;
+              return (
+                <div
+                  key={t.id}
+                  className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 transition ${
+                    isActive
+                      ? "border-foreground/30 bg-foreground/5"
+                      : "border-border/40 opacity-60"
+                  }`}
+                >
+                  <span
+                    className="h-2 w-2 rounded-full shrink-0"
+                    style={{ background: t.gradient }}
+                    aria-hidden
+                  />
+                  <span className="text-[10px] font-body font-medium text-foreground">
+                    {t.label}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground tabular-nums">
+                    {t.holdLabel}
+                  </span>
+                </div>
+              );
+            })}
           </div>
+
+          <p className="text-[11px] text-muted-foreground font-body mt-3 max-w-xs">
+            {holdTier !== "spark" ? (
+              <>
+                You're holding <span className="font-semibold capitalize text-foreground">{holdTier}</span> tier benefits.
+              </>
+            ) : (
+              <>Hold $RHOZE to unlock tier perks — no wallet needed.</>
+            )}
+          </p>
         </motion.div>
 
         {/* Claim to wallet */}
