@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadAndGetUrl } from "@/lib/storage-utils";
@@ -23,11 +23,15 @@ import {
   Loader2,
   Link2,
   FileText,
+  Mic,
+  Square,
+  Send,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-type ShareType = "menu" | "smartboards" | "profiles" | "listings" | "link";
+type ShareType = "menu" | "smartboards" | "profiles" | "listings" | "link" | "voice";
 
 interface ChatAttachmentMenuProps {
   onSendMessage: (content: string) => void;
