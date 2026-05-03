@@ -37,7 +37,8 @@ import QrCheckInScanner from "@/components/events/QrCheckInScanner";
 import EventCollaborators from "@/components/events/EventCollaborators";
 import EventMediaManager from "@/components/events/EventMediaManager";
 import HostFiatPayoutPanel from "@/components/seller/HostFiatPayoutPanel";
-import { fiatToRhoze, formatMoney } from "@/lib/event-currency";
+import { fiatToRhoze, formatMoney, COUNTRY_CURRENCY } from "@/lib/event-currency";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CircleDollarSign } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -173,6 +174,27 @@ const EventManagePage = () => {
         description: err instanceof Error ? err.message : "Unknown error",
       }),
   });
+
+  const updateCurrency = useMutation({
+    mutationFn: async (next: string) => {
+      const { error } = await supabase
+        .from("events")
+        .update({ currency_code: next } as any)
+        .eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Currency updated");
+      qc.invalidateQueries({ queryKey: ["event-manage", id] });
+    },
+    onError: (err: unknown) =>
+      toast.error("Could not update currency", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      }),
+  });
+
+  const CURRENCY_OPTIONS = Array.from(new Set(Object.values(COUNTRY_CURRENCY))).sort();
+
 
   const checkIn = useMutation({
     mutationFn: async (ticketId: string) => {
@@ -478,10 +500,31 @@ const EventManagePage = () => {
             </div>
 
             <div className="rounded-xl border border-dashed border-border p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <Plus className="h-4 w-4 text-primary" />
-                <p className="font-medium text-sm">Add a paid tier ({eventCurrency})</p>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <Plus className="h-4 w-4 text-primary" />
+                  <p className="font-medium text-sm">Add a paid tier</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label className="text-[11px] text-muted-foreground">Currency</Label>
+                  <Select
+                    value={eventCurrency}
+                    onValueChange={(v) => updateCurrency.mutate(v)}
+                  >
+                    <SelectTrigger className="h-8 w-[110px] text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CURRENCY_OPTIONS.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+              <p className="text-[11px] text-muted-foreground">
+                Price is set in your local currency — auto-detected from venue, change anytime.
+              </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <div className="space-y-1.5 col-span-2 sm:col-span-2">
                   <Label className="text-xs">Name</Label>

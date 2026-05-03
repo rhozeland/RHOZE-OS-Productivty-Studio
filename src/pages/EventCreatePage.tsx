@@ -24,7 +24,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Link } from "react-router-dom";
-import { detectCountryFromAddress, currencyFromCountry, formatMoney, fiatToRhoze } from "@/lib/event-currency";
+import { detectCountryFromAddress, currencyFromCountry, formatMoney, fiatToRhoze, COUNTRY_CURRENCY } from "@/lib/event-currency";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 async function sha256Hex(text: string): Promise<string> {
   const buf = new TextEncoder().encode(text);
@@ -464,8 +465,8 @@ const EventCreatePage = () => {
             <p className="text-sm font-medium">Free RSVP tier</p>
           </div>
           <p className="text-xs text-muted-foreground">
-            Every event ships with a free tier. Add paid tiers (USD or $RHOZE)
-            from Manage after publishing.
+            Every event ships with a free tier. Add paid tiers in your local currency
+            (or $RHOZE) from Manage after publishing.
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
@@ -492,19 +493,31 @@ const EventCreatePage = () => {
 
         {/* Paid tiers (optional) */}
         <div className="rounded-xl border border-dashed border-border p-4 space-y-3">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2">
               <Plus className="h-4 w-4 text-primary" />
               <p className="text-sm font-medium">Paid tiers (optional)</p>
             </div>
-            <span className="text-[11px] text-muted-foreground">
-              Currency: <strong className="text-foreground">{currencyCode}</strong>
-              {detectedCountry ? ` · auto-detected (${detectedCountry})` : " · default"}
-            </span>
+            <div className="flex items-center gap-2">
+              <Label className="text-[11px] text-muted-foreground">Currency</Label>
+              <Select value={currencyCode} onValueChange={(v) => setCurrencyOverride(v)}>
+                <SelectTrigger className="h-8 w-[110px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from(new Set(Object.values(COUNTRY_CURRENCY))).sort().map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {detectedCountry && !currencyOverride && (
+                <span className="text-[10px] text-muted-foreground">auto · {detectedCountry}</span>
+              )}
+            </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            Price is in your local currency. Buyers paying with $RHOZE get a tier-based discount
-            (Bloom 5% · Glow 10% · Play 15%) — no separate token price needed.
+            Price is in your local currency — auto-detected from venue, change anytime. Buyers paying with $RHOZE get a tier-based discount
+            (Bloom 5% · Glow 10% · Play 15%).
           </p>
 
           {paidTiers.map((t, i) => (
