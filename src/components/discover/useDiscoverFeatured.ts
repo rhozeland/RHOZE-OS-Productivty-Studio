@@ -329,7 +329,11 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
         title: space.name,
         subtitle: space.short_description,
         banner: space.cover_image_url,
-        location: space.location,
+        location:
+          [space.city, space.state].filter(Boolean).join(", ") ||
+          space.location ||
+          space.country ||
+          null,
         region_code: space.region_code,
       });
     }
