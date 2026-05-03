@@ -4099,6 +4099,7 @@ export type Database = {
       }
     }
     Functions: {
+      _coin_drops_remaining: { Args: { _user: string }; Returns: number }
       adjust_user_credits: {
         Args: {
           _amount: number
