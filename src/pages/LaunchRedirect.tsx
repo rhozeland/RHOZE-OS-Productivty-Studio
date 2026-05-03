@@ -21,7 +21,7 @@ const LaunchRedirect = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("coin_launches")
-        .select("creator_id")
+        .select("ticker, creator_id")
         .eq("id", id!)
         .maybeSingle();
       if (error) throw error;
@@ -32,10 +32,12 @@ const LaunchRedirect = () => {
 
   useEffect(() => {
     if (isLoading) return;
-    if (data?.creator_id) {
-      navigate(`/profiles/${data.creator_id}?tab=coin`, { replace: true });
+    if (data?.ticker) {
+      navigate(`/coin/${data.ticker}`, { replace: true });
+    } else if (data?.creator_id) {
+      navigate(`/profiles/${data.creator_id}?tab=support`, { replace: true });
     } else if (isError || !data) {
-      navigate("/hub", { replace: true });
+      navigate("/discover", { replace: true });
     }
   }, [data, isLoading, isError, navigate]);
 
