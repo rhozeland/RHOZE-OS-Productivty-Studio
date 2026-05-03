@@ -372,7 +372,7 @@ const AppLayout = () => {
           only surface once the user has typed (>=2 chars). */}
       <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
         <CommandInput
-          placeholder="Search pages, studios, listings, creators..."
+          placeholder="Search handles, $tickers, contract addresses, studios..."
           value={searchQuery}
           onValueChange={setSearchQuery}
         />
