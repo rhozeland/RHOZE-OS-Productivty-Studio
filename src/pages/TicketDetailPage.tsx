@@ -183,10 +183,11 @@ const TicketDetailPage = () => {
         <ArrowLeft className="h-4 w-4" /> Back to event
       </Link>
 
+      <Tilt3D maxTilt={14} className="rounded-3xl">
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative rounded-3xl bg-gradient-to-br from-foreground to-foreground/85 text-background p-6 space-y-5 shadow-xl overflow-hidden"
+        className="relative rounded-3xl bg-gradient-to-br from-foreground to-foreground/85 text-background p-6 space-y-5 shadow-2xl overflow-hidden"
       >
         <div className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${accent}`} aria-hidden />
         <div className="flex items-start justify-between gap-3">
@@ -248,6 +249,7 @@ const TicketDetailPage = () => {
           <span className="uppercase tracking-wider">{ticket.status.replace("_", " ")}</span>
         </div>
       </motion.div>
+      </Tilt3D>
 
       {/* Proof of attendance — host-anchored, fees paid by Rhozeland */}
       <div className="rounded-2xl bg-card border border-border p-5 space-y-3">
