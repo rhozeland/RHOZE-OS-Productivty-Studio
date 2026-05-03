@@ -538,8 +538,8 @@ const EventDetailPage = () => {
               <div className="text-[11px] text-muted-foreground pt-2 border-t border-border inline-flex items-start gap-1.5">
                 <Wallet className="h-3 w-3 mt-0.5 shrink-0" />
                 <span>
-                  You earn <strong className="text-foreground">75%</strong> of every ticket
-                  (15% community reserve · 10% platform). Settles to your wallet.
+                  Platform fee scales with your tier — <strong className="text-foreground">Spark/Bloom 15% · Glow 10% · Play 7%</strong>.
+                  The rest settles to your wallet. Hold more $RHOZE, keep more.
                 </span>
               </div>
             )}
