@@ -182,6 +182,8 @@ const EventCollaborators = ({ eventId, hostId }: Props) => {
                 <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
                   <ShieldCheck className="h-3 w-3" />
                   {c.role === "co_host" ? "Co-host" : "Manager"}
+                  {c.status === "pending" && " · Invite pending"}
+                  {c.status === "declined" && " · Declined"}
                 </p>
               </div>
             </div>
