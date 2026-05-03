@@ -89,6 +89,7 @@ const LaunchCoinDialog = ({
 
   useEffect(() => {
     if (!open) return;
+    setStep("form");
     let cancelled = false;
     (async () => {
       const { data: userResp } = await supabase.auth.getUser();
