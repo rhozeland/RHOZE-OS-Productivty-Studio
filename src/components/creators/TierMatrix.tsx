@@ -29,6 +29,7 @@ export const TierMatrix = ({ activeTier, className }: Props) => {
               <th className="text-left font-medium px-3 py-2.5">Tier</th>
               <th className="text-left font-medium px-3 py-2.5 whitespace-nowrap">Hold $RHOZE</th>
               <th className="text-left font-medium px-3 py-2.5">Or any one of</th>
+              <th className="text-left font-medium px-3 py-2.5 whitespace-nowrap">Coin drops / 30d</th>
               <th className="text-left font-medium px-3 py-2.5">Perks</th>
             </tr>
           </thead>
