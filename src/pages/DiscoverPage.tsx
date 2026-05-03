@@ -171,18 +171,45 @@ const DiscoverPage = () => {
       {/* ─── Creator Pass upgrade nudge ─────────────────────────────── */}
       <CreatorPassUpgradeCta />
 
-      {/* ─── Conversations mosaic — content + IP + seasonal events ─── */}
-      <section className="space-y-4">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-1">
-            Conversations
-          </p>
-          <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
-            Everything, in one breath.
-          </h2>
+      {/* ─── The Stream — mosaic / events / flow toggle ─────────────── */}
+      <section id="discover-stream" className="space-y-4 scroll-mt-20">
+        <div className="flex items-end justify-between gap-4 flex-wrap">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-1">
+              The Stream
+            </p>
+            <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
+              {view === "events"
+                ? "What's happening."
+                : view === "flow"
+                ? "Tune in."
+                : "Everything, all at once."}
+            </h2>
+          </div>
+
+          <div className="inline-flex items-center gap-1 rounded-full border border-border bg-card p-1">
+            {VIEW_OPTIONS.map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setView(value)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                  view === value
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <ConversationsMosaic />
+        {view === "mosaic" && <ConversationsMosaic />}
+        {view === "events" && <ConversationsEventsBrowser />}
+        {view === "flow" && <HubFlowWidget expanded />}
       </section>
 
       {/* ─── Coins moving today ─────────────────────────────────────── */}
