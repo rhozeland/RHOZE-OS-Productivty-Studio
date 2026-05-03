@@ -10,9 +10,10 @@
  * Trade fees default to 200 bps creator + 100 bps platform per the chosen
  * launchpad config and are not editable in this first pass.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { getHoldTier, getCoinDropsPerMonth, TIERS } from "@/lib/tier-matrix";
 import {
   Dialog,
   DialogContent,
@@ -70,6 +71,36 @@ const LaunchCoinDialog = ({
   const [lpLock, setLpLock] = useState("12");
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [dropInfo, setDropInfo] = useState<{
+    tierLabel: string;
+    cap: number | null;
+    used: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (async () => {
+      const { data: userResp } = await supabase.auth.getUser();
+      const uid = userResp.user?.id;
+      if (!uid) return;
+      const [{ data: credits }, { count }] = await Promise.all([
+        supabase.from("user_credits").select("balance").eq("user_id", uid).maybeSingle(),
+        supabase
+          .from("coin_launches")
+          .select("id", { count: "exact", head: true })
+          .eq("creator_id", uid)
+          .neq("status", "cancelled")
+          .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+      ]);
+      const balance = Number(credits?.balance ?? 0);
+      const tier = getHoldTier(balance);
+      const cap = getCoinDropsPerMonth(tier);
+      const tierLabel = TIERS.find((t) => t.id === tier)?.label ?? "Spark";
+      if (!cancelled) setDropInfo({ tierLabel, cap, used: count ?? 0 });
+    })();
+    return () => { cancelled = true; };
+  }, [open]);
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -250,6 +281,31 @@ const LaunchCoinDialog = ({
             </div>
           </div>
 
+          {dropInfo && (() => {
+            const unlimited = dropInfo.cap === null;
+            const remaining = unlimited
+              ? Infinity
+              : Math.max((dropInfo.cap ?? 0) - dropInfo.used, 0);
+            const blocked = !unlimited && remaining <= 0;
+            return (
+              <div
+                className={`rounded-md border p-3 text-[11px] ${
+                  blocked
+                    ? "border-destructive/50 bg-destructive/10 text-destructive"
+                    : "border-border/60 bg-muted/30 text-muted-foreground"
+                }`}
+              >
+                <span className="font-medium text-foreground">{dropInfo.tierLabel} tier</span>
+                {" — "}
+                {unlimited
+                  ? "unlimited coin drops."
+                  : blocked
+                    ? `you've used ${dropInfo.used}/${dropInfo.cap} drops in the last 30 days. Hold more $RHOZE to raise your cap.`
+                    : `${remaining} of ${dropInfo.cap} coin drops left in the next 30 days.`}
+              </div>
+            );
+          })()}
+
           <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-[11px] text-muted-foreground">
             Simulated launch — no real liquidity yet. Tokenomics (supply, fees, graduation) lock in once the on-chain mint ships.
           </div>
@@ -258,7 +314,15 @@ const LaunchCoinDialog = ({
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>Cancel</Button>
-          <Button onClick={submit} disabled={submitting}>
+          <Button
+            onClick={submit}
+            disabled={
+              submitting ||
+              (dropInfo !== null &&
+                dropInfo.cap !== null &&
+                dropInfo.used >= dropInfo.cap)
+            }
+          >
             {submitting && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}
             Launch coin
           </Button>

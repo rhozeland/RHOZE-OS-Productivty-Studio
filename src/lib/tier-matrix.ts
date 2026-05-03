@@ -36,6 +36,11 @@ export interface TierRow {
   activity: TierActivityReqs;
   /** Short benefit blurbs */
   benefits: string[];
+  /**
+   * Coin drops a user can launch per rolling 30 days at this tier.
+   * `null` = unlimited.
+   */
+  coinDropsPerMonth: number | null;
   gradient: string;
   glowColor: string;
 }
@@ -50,8 +55,9 @@ export const TIERS: TierRow[] = [
     benefits: [
       "1× reward multiplier",
       "Standard marketplace fees",
-      "Public coin launches",
+      "1 coin drop / 30 days",
     ],
+    coinDropsPerMonth: 1,
     gradient: "linear-gradient(135deg, hsl(205 75% 65%), hsl(220 55% 42%))",
     glowColor: "hsl(210, 70%, 55%)",
   },
@@ -65,8 +71,10 @@ export const TIERS: TierRow[] = [
       "1.25× reward multiplier",
       "5% off Spaces & services",
       "2 free IP anchors / mo",
+      "3 coin drops / 30 days",
       "24h early coin access",
     ],
+    coinDropsPerMonth: 3,
     gradient: "linear-gradient(135deg, hsl(330 65% 72%), hsl(345 55% 48%))",
     glowColor: "hsl(335, 60%, 65%)",
   },
@@ -80,9 +88,11 @@ export const TIERS: TierRow[] = [
       "1.5× reward multiplier",
       "10% off Spaces & services",
       "Unlimited IP anchors",
+      "10 coin drops / 30 days",
       "48h early coin access",
       "Discover boost",
     ],
+    coinDropsPerMonth: 10,
     gradient: "linear-gradient(135deg, hsl(30 90% 60%), hsl(20 80% 42%))",
     glowColor: "hsl(28, 85%, 55%)",
   },
@@ -95,11 +105,13 @@ export const TIERS: TierRow[] = [
     benefits: [
       "2× reward multiplier",
       "15% off Spaces & services",
+      "Unlimited coin drops",
       "Free coin launch (no platform fee)",
       "72h early coin access",
       "Featured artist placement",
       "Verified Artist fast-track",
     ],
+    coinDropsPerMonth: null,
     gradient: "linear-gradient(135deg, hsl(50 90% 58%), hsl(38 80% 40%))",
     glowColor: "hsl(45, 85%, 52%)",
   },
@@ -151,3 +163,9 @@ export function getEffectiveTier(...tiers: TierId[]): TierId {
     "spark",
   );
 }
+
+/** Coin drops allowed per rolling 30 days for the given tier. `null` = unlimited. */
+export function getCoinDropsPerMonth(tier: TierId): number | null {
+  return TIERS.find((t) => t.id === tier)?.coinDropsPerMonth ?? 1;
+}
+
