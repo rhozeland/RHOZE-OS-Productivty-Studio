@@ -504,15 +504,42 @@ const ProjectThread = ({
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
-          ) : (messages?.length ?? 0) === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-muted/20 p-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                No messages yet. Kick off the thread below.
-              </p>
-            </div>
           ) : (
             <div className="space-y-2">
-              {messages!.map((m: any) => {
+              {allMessages.map((m: any) => {
+                if (m.system) {
+                  const isKickoff = m.kind === "kickoff";
+                  return (
+                    <div key={m.id} className="flex justify-center py-1">
+                      <div
+                        className={cn(
+                          "max-w-[90%] rounded-2xl border px-4 py-3 text-center",
+                          isKickoff
+                            ? "border-primary/30 bg-gradient-to-br from-primary/10 via-card/60 to-amber-500/10"
+                            : "border-emerald-500/30 bg-emerald-500/5",
+                        )}
+                      >
+                        <div className="flex items-center justify-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                          {isKickoff ? (
+                            <Sparkles className="h-3 w-3 text-primary" />
+                          ) : (
+                            <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                          )}
+                          {isKickoff ? "Kickoff" : "Milestone"}
+                        </div>
+                        <p className="mt-1 font-display text-sm font-semibold text-foreground">
+                          {m.title}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                          {m.body}
+                        </p>
+                        <p className="mt-1.5 text-[10px] text-muted-foreground/70">
+                          {format(new Date(m.created_at), "MMM d · h:mm a")}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
                 const mine = m.sender_id === userId;
                 return (
                   <div
