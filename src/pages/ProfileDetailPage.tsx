@@ -18,6 +18,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import ProfileBadges from "@/components/profile/ProfileBadges";
+import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
 import { cn } from "@/lib/utils";
@@ -324,15 +325,17 @@ const ProfileDetailPage = () => {
               </div>
 
               <div className="flex-1 min-w-0 pb-1">
-                <div className="flex items-baseline gap-2 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground tracking-tight break-words leading-none">
                     {p.display_name || p.username || "Creator"}
                   </h1>
+                  <VerifiedArtistBadge status={p.verification_status} size="sm" showLabel={false} />
                   {p.username && (
                     <span className="text-sm text-muted-foreground leading-none">@{p.username}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                  <VerifiedArtistBadge status={p.verification_status} size="xs" />
                   <ProfileBadges userId={id!} compact />
                   {reviewStats && reviewStats.count > 0 && (
                     <Badge variant="outline" className="text-[10px] gap-1 font-medium">
