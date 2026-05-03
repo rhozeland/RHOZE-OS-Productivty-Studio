@@ -66,12 +66,6 @@ const VerificationPage = () => {
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("profiles")
-      .select("wallet_address")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => setWalletAddress(data?.wallet_address ?? null));
     loadLatest();
   }, [user]);
 
