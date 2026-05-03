@@ -36,6 +36,9 @@ import { shortHash } from "@/lib/content-hash";
 import QrCheckInScanner from "@/components/events/QrCheckInScanner";
 import EventCollaborators from "@/components/events/EventCollaborators";
 import EventMediaManager from "@/components/events/EventMediaManager";
+import HostFiatPayoutPanel from "@/components/seller/HostFiatPayoutPanel";
+import { fiatToRhoze, formatMoney } from "@/lib/event-currency";
+import { CircleDollarSign } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
