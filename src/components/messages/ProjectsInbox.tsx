@@ -257,10 +257,14 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
                       <span className="text-sm font-medium text-foreground truncate flex-1">
                         {p.title}
                       </span>
-                      {!isOwner && (
-                        <Badge variant="outline" className="text-[9px] py-0 h-4">
-                          Collab
-                        </Badge>
+                      {(memberCounts?.[p.id] ?? 1) > 1 && (
+                        <span
+                          className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground shrink-0"
+                          title={`${memberCounts?.[p.id] ?? 1} members`}
+                        >
+                          <Users className="h-3 w-3" />
+                          {memberCounts?.[p.id] ?? 1}
+                        </span>
                       )}
                     </div>
                     <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
