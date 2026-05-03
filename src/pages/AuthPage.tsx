@@ -104,16 +104,24 @@ const AuthPage = () => {
           backgroundSize: '300% 300%',
         }}
       />
-      {/* Secondary aurora layer for depth */}
+      {/* Big pink→amber→mint orb (matches Discover/Dashboard greeting) */}
       <div
-        className="pointer-events-none fixed inset-0"
+        aria-hidden
+        className="pointer-events-none fixed -top-40 -right-32 h-[640px] w-[640px] rounded-full opacity-80 blur-3xl"
         style={{
-          background: `
-            radial-gradient(ellipse 70% 60% at 20% 50%, hsl(280 60% 75% / 0.15) 0%, transparent 60%),
-            radial-gradient(ellipse 60% 70% at 80% 30%, hsl(320 60% 65% / 0.12) 0%, transparent 60%),
-            radial-gradient(ellipse 65% 45% at 50% 85%, hsl(30 70% 65% / 0.10) 0%, transparent 60%)
-          `,
-          animation: 'aurora-drift 20s ease-in-out infinite',
+          background:
+            "radial-gradient(circle at 30% 30%, hsl(330 85% 70% / 0.65), transparent 55%)," +
+            "radial-gradient(circle at 70% 60%, hsl(38 92% 65% / 0.60), transparent 60%)," +
+            "radial-gradient(circle at 50% 90%, hsl(160 65% 60% / 0.45), transparent 60%)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed -bottom-40 -left-32 h-[520px] w-[520px] rounded-full opacity-70 blur-3xl"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 50%, hsl(292 84% 70% / 0.55), transparent 60%)," +
+            "radial-gradient(circle at 30% 70%, hsl(38 92% 65% / 0.45), transparent 60%)",
         }}
       />
 
