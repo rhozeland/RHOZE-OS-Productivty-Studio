@@ -364,7 +364,9 @@ const LaunchDetailPage = () => {
           </Card>
         </div>
 
-        {/* RIGHT: trade panel + on-chain */}
+        {/* RIGHT: trade panel. The on-chain address + balance cards are
+            hidden in simulation mode — the only Solana detail users care
+            about is the CA chip in the header (links out when on-chain). */}
         <div className="space-y-4">
           <LaunchpadModeBanner />
           <TradePanel
@@ -375,16 +377,20 @@ const LaunchDetailPage = () => {
             virtualToken={Number(launch.virtual_token_reserves)}
             onTraded={load}
           />
-          <OnChainAddressesCard
-            mint={launch.mint_address}
-            launchPda={deriveLaunchPda(launch.id)?.toBase58() ?? null}
-            raydiumPool={launch.raydium_pool}
-          />
-          <OnChainBalancesCard
-            workId={launch.id}
-            ticker={launch.ticker}
-            mint={launch.mint_address}
-          />
+          {isLaunchpadOnChainEnabled() && (
+            <>
+              <OnChainAddressesCard
+                mint={launch.mint_address}
+                launchPda={deriveLaunchPda(launch.id)?.toBase58() ?? null}
+                raydiumPool={launch.raydium_pool}
+              />
+              <OnChainBalancesCard
+                workId={launch.id}
+                ticker={launch.ticker}
+                mint={launch.mint_address}
+              />
+            </>
+          )}
         </div>
       </div>
     </div>
