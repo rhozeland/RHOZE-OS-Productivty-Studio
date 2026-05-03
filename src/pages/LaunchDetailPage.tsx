@@ -307,7 +307,7 @@ const LaunchDetailPage = () => {
                             ${launch.ticker}
                           </span>
                           <span className="text-muted-foreground text-right">
-                            {Number(t.sol_amount).toFixed(4)} SOL
+                            {(Number(t.sol_amount) * 100).toFixed(2)} $RHOZE
                           </span>
                           <span className="text-muted-foreground text-[10px] text-right">
                             {new Date(t.created_at).toLocaleTimeString([], {
