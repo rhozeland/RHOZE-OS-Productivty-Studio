@@ -160,10 +160,10 @@ const EventDetailPage = () => {
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <Link
-          to="/spaces?tab=events"
+          to="/discover"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" /> Back to Events
+          <ArrowLeft className="h-4 w-4" /> Back to Discover
         </Link>
 
         {canManage && (
