@@ -27,7 +27,7 @@ import CreatorPassCard from "@/components/creators/CreatorPassCard";
 import TierMatrix from "@/components/creators/TierMatrix";
 import CoinPortfolio from "@/components/creators/CoinPortfolio";
 import { StreakCard } from "@/components/creators/StreakCard";
-import { REWARDS_BY_CATEGORY } from "@/lib/rewards-catalog";
+import { REWARDS_BY_LANE } from "@/lib/rewards-catalog";
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
