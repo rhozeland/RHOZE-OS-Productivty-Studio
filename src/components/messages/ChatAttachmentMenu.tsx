@@ -112,6 +112,8 @@ const ChatAttachmentMenu = ({ onSendMessage, onSendQuote, disabled }: ChatAttach
         .limit(50);
       if (error) throw error;
       return data;
+    },
+    enabled: open && view === "events",
   });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
