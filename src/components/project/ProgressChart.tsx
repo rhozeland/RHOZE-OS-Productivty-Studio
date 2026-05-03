@@ -5,9 +5,11 @@ import { motion } from "framer-motion";
 interface ProgressChartProps {
   goals: Array<{ status: string; progress: number }> | undefined;
   tasks?: Array<{ completed: boolean | null }> | undefined;
+  /** Optional action slot rendered in the section header (e.g. Drop Room launcher). */
+  headerAction?: React.ReactNode;
 }
 
-const ProgressChart = ({ goals, tasks }: ProgressChartProps) => {
+const ProgressChart = ({ goals, tasks, headerAction }: ProgressChartProps) => {
   const totalGoals = goals?.length ?? 0;
   const completedGoals = goals?.filter((g) => g.status === "completed").length ?? 0;
   const inProgressGoals = goals?.filter((g) => g.status === "in_progress").length ?? 0;
@@ -26,9 +28,12 @@ const ProgressChart = ({ goals, tasks }: ProgressChartProps) => {
 
   return (
     <div className="surface-card p-6">
-      <div className="mb-4 flex items-center gap-2">
-        <BarChart3 className="h-5 w-5 text-primary" />
-        <h2 className="font-display text-lg font-semibold text-foreground">Progress Overview</h2>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="h-5 w-5 text-primary" />
+          <h2 className="font-display text-lg font-semibold text-foreground">Progress Overview</h2>
+        </div>
+        {headerAction}
       </div>
       <div className="grid grid-cols-2 gap-4">
         {stats.map((stat, i) => (
