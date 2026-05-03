@@ -88,7 +88,6 @@ export const TIERS: TierRow[] = [
       "10% off Spaces & services",
       "Unlimited IP anchors",
       "10 coin drops / 30 days",
-      "48h early coin access",
       "Discover boost",
     ],
     coinDropsPerMonth: 10,
