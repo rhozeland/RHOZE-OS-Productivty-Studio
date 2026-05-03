@@ -1521,11 +1521,11 @@ const FlowModePage = () => {
           >
             <div className="absolute inset-0 bg-black/50" />
             <div className="relative flex flex-col items-center gap-8">
-              {/* Up */}
+              {/* Up — open creator profile peek */}
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
                 <span className="flex flex-col items-center gap-1 text-white/90">
                   <ChevronUp className="h-6 w-6" />
-                  <span className="text-sm font-medium">Like</span>
+                  <span className="text-sm font-medium">Profile</span>
                 </span>
               </motion.div>
               {/* Middle row: Left + Center + Right */}
