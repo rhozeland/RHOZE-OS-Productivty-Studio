@@ -1,17 +1,11 @@
 /**
- * PriceChartCard — pump.fun / Padre / Bullx-style chart for a launch.
+ * PriceChartCard — pump.fun-style live chart for a coin launch.
  *
- * Two views (toggled by the user):
- *   - Price        : line + area of `price_per_token` over time, with
- *                    buy/sell dots so you can read flow at a glance.
- *   - Bonding Curve: visualizes real_sol_reserves progress toward the
- *                    graduation_sol_target (the existing progress bar
- *                    rendered as a chart).
- *
- * Timeframe pills: 1H · 6H · 1D · ALL — purely client-side filter.
- *
- * Data source: `coin_trades` (publicly readable). Uses recharts
- * (already a dep).
+ * Goals (per user feedback):
+ *   - Read like pump.fun: big price up top, live pulse, simple area chart
+ *   - No scary scientific notation (e-7) — formats prices for humans
+ *   - Use $RHOZE units everywhere (simulation mode), not SOL
+ *   - Two views: Price (default) · Bonding Curve (graduation progress)
  */
 import { useMemo, useState, type KeyboardEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -27,7 +21,7 @@ import {
 } from "recharts";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { LineChart as LineChartIcon, Activity, TrendingUp } from "lucide-react";
+import { LineChart as LineChartIcon, Activity, Radio } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type View = "price" | "curve";
@@ -46,6 +40,35 @@ const RANGE_LABELS: Record<Range, string> = {
   "1D": "Last 24 hours",
   ALL: "All time",
 };
+
+// 1 SOL on the simulated curve = 100 $RHOZE (matches PayWithRhoze convention).
+const RHOZE_PER_SOL = 100;
+const toRhoze = (sol: number) => sol * RHOZE_PER_SOL;
+
+/** Human-readable price formatting — no scientific notation. */
+function fmtPrice(p: number) {
+  if (!isFinite(p) || p <= 0) return "0";
+  if (p >= 1) return p.toFixed(4);
+  if (p >= 0.0001) return p.toFixed(6);
+  // For very small numbers, use a compact "0.0₍n₎xxx" subscript style
+  // similar to what pump.fun / GMGN show.
+  const s = p.toFixed(20);
+  const m = s.match(/^0\.0*(?=\d)/);
+  if (!m) return p.toPrecision(3);
+  const zeros = m[0].length - 2; // count zeros after "0."
+  const sig = s.slice(m[0].length, m[0].length + 4);
+  if (zeros <= 3) return `0.${"0".repeat(zeros)}${sig}`;
+  const sub = String(zeros)
+    .split("")
+    .map((d) => "₀₁₂₃₄₅₆₇₈₉"[Number(d)])
+    .join("");
+  return `0.0${sub}${sig}`;
+}
+
+function fmtPct(now: number, prev: number) {
+  if (!prev || !isFinite(prev)) return null;
+  return ((now - prev) / prev) * 100;
+}
 
 function handleRovingKeyDown<T extends string>(
   e: KeyboardEvent<HTMLDivElement>,
@@ -76,7 +99,6 @@ function handleRovingKeyDown<T extends string>(
   }
   e.preventDefault();
   setValue(options[nextIdx]);
-  // Move focus to the newly-selected control
   const target = e.currentTarget.querySelectorAll<HTMLButtonElement>("button[role]")[nextIdx];
   target?.focus();
 }
@@ -103,15 +125,16 @@ const PriceChartCard = ({ launchId, ticker, realSolReserves, graduationTarget }:
         .limit(2000);
       return data ?? [];
     },
-    refetchInterval: 15_000,
+    refetchInterval: 10_000,
   });
 
+  // Convert SOL-denominated price to $RHOZE-denominated for display.
   const priceSeries = useMemo(() => {
     const all = (trades ?? []).map((t) => ({
       t: new Date(t.created_at).getTime(),
-      price: Number(t.price_per_token),
+      price: toRhoze(Number(t.price_per_token)),
       side: t.side as "buy" | "sell",
-      sol: Number(t.sol_amount),
+      rhoze: toRhoze(Number(t.sol_amount)),
     }));
     const ms = RANGE_MS[range];
     if (!ms) return all;
@@ -119,21 +142,58 @@ const PriceChartCard = ({ launchId, ticker, realSolReserves, graduationTarget }:
     return all.filter((d) => d.t >= cutoff);
   }, [trades, range]);
 
-  // Synthetic curve series: SOL-in vs token-out progression toward target.
+  const lastPrice = priceSeries.length ? priceSeries[priceSeries.length - 1].price : 0;
+  const firstPrice = priceSeries.length ? priceSeries[0].price : 0;
+  const pct = fmtPct(lastPrice, firstPrice);
+  const up = (pct ?? 0) >= 0;
+
+  // Synthetic curve (graduation progress) in $RHOZE units.
+  const targetRhoze = toRhoze(Number(graduationTarget));
+  const nowRhoze = toRhoze(Number(realSolReserves));
   const curveSeries = useMemo(() => {
-    const target = Number(graduationTarget);
     const steps = 40;
-    const out: { x: number; sol: number }[] = [];
+    const out: { x: number; v: number }[] = [];
     for (let i = 0; i <= steps; i++) {
-      const sol = (target * i) / steps;
-      out.push({ x: sol, sol });
+      const v = (targetRhoze * i) / steps;
+      out.push({ x: v, v });
     }
     return out;
-  }, [graduationTarget]);
+  }, [targetRhoze]);
 
   return (
-    <Card className="bg-card/40 backdrop-blur">
+    <Card className="bg-card/40 backdrop-blur overflow-hidden">
       <CardContent className="p-4 space-y-3">
+        {/* ── Top: live price + delta ─────────────────────────── */}
+        {view === "price" && (
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                </span>
+                Live price · ${ticker}
+              </div>
+              <div className="text-2xl md:text-3xl font-bold font-mono mt-1 tabular-nums">
+                {fmtPrice(lastPrice)}{" "}
+                <span className="text-sm text-muted-foreground font-normal">$RHOZE</span>
+              </div>
+            </div>
+            {pct !== null && (
+              <div
+                className={`text-sm font-mono font-semibold ${
+                  up ? "text-emerald-500" : "text-rose-500"
+                }`}
+              >
+                {up ? "▲" : "▼"} {Math.abs(pct).toFixed(2)}%
+                <div className="text-[10px] uppercase text-muted-foreground font-normal text-right tracking-wide">
+                  {RANGE_LABELS[range]}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div
@@ -198,16 +258,20 @@ const PriceChartCard = ({ launchId, ticker, realSolReserves, graduationTarget }:
             </div>
           )}
 
-          <Badge variant="outline" className="text-[10px] gap-1" aria-live="polite">
-            <TrendingUp className="h-2.5 w-2.5" aria-hidden="true" />
+          <Badge
+            variant="outline"
+            className="text-[10px] gap-1 border-emerald-500/30 text-emerald-400/90"
+            aria-live="polite"
+          >
+            <Radio className="h-2.5 w-2.5 animate-pulse" aria-hidden="true" />
             {view === "price"
-              ? `${priceSeries.length} pts`
-              : `${realSolReserves.toFixed(2)} / ${graduationTarget} SOL`}
+              ? `${priceSeries.length} trade${priceSeries.length === 1 ? "" : "s"}`
+              : `${(nowRhoze / targetRhoze * 100).toFixed(1)}% to grad`}
           </Badge>
         </div>
 
         {/* Chart */}
-        <div className="h-[260px] -mx-1">
+        <div className="h-[280px] -mx-1 rounded-lg bg-background/40">
           {view === "price" ? (
             isLoading ? (
               <div className="h-full w-full animate-pulse bg-muted/30 rounded-md" />
@@ -215,14 +279,22 @@ const PriceChartCard = ({ launchId, ticker, realSolReserves, graduationTarget }:
               <EmptyChart message="Chart will appear after the first trade." />
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={priceSeries} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+                <AreaChart data={priceSeries} margin={{ top: 10, right: 16, left: 0, bottom: 4 }}>
                   <defs>
                     <linearGradient id="priceFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(160 84% 45%)" stopOpacity={0.4} />
-                      <stop offset="100%" stopColor="hsl(290 84% 60%)" stopOpacity={0.02} />
+                      <stop
+                        offset="0%"
+                        stopColor={up ? "hsl(160 84% 45%)" : "hsl(346 84% 55%)"}
+                        stopOpacity={0.45}
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor={up ? "hsl(160 84% 45%)" : "hsl(346 84% 55%)"}
+                        stopOpacity={0.02}
+                      />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid stroke="hsl(var(--border))" strokeOpacity={0.3} vertical={false} />
+                  <CartesianGrid stroke="hsl(var(--border))" strokeOpacity={0.2} vertical={false} />
                   <XAxis
                     dataKey="t"
                     type="number"
@@ -238,14 +310,15 @@ const PriceChartCard = ({ launchId, ticker, realSolReserves, graduationTarget }:
                   <YAxis
                     dataKey="price"
                     domain={["auto", "auto"]}
-                    tickFormatter={(v) => Number(v).toExponential(1)}
+                    tickFormatter={(v) => fmtPrice(Number(v))}
                     stroke="hsl(var(--muted-foreground))"
                     fontSize={10}
                     tickLine={false}
                     axisLine={false}
-                    width={60}
+                    width={70}
                   />
                   <Tooltip
+                    cursor={{ stroke: "hsl(var(--border))", strokeDasharray: "3 3" }}
                     content={({ active, payload }) => {
                       if (!active || !payload?.length) return null;
                       const p = payload[0].payload as (typeof priceSeries)[number];
@@ -266,10 +339,10 @@ const PriceChartCard = ({ launchId, ticker, realSolReserves, graduationTarget }:
                             </span>
                           </div>
                           <div className="font-mono mt-0.5">
-                            {p.price.toExponential(3)} SOL / ${ticker}
+                            {fmtPrice(p.price)} $RHOZE / ${ticker}
                           </div>
                           <div className="font-mono text-[10px] text-muted-foreground">
-                            {p.sol.toFixed(4)} SOL traded
+                            {p.rhoze.toFixed(2)} $RHOZE traded
                           </div>
                         </div>
                       );
@@ -278,8 +351,8 @@ const PriceChartCard = ({ launchId, ticker, realSolReserves, graduationTarget }:
                   <Area
                     type="monotone"
                     dataKey="price"
-                    stroke="hsl(160 84% 45%)"
-                    strokeWidth={1.75}
+                    stroke={up ? "hsl(160 84% 45%)" : "hsl(346 84% 55%)"}
+                    strokeWidth={2}
                     fill="url(#priceFill)"
                     isAnimationActive={false}
                   />
@@ -288,19 +361,19 @@ const PriceChartCard = ({ launchId, ticker, realSolReserves, graduationTarget }:
             )
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={curveSeries} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+              <AreaChart data={curveSeries} margin={{ top: 10, right: 16, left: 0, bottom: 4 }}>
                 <defs>
                   <linearGradient id="curveFill" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="hsl(290 84% 60%)" stopOpacity={0.4} />
                     <stop offset="100%" stopColor="hsl(160 84% 45%)" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid stroke="hsl(var(--border))" strokeOpacity={0.3} vertical={false} />
+                <CartesianGrid stroke="hsl(var(--border))" strokeOpacity={0.2} vertical={false} />
                 <XAxis
                   dataKey="x"
                   type="number"
-                  domain={[0, graduationTarget]}
-                  tickFormatter={(v) => `${Number(v).toFixed(0)} SOL`}
+                  domain={[0, targetRhoze]}
+                  tickFormatter={(v) => `${Math.round(Number(v)).toLocaleString()}`}
                   stroke="hsl(var(--muted-foreground))"
                   fontSize={10}
                   tickLine={false}
@@ -310,30 +383,30 @@ const PriceChartCard = ({ launchId, ticker, realSolReserves, graduationTarget }:
                 <Tooltip
                   content={({ active, payload }) => {
                     if (!active || !payload?.length) return null;
-                    const p = payload[0].payload as { sol: number };
-                    const pct = (p.sol / Number(graduationTarget)) * 100;
+                    const p = payload[0].payload as { v: number };
+                    const pctTo = (p.v / targetRhoze) * 100;
                     return (
                       <div className="rounded-md border border-border/60 bg-background/95 backdrop-blur px-2.5 py-1.5 text-[11px] shadow-lg font-mono">
-                        {p.sol.toFixed(2)} SOL · {pct.toFixed(1)}% to grad
+                        {p.v.toFixed(0)} $RHOZE · {pctTo.toFixed(1)}% to grad
                       </div>
                     );
                   }}
                 />
                 <Area
                   type="monotone"
-                  dataKey="sol"
+                  dataKey="v"
                   stroke="hsl(290 84% 60%)"
-                  strokeWidth={1.75}
+                  strokeWidth={2}
                   fill="url(#curveFill)"
                   isAnimationActive={false}
                 />
                 <ReferenceLine
-                  x={realSolReserves}
+                  x={nowRhoze}
                   stroke="hsl(160 84% 45%)"
                   strokeWidth={2}
                   strokeDasharray="4 2"
                   label={{
-                    value: "Now",
+                    value: "You are here",
                     position: "top",
                     fill: "hsl(160 84% 45%)",
                     fontSize: 10,
@@ -343,6 +416,14 @@ const PriceChartCard = ({ launchId, ticker, realSolReserves, graduationTarget }:
             </ResponsiveContainer>
           )}
         </div>
+
+        {view === "curve" && (
+          <p className="text-[11px] text-muted-foreground text-center">
+            {nowRhoze.toLocaleString(undefined, { maximumFractionDigits: 0 })} /{" "}
+            {targetRhoze.toLocaleString(undefined, { maximumFractionDigits: 0 })} $RHOZE raised — when
+            the curve fills, the coin graduates and liquidity locks.
+          </p>
+        )}
       </CardContent>
     </Card>
   );

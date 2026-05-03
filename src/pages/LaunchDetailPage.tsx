@@ -193,33 +193,54 @@ const LaunchDetailPage = () => {
             </div>
           </div>
 
-          {/* Quick stats */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-            <Stat label="Price" value={`${price.toExponential(2)} SOL`} />
-            <Stat label="Market cap" value={`${marketCap.toFixed(2)} SOL`} />
-            <Stat label="24h volume" value={`${vol24h.toFixed(3)} SOL`} />
-            <Stat
-              label="Holders"
-              value={holderCount === null ? "—" : holderCount.toLocaleString()}
-            />
-            <Stat label="LP lock" value={`${launch.lp_lock_months}mo`} icon={<Lock className="h-3 w-3" />} />
-          </div>
+          {/* Quick stats — denominated in $RHOZE so it reads like an in-app
+              economy, not a Solana DEX. 1 SOL ≈ 100 $RHOZE on the simulated
+              curve. */}
+          {(() => {
+            const RHOZE_PER_SOL = 100;
+            const priceRhoze = price * RHOZE_PER_SOL;
+            const mcapRhoze = marketCap * RHOZE_PER_SOL;
+            const vol24Rhoze = vol24h * RHOZE_PER_SOL;
+            const targetRhoze = Number(launch.graduation_sol_target) * RHOZE_PER_SOL;
+            const nowRhoze = Number(launch.real_sol_reserves) * RHOZE_PER_SOL;
+            const fmt = (n: number) =>
+              n >= 1000 ? n.toLocaleString(undefined, { maximumFractionDigits: 0 }) : n.toFixed(2);
+            const fmtTiny = (n: number) => {
+              if (n >= 1) return n.toFixed(4);
+              if (n >= 0.0001) return n.toFixed(6);
+              return n.toPrecision(3);
+            };
+            return (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                  <Stat label="Price" value={`${fmtTiny(priceRhoze)} $RHOZE`} />
+                  <Stat label="Market cap" value={`${fmt(mcapRhoze)} $RHOZE`} />
+                  <Stat label="24h volume" value={`${fmt(vol24Rhoze)} $RHOZE`} />
+                  <Stat
+                    label="Holders"
+                    value={holderCount === null ? "—" : holderCount.toLocaleString()}
+                  />
+                  <Stat label="LP lock" value={`${launch.lp_lock_months}mo`} icon={<Lock className="h-3 w-3" />} />
+                </div>
 
-          {/* Progress bar */}
-          <div className="space-y-1">
-            <div className="flex justify-between text-[10px] font-mono text-muted-foreground">
-              <span>
-                {Number(launch.real_sol_reserves).toFixed(3)} / {launch.graduation_sol_target} SOL
-              </span>
-              <span>{progress.toFixed(1)}% to graduation</span>
-            </div>
-            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-emerald-500 to-fuchsia-500 transition-all"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
+                {/* Progress bar */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] font-mono text-muted-foreground">
+                    <span>
+                      {fmt(nowRhoze)} / {fmt(targetRhoze)} $RHOZE raised
+                    </span>
+                    <span>{progress.toFixed(1)}% to graduation</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-emerald-500 to-fuchsia-500 transition-all"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+              </>
+            );
+          })()}
 
           {isCreator && (
             <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs">
@@ -286,7 +307,7 @@ const LaunchDetailPage = () => {
                             ${launch.ticker}
                           </span>
                           <span className="text-muted-foreground text-right">
-                            {Number(t.sol_amount).toFixed(4)} SOL
+                            {(Number(t.sol_amount) * 100).toFixed(2)} $RHOZE
                           </span>
                           <span className="text-muted-foreground text-[10px] text-right">
                             {new Date(t.created_at).toLocaleTimeString([], {
@@ -343,7 +364,9 @@ const LaunchDetailPage = () => {
           </Card>
         </div>
 
-        {/* RIGHT: trade panel + on-chain */}
+        {/* RIGHT: trade panel. The on-chain address + balance cards are
+            hidden in simulation mode — the only Solana detail users care
+            about is the CA chip in the header (links out when on-chain). */}
         <div className="space-y-4">
           <LaunchpadModeBanner />
           <TradePanel
@@ -354,16 +377,20 @@ const LaunchDetailPage = () => {
             virtualToken={Number(launch.virtual_token_reserves)}
             onTraded={load}
           />
-          <OnChainAddressesCard
-            mint={launch.mint_address}
-            launchPda={deriveLaunchPda(launch.id)?.toBase58() ?? null}
-            raydiumPool={launch.raydium_pool}
-          />
-          <OnChainBalancesCard
-            workId={launch.id}
-            ticker={launch.ticker}
-            mint={launch.mint_address}
-          />
+          {isLaunchpadOnChainEnabled() && (
+            <>
+              <OnChainAddressesCard
+                mint={launch.mint_address}
+                launchPda={deriveLaunchPda(launch.id)?.toBase58() ?? null}
+                raydiumPool={launch.raydium_pool}
+              />
+              <OnChainBalancesCard
+                workId={launch.id}
+                ticker={launch.ticker}
+                mint={launch.mint_address}
+              />
+            </>
+          )}
         </div>
       </div>
     </div>
