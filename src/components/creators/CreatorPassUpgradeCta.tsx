@@ -46,7 +46,6 @@ type Props = { variant?: "wide" | "compact" };
 
 const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
   const { user } = useAuth();
-  const { data: tokenInfo } = useRhozeBalance();
 
   const [dismissed, setDismissed] = useState<boolean>(() => {
     if (typeof window === "undefined" || !user) return false;
@@ -58,7 +57,7 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
     queryFn: async () => {
       const { data } = await supabase
         .from("user_credits")
-        .select("tier")
+        .select("tier, balance")
         .eq("user_id", user!.id)
         .maybeSingle();
       return data;
