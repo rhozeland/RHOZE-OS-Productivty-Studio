@@ -640,8 +640,26 @@ const ProfileDetailPage = () => {
               </Popover>
             </div>
 
+            {/* ─── Artist token (formerly the Coin tab) — surfaced first: backing > booking ─── */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 px-1">
+                <Coins className="h-4 w-4 text-primary" />
+                <h3 className="font-display text-sm font-semibold text-foreground">
+                  {isOwnProfile ? "Your artist token" : `${p.display_name || p.username || "Artist"}'s token`}
+                </h3>
+              </div>
+              <ProfileCoinTab
+                creatorId={id!}
+                isOwnProfile={isOwnProfile}
+                defaultName={p.display_name || p.username}
+                defaultImage={p.avatar_url}
+                memberSince={p.created_at}
+                showReadiness={false}
+              />
+            </div>
+
             {/* Action grid — Book a session is full-width when present */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               {profile.available && (
                 <button
                   onClick={() => user ? setBookingOpen(true) : navigate("/auth")}
@@ -699,24 +717,6 @@ const ProfileDetailPage = () => {
                   </div>
                 </button>
               )}
-            </div>
-
-            {/* ─── Artist token (formerly the Coin tab) ─── */}
-            <div className="space-y-2 pt-2">
-              <div className="flex items-center gap-2 px-1">
-                <Coins className="h-4 w-4 text-primary" />
-                <h3 className="font-display text-sm font-semibold text-foreground">
-                  {isOwnProfile ? "Your artist token" : `${p.display_name || p.username || "Artist"}'s token`}
-                </h3>
-              </div>
-              <ProfileCoinTab
-                creatorId={id!}
-                isOwnProfile={isOwnProfile}
-                defaultName={p.display_name || p.username}
-                defaultImage={p.avatar_url}
-                memberSince={p.created_at}
-                showReadiness={false}
-              />
             </div>
 
             {/* Listings inline — what they're offering OR looking for */}
