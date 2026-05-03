@@ -28,6 +28,9 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { ROLE_BY_ID } from "@/lib/creator-roles";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
+import NoteBubble from "@/components/notes/NoteBubble";
+import { useUserNote } from "@/hooks/useNotes";
+import { useBuddyStatus } from "@/hooks/useBuddies";
 
 // Human-readable labels + destinations for on-chain reputation tiles.
 // Tiles are clickable when href is set; otherwise rendered as static cards.
