@@ -50,6 +50,7 @@ import InfrastructurePage from "@/pages/InfrastructurePage";
 import SpacesHubPage from "@/pages/SpacesHubPage";
 import EventCreatePage from "@/pages/EventCreatePage";
 import EventDetailPage from "@/pages/EventDetailPage";
+import EventsExplorePage from "@/pages/EventsExplorePage";
 import EventManagePage from "@/pages/EventManagePage";
 import TicketDetailPage from "@/pages/TicketDetailPage";
 import { ProfileRedirect } from "@/components/ProfileRedirect";
