@@ -165,10 +165,20 @@ const LaunchCoinDialog = ({
       toast({ title: "Coin image required", description: "Use your profile picture or upload one.", variant: "destructive" });
       return;
     }
-    if (dropInfo && dropInfo.balance < COIN_LAUNCH_FEE_RHOZE) {
+    const initialBuyNum = Math.max(0, Number(initialBuy) || 0);
+    const totalSpend = COIN_LAUNCH_FEE_RHOZE + initialBuyNum;
+    if (initialBuyNum < 1) {
+      toast({
+        title: "Kickstart your coin",
+        description: "Buy at least 1 $RHOZE worth to seed your own supply.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (dropInfo && dropInfo.balance < totalSpend) {
       toast({
         title: "Not enough $RHOZE",
-        description: `Launching costs ${COIN_LAUNCH_FEE_RHOZE} $RHOZE. You have ${Math.floor(dropInfo.balance)}.`,
+        description: `Launch fee + initial buy = ${totalSpend} $RHOZE. You have ${Math.floor(dropInfo.balance)}.`,
         variant: "destructive",
       });
       return;
