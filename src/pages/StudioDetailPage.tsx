@@ -359,7 +359,6 @@ const StudioDetailPage = () => {
               </div>
             );
           })()}
-          )}
 
           {/* Gallery */}
           {(() => {
