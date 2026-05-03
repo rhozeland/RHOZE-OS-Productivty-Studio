@@ -91,6 +91,25 @@ Deno.serve(async (req) => {
       return json({ error: "Only http/https URLs supported" }, 400);
     }
 
+    // SSRF guard: block private/loopback/link-local hosts (literal + DNS-resolved)
+    const PRIVATE_RE =
+      /^(?:127\.|10\.|0\.|169\.254\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.|::1$|fc|fd|fe80:)/i;
+    const host = target.hostname.toLowerCase();
+    if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".internal") || PRIVATE_RE.test(host)) {
+      return json({ error: "Blocked host" }, 403);
+    }
+    try {
+      const ips = await Deno.resolveDns(host, "A").catch(() => [] as string[]);
+      const ips6 = await Deno.resolveDns(host, "AAAA").catch(() => [] as string[]);
+      for (const ip of [...ips, ...ips6]) {
+        if (PRIVATE_RE.test(ip)) {
+          return json({ error: "Blocked host" }, 403);
+        }
+      }
+    } catch {
+      // resolution failure — let fetch handle it
+    }
+
     // 8s fetch timeout
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 8000);
