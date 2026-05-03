@@ -337,32 +337,31 @@ const EventDetailPage = () => {
         {/* RIGHT — title, details, registration, about */}
         <div className="min-w-0 space-y-7">
           {/* Title block */}
-          <div className="space-y-4">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              {format(start, "EEEE, MMMM d")} · {format(start, "h:mm a")}
-            </p>
+          <div className="space-y-5">
+            <div className="inline-flex w-fit items-center rounded-full border border-border bg-card px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              {ev.category}
+            </div>
             <h1 className="font-display text-3xl font-bold leading-[1.06] tracking-tight md:text-4xl xl:text-[3.3rem]">
               {ev.title}
             </h1>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="flex items-start gap-3 rounded-2xl border border-border bg-card/70 p-4">
-                <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-xl bg-muted/60">
-                  <span className="text-[9px] uppercase tracking-wider text-muted-foreground leading-none">
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-xl border border-border bg-card">
+                  <span className="text-[9px] leading-none uppercase tracking-wider text-muted-foreground">
                     {format(start, "MMM")}
                   </span>
                   <span className="mt-0.5 text-base font-bold leading-none">{format(start, "d")}</span>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold">{format(start, "EEEE, MMM d")}</p>
-                  <p className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
+                  <p className="text-base font-semibold">{format(start, "EEEE, MMMM d")}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
                     {format(start, "h:mm a")} – {format(end, "h:mm a")}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 rounded-2xl border border-border bg-card/70 p-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted/60">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-card">
                   {ev.is_online ? (
                     <Globe2 className="h-4 w-4 text-muted-foreground" />
                   ) : (
@@ -372,13 +371,13 @@ const EventDetailPage = () => {
                 <div className="min-w-0">
                   {ev.is_online ? (
                     <>
-                      <p className="text-sm font-semibold">Online event</p>
-                      <p className="mt-1 text-xs text-muted-foreground">Link shared after registration</p>
+                      <p className="text-base font-semibold">Online event</p>
+                      <p className="mt-1 text-sm text-muted-foreground">Link shared after registration</p>
                     </>
                   ) : (
                     <>
-                      <p className="truncate text-sm font-semibold">{ev.venue_name ?? "Venue TBA"}</p>
-                      <p className="mt-1 truncate text-xs text-muted-foreground">
+                      <p className="text-base font-semibold">{ev.venue_name ?? "Venue TBA"}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
                         {ev.venue_address ?? "Address shared after registration"}
                       </p>
                     </>
