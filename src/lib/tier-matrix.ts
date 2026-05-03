@@ -72,7 +72,6 @@ export const TIERS: TierRow[] = [
       "5% off Spaces & services",
       "2 free IP anchors / mo",
       "3 coin drops / 30 days",
-      "24h early coin access",
     ],
     coinDropsPerMonth: 3,
     gradient: "linear-gradient(135deg, hsl(330 65% 72%), hsl(345 55% 48%))",
