@@ -17,8 +17,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
-import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
-import { useListingVerifiedIp } from "@/hooks/useListingVerifiedIp";
 
 const CATEGORIES = [
   { key: "all", label: "All", icon: Sparkles },
@@ -67,9 +65,6 @@ const ExploreCreatorsPage = () => {
       l.description?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Bulk Verified IP lookup so guest creator cards surface on-chain proof.
-  const filteredIds = (filtered ?? []).map((l: any) => l.id);
-  const { data: verifiedIpMap } = useListingVerifiedIp(filteredIds);
 
   return (
     <div className="min-h-screen bg-background">
