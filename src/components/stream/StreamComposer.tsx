@@ -12,8 +12,9 @@
  * primary action button reads naturally ("Drop" on Conversations,
  * "Post Offering" on Offerings, etc.).
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAuthGate } from "@/components/AuthGateDialog";
 import { Button } from "@/components/ui/button";
