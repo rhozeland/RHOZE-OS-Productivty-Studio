@@ -210,17 +210,21 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
       const bannerFallback = new Map<string, string>();
       const worksCount = new Map<string, number>();
 
+      // Count ALL works owned by the artist (not just `visibility=public`),
+      // so that creators see their real total in the Featured stat strip.
+      // The list of files is never rendered here — only the count.
       const { data: workRows } = await supabase
         .from("works")
-        .select("user_id, file_url, mime_type, created_at")
+        .select("user_id, file_url, mime_type, visibility, created_at")
         .in("user_id", userIds)
-        .eq("visibility", "public")
         .order("created_at", { ascending: false })
-        .limit(200);
+        .limit(400);
 
       (workRows ?? []).forEach((row: any) => {
         worksCount.set(row.user_id, (worksCount.get(row.user_id) ?? 0) + 1);
+        // Only public images may be used as banner fallback (no leaking private work).
         if (
+          row.visibility === "public" &&
           needsBanner.includes(row.user_id) &&
           !bannerFallback.has(row.user_id) &&
           row.file_url &&

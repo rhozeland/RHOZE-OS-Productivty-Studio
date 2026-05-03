@@ -93,23 +93,20 @@ const EventSpotlightCard = ({
           )}
         </div>
 
-        {/* Portrait poster — 9:16, image preserved (object-contain so nothing
-            gets cropped out of the composition). */}
-        <div className="relative w-[120px] sm:w-[140px] aspect-[9/16] shrink-0 overflow-hidden rounded-2xl border border-border/45 bg-muted">
+        {/* Portrait poster — 9:16 frame, image rendered with object-contain
+            so the full uploaded composition is visible (no crop/zoom-fill).
+            Background uses the avatar gradient as a passe-partout. */}
+        <div
+          className="relative w-[120px] sm:w-[140px] aspect-[9/16] shrink-0 overflow-hidden rounded-2xl border border-border/45"
+          style={{ background: grad.background }}
+        >
           {banner ? (
             <img
               src={banner}
               alt={title}
-              className="h-full w-full object-cover"
-              style={{ objectPosition: "center" }}
+              className="absolute inset-0 h-full w-full object-contain"
             />
-          ) : (
-            <div
-              className="absolute inset-0"
-              style={{ background: grad.background }}
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/25 to-transparent pointer-events-none" />
+          ) : null}
         </div>
       </div>
 
