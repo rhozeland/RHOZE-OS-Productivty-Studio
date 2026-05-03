@@ -591,8 +591,6 @@ const EventDetailPage = () => {
             </div>
           )}
 
-          {/* Gallery (images + videos) */}
-          <EventMediaCarousel eventId={ev.id} />
         </div>
       </div>
 
