@@ -15,7 +15,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRhozeBalance } from "@/hooks/useRhozeBalance";
 import {
   TIERS,
   TIER_RANK,
@@ -47,7 +46,6 @@ type Props = { variant?: "wide" | "compact" };
 
 const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
   const { user } = useAuth();
-  const { data: tokenInfo } = useRhozeBalance();
 
   const [dismissed, setDismissed] = useState<boolean>(() => {
     if (typeof window === "undefined" || !user) return false;
@@ -59,7 +57,7 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
     queryFn: async () => {
       const { data } = await supabase
         .from("user_credits")
-        .select("tier")
+        .select("tier, balance")
         .eq("user_id", user!.id)
         .maybeSingle();
       return data;
@@ -91,7 +89,7 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
 
   const personalized = useMemo(() => {
     if (!activity) return null;
-    const balance = tokenInfo?.balance ?? 0;
+    const balance = Number(credits?.balance ?? 0);
 
     const LEGACY_MAP: Record<string, TierId> = { bronze: "spark", gold: "bloom", diamond: "glow", prism: "play" };
     const subTier: TierId = credits?.tier ? ((LEGACY_MAP[credits.tier] || credits.tier) as TierId) : "spark";
@@ -147,7 +145,7 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
     }
 
     return { effective, next: nextTier, hint };
-  }, [activity, credits, tokenInfo]);
+  }, [activity, credits]);
 
   if (!user) return null;
   if (dismissed) return null;

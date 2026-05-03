@@ -1,8 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRhozeBalance } from "@/hooks/useRhozeBalance";
-import { useWallet } from "@solana/wallet-adapter-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -47,8 +45,6 @@ export function getTokenTier(balance: number): string {
 
 const CreatorPassCard = () => {
   const { user } = useAuth();
-  const { connected } = useWallet();
-  const { data: tokenInfo } = useRhozeBalance();
   const [claimAmount, setClaimAmount] = useState(0);
 
   const { data: credits } = useQuery({
@@ -177,7 +173,7 @@ const CreatorPassCard = () => {
   // Effective tier = max(subscription, $RHOZE hold, activity)
   const LEGACY_MAP: Record<string, TierId> = { bronze: "spark", gold: "bloom", diamond: "glow", prism: "play" };
   const subTier: TierId = credits?.tier ? ((LEGACY_MAP[credits.tier] || credits.tier) as TierId) : "spark";
-  const holdTier: TierId = tokenInfo ? (getHoldTier(tokenInfo.balance) as TierId) : "spark";
+  const holdTier: TierId = getHoldTier(Number(credits?.balance ?? 0)) as TierId;
   const activityTier: TierId = activityCounts ? getActivityTier(activityCounts) : "spark";
   const effectiveTier = getEffectiveTier(subTier, holdTier, activityTier);
   const gradient = TIER_GRADIENTS[effectiveTier] || TIER_GRADIENTS.spark;
@@ -282,33 +278,29 @@ const CreatorPassCard = () => {
         ))}
       </motion.div>
 
-      {/* ── Token Balance + Claim ── */}
+      {/* ── In-app $RHOZE Balance + Claim ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* On-chain balance */}
+        {/* In-app balance — drives tier eligibility */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="surface-card p-4 space-y-3">
           <div className="flex items-center gap-2">
             <Shield className="h-4 w-4 text-primary" />
-            <span className="text-sm font-body font-semibold text-foreground">Wallet Token Balance</span>
+            <span className="text-sm font-body font-semibold text-foreground">$RHOZE Balance</span>
           </div>
-          {connected && tokenInfo ? (
-            <>
-              <p className="text-2xl font-display text-foreground">
-                {tokenInfo.balance.toLocaleString()} <span className="text-sm text-muted-foreground">$RHOZE</span>
-              </p>
-              {holdTier !== "spark" && (
-                <p className="text-xs font-body text-muted-foreground">
-                  Holding unlocks <span className="font-semibold capitalize text-primary">{holdTier}</span> tier benefits
-                </p>
-              )}
-              <div className="text-[10px] text-muted-foreground font-body space-y-0.5">
-                <p>1M–24M → Bloom • 25M–49M → Glow • 50M+ → Play</p>
-              </div>
-            </>
+          <p className="text-2xl font-display text-foreground">
+            {Number(credits?.balance ?? 0).toLocaleString()} <span className="text-sm text-muted-foreground">$RHOZE</span>
+          </p>
+          {holdTier !== "spark" ? (
+            <p className="text-xs font-body text-muted-foreground">
+              Holding unlocks <span className="font-semibold capitalize text-primary">{holdTier}</span> tier benefits
+            </p>
           ) : (
-            <p className="text-xs text-muted-foreground font-body py-4 text-center">
-              Connect your wallet to see your verified $RHOZE balance and unlock tier benefits by holding.
+            <p className="text-xs font-body text-muted-foreground">
+              Earn or hold $RHOZE to unlock tier benefits — no wallet needed.
             </p>
           )}
+          <div className="text-[10px] text-muted-foreground font-body space-y-0.5">
+            <p>1M–24M → Bloom • 25M–49M → Glow • 50M+ → Play</p>
+          </div>
         </motion.div>
 
         {/* Claim to wallet */}
