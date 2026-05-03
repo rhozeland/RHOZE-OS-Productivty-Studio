@@ -313,8 +313,14 @@ const ProjectDetailPage = () => {
         </div>
       </div>
 
-      {/* Progress Overview */}
-      <ProgressChart goals={goals} />
+      {/* Progress Overview — Drop Room launcher lives in the header so a
+          live collab space is always one tap away without a dedicated tab. */}
+      <ProgressChart
+        goals={goals}
+        headerAction={
+          <DropRoomLauncher projectId={id!} projectTitle={project.title} />
+        }
+      />
 
       <Tabs defaultValue="roadmap" className="w-full">
         <TabsList className="mb-4 w-full justify-start overflow-x-auto flex-nowrap shrink-0">
