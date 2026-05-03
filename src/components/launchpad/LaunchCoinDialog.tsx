@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { getHoldTier, getCoinDropsPerMonth, TIERS } from "@/lib/tier-matrix";
+import { COIN_LAUNCH_FEE_RHOZE } from "@/lib/rewards-catalog";
 import {
   Dialog,
   DialogContent,
