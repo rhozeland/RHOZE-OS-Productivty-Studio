@@ -337,10 +337,10 @@ const AppLayout = () => {
 
               {!user && (
                 <button
-                  onClick={() => navigate("/auth")}
-                  className="text-xs font-body font-medium text-primary-foreground bg-primary px-4 py-1.5 rounded-full hover:opacity-90 transition-opacity"
+                  onClick={() => navigate("/landing")}
+                  className="text-xs font-body text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5"
                 >
-                  Sign Up
+                  Sign in
                 </button>
               )}
             </div>
