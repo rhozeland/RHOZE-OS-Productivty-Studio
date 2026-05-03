@@ -190,65 +190,28 @@ const EventManagePage = () => {
         method: "manual",
       });
 
-      // 3. Mint proof-of-attendance — SHA-256 over ticket+event+host signature
-      const payload = {
-        protocol: "rhozeland",
-        type: "attendance",
-        ticket_id: ticketId,
-        event_id: ev!.id,
-        holder_id: ticket.holder_id,
-        host_id: user!.id,
-        qr_token: ticket.qr_token,
-        event_manifest_hash: ev!.manifest_hash ?? null,
-        checked_in_at: checkedAt,
-      };
-      const buf = new TextEncoder().encode(JSON.stringify(payload));
-      const hashBuf = await crypto.subtle.digest("SHA-256", buf);
-      const attendance_hash = Array.from(new Uint8Array(hashBuf))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
-
-      await supabase
-        .from("event_tickets")
-        .update({ attendance_hash })
-        .eq("id", ticketId);
-
-      // 4. Anchor on Solana via existing edge function (best-effort)
+      // 3. Anchor proof-of-attendance via dedicated edge function (idempotent + retryable).
+      // The function computes the SHA-256, creates the contribution_proofs row,
+      // posts the Solana memo, and writes back signature + anchored_at.
+      // Failures are recorded server-side; nightly sweep + holder retry will recover.
+      let anchored = false;
       try {
-        const { data: proof, error: proofErr } = await supabase
-          .from("contribution_proofs")
-          .insert({
-            user_id: ticket.holder_id,
-            action_type: "event_attendance",
-            reference_id: ticketId,
-            metadata: { ...payload, attendance_hash },
-          })
-          .select()
-          .single();
-        if (proofErr) throw proofErr;
-
-        const { data: res } = await supabase.functions.invoke(
-          "anchor-contribution",
-          { body: { proof_id: proof.id } },
+        const { data: res, error: fnErr } = await supabase.functions.invoke(
+          "anchor-event-ticket",
+          { body: { ticket_id: ticketId } },
         );
-        const signature = (res as { signature?: string })?.signature ?? null;
-        if (signature) {
-          await supabase
-            .from("event_tickets")
-            .update({
-              solana_signature: signature,
-              anchored_at: new Date().toISOString(),
-            })
-            .eq("id", ticketId);
-        }
+        if (fnErr) throw fnErr;
+        anchored = !!(res as { signature?: string })?.signature;
       } catch (anchorErr) {
-        // Holder can still self-anchor from their ticket page later.
-        console.warn("Auto-anchor failed; holder can retry from ticket", anchorErr);
+        console.warn("Auto-anchor failed; will retry", anchorErr);
       }
+      return { anchored };
     },
-    onSuccess: () => {
+    onSuccess: ({ anchored }) => {
       toast.success("Checked in", {
-        description: "Proof-of-attendance minted on Solana.",
+        description: anchored
+          ? "Proof-of-attendance anchored on Solana."
+          : "Receipt is pending — we'll retry automatically.",
       });
       qc.invalidateQueries({ queryKey: ["event-tickets-manage", id] });
     },

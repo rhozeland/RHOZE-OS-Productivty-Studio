@@ -5,6 +5,7 @@
  * proof-of-attendance on Solana (SHA-256 of ticket+event metadata).
  */
 import { useParams, Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
@@ -18,6 +19,7 @@ import {
   Loader2,
   ShieldCheck,
   Hourglass,
+  RefreshCw,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,7 +46,7 @@ const TicketDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
 
-  const { data: ticket, isLoading } = useQuery({
+  const { data: ticket, isLoading, refetch } = useQuery({
     queryKey: ["ticket", id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -56,6 +58,11 @@ const TicketDetailPage = () => {
       return data;
     },
     enabled: !!id,
+    // Poll every 4s while we're waiting on a Solana receipt.
+    refetchInterval: (q) => {
+      const t = q.state.data as { status?: string; solana_signature?: string | null } | undefined;
+      return t && t.status === "checked_in" && !t.solana_signature ? 4000 : false;
+    },
   });
 
   const { data: host } = useQuery({
@@ -70,6 +77,63 @@ const TicketDetailPage = () => {
       return data;
     },
   });
+
+  // Holder-side auto-retry: if checked in but no signature yet, ping the
+  // dedicated edge fn once on mount and again every ~30s, with backoff.
+  const [retrying, setRetrying] = useState(false);
+  const [retryError, setRetryError] = useState<string | null>(null);
+  const attemptCountRef = useRef(0);
+  const ticketStatus = ticket?.status;
+  const ticketSig = ticket?.solana_signature;
+  const ticketId = ticket?.id;
+  useEffect(() => {
+    if (!ticketId || ticketStatus !== "checked_in" || ticketSig) return;
+    let cancelled = false;
+    const run = async () => {
+      if (cancelled || attemptCountRef.current >= 5) return;
+      attemptCountRef.current += 1;
+      setRetrying(true);
+      try {
+        const { error } = await supabase.functions.invoke(
+          "anchor-event-ticket",
+          { body: { ticket_id: ticketId } },
+        );
+        if (error) throw error;
+        setRetryError(null);
+        refetch();
+      } catch (err) {
+        setRetryError(err instanceof Error ? err.message : "Retry failed");
+      } finally {
+        if (!cancelled) setRetrying(false);
+      }
+    };
+    // Fire immediately, then every 30s.
+    run();
+    const iv = setInterval(run, 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(iv);
+    };
+  }, [ticketId, ticketStatus, ticketSig, refetch]);
+
+  const manualRetry = async () => {
+    if (!ticketId || retrying) return;
+    setRetrying(true);
+    setRetryError(null);
+    try {
+      const { error } = await supabase.functions.invoke(
+        "anchor-event-ticket",
+        { body: { ticket_id: ticketId } },
+      );
+      if (error) throw error;
+      attemptCountRef.current = 0;
+      refetch();
+    } catch (err) {
+      setRetryError(err instanceof Error ? err.message : "Retry failed");
+    } finally {
+      setRetrying(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -211,10 +275,36 @@ const TicketDetailPage = () => {
             </a>
           </>
         ) : ticket.status === "checked_in" ? (
-          <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
-            <Hourglass className="h-3.5 w-3.5" />
-            Checked in — anchoring receipt to Solana…
-          </p>
+          <div className="space-y-2">
+            <p className="text-xs inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+              <ShieldCheck className="h-3.5 w-3.5" /> Checked in
+            </p>
+            {retryError && attemptCountRef.current >= 5 ? (
+              <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+                <Hourglass className="h-3.5 w-3.5" />
+                Receipt pending — we'll retry automatically.
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+                {retrying ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Hourglass className="h-3.5 w-3.5" />
+                )}
+                Receipt minting on Solana — usually a few seconds.
+              </p>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              className="rounded-full gap-1.5 h-7 text-xs"
+              onClick={manualRetry}
+              disabled={retrying}
+            >
+              <RefreshCw className={`h-3 w-3 ${retrying ? "animate-spin" : ""}`} />
+              {retrying ? "Retrying…" : "Retry now"}
+            </Button>
+          </div>
         ) : (
           <>
             <p className="text-xs text-muted-foreground">
