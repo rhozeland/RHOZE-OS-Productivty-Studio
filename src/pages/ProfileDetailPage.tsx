@@ -112,7 +112,7 @@ const ProfileDetailPage = () => {
     queryKey: ["profile-flow-posts", id],
     queryFn: async () => {
       const { data } = await supabase.from("flow_items")
-        .select("id, title, file_url, link_url, category, content_type, description, created_at")
+        .select("id, title, file_url, link_url, category, content_type, description, solana_signature, anchored_at, created_at")
         .eq("user_id", id!).order("created_at", { ascending: false }).limit(12);
       return data ?? [];
     },
