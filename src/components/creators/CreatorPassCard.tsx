@@ -164,9 +164,21 @@ const CreatorPassCard = () => {
                   <span className="text-xl font-display font-bold">{profile?.display_name?.[0]?.toUpperCase() || "?"}</span>
                 )}
               </div>
-              <div>
-                <p className="font-display text-lg font-bold drop-shadow-sm">{profile?.display_name || "Creator"}</p>
-                <p className="text-xs opacity-80 font-body">Creator Pass</p>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <p className="font-display text-lg font-bold drop-shadow-sm truncate">{profile?.display_name || "Creator"}</p>
+                  {isVerifiedArtist && (
+                    <span
+                      title="Verified Artist · identity confirmed by Rhozeland"
+                      className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-white/25 backdrop-blur-sm shrink-0"
+                    >
+                      <BadgeCheck className="h-3.5 w-3.5" />
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs opacity-80 font-body">
+                  {isVerifiedArtist ? "Verified Artist · Creator Pass" : "Creator Pass"}
+                </p>
               </div>
             </div>
             <div className="text-right">
