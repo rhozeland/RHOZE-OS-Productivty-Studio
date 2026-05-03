@@ -21,7 +21,7 @@ const CreatorDropsCatalog = ({ creatorId, isOwnProfile }: Props) => {
       const { data } = await supabase
         .from("coin_launches")
         .select(
-          "id, ticker, name, image_url, status, real_sol_reserves, graduation_sol_target, event_id, space_id, events(title), studios(name)"
+          "id, ticker, name, image_url, status, virtual_sol_reserves, virtual_token_reserves, total_supply, event_id, space_id, events(title), studios(name)"
         )
         .eq("creator_id", creatorId)
         .neq("status", "cancelled")
