@@ -58,7 +58,7 @@ import LinkPreviewCard from "@/components/flow/LinkPreviewCard";
 import { cn } from "@/lib/utils";
 import { loadFlowFeed } from "@/lib/flow-feed";
 import { computeContentHash } from "@/lib/content-hash";
-import AdminFlowSeedPanel from "@/components/flow/AdminFlowSeedPanel";
+import FlowCreatorPeek from "@/components/flow/FlowCreatorPeek";
 import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
 import SignUpToPostPrompt from "@/components/flow/SignUpToPostPrompt";
 import FlowFeedErrorState from "@/components/flow/FlowFeedErrorState";
