@@ -4,12 +4,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
-  Flame, Star, Trophy, Crown, Zap, Award, Coins, Shield, TrendingUp, Download,
+  Flame, Coins, Shield, Download, BadgeCheck, Ticket,
   FolderKanban, MessageSquare, Calendar,
 } from "lucide-react";
 import ClaimRhozeButton from "@/components/ClaimRhozeButton";
 import { Input } from "@/components/ui/input";
+import Tilt3D from "@/components/ui/Tilt3D";
 import { useState } from "react";
+import { format } from "date-fns";
 
 const LEVELS = [
   { level: 1, title: "Newcomer", xp: 0, icon: Zap, color: "hsl(210 60% 55%)" },
