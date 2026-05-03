@@ -283,31 +283,10 @@ const TicketDetailPage = () => {
             <p className="text-xs inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
               <ShieldCheck className="h-3.5 w-3.5" /> Checked in
             </p>
-            {retryError && attemptCountRef.current >= 5 ? (
-              <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
-                <Hourglass className="h-3.5 w-3.5" />
-                Receipt pending — we'll retry automatically.
-              </p>
-            ) : (
-              <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
-                {retrying ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Hourglass className="h-3.5 w-3.5" />
-                )}
-                Receipt minting on Solana — usually a few seconds.
-              </p>
-            )}
-            <Button
-              size="sm"
-              variant="outline"
-              className="rounded-full gap-1.5 h-7 text-xs"
-              onClick={manualRetry}
-              disabled={retrying}
-            >
-              <RefreshCw className={`h-3 w-3 ${retrying ? "animate-spin" : ""}`} />
-              {retrying ? "Retrying…" : "Retry now"}
-            </Button>
+            <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+              <Hourglass className="h-3.5 w-3.5" />
+              Receipt minting on Solana — usually a few seconds.
+            </p>
           </div>
         ) : (
           <>
