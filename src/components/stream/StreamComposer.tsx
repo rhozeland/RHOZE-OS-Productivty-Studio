@@ -171,7 +171,7 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
               ref={textareaRef}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="What are you working on? Drop a thought, link, or update…"
+              placeholder="Share an update — what you're working on, a thought, a link…"
               className="min-h-[88px] resize-none border-0 bg-muted/40 focus-visible:ring-1"
               maxLength={500}
               onKeyDown={(e) => {
@@ -186,7 +186,7 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
               }}
             />
             <div className="mt-1.5 text-[10px] text-muted-foreground/60 px-1">
-              {text.length}/500 · ⌘↵ to drop · Esc to close
+              {text.length}/500 · ⌘↵ to post · Esc to close
             </div>
           </motion.div>
         )}
