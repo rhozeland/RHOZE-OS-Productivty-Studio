@@ -4,25 +4,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
-  Flame, Star, Trophy, Crown, Zap, Award, Coins, Shield, TrendingUp, Download,
+  Flame, Coins, Shield, Download, BadgeCheck, Ticket,
   FolderKanban, MessageSquare, Calendar,
 } from "lucide-react";
 import ClaimRhozeButton from "@/components/ClaimRhozeButton";
 import { Input } from "@/components/ui/input";
+import Tilt3D from "@/components/ui/Tilt3D";
 import { useState } from "react";
+import { format } from "date-fns";
 
-const LEVELS = [
-  { level: 1, title: "Newcomer", xp: 0, icon: Zap, color: "hsl(210 60% 55%)" },
-  { level: 2, title: "Contributor", xp: 20, icon: Star, color: "hsl(175 70% 50%)" },
-  { level: 3, title: "Creator", xp: 50, icon: Flame, color: "hsl(40 80% 50%)" },
-  { level: 4, title: "Builder", xp: 100, icon: Flame, color: "hsl(30 90% 60%)" },
-  { level: 5, title: "Pro", xp: 200, icon: Trophy, color: "hsl(280 60% 60%)" },
-  { level: 6, title: "Expert", xp: 350, icon: Trophy, color: "hsl(320 80% 60%)" },
-  { level: 7, title: "Master", xp: 500, icon: Crown, color: "hsl(350 60% 55%)" },
-  { level: 8, title: "Legend", xp: 750, icon: Crown, color: "hsl(150 55% 45%)" },
-  { level: 9, title: "Visionary", xp: 1000, icon: Crown, color: "hsl(280 80% 65%)" },
-  { level: 10, title: "Founder", xp: 1500, icon: Crown, color: "hsl(40 80% 50%)" },
-];
+// Levels/XP removed in v8.7 — Creator Pass surfaces $RHOZE hold + collectible
+// stats only. Level + XP previously double-displayed alongside the tier.
+
 
 import {
   TIERS,
@@ -62,32 +55,46 @@ const CreatorPassCard = () => {
   const { data: profile } = useQuery({
     queryKey: ["profile-pass", user?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("display_name, avatar_url").eq("user_id", user!.id).maybeSingle();
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url, verification_status")
+        .eq("user_id", user!.id)
+        .maybeSingle();
       return data;
     },
     enabled: !!user,
   });
 
-  const { data: xpData } = useQuery({
-    queryKey: ["creator-xp-pass", user?.id],
+  // Verified Works (anchored creative IP) — replaces the old "Anchored" generic count.
+  const { data: verifiedWorks } = useQuery({
+    queryKey: ["verified-works-pass", user?.id],
     queryFn: async () => {
-      const [{ count: proofCount }, { count: txCount }] = await Promise.all([
-        supabase.from("contribution_proofs").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
-        supabase.from("credit_transactions").select("id", { count: "exact", head: true }).eq("user_id", user!.id).eq("type", "reward"),
-      ]);
-      return { proofCount: proofCount ?? 0, txCount: txCount ?? 0, totalXP: (proofCount ?? 0) + (txCount ?? 0) * 2 };
-    },
-    enabled: !!user,
-  });
-
-  const { data: badgeCount } = useQuery({
-    queryKey: ["badge-count-pass", user?.id],
-    queryFn: async () => {
-      const { count } = await supabase.from("contribution_proofs").select("id", { count: "exact", head: true }).eq("user_id", user!.id).not("solana_signature", "is", null);
+      const { count } = await supabase
+        .from("contribution_proofs")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id)
+        .not("solana_signature", "is", null);
       return count ?? 0;
     },
     enabled: !!user,
   });
+
+  // Events attended — count of issued/checked-in tickets the user holds.
+  const { data: ticketsData } = useQuery({
+    queryKey: ["pass-tickets", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("event_tickets")
+        .select("id, status, created_at, event_id, event:events(id,title,starts_at,cover_url,category)")
+        .eq("holder_id", user!.id)
+        .in("status", ["issued", "checked_in"])
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  const eventsAttended = (ticketsData ?? []).filter((t: any) => t.status === "checked_in").length;
 
   // ─── Personal "Studio activity" metrics — relocated here from the
   // retired My Studio dashboard. Surfaces the live counts for a creator's
@@ -119,33 +126,6 @@ const CreatorPassCard = () => {
     enabled: !!user,
   });
 
-  const { data: weeklyRank } = useQuery({
-    queryKey: ["weekly-rank-pass", user?.id],
-    queryFn: async () => {
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      const { data } = await supabase
-        .from("credit_transactions")
-        .select("user_id, amount")
-        .eq("type", "reward")
-        .gte("created_at", weekAgo.toISOString());
-      if (!data?.length) return null;
-      const totals: Record<string, number> = {};
-      data.forEach((t) => { totals[t.user_id] = (totals[t.user_id] || 0) + Number(t.amount); });
-      const sorted = Object.entries(totals).sort(([, a], [, b]) => b - a);
-      const rank = sorted.findIndex(([id]) => id === user!.id);
-      return rank >= 0 ? rank + 1 : null;
-    },
-    enabled: !!user,
-  });
-
-  const totalXP = xpData?.totalXP ?? 0;
-  const currentLevel = LEVELS.reduce((acc, l) => (totalXP >= l.xp ? l : acc), LEVELS[0]);
-  const nextLevel = LEVELS.find((l) => l.xp > totalXP) ?? LEVELS[LEVELS.length - 1];
-  const progressPct = nextLevel.xp > currentLevel.xp
-    ? Math.min(100, ((totalXP - currentLevel.xp) / (nextLevel.xp - currentLevel.xp)) * 100)
-    : 100;
-
   // Effective tier = max($RHOZE hold, legacy subscription mapping)
   // v8.3: activity-based qualification removed — tier eligibility = $RHOZE hold only.
   const LEGACY_MAP: Record<string, TierId> = { bronze: "spark", gold: "bloom", diamond: "glow", prism: "play" };
@@ -154,13 +134,15 @@ const CreatorPassCard = () => {
   const effectiveTier = getEffectiveTier(subTier, holdTier);
   const gradient = TIER_GRADIENTS[effectiveTier] || TIER_GRADIENTS.spark;
 
-  if (!user) return null;
+  const isVerifiedArtist = profile?.verification_status === "verified";
 
-  const LevelIcon = currentLevel.icon;
+  if (!user) return null;
 
   return (
     <div className="space-y-6">
-      {/* ── Gym Badge Card ── */}
+      {/* ── Holographic Pass Card (3D tilt + shine) ── */}
+      <Tilt3D maxTilt={10} className="rounded-2xl">
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -182,9 +164,21 @@ const CreatorPassCard = () => {
                   <span className="text-xl font-display font-bold">{profile?.display_name?.[0]?.toUpperCase() || "?"}</span>
                 )}
               </div>
-              <div>
-                <p className="font-display text-lg font-bold drop-shadow-sm">{profile?.display_name || "Creator"}</p>
-                <p className="text-xs opacity-80 font-body">Creator Pass</p>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <p className="font-display text-lg font-bold drop-shadow-sm truncate">{profile?.display_name || "Creator"}</p>
+                  {isVerifiedArtist && (
+                    <span
+                      title="Verified Artist · identity confirmed by Rhozeland"
+                      className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-white/25 backdrop-blur-sm shrink-0"
+                    >
+                      <BadgeCheck className="h-3.5 w-3.5" />
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs opacity-80 font-body">
+                  {isVerifiedArtist ? "Verified Artist · Creator Pass" : "Creator Pass"}
+                </p>
               </div>
             </div>
             <div className="text-right">
@@ -196,43 +190,84 @@ const CreatorPassCard = () => {
             </div>
           </div>
 
-          {/* Stats grid — the "gym badges" */}
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+          {/* Stats — 4 collectible metrics (no XP/Level/Rank duplication) */}
+          <div className="grid grid-cols-4 gap-3">
             {[
               { label: "Balance", value: `${credits?.balance ?? 0}`, icon: Coins },
               { label: "Streak", value: `${credits?.reward_streak ?? 0}d`, icon: Flame },
-              { label: "Level", value: `${currentLevel.level}`, icon: LevelIcon },
-              { label: "XP", value: `${totalXP}`, icon: TrendingUp },
-              { label: "Anchored", value: `${badgeCount ?? 0}`, icon: Shield },
-              { label: "Rank", value: weeklyRank ? `#${weeklyRank}` : "—", icon: Award },
+              { label: "Events", value: `${eventsAttended}`, icon: Ticket },
+              { label: "Verified Works", value: `${verifiedWorks ?? 0}`, icon: Shield },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <div className="h-9 w-9 mx-auto rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center mb-1">
                   <stat.icon className="h-4 w-4" />
                 </div>
-                <p className="font-display text-sm font-bold">{stat.value}</p>
+                <p className="font-display text-sm font-bold tabular-nums">{stat.value}</p>
                 <p className="text-[9px] uppercase tracking-wider opacity-60 font-body">{stat.label}</p>
               </div>
             ))}
           </div>
-
-          {/* Level progress bar */}
-          <div className="mt-5">
-            <div className="flex items-center justify-between text-[10px] mb-1 opacity-80 font-body">
-              <span>Lv.{currentLevel.level} {currentLevel.title}</span>
-              <span>{totalXP} / {nextLevel.xp} XP</span>
-            </div>
-            <div className="h-2 rounded-full bg-white/20 overflow-hidden">
-              <motion.div
-                className="h-full rounded-full bg-white/70"
-                initial={{ width: 0 }}
-                animate={{ width: `${progressPct}%` }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-              />
-            </div>
-          </div>
         </div>
       </motion.div>
+      </Tilt3D>
+
+      {/* ── Ticket Collection — collectible row of attended/upcoming tickets ── */}
+      {(ticketsData?.length ?? 0) > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="surface-card p-4 space-y-3"
+        >
+          <div className="flex items-center gap-2">
+            <Ticket className="h-4 w-4 text-muted-foreground" />
+            <p className="font-body font-semibold text-sm">Ticket Collection</p>
+            <span className="text-[10px] text-muted-foreground tabular-nums">
+              {ticketsData!.length} {ticketsData!.length === 1 ? "stub" : "stubs"}
+            </span>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 snap-x">
+            {ticketsData!.slice(0, 12).map((t: any) => {
+              const ev = t.event;
+              const checked = t.status === "checked_in";
+              return (
+                <Link
+                  key={t.id}
+                  to={`/tickets/${t.id}`}
+                  className="snap-start shrink-0 w-36 group"
+                >
+                  <div className="relative aspect-[4/5] rounded-xl overflow-hidden bg-muted border border-border group-hover:border-foreground/30 transition-colors">
+                    {ev?.cover_url ? (
+                      <img src={ev.cover_url} alt={ev.title} className="absolute inset-0 w-full h-full object-cover" />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/10" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute top-2 left-2">
+                      <span className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full font-medium ${
+                        checked
+                          ? "bg-emerald-500/90 text-white"
+                          : "bg-white/85 text-foreground"
+                      }`}>
+                        {checked ? "Attended" : "RSVP"}
+                      </span>
+                    </div>
+                    <div className="absolute inset-x-2 bottom-2 text-white">
+                      <p className="text-[11px] font-semibold leading-tight line-clamp-2">{ev?.title ?? "Event"}</p>
+                      {ev?.starts_at && (
+                        <p className="text-[9px] opacity-80 mt-0.5">
+                          {format(new Date(ev.starts_at), "MMM d")}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+
 
       {/* ── Studio activity (relocated from My Studio) ── */}
       <motion.div
