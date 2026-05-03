@@ -27,7 +27,7 @@ import CreatorPassCard from "@/components/creators/CreatorPassCard";
 import TierMatrix from "@/components/creators/TierMatrix";
 import CoinPortfolio from "@/components/creators/CoinPortfolio";
 import { StreakCard } from "@/components/creators/StreakCard";
-import { REWARDS_BY_CATEGORY } from "@/lib/rewards-catalog";
+import { REWARDS_BY_LANE } from "@/lib/rewards-catalog";
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
@@ -338,9 +338,18 @@ const RewardsExplainer = () => (
         <h3 className="font-display text-lg font-semibold text-foreground">How you earn</h3>
       </div>
       {[
-        { key: "engagement" as const, icon: Heart, title: "Engagement", subtitle: "Small + capped." },
-        { key: "commerce" as const, icon: ShoppingBag, title: "Commerce", subtitle: "Bigger — back artists, get rewarded." },
-        { key: "milestone" as const, icon: Trophy, title: "Milestones", subtitle: "One-time unlocks." },
+        {
+          key: "connect" as const,
+          icon: Heart,
+          title: "Connect",
+          subtitle: "Engage with artists and the community.",
+        },
+        {
+          key: "build" as const,
+          icon: Trophy,
+          title: "Build",
+          subtitle: "Run Spaces, projects, and your creative footprint.",
+        },
       ].map(({ key, icon: Icon, title, subtitle }) => (
         <div key={key} className="rounded-2xl border border-border/50 bg-card/60 p-4">
           <div className="mb-3 flex items-center gap-2">
@@ -349,7 +358,7 @@ const RewardsExplainer = () => (
             <span className="text-[11px] text-muted-foreground">· {subtitle}</span>
           </div>
           <ul className="divide-y divide-border/40">
-            {REWARDS_BY_CATEGORY[key].map((r) => (
+            {REWARDS_BY_LANE[key].map((r) => (
               <li key={r.action} className="py-2">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
