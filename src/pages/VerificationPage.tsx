@@ -192,7 +192,7 @@ const VerificationPage = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Social links (2 minimum)</Label>
+                <Label>Social link <span className="text-muted-foreground font-normal">(optional, helps us verify you faster)</span></Label>
                 {socials.map((s, i) => (
                   <div key={i} className="flex gap-2">
                     <Input
@@ -200,7 +200,7 @@ const VerificationPage = () => {
                       value={s}
                       onChange={(e) => updateSocial(i, e.target.value)}
                     />
-                    {socials.length > 2 && (
+                    {socials.length > 1 && (
                       <Button variant="ghost" size="icon" onClick={() => removeSocial(i)}>
                         <X className="h-4 w-4" />
                       </Button>
@@ -233,23 +233,9 @@ const VerificationPage = () => {
                 <p className="text-xs text-muted-foreground">{bio.length}/500</p>
               </div>
 
-              <div className="space-y-1 rounded-md border bg-muted/40 p-3 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Wallet address</span>
-                  <span className="font-mono">
-                    {walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : "Not connected"}
-                  </span>
-                </div>
-                {!walletAddress && (
-                  <p className="text-amber-600 dark:text-amber-400">
-                    Connect your wallet in Settings → Wallet before submitting.
-                  </p>
-                )}
-              </div>
-
               <Button
                 onClick={handleSubmit}
-                disabled={submitting || !walletAddress}
+                disabled={submitting}
                 className="w-full"
                 size="lg"
               >
