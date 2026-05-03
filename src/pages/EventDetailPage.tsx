@@ -40,6 +40,7 @@ const EventDetailPage = () => {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [checkoutTier, setCheckoutTier] = useState<any | null>(null);
+  const [launchCoinOpen, setLaunchCoinOpen] = useState(false);
 
   const { data: ev, isLoading } = useQuery({
     queryKey: ["event", id],
