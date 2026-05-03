@@ -322,6 +322,8 @@ const SettingsPage = () => {
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const handleDeleteAccount = async () => {
     if (deleteConfirm !== "DELETE") { toast.error("Type DELETE to confirm"); return; }
     toast.success("Account deactivated. Signing out...");
     setTimeout(() => signOut(), 1500);
