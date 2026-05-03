@@ -103,7 +103,7 @@ const ProfileCoinTab = ({ creatorId, isOwnProfile, defaultName, defaultImage, me
   // ── Coin exists — chart + trade panel ────────────────────────
   return (
     <div className="space-y-4">
-      <CreatorReadinessCard creatorId={creatorId} memberSince={memberSince} />
+      {showReadiness && <CreatorReadinessCard creatorId={creatorId} memberSince={memberSince} />}
       <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-4 flex items-center gap-3">
         {coin.image_url ? (
           <img src={coin.image_url} alt="" className="h-12 w-12 rounded-md object-cover" />
