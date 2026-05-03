@@ -177,7 +177,7 @@ const CreatorPassCard = () => {
   // Effective tier = max(subscription, $RHOZE hold, activity)
   const LEGACY_MAP: Record<string, TierId> = { bronze: "spark", gold: "bloom", diamond: "glow", prism: "play" };
   const subTier: TierId = credits?.tier ? ((LEGACY_MAP[credits.tier] || credits.tier) as TierId) : "spark";
-  const holdTier: TierId = tokenInfo ? (getHoldTier(tokenInfo.balance) as TierId) : "spark";
+  const holdTier: TierId = getHoldTier(Number(credits?.balance ?? 0)) as TierId;
   const activityTier: TierId = activityCounts ? getActivityTier(activityCounts) : "spark";
   const effectiveTier = getEffectiveTier(subTier, holdTier, activityTier);
   const gradient = TIER_GRADIENTS[effectiveTier] || TIER_GRADIENTS.spark;
