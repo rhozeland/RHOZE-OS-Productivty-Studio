@@ -69,6 +69,7 @@ import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
 import SignUpToPostPrompt from "@/components/flow/SignUpToPostPrompt";
 import FlowFeedErrorState from "@/components/flow/FlowFeedErrorState";
 import { useFlowCoinsByCreator } from "@/hooks/useFlowCoinsByWork";
+import { awardEngagementReward } from "@/lib/award-engagement-reward";
 
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
