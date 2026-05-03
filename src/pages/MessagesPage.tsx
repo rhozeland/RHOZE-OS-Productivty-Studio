@@ -16,7 +16,7 @@ import {
 import {
   Search, Send, User, MessageSquare, ArrowLeft,
   Inbox, FolderKanban, CheckCircle, XCircle, Clock, ArrowRight, Loader2,
-  DollarSign, Video, Phone, Plus, Users, Store,
+  DollarSign, Video, Phone, Plus, Users, Store, Flame,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
