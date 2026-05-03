@@ -427,7 +427,8 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex gap-6 items-start">
+      <div className="flex-1 min-w-0 space-y-6">
       <div>
         <h1 className="font-display text-3xl font-bold text-foreground">Conversations</h1>
         <p className="text-muted-foreground">Messages, projects, and listings — all in one place.</p>
