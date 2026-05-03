@@ -151,6 +151,7 @@ const ListingDetailPage = () => {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [dmOpen, setDmOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const { isAdmin } = useAdminCheck();
 
   const toggleActive = useMutation({
