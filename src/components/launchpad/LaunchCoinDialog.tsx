@@ -147,7 +147,9 @@ const LaunchCoinDialog = ({
     toast({ title: "Image uploaded" });
   };
 
-  const isProfileCoin = !workId;
+  const isWorkCoin = !!workId;
+  const dropContext = contextLabel
+    ?? (eventId ? "this event" : spaceId ? "this space" : null);
 
   const submit = async () => {
     if (ticker.trim().length < 2) {
@@ -172,7 +174,7 @@ const LaunchCoinDialog = ({
     }
     setSubmitting(true);
 
-    const payload = {
+    const basePayload = {
       _ticker: ticker.trim(),
       _name: name.trim(),
       _description: description.trim() || null,
@@ -182,9 +184,13 @@ const LaunchCoinDialog = ({
       _lp_lock_months: Number(lpLock),
     };
 
-    const { data, error } = isProfileCoin
-      ? await supabase.rpc("create_profile_coin_launch", payload)
-      : await supabase.rpc("create_coin_launch", { ...payload, _work_id: workId! });
+    const { data, error } = isWorkCoin
+      ? await supabase.rpc("create_coin_launch", { ...basePayload, _work_id: workId! })
+      : await supabase.rpc("create_drop_coin_launch", {
+          ...basePayload,
+          _event_id: eventId ?? null,
+          _space_id: spaceId ?? null,
+        });
 
     if (error) {
       setSubmitting(false);
@@ -206,15 +212,13 @@ const LaunchCoinDialog = ({
 
     setSubmitting(false);
     toast({
-      title: "Coin launched",
+      title: "Coin dropped",
       description: `$${ticker.toUpperCase()} is live. ${COIN_LAUNCH_FEE_RHOZE} $RHOZE fee deducted.`,
     });
     onOpenChange(false);
     if (data) {
       onLaunched?.(data as string);
-      if (userResp.user) {
-        navigate(`/profiles/${userResp.user.id}?tab=coin`);
-      }
+      navigate(`/coin/${ticker.trim().toUpperCase()}`);
     }
   };
 
