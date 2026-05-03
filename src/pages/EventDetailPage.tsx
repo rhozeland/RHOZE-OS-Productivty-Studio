@@ -31,6 +31,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { shortHash } from "@/lib/content-hash";
 import TicketCheckoutDialog from "@/components/events/TicketCheckoutDialog";
+import EventInviteBanner from "@/components/events/EventInviteBanner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const EventDetailPage = () => {
   const { id } = useParams<{ id: string }>();
