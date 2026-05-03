@@ -86,7 +86,7 @@ const LaunchCoinDialog = ({
       const { data: userResp } = await supabase.auth.getUser();
       const uid = userResp.user?.id;
       if (!uid) return;
-      const [{ data: credits }, { count }] = await Promise.all([
+      const [{ data: credits }, { count }, { data: profile }] = await Promise.all([
         supabase.from("user_credits").select("balance").eq("user_id", uid).maybeSingle(),
         supabase
           .from("coin_launches")
@@ -94,12 +94,17 @@ const LaunchCoinDialog = ({
           .eq("creator_id", uid)
           .neq("status", "cancelled")
           .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+        supabase.from("profiles").select("avatar_url").eq("id", uid).maybeSingle(),
       ]);
       const balance = Number(credits?.balance ?? 0);
       const tier = getHoldTier(balance);
       const cap = getCoinDropsPerMonth(tier);
       const tierLabel = TIERS.find((t) => t.id === tier)?.label ?? "Spark";
-      if (!cancelled) setDropInfo({ tierLabel, cap, used: count ?? 0, balance });
+      if (!cancelled) {
+        setDropInfo({ tierLabel, cap, used: count ?? 0, balance });
+        // Auto-fill coin image with profile avatar (creator can change it).
+        setImageUrl((prev) => prev || profile?.avatar_url || "");
+      }
     })();
     return () => { cancelled = true; };
   }, [open]);
@@ -145,6 +150,10 @@ const LaunchCoinDialog = ({
     }
     if (!name.trim()) {
       toast({ title: "Name required", variant: "destructive" });
+      return;
+    }
+    if (!imageUrl.trim()) {
+      toast({ title: "Coin image required", description: "Use your profile picture or upload one.", variant: "destructive" });
       return;
     }
     if (dropInfo && dropInfo.balance < COIN_LAUNCH_FEE_RHOZE) {
@@ -213,8 +222,8 @@ const LaunchCoinDialog = ({
           </DialogTitle>
           <DialogDescription>
             {isProfileCoin
-              ? "Mint a coin tied to your profile so collectors can back you. Trades flow through a bonding curve until graduation, then migrate to Raydium with locked LP."
-              : "Mint a fan coin tied to your Verified IP. Trades flow through a bonding curve until graduation, then migrate to Raydium with locked LP."}
+              ? "Launch a coin so your community can back you and grow with you. Think of it like crowdfunding — supporters buy in early, and as more people join, the value rises. You earn a cut of every trade."
+              : "Launch a coin tied to this work so your community can back it. Supporters buy in early, and you earn a cut of every trade as it grows."}
           </DialogDescription>
         </DialogHeader>
 
@@ -250,7 +259,7 @@ const LaunchCoinDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label>Coin image (optional)</Label>
+            <Label>Coin image</Label>
             <div className="flex items-start gap-3">
               {imageUrl ? (
                 <div className="relative shrink-0">
@@ -292,14 +301,10 @@ const LaunchCoinDialog = ({
                   />
                 </label>
               )}
-              <div className="flex-1 min-w-0 space-y-1">
-                <Input
-                  id="image"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="…or paste image URL"
-                  className="text-xs"
-                />
+              <div className="flex-1 min-w-0 space-y-1 pt-1">
+                <p className="text-[11px] text-muted-foreground">
+                  We use your profile picture by default. Tap the image to remove it and upload your own.
+                </p>
                 <p className="text-[10px] text-muted-foreground">PNG/JPG/GIF · max 5 MB</p>
               </div>
             </div>
@@ -353,10 +358,6 @@ const LaunchCoinDialog = ({
               </div>
             );
           })()}
-
-          <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-[11px] text-muted-foreground">
-            Simulated launch — no real liquidity yet. Tokenomics (supply, fees, graduation) lock in once the on-chain mint ships.
-          </div>
 
         </div>
 
