@@ -27,6 +27,7 @@ import WorksPage from "@/pages/WorksPage";
 import MyVerificationRequests from "@/components/works/MyVerificationRequests";
 import LaunchpadIdlSettings from "@/components/launchpad/LaunchpadIdlSettings";
 import LaunchpadIdlVersions from "@/components/launchpad/LaunchpadIdlVersions";
+import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { REGIONS } from "@/lib/regions";
