@@ -375,5 +375,5 @@ export const REWARDS_BY_LANE: Record<RewardLane, RewardEntry[]> = {
  * 100 $RHOZE ≈ $1, so 500 ≈ $5 — intentionally small so it doesn't gate
  * launches, but real enough to discourage spam mints.
  */
-export const COIN_LAUNCH_FEE_RHOZE = 500;
+export const COIN_LAUNCH_FEE_RHOZE = 100;
 
