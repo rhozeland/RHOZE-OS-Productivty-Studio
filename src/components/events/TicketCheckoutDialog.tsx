@@ -26,6 +26,7 @@ import SquareCardForm from "@/components/booking/SquareCardForm";
 import PayWithRhozeButton from "@/components/PayWithRhozeButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { getPlatformFeeFromBalance } from "@/lib/platform-fee";
 
 interface Tier {
   id: string;
