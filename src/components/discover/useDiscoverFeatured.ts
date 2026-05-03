@@ -42,6 +42,14 @@ export type FeaturedSlide =
       banner?: string | null;
       location?: string | null;
       region_code?: string | null;
+      category?: string | null;
+      hourly_rate?: number | null;
+      currency?: string | null;
+      max_guests?: number | null;
+      amenities?: string[] | null;
+      rating_avg?: number | null;
+      review_count?: number | null;
+      available_days?: number | null;
     };
 
 export interface FeaturedSpotlight {
