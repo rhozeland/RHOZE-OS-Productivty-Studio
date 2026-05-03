@@ -269,7 +269,7 @@ const LaunchDetailPage = () => {
           {isCreator && (
             <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs">
               <span className="text-emerald-500 font-semibold">Your earnings:</span>{" "}
-              <span className="font-mono">{Number(launch.creator_fees_earned).toFixed(6)} SOL</span>
+              <span className="font-mono">{(Number(launch.creator_fees_earned) * 100).toFixed(2)} $RHOZE</span>
               <span className="text-muted-foreground">
                 {" "}
                 · {launch.creator_fee_bps / 100}% of every trade
