@@ -1,64 +1,104 @@
-import { useRef } from "react";
 import { Link } from "react-router-dom";
-import { motion, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
-  Flame,
-  Building2,
-  Users,
-  FolderKanban,
-  Coins,
   Sparkles,
-  Shield,
-  TrendingUp,
-  ArrowRightLeft,
-  RefreshCw,
+  ShieldCheck,
+  Coins,
+  Heart,
+  Palette,
+  Search,
 } from "lucide-react";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-const FLYWHEEL_NODES = [
-  { icon: Sparkles, label: "Create", color: "hsl(150 55% 45%)" },
-  { icon: Coins, label: "Earn", color: "hsl(40 80% 50%)" },
-  { icon: TrendingUp, label: "Grow", color: "hsl(210 60% 55%)" },
-  { icon: Shield, label: "Reputation", color: "hsl(280 60% 60%)" },
-  { icon: ArrowRightLeft, label: "Reinvest", color: "hsl(350 60% 55%)" },
+/* ─────────────────────────── Data ─────────────────────────── */
+
+const HOW_FANS = [
+  { icon: Search, title: "Discover", body: "Spin the globe to find verified artists, spaces, and live moments worldwide." },
+  { icon: Heart, title: "Back the work", body: "Follow, collect, book, and tip the artists whose work moves you." },
+  { icon: Coins, title: "Earn $RHOZE", body: "Every meaningful action earns rewards you can reinvest into the artists you love." },
 ];
 
-const FEATURES = [
-  { icon: Building2, title: "Book Studios", desc: "Reserve creative spaces by the hour — recording, photo, video." },
-  { icon: Users, title: "Hire Talent", desc: "Find and commission freelance creatives on the marketplace." },
-  { icon: FolderKanban, title: "Ship Projects", desc: "Manage work with milestones, budgets, and team collaboration." },
+const HOW_ARTISTS = [
+  { icon: ShieldCheck, title: "Get verified", body: "A quick selfie + bio unlocks the Verified Artist badge and monetization." },
+  { icon: Palette, title: "Prove your work", body: "Upload, content-hash, and anchor your work on-chain — provenance you own forever." },
+  { icon: Sparkles, title: "Sell access & upside", body: "Open commissions, host Spaces, drop events, and let fans co-own your momentum." },
 ];
+
+const TIERS = [
+  { name: "Spark",  hue: "from-rose-300 to-pink-300",      blurb: "Welcome in. Earn rewards just by showing up." },
+  { name: "Bloom",  hue: "from-pink-300 to-fuchsia-300",   blurb: "Hold a little $RHOZE. Unlock more of the network." },
+  { name: "Glow",   hue: "from-fuchsia-300 to-amber-300",  blurb: "Hold more, get lower fees and louder reach." },
+  { name: "Play",   hue: "from-amber-300 to-emerald-300",  blurb: "The top floor — best perks, lowest fees, full studio." },
+];
+
+/* ─────────────────────── Soft pastel orbs ─────────────────── */
+
+const PastelBackdrop = () => (
+  <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+    <div
+      className="absolute -top-32 -left-24 h-[520px] w-[520px] rounded-full opacity-70 blur-3xl"
+      style={{
+        background:
+          "radial-gradient(circle at 30% 30%, hsl(330 85% 78% / 0.55), transparent 60%)," +
+          "radial-gradient(circle at 70% 60%, hsl(292 84% 78% / 0.45), transparent 65%)",
+      }}
+    />
+    <div
+      className="absolute top-10 -right-20 h-[480px] w-[480px] rounded-full opacity-70 blur-3xl"
+      style={{
+        background:
+          "radial-gradient(circle at 50% 50%, hsl(38 92% 75% / 0.55), transparent 60%)," +
+          "radial-gradient(circle at 70% 30%, hsl(160 65% 70% / 0.40), transparent 65%)",
+      }}
+    />
+    <div
+      className="absolute bottom-[-200px] left-1/3 h-[520px] w-[520px] rounded-full opacity-60 blur-3xl"
+      style={{
+        background:
+          "radial-gradient(circle at 50% 50%, hsl(200 85% 78% / 0.40), transparent 60%)," +
+          "radial-gradient(circle at 30% 70%, hsl(330 85% 78% / 0.45), transparent 65%)",
+      }}
+    />
+  </div>
+);
+
+/* ────────────────────────── Page ──────────────────────────── */
 
 const LandingPage = () => {
   const { user } = useAuth();
-  const flywheelRef = useRef<HTMLDivElement>(null);
-  const flywheelInView = useInView(flywheelRef, { once: true, amount: 0.4 });
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="relative min-h-screen bg-background text-foreground overflow-x-hidden">
+      <PastelBackdrop />
+
       {/* Nav */}
-      <nav className="border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 items-center justify-between px-4 sm:px-6 max-w-5xl">
-          <Link to="/" className="flex items-center gap-2 shrink-0">
+      <nav className="relative z-10">
+        <div className="mx-auto flex h-16 items-center justify-between px-5 sm:px-8 max-w-6xl">
+          <Link to="/" className="flex items-center gap-2">
             <img src={rhozelandLogo} alt="Rhozeland" className="h-8 w-8" />
-            <span className="font-body text-lg font-bold tracking-tight text-foreground">Rhozeland</span>
+            <span className="font-display text-xl font-bold tracking-tight">Rhozeland</span>
           </Link>
           <div className="flex items-center gap-2">
+            <Link to="/discover">
+              <Button size="sm" variant="ghost" className="rounded-full text-sm">Explore</Button>
+            </Link>
             {user ? (
               <Link to="/dashboard">
-                <Button size="sm" variant="ghost" className="text-sm">Dashboard</Button>
+                <Button size="sm" className="rounded-full text-sm gap-1.5">
+                  Open Studio <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
               </Link>
             ) : (
               <>
                 <Link to="/auth">
-                  <Button size="sm" variant="ghost" className="text-sm">Sign in</Button>
+                  <Button size="sm" variant="ghost" className="rounded-full text-sm">Sign in</Button>
                 </Link>
                 <Link to="/auth">
-                  <Button size="sm" className="text-sm rounded-full gap-1.5">
-                    Get Started <ArrowRight className="h-3 w-3" />
+                  <Button size="sm" className="rounded-full text-sm gap-1.5">
+                    Join free <ArrowRight className="h-3.5 w-3.5" />
                   </Button>
                 </Link>
               </>
@@ -67,216 +107,265 @@ const LandingPage = () => {
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="flex-1 flex items-center justify-center px-4 sm:px-6 relative overflow-hidden">
-        {/* Grain */}
-        <div
-          className="absolute inset-0 pointer-events-none opacity-[0.03]"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-            backgroundRepeat: "repeat",
-            backgroundSize: "128px 128px",
-          }}
-        />
-        {/* Aurora */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 2 }} className="absolute inset-0">
-            <div
-              className="absolute top-[-40%] left-[-20%] w-[140%] h-[180%]"
-              style={{
-                background: `
-                  radial-gradient(ellipse 50% 40% at 20% 50%, hsl(280 80% 70% / 0.25) 0%, transparent 70%),
-                  radial-gradient(ellipse 40% 50% at 80% 30%, hsl(320 80% 60% / 0.2) 0%, transparent 70%),
-                  radial-gradient(ellipse 45% 35% at 60% 80%, hsl(30 90% 60% / 0.18) 0%, transparent 70%),
-                  radial-gradient(ellipse 35% 45% at 30% 20%, hsl(175 70% 50% / 0.15) 0%, transparent 70%)
-                `,
-                animation: "aurora-drift 20s ease-in-out infinite alternate",
-              }}
-            />
+      {/* ─── Hero ─── */}
+      <section className="relative z-10 px-5 sm:px-8">
+        <div className="mx-auto max-w-5xl pt-12 sm:pt-20 pb-16 sm:pb-24 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/60 backdrop-blur-md px-3 py-1 mb-6"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+              A home for real artists
+            </span>
           </motion.div>
-        </div>
 
-        <div className="relative z-10 max-w-4xl mx-auto w-full py-16 sm:py-24">
-          <div className="grid lg:grid-cols-2 gap-12 items-center justify-items-center lg:justify-items-stretch text-center lg:text-left">
-            {/* Left — copy */}
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="flex flex-col items-center lg:items-start max-w-md mx-auto lg:mx-0">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/15 px-3 py-1 mb-6">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                </span>
-                <span className="text-[11px] font-medium text-primary tracking-wide">50+ CREATORS BUILDING NOW</span>
-              </div>
+          <motion.h1
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.05 }}
+            className="font-display text-5xl sm:text-7xl leading-[0.98] tracking-tight"
+          >
+            Where{" "}
+            <span
+              style={{
+                backgroundImage:
+                  "linear-gradient(to right, hsl(330 85% 60%), hsl(292 84% 65%), hsl(38 92% 55%))",
+                WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent",
+              }}
+            >
+              real artists
+            </span>
+            <br />
+            and{" "}
+            <span
+              style={{
+                backgroundImage:
+                  "linear-gradient(to right, hsl(38 92% 55%), hsl(160 65% 50%), hsl(200 85% 55%))",
+                WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent",
+              }}
+            >
+              real fans
+            </span>{" "}
+            meet.
+          </motion.h1>
 
-              <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold leading-[1.1] text-foreground mb-4">
-                Own a piece of
-                <br />
-                the artists you love.
-              </h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mt-6 max-w-2xl mx-auto text-base sm:text-lg text-muted-foreground leading-relaxed"
+          >
+            Rhozeland is a soft place on the internet for independent artists to
+            prove their work, host Spaces, and grow — while fans discover, back,
+            and earn alongside the people they love.
+          </motion.p>
 
-              <p className="text-sm sm:text-base text-muted-foreground mb-8 leading-relaxed">
-                Rhozeland verifies independent artists and gives them tools to
-                prove their work on-chain — so fans can buy ownership, access,
-                and upside in the art they back.
-              </p>
-
-              <div className="flex items-center gap-3 flex-wrap justify-center lg:justify-start">
-                <Link to="/auth">
-                  <Button className="rounded-full h-11 px-6 gap-2 text-sm font-medium">
-                    Get Started <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
-                </Link>
-                <a href="#how-it-works">
-                  <Button variant="outline" className="rounded-full h-11 px-6 text-sm">
-                    How it works
-                  </Button>
-                </a>
-              </div>
-            </motion.div>
-
-            {/* Right — flywheel */}
-            <div ref={flywheelRef} className="flex items-center justify-center">
-              <div className="relative" style={{ width: 280, height: 280 }}>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={flywheelInView ? { opacity: 1, rotate: 360 } : {}}
-                  transition={{ opacity: { duration: 0.5, delay: 0.3 }, rotate: { duration: 20, repeat: Infinity, ease: "linear" } }}
-                  className="absolute inset-0 rounded-full border-2 border-dashed border-primary/20"
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.3 }}
-                    animate={flywheelInView ? { opacity: 1, scale: 1 } : {}}
-                    transition={{ delay: 0.5, duration: 0.5, type: "spring" }}
-                    className="h-20 w-20 rounded-full bg-primary/10 border border-primary/30 flex flex-col items-center justify-center"
-                  >
-                    <RefreshCw className="h-6 w-6 text-primary mb-0.5" />
-                    <span className="text-[8px] font-bold text-primary tracking-widest uppercase">$RHOZE</span>
-                  </motion.div>
+          {/* Split CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="mt-10 grid sm:grid-cols-2 gap-3 max-w-2xl mx-auto"
+          >
+            <Link to="/auth?intent=fan" className="group">
+              <div className="rounded-2xl border border-border/60 bg-card/70 backdrop-blur-md p-5 text-left hover:border-foreground/30 transition-all hover:-translate-y-0.5">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Heart className="h-4 w-4 text-pink-500" />
+                  <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">For fans</span>
                 </div>
-                {FLYWHEEL_NODES.map((node, i) => {
-                  const rad = (i * 72 - 90) * (Math.PI / 180);
-                  const r = 115;
-                  const x = 140 + r * Math.cos(rad) - 28;
-                  const y = 140 + r * Math.sin(rad) - 28;
-                  return (
-                    <motion.div
-                      key={node.label}
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={flywheelInView ? { opacity: 1, scale: 1 } : {}}
-                      transition={{ delay: 0.7 + i * 0.12, type: "spring", stiffness: 200 }}
-                      className="absolute flex flex-col items-center gap-1"
-                      style={{ left: x, top: y, width: 56 }}
-                    >
-                      <motion.div
-                        whileHover={{ scale: 1.15 }}
-                        className="h-11 w-11 rounded-full flex items-center justify-center shadow-md cursor-default"
-                        style={{ backgroundColor: node.color + "22", border: `2px solid ${node.color}` }}
-                      >
-                        <node.icon className="h-5 w-5" style={{ color: node.color }} />
-                      </motion.div>
-                      <span className="text-[10px] font-semibold text-foreground whitespace-nowrap text-center">{node.label}</span>
-                    </motion.div>
-                  );
-                })}
-                <motion.svg
-                  className="absolute inset-0"
-                  viewBox="0 0 280 280"
-                  fill="none"
-                  initial={{ opacity: 0 }}
-                  animate={flywheelInView ? { opacity: 1 } : {}}
-                  transition={{ delay: 1.2, duration: 0.5 }}
-                >
-                  {FLYWHEEL_NODES.map((node, i) => {
-                    const angle = i * 72;
-                    const rad1 = (angle - 90) * (Math.PI / 180);
-                    const rad2 = (angle + 72 - 90) * (Math.PI / 180);
-                    const r = 90;
-                    const x1 = 140 + r * Math.cos(rad1);
-                    const y1 = 140 + r * Math.sin(rad1);
-                    const x2 = 140 + r * Math.cos(rad2);
-                    const y2 = 140 + r * Math.sin(rad2);
-                    const midAngle = (angle + 36 - 90) * (Math.PI / 180);
-                    const cx = 140 + (r + 20) * Math.cos(midAngle);
-                    const cy = 140 + (r + 20) * Math.sin(midAngle);
-                    return (
-                      <motion.path
-                        key={i}
-                        d={`M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`}
-                        stroke={node.color}
-                        strokeWidth="1.5"
-                        strokeOpacity="0.25"
-                        strokeDasharray="4 3"
-                        fill="none"
-                        initial={{ pathLength: 0 }}
-                        animate={flywheelInView ? { pathLength: 1 } : {}}
-                        transition={{ delay: 1.2 + i * 0.15, duration: 0.5 }}
-                      />
-                    );
-                  })}
-                </motion.svg>
+                <p className="font-display text-lg font-semibold">Discover & back artists</p>
+                <p className="text-xs text-muted-foreground mt-1">Free to join · earn $RHOZE rewards</p>
+                <div className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium group-hover:gap-2.5 transition-all">
+                  Start exploring <ArrowRight className="h-3.5 w-3.5" />
+                </div>
               </div>
+            </Link>
+
+            <Link to="/auth?intent=artist" className="group">
+              <div className="rounded-2xl border border-border/60 bg-card/70 backdrop-blur-md p-5 text-left hover:border-foreground/30 transition-all hover:-translate-y-0.5">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Palette className="h-4 w-4 text-amber-500" />
+                  <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">For artists</span>
+                </div>
+                <p className="font-display text-lg font-semibold">Get verified & monetize</p>
+                <p className="text-xs text-muted-foreground mt-1">Prove your work · keep up to 93%</p>
+                <div className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium group-hover:gap-2.5 transition-all">
+                  Apply to verify <ArrowRight className="h-3.5 w-3.5" />
+                </div>
+              </div>
+            </Link>
+          </motion.div>
+
+          <p className="mt-5 text-xs text-muted-foreground">
+            <Link to="/discover" className="underline-offset-4 hover:underline">
+              Or peek at the world first →
+            </Link>
+          </p>
+        </div>
+      </section>
+
+      {/* ─── How it works (3 steps × 2 audiences) ─── */}
+      <section id="how-it-works" className="relative z-10 px-5 sm:px-8 pb-20">
+        <div className="mx-auto max-w-6xl">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 mb-2">How it works</p>
+            <h2 className="font-display text-3xl sm:text-4xl tracking-tight">Two sides. One soft economy.</h2>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-5">
+            {/* Fans column */}
+            <div className="rounded-3xl border border-border/60 bg-card/60 backdrop-blur-md p-6 sm:p-8">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-pink-500/10 border border-pink-500/20 px-2.5 py-1 mb-5">
+                <Heart className="h-3 w-3 text-pink-500" />
+                <span className="text-[10px] uppercase tracking-[0.18em] text-pink-600 dark:text-pink-300">Fans</span>
+              </div>
+              <ol className="space-y-5">
+                {HOW_FANS.map((s, i) => (
+                  <li key={s.title} className="flex gap-4">
+                    <div className="shrink-0 h-9 w-9 rounded-full bg-foreground/5 border border-border/60 flex items-center justify-center text-xs font-bold">
+                      {i + 1}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <s.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                        <h3 className="font-semibold text-sm">{s.title}</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{s.body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            {/* Artists column */}
+            <div className="rounded-3xl border border-border/60 bg-card/60 backdrop-blur-md p-6 sm:p-8">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 mb-5">
+                <Palette className="h-3 w-3 text-amber-500" />
+                <span className="text-[10px] uppercase tracking-[0.18em] text-amber-600 dark:text-amber-300">Artists</span>
+              </div>
+              <ol className="space-y-5">
+                {HOW_ARTISTS.map((s, i) => (
+                  <li key={s.title} className="flex gap-4">
+                    <div className="shrink-0 h-9 w-9 rounded-full bg-foreground/5 border border-border/60 flex items-center justify-center text-xs font-bold">
+                      {i + 1}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <s.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                        <h3 className="font-semibold text-sm">{s.title}</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{s.body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
             </div>
           </div>
         </div>
       </section>
 
-      {/* How It Works strip */}
-      <section id="how-it-works" className="border-t border-border bg-card/50 px-4 sm:px-6 py-14">
-        <div className="max-w-4xl mx-auto">
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
+      {/* ─── Tier ladder (Creator Pass) ─── */}
+      <section className="relative z-10 px-5 sm:px-8 pb-20">
+        <div className="mx-auto max-w-6xl">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-[11px] uppercase tracking-widest text-muted-foreground/50 text-center mb-8"
+            className="text-center mb-10"
           >
-            What you can do
-          </motion.p>
+            <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 mb-2">Creator Pass</p>
+            <h2 className="font-display text-3xl sm:text-4xl tracking-tight">Earned, never paid.</h2>
+            <p className="mt-3 max-w-xl mx-auto text-sm text-muted-foreground leading-relaxed">
+              Show up, hold a little $RHOZE, climb the ladder. Lower fees, louder
+              reach, more perks — at every tier.
+            </p>
+          </motion.div>
 
-          <div className="grid sm:grid-cols-3 gap-5">
-            {FEATURES.map((f, i) => (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {TIERS.map((t, i) => (
               <motion.div
-                key={f.title}
-                initial={{ opacity: 0, y: 16 }}
+                key={t.name}
+                initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="rounded-2xl border border-border/50 bg-card/70 backdrop-blur-sm p-6 hover:border-border transition-all"
+                transition={{ delay: i * 0.06 }}
+                className="relative rounded-2xl border border-border/60 bg-card/70 backdrop-blur-md p-5 overflow-hidden"
               >
-                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                  <f.icon className="h-5 w-5 text-primary" />
+                <div className={`absolute -top-10 -right-10 h-32 w-32 rounded-full bg-gradient-to-br ${t.hue} opacity-50 blur-2xl`} />
+                <div className="relative">
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">Tier {i + 1}</div>
+                  <div className="font-display text-2xl font-bold">{t.name}</div>
+                  <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{t.blurb}</p>
                 </div>
-                <h3 className="text-sm font-bold text-foreground mb-2">{f.title}</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">{f.desc}</p>
               </motion.div>
             ))}
           </div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.4 }}
-            className="text-center mt-10"
-          >
-            <Link to={user ? "/dashboard" : "/auth"}>
-              <Button variant="outline" size="sm" className="rounded-full gap-2 text-xs">
-                {user ? "Go to Dashboard" : "Start Creating"} <ArrowRight className="h-3 w-3" />
-              </Button>
+          <div className="text-center mt-8">
+            <Link to="/credits?tab=how" className="text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
+              How rewards work →
             </Link>
-          </motion.div>
+          </div>
         </div>
       </section>
 
-      <footer className="border-t border-border py-5">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <img src={rhozelandLogo} alt="" className="h-4 w-4 opacity-50" />
-            <span className="text-xs text-muted-foreground">© 2026 Rhozeland</span>
+      {/* ─── Closing CTA ─── */}
+      <section className="relative z-10 px-5 sm:px-8 pb-24">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mx-auto max-w-3xl text-center rounded-[2rem] border border-border/60 bg-card/70 backdrop-blur-xl p-10 sm:p-14 relative overflow-hidden"
+        >
+          <div
+            aria-hidden
+            className="absolute inset-0 opacity-70 blur-2xl"
+            style={{
+              background:
+                "radial-gradient(circle at 30% 40%, hsl(330 85% 78% / 0.40), transparent 60%)," +
+                "radial-gradient(circle at 70% 60%, hsl(38 92% 75% / 0.40), transparent 65%)",
+            }}
+          />
+          <div className="relative">
+            <h2 className="font-display text-3xl sm:text-5xl tracking-tight leading-[1.05]">
+              Bring your work.
+              <br />
+              We'll bring the world.
+            </h2>
+            <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link to="/auth">
+                <Button size="lg" className="rounded-full gap-2">
+                  Join Rhozeland — it's free <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Link to="/discover">
+                <Button size="lg" variant="ghost" className="rounded-full">
+                  Explore first
+                </Button>
+              </Link>
+            </div>
           </div>
-          <Link to="/auth" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-            Sign in →
-          </Link>
+        </motion.div>
+      </section>
+
+      <footer className="relative z-10 border-t border-border/60 py-6">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <img src={rhozelandLogo} alt="" className="h-4 w-4 opacity-60" />
+            <span>© 2026 Rhozeland</span>
+          </div>
+          <Link to="/auth" className="hover:text-foreground transition-colors">Sign in →</Link>
         </div>
       </footer>
     </div>
