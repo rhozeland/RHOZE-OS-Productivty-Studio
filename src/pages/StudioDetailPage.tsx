@@ -144,8 +144,8 @@ const StudioDetailPage = () => {
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Back + Manage */}
       <div className="flex items-center justify-between">
-        <Link to="/studios" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-4 w-4" /> Back to Studios
+        <Link to="/discover?kind=space" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-4 w-4" /> Back to Discover
         </Link>
         {user && studio.owner_id === user.id && (
           <Link to={`/studios/${studio.id}/manage`}>
