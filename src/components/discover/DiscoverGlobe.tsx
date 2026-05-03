@@ -20,6 +20,8 @@ import type { FeaturedSlide } from "./useDiscoverFeatured";
 import RegionChip from "@/components/profile/RegionChip";
 import { avatarGradientFor } from "@/lib/avatar-gradient";
 import ArtistSpotlightCard from "./ArtistSpotlightCard";
+import EventSpotlightCard from "./EventSpotlightCard";
+import SpaceSpotlightCard from "./SpaceSpotlightCard";
 
 const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
   KR: { lat: 37.55, lng: 126.99 },
@@ -612,10 +614,10 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
               {activeSpotlight ? (
                 <motion.div
                   key={activeSpotlight.key}
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.28, ease: "easeOut" }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
                 >
                   {activeSpotlight.kind === "artist" ? (
                     <ArtistSpotlightCard
@@ -631,66 +633,36 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                       works_count={activeSpotlight.works_count}
                       followers_count={activeSpotlight.followers_count}
                     />
+                  ) : activeSpotlight.kind === "event" ? (
+                    <EventSpotlightCard
+                      id={activeSpotlight.id}
+                      href={activeSpotlight.href}
+                      title={activeSpotlight.title}
+                      subtitle={activeSpotlight.subtitle}
+                      banner={activeSpotlight.banner}
+                      starts_at={activeSpotlight.starts_at}
+                      venue={activeSpotlight.venue}
+                      is_online={activeSpotlight.is_online}
+                      region_code={activeSpotlight.region_code}
+                    />
                   ) : (
-                    <div className="overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75">
-                      <div className="relative aspect-[16/6] overflow-hidden border-b border-border/40 bg-muted/70">
-                        {activeSpotlight.banner ? (
-                          <img src={activeSpotlight.banner} alt={activeSpotlight.title} className="h-full w-full object-cover" />
-                        ) : (
-                          <>
-                            <div
-                              className="absolute inset-0"
-                              style={{ background: avatarGradientFor(activeSpotlight.id).background }}
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center text-foreground/30">
-                              <ImageIcon className="h-8 w-8" />
-                            </div>
-                          </>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/35 to-transparent" />
-                        <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2">
-                          <span className="inline-flex items-center gap-1 rounded-full border border-border/45 bg-background/72 px-2 py-1 text-[10px] uppercase tracking-[0.14em] text-foreground backdrop-blur-md">
-                            {activeSpotlight.kind === "event" && <><Calendar className="h-3 w-3" /> Featured event</>}
-                            {activeSpotlight.kind === "space" && <><Users className="h-3 w-3" /> Featured space</>}
-                          </span>
-                          {activeSpotlight.region_code && (
-                            <RegionChip code={activeSpotlight.region_code} size="sm" showLabel />
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="space-y-3 p-4">
-                        <div>
-                          <h3 className="font-display text-2xl leading-tight text-foreground">{activeSpotlight.title}</h3>
-                          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                            {activeSpotlight.kind === "event" && (
-                              <span className="inline-flex items-center gap-1 rounded-full border border-border/40 bg-background/65 px-2 py-1">
-                                <Calendar className="h-3 w-3" />
-                                {format(new Date(activeSpotlight.starts_at), "MMM d · h:mm a")}
-                              </span>
-                            )}
-                            {activeSpotlight.kind === "space" && activeSpotlight.location && (
-                              <span className="inline-flex items-center gap-1 rounded-full border border-border/40 bg-background/65 px-2 py-1">
-                                <MapPin className="h-3 w-3" /> {activeSpotlight.location}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {activeSpotlight.subtitle && (
-                          <p className="text-sm leading-6 text-foreground/74 line-clamp-3">
-                            {activeSpotlight.subtitle}
-                          </p>
-                        )}
-
-                        <Link
-                          to={activeSpotlight.href}
-                          className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-transform hover:translate-x-0.5"
-                        >
-                          Open detail <ArrowUpRight className="h-4 w-4" />
-                        </Link>
-                      </div>
-                    </div>
+                    <SpaceSpotlightCard
+                      id={activeSpotlight.id}
+                      href={activeSpotlight.href}
+                      title={activeSpotlight.title}
+                      subtitle={activeSpotlight.subtitle}
+                      banner={activeSpotlight.banner}
+                      location={activeSpotlight.location}
+                      region_code={activeSpotlight.region_code}
+                      category={(activeSpotlight as any).category}
+                      hourly_rate={(activeSpotlight as any).hourly_rate}
+                      currency={(activeSpotlight as any).currency}
+                      max_guests={(activeSpotlight as any).max_guests}
+                      amenities={(activeSpotlight as any).amenities}
+                      rating_avg={(activeSpotlight as any).rating_avg}
+                      review_count={(activeSpotlight as any).review_count}
+                      available_days={(activeSpotlight as any).available_days}
+                    />
                   )}
                 </motion.div>
               ) : (
