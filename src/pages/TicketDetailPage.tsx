@@ -5,7 +5,7 @@
  * proof-of-attendance on Solana (SHA-256 of ticket+event metadata).
  */
 import { useParams, Link } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import {
@@ -16,19 +16,28 @@ import {
   Sparkles,
   ExternalLink,
   Loader2,
+  ShieldCheck,
+  Hourglass,
 } from "lucide-react";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { shortHash } from "@/lib/content-hash";
 
-async function sha256Hex(text: string): Promise<string> {
-  const buf = new TextEncoder().encode(text);
-  const hashBuf = await crypto.subtle.digest("SHA-256", buf);
-  return Array.from(new Uint8Array(hashBuf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+// Deterministic accent palette mapped from tier sort order / id.
+const TIER_ACCENTS = [
+  "from-rose-500/90 to-fuchsia-500/90",
+  "from-amber-400/90 to-orange-500/90",
+  "from-sky-400/90 to-indigo-500/90",
+  "from-emerald-400/90 to-teal-500/90",
+  "from-violet-500/90 to-purple-600/90",
+];
+function pickAccent(seed: string | number | null | undefined) {
+  const s = String(seed ?? "0");
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return TIER_ACCENTS[h % TIER_ACCENTS.length];
 }
 
 const TicketDetailPage = () => {
