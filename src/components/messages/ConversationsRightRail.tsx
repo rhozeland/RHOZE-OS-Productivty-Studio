@@ -47,7 +47,7 @@ const ConversationsRightRail = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("studios")
-        .select("id, name, hero_url, city, region, hourly_rate_credits")
+        .select("id, name, cover_image_url, city, state, hourly_rate")
         .eq("is_active", true)
         .order("created_at", { ascending: false })
         .limit(20);
