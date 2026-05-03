@@ -359,10 +359,6 @@ const LaunchCoinDialog = ({
             );
           })()}
 
-          <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-[11px] text-muted-foreground">
-            Simulated launch — no real liquidity yet. Tokenomics (supply, fees, graduation) lock in once the on-chain mint ships.
-          </div>
-
         </div>
 
         <DialogFooter>
