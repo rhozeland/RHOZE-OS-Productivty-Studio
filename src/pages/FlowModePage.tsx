@@ -1581,7 +1581,7 @@ const FlowModePage = () => {
               className="pointer-events-none absolute left-0 right-0 top-16 z-40 flex justify-center"
             >
               <span className="flex items-center gap-1 rounded-full bg-card/80 border border-border/20 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm" style={{ textShadow: "0 1px 2px hsl(var(--background) / 0.5)" }}>
-                <ChevronUp className="h-3 w-3" /> Like
+                <ChevronUp className="h-3 w-3" /> Profile
               </span>
             </motion.div>
             {/* Bottom — Share (centered in the card area, above dock) */}
