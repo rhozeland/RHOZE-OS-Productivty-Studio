@@ -496,15 +496,15 @@ const ProfileDetailPage = () => {
           </div>
         </motion.div>
 
-        {/* ─── On-Chain Reputation (compact) ─── */}
-        {totalProofs > 0 && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.4 }}
-            className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Award className="h-5 w-5 text-primary" />
-                <h2 className="font-display text-base font-semibold text-foreground">On-Chain Reputation</h2>
-              </div>
+        {/* ─── On-Chain Reputation (Investor Signal + proofs) ─── */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.4 }}
+          className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-primary" />
+              <h2 className="font-display text-base font-semibold text-foreground">On-Chain Reputation</h2>
+            </div>
+            {totalProofs > 0 && (
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="font-mono text-[10px]">
                   {anchoredCount}/{totalProofs} verified
@@ -513,48 +513,55 @@ const ProfileDetailPage = () => {
                   <AnchorButton proofs={proofs!} />
                 )}
               </div>
-            </div>
-            {/* Summary stats — clickable, with human-readable labels */}
-            <div className="grid grid-cols-3 gap-3">
-              {Object.entries(
-                proofs!.reduce<Record<string, number>>((acc, pr) => {
-                  acc[pr.action_type] = (acc[pr.action_type] || 0) + 1;
-                  return acc;
-                }, {})
-              ).sort(([, a], [, b]) => b - a).slice(0, 3).map(([type, count]) => {
-                const meta = PROOF_TYPE_META[type] ?? {
-                  label: type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-                  href: null as string | null,
-                };
-                const inner = (
-                  <>
-                    <p className="text-2xl font-bold text-foreground">{count}</p>
-                    <p className="text-xs text-muted-foreground">{meta.label}</p>
-                  </>
-                );
-                return meta.href ? (
-                  <Link
-                    key={type}
-                    to={meta.href}
-                    className="rounded-lg border border-border bg-muted/30 p-3 text-center transition-colors hover:bg-muted/60 hover:border-border/80"
-                  >
-                    {inner}
-                  </Link>
-                ) : (
-                  <div key={type} className="rounded-lg border border-border bg-muted/30 p-3 text-center">
-                    {inner}
-                  </div>
-                );
-              })}
-            </div>
-            {anchoredCount > 0 && (
-              <p className="text-xs text-muted-foreground text-center mt-3 flex items-center justify-center gap-1">
-                <ExternalLink className="h-3 w-3" />
-                Independently verifiable on the public ledger
-              </p>
             )}
-          </motion.div>
-        )}
+          </div>
+
+          {/* Investor signal — full readiness card (moved from Coin tab) */}
+          <CreatorReadinessCard creatorId={id!} memberSince={p.created_at} />
+
+          {totalProofs > 0 && (
+            <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
+              <div className="grid grid-cols-3 gap-3">
+                {Object.entries(
+                  proofs!.reduce<Record<string, number>>((acc, pr) => {
+                    acc[pr.action_type] = (acc[pr.action_type] || 0) + 1;
+                    return acc;
+                  }, {})
+                ).sort(([, a], [, b]) => b - a).slice(0, 3).map(([type, count]) => {
+                  const meta = PROOF_TYPE_META[type] ?? {
+                    label: type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+                    href: null as string | null,
+                  };
+                  const inner = (
+                    <>
+                      <p className="text-2xl font-bold text-foreground">{count}</p>
+                      <p className="text-xs text-muted-foreground">{meta.label}</p>
+                    </>
+                  );
+                  return meta.href ? (
+                    <Link
+                      key={type}
+                      to={meta.href}
+                      className="rounded-lg border border-border bg-muted/30 p-3 text-center transition-colors hover:bg-muted/60 hover:border-border/80"
+                    >
+                      {inner}
+                    </Link>
+                  ) : (
+                    <div key={type} className="rounded-lg border border-border bg-muted/30 p-3 text-center">
+                      {inner}
+                    </div>
+                  );
+                })}
+              </div>
+              {anchoredCount > 0 && (
+                <p className="text-xs text-muted-foreground text-center mt-3 flex items-center justify-center gap-1">
+                  <ExternalLink className="h-3 w-3" />
+                  Independently verifiable on the public ledger
+                </p>
+              )}
+            </div>
+          )}
+        </motion.div>
 
         {/* Ratings inside Overview */}
         {reviewStats && reviewStats.count > 0 && (
