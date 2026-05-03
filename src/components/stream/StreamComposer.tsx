@@ -82,6 +82,7 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
   const [type, setType] = useState<StreamPostType>(defaultType);
   const [text, setText] = useState("");
   const [expanded, setExpanded] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(false);
 
   // Re-sync default when lane changes (HubPage drives this).
   useEffect(() => setType(defaultType), [defaultType]);
@@ -89,42 +90,16 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
   const meta = TYPES.find((t) => t.key === type)!;
   const Icon = meta.icon;
 
-  const createDrop = useMutation({
-    mutationFn: async () => {
-      if (!user) throw new Error("Sign in to drop a post.");
-      const trimmed = text.trim();
-      if (!trimmed) throw new Error("Say something first.");
-      const { error } = await supabase.from("flow_items").insert({
-        user_id: user.id,
-        title: trimmed.slice(0, 80),
-        description: trimmed,
-        category: defaultCategory ?? "general",
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      setText("");
-      setExpanded(false);
-      queryClient.invalidateQueries({ queryKey: ["hub-conversations"] });
-      queryClient.invalidateQueries({ queryKey: ["stream-conversations"] });
-      toast.success("Update posted.");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  // Update no longer writes to flow_items — it opens the Notes composer.
+  // Kept the mutation shell removed; createDrop is unused now.
 
   const handlePrimary = () => {
-    if (!requireAuth("Sign up to post updates.")) return;
-    if (meta.inline) {
-      if (!expanded) {
-        setExpanded(true);
-        // focus on next tick so the textarea exists
-        setTimeout(() => textareaRef.current?.focus(), 0);
-        return;
-      }
-      createDrop.mutate();
-    } else if (meta.href) {
-      navigate(meta.href);
+    if (!requireAuth("Sign up to leave a note.")) return;
+    if (type === "text") {
+      setNoteOpen(true);
+      return;
     }
+    if (meta.href) navigate(meta.href);
   };
 
   return (
