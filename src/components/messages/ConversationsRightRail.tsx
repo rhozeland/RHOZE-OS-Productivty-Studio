@@ -175,8 +175,8 @@ const ConversationsRightRail = () => {
                 className="group flex gap-3 rounded-xl border border-border bg-card/60 p-2 hover:bg-muted/40 transition-colors"
               >
                 <div className="h-14 w-14 shrink-0 rounded-lg bg-muted overflow-hidden">
-                  {s.hero_url ? (
-                    <img src={s.hero_url} alt="" className="w-full h-full object-cover" />
+                  {s.cover_image_url ? (
+                    <img src={s.cover_image_url} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-primary/15 to-accent/10 flex items-center justify-center">
                       <Building2 className="h-5 w-5 text-foreground/30" />
@@ -188,11 +188,11 @@ const ConversationsRightRail = () => {
                     {s.name}
                   </p>
                   <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                    {[s.city, s.region].filter(Boolean).join(" · ")}
+                    {[s.city, s.state].filter(Boolean).join(" · ")}
                   </p>
-                  {s.hourly_rate_credits ? (
+                  {s.hourly_rate ? (
                     <p className="text-[10px] text-foreground/70 mt-0.5">
-                      {s.hourly_rate_credits} $RHOZE / hr
+                      ${s.hourly_rate} / hr
                     </p>
                   ) : null}
                 </div>
