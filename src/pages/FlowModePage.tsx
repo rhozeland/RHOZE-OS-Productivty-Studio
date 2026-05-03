@@ -1913,17 +1913,52 @@ const FlowModePage = () => {
 
                 {shareStep === "compose" && (
                   <>
-                    <Input placeholder="Title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
-                    <Input placeholder="Creator / Artist name (optional)" value={newCreatorName} onChange={(e) => setNewCreatorName(e.target.value)} />
-                    <Textarea placeholder="Description (optional)" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={2} />
-                    <Select value={newCategory} onValueChange={(val) => { setNewCategory(val); resetPendingFiles(); }}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {CATEGORIES.map((cat) => (
-                          <SelectItem key={cat} value={cat} className="capitalize">{cat}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {/* Visual icon picker — replaces the boring dropdown */}
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-2 px-0.5">
+                        Pick a vibe
+                      </p>
+                      <div className="grid grid-cols-5 gap-1.5">
+                        {CATEGORIES.map((cat) => {
+                          const meta = CATEGORY_ICONS[cat];
+                          const Icon = meta.Icon;
+                          const active = newCategory === cat;
+                          return (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => { setNewCategory(cat); resetPendingFiles(); }}
+                              aria-pressed={active}
+                              aria-label={meta.label}
+                              className={cn(
+                                "group flex flex-col items-center justify-center gap-1 rounded-xl py-2.5 transition-all",
+                                "border bg-gradient-to-br",
+                                active
+                                  ? `border-primary/60 ${meta.tint} shadow-sm scale-[1.02]`
+                                  : "border-border bg-muted/30 hover:bg-muted/60 text-muted-foreground"
+                              )}
+                            >
+                              <Icon className={cn("h-5 w-5 transition-transform group-hover:scale-110", active ? "" : "")} strokeWidth={active ? 2.25 : 1.75} />
+                              <span className="text-[10px] font-medium capitalize">{meta.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <Input
+                      placeholder="Title"
+                      value={newTitle}
+                      onChange={(e) => setNewTitle(e.target.value)}
+                      className="rounded-xl"
+                    />
+                    <Textarea
+                      placeholder="Add a caption (optional)"
+                      value={newDesc}
+                      onChange={(e) => setNewDesc(e.target.value)}
+                      rows={2}
+                      className="rounded-xl resize-none"
+                    />
 
                     <div>
                       <input
@@ -1994,11 +2029,22 @@ const FlowModePage = () => {
                       )}
                     </div>
 
-                    <Input
-                      placeholder={CATEGORY_UPLOAD_HINTS[newCategory]?.linkHint || "Link URL (optional)"}
-                      value={newLink}
-                      onChange={(e) => setNewLink(e.target.value)}
-                    />
+                    {/* Optional link — collapsed behind a tiny toggle so it doesn't clutter the form */}
+                    <div className="relative">
+                      <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
+                      <Input
+                        placeholder="Paste a link (optional)"
+                        value={newLink}
+                        onChange={(e) => setNewLink(e.target.value)}
+                        className="rounded-xl pl-9 text-sm"
+                      />
+                    </div>
+
+                    {/* Reward nudge */}
+                    <div className="flex items-center gap-2 rounded-xl bg-primary/5 border border-primary/15 px-3 py-2 text-[11px] text-foreground/80">
+                      <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
+                      <span>Earn <strong className="text-primary">+1 $RHOZE</strong> per share · adds to your XP and Creator Pass progress.</span>
+                    </div>
                   </>
                 )}
 
