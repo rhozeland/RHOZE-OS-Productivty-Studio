@@ -751,6 +751,8 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
           )}
         </DialogContent>
       </Dialog>
+      </div>
+      <ConversationsRightRail />
     </div>
   );
 };
