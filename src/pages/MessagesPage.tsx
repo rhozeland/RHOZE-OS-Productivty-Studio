@@ -27,7 +27,7 @@ import QuoteCard, { isQuoteMessage } from "@/components/messages/QuoteCard";
 import ChatAttachmentMenu from "@/components/messages/ChatAttachmentMenu";
 import RichMessageCard, { isRichMessage } from "@/components/messages/RichMessageCard";
 import CirclesTab from "@/components/messages/CirclesTab";
-import BuddyList from "@/components/messages/BuddyList";
+import BuddyNotesRow from "@/components/notes/BuddyNotesRow";
 import GuestMessagesPreview from "@/components/guest/GuestMessagesPreview";
 import ProjectsInbox from "@/components/messages/ProjectsInbox";
 import ListingsTab from "@/components/messages/ListingsTab";
