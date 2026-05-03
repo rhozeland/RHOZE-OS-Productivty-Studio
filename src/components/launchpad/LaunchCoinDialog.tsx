@@ -228,12 +228,16 @@ const LaunchCoinDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Coins className="h-4 w-4 text-emerald-500" />
-            {isProfileCoin ? "Launch your profile coin" : "Launch a coin for this work"}
+            {isWorkCoin
+              ? "Launch a coin for this work"
+              : dropContext
+                ? `Drop a coin for ${dropContext}`
+                : "Drop a new coin"}
           </DialogTitle>
           <DialogDescription>
-            {isProfileCoin
-              ? "Launch a coin so your community can back you and grow with you. Think of it like crowdfunding — supporters buy in early, and as more people join, the value rises. You earn a cut of every trade."
-              : "Launch a coin tied to this work so your community can back it. Supporters buy in early, and you earn a cut of every trade as it grows."}
+            {isWorkCoin
+              ? "Launch a coin tied to this work so your community can back it. Supporters buy in early, and you earn a cut of every trade as it grows."
+              : "Drop a coin so your community can back it and grow with you. Think of it like crowdfunding — supporters buy in early, and as more people join, the value rises. You earn a cut of every trade."}
           </DialogDescription>
         </DialogHeader>
 
