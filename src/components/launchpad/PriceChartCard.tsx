@@ -27,9 +27,11 @@ import { Badge } from "@/components/ui/badge";
 import { LineChart as LineChartIcon, Radio } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-type Range = "1H" | "6H" | "1D" | "ALL";
+type Range = "1M" | "15M" | "1H" | "6H" | "1D" | "ALL";
 
 const RANGE_MS: Record<Range, number | null> = {
+  "1M": 60 * 1000,
+  "15M": 15 * 60 * 1000,
   "1H": 60 * 60 * 1000,
   "6H": 6 * 60 * 60 * 1000,
   "1D": 24 * 60 * 60 * 1000,
@@ -37,6 +39,8 @@ const RANGE_MS: Record<Range, number | null> = {
 };
 
 const RANGE_LABELS: Record<Range, string> = {
+  "1M": "Last 1 minute",
+  "15M": "Last 15 minutes",
   "1H": "Last 1 hour",
   "6H": "Last 6 hours",
   "1D": "Last 24 hours",
@@ -253,10 +257,10 @@ const PriceChartCard = ({ launchId, ticker }: Props) => {
             aria-label="Chart timeframe"
             className="inline-flex rounded-full border border-border/60 bg-muted/30 p-0.5 text-[10px] font-mono"
             onKeyDown={(e) =>
-              handleRovingKeyDown<Range>(e, ["1H", "6H", "1D", "ALL"], range, setRange)
+              handleRovingKeyDown<Range>(e, ["1M", "15M", "1H", "6H", "1D", "ALL"], range, setRange)
             }
           >
-            {(["1H", "6H", "1D", "ALL"] as Range[]).map((r) => {
+            {(["1M", "15M", "1H", "6H", "1D", "ALL"] as Range[]).map((r) => {
               const selected = range === r;
               return (
                 <button

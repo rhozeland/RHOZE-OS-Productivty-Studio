@@ -8,7 +8,7 @@ import NotificationBell from "@/components/NotificationBell";
 import UsernamePrompt from "@/components/UsernamePrompt";
 // FlowLauncher (floating FAB) retired — Flow is now reachable via the Hub view toggle + HubFlowWidget.
 // DockBar retired in v7 (post phase-2) — navigation happens via the left side nav + global ⌘K search.
-import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Settings as SettingsIcon, LogOut, Coins } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -191,6 +191,20 @@ const AppLayout = () => {
         .eq("is_public", true)
         .not("display_name", "is", null)
         .ilike("display_name", `%${trimmedQuery}%`)
+        .limit(5);
+      return data ?? [];
+    },
+    enabled: queryEnabled,
+  });
+
+  const { data: coins } = useQuery({
+    queryKey: ["search-coins", trimmedQuery],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("coin_launches")
+        .select("id, ticker, name, mint_address")
+        .neq("status", "cancelled")
+        .or(`ticker.ilike.%${trimmedQuery}%,name.ilike.%${trimmedQuery}%,mint_address.ilike.%${trimmedQuery}%`)
         .limit(5);
       return data ?? [];
     },
@@ -414,6 +428,17 @@ const AppLayout = () => {
                 <CommandItem key={p.user_id} onSelect={() => goTo(`/profiles/${p.user_id}`)}>
                   <User className="mr-2 h-4 w-4 text-muted-foreground" />
                   {p.display_name}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+          {queryEnabled && coins && coins.length > 0 && (
+            <CommandGroup heading="Coins">
+              {coins.map((c) => (
+                <CommandItem key={c.id} onSelect={() => goTo(`/coin/${c.ticker}`)}>
+                  <Coins className="mr-2 h-4 w-4 text-emerald-500" />
+                  <span className="font-mono">${c.ticker}</span>
+                  <span className="ml-2 text-xs text-muted-foreground truncate">{c.name}</span>
                 </CommandItem>
               ))}
             </CommandGroup>

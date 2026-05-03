@@ -57,6 +57,7 @@ import TicketDetailPage from "@/pages/TicketDetailPage";
 import { ProfileRedirect } from "@/components/ProfileRedirect";
 import FlowModePage from "@/pages/FlowModePage";
 import LaunchRedirect from "@/pages/LaunchRedirect";
+import LaunchDetailPage from "@/pages/LaunchDetailPage";
 // /rewards now redirects to /credits?tab=how — explainer lives inside Creator Pass
 import SwapHistoryPage from "@/pages/SwapHistoryPage";
 import UnsubscribePage from "@/pages/UnsubscribePage";
@@ -260,6 +261,9 @@ const App = () => (
                     the coin's creator and forwards to their profile Coin tab. */}
                 <Route path="/launchpad" element={<Navigate to="/discover" replace />} />
                 <Route path="/launchpad/:id" element={<LaunchRedirect />} />
+                {/* Coin detail page — slug = ticker (case-insensitive). */}
+                <Route path="/coin/:slug" element={<LaunchDetailPage />} />
+                
                 <Route path="/smartboards" element={<Navigate to="/projects" replace />} />
                 <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
                 <Route path="/drop-rooms" element={<Navigate to="/projects" replace />} />

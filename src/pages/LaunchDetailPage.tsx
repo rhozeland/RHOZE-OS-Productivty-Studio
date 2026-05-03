@@ -73,8 +73,12 @@ type Trade = {
   trader_id: string;
 };
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const LaunchDetailPage = () => {
-  const { id } = useParams();
+  // Route may be `/launchpad/:id` (UUID) or `/coin/:slug` (ticker, case-insensitive).
+  const params = useParams();
+  const slugOrId = (params.id ?? params.slug ?? "").trim();
   const { user } = useAuth();
   const [launch, setLaunch] = useState<Launch | null>(null);
   const [trades, setTrades] = useState<Trade[]>([]);
@@ -84,10 +88,30 @@ const LaunchDetailPage = () => {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    if (!id) return;
-    const { data: l } = await supabase.from("coin_launches").select("*").eq("id", id).maybeSingle();
-    setLaunch(l as Launch | null);
-    if (l?.work_id) {
+    if (!slugOrId) return;
+    let l: Launch | null = null;
+    if (UUID_RE.test(slugOrId)) {
+      const { data } = await supabase.from("coin_launches").select("*").eq("id", slugOrId).maybeSingle();
+      l = (data as Launch | null) ?? null;
+    } else {
+      // Resolve by ticker (slug). Strip a leading "$" if present.
+      const ticker = slugOrId.replace(/^\$/, "");
+      const { data } = await supabase
+        .from("coin_launches")
+        .select("*")
+        .ilike("ticker", ticker)
+        .neq("status", "cancelled")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      l = (data as Launch | null) ?? null;
+    }
+    setLaunch(l);
+    if (!l) {
+      setLoading(false);
+      return;
+    }
+    if (l.work_id) {
       const { data: w } = await supabase
         .from("works")
         .select("solana_signature")
@@ -98,7 +122,7 @@ const LaunchDetailPage = () => {
     const { data: t } = await supabase
       .from("coin_trades")
       .select("id,side,sol_amount,token_amount,fee_sol,price_per_token,created_at,trader_id")
-      .eq("launch_id", id)
+      .eq("launch_id", l.id)
       .order("created_at", { ascending: false })
       .limit(50);
     setTrades((t ?? []) as Trade[]);
@@ -108,7 +132,7 @@ const LaunchDetailPage = () => {
     const { data: vol } = await supabase
       .from("coin_trades")
       .select("sol_amount")
-      .eq("launch_id", id)
+      .eq("launch_id", l.id)
       .gte("created_at", since);
     setVol24h((vol ?? []).reduce((s, r) => s + Number(r.sol_amount), 0));
 
@@ -116,11 +140,11 @@ const LaunchDetailPage = () => {
     const { count } = await supabase
       .from("coin_holdings")
       .select("trader_id", { count: "exact", head: true })
-      .eq("launch_id", id);
+      .eq("launch_id", l.id);
     setHolderCount(count ?? null);
 
     setLoading(false);
-  }, [id]);
+  }, [slugOrId]);
 
   useEffect(() => {
     load();
@@ -245,7 +269,7 @@ const LaunchDetailPage = () => {
           {isCreator && (
             <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs">
               <span className="text-emerald-500 font-semibold">Your earnings:</span>{" "}
-              <span className="font-mono">{Number(launch.creator_fees_earned).toFixed(6)} SOL</span>
+              <span className="font-mono">{(Number(launch.creator_fees_earned) * 100).toFixed(2)} $RHOZE</span>
               <span className="text-muted-foreground">
                 {" "}
                 · {launch.creator_fee_bps / 100}% of every trade
