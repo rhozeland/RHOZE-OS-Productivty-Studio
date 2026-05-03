@@ -20,7 +20,7 @@ import { loadFlowFeed } from "@/lib/flow-feed";
 import { Button } from "@/components/ui/button";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 
-const HubFlowWidget = ({ expanded = false }: { expanded?: boolean }) => {
+const HubFlowWidget = ({ expanded = false, hideHeading = false }: { expanded?: boolean; hideHeading?: boolean }) => {
   const navigate = useNavigate();
 
   const { data: items, isLoading } = useQuery({
