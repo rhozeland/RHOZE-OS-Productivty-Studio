@@ -130,9 +130,10 @@ const SettingsPage = () => {
   const [notifPurchases, setNotifPurchases] = useState(true);
   const [notifReviews, setNotifReviews] = useState(true);
 
-  // Password
+  // Password + email change
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [newEmail, setNewEmail] = useState("");
 
   // Danger zone
   const [deleteConfirm, setDeleteConfirm] = useState("");
