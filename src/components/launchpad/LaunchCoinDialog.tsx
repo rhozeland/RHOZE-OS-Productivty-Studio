@@ -152,6 +152,10 @@ const LaunchCoinDialog = ({
       toast({ title: "Name required", variant: "destructive" });
       return;
     }
+    if (!imageUrl.trim()) {
+      toast({ title: "Coin image required", description: "Use your profile picture or upload one.", variant: "destructive" });
+      return;
+    }
     if (dropInfo && dropInfo.balance < COIN_LAUNCH_FEE_RHOZE) {
       toast({
         title: "Not enough $RHOZE",
