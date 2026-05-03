@@ -147,6 +147,14 @@ const LaunchCoinDialog = ({
       toast({ title: "Name required", variant: "destructive" });
       return;
     }
+    if (dropInfo && dropInfo.balance < COIN_LAUNCH_FEE_RHOZE) {
+      toast({
+        title: "Not enough $RHOZE",
+        description: `Launching costs ${COIN_LAUNCH_FEE_RHOZE} $RHOZE. You have ${Math.floor(dropInfo.balance)}.`,
+        variant: "destructive",
+      });
+      return;
+    }
     setSubmitting(true);
 
     const payload = {
@@ -163,18 +171,32 @@ const LaunchCoinDialog = ({
       ? await supabase.rpc("create_profile_coin_launch", payload)
       : await supabase.rpc("create_coin_launch", { ...payload, _work_id: workId! });
 
-    setSubmitting(false);
     if (error) {
+      setSubmitting(false);
       toast({ title: "Launch failed", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Coin launched", description: `$${ticker.toUpperCase()} is now live on the curve.` });
+
+    // Best-effort fee deduction. Server-side ledger should mirror this in the
+    // future; for now we mutate user_credits.balance directly so the launch
+    // feels real and the next-tier math reflects the spend.
+    const { data: userResp } = await supabase.auth.getUser();
+    if (userResp.user && dropInfo) {
+      const newBalance = Math.max(0, dropInfo.balance - COIN_LAUNCH_FEE_RHOZE);
+      await supabase
+        .from("user_credits")
+        .update({ balance: newBalance })
+        .eq("user_id", userResp.user.id);
+    }
+
+    setSubmitting(false);
+    toast({
+      title: "Coin launched",
+      description: `$${ticker.toUpperCase()} is live. ${COIN_LAUNCH_FEE_RHOZE} $RHOZE fee deducted.`,
+    });
     onOpenChange(false);
     if (data) {
       onLaunched?.(data as string);
-      // Always send creators back to their profile Coin tab — that's where
-      // the chart + trade panel now live.
-      const { data: userResp } = await supabase.auth.getUser();
       if (userResp.user) {
         navigate(`/profiles/${userResp.user.id}?tab=coin`);
       }
