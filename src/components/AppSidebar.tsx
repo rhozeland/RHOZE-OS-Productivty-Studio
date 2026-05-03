@@ -163,7 +163,7 @@ const AppSidebar = () => {
       </Link>
 
       <SidebarContent className="px-2 pt-3 space-y-2">
-        {renderGroup(pillarItems, { label: "Pillars" })}
+        {renderGroup(pillarItems)}
         {secondaryItems.length > 0 && renderGroup(secondaryItems)}
       </SidebarContent>
 
