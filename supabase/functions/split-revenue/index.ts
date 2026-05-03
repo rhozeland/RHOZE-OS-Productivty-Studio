@@ -79,6 +79,47 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Verify the milestone exists, is approved, belongs to the same contract,
+    // and that the caller is the contract's client (the one paying).
+    const { data: milestone, error: msErr } = await adminClient
+      .from("project_milestones")
+      .select("id, contract_id, credit_amount, status")
+      .eq("id", purchase_id)
+      .maybeSingle();
+    if (msErr || !milestone) {
+      return new Response(JSON.stringify({ error: "Milestone not found" }), {
+        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (milestone.contract_id !== config.contract_id) {
+      return new Response(JSON.stringify({ error: "Milestone/config mismatch" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (milestone.status !== "approved" && milestone.status !== "released") {
+      return new Response(JSON.stringify({ error: "Milestone not approved" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: contract } = await adminClient
+      .from("project_contracts")
+      .select("client_id, specialist_id")
+      .eq("id", milestone.contract_id)
+      .maybeSingle();
+    if (!contract || (contract.client_id !== user.id && contract.specialist_id !== user.id)) {
+      return new Response(JSON.stringify({ error: "Not authorized for this contract" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Server-derived amount — never trust client value
+    const total_amount = Number(milestone.credit_amount);
+    if (!total_amount || total_amount <= 0) {
+      return new Response(JSON.stringify({ error: "Invalid milestone amount" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Calculate splits
     const creatorAmount = Math.floor(total_amount * (config.creator_pct / 100));
     const curatorAmount = config.curator_id
