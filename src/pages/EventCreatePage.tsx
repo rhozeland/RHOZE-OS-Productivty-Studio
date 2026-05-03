@@ -465,8 +465,8 @@ const EventCreatePage = () => {
             <p className="text-sm font-medium">Free RSVP tier</p>
           </div>
           <p className="text-xs text-muted-foreground">
-            Every event ships with a free tier. Add paid tiers (USD or $RHOZE)
-            from Manage after publishing.
+            Every event ships with a free tier. Add paid tiers in your local currency
+            (or $RHOZE) from Manage after publishing.
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
