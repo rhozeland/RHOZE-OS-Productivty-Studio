@@ -50,6 +50,7 @@ import InfrastructurePage from "@/pages/InfrastructurePage";
 import SpacesHubPage from "@/pages/SpacesHubPage";
 import EventCreatePage from "@/pages/EventCreatePage";
 import EventDetailPage from "@/pages/EventDetailPage";
+import EventsExplorePage from "@/pages/EventsExplorePage";
 import EventManagePage from "@/pages/EventManagePage";
 import TicketDetailPage from "@/pages/TicketDetailPage";
 import { ProfileRedirect } from "@/components/ProfileRedirect";
@@ -88,6 +89,7 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/hub",
   "/profile",
   "/spaces",
+  "/events",
   "/spaces/events/:id",
   "/spaces/events/new",
   "/spaces/events/:id/manage",
@@ -216,6 +218,7 @@ const App = () => (
                 <Route path="/stream" element={<Navigate to="/discover" replace />} />
                 <Route path="/hub" element={<Navigate to="/discover" replace />} />
                 <Route path="/spaces" element={<Navigate to="/discover?kind=space" replace />} />
+                <Route path="/events" element={<EventsExplorePage />} />
                 <Route path="/spaces/events/new" element={<ProtectedRoute><EventCreatePage /></ProtectedRoute>} />
                 <Route path="/spaces/events/:id" element={<EventDetailPage />} />
                 <Route path="/spaces/events/:id/manage" element={<ProtectedRoute><EventManagePage /></ProtectedRoute>} />

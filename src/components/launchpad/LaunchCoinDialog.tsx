@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { getHoldTier, getCoinDropsPerMonth, TIERS } from "@/lib/tier-matrix";
+import { COIN_LAUNCH_FEE_RHOZE } from "@/lib/rewards-catalog";
 import {
   Dialog,
   DialogContent,
@@ -75,6 +76,7 @@ const LaunchCoinDialog = ({
     tierLabel: string;
     cap: number | null;
     used: number;
+    balance: number;
   } | null>(null);
 
   useEffect(() => {
@@ -97,7 +99,7 @@ const LaunchCoinDialog = ({
       const tier = getHoldTier(balance);
       const cap = getCoinDropsPerMonth(tier);
       const tierLabel = TIERS.find((t) => t.id === tier)?.label ?? "Spark";
-      if (!cancelled) setDropInfo({ tierLabel, cap, used: count ?? 0 });
+      if (!cancelled) setDropInfo({ tierLabel, cap, used: count ?? 0, balance });
     })();
     return () => { cancelled = true; };
   }, [open]);
@@ -145,6 +147,14 @@ const LaunchCoinDialog = ({
       toast({ title: "Name required", variant: "destructive" });
       return;
     }
+    if (dropInfo && dropInfo.balance < COIN_LAUNCH_FEE_RHOZE) {
+      toast({
+        title: "Not enough $RHOZE",
+        description: `Launching costs ${COIN_LAUNCH_FEE_RHOZE} $RHOZE. You have ${Math.floor(dropInfo.balance)}.`,
+        variant: "destructive",
+      });
+      return;
+    }
     setSubmitting(true);
 
     const payload = {
@@ -161,18 +171,32 @@ const LaunchCoinDialog = ({
       ? await supabase.rpc("create_profile_coin_launch", payload)
       : await supabase.rpc("create_coin_launch", { ...payload, _work_id: workId! });
 
-    setSubmitting(false);
     if (error) {
+      setSubmitting(false);
       toast({ title: "Launch failed", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Coin launched", description: `$${ticker.toUpperCase()} is now live on the curve.` });
+
+    // Best-effort fee deduction. Server-side ledger should mirror this in the
+    // future; for now we mutate user_credits.balance directly so the launch
+    // feels real and the next-tier math reflects the spend.
+    const { data: userResp } = await supabase.auth.getUser();
+    if (userResp.user && dropInfo) {
+      const newBalance = Math.max(0, dropInfo.balance - COIN_LAUNCH_FEE_RHOZE);
+      await supabase
+        .from("user_credits")
+        .update({ balance: newBalance })
+        .eq("user_id", userResp.user.id);
+    }
+
+    setSubmitting(false);
+    toast({
+      title: "Coin launched",
+      description: `$${ticker.toUpperCase()} is live. ${COIN_LAUNCH_FEE_RHOZE} $RHOZE fee deducted.`,
+    });
     onOpenChange(false);
     if (data) {
       onLaunched?.(data as string);
-      // Always send creators back to their profile Coin tab — that's where
-      // the chart + trade panel now live.
-      const { data: userResp } = await supabase.auth.getUser();
       if (userResp.user) {
         navigate(`/profiles/${userResp.user.id}?tab=coin`);
       }
@@ -306,6 +330,30 @@ const LaunchCoinDialog = ({
             );
           })()}
 
+          {(() => {
+            const balance = dropInfo?.balance ?? 0;
+            const insufficient = balance < COIN_LAUNCH_FEE_RHOZE;
+            return (
+              <div
+                className={`rounded-md border p-3 text-[11px] flex items-start justify-between gap-3 ${
+                  insufficient
+                    ? "border-destructive/50 bg-destructive/10 text-destructive"
+                    : "border-border/60 bg-muted/30 text-muted-foreground"
+                }`}
+              >
+                <div>
+                  <span className="font-medium text-foreground">One-time launch fee</span>
+                  <p className="mt-0.5">
+                    {COIN_LAUNCH_FEE_RHOZE} $RHOZE — covers metadata, vanity address, and platform infra. Same for every tier.
+                  </p>
+                </div>
+                <span className="font-mono tabular-nums shrink-0">
+                  Bal: {Math.floor(balance).toLocaleString()}
+                </span>
+              </div>
+            );
+          })()}
+
           <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-[11px] text-muted-foreground">
             Simulated launch — no real liquidity yet. Tokenomics (supply, fees, graduation) lock in once the on-chain mint ships.
           </div>
@@ -320,7 +368,8 @@ const LaunchCoinDialog = ({
               submitting ||
               (dropInfo !== null &&
                 dropInfo.cap !== null &&
-                dropInfo.used >= dropInfo.cap)
+                dropInfo.used >= dropInfo.cap) ||
+              (dropInfo !== null && dropInfo.balance < COIN_LAUNCH_FEE_RHOZE)
             }
           >
             {submitting && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}

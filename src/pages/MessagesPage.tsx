@@ -33,6 +33,7 @@ import ProjectsInbox from "@/components/messages/ProjectsInbox";
 import ListingsTab from "@/components/messages/ListingsTab";
 import HubFlowWidget from "@/components/hub/HubFlowWidget";
 import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
+import ConversationsRightRail from "@/components/messages/ConversationsRightRail";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pending", color: "bg-amber-500/15 text-amber-600", icon: Clock },
@@ -426,7 +427,8 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex gap-6 items-start">
+      <div className="flex-1 min-w-0 space-y-6">
       <div>
         <h1 className="font-display text-3xl font-bold text-foreground">Conversations</h1>
         <p className="text-muted-foreground">Messages, projects, and listings — all in one place.</p>
@@ -749,6 +751,8 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
           )}
         </DialogContent>
       </Dialog>
+      </div>
+      <ConversationsRightRail />
     </div>
   );
 };

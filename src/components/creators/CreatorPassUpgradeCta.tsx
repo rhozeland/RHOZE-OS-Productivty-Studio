@@ -22,7 +22,7 @@ import {
   getEffectiveTier,
   type TierId,
 } from "@/lib/tier-matrix";
-import { Sparkles, ArrowRight, X } from "lucide-react";
+import { Sparkles, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const dismissKey = (userId: string) => `rhozeland.creator-pass-cta.dismissed.${userId}`;
@@ -157,7 +157,7 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
           Climb to {personalized.next.label} for bigger rewards
         </h3>
         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{personalized.hint}</p>
-        <ArrowRight className="inline-block ml-1 h-3.5 w-3.5 text-muted-foreground/70 align-[-2px] group-hover:text-foreground group-hover:translate-x-0.5 transition" />
+        
       </div>
       <button
         type="button"
