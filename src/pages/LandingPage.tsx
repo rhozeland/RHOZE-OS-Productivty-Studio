@@ -39,9 +39,9 @@ const TIERS = [
   },
   {
     name: "Bloom",
-    hue: "from-pink-400 via-rose-500 to-fuchsia-600",
-    accent: "text-rose-600",
-    chipBg: "bg-rose-500/10 text-rose-700 border-rose-500/30",
+    hue: "from-pink-400 via-rose-500 to-pink-600",
+    accent: "text-pink-600",
+    chipBg: "bg-pink-500/15 text-pink-700 border-pink-500/40",
     blurb: "Hold a little $RHOZE. Unlock more of the network.",
   },
   {
