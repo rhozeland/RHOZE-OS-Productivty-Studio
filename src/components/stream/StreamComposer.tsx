@@ -24,11 +24,9 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Flame,
   Briefcase,
-  Megaphone,
   CalendarDays,
   Building2,
   Shield,
-  FolderKanban,
   Send,
   Loader2,
   Plus,
