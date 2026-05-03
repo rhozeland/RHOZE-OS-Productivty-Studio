@@ -25,6 +25,7 @@ import {
   type TierId,
 } from "@/lib/tier-matrix";
 import { Sparkles, ArrowRight, X } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const dismissKey = (userId: string) => `rhozeland.creator-pass-cta.dismissed.${userId}`;
 
@@ -53,7 +54,7 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
     return window.localStorage.getItem(dismissKey(user.id)) === "1";
   });
 
-  const { data: credits } = useQuery({
+  const { data: credits, isLoading: creditsLoading } = useQuery({
     queryKey: ["creator-pass-cta-credits", user?.id],
     queryFn: async () => {
       const { data } = await supabase
@@ -66,7 +67,7 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
     enabled: !!user,
   });
 
-  const { data: activity } = useQuery({
+  const { data: activity, isLoading: activityLoading } = useQuery({
     queryKey: ["creator-pass-cta-activity", user?.id],
     queryFn: async () => {
       const sb = supabase as any;
@@ -150,6 +151,26 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
 
   if (!user) return null;
   if (dismissed) return null;
+
+  const isLoading = creditsLoading || activityLoading;
+  if (isLoading) {
+    return (
+      <div
+        className={`surface-card relative overflow-hidden flex items-start gap-4 p-4 ${
+          variant === "compact" ? "" : "md:p-5"
+        }`}
+        aria-hidden
+      >
+        <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+        <div className="flex-1 min-w-0 space-y-2">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-5 w-3/4" />
+          <Skeleton className="h-3 w-2/3" />
+        </div>
+      </div>
+    );
+  }
+
   if (!personalized) return null;
   if (!personalized.next) return null;
 
