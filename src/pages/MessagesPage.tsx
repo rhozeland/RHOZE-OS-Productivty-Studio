@@ -491,6 +491,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
               "flex flex-col border-r border-border",
               selectedUser ? "hidden md:flex md:w-80" : "w-full md:w-80"
             )}>
+              <BuddyNotesRow onSelectBuddy={setSelectedUser} />
               <div className="p-3 space-y-2">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -564,7 +565,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                   })
                 )}
               </ScrollArea>
-              <BuddyList onSelectUser={setSelectedUser} selectedUserId={selectedUser?.user_id} />
+              
             </div>
 
             {/* Chat Area */}
