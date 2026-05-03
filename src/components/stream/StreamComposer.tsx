@@ -33,6 +33,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import NoteComposer from "@/components/notes/NoteComposer";
 
 export type StreamPostType =
   | "text"
