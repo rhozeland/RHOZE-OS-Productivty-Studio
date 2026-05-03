@@ -34,6 +34,7 @@ import ProjectDisputes from "@/components/project/ProjectDisputes";
 import ProjectControls from "@/components/project/ProjectControls";
 import RevenueSplitConfig from "@/components/revenue/RevenueSplitConfig";
 import ProjectTools from "@/components/project/ProjectTools";
+import DropRoomLauncher from "@/components/project/DropRoomLauncher";
 import { useProjectRole } from "@/hooks/useProjectRole";
 
 const ProjectDetailPage = () => {
@@ -312,8 +313,14 @@ const ProjectDetailPage = () => {
         </div>
       </div>
 
-      {/* Progress Overview */}
-      <ProgressChart goals={goals} />
+      {/* Progress Overview — Drop Room launcher lives in the header so a
+          live collab space is always one tap away without a dedicated tab. */}
+      <ProgressChart
+        goals={goals}
+        headerAction={
+          <DropRoomLauncher projectId={id!} projectTitle={project.title} />
+        }
+      />
 
       <Tabs defaultValue="roadmap" className="w-full">
         <TabsList className="mb-4 w-full justify-start overflow-x-auto flex-nowrap shrink-0">
