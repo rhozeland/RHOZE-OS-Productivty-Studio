@@ -83,11 +83,11 @@ const LaunchCard = ({ l }: { l: Launch }) => {
 
           {l.mint_address && <MintAddressChip address={l.mint_address} size="xs" />}
 
-          <div className="space-y-1">
-            <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
-              <span>{Number(l.real_sol_reserves).toFixed(2)} SOL</span>
-              <span>{l.graduation_sol_target} SOL goal</span>
-            </div>
+            <div className="space-y-1">
+              <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
+                <span>{Number(l.real_sol_reserves).toFixed(2)} $RHOZE raised</span>
+                <span>{Number(l.graduation_sol_target).toFixed(2)} $RHOZE goal</span>
+              </div>
             <div className="h-1.5 rounded-full bg-muted overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-emerald-500 to-fuchsia-500"
