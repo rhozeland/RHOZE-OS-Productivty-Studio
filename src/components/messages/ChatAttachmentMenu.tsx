@@ -582,6 +582,58 @@ const ChatAttachmentMenu = ({ onSendMessage, onSendQuote, disabled }: ChatAttach
               </div>
             </div>
           )}
+          {view === "events" && (
+            <div>
+              <div className="flex items-center gap-2 p-2 border-b border-border">
+                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setView("menu")}>
+                  <span className="text-lg">←</span>
+                </Button>
+                <p className="text-sm font-medium text-foreground">Share Event</p>
+              </div>
+              <div className="p-2">
+                <div className="relative mb-2">
+                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search upcoming events..."
+                    className="pl-8 h-8 text-sm"
+                  />
+                </div>
+              </div>
+              <ScrollArea className="max-h-64">
+                {filterBySearch(events, ["title", "venue_name"]).length === 0 ? (
+                  <p className="text-center text-xs text-muted-foreground py-6">No upcoming events</p>
+                ) : (
+                  filterBySearch(events, ["title", "venue_name"]).map((ev) => {
+                    const dt = ev.starts_at ? new Date(ev.starts_at) : null;
+                    return (
+                      <button
+                        key={ev.id}
+                        onClick={() => shareEvent(ev)}
+                        className="flex w-full items-center gap-3 px-3 py-2 hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                          {ev.cover_url ? (
+                            <img src={ev.cover_url} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            <CalendarDays className="h-4 w-4 text-primary" />
+                          )}
+                        </div>
+                        <div className="min-w-0 text-left flex-1">
+                          <p className="text-sm text-foreground truncate">{ev.title}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">
+                            {dt ? dt.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "TBD"}
+                            {ev.is_online ? " · Online" : ev.venue_name ? ` · ${ev.venue_name}` : ""}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </ScrollArea>
+            </div>
+          )}
         </PopoverContent>
       </Popover>
     </>
