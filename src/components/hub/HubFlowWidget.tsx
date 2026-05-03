@@ -39,18 +39,22 @@ const HubFlowWidget = ({ expanded = false, hideHeading = false }: { expanded?: b
       aria-label="Flow preview"
     >
       <div className="flex items-start justify-between gap-3 mb-4">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-1 flex items-center gap-1.5">
-            <Flame className="h-3 w-3 fill-amber-400/40 text-amber-400" />
-            Flow
-          </p>
-          <h2 className="font-display text-xl font-semibold text-foreground">
-            {expanded ? "Tune in." : "Quick tune-in."}
-          </h2>
-          <p className="text-xs text-muted-foreground mt-1">
-            Verified creative IP, ranked. Swipe through one at a time.
-          </p>
-        </div>
+        {hideHeading ? (
+          <div />
+        ) : (
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-1 flex items-center gap-1.5">
+              <Flame className="h-3 w-3 fill-amber-400/40 text-amber-400" />
+              Flow
+            </p>
+            <h2 className="font-display text-xl font-semibold text-foreground">
+              {expanded ? "Tune in." : "Quick tune-in."}
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Verified creative IP, ranked. Swipe through one at a time.
+            </p>
+          </div>
+        )}
         <Button
           size="sm"
           variant="default"
