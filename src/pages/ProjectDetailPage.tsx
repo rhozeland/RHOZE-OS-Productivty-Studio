@@ -34,6 +34,7 @@ import ProjectDisputes from "@/components/project/ProjectDisputes";
 import ProjectControls from "@/components/project/ProjectControls";
 import RevenueSplitConfig from "@/components/revenue/RevenueSplitConfig";
 import ProjectTools from "@/components/project/ProjectTools";
+import DropRoomLauncher from "@/components/project/DropRoomLauncher";
 import { useProjectRole } from "@/hooks/useProjectRole";
 
 const ProjectDetailPage = () => {
