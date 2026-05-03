@@ -9,6 +9,7 @@ import LaunchpadWalletBridge from "@/components/launchpad/LaunchpadWalletBridge"
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthGateProvider } from "@/components/AuthGateDialog";
 import AppLayout from "@/components/AppLayout";
+import FlowAuthGuard from "@/components/FlowAuthGuard";
 import AuthPage from "@/pages/AuthPage";
 import LandingPage from "@/pages/LandingPage";
 // DashboardPage retired in v8 — /dashboard now redirects to /discover.
