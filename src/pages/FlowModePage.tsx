@@ -201,11 +201,14 @@ const FlowModePage = () => {
     return saved !== null ? saved === "true" : true;
   });
   const [swipeMap] = useState({
-    up: "like",
+    up: "profile",
     down: "comment",
     left: "dislike",
     right: "skip",
   });
+  const [peekOpen, setPeekOpen] = useState(false);
+  const [peekCreatorId, setPeekCreatorId] = useState<string | null>(null);
+  const [peekInitial, setPeekInitial] = useState<{ display_name?: string | null; avatar_url?: string | null } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Validate one file against the current category's accept rules. Returns null if OK,
