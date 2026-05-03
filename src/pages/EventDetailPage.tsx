@@ -29,6 +29,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import TicketCheckoutDialog from "@/components/events/TicketCheckoutDialog";
 import EventInviteBanner from "@/components/events/EventInviteBanner";
+import EventMediaCarousel from "@/components/events/EventMediaCarousel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const EventDetailPage = () => {
@@ -244,9 +245,9 @@ const EventDetailPage = () => {
         >
           {/* Poster */}
           <div className="overflow-hidden rounded-[22px] border border-border bg-card shadow-sm">
-            <div className="relative aspect-[0.92] overflow-hidden bg-muted">
-              {ev.cover_url ? (
-                <img src={ev.cover_url} alt={ev.title} className="h-full w-full object-cover" />
+            <div className="relative aspect-[3/4] overflow-hidden bg-muted">
+              {(ev.cover_url_poster || ev.cover_url) ? (
+                <img src={ev.cover_url_poster || ev.cover_url} alt={ev.title} className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/15 to-accent/10">
                   <CalendarDays className="h-14 w-14 text-muted-foreground/30" />
@@ -500,6 +501,9 @@ const EventDetailPage = () => {
               </p>
             </div>
           )}
+
+          {/* Gallery (images + videos) */}
+          <EventMediaCarousel eventId={ev.id} />
         </div>
       </div>
 

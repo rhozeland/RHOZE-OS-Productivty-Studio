@@ -1361,6 +1361,50 @@ export type Database = {
           },
         ]
       }
+      event_media: {
+        Row: {
+          caption: string | null
+          created_at: string
+          event_id: string
+          id: string
+          media_type: string
+          sort_order: number
+          thumbnail_url: string | null
+          uploaded_by: string
+          url: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          event_id: string
+          id?: string
+          media_type: string
+          sort_order?: number
+          thumbnail_url?: string | null
+          uploaded_by: string
+          url: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          event_id?: string
+          id?: string
+          media_type?: string
+          sort_order?: number
+          thumbnail_url?: string | null
+          uploaded_by?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_media_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_ticket_settlements: {
         Row: {
           buyer_id: string
@@ -1424,6 +1468,7 @@ export type Database = {
       event_ticket_tiers: {
         Row: {
           created_at: string
+          currency_code: string
           description: string | null
           event_id: string
           id: string
@@ -1440,6 +1485,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          currency_code?: string
           description?: string | null
           event_id: string
           id?: string
@@ -1456,6 +1502,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          currency_code?: string
           description?: string | null
           event_id?: string
           id?: string
@@ -1573,8 +1620,11 @@ export type Database = {
           anchored_at: string | null
           capacity: number | null
           category: string
+          country_code: string | null
           cover_url: string | null
+          cover_url_poster: string | null
           created_at: string
+          currency_code: string
           description: string | null
           ends_at: string
           host_id: string
@@ -1598,8 +1648,11 @@ export type Database = {
           anchored_at?: string | null
           capacity?: number | null
           category?: string
+          country_code?: string | null
           cover_url?: string | null
+          cover_url_poster?: string | null
           created_at?: string
+          currency_code?: string
           description?: string | null
           ends_at: string
           host_id: string
@@ -1623,8 +1676,11 @@ export type Database = {
           anchored_at?: string | null
           capacity?: number | null
           category?: string
+          country_code?: string | null
           cover_url?: string | null
+          cover_url_poster?: string | null
           created_at?: string
+          currency_code?: string
           description?: string | null
           ends_at?: string
           host_id?: string
@@ -1792,6 +1848,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      host_payout_requests: {
+        Row: {
+          admin_note: string | null
+          amount: number
+          created_at: string
+          currency_code: string
+          host_id: string
+          id: string
+          paid_at: string | null
+          payout_details: Json | null
+          payout_method: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount: number
+          created_at?: string
+          currency_code?: string
+          host_id: string
+          id?: string
+          paid_at?: string | null
+          payout_details?: Json | null
+          payout_method: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount?: number
+          created_at?: string
+          currency_code?: string
+          host_id?: string
+          id?: string
+          paid_at?: string | null
+          payout_details?: Json | null
+          payout_method?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       listing_inquiries: {
         Row: {
@@ -4392,6 +4496,19 @@ export type Database = {
           tenure_full_months: number
         }[]
       }
+      get_host_fiat_earnings: {
+        Args: { _host_id: string }
+        Returns: {
+          available: number
+          currency_code: string
+          gross: number
+          host_net: number
+          paid_payouts: number
+          pending_payouts: number
+          platform_fee: number
+          ticket_count: number
+        }[]
+      }
       get_platform_fee_bps: { Args: { _user_id: string }; Returns: number }
       get_profiles_by_ids: {
         Args: { _ids: string[] }
@@ -4536,6 +4653,15 @@ export type Database = {
       release_milestone_credits: {
         Args: { _approver_id: string; _milestone_id: string }
         Returns: undefined
+      }
+      request_host_payout: {
+        Args: {
+          _amount: number
+          _currency_code: string
+          _payout_details?: Json
+          _payout_method: string
+        }
+        Returns: string
       }
       request_withdrawal: {
         Args: {

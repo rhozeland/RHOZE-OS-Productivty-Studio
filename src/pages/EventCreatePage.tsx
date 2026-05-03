@@ -14,7 +14,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, CalendarDays, Sparkles, Loader2, ImagePlus, X } from "lucide-react";
+import { ArrowLeft, CalendarDays, Sparkles, Loader2, ImagePlus, X, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Link } from "react-router-dom";
+import { detectCountryFromAddress, currencyFromCountry, formatMoney, fiatToRhoze } from "@/lib/event-currency";
 
 async function sha256Hex(text: string): Promise<string> {
   const buf = new TextEncoder().encode(text);
@@ -86,9 +87,17 @@ const EventCreatePage = () => {
     }
   };
 
-  // Free RSVP tier (always created). Paid tiers can be added in /manage later.
+  // Free RSVP tier (always created) + optional paid tiers added during create.
   const [rsvpTierName, setRsvpTierName] = useState("RSVP");
   const [rsvpQuantity, setRsvpQuantity] = useState<string>("");
+
+  type DraftTier = { name: string; price: string; quantity: string };
+  const [paidTiers, setPaidTiers] = useState<DraftTier[]>([]);
+
+  // Auto currency from venue address (host can override)
+  const detectedCountry = isOnline ? null : detectCountryFromAddress(venueAddress) ?? detectCountryFromAddress(venueName);
+  const [currencyOverride, setCurrencyOverride] = useState<string | null>(null);
+  const currencyCode = currencyOverride ?? currencyFromCountry(detectedCountry);
 
   const buildManifest = () => ({
     protocol: "rhozeland",
@@ -103,12 +112,19 @@ const EventCreatePage = () => {
     starts_at: startsAt,
     ends_at: endsAt,
     capacity: capacity ? Number(capacity) : null,
+    currency_code: currencyCode,
+    country_code: detectedCountry,
     tiers: [
-      {
-        name: rsvpTierName || "RSVP",
-        kind: "rsvp",
-        quantity_total: rsvpQuantity ? Number(rsvpQuantity) : null,
-      },
+      { name: rsvpTierName || "RSVP", kind: "rsvp", quantity_total: rsvpQuantity ? Number(rsvpQuantity) : null },
+      ...paidTiers
+        .filter((t) => t.name.trim() && Number(t.price) > 0)
+        .map((t) => ({
+          name: t.name.trim(),
+          kind: "paid",
+          price: Number(t.price),
+          currency_code: currencyCode,
+          quantity_total: t.quantity ? Number(t.quantity) : null,
+        })),
     ],
     terms: description,
   });
@@ -152,24 +168,42 @@ const EventCreatePage = () => {
           status: publish ? "published" : "draft",
           manifest_hash,
           manifest_json: manifest as any,
-          ticket_currency_modes: ["rsvp"],
+          ticket_currency_modes: paidTiers.some((t) => Number(t.price) > 0) ? ["rsvp", "fiat"] : ["rsvp"],
           cover_url: coverUrl,
-        })
+          country_code: detectedCountry,
+          currency_code: currencyCode,
+        } as any)
         .select()
         .single();
       if (evErr) throw evErr;
 
-      // 2) Create the free RSVP tier
-      const { error: tierErr } = await supabase.from("event_ticket_tiers").insert({
+      // 2) Create the free RSVP tier + any paid tiers
+      const tierRows: any[] = [{
         event_id: ev.id,
         name: rsvpTierName.trim() || "RSVP",
         description: "Free RSVP",
         price_usd: 0,
         price_rhoze: 0,
+        currency_code: currencyCode,
         quantity_total: rsvpQuantity ? Number(rsvpQuantity) : null,
         sort_order: 0,
         is_active: true,
+      }];
+      paidTiers.forEach((t, i) => {
+        const price = Number(t.price);
+        if (!t.name.trim() || !price || price <= 0) return;
+        tierRows.push({
+          event_id: ev.id,
+          name: t.name.trim(),
+          price_usd: price, // stored in tier's local currency_code
+          price_rhoze: fiatToRhoze(price),
+          currency_code: currencyCode,
+          quantity_total: t.quantity ? Number(t.quantity) : null,
+          sort_order: i + 1,
+          is_active: true,
+        });
       });
+      const { error: tierErr } = await supabase.from("event_ticket_tiers").insert(tierRows);
       if (tierErr) throw tierErr;
 
       // 3) If publishing, write a contribution_proof + anchor on Solana
