@@ -273,7 +273,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
   // Events + Flow moved to Discover. Quietly redirect any deep-links.
   useEffect(() => {
     if (rawTab === "events") navigate("/discover?view=events", { replace: true });
-    else if (rawTab === "flow") navigate("/discover?view=flow", { replace: true });
+    else if (rawTab === "flow") navigate("/flow", { replace: true });
   }, [rawTab, navigate]);
   const activeTab =
     rawTab === "inquiries" || !rawTab || rawTab === "events" || rawTab === "flow"
