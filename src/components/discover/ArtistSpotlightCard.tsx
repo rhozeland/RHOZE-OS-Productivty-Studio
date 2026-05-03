@@ -124,14 +124,4 @@ const ArtistSpotlightCard = ({
   );
 };
 
-const Stat = ({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) => (
-  <div className="flex flex-col items-center justify-center py-3 text-center">
-    <span className="flex items-center gap-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-      {icon}
-      {label}
-    </span>
-    <span className="mt-0.5 font-display text-xl text-foreground">{value}</span>
-  </div>
-);
-
 export default ArtistSpotlightCard;
