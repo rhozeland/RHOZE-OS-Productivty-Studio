@@ -55,32 +55,46 @@ const CreatorPassCard = () => {
   const { data: profile } = useQuery({
     queryKey: ["profile-pass", user?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("display_name, avatar_url").eq("user_id", user!.id).maybeSingle();
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url, verification_status")
+        .eq("user_id", user!.id)
+        .maybeSingle();
       return data;
     },
     enabled: !!user,
   });
 
-  const { data: xpData } = useQuery({
-    queryKey: ["creator-xp-pass", user?.id],
+  // Verified Works (anchored creative IP) — replaces the old "Anchored" generic count.
+  const { data: verifiedWorks } = useQuery({
+    queryKey: ["verified-works-pass", user?.id],
     queryFn: async () => {
-      const [{ count: proofCount }, { count: txCount }] = await Promise.all([
-        supabase.from("contribution_proofs").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
-        supabase.from("credit_transactions").select("id", { count: "exact", head: true }).eq("user_id", user!.id).eq("type", "reward"),
-      ]);
-      return { proofCount: proofCount ?? 0, txCount: txCount ?? 0, totalXP: (proofCount ?? 0) + (txCount ?? 0) * 2 };
-    },
-    enabled: !!user,
-  });
-
-  const { data: badgeCount } = useQuery({
-    queryKey: ["badge-count-pass", user?.id],
-    queryFn: async () => {
-      const { count } = await supabase.from("contribution_proofs").select("id", { count: "exact", head: true }).eq("user_id", user!.id).not("solana_signature", "is", null);
+      const { count } = await supabase
+        .from("contribution_proofs")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id)
+        .not("solana_signature", "is", null);
       return count ?? 0;
     },
     enabled: !!user,
   });
+
+  // Events attended — count of issued/checked-in tickets the user holds.
+  const { data: ticketsData } = useQuery({
+    queryKey: ["pass-tickets", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("event_tickets")
+        .select("id, status, created_at, event_id, event:events(id,title,starts_at,cover_url,category)")
+        .eq("holder_id", user!.id)
+        .in("status", ["issued", "checked_in"])
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  const eventsAttended = (ticketsData ?? []).filter((t: any) => t.status === "checked_in").length;
 
   // ─── Personal "Studio activity" metrics — relocated here from the
   // retired My Studio dashboard. Surfaces the live counts for a creator's
@@ -112,33 +126,6 @@ const CreatorPassCard = () => {
     enabled: !!user,
   });
 
-  const { data: weeklyRank } = useQuery({
-    queryKey: ["weekly-rank-pass", user?.id],
-    queryFn: async () => {
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      const { data } = await supabase
-        .from("credit_transactions")
-        .select("user_id, amount")
-        .eq("type", "reward")
-        .gte("created_at", weekAgo.toISOString());
-      if (!data?.length) return null;
-      const totals: Record<string, number> = {};
-      data.forEach((t) => { totals[t.user_id] = (totals[t.user_id] || 0) + Number(t.amount); });
-      const sorted = Object.entries(totals).sort(([, a], [, b]) => b - a);
-      const rank = sorted.findIndex(([id]) => id === user!.id);
-      return rank >= 0 ? rank + 1 : null;
-    },
-    enabled: !!user,
-  });
-
-  const totalXP = xpData?.totalXP ?? 0;
-  const currentLevel = LEVELS.reduce((acc, l) => (totalXP >= l.xp ? l : acc), LEVELS[0]);
-  const nextLevel = LEVELS.find((l) => l.xp > totalXP) ?? LEVELS[LEVELS.length - 1];
-  const progressPct = nextLevel.xp > currentLevel.xp
-    ? Math.min(100, ((totalXP - currentLevel.xp) / (nextLevel.xp - currentLevel.xp)) * 100)
-    : 100;
-
   // Effective tier = max($RHOZE hold, legacy subscription mapping)
   // v8.3: activity-based qualification removed — tier eligibility = $RHOZE hold only.
   const LEGACY_MAP: Record<string, TierId> = { bronze: "spark", gold: "bloom", diamond: "glow", prism: "play" };
@@ -146,6 +133,8 @@ const CreatorPassCard = () => {
   const holdTier: TierId = getHoldTier(Number(credits?.balance ?? 0)) as TierId;
   const effectiveTier = getEffectiveTier(subTier, holdTier);
   const gradient = TIER_GRADIENTS[effectiveTier] || TIER_GRADIENTS.spark;
+
+  const isVerifiedArtist = profile?.verification_status === "verified";
 
   if (!user) return null;
 
