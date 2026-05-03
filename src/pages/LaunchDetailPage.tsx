@@ -228,16 +228,16 @@ const LaunchDetailPage = () => {
             </div>
           </div>
 
-          {/* Quick stats — denominated in $RHOZE so it reads like an in-app
-              economy, not a Solana DEX. 1 SOL ≈ 100 $RHOZE on the simulated
-              curve. */}
+          {/* Quick stats — prices are shown in $RHOZE. Reserve/graduation values
+              are already stored in the same simulated in-app units, so they
+              must never be multiplied by an extra conversion factor. */}
           {(() => {
             const RHOZE_PER_SOL = 100;
             const priceRhoze = price * RHOZE_PER_SOL;
             const mcapRhoze = marketCap * RHOZE_PER_SOL;
             const vol24Rhoze = vol24h * RHOZE_PER_SOL;
-            const targetRhoze = Number(launch.graduation_sol_target) * RHOZE_PER_SOL;
-            const nowRhoze = Number(launch.real_sol_reserves) * RHOZE_PER_SOL;
+            const targetRaised = Number(launch.graduation_sol_target);
+            const currentRaised = Number(launch.real_sol_reserves);
             const fmt = (n: number) =>
               n >= 1000 ? n.toLocaleString(undefined, { maximumFractionDigits: 0 }) : n.toFixed(2);
             const fmtTiny = (n: number) => {
@@ -262,7 +262,7 @@ const LaunchDetailPage = () => {
                 <div className="space-y-1">
                   <div className="flex justify-between text-[10px] font-mono text-muted-foreground">
                     <span>
-                      {fmt(nowRhoze)} / {fmt(targetRhoze)} $RHOZE raised
+                      {fmt(currentRaised)} / {fmt(targetRaised)} $RHOZE raised
                     </span>
                     <span>{progress.toFixed(1)}% to graduation</span>
                   </div>
