@@ -25,6 +25,10 @@ import {
   Search,
   Image as ImageIcon,
   Settings,
+  Pencil,
+  Trash2,
+  X,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
