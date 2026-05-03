@@ -19,6 +19,12 @@ import {
   AlertTriangle,
   RotateCcw,
   Loader2,
+  Palette,
+  Music,
+  Camera,
+  Video,
+  PenLine,
+  Link as LinkIcon,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import {
