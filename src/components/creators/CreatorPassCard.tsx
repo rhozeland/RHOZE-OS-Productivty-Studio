@@ -178,43 +178,84 @@ const CreatorPassCard = () => {
             </div>
           </div>
 
-          {/* Stats grid — the "gym badges" */}
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+          {/* Stats — 4 collectible metrics (no XP/Level/Rank duplication) */}
+          <div className="grid grid-cols-4 gap-3">
             {[
               { label: "Balance", value: `${credits?.balance ?? 0}`, icon: Coins },
               { label: "Streak", value: `${credits?.reward_streak ?? 0}d`, icon: Flame },
-              { label: "Level", value: `${currentLevel.level}`, icon: LevelIcon },
-              { label: "XP", value: `${totalXP}`, icon: TrendingUp },
-              { label: "Anchored", value: `${badgeCount ?? 0}`, icon: Shield },
-              { label: "Rank", value: weeklyRank ? `#${weeklyRank}` : "—", icon: Award },
+              { label: "Events", value: `${eventsAttended}`, icon: Ticket },
+              { label: "Verified Works", value: `${verifiedWorks ?? 0}`, icon: Shield },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <div className="h-9 w-9 mx-auto rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center mb-1">
                   <stat.icon className="h-4 w-4" />
                 </div>
-                <p className="font-display text-sm font-bold">{stat.value}</p>
+                <p className="font-display text-sm font-bold tabular-nums">{stat.value}</p>
                 <p className="text-[9px] uppercase tracking-wider opacity-60 font-body">{stat.label}</p>
               </div>
             ))}
           </div>
-
-          {/* Level progress bar */}
-          <div className="mt-5">
-            <div className="flex items-center justify-between text-[10px] mb-1 opacity-80 font-body">
-              <span>Lv.{currentLevel.level} {currentLevel.title}</span>
-              <span>{totalXP} / {nextLevel.xp} XP</span>
-            </div>
-            <div className="h-2 rounded-full bg-white/20 overflow-hidden">
-              <motion.div
-                className="h-full rounded-full bg-white/70"
-                initial={{ width: 0 }}
-                animate={{ width: `${progressPct}%` }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-              />
-            </div>
-          </div>
         </div>
       </motion.div>
+      </Tilt3D>
+
+      {/* ── Ticket Collection — collectible row of attended/upcoming tickets ── */}
+      {(ticketsData?.length ?? 0) > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="surface-card p-4 space-y-3"
+        >
+          <div className="flex items-center gap-2">
+            <Ticket className="h-4 w-4 text-muted-foreground" />
+            <p className="font-body font-semibold text-sm">Ticket Collection</p>
+            <span className="text-[10px] text-muted-foreground tabular-nums">
+              {ticketsData!.length} {ticketsData!.length === 1 ? "stub" : "stubs"}
+            </span>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 snap-x">
+            {ticketsData!.slice(0, 12).map((t: any) => {
+              const ev = t.event;
+              const checked = t.status === "checked_in";
+              return (
+                <Link
+                  key={t.id}
+                  to={`/tickets/${t.id}`}
+                  className="snap-start shrink-0 w-36 group"
+                >
+                  <div className="relative aspect-[4/5] rounded-xl overflow-hidden bg-muted border border-border group-hover:border-foreground/30 transition-colors">
+                    {ev?.cover_url ? (
+                      <img src={ev.cover_url} alt={ev.title} className="absolute inset-0 w-full h-full object-cover" />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/10" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute top-2 left-2">
+                      <span className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full font-medium ${
+                        checked
+                          ? "bg-emerald-500/90 text-white"
+                          : "bg-white/85 text-foreground"
+                      }`}>
+                        {checked ? "Attended" : "RSVP"}
+                      </span>
+                    </div>
+                    <div className="absolute inset-x-2 bottom-2 text-white">
+                      <p className="text-[11px] font-semibold leading-tight line-clamp-2">{ev?.title ?? "Event"}</p>
+                      {ev?.starts_at && (
+                        <p className="text-[9px] opacity-80 mt-0.5">
+                          {format(new Date(ev.starts_at), "MMM d")}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+
 
       {/* ── Studio activity (relocated from My Studio) ── */}
       <motion.div
