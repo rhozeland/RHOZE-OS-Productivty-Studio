@@ -608,6 +608,75 @@ const EventDetailPage = () => {
             </div>
           )}
 
+          {/* Coin drops attached to this event — host can drop, anyone can browse + back. */}
+          {(() => {
+            const hasCoins = eventCoins && eventCoins.length > 0;
+            if (!hasCoins && !isHost) return null;
+            return (
+              <div className="space-y-3 border-t border-border pt-5">
+                <div className="flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">Coin drops</p>
+                    <h2 className="font-display text-lg font-bold tracking-tight">From this event.</h2>
+                  </div>
+                  {isHost && (
+                    <Button size="sm" variant="outline" className="rounded-full gap-1.5" onClick={() => setLaunchCoinOpen(true)}>
+                      <Coins className="h-3.5 w-3.5" /> Drop a coin
+                    </Button>
+                  )}
+                </div>
+                {hasCoins ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {eventCoins!.map((c: any) => {
+                      const real = Number(c.real_sol_reserves) * 100;
+                      const goal = Number(c.graduation_sol_target) * 100;
+                      const progress = Math.min(100, goal > 0 ? (real / goal) * 100 : 0);
+                      return (
+                        <Link key={c.id} to={`/coin/${c.ticker}`} className="group block rounded-2xl border border-border bg-card hover:border-emerald-500/40 hover:-translate-y-0.5 transition-all p-4">
+                          <div className="flex items-start gap-3 mb-3">
+                            {c.image_url ? (
+                              <img src={c.image_url} alt={c.name} className="h-11 w-11 rounded-md object-cover shrink-0" />
+                            ) : (
+                              <div className="h-11 w-11 rounded-md bg-gradient-to-br from-emerald-500/30 to-fuchsia-500/30 flex items-center justify-center shrink-0">
+                                <Coins className="h-5 w-5 text-emerald-500" />
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-mono font-bold text-sm group-hover:text-emerald-500 transition-colors">${c.ticker}</span>
+                              </div>
+                              <p className="text-[11px] text-muted-foreground truncate">{c.name}</p>
+                            </div>
+                          </div>
+                          <div className="flex justify-between text-[10px] font-mono text-muted-foreground mb-1">
+                            <span>{real.toFixed(0)} $RHOZE</span>
+                            <span>{goal.toFixed(0)} goal</span>
+                          </div>
+                          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-emerald-500 to-fuchsia-500" style={{ width: `${progress}%` }} />
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-border/60 p-6 text-center text-xs text-muted-foreground">
+                    No coins dropped for this event yet.
+                  </div>
+                )}
+                <LaunchCoinDialog
+                  open={launchCoinOpen}
+                  onOpenChange={setLaunchCoinOpen}
+                  eventId={ev.id}
+                  contextLabel={ev.title}
+                  defaultName={ev.title}
+                  defaultImage={ev.cover_url ?? undefined}
+                  onLaunched={() => refetchEventCoins()}
+                />
+              </div>
+            );
+          })()}
+
         </div>
       </div>
 
