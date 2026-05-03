@@ -94,6 +94,7 @@ interface FeaturedSpaceRow {
   cover_image_url: string | null;
   location: string | null;
   city: string | null;
+  state: string | null;
   country: string | null;
 }
 
