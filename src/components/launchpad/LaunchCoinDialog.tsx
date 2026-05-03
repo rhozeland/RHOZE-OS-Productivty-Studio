@@ -10,9 +10,10 @@
  * Trade fees default to 200 bps creator + 100 bps platform per the chosen
  * launchpad config and are not editable in this first pass.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { getHoldTier, getCoinDropsPerMonth, TIERS } from "@/lib/tier-matrix";
 import {
   Dialog,
   DialogContent,
