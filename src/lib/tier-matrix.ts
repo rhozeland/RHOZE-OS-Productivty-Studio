@@ -163,3 +163,9 @@ export function getEffectiveTier(...tiers: TierId[]): TierId {
     "spark",
   );
 }
+
+/** Coin drops allowed per rolling 30 days for the given tier. `null` = unlimited. */
+export function getCoinDropsPerMonth(tier: TierId): number | null {
+  return TIERS.find((t) => t.id === tier)?.coinDropsPerMonth ?? 1;
+}
+
