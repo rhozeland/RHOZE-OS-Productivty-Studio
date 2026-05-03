@@ -94,6 +94,19 @@ const EventDetailPage = () => {
     },
   });
 
+  const { data: hostProfile } = useQuery({
+    queryKey: ["event-host-profile", ev?.host_id],
+    enabled: !!ev?.host_id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, username, avatar_url")
+        .eq("user_id", ev!.host_id)
+        .maybeSingle();
+      return data;
+    },
+  });
+
   const rsvpMutation = useMutation({
     mutationFn: async (tierId: string) => {
       if (!user) throw new Error("Sign in to RSVP");
