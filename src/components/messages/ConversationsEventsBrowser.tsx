@@ -97,17 +97,21 @@ const ConversationsEventsBrowser = ({ hideHeading = false }: { hideHeading?: boo
     <div className="space-y-8">
       {/* Header */}
       <div className="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
-            Discover events
-          </p>
-          <h2 className="font-display text-2xl md:text-3xl font-bold tracking-tight">
-            What's happening
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Browse upcoming events from creators across Rhozeland.
-          </p>
-        </div>
+        {hideHeading ? (
+          <div />
+        ) : (
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
+              Discover events
+            </p>
+            <h2 className="font-display text-2xl md:text-3xl font-bold tracking-tight">
+              What's happening
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Browse upcoming events from creators across Rhozeland.
+            </p>
+          </div>
+        )}
         {user && (
           <Link to="/spaces/events/new">
             <Button className="rounded-full gap-1.5">
