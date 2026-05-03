@@ -219,7 +219,7 @@ const EventDetailPage = () => {
   );
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <Link
           to="/discover?view=events"
@@ -238,16 +238,16 @@ const EventDetailPage = () => {
 
       <EventInviteBanner eventId={ev.id} eventTitle={ev.title} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 items-start">
-        {/* LEFT — content */}
-        <motion.div
+      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-8 items-start">
+        {/* LEFT — small cover + presenter + hosts + going (Luma style) */}
+        <motion.aside
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-6 min-w-0"
+          className="space-y-5 min-w-0 lg:sticky lg:top-20"
         >
-          {/* Cover */}
+          {/* Square cover */}
           <div className="rounded-2xl overflow-hidden border border-border bg-card">
-            <div className="aspect-[16/9] bg-muted relative overflow-hidden">
+            <div className="aspect-square bg-muted relative overflow-hidden">
               {ev.cover_url ? (
                 <img src={ev.cover_url} alt={ev.title} className="w-full h-full object-cover" />
               ) : (
@@ -255,77 +255,48 @@ const EventDetailPage = () => {
                   <CalendarDays className="h-14 w-14 text-muted-foreground/30" />
                 </div>
               )}
-              <div className="absolute top-4 left-4 rounded-full bg-background/90 backdrop-blur-sm px-3 py-1.5 text-xs font-medium capitalize">
+              <div className="absolute top-3 left-3 rounded-full bg-background/90 backdrop-blur-sm px-2.5 py-1 text-[11px] font-medium capitalize">
                 {ev.category}
               </div>
-              {ev.status !== "published" && (
-                <div className="absolute top-4 right-4 rounded-full bg-foreground text-background px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider">
-                  {ev.status}
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Title block */}
-          <div className="space-y-2">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
-              {format(start, "EEEE, MMMM d")} · {format(start, "h:mm a")}
-            </p>
-            <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight leading-[1.05]">
-              {ev.title}
-            </h1>
-          </div>
-
-          {/* Hosted By — Luma style list */}
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
-                Hosted By
-              </h2>
-              <div className="h-px flex-1 bg-border ml-3" />
-            </div>
-            <div className="space-y-1">
+          {/* Hosted By */}
+          <section className="space-y-2">
+            <h2 className="text-sm font-semibold">Hosted By</h2>
+            <div className="h-px bg-border" />
+            <div className="space-y-2 pt-1">
               {hostProfile && (
                 <Link
                   to={`/profiles/${hostProfile.user_id}`}
-                  className="flex items-center justify-between gap-3 py-2 hover:opacity-80 transition-opacity"
+                  className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Avatar className="h-9 w-9">
-                      <AvatarImage src={hostProfile.avatar_url ?? undefined} />
-                      <AvatarFallback>
-                        {(hostProfile.display_name ?? hostProfile.username ?? "?")[0]?.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <p className="text-base font-semibold truncate">
-                      {hostProfile.display_name ?? hostProfile.username ?? "Host"}
-                    </p>
-                  </div>
-                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    Host
-                  </span>
+                  <Avatar className="h-7 w-7">
+                    <AvatarImage src={hostProfile.avatar_url ?? undefined} />
+                    <AvatarFallback className="text-[10px]">
+                      {(hostProfile.display_name ?? hostProfile.username ?? "?")[0]?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="text-sm font-medium truncate">
+                    {hostProfile.display_name ?? hostProfile.username ?? "Host"}
+                  </p>
                 </Link>
               )}
               {coHosts.map((c: any) => (
                 <Link
                   key={c.user_id}
                   to={`/profiles/${c.user_id}`}
-                  className="flex items-center justify-between gap-3 py-2 hover:opacity-80 transition-opacity"
+                  className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Avatar className="h-9 w-9">
-                      <AvatarImage src={c.profile?.avatar_url ?? undefined} />
-                      <AvatarFallback>
-                        {(c.profile?.display_name ?? c.profile?.username ?? "?")[0]?.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <p className="text-base font-semibold truncate">
-                      {c.profile?.display_name ?? c.profile?.username ?? "Co-host"}
-                    </p>
-                  </div>
-                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    {c.role === "co_host" ? "Co-host" : "Manager"}
-                  </span>
+                  <Avatar className="h-7 w-7">
+                    <AvatarImage src={c.profile?.avatar_url ?? undefined} />
+                    <AvatarFallback className="text-[10px]">
+                      {(c.profile?.display_name ?? c.profile?.username ?? "?")[0]?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="text-sm font-medium truncate">
+                    {c.profile?.display_name ?? c.profile?.username ?? "Co-host"}
+                  </p>
                 </Link>
               ))}
             </div>
@@ -333,17 +304,13 @@ const EventDetailPage = () => {
 
           {/* Going */}
           {(goingData?.count ?? 0) > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
-                  {goingData!.count} Going
-                </h2>
-                <div className="h-px flex-1 bg-border ml-3" />
-              </div>
-              <div className="flex items-center gap-3">
+            <section className="space-y-2">
+              <h2 className="text-sm font-semibold">{goingData!.count} Going</h2>
+              <div className="h-px bg-border" />
+              <div className="flex items-center gap-2.5 pt-1">
                 <div className="flex -space-x-2">
-                  {goingData!.avatars.slice(0, 6).map((p: any) => (
-                    <Avatar key={p.user_id} className="h-8 w-8 border-2 border-background">
+                  {goingData!.avatars.slice(0, 5).map((p: any) => (
+                    <Avatar key={p.user_id} className="h-7 w-7 border-2 border-background">
                       <AvatarImage src={p.avatar_url ?? undefined} />
                       <AvatarFallback className="text-[10px]">
                         {(p.display_name ?? p.username ?? "?")[0]?.toUpperCase()}
@@ -351,7 +318,7 @@ const EventDetailPage = () => {
                     </Avatar>
                   ))}
                 </div>
-                <p className="text-sm text-muted-foreground truncate">
+                <p className="text-xs text-muted-foreground truncate">
                   {goingData!.avatars
                     .slice(0, 2)
                     .map((p: any) => p.display_name ?? p.username ?? "Someone")
@@ -361,44 +328,10 @@ const EventDetailPage = () => {
               </div>
             </section>
           )}
+        </motion.aside>
 
-
-          {/* About */}
-          {ev.description && (
-            <div className="space-y-2">
-              <h2 className="font-display text-lg font-bold tracking-tight">About</h2>
-              <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-wrap">
-                {ev.description}
-              </p>
-            </div>
-          )}
-
-          {/* Anchor / manifest */}
-          {ev.manifest_hash && (
-            <div className="rounded-xl bg-muted/40 border border-border p-3 flex items-center justify-between gap-3 flex-wrap">
-              <div className="flex items-center gap-2 text-xs">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                <span className="text-muted-foreground">Manifest:</span>
-                <code className="font-mono text-foreground">{shortHash(ev.manifest_hash)}</code>
-              </div>
-              {ev.solana_signature ? (
-                <a
-                  href={`https://solscan.io/tx/${ev.solana_signature}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-xs inline-flex items-center gap-1 text-primary hover:underline"
-                >
-                  Anchored on Solana <ExternalLink className="h-3 w-3" />
-                </a>
-              ) : (
-                <span className="text-[11px] text-muted-foreground">Pending anchor</span>
-              )}
-            </div>
-          )}
-        </motion.div>
-
-        {/* RIGHT — sticky registration */}
-        <aside className="lg:sticky lg:top-20 space-y-4">
+        {/* RIGHT — title, date/place, registration, about */}
+        <div className="space-y-6 min-w-0">
           {/* When / Where */}
           <div className="rounded-2xl bg-card border border-border p-5 space-y-4">
             <div className="flex items-start gap-3">
