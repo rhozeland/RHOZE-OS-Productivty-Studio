@@ -424,45 +424,6 @@ const ProjectDetailPage = () => {
           <Collaborators projectId={id!} isCollaborative={project.project_type === "collaborative"} />
         </TabsContent>
 
-        <TabsContent value="tools">
-          <ProjectTools
-            projectId={id!}
-            projectTitle={project.title}
-            smartboardDetails={smartboardDetails}
-            onLinkSmartboard={() => setLinkDialogOpen(true)}
-            onUnlinkSmartboard={(sbId: string) => unlinkSmartboard.mutate(sbId)}
-          />
-        </TabsContent>
-
-        {/* Vault — every file attached to this project. References, drafts,
-            and final deliverables all land here. The Verified IP filter
-            surfaces what's been content-hashed + anchored on Solana. */}
-        <TabsContent value="vault" className="space-y-4">
-          <Card className="border-dashed bg-muted/20">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base font-display">
-                <Archive className="h-4 w-4 text-primary" />
-                Project Vault
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground space-y-1.5">
-              <p>
-                Everything attached to this project lives here — references, drafts and final deliverables.
-              </p>
-              <p className="flex items-start gap-2 text-xs">
-                <Fingerprint className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary" />
-                Items marked <span className="font-medium text-foreground">Verified IP</span> have been content-hashed and anchored on Solana — proving authorship and timestamp without revealing the file itself.
-              </p>
-            </CardContent>
-          </Card>
-
-          <AttachedWorks
-            targetType="project"
-            targetId={id!}
-            canManage={canManageProject}
-            title="Attached to this project"
-          />
-        </TabsContent>
       </Tabs>
 
       {/* Link Smartboard Dialog */}
