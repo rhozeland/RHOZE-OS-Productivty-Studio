@@ -99,6 +99,9 @@ const AdminPage = () => {
           <TabsTrigger value="moderation" className="gap-1.5 text-xs shrink-0">
             <Eye className="h-3.5 w-3.5" /> Content
           </TabsTrigger>
+          <TabsTrigger value="flow" className="gap-1.5 text-xs shrink-0">
+            <Film className="h-3.5 w-3.5" /> Flow
+          </TabsTrigger>
           <TabsTrigger value="capital" className="gap-1.5 text-xs shrink-0">
             <Sliders className="h-3.5 w-3.5" /> Capital
           </TabsTrigger>
