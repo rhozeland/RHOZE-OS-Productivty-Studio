@@ -86,7 +86,7 @@ const LaunchCoinDialog = ({
       const { data: userResp } = await supabase.auth.getUser();
       const uid = userResp.user?.id;
       if (!uid) return;
-      const [{ data: credits }, { count }] = await Promise.all([
+      const [{ data: credits }, { count }, { data: profile }] = await Promise.all([
         supabase.from("user_credits").select("balance").eq("user_id", uid).maybeSingle(),
         supabase
           .from("coin_launches")
@@ -94,12 +94,17 @@ const LaunchCoinDialog = ({
           .eq("creator_id", uid)
           .neq("status", "cancelled")
           .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+        supabase.from("profiles").select("avatar_url").eq("id", uid).maybeSingle(),
       ]);
       const balance = Number(credits?.balance ?? 0);
       const tier = getHoldTier(balance);
       const cap = getCoinDropsPerMonth(tier);
       const tierLabel = TIERS.find((t) => t.id === tier)?.label ?? "Spark";
-      if (!cancelled) setDropInfo({ tierLabel, cap, used: count ?? 0, balance });
+      if (!cancelled) {
+        setDropInfo({ tierLabel, cap, used: count ?? 0, balance });
+        // Auto-fill coin image with profile avatar (creator can change it).
+        setImageUrl((prev) => prev || profile?.avatar_url || "");
+      }
     })();
     return () => { cancelled = true; };
   }, [open]);
