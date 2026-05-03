@@ -55,7 +55,10 @@ interface TypeMeta {
 }
 
 const TYPES: TypeMeta[] = [
-  { key: "text",     label: "Update",   icon: Flame,         inline: true,  cta: "Post Update" },
+  // "Update" no longer posts to Stream — it now opens the Notes composer
+  // (Instagram-style 60-word, 24h thought bubble shown on the user's avatar
+  // and to their buddies in DMs). The composer handles its own write path.
+  { key: "text",     label: "Update",   icon: Flame,         inline: true,  cta: "Leave a note" },
   { key: "offering", label: "Offering", icon: Briefcase,     inline: false, href: "/marketplace?compose=service", cta: "Post Offering" },
   { key: "event",    label: "Event",    icon: CalendarDays,  inline: false, href: "/spaces/events/new",           cta: "Host Event" },
   { key: "space",    label: "Space",    icon: Building2,     inline: false, href: "/studios/apply",               cta: "List Space" },
