@@ -419,6 +419,9 @@ const EventDetailPage = () => {
               </section>
             );
           })()}
+
+          {/* Gallery (images + videos) — optional, hides when empty */}
+          <EventMediaCarousel eventId={ev.id} />
         </motion.aside>
 
         {/* RIGHT — title, details, registration, about */}
