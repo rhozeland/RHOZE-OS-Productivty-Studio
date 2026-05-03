@@ -1,9 +1,8 @@
 /**
- * SpaceSpotlightCard — wide 16:9 hero layout for the Featured Space slot.
+ * SpaceSpotlightCard — compact spotlight layout sized to match artist/event.
  *
- * Photo leads (full-width 16:9, object-cover so it stays true to the
- * uploaded composition without portrait letterboxing). Info, price,
- * stats, and amenities sit beneath the hero photo.
+ * Keeps a wide 16:9 hero, but condenses the body so the overall card height
+ * sits closer to the other featured spotlight cards.
  */
 import { Link } from "react-router-dom";
 import {
@@ -108,13 +107,13 @@ const SpaceSpotlightCard = ({
       </div>
 
       {/* Body */}
-      <div className="px-4 pt-4 pb-4 space-y-3">
+      <div className="px-4 pt-3 pb-3 space-y-2.5">
         <div>
-          <h3 className="font-display text-xl md:text-2xl leading-tight text-foreground line-clamp-2">
+          <h3 className="font-display text-lg md:text-xl leading-tight text-foreground line-clamp-2">
             {title}
           </h3>
           {location && (
-            <div className="mt-1 flex items-center gap-1.5 text-sm text-foreground">
+            <div className="mt-1 flex items-center gap-1.5 text-xs text-foreground">
               <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <span className="font-medium line-clamp-1">{location}</span>
             </div>
@@ -123,7 +122,7 @@ const SpaceSpotlightCard = ({
 
         {/* Stat strip */}
         <div className="grid grid-cols-3 divide-x divide-border/40 rounded-2xl border border-border/40 bg-background/40">
-          <div className="flex flex-col items-center justify-center py-2">
+          <div className="flex flex-col items-center justify-center py-1.5">
             <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="mt-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
               Days/wk
@@ -132,7 +131,7 @@ const SpaceSpotlightCard = ({
               {available_days ?? 0}
             </span>
           </div>
-          <div className="flex flex-col items-center justify-center py-2">
+          <div className="flex flex-col items-center justify-center py-1.5">
             <Users className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="mt-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
               Capacity
@@ -141,7 +140,7 @@ const SpaceSpotlightCard = ({
               {max_guests ?? "—"}
             </span>
           </div>
-          <div className="flex flex-col items-center justify-center py-2">
+          <div className="flex flex-col items-center justify-center py-1.5">
             <Star className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="mt-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
               Rating
@@ -168,13 +167,13 @@ const SpaceSpotlightCard = ({
         )}
 
         {subtitle && (
-          <p className="text-xs leading-5 text-muted-foreground line-clamp-2">
+          <p className="text-[11px] leading-5 text-muted-foreground line-clamp-2">
             {subtitle}
           </p>
         )}
       </div>
 
-      <div className="border-t border-border/40 px-4 py-3 text-center">
+      <div className="border-t border-border/40 px-4 py-2.5 text-center">
         <Link
           to={href}
           className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-transform hover:translate-x-0.5"
