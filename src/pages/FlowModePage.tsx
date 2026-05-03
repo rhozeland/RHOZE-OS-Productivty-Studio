@@ -1253,9 +1253,6 @@ const FlowModePage = () => {
             </SheetContent>
           </Sheet>
 
-          {/* Admin-only seed utility — keeps demo content fresh without
-              dropping into Supabase. Hidden for non-admins. */}
-          {isAdmin && <AdminFlowSeedPanel />}
 
           {/* Compose entry — guests get an inline "Sign up to post" popover
               instead of the upload sheet. SignUpToPostPrompt is a no-op for
