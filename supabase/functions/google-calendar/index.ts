@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +12,25 @@ serve(async (req) => {
   }
 
   try {
+    // Require an authenticated Supabase user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: userData, error: userErr } = await supabase.auth.getUser();
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { provider_token, time_min, time_max } = await req.json();
 
     if (!provider_token) {
@@ -28,9 +48,7 @@ serve(async (req) => {
     if (time_max) calendarUrl.searchParams.set("timeMax", time_max);
 
     const response = await fetch(calendarUrl.toString(), {
-      headers: {
-        Authorization: `Bearer ${provider_token}`,
-      },
+      headers: { Authorization: `Bearer ${provider_token}` },
     });
 
     if (!response.ok) {
