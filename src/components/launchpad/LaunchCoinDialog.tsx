@@ -473,21 +473,61 @@ const LaunchCoinDialog = ({
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>Cancel</Button>
-          <Button
-            onClick={submit}
-            disabled={
-              submitting ||
-              (dropInfo !== null &&
-                dropInfo.cap !== null &&
-                dropInfo.used >= dropInfo.cap) ||
-              (dropInfo !== null &&
-                dropInfo.balance < COIN_LAUNCH_FEE_RHOZE + Math.max(0, Number(initialBuy) || 0))
-            }
-          >
-            {submitting && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}
-            Launch coin
-          </Button>
+          {step === "form" ? (
+            <>
+              <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>Cancel</Button>
+              <Button
+                onClick={() => {
+                  // Run the same validations as submit before showing the preview.
+                  if (ticker.trim().length < 2) {
+                    toast({ title: "Ticker too short", description: "Pick a 2-10 character ticker.", variant: "destructive" });
+                    return;
+                  }
+                  if (!name.trim()) {
+                    toast({ title: "Name required", variant: "destructive" });
+                    return;
+                  }
+                  if (!imageUrl.trim()) {
+                    toast({ title: "Coin image required", description: "Use your profile picture or upload one.", variant: "destructive" });
+                    return;
+                  }
+                  const buyNum = Math.max(0, Number(initialBuy) || 0);
+                  if (buyNum < 1) {
+                    toast({
+                      title: "Kickstart your coin",
+                      description: "Buy at least 1 $RHOZE worth to seed your own supply.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  if (dropInfo && dropInfo.balance < COIN_LAUNCH_FEE_RHOZE + buyNum) {
+                    toast({
+                      title: "Not enough $RHOZE",
+                      description: `Launch fee + initial buy = ${COIN_LAUNCH_FEE_RHOZE + buyNum} $RHOZE. You have ${Math.floor(dropInfo.balance)}.`,
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  setStep("confirm");
+                }}
+                disabled={
+                  (dropInfo !== null && dropInfo.cap !== null && dropInfo.used >= dropInfo.cap) ||
+                  (dropInfo !== null &&
+                    dropInfo.balance < COIN_LAUNCH_FEE_RHOZE + Math.max(0, Number(initialBuy) || 0))
+                }
+              >
+                Review launch
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" onClick={() => setStep("form")} disabled={submitting}>Back</Button>
+              <Button onClick={submit} disabled={submitting}>
+                {submitting && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}
+                Confirm & launch
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
