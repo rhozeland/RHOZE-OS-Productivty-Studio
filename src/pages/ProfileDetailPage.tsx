@@ -833,22 +833,11 @@ const ProfileDetailPage = () => {
             )}
 
             {/* Empty fallback if nothing surfaces */}
-            {isOwnProfile && !hasSellerContent && !profileCoin && !upcomingEvents?.length && (
+            {isOwnProfile && !hasSellerContent && !upcomingEvents?.length && (
               <div className="rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
-                Add an offering, launch your coin, or post an event so people have something to back.
+                Add an offering or post an event so people have something to back.
               </div>
             )}
-          </TabsContent>
-
-          {/* ─── Coin tab ─── */}
-          <TabsContent value="coin" className="mt-5">
-            <ProfileCoinTab
-              creatorId={id!}
-              isOwnProfile={isOwnProfile}
-              defaultName={p.display_name || p.username}
-              defaultImage={p.avatar_url}
-              memberSince={p.created_at}
-            />
           </TabsContent>
 
           {/* ─── Works (Posts) tab ─── */}
