@@ -89,7 +89,7 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
 
   const personalized = useMemo(() => {
     if (!activity) return null;
-    const balance = tokenInfo?.balance ?? 0;
+    const balance = Number(credits?.balance ?? 0);
 
     const LEGACY_MAP: Record<string, TierId> = { bronze: "spark", gold: "bloom", diamond: "glow", prism: "play" };
     const subTier: TierId = credits?.tier ? ((LEGACY_MAP[credits.tier] || credits.tier) as TierId) : "spark";
