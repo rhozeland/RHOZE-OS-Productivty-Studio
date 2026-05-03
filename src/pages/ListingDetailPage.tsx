@@ -735,14 +735,9 @@ const ListingDetailPage = () => {
                         variant="outline"
                         size="sm"
                         className="rounded-full gap-1.5"
-                        onClick={() => toggleActive.mutate(!listing.is_active)}
-                        disabled={toggleActive.isPending}
+                        onClick={() => setEditOpen(true)}
                       >
-                        {listing.is_active ? (
-                          <><EyeOff className="h-3.5 w-3.5" /> Hide listing</>
-                        ) : (
-                          <><Eye className="h-3.5 w-3.5" /> Make visible</>
-                        )}
+                        <Pencil className="h-3.5 w-3.5" /> Edit
                       </Button>
                       <Button
                         variant="outline"
@@ -758,13 +753,10 @@ const ListingDetailPage = () => {
                         <Trash2 className="h-3.5 w-3.5" /> Delete
                       </Button>
                     </div>
-                    {!listing.is_active && (
-                      <p className="text-[11px] text-muted-foreground">
-                        Hidden from the Hub. Only you can see it.
-                      </p>
-                    )}
+                    <p className="text-[11px] text-muted-foreground">
+                      Inquiries from interested people land in your Conversations › Inquiries tab.
+                    </p>
                   </div>
-                  
                 </div>
               )}
 
