@@ -1,142 +1,75 @@
 /**
- * HomePage — Public front door for guests.
- * ─────────────────────────────────────────────────────────────────────────
- * Goal: convert "I don't get what this is" + "I don't want yet another
- * crypto app" into "oh, this is a real creator network — let me try it."
+ * HomePage — Public front door for guests (v8.7).
  *
- * Strategy:
- *  1. Lead with concrete value ("book studios, hire talent, ship projects"),
- *     not tokens. $RHOZE is mentioned once, late, framed as a perk.
- *  2. Show LIVE platform activity (real Flow posts, real creator count) so
- *     the page never feels like marketing — it feels like a window into a
- *     working community.
- *  3. Two equal-weight CTAs: "Explore as guest" (no commitment) and
- *     "Sign up free" (one-click Google).
- *  4. Authed users skip this entirely — App.tsx routes them to /dashboard.
+ * One-pager. No inbox, no projects, no marketplace dump. Just the pitch:
+ *   1. Hero — "Own a piece of the artists you love." (v7 framing)
+ *   2. Live globe — featured artists / events / spaces orbiting the world
+ *   3. Creator Pass preview — 3D-tilt mock + tier ladder (Spark→Play)
+ *   4. How rewards work — 3 simple steps, no jargon
+ *   5. Final sign-up CTA
+ *
+ * Authed users skip this entirely (App.tsx routes them to /discover).
  */
-import { useRef } from "react";
+import { Suspense, lazy, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   ArrowRight,
-  Building2,
-  Users,
-  FolderKanban,
-  Sparkles,
   Eye,
-  Zap,
-  CheckCircle2,
-  ShoppingBag,
+  Loader2,
+  Sparkles,
+  ShieldCheck,
+  Coins,
+  TrendingUp,
 } from "lucide-react";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
+import Tilt3D from "@/components/ui/Tilt3D";
+import { TIERS } from "@/lib/tier-matrix";
+import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
+import type { RegionMarket } from "@/lib/regions";
 
-type LiveStats = { creators: number; studios: number };
-type LiveStudio = {
-  id: string;
-  name: string | null;
-  cover_image_url: string | null;
-  city: string | null;
-};
-type LiveCreator = {
-  user_id: string;
-  display_name: string | null;
-  avatar_url: string | null;
-  username: string | null;
-};
+const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
 
-const VALUE_PROPS = [
+const STEPS = [
   {
-    icon: Building2,
-    title: "Find a space",
-    desc: "Vetted physical studios + live digital rooms — book or jump in.",
-    cta: "Browse Spaces",
-    to: "/spaces",
+    icon: ShieldCheck,
+    title: "Verify",
+    desc: "Artists prove identity + IP. Every drop is content-hashed and anchored on Solana.",
   },
   {
-    icon: Users,
-    title: "Find a person",
-    desc: "Browse the directory, submit a brief, or have us broker the intro.",
-    cta: "Browse People",
-    to: "/people",
+    icon: Coins,
+    title: "Engage",
+    desc: "Discover spaces, events, and creators. Buy access, support, and collect.",
   },
   {
-    icon: FolderKanban,
-    title: "Open a project",
-    desc: "Roadmaps, milestones, and budgets — collaborate end-to-end.",
-    cta: "Start a Project",
-    to: "/projects",
+    icon: TrendingUp,
+    title: "Earn $RHOZE",
+    desc: "Real activity earns credits. Hold them to unlock tier perks — or cash out.",
   },
-];
-
-const TRUST_BULLETS = [
-  "Free to join — no credit card",
-  "One-click Google sign in",
-  "No spam, ever",
 ];
 
 const HomePage = () => {
-  const showcaseRef = useRef<HTMLDivElement>(null);
-  const showcaseInView = useInView(showcaseRef, { once: true, amount: 0.2 });
+  const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
+  const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
 
-  // Live platform stats — drives the "real, active community" feeling.
-  const { data: stats } = useQuery<LiveStats>({
-    queryKey: ["home-live-stats"],
+  // Live creators count — small trust signal under the hero.
+  const { data: creatorCount = 0 } = useQuery({
+    queryKey: ["home-creator-count"],
     queryFn: async () => {
-      const [c, s] = await Promise.all([
-        supabase.from("profiles_public").select("*", { count: "exact", head: true }),
-        supabase
-          .from("studios")
-          .select("*", { count: "exact", head: true })
-          .eq("is_active", true)
-          .eq("status", "approved"),
-      ]);
-      return {
-        creators: c.count ?? 0,
-        studios: s.count ?? 0,
-      };
-    },
-    staleTime: 60_000,
-  });
-
-  // Featured studios — proof the platform is alive.
-  const { data: studios } = useQuery<LiveStudio[]>({
-    queryKey: ["home-live-studios"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("studios")
-        .select("id, name, cover_image_url, city")
-        .eq("is_active", true)
-        .eq("status", "approved")
-        .order("rating_avg", { ascending: false })
-        .limit(6);
-      return (data ?? []) as LiveStudio[];
-    },
-    staleTime: 60_000,
-  });
-
-  // Featured creators
-  const { data: creators } = useQuery<LiveCreator[]>({
-    queryKey: ["home-live-creators"],
-    queryFn: async () => {
-      const { data } = await supabase
+      const { count } = await supabase
         .from("profiles_public")
-        .select("user_id, display_name, avatar_url, username")
-        .not("display_name", "is", null)
-        .limit(8);
-      return (data ?? []) as LiveCreator[];
+        .select("*", { count: "exact", head: true });
+      return count ?? 0;
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
   });
-
-  const creatorCount = stats?.creators ?? 0;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* ─── Nav ───────────────────────────────────────────────────────── */}
+      {/* ─── Nav ────────────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex h-14 items-center justify-between px-4 sm:px-6 max-w-6xl">
           <Link to="/" className="flex items-center gap-2">
@@ -146,11 +79,6 @@ const HomePage = () => {
             </span>
           </Link>
           <div className="flex items-center gap-2">
-            <Link to="/explore/studios">
-              <Button size="sm" variant="ghost" className="text-xs">
-                Explore
-              </Button>
-            </Link>
             <Link to="/auth">
               <Button size="sm" variant="ghost" className="text-xs">
                 Sign in
@@ -165,9 +93,8 @@ const HomePage = () => {
         </div>
       </nav>
 
-      {/* ─── Hero ──────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden px-4 sm:px-6 pt-12 sm:pt-20 pb-16">
-        {/* Aurora background */}
+      {/* ─── Hero ───────────────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden px-4 sm:px-6 pt-14 sm:pt-20 pb-10">
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <motion.div
             initial={{ opacity: 0 }}
@@ -179,9 +106,9 @@ const HomePage = () => {
               className="absolute top-[-30%] left-[-20%] w-[140%] h-[160%]"
               style={{
                 background: `
-                  radial-gradient(ellipse 50% 40% at 20% 50%, hsl(280 80% 70% / 0.22) 0%, transparent 70%),
-                  radial-gradient(ellipse 40% 50% at 80% 30%, hsl(320 80% 60% / 0.18) 0%, transparent 70%),
-                  radial-gradient(ellipse 45% 35% at 60% 80%, hsl(30 90% 60% / 0.15) 0%, transparent 70%)
+                  radial-gradient(ellipse 50% 40% at 20% 50%, hsl(330 81% 60% / 0.22) 0%, transparent 70%),
+                  radial-gradient(ellipse 40% 50% at 80% 30%, hsl(292 84% 61% / 0.18) 0%, transparent 70%),
+                  radial-gradient(ellipse 45% 35% at 60% 80%, hsl(38 92% 50% / 0.16) 0%, transparent 70%)
                 `,
                 animation: "aurora-drift 20s ease-in-out infinite alternate",
               }}
@@ -189,8 +116,7 @@ const HomePage = () => {
           </motion.div>
         </div>
 
-        <div className="relative z-10 max-w-5xl mx-auto text-center">
-          {/* Live activity badge — REAL number, builds trust */}
+        <div className="relative z-10 max-w-4xl mx-auto text-center">
           {creatorCount > 0 && (
             <motion.div
               initial={{ opacity: 0, y: -8 }}
@@ -202,8 +128,7 @@ const HomePage = () => {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
               <span className="text-xs font-medium text-foreground">
-                {creatorCount} {creatorCount === 1 ? "creator" : "creators"} building
-                here right now
+                {creatorCount.toLocaleString()} creators building on Rhozeland
               </span>
             </motion.div>
           )}
@@ -212,12 +137,21 @@ const HomePage = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="font-display text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.05] text-foreground mb-5 max-w-3xl mx-auto"
+            className="font-display text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.05] text-foreground mb-5"
           >
-            The creative network
+            Own a piece of the
             <br />
-            <span className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-              that pays you back.
+            <span
+              className="inline-block"
+              style={{
+                backgroundImage:
+                  "linear-gradient(to right, hsl(330 81% 60%), hsl(292 84% 61%), hsl(38 92% 50%))",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              artists you love.
             </span>
           </motion.h1>
 
@@ -227,23 +161,23 @@ const HomePage = () => {
             transition={{ duration: 0.6, delay: 0.15 }}
             className="text-base sm:text-lg text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed"
           >
-            Book studios. Hire creators. Ship projects. Get rewarded for every
-            contribution — no crypto knowledge required.
+            Verified artists. Provable work. Real upside. A creative network
+            where every contribution is on-chain — and every fan can be an early
+            backer.
           </motion.p>
 
-          {/* Dual primary CTAs */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex items-center gap-3 flex-wrap justify-center mb-4"
+            className="flex items-center gap-3 flex-wrap justify-center"
           >
             <Link to="/auth">
               <Button className="rounded-full h-12 px-6 gap-2 text-sm font-semibold">
                 Sign up free <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <Link to="/explore/studios">
+            <Link to="/discover">
               <Button
                 variant="outline"
                 className="rounded-full h-12 px-6 gap-2 text-sm font-medium"
@@ -252,242 +186,172 @@ const HomePage = () => {
               </Button>
             </Link>
           </motion.div>
-
-          {/* Quick browse links — let guests pick exactly what to explore.
-              Each route is fully public; auth only kicks in on actions. */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="flex items-center gap-2 flex-wrap justify-center mb-5 text-xs"
-          >
-            <span className="text-muted-foreground/60">Browse:</span>
-            <Link to="/spaces" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
-              Spaces
-            </Link>
-            <span className="text-muted-foreground/30">·</span>
-            <Link to="/people" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
-              People
-            </Link>
-            <span className="text-muted-foreground/30">·</span>
-            <Link to="/marketplace" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
-              Marketplace
-            </Link>
-          </motion.div>
-
-          {/* Trust signals — directly addresses "yet another app" + privacy */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="flex items-center gap-4 flex-wrap justify-center text-xs text-muted-foreground"
-          >
-            {TRUST_BULLETS.map((t) => (
-              <div key={t} className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                <span>{t}</span>
-              </div>
-            ))}
-          </motion.div>
         </div>
       </section>
 
-      {/* ─── Featured studios — real spaces guests can browse ──────────── */}
-      {studios && studios.length > 0 && (
-        <section ref={showcaseRef} className="border-t border-border/60 px-4 sm:px-6 py-12 bg-card/30">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-end justify-between mb-6 flex-wrap gap-3">
-              <div>
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-1.5">
-                  Featured studios
-                </p>
-                <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground">
-                  Spaces you can book today
-                </h2>
-              </div>
-              <Link to="/explore/studios">
-                <Button variant="ghost" size="sm" className="gap-1.5 text-xs">
-                  See all <ArrowRight className="h-3 w-3" />
-                </Button>
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-              {studios.slice(0, 6).map((s, i) => (
-                <motion.div
-                  key={s.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={showcaseInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ delay: i * 0.06 }}
-                >
-                  <Link
-                    to={`/explore/studios/${s.id}`}
-                    className="group block aspect-[4/3] rounded-xl overflow-hidden border border-border/50 bg-muted relative"
-                  >
-                    {s.cover_image_url ? (
-                      <img
-                        src={s.cover_image_url}
-                        alt={s.name ?? "Studio"}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/20">
-                        <Building2 className="h-8 w-8 text-muted-foreground" />
-                      </div>
-                    )}
-                    <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent">
-                      <p className="text-sm font-semibold text-white truncate">
-                        {s.name ?? "Studio"}
-                      </p>
-                      {s.city && (
-                        <p className="text-[10px] text-white/70 truncate">{s.city}</p>
-                      )}
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ─── Featured creators ─────────────────────────────────────────── */}
-      {creators && creators.length > 0 && (
-        <section className="border-t border-border/60 px-4 sm:px-6 py-12">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-end justify-between mb-6 flex-wrap gap-3">
-              <div>
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-1.5">
-                  Featured creators
-                </p>
-                <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground">
-                  People building here
-                </h2>
-              </div>
-              <Link to="/explore/creators">
-                <Button variant="ghost" size="sm" className="gap-1.5 text-xs">
-                  See all <ArrowRight className="h-3 w-3" />
-                </Button>
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {creators.slice(0, 8).map((c, i) => (
-                <motion.div
-                  key={c.user_id}
-                  initial={{ opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.05 }}
-                  className="rounded-xl border border-border/50 bg-card/60 p-4 flex flex-col items-center text-center hover:border-border transition-all"
-                >
-                  <Avatar className="h-14 w-14 border border-border/40 mb-3">
-                    <AvatarImage src={c.avatar_url ?? undefined} />
-                    <AvatarFallback className="text-sm">
-                      {c.display_name?.[0]?.toUpperCase() ?? "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <p className="text-sm font-semibold text-foreground truncate w-full">
-                    {c.display_name ?? "Creator"}
-                  </p>
-                  {c.username && (
-                    <p className="text-[11px] text-muted-foreground truncate w-full">
-                      @{c.username}
-                    </p>
-                  )}
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ─── What you can do — concrete value, no jargon ───────────────── */}
-      <section className="px-4 sm:px-6 py-16 border-t border-border/60">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-2">
-              What it actually is
+      {/* ─── Live globe — featured artists / events / spaces ────────────── */}
+      <section className="relative px-4 sm:px-6 pb-12">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-5">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-1.5">
+              Featured worldwide
             </p>
             <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground">
-              Two networks. One creative space.
+              A living map of creative work.
             </h2>
-            <p className="text-sm text-muted-foreground mt-3 max-w-lg mx-auto">
-              Not a feed. Not a token. A place to make and ship work with other
-              people — and get paid for it.
-            </p>
+          </div>
+          <Suspense
+            fallback={
+              <div className="flex h-[420px] w-full items-center justify-center rounded-[2rem] border border-border/60 bg-card/40">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            }
+          >
+            <DiscoverGlobe
+              marketFilter={marketFilter}
+              onSelectMarket={setMarketFilter}
+              featuredSlides={featuredSlides}
+              height={420}
+            />
+          </Suspense>
+        </div>
+      </section>
+
+      {/* ─── Creator Pass preview — 3D tilt + tier ladder ───────────────── */}
+      <section className="px-4 sm:px-6 py-16 border-t border-border/60 bg-card/30">
+        <div className="max-w-5xl mx-auto grid lg:grid-cols-[1fr_1.1fr] gap-10 lg:gap-14 items-center">
+          {/* Left — tilt card */}
+          <div className="flex justify-center">
+            <Tilt3D className="w-full max-w-[320px] aspect-[1.586/1] rounded-[22px] overflow-hidden">
+              <div
+                className="h-full w-full p-5 flex flex-col justify-between text-white"
+                style={{
+                  background:
+                    "linear-gradient(135deg, hsl(330 81% 60%), hsl(292 84% 61%) 50%, hsl(38 92% 50%))",
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <img src={rhozelandLogo} alt="" className="h-5 w-5" />
+                    <span className="font-body text-xs font-bold tracking-wider uppercase">
+                      Creator Pass
+                    </span>
+                  </div>
+                  <Sparkles className="h-4 w-4 opacity-90" />
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-[10px] uppercase tracking-[0.25em] opacity-80">
+                    Tier
+                  </p>
+                  <p className="font-display text-3xl font-bold tracking-tight">
+                    Bloom
+                  </p>
+                  <p className="text-[11px] opacity-85">
+                    1.25× rewards · 5% off Spaces · 2 IP anchors / mo
+                  </p>
+                </div>
+                <div className="flex items-center justify-between text-[10px] opacity-80">
+                  <span>0001 · RHOZE</span>
+                  <span>Earned, never bought</span>
+                </div>
+              </div>
+            </Tilt3D>
           </div>
 
+          {/* Right — tier ladder */}
+          <div className="space-y-5">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-1.5">
+                The Creator Pass
+              </p>
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground">
+                Hold $RHOZE. Unlock the network.
+              </h2>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                No subscriptions. Tiers are <em>earned</em> by holding $RHOZE —
+                the credits you collect from real activity on the platform.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              {TIERS.map((t) => (
+                <div
+                  key={t.id}
+                  className="relative overflow-hidden rounded-2xl border border-border/60 bg-background/60 p-3"
+                >
+                  <div
+                    className="absolute inset-x-0 top-0 h-0.5"
+                    style={{ background: t.gradient }}
+                  />
+                  <div className="flex items-baseline justify-between mb-1">
+                    <p className="text-sm font-bold text-foreground">{t.label}</p>
+                    <p className="text-[10px] text-muted-foreground tabular-nums">
+                      {t.holdLabel}
+                    </p>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-snug">
+                    {t.benefits[0]}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <Link to="/credits?tab=how" className="inline-flex items-center gap-1 text-xs text-foreground hover:underline underline-offset-4">
+              How rewards work <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── How it works — 3 simple steps ──────────────────────────────── */}
+      <section className="px-4 sm:px-6 py-16 border-t border-border/60">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-1.5">
+              How it works
+            </p>
+            <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground">
+              Three steps. No crypto knowledge required.
+            </h2>
+          </div>
           <div className="grid sm:grid-cols-3 gap-4">
-            {VALUE_PROPS.map((p, i) => (
+            {STEPS.map((s, i) => (
               <motion.div
-                key={p.title}
+                key={s.title}
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
+                className="rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-5"
               >
-                <Link
-                  to={p.to}
-                  className="group block h-full rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-5 hover:border-foreground/30 hover:shadow-lg transition-all"
-                >
-                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <p.icon className="h-5 w-5 text-primary" />
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <s.icon className="h-4 w-4 text-primary" />
                   </div>
-                  <h3 className="text-sm font-bold text-foreground mb-1.5">
-                    {p.title}
-                  </h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed mb-3">
-                    {p.desc}
-                  </p>
-                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-foreground group-hover:gap-2 transition-all">
-                    {p.cta} <ArrowRight className="h-3 w-3" />
+                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Step {i + 1}
                   </span>
-                </Link>
+                </div>
+                <h3 className="text-sm font-bold text-foreground mb-1.5">
+                  {s.title}
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {s.desc}
+                </p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ─── $RHOZE explained — last, briefly, no jargon ───────────────── */}
-      <section className="px-4 sm:px-6 py-16 border-t border-border/60 bg-card/30">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-amber-500/10 mb-4">
-            <Zap className="h-6 w-6 text-amber-500" />
-          </div>
-          <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-3">
-            Get paid for showing up.
-          </h2>
-          <p className="text-sm text-muted-foreground leading-relaxed max-w-xl mx-auto mb-6">
-            Every booking, sale, and project earns <strong className="text-foreground">$RHOZE</strong> — credits you can
-            spend on studio time, creator services, or cash out. Think of it as
-            airline miles for creative work. <span className="text-muted-foreground/70">No wallet to set up. No fees to start.</span>
-          </p>
-          <div className="flex items-center gap-2 flex-wrap justify-center text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background border border-border/60">
-              <Building2 className="h-3 w-3" /> Book a studio → earn
-            </span>
-            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background border border-border/60">
-              <ShoppingBag className="h-3 w-3" /> Sell your work → earn
-            </span>
-            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background border border-border/60">
-              <FolderKanban className="h-3 w-3" /> Ship a project → earn
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Final CTA ─────────────────────────────────────────────────── */}
+      {/* ─── Final CTA ──────────────────────────────────────────────────── */}
       <section className="px-4 sm:px-6 py-20 border-t border-border/60">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            Try it. It's free.
+            Build, prove, and own — together.
           </h2>
           <p className="text-sm text-muted-foreground mb-7 max-w-md mx-auto">
-            Sign up takes 10 seconds with Google. Or look around without an
-            account first — we'll be here.
+            Sign up takes 10 seconds. No card. No wallet. Just the network.
           </p>
           <div className="flex items-center gap-3 flex-wrap justify-center">
             <Link to="/auth">
@@ -495,7 +359,7 @@ const HomePage = () => {
                 Sign up free <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <Link to="/explore/studios">
+            <Link to="/discover">
               <Button
                 variant="outline"
                 className="rounded-full h-12 px-6 gap-2 text-sm"
@@ -517,11 +381,11 @@ const HomePage = () => {
             <Link to="/auth" className="hover:text-foreground transition-colors">
               Sign in
             </Link>
-            <Link to="/explore/studios" className="hover:text-foreground transition-colors">
-              Explore
+            <Link to="/discover" className="hover:text-foreground transition-colors">
+              Discover
             </Link>
-            <Link to="/infrastructure" className="hover:text-foreground transition-colors">
-              Infrastructure
+            <Link to="/credits?tab=how" className="hover:text-foreground transition-colors">
+              How rewards work
             </Link>
           </div>
         </div>
