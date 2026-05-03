@@ -197,21 +197,26 @@ const StudioDetailPage = () => {
             </div>
           </div>
 
-          {/* Hosted by */}
+          {/* Hosted by — links to host profile */}
           {ownerProfile && (
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+            <Link
+              to={`/profiles/${ownerProfile.user_id}`}
+              className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border hover:bg-muted/40 transition-colors"
+            >
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm overflow-hidden shrink-0">
                 {ownerProfile.avatar_url ? (
                   <img src={ownerProfile.avatar_url} className="h-10 w-10 rounded-full object-cover" />
                 ) : (
                   ownerProfile.display_name?.[0]?.toUpperCase() ?? "?"
                 )}
               </div>
-              <div>
-                <p className="text-sm font-medium text-foreground">Hosted by {ownerProfile.display_name}</p>
-                <p className="text-xs text-muted-foreground">Studio Owner</p>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  Hosted by {ownerProfile.display_name ?? ownerProfile.username ?? "Creator"}
+                </p>
+                <p className="text-xs text-muted-foreground">View profile →</p>
               </div>
-            </div>
+            </Link>
           )}
 
           {/* Description */}
