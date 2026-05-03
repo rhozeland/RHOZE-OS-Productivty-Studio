@@ -44,6 +44,7 @@ import {
   Eye,
   EyeOff,
   Trash2,
+  Pencil,
   Shield,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -52,6 +53,7 @@ import { format } from "date-fns";
 import AudioPreview from "@/components/marketplace/AudioPreview";
 import StarRating from "@/components/marketplace/StarRating";
 import QuickMessageDialog from "@/components/messages/QuickMessageDialog";
+import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 const CATEGORIES: Record<string, { label: string; icon: any; color: string }> = {
@@ -150,6 +152,7 @@ const ListingDetailPage = () => {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [dmOpen, setDmOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const { isAdmin } = useAdminCheck();
 
   const toggleActive = useMutation({
@@ -343,6 +346,29 @@ const ListingDetailPage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
+  // One-click "I'm interested" — sends a minimal pre-filled note so the
+  // poster knows who to reach out to without forcing a pitch upfront.
+  const expressInterest = useMutation({
+    mutationFn: async () => {
+      if (!user || !listing) throw new Error("Missing data");
+      const note =
+        listing.listing_type === "project_request"
+          ? "I'm interested in this project — happy to share more if it looks like a fit."
+          : listing.listing_type === "collaboration"
+            ? "I'd love to collaborate on this — open to chatting more."
+            : "I'm interested in this — open to chatting more.";
+      const { error } = await supabase.from("listing_inquiries").insert({
+        listing_id: listing.id,
+        sender_id: user.id,
+        receiver_id: listing.user_id,
+        message: note,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => toast.success("Interest sent — they'll see your profile and can reach out."),
+    onError: (e: any) => toast.error(e.message),
+  });
+
   if (!listing) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -367,12 +393,23 @@ const ListingDetailPage = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Back */}
-      <Link to="/marketplace">
-        <Button variant="ghost" size="sm" className="gap-1 rounded-full">
-          <ArrowLeft className="h-4 w-4" /> Back to Marketplace
-        </Button>
-      </Link>
+      {/* Back — owners go to their Conversations › Listings; visitors go back in history */}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="gap-1 rounded-full"
+        onClick={() => {
+          if (isOwner) {
+            navigate("/messages?tab=listings");
+          } else if (window.history.length > 1) {
+            navigate(-1);
+          } else {
+            navigate("/discover");
+          }
+        }}
+      >
+        <ArrowLeft className="h-4 w-4" /> {isOwner ? "Back to Conversations" : "Back"}
+      </Button>
 
       <div className="grid gap-6 lg:grid-cols-5">
         {/* Left: Media */}
@@ -664,25 +701,38 @@ const ListingDetailPage = () => {
                     </Button>
                   )}
 
-                  {/* Primary type-specific CTA (for non-instant-buy listings) */}
+                  {/* Primary CTA — one-click "I'm interested". Pitch is a
+                      lighter secondary action so it doesn't feel like
+                      homework just to raise your hand. */}
                   {!canBuyInstantly && (
-                    <Button
-                      className="w-full rounded-full h-11"
-                      onClick={() => setInquiryOpen(true)}
-                      style={{
-                        background: typeMeta.accent,
-                        color: "white",
-                      }}
-                    >
-                      {listing.listing_type === "project_request" ? (
-                        <Send className="mr-2 h-4 w-4" />
-                      ) : listing.listing_type === "collaboration" ? (
-                        <HandshakeIcon className="mr-2 h-4 w-4" />
-                      ) : (
-                        <Zap className="mr-2 h-4 w-4" />
-                      )}
-                      {typeMeta.primaryCta}
-                    </Button>
+                    <>
+                      <Button
+                        className="w-full rounded-full h-11"
+                        onClick={() => expressInterest.mutate()}
+                        disabled={expressInterest.isPending}
+                        style={{ background: typeMeta.accent, color: "white" }}
+                      >
+                        {expressInterest.isPending ? (
+                          <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending…</>
+                        ) : (
+                          <><Zap className="mr-2 h-4 w-4" />I'm interested</>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full rounded-full"
+                        onClick={() => setInquiryOpen(true)}
+                      >
+                        {listing.listing_type === "project_request" ? (
+                          <Send className="mr-2 h-4 w-4" />
+                        ) : listing.listing_type === "collaboration" ? (
+                          <HandshakeIcon className="mr-2 h-4 w-4" />
+                        ) : (
+                          <Send className="mr-2 h-4 w-4" />
+                        )}
+                        Write a detailed pitch
+                      </Button>
+                    </>
                   )}
 
                   {/* Secondary inquiry button for digital products */}
@@ -721,14 +771,9 @@ const ListingDetailPage = () => {
                         variant="outline"
                         size="sm"
                         className="rounded-full gap-1.5"
-                        onClick={() => toggleActive.mutate(!listing.is_active)}
-                        disabled={toggleActive.isPending}
+                        onClick={() => setEditOpen(true)}
                       >
-                        {listing.is_active ? (
-                          <><EyeOff className="h-3.5 w-3.5" /> Hide listing</>
-                        ) : (
-                          <><Eye className="h-3.5 w-3.5" /> Make visible</>
-                        )}
+                        <Pencil className="h-3.5 w-3.5" /> Edit
                       </Button>
                       <Button
                         variant="outline"
@@ -744,13 +789,10 @@ const ListingDetailPage = () => {
                         <Trash2 className="h-3.5 w-3.5" /> Delete
                       </Button>
                     </div>
-                    {!listing.is_active && (
-                      <p className="text-[11px] text-muted-foreground">
-                        Hidden from the Hub. Only you can see it.
-                      </p>
-                    )}
+                    <p className="text-[11px] text-muted-foreground">
+                      Inquiries from interested people land in your Conversations › Inquiries tab.
+                    </p>
                   </div>
-                  
                 </div>
               )}
 
@@ -875,6 +917,24 @@ const ListingDetailPage = () => {
           recipientName={sellerProfile?.display_name || "Creator"}
           recipientAvatar={sellerProfile?.avatar_url}
           prefillMessage={`Hi! I'm interested in your listing "${listing.title}". Could we discuss the details?`}
+        />
+      )}
+
+      {isOwner && (
+        <CreateListingDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          editListing={{
+            id: listing.id,
+            title: listing.title,
+            description: listing.description,
+            listing_type: listing.listing_type,
+            category: listing.category,
+            contact_info: (listing as any).contact_info ?? null,
+            delivery_days: listing.delivery_days,
+            revisions: listing.revisions,
+            tags: listing.tags,
+          }}
         />
       )}
     </div>

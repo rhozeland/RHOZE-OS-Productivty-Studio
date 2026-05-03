@@ -6,16 +6,14 @@
  */
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
-import { Plus, Store, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
+import { Plus, Store, ArrowRight, Loader2 } from "lucide-react";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 
 const ListingsTab = ({ userId }: { userId: string }) => {
-  const qc = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
 
   const { data: listings, isLoading } = useQuery({
@@ -29,21 +27,6 @@ const ListingsTab = ({ userId }: { userId: string }) => {
       if (error) throw error;
       return data ?? [];
     },
-  });
-
-  const toggleActive = useMutation({
-    mutationFn: async ({ id, next }: { id: string; next: boolean }) => {
-      const { error } = await supabase
-        .from("marketplace_listings")
-        .update({ is_active: next })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: (_, vars) => {
-      qc.invalidateQueries({ queryKey: ["my-listings", userId] });
-      toast.success(vars.next ? "Listing live" : "Listing hidden");
-    },
-    onError: (e: any) => toast.error(e.message),
   });
 
   return (
@@ -110,17 +93,8 @@ const ListingsTab = ({ userId }: { userId: string }) => {
                 </p>
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 rounded-full"
-                  onClick={() => toggleActive.mutate({ id: l.id, next: !l.is_active })}
-                  title={l.is_active ? "Hide" : "Show"}
-                >
-                  {l.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                </Button>
                 <Link to={`/marketplace/${l.id}`}>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" title="Open">
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
