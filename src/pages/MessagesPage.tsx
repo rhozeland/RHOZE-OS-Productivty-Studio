@@ -582,14 +582,21 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                     <Button variant="ghost" size="icon" className="md:hidden shrink-0" onClick={() => setSelectedUser(null)}>
                       <ArrowLeft className="h-5 w-5" />
                     </Button>
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-                      {selectedUser.avatar_url ? (
-                        <img src={selectedUser.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
-                      ) : (
-                        <User className="h-4 w-4 text-primary" />
-                      )}
-                    </div>
-                    <span className="font-display font-semibold text-foreground">{selectedUser.display_name || "Creator"}</span>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/profiles/${selectedUser.user_id}`)}
+                      className="flex items-center gap-3 group min-w-0 hover:opacity-80 transition-opacity"
+                      title="View profile"
+                    >
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 shrink-0">
+                        {selectedUser.avatar_url ? (
+                          <img src={selectedUser.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
+                        ) : (
+                          <User className="h-4 w-4 text-primary" />
+                        )}
+                      </div>
+                      <span className="font-display font-semibold text-foreground truncate group-hover:underline underline-offset-4">{selectedUser.display_name || "Creator"}</span>
+                    </button>
                     <div className="ml-auto flex items-center gap-1">
                       <Button
                         variant="ghost" size="icon"
