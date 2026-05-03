@@ -106,7 +106,7 @@ const ProfileCoinTab = ({ creatorId, isOwnProfile, defaultName, defaultImage, me
     <div className="space-y-4">
       {showReadiness && <CreatorReadinessCard creatorId={creatorId} memberSince={memberSince} />}
       <Link
-        to={`/coin/${coin.ticker}`}
+        to={`/coin/${coin.mint_address || coin.ticker}`}
         className="block rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-4 flex items-center gap-3 hover:border-emerald-500/40 hover:bg-card transition-colors group"
         aria-label={`Open ${coin.ticker} coin page`}
       >

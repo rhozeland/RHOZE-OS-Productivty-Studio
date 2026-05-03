@@ -94,17 +94,28 @@ const LaunchDetailPage = () => {
       const { data } = await supabase.from("coin_launches").select("*").eq("id", slugOrId).maybeSingle();
       l = (data as Launch | null) ?? null;
     } else {
-      // Resolve by ticker (slug). Strip a leading "$" if present.
-      const ticker = slugOrId.replace(/^\$/, "");
-      const { data } = await supabase
+      // Slug may be the full mint address (CA) or a ticker (with optional $).
+      const cleaned = slugOrId.replace(/^\$/, "");
+      // Try mint address first (case-sensitive base58).
+      const { data: byMint } = await supabase
         .from("coin_launches")
         .select("*")
-        .ilike("ticker", ticker)
+        .eq("mint_address", cleaned)
         .neq("status", "cancelled")
-        .order("created_at", { ascending: false })
-        .limit(1)
         .maybeSingle();
-      l = (data as Launch | null) ?? null;
+      if (byMint) {
+        l = byMint as Launch;
+      } else {
+        const { data } = await supabase
+          .from("coin_launches")
+          .select("*")
+          .ilike("ticker", cleaned)
+          .neq("status", "cancelled")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        l = (data as Launch | null) ?? null;
+      }
     }
     setLaunch(l);
     if (!l) {
@@ -162,8 +173,8 @@ const LaunchDetailPage = () => {
       <div className="container mx-auto px-4 py-8 max-w-6xl text-center space-y-4">
         <p className="text-muted-foreground">Coin not found.</p>
         <Button asChild variant="outline">
-          <Link to="/launchpad">
-            <ArrowLeft className="h-3 w-3 mr-1" /> Back to Launchpad
+          <Link to="/discover">
+            <ArrowLeft className="h-3 w-3 mr-1" /> Back to Discover
           </Link>
         </Button>
       </div>
@@ -181,8 +192,8 @@ const LaunchDetailPage = () => {
   return (
     <div className="container mx-auto px-4 py-6 max-w-6xl space-y-4">
       <Button asChild variant="ghost" size="sm" className="gap-1">
-        <Link to="/launchpad">
-          <ArrowLeft className="h-3 w-3" /> Launchpad
+        <Link to={`/profiles/${launch.creator_id}`}>
+          <ArrowLeft className="h-3 w-3" /> Back to creator
         </Link>
       </Button>
 

@@ -218,7 +218,14 @@ const LaunchCoinDialog = ({
     onOpenChange(false);
     if (data) {
       onLaunched?.(data as string);
-      navigate(`/coin/${ticker.trim().toUpperCase()}`);
+      // Resolve to mint_address (vanity CA) so the URL is the canonical coin slug.
+      const { data: launched } = await supabase
+        .from("coin_launches")
+        .select("mint_address, ticker")
+        .eq("id", data as string)
+        .maybeSingle();
+      const slug = launched?.mint_address || launched?.ticker || ticker.trim().toUpperCase();
+      navigate(`/coin/${slug}`);
     }
   };
 

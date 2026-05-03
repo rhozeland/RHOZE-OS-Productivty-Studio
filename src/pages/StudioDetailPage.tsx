@@ -94,7 +94,7 @@ const StudioDetailPage = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("coin_launches")
-        .select("id, name, ticker, image_url, status, virtual_sol_reserves, virtual_token_reserves, total_supply, space_id")
+        .select("id, name, ticker, image_url, status, mint_address, virtual_sol_reserves, virtual_token_reserves, total_supply, space_id")
         .or(`space_id.eq.${id},and(space_id.is.null,creator_id.eq.${studio!.owner_id})`)
         .neq("status", "cancelled")
         .order("created_at", { ascending: false })

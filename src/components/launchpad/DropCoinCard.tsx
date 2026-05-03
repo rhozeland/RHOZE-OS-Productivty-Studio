@@ -13,6 +13,7 @@ export interface DropCoin {
   name: string;
   image_url: string | null;
   status: string;
+  mint_address?: string | null;
   virtual_sol_reserves: number | string;
   virtual_token_reserves: number | string;
   total_supply: number | string;
@@ -62,7 +63,7 @@ const DropCoinCard = ({ coin, hideContext }: Props) => {
 
   return (
     <Link
-      to={`/coin/${coin.ticker}`}
+      to={`/coin/${coin.mint_address || coin.ticker}`}
       className="group block rounded-2xl border border-border bg-card hover:border-emerald-500/40 hover:-translate-y-0.5 transition-all p-4"
     >
       <div className="flex items-start gap-3 mb-3">
