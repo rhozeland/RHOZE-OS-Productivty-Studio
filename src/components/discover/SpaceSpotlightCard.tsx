@@ -72,9 +72,9 @@ const SpaceSpotlightCard = ({
 
   return (
     <div className="overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75">
-      {/* Wide 16:9 hero photo */}
+      {/* Compact landscape hero — sized so total card height matches the artist/event spotlights */}
       <div
-        className="relative w-full aspect-[16/9] overflow-hidden"
+        className="relative w-full aspect-[21/9] overflow-hidden"
         style={{ background: grad.background }}
       >
         {banner ? (
