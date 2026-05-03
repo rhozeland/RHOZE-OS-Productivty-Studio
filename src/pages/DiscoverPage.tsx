@@ -57,22 +57,27 @@ const getGreeting = () => {
 
 const DiscoverPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
   const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
 
-  // View toggle (mosaic / events / flow), persisted in ?view= param.
+  // View toggle (all / events / spaces / works), persisted in ?view= param.
   const [searchParams, setSearchParams] = useSearchParams();
   const rawView = searchParams.get("view");
   const view: DiscoverView =
-    rawView === "events" || rawView === "flow" ? rawView : "mosaic";
+    rawView === "events" || rawView === "spaces" || rawView === "works"
+      ? rawView
+      : "all";
   const setView = (v: DiscoverView) => {
-    if (v === "mosaic") searchParams.delete("view");
+    if (v === "all") searchParams.delete("view");
     else searchParams.set("view", v);
     setSearchParams(searchParams, { replace: true });
   };
+  const activeOption = VIEW_OPTIONS.find((o) => o.value === view) ?? VIEW_OPTIONS[0];
+  const ActiveIcon = activeOption.icon;
+
   useEffect(() => {
-    if (view === "events" || view === "flow") {
-      // Scroll the toggled section into view on load.
+    if (view !== "all") {
       requestAnimationFrame(() => {
         document.getElementById("discover-stream")?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
@@ -176,45 +181,60 @@ const DiscoverPage = () => {
       {/* ─── Creator Pass upgrade nudge ─────────────────────────────── */}
       <CreatorPassUpgradeCta />
 
-      {/* ─── The Stream — mosaic / events / flow toggle ─────────────── */}
+      {/* ─── The Stream ─────────────────────────────────────────────── */}
       <section id="discover-stream" className="space-y-4 scroll-mt-20">
-        <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div className="flex items-end justify-between gap-3 flex-wrap">
           <div>
             <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-1">
               The Stream
             </p>
             <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
-              {view === "events"
-                ? "What's happening."
-                : view === "flow"
-                ? "Tune in."
-                : "Everything, all at once."}
+              Everything, all at once.
             </h2>
           </div>
 
-          <div className="inline-flex items-center gap-1 rounded-full border border-border bg-card p-1">
-            {VIEW_OPTIONS.map(({ value, label, icon: Icon }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setView(value)}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                  view === value
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {label}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            {/* Filter dropdown — All / Events / Spaces / Works */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-2 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors"
+                >
+                  <ActiveIcon className="h-3.5 w-3.5" />
+                  {activeOption.label}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                {VIEW_OPTIONS.map(({ value, label, icon: Icon }) => (
+                  <DropdownMenuItem
+                    key={value}
+                    onSelect={() => setView(value)}
+                    className="gap-2 text-xs"
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span className="flex-1">{label}</span>
+                    {view === value && <Check className="h-3.5 w-3.5 opacity-70" />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Open Flow — replaces the old Tune-in heading; opens full Flow Mode */}
+            <button
+              type="button"
+              onClick={() => navigate("/flow")}
+              className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-xs font-semibold text-background hover:bg-foreground/90 transition-colors"
+            >
+              <Flame className="h-3.5 w-3.5" />
+              Open Flow
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
           </div>
         </div>
 
-        {view === "mosaic" && <ConversationsMosaic />}
-        {view === "events" && <ConversationsEventsBrowser hideHeading />}
-        {view === "flow" && <HubFlowWidget expanded hideHeading />}
+        <ConversationsMosaic kind={activeOption.kind} />
       </section>
 
       {/* ─── Coins moving today ─────────────────────────────────────── */}
