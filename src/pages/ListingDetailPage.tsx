@@ -52,6 +52,7 @@ import { format } from "date-fns";
 import AudioPreview from "@/components/marketplace/AudioPreview";
 import StarRating from "@/components/marketplace/StarRating";
 import QuickMessageDialog from "@/components/messages/QuickMessageDialog";
+import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 const CATEGORIES: Record<string, { label: string; icon: any; color: string }> = {
