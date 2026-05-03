@@ -73,20 +73,6 @@ const STATUS_META: Record<string, { label: string; icon: typeof Clock; color: st
   paused:    { label: "Paused",      icon: PauseCircle,   color: "bg-amber-500/10 text-amber-600" },
 };
 
-const PROJECT_INTENTS = [
-  {
-    value: "service",
-    label: "Service / client work",
-    hint: "Start the thread now, add budget later inside the project.",
-    icon: Briefcase,
-  },
-  {
-    value: "collaboration",
-    label: "Creative collaboration",
-    hint: "Shared working space for ideas, files, and execution.",
-    icon: Users,
-  },
-] as const;
 
 const COVER_COLORS = [
   "#7c3aed",
