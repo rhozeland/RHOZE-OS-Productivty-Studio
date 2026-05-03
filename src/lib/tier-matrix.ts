@@ -105,11 +105,13 @@ export const TIERS: TierRow[] = [
     benefits: [
       "2× reward multiplier",
       "15% off Spaces & services",
+      "Unlimited coin drops",
       "Free coin launch (no platform fee)",
       "72h early coin access",
       "Featured artist placement",
       "Verified Artist fast-track",
     ],
+    coinDropsPerMonth: null,
     gradient: "linear-gradient(135deg, hsl(50 90% 58%), hsl(38 80% 40%))",
     glowColor: "hsl(45, 85%, 52%)",
   },
