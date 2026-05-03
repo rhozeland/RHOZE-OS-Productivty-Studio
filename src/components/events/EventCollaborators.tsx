@@ -48,7 +48,7 @@ const EventCollaborators = ({ eventId, hostId }: Props) => {
     queryFn: async () => {
       const { data: rows } = await supabase
         .from("event_collaborators")
-        .select("id, user_id, role, created_at")
+        .select("id, user_id, role, status, created_at")
         .eq("event_id", eventId);
       const ids = (rows ?? []).map((r) => r.user_id);
       if (ids.length === 0) return [];
@@ -182,6 +182,8 @@ const EventCollaborators = ({ eventId, hostId }: Props) => {
                 <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
                   <ShieldCheck className="h-3 w-3" />
                   {c.role === "co_host" ? "Co-host" : "Manager"}
+                  {c.status === "pending" && " · Invite pending"}
+                  {c.status === "declined" && " · Declined"}
                 </p>
               </div>
             </div>

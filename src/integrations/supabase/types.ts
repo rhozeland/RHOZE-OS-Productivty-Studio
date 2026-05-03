@@ -1330,6 +1330,7 @@ export type Database = {
           id: string
           invited_by: string
           role: Database["public"]["Enums"]["event_collaborator_role"]
+          status: Database["public"]["Enums"]["event_collaborator_status"]
           user_id: string
         }
         Insert: {
@@ -1338,6 +1339,7 @@ export type Database = {
           id?: string
           invited_by: string
           role?: Database["public"]["Enums"]["event_collaborator_role"]
+          status?: Database["public"]["Enums"]["event_collaborator_status"]
           user_id: string
         }
         Update: {
@@ -1346,6 +1348,7 @@ export type Database = {
           id?: string
           invited_by?: string
           role?: Database["public"]["Enums"]["event_collaborator_role"]
+          status?: Database["public"]["Enums"]["event_collaborator_status"]
           user_id?: string
         }
         Relationships: [
@@ -4534,6 +4537,7 @@ export type Database = {
         | "rejected"
         | "cancelled"
       event_collaborator_role: "co_host" | "manager"
+      event_collaborator_status: "pending" | "accepted" | "declined"
       event_purchase_currency: "usd" | "rhoze" | "free"
       event_status: "draft" | "published" | "cancelled" | "completed"
       event_ticket_status: "issued" | "checked_in" | "refunded" | "cancelled"
@@ -4674,6 +4678,7 @@ export const Constants = {
         "cancelled",
       ],
       event_collaborator_role: ["co_host", "manager"],
+      event_collaborator_status: ["pending", "accepted", "declined"],
       event_purchase_currency: ["usd", "rhoze", "free"],
       event_status: ["draft", "published", "cancelled", "completed"],
       event_ticket_status: ["issued", "checked_in", "refunded", "cancelled"],

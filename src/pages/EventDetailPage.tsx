@@ -31,6 +31,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { shortHash } from "@/lib/content-hash";
 import TicketCheckoutDialog from "@/components/events/TicketCheckoutDialog";
+import EventInviteBanner from "@/components/events/EventInviteBanner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const EventDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -103,6 +105,55 @@ const EventDetailPage = () => {
         .eq("user_id", ev!.host_id)
         .maybeSingle();
       return data;
+    },
+  });
+
+  const { data: coHosts = [] } = useQuery({
+    queryKey: ["event-cohosts", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data: rows } = await supabase
+        .from("event_collaborators")
+        .select("user_id, role")
+        .eq("event_id", id!)
+        .eq("status", "accepted");
+      const ids = (rows ?? []).map((r: any) => r.user_id);
+      if (!ids.length) return [];
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, username, avatar_url")
+        .in("user_id", ids);
+      const map = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
+      return (rows ?? []).map((r: any) => ({ ...r, profile: map.get(r.user_id) }));
+    },
+  });
+
+  const { data: goingData } = useQuery({
+    queryKey: ["event-going", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("event_tickets")
+        .select("id", { count: "exact", head: true })
+        .eq("event_id", id!)
+        .in("status", ["issued", "checked_in"]);
+      const { data: recent } = await supabase
+        .from("event_tickets")
+        .select("holder_id")
+        .eq("event_id", id!)
+        .in("status", ["issued", "checked_in"])
+        .order("created_at", { ascending: false })
+        .limit(8);
+      const holderIds = (recent ?? []).map((r: any) => r.holder_id);
+      let avatars: any[] = [];
+      if (holderIds.length) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("user_id, display_name, username, avatar_url")
+          .in("user_id", holderIds);
+        avatars = profs ?? [];
+      }
+      return { count: count ?? 0, avatars };
     },
   });
 
@@ -185,6 +236,8 @@ const EventDetailPage = () => {
         )}
       </div>
 
+      <EventInviteBanner eventId={ev.id} eventTitle={ev.title} />
+
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 items-start">
         {/* LEFT — content */}
         <motion.div
@@ -223,27 +276,92 @@ const EventDetailPage = () => {
             </h1>
           </div>
 
-          {/* Hosted by */}
-          {hostProfile && (
-            <Link
-              to={`/profiles/${hostProfile.user_id}`}
-              className="inline-flex items-center gap-3 p-3 pr-5 rounded-full bg-card border border-border hover:bg-muted/40 transition-colors"
-            >
-              <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm overflow-hidden shrink-0">
-                {hostProfile.avatar_url ? (
-                  <img src={hostProfile.avatar_url} className="h-9 w-9 rounded-full object-cover" alt="" />
-                ) : (
-                  hostProfile.display_name?.[0]?.toUpperCase() ?? "?"
-                )}
+          {/* Hosted By — Luma style list */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
+                Hosted By
+              </h2>
+              <div className="h-px flex-1 bg-border ml-3" />
+            </div>
+            <div className="space-y-1">
+              {hostProfile && (
+                <Link
+                  to={`/profiles/${hostProfile.user_id}`}
+                  className="flex items-center justify-between gap-3 py-2 hover:opacity-80 transition-opacity"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar className="h-9 w-9">
+                      <AvatarImage src={hostProfile.avatar_url ?? undefined} />
+                      <AvatarFallback>
+                        {(hostProfile.display_name ?? hostProfile.username ?? "?")[0]?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <p className="text-base font-semibold truncate">
+                      {hostProfile.display_name ?? hostProfile.username ?? "Host"}
+                    </p>
+                  </div>
+                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Host
+                  </span>
+                </Link>
+              )}
+              {coHosts.map((c: any) => (
+                <Link
+                  key={c.user_id}
+                  to={`/profiles/${c.user_id}`}
+                  className="flex items-center justify-between gap-3 py-2 hover:opacity-80 transition-opacity"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar className="h-9 w-9">
+                      <AvatarImage src={c.profile?.avatar_url ?? undefined} />
+                      <AvatarFallback>
+                        {(c.profile?.display_name ?? c.profile?.username ?? "?")[0]?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <p className="text-base font-semibold truncate">
+                      {c.profile?.display_name ?? c.profile?.username ?? "Co-host"}
+                    </p>
+                  </div>
+                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    {c.role === "co_host" ? "Co-host" : "Manager"}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          {/* Going */}
+          {(goingData?.count ?? 0) > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
+                  {goingData!.count} Going
+                </h2>
+                <div className="h-px flex-1 bg-border ml-3" />
               </div>
-              <div className="min-w-0 text-left">
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Hosted by</p>
-                <p className="text-sm font-medium text-foreground truncate">
-                  {hostProfile.display_name ?? hostProfile.username ?? "Creator"}
+              <div className="flex items-center gap-3">
+                <div className="flex -space-x-2">
+                  {goingData!.avatars.slice(0, 6).map((p: any) => (
+                    <Avatar key={p.user_id} className="h-8 w-8 border-2 border-background">
+                      <AvatarImage src={p.avatar_url ?? undefined} />
+                      <AvatarFallback className="text-[10px]">
+                        {(p.display_name ?? p.username ?? "?")[0]?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                </div>
+                <p className="text-sm text-muted-foreground truncate">
+                  {goingData!.avatars
+                    .slice(0, 2)
+                    .map((p: any) => p.display_name ?? p.username ?? "Someone")
+                    .join(", ")}
+                  {goingData!.count > 2 && ` and ${goingData!.count - 2} others`}
                 </p>
               </div>
-            </Link>
+            </section>
           )}
+
 
           {/* About */}
           {ev.description && (
