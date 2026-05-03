@@ -46,7 +46,7 @@ const TicketDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
 
-  const { data: ticket, isLoading } = useQuery({
+  const { data: ticket, isLoading, refetch } = useQuery({
     queryKey: ["ticket", id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -58,6 +58,11 @@ const TicketDetailPage = () => {
       return data;
     },
     enabled: !!id,
+    // Poll every 4s while we're waiting on a Solana receipt.
+    refetchInterval: (q) => {
+      const t = q.state.data as { status?: string; solana_signature?: string | null } | undefined;
+      return t && t.status === "checked_in" && !t.solana_signature ? 4000 : false;
+    },
   });
 
   const { data: host } = useQuery({
