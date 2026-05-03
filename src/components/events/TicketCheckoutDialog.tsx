@@ -9,9 +9,9 @@
  * reference, increments the tier's quantity_sold, and bounces the user
  * to /tickets/:id.
  */
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Coins, CreditCard, Loader2, Ticket } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -27,13 +27,16 @@ import PayWithRhozeButton from "@/components/PayWithRhozeButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { getPlatformFeeFromBalance } from "@/lib/platform-fee";
+import { fiatToRhoze, formatMoney, rhozeDiscount } from "@/lib/event-currency";
+import { getHoldTier, type TierId } from "@/lib/tier-matrix";
 
 interface Tier {
   id: string;
   name: string;
   description?: string | null;
-  price_usd?: number | null;
+  price_usd?: number | null; // stored in event currency (legacy column name)
   price_rhoze?: number | null;
+  currency_code?: string | null;
   quantity_total?: number | null;
   quantity_sold: number;
 }
@@ -42,6 +45,7 @@ interface Event {
   id: string;
   title: string;
   host_id?: string;
+  currency_code?: string | null;
 }
 
 interface TicketCheckoutDialogProps {
@@ -62,13 +66,32 @@ const TicketCheckoutDialog = ({
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const usd = Number(tier.price_usd) || 0;
-  const rhoze = Number(tier.price_rhoze) || 0;
-  const hasUsd = usd > 0;
+  const fiatPrice = Number(tier.price_usd) || 0;
+  const currency = tier.currency_code || event.currency_code || "USD";
+  const hasFiat = fiatPrice > 0;
+
+  // Buyer's $RHOZE balance → tier → discount
+  const { data: buyerBalance } = useQuery({
+    queryKey: ["buyer-rhoze-balance", user?.id],
+    enabled: !!user && hasFiat,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_credits")
+        .select("balance")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return Number(data?.balance) || 0;
+    },
+  });
+
+  const buyerTier: TierId = getHoldTier(buyerBalance ?? 0);
+  const discountPct = rhozeDiscount(buyerTier);
+  const rhoze = hasFiat ? fiatToRhoze(fiatPrice, buyerTier) : Number(tier.price_rhoze) || 0;
   const hasRhoze = rhoze > 0;
 
-  const defaultTab = useMemo(() => (hasUsd ? "usd" : "rhoze"), [hasUsd]);
+  const defaultTab = useMemo(() => (hasFiat ? "usd" : "rhoze"), [hasFiat]);
   const [tab, setTab] = useState<"usd" | "rhoze">(defaultTab);
+  useEffect(() => setTab(defaultTab), [defaultTab]);
 
   const issueTicket = useMutation({
     mutationFn: async (args: {
