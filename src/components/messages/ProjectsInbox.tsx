@@ -49,6 +49,8 @@ import {
   ListTree,
   Loader2,
   Link as LinkIcon,
+  Users,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
