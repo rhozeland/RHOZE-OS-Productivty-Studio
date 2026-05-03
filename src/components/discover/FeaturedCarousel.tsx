@@ -132,7 +132,7 @@ const FeaturedCarousel = ({ slides }: FeaturedCarouselProps) => {
                   <p className="text-[11px] font-medium text-foreground/80 mt-0.5 line-clamp-1">
                     {current.creator_roles.slice(0, 2).map((id) => {
                       const role = ROLE_BY_ID.get(id);
-                      return role ? `${role.emoji} ${role.label}` : id;
+                      return role ? role.label : id;
                     }).join(" · ")}
                   </p>
                 ) : null}
