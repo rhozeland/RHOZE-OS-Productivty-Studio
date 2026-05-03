@@ -131,9 +131,9 @@ const StudioDetailPage = () => {
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <Building2 className="h-12 w-12 text-muted-foreground/40 mb-4" />
         <h3 className="font-display text-lg font-semibold text-foreground mb-1">Studio not found</h3>
-        <Link to="/studios" className="mt-4">
+        <Link to="/discover?kind=space" className="mt-4">
           <Button variant="outline" className="rounded-full">
-            <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Studios
+            <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Discover
           </Button>
         </Link>
       </div>
