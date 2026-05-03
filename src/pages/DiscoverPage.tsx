@@ -150,34 +150,46 @@ const DiscoverPage = () => {
         </motion.header>
       )}
 
-      {/* ─── Guest intro — never let Discover feel empty for first-timers ─── */}
+      {/* ─── Guest intro — soft gradient orb + minimal copy ─── */}
       {!user && (
         <motion.header
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="pt-1"
+          transition={{ duration: 0.5 }}
+          className="relative pt-1 overflow-hidden"
         >
-          <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 mb-2">
-            Discover
-          </p>
-          <h1 className="font-display text-3xl sm:text-4xl leading-[1.05] text-foreground tracking-tight max-w-2xl">
-            Real artists.{" "}
-            <span
-              className="inline-block"
-              style={{
-                backgroundImage:
-                  "linear-gradient(to right, hsl(330 81% 60%), hsl(292 84% 61%), hsl(38 92% 50%))",
-                WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent",
-              }}
-            >
-              Real spaces. Real moments.
-            </span>
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-2 max-w-xl leading-relaxed">
-            Spin the globe to find creators, studios and events near you — or just take a peek
-            at what's happening today. No account needed to look around.
-          </p>
+          {/* Soft pink→amber→mint orb à la dashboard */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-24 -right-16 h-[420px] w-[420px] rounded-full opacity-70 blur-3xl"
+            style={{
+              background:
+                "radial-gradient(circle at 30% 30%, hsl(330 85% 70% / 0.55), transparent 55%)," +
+                "radial-gradient(circle at 70% 60%, hsl(38 92% 65% / 0.55), transparent 60%)," +
+                "radial-gradient(circle at 50% 90%, hsl(160 65% 60% / 0.40), transparent 60%)",
+            }}
+          />
+          <div className="relative">
+            <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 mb-2">
+              Discover
+            </p>
+            <h1 className="font-display text-4xl sm:text-5xl leading-[1.02] text-foreground tracking-tight max-w-2xl">
+              Real artists.{" "}
+              <span
+                className="inline-block"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(to right, hsl(330 81% 60%), hsl(292 84% 61%), hsl(38 92% 50%))",
+                  WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent",
+                }}
+              >
+                Real spaces. Real moments.
+              </span>
+            </h1>
+            <p className="text-sm text-muted-foreground mt-2 max-w-md">
+              Spin the globe. No account needed.
+            </p>
+          </div>
         </motion.header>
       )}
 
