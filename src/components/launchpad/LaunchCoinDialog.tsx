@@ -76,6 +76,7 @@ const LaunchCoinDialog = ({
     tierLabel: string;
     cap: number | null;
     used: number;
+    balance: number;
   } | null>(null);
 
   useEffect(() => {
