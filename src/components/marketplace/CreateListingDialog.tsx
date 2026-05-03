@@ -58,24 +58,37 @@ interface CreateListingDialogProps {
     listing_type?: string;
     category?: string;
   };
+  /** When provided, dialog operates in edit mode and updates this listing. */
+  editListing?: {
+    id: string;
+    title: string;
+    description: string | null;
+    listing_type: string;
+    category: string;
+    contact_info: string | null;
+    delivery_days: number | null;
+    revisions: number | null;
+    tags: string[] | null;
+  };
 }
 
-const CreateListingDialog = ({ open, onOpenChange, prefill }: CreateListingDialogProps) => {
+const CreateListingDialog = ({ open, onOpenChange, prefill, editListing }: CreateListingDialogProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [step, setStep] = useState(0);
+  const isEdit = !!editListing;
+  const [step, setStep] = useState(isEdit ? 1 : 0);
 
   // Form
-  const [listingType, setListingType] = useState(prefill?.listing_type ?? "service");
-  const [title, setTitle] = useState(prefill?.title ?? "");
-  const [description, setDescription] = useState(prefill?.description ?? "");
-  const [category, setCategory] = useState(prefill?.category ?? "design");
-  const [budgetRange, setBudgetRange] = useState("");
-  const [deliveryDays, setDeliveryDays] = useState("");
-  const [revisions, setRevisions] = useState("");
+  const [listingType, setListingType] = useState(editListing?.listing_type ?? prefill?.listing_type ?? "service");
+  const [title, setTitle] = useState(editListing?.title ?? prefill?.title ?? "");
+  const [description, setDescription] = useState(editListing?.description ?? prefill?.description ?? "");
+  const [category, setCategory] = useState(editListing?.category ?? prefill?.category ?? "design");
+  const [budgetRange, setBudgetRange] = useState(editListing?.contact_info ?? "");
+  const [deliveryDays, setDeliveryDays] = useState(editListing?.delivery_days?.toString() ?? "");
+  const [revisions, setRevisions] = useState(editListing?.revisions?.toString() ?? "");
   const [tagInput, setTagInput] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>(editListing?.tags ?? []);
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
 
@@ -88,7 +101,8 @@ const CreateListingDialog = ({ open, onOpenChange, prefill }: CreateListingDialo
   };
 
   const reset = () => {
-    setStep(0);
+    setStep(isEdit ? 1 : 0);
+    if (isEdit) return;
     setListingType(prefill?.listing_type ?? "service");
     setTitle(prefill?.title ?? "");
     setDescription(prefill?.description ?? "");
@@ -100,6 +114,34 @@ const CreateListingDialog = ({ open, onOpenChange, prefill }: CreateListingDialo
     setTagInput("");
     setFiles([]);
   };
+
+  const updateListing = useMutation({
+    mutationFn: async () => {
+      if (!editListing) throw new Error("Not in edit mode");
+      const { error } = await supabase
+        .from("marketplace_listings")
+        .update({
+          title,
+          description: description || null,
+          category,
+          listing_type: listingType,
+          contact_info: budgetRange || null,
+          delivery_days: deliveryDays ? parseInt(deliveryDays) : null,
+          revisions: revisions ? parseInt(revisions) : null,
+          tags: tags.length > 0 ? tags : null,
+        })
+        .eq("id", editListing.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["listing", editListing!.id] });
+      queryClient.invalidateQueries({ queryKey: ["my-listings"] });
+      queryClient.invalidateQueries({ queryKey: ["marketplace-listings"] });
+      toast.success("Listing updated");
+      onOpenChange(false);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const createListing = useMutation({
     mutationFn: async () => {
