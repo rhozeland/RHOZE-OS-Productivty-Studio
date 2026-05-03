@@ -23,6 +23,8 @@ import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
+import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { ROLE_BY_ID } from "@/lib/creator-roles";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
