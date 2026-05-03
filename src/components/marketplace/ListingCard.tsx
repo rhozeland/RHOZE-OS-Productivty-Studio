@@ -113,16 +113,6 @@ const ListingCard = ({
               {typeMeta.label}
             </Badge>
           </div>
-          {verifiedIp && (
-            <div className="absolute top-2 right-2">
-              <VerifiedIPBadge
-                signature={verifiedIp.signature}
-                size="xs"
-                showLabel={false}
-                className="shadow-sm"
-              />
-            </div>
-          )}
         </div>
       ) : hasInlinePreview ? (
         // Compact header strip when audio/video preview will render below.
@@ -201,15 +191,6 @@ const ListingCard = ({
               <CatIcon className="h-3 w-3" style={{ color: catMeta.color }} />
               {catMeta.label}
             </Badge>
-            {/* On non-image covers there's no overlay, so surface the proof
-                here too. The cover overlay still shows on image covers. */}
-            {verifiedIp && !coverImage && (
-              <VerifiedIPBadge
-                signature={verifiedIp.signature}
-                size="xs"
-                showLabel={false}
-              />
-            )}
           </div>
           {listing.contact_info && (
             <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground shrink-0">
