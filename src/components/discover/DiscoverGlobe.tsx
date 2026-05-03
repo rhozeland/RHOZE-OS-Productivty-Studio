@@ -20,6 +20,8 @@ import type { FeaturedSlide } from "./useDiscoverFeatured";
 import RegionChip from "@/components/profile/RegionChip";
 import { avatarGradientFor } from "@/lib/avatar-gradient";
 import ArtistSpotlightCard from "./ArtistSpotlightCard";
+import EventSpotlightCard from "./EventSpotlightCard";
+import SpaceSpotlightCard from "./SpaceSpotlightCard";
 
 const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
   KR: { lat: 37.55, lng: 126.99 },
