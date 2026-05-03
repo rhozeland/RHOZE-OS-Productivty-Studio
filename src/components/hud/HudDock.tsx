@@ -141,9 +141,12 @@ const HudDock = () => {
 
   if (!user) return null;
 
-  // Hide on routes where the HUD would clash (auth, onboarding, immersive flow).
+  // HUD now only shows on Discover — Conversations and Creator Pass keep
+  // their own headers clean. Auth/onboarding/flow always hidden too.
+  const allowedPrefixes = ["/discover"];
   const hiddenRoutes = ["/auth", "/onboarding", "/flow"];
   if (hiddenRoutes.some((p) => pathname.startsWith(p))) return null;
+  if (!allowedPrefixes.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p + "?"))) return null;
 
   const tierColor = xp?.titleColor ?? "210 60% 55%";
   const level = xp?.level ?? 1;
