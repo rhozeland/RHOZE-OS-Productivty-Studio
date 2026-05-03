@@ -36,6 +36,11 @@ export interface TierRow {
   activity: TierActivityReqs;
   /** Short benefit blurbs */
   benefits: string[];
+  /**
+   * Coin drops a user can launch per rolling 30 days at this tier.
+   * `null` = unlimited.
+   */
+  coinDropsPerMonth: number | null;
   gradient: string;
   glowColor: string;
 }
