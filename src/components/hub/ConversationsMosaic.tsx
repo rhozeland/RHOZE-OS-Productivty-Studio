@@ -155,9 +155,12 @@ export type MosaicKindFilter = "all" | TileKind;
 const ConversationsMosaic = ({
   search = "",
   kind = "all",
+  category = null,
 }: {
   search?: string;
   kind?: MosaicKindFilter;
+  /** Optional sub-filter (only meaningful when kind is "event" or "space"). */
+  category?: string | null;
 } = {}) => {
   const navigate = useNavigate();
 
