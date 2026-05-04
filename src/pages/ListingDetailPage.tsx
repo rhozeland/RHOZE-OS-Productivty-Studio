@@ -582,9 +582,14 @@ const ListingDetailPage = () => {
           )}
 
         </div>
+        )}
 
         {/* Right: Info sidebar */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className={
+          (images.length > 0 || audioFiles.length > 0 || videoFiles.length > 0 || pdfFiles.length > 0 || listing.cover_url || listing.description)
+            ? "lg:col-span-2 space-y-4"
+            : "space-y-4"
+        }>
           <div className="surface-card overflow-hidden sticky top-4">
             {/* Type hero band — sets clear context for what this listing IS */}
             <div
