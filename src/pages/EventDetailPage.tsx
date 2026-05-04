@@ -28,7 +28,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import TicketCheckoutDialog from "@/components/events/TicketCheckoutDialog";
+import EventCheckoutSheet from "@/components/events/EventCheckoutSheet";
 import EventInviteBanner from "@/components/events/EventInviteBanner";
 import EventMediaCarousel from "@/components/events/EventMediaCarousel";
 import LaunchCoinDialog from "@/components/launchpad/LaunchCoinDialog";
@@ -177,38 +177,6 @@ const EventDetailPage = () => {
         tierCounts: Object.fromEntries(tierCounts),
         checkedIn,
       };
-    },
-  });
-
-  const rsvpMutation = useMutation({
-    mutationFn: async (tierId: string) => {
-      if (!user) throw new Error("Sign in to RSVP");
-      const qr_token = `tk_${crypto.randomUUID().replace(/-/g, "")}`;
-      const { data, error } = await supabase
-        .from("event_tickets")
-        .insert([{
-          event_id: id!,
-          holder_id: user.id,
-          tier_id: tierId,
-          qr_token,
-          purchase_currency: "free",
-          amount_paid: 0,
-          status: "issued",
-        }])
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (ticket) => {
-      toast.success("You're in", { description: "Your ticket is ready." });
-      qc.invalidateQueries({ queryKey: ["event-my-ticket", id] });
-      navigate(`/tickets/${ticket.id}`);
-    },
-    onError: (err: unknown) => {
-      toast.error("RSVP failed", {
-        description: err instanceof Error ? err.message : "Unknown error",
-      });
     },
   });
 
