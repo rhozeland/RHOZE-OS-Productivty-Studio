@@ -251,9 +251,13 @@ const ConversationsMosaic = ({
 
   const allTiles = data ?? [];
   const tiles = useMemo(() => {
-    const filtered = kind === "all" ? allTiles : allTiles.filter((t) => t.kind === kind);
+    let filtered = kind === "all" ? allTiles : allTiles.filter((t) => t.kind === kind);
+    if (category && kind !== "all") {
+      const cat = category.toLowerCase();
+      filtered = filtered.filter((t) => (t.category ?? "").toLowerCase() === cat);
+    }
     return filtered.slice(0, 24);
-  }, [allTiles, kind]);
+  }, [allTiles, kind, category]);
 
   // When filtered to a single kind, drop the bento "hero/wide/tall" pattern
   // (which creates large empty cells when there are only a handful of items)
