@@ -15,7 +15,7 @@
  * lifted from HubPage and Fresh Works is removed (the mosaic IS the
  * fresh feed now — drops, works, offerings, events, spaces all in one).
  */
-import { Suspense, lazy, useState, useEffect } from "react";
+import { Suspense, lazy, useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -195,13 +195,18 @@ const DiscoverPage = () => {
   const ActiveIcon = activeOption.icon;
 
   const category = searchParams.get("cat");
+  const normalizedCategory = category ? normalizeCategory(category) : null;
   const setCategory = (c: string | null) => {
     if (!c) searchParams.delete("cat");
-    else searchParams.set("cat", c);
+    else searchParams.set("cat", normalizeCategory(c));
     setSearchParams(searchParams, { replace: true });
   };
-  const categoryList =
-    view === "events" ? EVENT_CATEGORIES : view === "spaces" ? SPACE_CATEGORIES : null;
+  const categoryDefs =
+    view === "events"
+      ? EVENT_CATEGORY_DEFS
+      : view === "spaces"
+        ? SPACE_CATEGORY_DEFS
+        : null;
 
   useEffect(() => {
     if (view !== "all") {
@@ -247,6 +252,47 @@ const DiscoverPage = () => {
       return data ?? [];
     },
   });
+
+  const { data: eventCategoryRows = [] } = useQuery({
+    queryKey: ["discover-event-category-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("events")
+        .select("category")
+        .eq("status", "published")
+        .gte("starts_at", new Date().toISOString())
+        .limit(250);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: view === "events",
+    staleTime: 30_000,
+  });
+
+  const { data: spaceCategoryRows = [] } = useQuery({
+    queryKey: ["discover-space-category-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("studios")
+        .select("category")
+        .eq("is_active", true)
+        .limit(250);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: view === "spaces",
+    staleTime: 30_000,
+  });
+
+  const categoryCounts = useMemo(() => {
+    const rows = view === "events" ? eventCategoryRows : view === "spaces" ? spaceCategoryRows : [];
+    return rows.reduce<Record<string, number>>((acc, row: { category?: string | null }) => {
+      const key = normalizeCategory(row.category);
+      if (!key) return acc;
+      acc[key] = (acc[key] ?? 0) + 1;
+      return acc;
+    }, {});
+  }, [eventCategoryRows, spaceCategoryRows, view]);
 
   return (
     <div className="max-w-6xl mx-auto pb-20 space-y-6">
@@ -405,44 +451,17 @@ const DiscoverPage = () => {
           </div>
         </div>
 
-        {categoryList && (
-          <div className="space-y-2">
-            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
-              Browse by category
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setCategory(null)}
-                className={cn(
-                  "rounded-full border px-3 py-1.5 text-xs font-medium capitalize transition-colors",
-                  !category
-                    ? "border-foreground bg-foreground text-background"
-                    : "border-border bg-card text-foreground hover:bg-muted/60",
-                )}
-              >
-                All
-              </button>
-              {categoryList.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setCategory(category === c ? null : c)}
-                  className={cn(
-                    "rounded-full border px-3 py-1.5 text-xs font-medium capitalize transition-colors",
-                    category === c
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border bg-card text-foreground hover:bg-muted/60",
-                  )}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
+        {categoryDefs && (
+          <StreamCategorySection
+            defs={categoryDefs}
+            noun={view === "events" ? "event" : "space"}
+            activeCategory={normalizedCategory}
+            counts={categoryCounts}
+            onSelect={setCategory}
+          />
         )}
 
-        <ConversationsMosaic kind={activeOption.kind} category={category} />
+        <ConversationsMosaic kind={activeOption.kind} category={normalizedCategory} />
       </section>
 
       {/* ─── Coins moving today ─────────────────────────────────────── */}
