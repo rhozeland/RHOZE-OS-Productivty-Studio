@@ -1501,6 +1501,7 @@ export type Database = {
           sale_ends_at: string | null
           sale_starts_at: string | null
           sort_order: number
+          tier_kind: string
           updated_at: string
         }
         Insert: {
@@ -1518,6 +1519,7 @@ export type Database = {
           sale_ends_at?: string | null
           sale_starts_at?: string | null
           sort_order?: number
+          tier_kind?: string
           updated_at?: string
         }
         Update: {
@@ -1535,6 +1537,7 @@ export type Database = {
           sale_ends_at?: string | null
           sale_starts_at?: string | null
           sort_order?: number
+          tier_kind?: string
           updated_at?: string
         }
         Relationships: [
@@ -1555,9 +1558,13 @@ export type Database = {
           anchor_last_error: string | null
           anchor_proof_id: string | null
           anchored_at: string | null
+          approved_at: string | null
+          approved_by: string | null
           attendance_hash: string | null
           checked_in_at: string | null
           event_id: string
+          guest_email: string | null
+          guest_name: string | null
           holder_id: string
           id: string
           issued_at: string
@@ -1565,6 +1572,7 @@ export type Database = {
           payment_reference: string | null
           purchase_currency: Database["public"]["Enums"]["event_purchase_currency"]
           qr_token: string
+          requested_at: string | null
           solana_signature: string | null
           status: Database["public"]["Enums"]["event_ticket_status"]
           tier_id: string | null
@@ -1576,9 +1584,13 @@ export type Database = {
           anchor_last_error?: string | null
           anchor_proof_id?: string | null
           anchored_at?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           attendance_hash?: string | null
           checked_in_at?: string | null
           event_id: string
+          guest_email?: string | null
+          guest_name?: string | null
           holder_id: string
           id?: string
           issued_at?: string
@@ -1586,6 +1598,7 @@ export type Database = {
           payment_reference?: string | null
           purchase_currency?: Database["public"]["Enums"]["event_purchase_currency"]
           qr_token: string
+          requested_at?: string | null
           solana_signature?: string | null
           status?: Database["public"]["Enums"]["event_ticket_status"]
           tier_id?: string | null
@@ -1597,9 +1610,13 @@ export type Database = {
           anchor_last_error?: string | null
           anchor_proof_id?: string | null
           anchored_at?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           attendance_hash?: string | null
           checked_in_at?: string | null
           event_id?: string
+          guest_email?: string | null
+          guest_name?: string | null
           holder_id?: string
           id?: string
           issued_at?: string
@@ -1607,6 +1624,7 @@ export type Database = {
           payment_reference?: string | null
           purchase_currency?: Database["public"]["Enums"]["event_purchase_currency"]
           qr_token?: string
+          requested_at?: string | null
           solana_signature?: string | null
           status?: Database["public"]["Enums"]["event_ticket_status"]
           tier_id?: string | null
@@ -4843,7 +4861,13 @@ export type Database = {
       event_collaborator_status: "pending" | "accepted" | "declined"
       event_purchase_currency: "usd" | "rhoze" | "free"
       event_status: "draft" | "published" | "cancelled" | "completed"
-      event_ticket_status: "issued" | "checked_in" | "refunded" | "cancelled"
+      event_ticket_status:
+        | "issued"
+        | "checked_in"
+        | "refunded"
+        | "cancelled"
+        | "pending_approval"
+        | "declined"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4985,7 +5009,14 @@ export const Constants = {
       event_collaborator_status: ["pending", "accepted", "declined"],
       event_purchase_currency: ["usd", "rhoze", "free"],
       event_status: ["draft", "published", "cancelled", "completed"],
-      event_ticket_status: ["issued", "checked_in", "refunded", "cancelled"],
+      event_ticket_status: [
+        "issued",
+        "checked_in",
+        "refunded",
+        "cancelled",
+        "pending_approval",
+        "declined",
+      ],
     },
   },
 } as const
