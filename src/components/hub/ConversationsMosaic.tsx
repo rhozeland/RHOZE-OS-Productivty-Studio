@@ -39,6 +39,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
+import { cn } from "@/lib/utils";
 
 // ─── Tile shape ────────────────────────────────────────────────────────
 // Note: "work" + "opportunity" no longer exist as standalone tile kinds.
@@ -154,9 +155,12 @@ export type MosaicKindFilter = "all" | TileKind;
 const ConversationsMosaic = ({
   search = "",
   kind = "all",
+  category = null,
 }: {
   search?: string;
   kind?: MosaicKindFilter;
+  /** Optional sub-filter (only meaningful when kind is "event" or "space"). */
+  category?: string | null;
 } = {}) => {
   const navigate = useNavigate();
 
@@ -218,6 +222,7 @@ const ConversationsMosaic = ({
           kind: "event",
           title: e.title,
           cover: e.cover_url,
+          category: e.category,
           href: `/spaces/events/${e.id}`,
           meta: format(new Date(e.starts_at), "EEE, MMM d · h:mm a"),
           subtitle: e.is_online ? "Online" : e.venue_name,
@@ -246,17 +251,31 @@ const ConversationsMosaic = ({
 
   const allTiles = data ?? [];
   const tiles = useMemo(() => {
-    const filtered = kind === "all" ? allTiles : allTiles.filter((t) => t.kind === kind);
+    let filtered = kind === "all" ? allTiles : allTiles.filter((t) => t.kind === kind);
+    if (category && kind !== "all") {
+      const cat = category.toLowerCase();
+      filtered = filtered.filter((t) => (t.category ?? "").toLowerCase() === cat);
+    }
     return filtered.slice(0, 24);
-  }, [allTiles, kind]);
+  }, [allTiles, kind, category]);
+
+  // When filtered to a single kind, drop the bento "hero/wide/tall" pattern
+  // (which creates large empty cells when there are only a handful of items)
+  // and render a tight uniform grid instead.
+  const isFiltered = kind !== "all";
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[150px] gap-3">
-        {Array.from({ length: 10 }).map((_, i) => (
+      <div className={isFiltered
+        ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
+        : "grid grid-cols-2 md:grid-cols-4 auto-rows-[150px] gap-3 grid-flow-dense"}>
+        {Array.from({ length: 8 }).map((_, i) => (
           <div
             key={i}
-            className={`${SIZE_PATTERN[i % SIZE_PATTERN.length]} rounded-2xl bg-muted animate-pulse`}
+            className={cn(
+              "rounded-2xl bg-muted animate-pulse",
+              isFiltered ? "aspect-square" : SIZE_PATTERN[i % SIZE_PATTERN.length],
+            )}
           />
         ))}
       </div>
@@ -278,8 +297,24 @@ const ConversationsMosaic = ({
     );
   }
 
+  if (isFiltered) {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        {tiles.map((tile, i) => (
+          <MosaicTileCard
+            key={tile.id}
+            tile={tile}
+            sizeClass="aspect-square"
+            index={i}
+            onClick={() => navigate(tile.href)}
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[150px] gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[150px] gap-3 grid-flow-dense">
       {tiles.map((tile, i) => {
         const size = SIZE_PATTERN[i % SIZE_PATTERN.length];
         return (

@@ -48,6 +48,9 @@ const VIEW_OPTIONS: { value: DiscoverView; label: string; icon: any; kind: Mosai
   { value: "works", label: "Works", icon: FileText, kind: "drop" },
 ];
 
+const EVENT_CATEGORIES = ["music", "art", "talk", "workshop", "screening", "exhibition", "meetup", "other"];
+const SPACE_CATEGORIES = ["studio", "gallery", "venue", "rehearsal", "co-working", "outdoor"];
+
 const getGreeting = () => {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
@@ -71,10 +74,20 @@ const DiscoverPage = () => {
   const setView = (v: DiscoverView) => {
     if (v === "all") searchParams.delete("view");
     else searchParams.set("view", v);
+    searchParams.delete("cat");
     setSearchParams(searchParams, { replace: true });
   };
   const activeOption = VIEW_OPTIONS.find((o) => o.value === view) ?? VIEW_OPTIONS[0];
   const ActiveIcon = activeOption.icon;
+
+  const category = searchParams.get("cat");
+  const setCategory = (c: string | null) => {
+    if (!c) searchParams.delete("cat");
+    else searchParams.set("cat", c);
+    setSearchParams(searchParams, { replace: true });
+  };
+  const categoryList =
+    view === "events" ? EVENT_CATEGORIES : view === "spaces" ? SPACE_CATEGORIES : null;
 
   useEffect(() => {
     if (view !== "all") {
@@ -278,7 +291,44 @@ const DiscoverPage = () => {
           </div>
         </div>
 
-        <ConversationsMosaic kind={activeOption.kind} />
+        {categoryList && (
+          <div className="space-y-2">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
+              Browse by category
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setCategory(null)}
+                className={cn(
+                  "rounded-full border px-3 py-1.5 text-xs font-medium capitalize transition-colors",
+                  !category
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border bg-card text-foreground hover:bg-muted/60",
+                )}
+              >
+                All
+              </button>
+              {categoryList.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCategory(category === c ? null : c)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium capitalize transition-colors",
+                    category === c
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border bg-card text-foreground hover:bg-muted/60",
+                  )}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <ConversationsMosaic kind={activeOption.kind} category={category} />
       </section>
 
       {/* ─── Coins moving today ─────────────────────────────────────── */}
