@@ -306,6 +306,40 @@ const ListingDetailPage = () => {
     : null;
   const myReview = reviews?.find((r: any) => r.reviewer_id === user?.id);
 
+  // Owner-only: inquiries that have come in for this listing.
+  // Surfaces a real "pool of interested people" right on the listing page so
+  // owners don't have to bounce to Conversations to see who reached out.
+  const isOwnerLazy = listing && listing.user_id === user?.id;
+  const { data: inquiries } = useQuery({
+    queryKey: ["listing-inquiries", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("listing_inquiries")
+        .select("id, sender_id, message, status, created_at")
+        .eq("listing_id", id!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!id && !!isOwnerLazy,
+  });
+
+  const inquirerIds = [...new Set((inquiries ?? []).map((i: any) => i.sender_id))];
+  const { data: inquirerProfiles } = useQuery({
+    queryKey: ["inquirer-profiles", inquirerIds],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, avatar_url, username")
+        .in("user_id", inquirerIds);
+      if (error) throw error;
+      return data;
+    },
+    enabled: inquirerIds.length > 0,
+  });
+  const inquirersMap = new Map((inquirerProfiles ?? []).map((p: any) => [p.user_id, p]));
+
+
   const submitReview = useMutation({
     mutationFn: async () => {
       if (!user || !listing) throw new Error("Missing data");
