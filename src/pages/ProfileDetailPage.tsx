@@ -872,7 +872,7 @@ const ProfileDetailPage = () => {
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {flowPosts.map((post: any) => (
-                    <div key={post.id} onClick={() => navigate("/flow")}
+                    <div key={post.id} onClick={() => navigate(`/flow?item=${post.id}`)}
                       className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer">
                       <div className="relative aspect-square overflow-hidden bg-muted">
                         <FlowThumbnail
