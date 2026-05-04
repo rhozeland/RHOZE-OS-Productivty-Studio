@@ -2,11 +2,22 @@
  * CreatorDropsCatalog — replaces the old single "artist token" card on the
  * profile Support tab. Lists every coin (drop) the creator has launched,
  * each card linking to the dedicated `/coin/:ticker` page.
+ *
+ * For the profile owner (when verified) we also surface a "Launch a drop"
+ * CTA — both as a primary button on the empty state and as a secondary
+ * action above the grid when drops already exist. Standalone drops are
+ * supported (no event/space binding required).
  */
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Coins } from "lucide-react";
+import { Coins, Sparkles, BadgeCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import DropCoinCard, { DropCoin } from "@/components/launchpad/DropCoinCard";
+import LaunchCoinDialog from "@/components/launchpad/LaunchCoinDialog";
+import { useAuth } from "@/contexts/AuthContext";
+import { useArtistVerification } from "@/hooks/useArtistVerification";
 
 interface Props {
   creatorId: string;
@@ -14,7 +25,12 @@ interface Props {
 }
 
 const CreatorDropsCatalog = ({ creatorId, isOwnProfile }: Props) => {
-  const { data: drops, isLoading } = useQuery({
+  const { user } = useAuth();
+  const { data: verif } = useArtistVerification(isOwnProfile ? user?.id : null);
+  const isVerified = verif?.verified ?? false;
+  const [open, setOpen] = useState(false);
+
+  const { data: drops, isLoading, refetch } = useQuery({
     queryKey: ["creator-drops", creatorId],
     queryFn: async () => {
       const { data } = await supabase
@@ -33,27 +49,63 @@ const CreatorDropsCatalog = ({ creatorId, isOwnProfile }: Props) => {
     return <div className="rounded-2xl bg-card/60 border border-border/50 p-6 animate-pulse h-32" />;
   }
 
+  const launchDialog = (
+    <LaunchCoinDialog
+      open={open}
+      onOpenChange={setOpen}
+      onLaunched={() => refetch()}
+    />
+  );
+
   if (!drops || drops.length === 0) {
     return (
-      <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-6 text-center space-y-2">
-        <div className="mx-auto h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
-          <Coins className="h-5 w-5 text-emerald-500" />
+      <>
+        <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-6 text-center space-y-3">
+          <div className="mx-auto h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
+            <Coins className="h-5 w-5 text-emerald-500" />
+          </div>
+          <div>
+            <h3 className="font-display text-base font-semibold text-foreground">No drops yet</h3>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto mt-1">
+              {isOwnProfile
+                ? "Launch a coin so fans can back you and share in the upside."
+                : "This creator hasn't dropped any coins yet."}
+            </p>
+          </div>
+          {isOwnProfile && (
+            isVerified ? (
+              <Button size="sm" onClick={() => setOpen(true)} className="gap-2">
+                <Sparkles className="h-4 w-4" /> Launch a drop
+              </Button>
+            ) : (
+              <Button asChild size="sm" variant="outline" className="gap-2">
+                <Link to="/settings/verification">
+                  <BadgeCheck className="h-4 w-4" /> Verify to launch a drop
+                </Link>
+              </Button>
+            )
+          )}
         </div>
-        <h3 className="font-display text-base font-semibold text-foreground">No drops yet</h3>
-        <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-          {isOwnProfile
-            ? "Launch a coin from one of your events or spaces to start raising support."
-            : "This creator hasn't dropped any coins yet."}
-        </p>
-      </div>
+        {isOwnProfile && isVerified && launchDialog}
+      </>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {drops.map((c) => (
-        <DropCoinCard key={c.id} coin={c as DropCoin} />
-      ))}
+    <div className="space-y-3">
+      {isOwnProfile && isVerified && (
+        <div className="flex justify-end">
+          <Button size="sm" variant="outline" onClick={() => setOpen(true)} className="gap-2">
+            <Sparkles className="h-4 w-4" /> Launch another drop
+          </Button>
+        </div>
+      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {drops.map((c) => (
+          <DropCoinCard key={c.id} coin={c as DropCoin} />
+        ))}
+      </div>
+      {isOwnProfile && isVerified && launchDialog}
     </div>
   );
 };
