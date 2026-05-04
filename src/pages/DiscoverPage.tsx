@@ -15,7 +15,7 @@
  * lifted from HubPage and Fresh Works is removed (the mosaic IS the
  * fresh feed now — drops, works, offerings, events, spaces all in one).
  */
-import { Suspense, lazy, useState, useEffect } from "react";
+import { Suspense, lazy, useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -34,11 +34,36 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { RegionMarket } from "@/lib/regions";
-import { ArrowRight, Coins, Loader2, Sparkles, CalendarDays, Flame, MapPin, FileText, ChevronDown, Check } from "lucide-react";
+import {
+  ArrowRight,
+  Coins,
+  Loader2,
+  Sparkles,
+  CalendarDays,
+  Flame,
+  MapPin,
+  FileText,
+  ChevronDown,
+  Check,
+  Music2,
+  Palette,
+  MessageSquare,
+  Briefcase,
+  Clapperboard,
+  Users,
+  Compass,
+  Building2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
 
 const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
+
+const normalizeCategory = (value?: string | null) =>
+  (value ?? "")
+    .toLowerCase()
+    .trim()
+    .replace(/[\s_]+/g, "-");
 
 type DiscoverView = "all" | "events" | "spaces" | "works";
 const VIEW_OPTIONS: { value: DiscoverView; label: string; icon: any; kind: MosaicKindFilter }[] = [
@@ -48,8 +73,97 @@ const VIEW_OPTIONS: { value: DiscoverView; label: string; icon: any; kind: Mosai
   { value: "works", label: "Works", icon: FileText, kind: "drop" },
 ];
 
-const EVENT_CATEGORIES = ["music", "art", "talk", "workshop", "screening", "exhibition", "meetup", "other"];
-const SPACE_CATEGORIES = ["studio", "gallery", "venue", "rehearsal", "co-working", "outdoor"];
+const EVENT_CATEGORY_DEFS = [
+  { slug: "music", label: "Music", icon: Music2, accent: "hsl(var(--orange))" },
+  { slug: "art", label: "Art", icon: Palette, accent: "hsl(var(--pink))" },
+  { slug: "talk", label: "Talk", icon: MessageSquare, accent: "hsl(var(--blue))" },
+  { slug: "workshop", label: "Workshop", icon: Briefcase, accent: "hsl(var(--warm))" },
+  { slug: "screening", label: "Screening", icon: Clapperboard, accent: "hsl(var(--foreground))" },
+  { slug: "exhibition", label: "Exhibition", icon: Sparkles, accent: "hsl(var(--teal))" },
+  { slug: "meetup", label: "Meetup", icon: Users, accent: "hsl(var(--accent))" },
+  { slug: "other", label: "Other", icon: Compass, accent: "hsl(var(--muted-foreground))" },
+] as const;
+
+const SPACE_CATEGORY_DEFS = [
+  { slug: "studio", label: "Studio", icon: Building2, accent: "hsl(var(--blue))" },
+  { slug: "gallery", label: "Gallery", icon: Palette, accent: "hsl(var(--pink))" },
+  { slug: "venue", label: "Venue", icon: CalendarDays, accent: "hsl(var(--orange))" },
+  { slug: "rehearsal", label: "Rehearsal", icon: Music2, accent: "hsl(var(--warm))" },
+  { slug: "co-working", label: "Co-working", icon: Briefcase, accent: "hsl(var(--teal))" },
+  { slug: "outdoor", label: "Outdoor", icon: MapPin, accent: "hsl(var(--foreground))" },
+] as const;
+
+type StreamCategoryDef = (typeof EVENT_CATEGORY_DEFS)[number] | (typeof SPACE_CATEGORY_DEFS)[number];
+
+const StreamCategorySection = ({
+  defs,
+  noun,
+  activeCategory,
+  counts,
+  onSelect,
+}: {
+  defs: readonly StreamCategoryDef[];
+  noun: "event" | "space";
+  activeCategory: string | null;
+  counts: Record<string, number>;
+  onSelect: (category: string | null) => void;
+}) => (
+  <section className="rounded-[1.75rem] border border-border/70 bg-card/65 p-5 sm:p-6 space-y-4">
+    <div className="flex items-end justify-between gap-3 flex-wrap">
+      <div>
+        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 mb-1">
+          Browse by category
+        </p>
+        <h3 className="text-2xl font-semibold tracking-tight text-foreground">
+          Explore {noun === "event" ? "events" : "spaces"} by mood
+        </h3>
+      </div>
+      {activeCategory && (
+        <button
+          type="button"
+          onClick={() => onSelect(null)}
+          className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Show all {noun}s
+        </button>
+      )}
+    </div>
+
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {defs.map((def) => {
+        const Icon = def.icon;
+        const active = activeCategory === def.slug;
+        const count = counts[def.slug] ?? 0;
+
+        return (
+          <button
+            key={def.slug}
+            type="button"
+            onClick={() => onSelect(active ? null : def.slug)}
+            className={cn(
+              "group flex items-center gap-4 rounded-[1.4rem] border bg-background/70 p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:bg-background",
+              active && "border-foreground/40 bg-background shadow-sm",
+            )}
+          >
+            <div
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border bg-secondary/60"
+              style={{ borderColor: active ? def.accent : "hsl(var(--border))" }}
+            >
+              <Icon className="h-5 w-5" style={{ color: def.accent }} />
+            </div>
+
+            <div className="min-w-0">
+              <p className="text-base font-semibold text-foreground truncate">{def.label}</p>
+              <p className="text-sm text-muted-foreground">
+                {count.toLocaleString()} {noun}{count === 1 ? "" : "s"}
+              </p>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  </section>
+);
 
 const getGreeting = () => {
   const h = new Date().getHours();
@@ -81,13 +195,18 @@ const DiscoverPage = () => {
   const ActiveIcon = activeOption.icon;
 
   const category = searchParams.get("cat");
+  const normalizedCategory = category ? normalizeCategory(category) : null;
   const setCategory = (c: string | null) => {
     if (!c) searchParams.delete("cat");
-    else searchParams.set("cat", c);
+    else searchParams.set("cat", normalizeCategory(c));
     setSearchParams(searchParams, { replace: true });
   };
-  const categoryList =
-    view === "events" ? EVENT_CATEGORIES : view === "spaces" ? SPACE_CATEGORIES : null;
+  const categoryDefs =
+    view === "events"
+      ? EVENT_CATEGORY_DEFS
+      : view === "spaces"
+        ? SPACE_CATEGORY_DEFS
+        : null;
 
   useEffect(() => {
     if (view !== "all") {
@@ -133,6 +252,47 @@ const DiscoverPage = () => {
       return data ?? [];
     },
   });
+
+  const { data: eventCategoryRows = [] } = useQuery({
+    queryKey: ["discover-event-category-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("events")
+        .select("category")
+        .eq("status", "published")
+        .gte("starts_at", new Date().toISOString())
+        .limit(250);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: view === "events",
+    staleTime: 30_000,
+  });
+
+  const { data: spaceCategoryRows = [] } = useQuery({
+    queryKey: ["discover-space-category-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("studios")
+        .select("category")
+        .eq("is_active", true)
+        .limit(250);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: view === "spaces",
+    staleTime: 30_000,
+  });
+
+  const categoryCounts = useMemo(() => {
+    const rows = view === "events" ? eventCategoryRows : view === "spaces" ? spaceCategoryRows : [];
+    return rows.reduce<Record<string, number>>((acc, row: { category?: string | null }) => {
+      const key = normalizeCategory(row.category);
+      if (!key) return acc;
+      acc[key] = (acc[key] ?? 0) + 1;
+      return acc;
+    }, {});
+  }, [eventCategoryRows, spaceCategoryRows, view]);
 
   return (
     <div className="max-w-6xl mx-auto pb-20 space-y-6">
@@ -291,44 +451,17 @@ const DiscoverPage = () => {
           </div>
         </div>
 
-        {categoryList && (
-          <div className="space-y-2">
-            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
-              Browse by category
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setCategory(null)}
-                className={cn(
-                  "rounded-full border px-3 py-1.5 text-xs font-medium capitalize transition-colors",
-                  !category
-                    ? "border-foreground bg-foreground text-background"
-                    : "border-border bg-card text-foreground hover:bg-muted/60",
-                )}
-              >
-                All
-              </button>
-              {categoryList.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setCategory(category === c ? null : c)}
-                  className={cn(
-                    "rounded-full border px-3 py-1.5 text-xs font-medium capitalize transition-colors",
-                    category === c
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border bg-card text-foreground hover:bg-muted/60",
-                  )}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
+        {categoryDefs && (
+          <StreamCategorySection
+            defs={categoryDefs}
+            noun={view === "events" ? "event" : "space"}
+            activeCategory={normalizedCategory}
+            counts={categoryCounts}
+            onSelect={setCategory}
+          />
         )}
 
-        <ConversationsMosaic kind={activeOption.kind} category={category} />
+        <ConversationsMosaic kind={activeOption.kind} category={normalizedCategory} />
       </section>
 
       {/* ─── Coins moving today ─────────────────────────────────────── */}

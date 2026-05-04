@@ -135,6 +135,12 @@ const getCategoryVisual = (cat?: string | null) =>
     label: cat ?? "Offering",
   };
 
+const normalizeCategory = (value?: string | null) =>
+  (value ?? "")
+    .toLowerCase()
+    .trim()
+    .replace(/[\s_]+/g, "-");
+
 
 // Deterministic shuffle (Mulberry32 seeded by length) so order feels mixed
 // but doesn't dance on every render.
@@ -189,7 +195,7 @@ const ConversationsMosaic = ({
 
       const spaces = supabase
         .from("studios")
-        .select("id, name, cover_image_url, city, country, description")
+        .select("id, name, cover_image_url, city, country, description, category")
         .eq("is_active", true)
         .order("created_at", { ascending: false })
         .limit(6);
@@ -237,6 +243,7 @@ const ConversationsMosaic = ({
           kind: "space",
           title: s.name,
           description: s.description,
+          category: s.category,
           cover: s.cover_image_url,
           href: `/studios/${s.id}`,
           subtitle: [s.city, s.country].filter(Boolean).join(", ") || null,
@@ -253,8 +260,8 @@ const ConversationsMosaic = ({
   const tiles = useMemo(() => {
     let filtered = kind === "all" ? allTiles : allTiles.filter((t) => t.kind === kind);
     if (category && kind !== "all") {
-      const cat = category.toLowerCase();
-      filtered = filtered.filter((t) => (t.category ?? "").toLowerCase() === cat);
+      const cat = normalizeCategory(category);
+      filtered = filtered.filter((t) => normalizeCategory(t.category) === cat);
     }
     return filtered.slice(0, 24);
   }, [allTiles, kind, category]);
