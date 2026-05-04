@@ -34,11 +34,36 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { RegionMarket } from "@/lib/regions";
-import { ArrowRight, Coins, Loader2, Sparkles, CalendarDays, Flame, MapPin, FileText, ChevronDown, Check } from "lucide-react";
+import {
+  ArrowRight,
+  Coins,
+  Loader2,
+  Sparkles,
+  CalendarDays,
+  Flame,
+  MapPin,
+  FileText,
+  ChevronDown,
+  Check,
+  Music2,
+  Palette,
+  MessageSquare,
+  Briefcase,
+  Clapperboard,
+  Users,
+  Compass,
+  Building2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
 
 const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
+
+const normalizeCategory = (value?: string | null) =>
+  (value ?? "")
+    .toLowerCase()
+    .trim()
+    .replace(/[\s_]+/g, "-");
 
 type DiscoverView = "all" | "events" | "spaces" | "works";
 const VIEW_OPTIONS: { value: DiscoverView; label: string; icon: any; kind: MosaicKindFilter }[] = [
@@ -48,8 +73,97 @@ const VIEW_OPTIONS: { value: DiscoverView; label: string; icon: any; kind: Mosai
   { value: "works", label: "Works", icon: FileText, kind: "drop" },
 ];
 
-const EVENT_CATEGORIES = ["music", "art", "talk", "workshop", "screening", "exhibition", "meetup", "other"];
-const SPACE_CATEGORIES = ["studio", "gallery", "venue", "rehearsal", "co-working", "outdoor"];
+const EVENT_CATEGORY_DEFS = [
+  { slug: "music", label: "Music", icon: Music2, accent: "hsl(var(--orange))" },
+  { slug: "art", label: "Art", icon: Palette, accent: "hsl(var(--pink))" },
+  { slug: "talk", label: "Talk", icon: MessageSquare, accent: "hsl(var(--blue))" },
+  { slug: "workshop", label: "Workshop", icon: Briefcase, accent: "hsl(var(--warm))" },
+  { slug: "screening", label: "Screening", icon: Clapperboard, accent: "hsl(var(--foreground))" },
+  { slug: "exhibition", label: "Exhibition", icon: Sparkles, accent: "hsl(var(--teal))" },
+  { slug: "meetup", label: "Meetup", icon: Users, accent: "hsl(var(--accent))" },
+  { slug: "other", label: "Other", icon: Compass, accent: "hsl(var(--muted-foreground))" },
+] as const;
+
+const SPACE_CATEGORY_DEFS = [
+  { slug: "studio", label: "Studio", icon: Building2, accent: "hsl(var(--blue))" },
+  { slug: "gallery", label: "Gallery", icon: Palette, accent: "hsl(var(--pink))" },
+  { slug: "venue", label: "Venue", icon: CalendarDays, accent: "hsl(var(--orange))" },
+  { slug: "rehearsal", label: "Rehearsal", icon: Music2, accent: "hsl(var(--warm))" },
+  { slug: "co-working", label: "Co-working", icon: Briefcase, accent: "hsl(var(--teal))" },
+  { slug: "outdoor", label: "Outdoor", icon: MapPin, accent: "hsl(var(--foreground))" },
+] as const;
+
+type StreamCategoryDef = (typeof EVENT_CATEGORY_DEFS)[number] | (typeof SPACE_CATEGORY_DEFS)[number];
+
+const StreamCategorySection = ({
+  defs,
+  noun,
+  activeCategory,
+  counts,
+  onSelect,
+}: {
+  defs: readonly StreamCategoryDef[];
+  noun: "event" | "space";
+  activeCategory: string | null;
+  counts: Record<string, number>;
+  onSelect: (category: string | null) => void;
+}) => (
+  <section className="rounded-[1.75rem] border border-border/70 bg-card/65 p-5 sm:p-6 space-y-4">
+    <div className="flex items-end justify-between gap-3 flex-wrap">
+      <div>
+        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 mb-1">
+          Browse by category
+        </p>
+        <h3 className="text-2xl font-semibold tracking-tight text-foreground">
+          Explore {noun === "event" ? "events" : "spaces"} by mood
+        </h3>
+      </div>
+      {activeCategory && (
+        <button
+          type="button"
+          onClick={() => onSelect(null)}
+          className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Show all {noun}s
+        </button>
+      )}
+    </div>
+
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {defs.map((def) => {
+        const Icon = def.icon;
+        const active = activeCategory === def.slug;
+        const count = counts[def.slug] ?? 0;
+
+        return (
+          <button
+            key={def.slug}
+            type="button"
+            onClick={() => onSelect(active ? null : def.slug)}
+            className={cn(
+              "group flex items-center gap-4 rounded-[1.4rem] border bg-background/70 p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:bg-background",
+              active && "border-foreground/40 bg-background shadow-sm",
+            )}
+          >
+            <div
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border bg-secondary/60"
+              style={{ borderColor: active ? def.accent : "hsl(var(--border))" }}
+            >
+              <Icon className="h-5 w-5" style={{ color: def.accent }} />
+            </div>
+
+            <div className="min-w-0">
+              <p className="text-base font-semibold text-foreground truncate">{def.label}</p>
+              <p className="text-sm text-muted-foreground">
+                {count.toLocaleString()} {noun}{count === 1 ? "" : "s"}
+              </p>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  </section>
+);
 
 const getGreeting = () => {
   const h = new Date().getHours();
