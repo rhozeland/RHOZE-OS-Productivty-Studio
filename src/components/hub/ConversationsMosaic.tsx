@@ -204,7 +204,7 @@ const ConversationsMosaic = ({
           category: d.category,
           fileUrl: d.file_url,
           linkUrl: d.link_url,
-          href: `/flow`,
+          href: `/flow?item=${d.id}`,
           meta: d.category,
           verifiedSignature: d.solana_signature ?? null,
           createdAt: d.created_at,
