@@ -329,13 +329,9 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="text-xs text-muted-foreground">$RHOZE to spend</label>
-              <button
-                type="button"
-                onClick={() => setAmount(String(rhozeBalance))}
-                className="text-[11px] text-primary hover:underline"
-              >
-                Max
-              </button>
+              <span className="text-[10px] text-muted-foreground font-mono">
+                {rhozeBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} avail
+              </span>
             </div>
             <Input
               type="number"
@@ -344,6 +340,11 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="100"
+            />
+            <PercentRow
+              onPick={(pct) =>
+                setAmount(String(+(rhozeBalance * pct).toFixed(4)))
+              }
             />
           </div>
           <div className="flex justify-center"><ArrowDown className="h-4 w-4 text-muted-foreground" /></div>
@@ -355,13 +356,9 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
         <TabsContent value="sell" className="space-y-3 pt-3">
           <div className="flex justify-between items-center">
             <label className="text-xs text-muted-foreground">${ticker} to sell</label>
-            <button
-              type="button"
-              onClick={() => setAmount(String(holdings))}
-              className="text-[11px] text-primary hover:underline"
-            >
-              Max
-            </button>
+            <span className="text-[10px] text-muted-foreground font-mono">
+              {holdings.toLocaleString(undefined, { maximumFractionDigits: 2 })} held
+            </span>
           </div>
           <Input
             type="number"
@@ -369,6 +366,15 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="1000"
+          />
+          <PercentRow
+            onPick={(pct) =>
+              setAmount(
+                pct === 1
+                  ? String(holdings)
+                  : String(+(holdings * pct).toFixed(4))
+              )
+            }
           />
           <div className="flex justify-center"><ArrowDown className="h-4 w-4 text-muted-foreground" /></div>
           <div className="rounded-md bg-muted/40 p-3 text-sm font-mono text-center min-h-[2.5rem] flex items-center justify-center">
