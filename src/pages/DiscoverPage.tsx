@@ -291,7 +291,44 @@ const DiscoverPage = () => {
           </div>
         </div>
 
-        <ConversationsMosaic kind={activeOption.kind} />
+        {categoryList && (
+          <div className="space-y-2">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
+              Browse by category
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setCategory(null)}
+                className={cn(
+                  "rounded-full border px-3 py-1.5 text-xs font-medium capitalize transition-colors",
+                  !category
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border bg-card text-foreground hover:bg-muted/60",
+                )}
+              >
+                All
+              </button>
+              {categoryList.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCategory(category === c ? null : c)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium capitalize transition-colors",
+                    category === c
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border bg-card text-foreground hover:bg-muted/60",
+                  )}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <ConversationsMosaic kind={activeOption.kind} category={category} />
       </section>
 
       {/* ─── Coins moving today ─────────────────────────────────────── */}
