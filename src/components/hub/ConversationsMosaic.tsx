@@ -222,6 +222,7 @@ const ConversationsMosaic = ({
           kind: "event",
           title: e.title,
           cover: e.cover_url,
+          category: e.category,
           href: `/spaces/events/${e.id}`,
           meta: format(new Date(e.starts_at), "EEE, MMM d · h:mm a"),
           subtitle: e.is_online ? "Online" : e.venue_name,
