@@ -626,10 +626,10 @@ const EventDetailPage = () => {
       </div>
 
       {checkoutTier && (
-        <TicketCheckoutDialog
+        <EventCheckoutSheet
           open={!!checkoutTier}
           onOpenChange={(o) => !o && setCheckoutTier(null)}
-          event={{ id: ev.id, title: ev.title, host_id: ev.host_id, currency_code: (ev as any).currency_code }}
+          event={{ id: ev.id, title: ev.title, host_id: ev.host_id, currency_code: (ev as any).currency_code, cover_url: ev.cover_url, starts_at: ev.starts_at, venue_name: ev.venue_name }}
           tier={checkoutTier}
           onIssued={() => {
             qc.invalidateQueries({ queryKey: ["event-my-ticket", id] });
