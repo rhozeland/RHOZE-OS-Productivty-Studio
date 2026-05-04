@@ -804,6 +804,27 @@ const FlowModePage = () => {
   });
   const currentItem = allItems.length > 0 ? allItems[currentIndex % allItems.length] : null;
 
+  // Deep-link: when navigated with ?item=<flow_item_id>, jump the swipe
+  // cursor to that card as soon as the feed loads. Consumed once so user
+  // swipes after arrival aren't reverted.
+  const consumedItemParamRef = useRef(false);
+  useEffect(() => {
+    if (consumedItemParamRef.current) return;
+    const targetId = searchParams.get("item");
+    if (!targetId) return;
+    if (allItems.length === 0) return;
+    const idx = allItems.findIndex((i: any) => i.id === targetId);
+    if (idx >= 0) {
+      setCurrentIndex(idx);
+      consumedItemParamRef.current = true;
+    } else if (feedScope !== "all") {
+      // Item not in current preferred slice — broaden to All so the deep
+      // link always lands on the right card instead of a random one.
+      setFeedScope("all");
+      setSelectedCategories(CATEGORIES);
+    }
+  }, [allItems, searchParams, feedScope]);
+
   // Batched coin lookup keyed by uploader (creator_id). Coins are now
   // profile-bound, so the "$TICKER → speculate" pill on a Flow card means
   // "the artist behind this post has a tradeable profile coin".

@@ -306,6 +306,40 @@ const ListingDetailPage = () => {
     : null;
   const myReview = reviews?.find((r: any) => r.reviewer_id === user?.id);
 
+  // Owner-only: inquiries that have come in for this listing.
+  // Surfaces a real "pool of interested people" right on the listing page so
+  // owners don't have to bounce to Conversations to see who reached out.
+  const isOwnerLazy = listing && listing.user_id === user?.id;
+  const { data: inquiries } = useQuery({
+    queryKey: ["listing-inquiries", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("listing_inquiries")
+        .select("id, sender_id, message, status, created_at")
+        .eq("listing_id", id!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!id && !!isOwnerLazy,
+  });
+
+  const inquirerIds = [...new Set((inquiries ?? []).map((i: any) => i.sender_id))];
+  const { data: inquirerProfiles } = useQuery({
+    queryKey: ["inquirer-profiles", inquirerIds],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, avatar_url, username")
+        .in("user_id", inquirerIds);
+      if (error) throw error;
+      return data;
+    },
+    enabled: inquirerIds.length > 0,
+  });
+  const inquirersMap = new Map((inquirerProfiles ?? []).map((p: any) => [p.user_id, p]));
+
+
   const submitReview = useMutation({
     mutationFn: async () => {
       if (!user || !listing) throw new Error("Missing data");
@@ -411,8 +445,13 @@ const ListingDetailPage = () => {
         <ArrowLeft className="h-4 w-4" /> {isOwner ? "Back to Conversations" : "Back"}
       </Button>
 
-      <div className="grid gap-6 lg:grid-cols-5">
-        {/* Left: Media */}
+      <div className={
+        (images.length > 0 || audioFiles.length > 0 || videoFiles.length > 0 || pdfFiles.length > 0 || listing.cover_url || listing.description)
+          ? "grid gap-6 lg:grid-cols-5"
+          : "max-w-2xl mx-auto"
+      }>
+        {/* Left: Media — only render the column when there's actually media */}
+        {(images.length > 0 || audioFiles.length > 0 || videoFiles.length > 0 || pdfFiles.length > 0 || listing.cover_url || listing.description) && (
         <div className="lg:col-span-3 space-y-4">
           {/* Image Gallery */}
           {images.length > 0 ? (
@@ -533,9 +572,14 @@ const ListingDetailPage = () => {
           )}
 
         </div>
+        )}
 
         {/* Right: Info sidebar */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className={
+          (images.length > 0 || audioFiles.length > 0 || videoFiles.length > 0 || pdfFiles.length > 0 || listing.cover_url || listing.description)
+            ? "lg:col-span-2 space-y-4"
+            : "space-y-4"
+        }>
           <div className="surface-card overflow-hidden sticky top-4">
             {/* Type hero band — sets clear context for what this listing IS */}
             <div
@@ -792,6 +836,76 @@ const ListingDetailPage = () => {
                     <p className="text-[11px] text-muted-foreground">
                       Inquiries from interested people land in your Conversations › Inquiries tab.
                     </p>
+                  </div>
+
+                  {/* Interested people pool — surfaces inquiries directly on the listing */}
+                  <div className="rounded-lg border border-border bg-card/40 p-3 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                        <Users className="h-3 w-3" /> Interested
+                        {inquiries && inquiries.length > 0 && (
+                          <span className="ml-1 rounded-full bg-primary/15 text-primary px-1.5 py-0.5 text-[10px]">
+                            {inquiries.length}
+                          </span>
+                        )}
+                      </p>
+                      {inquiries && inquiries.length > 0 && (
+                        <Link
+                          to="/messages?tab=inquiries"
+                          className="text-[11px] text-primary hover:underline"
+                        >
+                          Open all →
+                        </Link>
+                      )}
+                    </div>
+                    {!inquiries || inquiries.length === 0 ? (
+                      <p className="text-[11px] text-muted-foreground py-2">
+                        No inquiries yet. Share your listing to get traction.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {inquiries.slice(0, 5).map((inq: any) => {
+                          const p = inquirersMap.get(inq.sender_id);
+                          return (
+                            <Link
+                              key={inq.id}
+                              to="/messages?tab=inquiries"
+                              className="flex items-start gap-2.5 rounded-md p-2 -mx-1 hover:bg-muted/50 transition-colors"
+                            >
+                              {p?.avatar_url ? (
+                                <img
+                                  src={p.avatar_url}
+                                  alt={p.display_name || ""}
+                                  className="h-8 w-8 rounded-full object-cover shrink-0"
+                                />
+                              ) : (
+                                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[11px] font-bold shrink-0">
+                                  {(p?.display_name || "?")[0].toUpperCase()}
+                                </div>
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="text-xs font-semibold text-foreground truncate">
+                                    {p?.display_name || "Someone"}
+                                  </p>
+                                  <span className="text-[10px] text-muted-foreground shrink-0">
+                                    {format(new Date(inq.created_at), "MMM d")}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-muted-foreground line-clamp-2 leading-snug mt-0.5">
+                                  {inq.message || "Expressed interest"}
+                                </p>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                        {inquiries.length > 5 && (
+                          <p className="text-[10px] text-muted-foreground text-center pt-1">
+                            +{inquiries.length - 5} more in Conversations
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
