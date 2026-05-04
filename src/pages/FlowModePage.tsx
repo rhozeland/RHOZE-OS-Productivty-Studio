@@ -1490,6 +1490,44 @@ const FlowModePage = () => {
                       profilesLoading={flowItemsFetching}
                       coin={(currentItem as any).user_id ? coinByCreator?.get((currentItem as any).user_id) ?? null : null}
                     />
+                    {/* Heart-burst overlay — celebratory feedback when the
+                        user likes the visible card. Re-keys per-tap so the
+                        animation replays on rapid taps. Pointer-events off
+                        so it never blocks subsequent gestures. */}
+                    <AnimatePresence>
+                      {heartBurst && heartBurst.itemId === currentItem.id && (
+                        <motion.div
+                          key={heartBurst.key}
+                          className="pointer-events-none absolute inset-0 flex items-center justify-center"
+                          initial={{ opacity: 0, scale: 0.4 }}
+                          animate={{ opacity: [0, 1, 1, 0], scale: [0.4, 1.3, 1.15, 1.4] }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.9, times: [0, 0.2, 0.6, 1], ease: "easeOut" }}
+                          onAnimationComplete={() => setHeartBurst(null)}
+                        >
+                          <svg viewBox="0 0 24 24" fill="currentColor" className="h-32 w-32 text-rose-500 drop-shadow-[0_8px_30px_rgba(244,63,94,0.6)]">
+                            <path d="M12 21s-7-4.35-9.5-9.05C.84 8.36 2.4 4.5 6.05 4.5c2.05 0 3.49 1.05 4.45 2.5C11.46 5.55 12.9 4.5 14.95 4.5c3.65 0 5.21 3.86 3.55 7.45C19 16.65 12 21 12 21z"/>
+                          </svg>
+                          {/* Floating "+1" sparkles */}
+                          {[0, 1, 2, 3, 4].map((i) => (
+                            <motion.span
+                              key={i}
+                              className="absolute text-rose-500 font-bold text-sm"
+                              initial={{ opacity: 0, x: 0, y: 0, scale: 0.5 }}
+                              animate={{
+                                opacity: [0, 1, 0],
+                                x: Math.cos((i / 5) * Math.PI * 2) * 80,
+                                y: Math.sin((i / 5) * Math.PI * 2) * 80 - 20,
+                                scale: [0.5, 1, 0.7],
+                              }}
+                              transition={{ duration: 0.8, delay: 0.05 * i, ease: "easeOut" }}
+                            >
+                              ♥
+                            </motion.span>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </motion.div>
                 ) : isFeedRefreshing ? (
                   // Suppress the "Nothing here yet" CTA while a refresh is
