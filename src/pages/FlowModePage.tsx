@@ -489,7 +489,17 @@ const FlowModePage = () => {
   // computed below, after `allItems` is declared. See `engagement` query.
 
   const interact = useMutation({
-    mutationFn: async ({ itemId, action, smartboardId }: { itemId: string; action: string; smartboardId?: string }) => {
+    mutationFn: async ({ itemId, action, smartboardId, unlike }: { itemId: string; action: string; smartboardId?: string; unlike?: boolean }) => {
+      if (action === "like" && unlike) {
+        const { error } = await supabase
+          .from("flow_interactions")
+          .delete()
+          .eq("user_id", user!.id)
+          .eq("flow_item_id", itemId)
+          .eq("action", "like");
+        if (error) throw error;
+        return;
+      }
       const { error } = await supabase.from("flow_interactions").upsert({
         user_id: user!.id,
         flow_item_id: itemId,
@@ -497,6 +507,32 @@ const FlowModePage = () => {
         smartboard_id: smartboardId || null,
       }, { onConflict: "user_id,flow_item_id" });
       if (error) throw error;
+    },
+    onMutate: async ({ itemId, action, unlike }) => {
+      if (action !== "like") return;
+      // Optimistic engagement update so the heart fills and count moves
+      // immediately under the user's thumb.
+      const keys = queryClient.getQueryCache().findAll({ queryKey: ["flow-engagement"] });
+      keys.forEach((q) => {
+        const prev: any = q.state.data;
+        if (!prev) return;
+        const liked = new Set(prev.liked);
+        const likes = new Map(prev.likes);
+        const cur = (likes.get(itemId) as number) ?? 0;
+        if (unlike) {
+          liked.delete(itemId);
+          likes.set(itemId, Math.max(0, cur - 1));
+        } else {
+          liked.add(itemId);
+          likes.set(itemId, cur + 1);
+        }
+        queryClient.setQueryData(q.queryKey, { ...prev, liked, likes });
+      });
+    },
+    onSettled: (_d, _e, vars) => {
+      if (vars?.action === "like") {
+        queryClient.invalidateQueries({ queryKey: ["flow-engagement"] });
+      }
     },
   });
 
