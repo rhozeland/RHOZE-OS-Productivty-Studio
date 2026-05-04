@@ -53,6 +53,22 @@ type TxPhase =
   | { kind: "error"; decoded: DecodedTradeError; signature?: string; logs?: string[] };
 
 const SLIPPAGE_OPTIONS = [0.5, 1, 3] as const;
+const PERCENT_OPTIONS = [0.25, 0.5, 0.75, 1] as const;
+
+const PercentRow = ({ onPick }: { onPick: (pct: number) => void }) => (
+  <div className="grid grid-cols-4 gap-1 mt-2">
+    {PERCENT_OPTIONS.map((p) => (
+      <button
+        key={p}
+        type="button"
+        onClick={() => onPick(p)}
+        className="px-2 py-1 rounded-md border border-border/60 bg-muted/30 hover:bg-muted/60 hover:border-primary/40 text-[11px] font-medium transition-colors"
+      >
+        {p === 1 ? "Max" : `${p * 100}%`}
+      </button>
+    ))}
+  </div>
+);
 
 const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTraded }: Props) => {
   const { user } = useAuth();
@@ -151,7 +167,20 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
     });
     setBusy(false);
     if (error) {
-      toast({ title: "Swap failed", description: error.message, variant: "destructive" });
+      const msg = error.message || "";
+      let friendly = msg;
+      if (/Not enough liquidity left on the curve/i.test(msg)) {
+        friendly = `Curve is nearly full — try a smaller buy. The remaining tokens fund graduation to Raydium.`;
+      } else if (/Not enough \$RHOZE liquidity/i.test(msg)) {
+        friendly = `Not enough $RHOZE in the pool to cover this sell. Try a smaller amount.`;
+      } else if (/Slippage exceeded/i.test(msg)) {
+        friendly = `Price moved too much. Bump slippage to 3% or reduce the amount.`;
+      } else if (/Insufficient \$RHOZE/i.test(msg)) {
+        friendly = `You don't have enough $RHOZE for this buy.`;
+      } else if (/Insufficient/i.test(msg) && /balance/i.test(msg)) {
+        friendly = `You don't hold enough $${ticker} to sell that much.`;
+      }
+      toast({ title: "Swap failed", description: friendly, variant: "destructive" });
       return;
     }
     const result = (data ?? {}) as {
@@ -316,13 +345,9 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="text-xs text-muted-foreground">$RHOZE to spend</label>
-              <button
-                type="button"
-                onClick={() => setAmount(String(rhozeBalance))}
-                className="text-[11px] text-primary hover:underline"
-              >
-                Max
-              </button>
+              <span className="text-[10px] text-muted-foreground font-mono">
+                {rhozeBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} avail
+              </span>
             </div>
             <Input
               type="number"
@@ -331,6 +356,11 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="100"
+            />
+            <PercentRow
+              onPick={(pct) =>
+                setAmount(String(+(rhozeBalance * pct).toFixed(4)))
+              }
             />
           </div>
           <div className="flex justify-center"><ArrowDown className="h-4 w-4 text-muted-foreground" /></div>
@@ -342,13 +372,9 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
         <TabsContent value="sell" className="space-y-3 pt-3">
           <div className="flex justify-between items-center">
             <label className="text-xs text-muted-foreground">${ticker} to sell</label>
-            <button
-              type="button"
-              onClick={() => setAmount(String(holdings))}
-              className="text-[11px] text-primary hover:underline"
-            >
-              Max
-            </button>
+            <span className="text-[10px] text-muted-foreground font-mono">
+              {holdings.toLocaleString(undefined, { maximumFractionDigits: 2 })} held
+            </span>
           </div>
           <Input
             type="number"
@@ -356,6 +382,15 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="1000"
+          />
+          <PercentRow
+            onPick={(pct) =>
+              setAmount(
+                pct === 1
+                  ? String(holdings)
+                  : String(+(holdings * pct).toFixed(4))
+              )
+            }
           />
           <div className="flex justify-center"><ArrowDown className="h-4 w-4 text-muted-foreground" /></div>
           <div className="rounded-md bg-muted/40 p-3 text-sm font-mono text-center min-h-[2.5rem] flex items-center justify-center">
