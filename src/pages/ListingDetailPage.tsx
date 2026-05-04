@@ -445,9 +445,6 @@ const ListingDetailPage = () => {
         <ArrowLeft className="h-4 w-4" /> {isOwner ? "Back to Conversations" : "Back"}
       </Button>
 
-      </Button>
-
-      </div>
       <div className={
         (images.length > 0 || audioFiles.length > 0 || videoFiles.length > 0 || pdfFiles.length > 0 || listing.cover_url || listing.description)
           ? "grid gap-6 lg:grid-cols-5"
