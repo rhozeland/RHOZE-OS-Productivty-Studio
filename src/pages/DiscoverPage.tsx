@@ -74,10 +74,20 @@ const DiscoverPage = () => {
   const setView = (v: DiscoverView) => {
     if (v === "all") searchParams.delete("view");
     else searchParams.set("view", v);
+    searchParams.delete("cat");
     setSearchParams(searchParams, { replace: true });
   };
   const activeOption = VIEW_OPTIONS.find((o) => o.value === view) ?? VIEW_OPTIONS[0];
   const ActiveIcon = activeOption.icon;
+
+  const category = searchParams.get("cat");
+  const setCategory = (c: string | null) => {
+    if (!c) searchParams.delete("cat");
+    else searchParams.set("cat", c);
+    setSearchParams(searchParams, { replace: true });
+  };
+  const categoryList =
+    view === "events" ? EVENT_CATEGORIES : view === "spaces" ? SPACE_CATEGORIES : null;
 
   useEffect(() => {
     if (view !== "all") {
