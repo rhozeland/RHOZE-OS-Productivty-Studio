@@ -1060,7 +1060,7 @@ const FlowModePage = () => {
     // dislike / skip / next: record + advance.
     if (user) interact.mutate({ itemId: targetItem.id, action });
     advanceCard();
-  }, [currentItem, interact, advanceCard, soundEnabled, user]);
+  }, [currentItem, interact, advanceCard, soundEnabled, user, engagement]);
 
   // Lock all swipe gestures while:
   //   • a card is expanded (taps inside the detail view should never
