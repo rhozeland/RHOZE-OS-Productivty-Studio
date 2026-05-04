@@ -53,6 +53,22 @@ type TxPhase =
   | { kind: "error"; decoded: DecodedTradeError; signature?: string; logs?: string[] };
 
 const SLIPPAGE_OPTIONS = [0.5, 1, 3] as const;
+const PERCENT_OPTIONS = [0.25, 0.5, 0.75, 1] as const;
+
+const PercentRow = ({ onPick }: { onPick: (pct: number) => void }) => (
+  <div className="grid grid-cols-4 gap-1 mt-2">
+    {PERCENT_OPTIONS.map((p) => (
+      <button
+        key={p}
+        type="button"
+        onClick={() => onPick(p)}
+        className="px-2 py-1 rounded-md border border-border/60 bg-muted/30 hover:bg-muted/60 hover:border-primary/40 text-[11px] font-medium transition-colors"
+      >
+        {p === 1 ? "Max" : `${p * 100}%`}
+      </button>
+    ))}
+  </div>
+);
 
 const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTraded }: Props) => {
   const { user } = useAuth();
