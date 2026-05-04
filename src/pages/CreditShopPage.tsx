@@ -19,8 +19,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Coins, Sparkles, Check, Wallet, ShoppingBag, Download, Music, Info, Shield,
   Award, Palette, Camera, Video, PenTool, ExternalLink, Star, Heart, Trophy,
-  HelpCircle,
+  HelpCircle, Ticket,
 } from "lucide-react";
+import TicketsTab from "@/components/credits/TicketsTab";
 import { format } from "date-fns";
 import { Link, useSearchParams } from "react-router-dom";
 import CreatorPassCard from "@/components/creators/CreatorPassCard";
@@ -149,6 +150,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
       <Tabs value={activeTab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="pass" className="gap-1.5"><Award className="h-3.5 w-3.5" /> My Pass</TabsTrigger>
+          <TabsTrigger value="tickets" className="gap-1.5"><Ticket className="h-3.5 w-3.5" /> Tickets</TabsTrigger>
           <TabsTrigger value="tiers" className="gap-1.5"><Star className="h-3.5 w-3.5" /> Tiers</TabsTrigger>
           <TabsTrigger value="how" className="gap-1.5"><HelpCircle className="h-3.5 w-3.5" /> How rewards work</TabsTrigger>
           <TabsTrigger value="works" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Verified IP</TabsTrigger>
@@ -160,6 +162,10 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
           <CreatorPassCard />
           <StreakCard />
           <CoinPortfolio />
+        </TabsContent>
+
+        <TabsContent value="tickets" className="mt-4 space-y-4">
+          <TicketsTab userId={user.id} />
         </TabsContent>
 
         {/* ═══════ Tiers (replaces old paid Plans) ═══════ */}
