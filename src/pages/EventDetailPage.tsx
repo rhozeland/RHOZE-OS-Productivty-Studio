@@ -513,33 +513,37 @@ const EventDetailPage = () => {
                         </p>
                       </div>
                     </div>
-                    {myTicket ? (
-                      <Button size="sm" disabled className="h-10 w-full rounded-full text-xs">
-                        Already registered
-                      </Button>
-                    ) : soldOut ? (
-                      <Button size="sm" disabled className="h-10 w-full rounded-full text-xs">
-                        Sold out
-                      </Button>
-                    ) : isFree ? (
-                      <Button
-                        size="sm"
-                        className="h-10 w-full rounded-full text-xs"
-                        disabled={!user || rsvpMutation.isPending}
-                        onClick={() => rsvpMutation.mutate(t.id)}
-                      >
-                        {!user ? "Sign in to RSVP" : "RSVP"}
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        className="h-10 w-full rounded-full text-xs"
-                        disabled={!user}
-                        onClick={() => setCheckoutTier(t)}
-                      >
-                        {!user ? "Sign in to buy" : "Get ticket"}
-                      </Button>
-                    )}
+                    {(() => {
+                      const tk = (t.tier_kind ?? (isFree ? "free_rsvp" : "paid")) as string;
+                      const cta =
+                        tk === "free_rsvp" ? "RSVP" :
+                        tk === "request" ? "Request to join" :
+                        "Get ticket";
+                      if (myTicket) {
+                        const pending = (myTicket as any).status === "pending_approval";
+                        return (
+                          <Button size="sm" disabled className="h-10 w-full rounded-full text-xs">
+                            {pending ? "Request pending" : "Already registered"}
+                          </Button>
+                        );
+                      }
+                      if (soldOut) {
+                        return (
+                          <Button size="sm" disabled className="h-10 w-full rounded-full text-xs">
+                            Sold out
+                          </Button>
+                        );
+                      }
+                      return (
+                        <Button
+                          size="sm"
+                          className="h-10 w-full rounded-full text-xs"
+                          onClick={() => setCheckoutTier(t)}
+                        >
+                          {cta}
+                        </Button>
+                      );
+                    })()}
                   </div>
                 );
               })}
