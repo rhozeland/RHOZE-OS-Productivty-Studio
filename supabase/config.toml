@@ -7,6 +7,8 @@ project_id = "puielauovddatgqvgxdy"
     verify_jwt = true
   [functions.fetch-link-metadata]
     verify_jwt = false
+  [functions.claim-event-ticket]
+    verify_jwt = false
   [functions.send-transactional-email]
     verify_jwt = true
   [functions.preview-transactional-email]
