@@ -159,6 +159,9 @@ const FlowModePage = () => {
     preferred: false,
   });
   const [currentIndex, setCurrentIndex] = useState(0);
+  // Heart-burst overlay (gamified like feedback). Re-keyed each tap so the
+  // animation replays even on rapid double-taps.
+  const [heartBurst, setHeartBurst] = useState<{ key: number; itemId: string } | null>(null);
   const [expandedCard, setExpandedCard] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"swipe" | "browse">("swipe");
@@ -489,7 +492,17 @@ const FlowModePage = () => {
   // computed below, after `allItems` is declared. See `engagement` query.
 
   const interact = useMutation({
-    mutationFn: async ({ itemId, action, smartboardId }: { itemId: string; action: string; smartboardId?: string }) => {
+    mutationFn: async ({ itemId, action, smartboardId, unlike }: { itemId: string; action: string; smartboardId?: string; unlike?: boolean }) => {
+      if (action === "like" && unlike) {
+        const { error } = await supabase
+          .from("flow_interactions")
+          .delete()
+          .eq("user_id", user!.id)
+          .eq("flow_item_id", itemId)
+          .eq("action", "like");
+        if (error) throw error;
+        return;
+      }
       const { error } = await supabase.from("flow_interactions").upsert({
         user_id: user!.id,
         flow_item_id: itemId,
@@ -497,6 +510,32 @@ const FlowModePage = () => {
         smartboard_id: smartboardId || null,
       }, { onConflict: "user_id,flow_item_id" });
       if (error) throw error;
+    },
+    onMutate: async ({ itemId, action, unlike }) => {
+      if (action !== "like") return;
+      // Optimistic engagement update so the heart fills and count moves
+      // immediately under the user's thumb.
+      const keys = queryClient.getQueryCache().findAll({ queryKey: ["flow-engagement"] });
+      keys.forEach((q) => {
+        const prev: any = q.state.data;
+        if (!prev) return;
+        const liked = new Set(prev.liked);
+        const likes = new Map(prev.likes);
+        const cur = (likes.get(itemId) as number) ?? 0;
+        if (unlike) {
+          liked.delete(itemId);
+          likes.set(itemId, Math.max(0, cur - 1));
+        } else {
+          liked.add(itemId);
+          likes.set(itemId, cur + 1);
+        }
+        queryClient.setQueryData(q.queryKey, { ...prev, liked, likes });
+      });
+    },
+    onSettled: (_d, _e, vars) => {
+      if (vars?.action === "like") {
+        queryClient.invalidateQueries({ queryKey: ["flow-engagement"] });
+      }
     },
   });
 
@@ -982,9 +1021,30 @@ const FlowModePage = () => {
       return;
     }
     if (action === "like") {
-      // Like is a non-blocking interaction — record it but don't auto-advance,
-      // so the heart fills under the user's thumb and they can keep reading.
-      if (user) interact.mutate({ itemId: targetItem.id, action });
+      // Toggle: if user already liked, unlike. Otherwise, like + animate +
+      // award engagement reward (capped server-side).
+      if (!user) {
+        toast.message("Sign in to like", { description: "Create an account to react to creators." });
+        return;
+      }
+      // Read current liked state from cache (engagement query).
+      const alreadyLiked = !!engagement?.liked.has(targetItem.id);
+      interact.mutate({ itemId: targetItem.id, action, unlike: alreadyLiked });
+      if (!alreadyLiked) {
+        // Heart-burst overlay + haptic + reward attempt.
+        setHeartBurst({ key: Date.now(), itemId: targetItem.id });
+        if (navigator.vibrate) navigator.vibrate([15, 40, 25]);
+        awardEngagementReward({
+          userId: user.id,
+          action: "like_work",
+          referenceId: targetItem.id,
+          description: "Liked a Flow post",
+        }).then((r) => {
+          if (r.status === "awarded" && r.amount > 0) {
+            toast.success(`+${r.amount} $RHOZE`, { description: "Thanks for the love" });
+          }
+        }).catch(() => {});
+      }
       return;
     }
     if (action === "comment") {
@@ -1000,7 +1060,7 @@ const FlowModePage = () => {
     // dislike / skip / next: record + advance.
     if (user) interact.mutate({ itemId: targetItem.id, action });
     advanceCard();
-  }, [currentItem, interact, advanceCard, soundEnabled, user]);
+  }, [currentItem, interact, advanceCard, soundEnabled, user, engagement]);
 
   // Lock all swipe gestures while:
   //   • a card is expanded (taps inside the detail view should never
@@ -1399,7 +1459,7 @@ const FlowModePage = () => {
                   <motion.div
                     key={`${currentItem.id}-${currentIndex}`}
                     className={cn(
-                      "w-full max-w-xs md:max-w-sm will-change-transform",
+                      "w-full max-w-xs md:max-w-sm will-change-transform relative",
                       swipeLocked ? "cursor-default" : "cursor-grab active:cursor-grabbing",
                     )}
                     drag={!swipeLocked}
@@ -1430,6 +1490,44 @@ const FlowModePage = () => {
                       profilesLoading={flowItemsFetching}
                       coin={(currentItem as any).user_id ? coinByCreator?.get((currentItem as any).user_id) ?? null : null}
                     />
+                    {/* Heart-burst overlay — celebratory feedback when the
+                        user likes the visible card. Re-keys per-tap so the
+                        animation replays on rapid taps. Pointer-events off
+                        so it never blocks subsequent gestures. */}
+                    <AnimatePresence>
+                      {heartBurst && heartBurst.itemId === currentItem.id && (
+                        <motion.div
+                          key={heartBurst.key}
+                          className="pointer-events-none absolute inset-0 flex items-center justify-center"
+                          initial={{ opacity: 0, scale: 0.4 }}
+                          animate={{ opacity: [0, 1, 1, 0], scale: [0.4, 1.3, 1.15, 1.4] }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.9, times: [0, 0.2, 0.6, 1], ease: "easeOut" }}
+                          onAnimationComplete={() => setHeartBurst(null)}
+                        >
+                          <svg viewBox="0 0 24 24" fill="currentColor" className="h-32 w-32 text-rose-500 drop-shadow-[0_8px_30px_rgba(244,63,94,0.6)]">
+                            <path d="M12 21s-7-4.35-9.5-9.05C.84 8.36 2.4 4.5 6.05 4.5c2.05 0 3.49 1.05 4.45 2.5C11.46 5.55 12.9 4.5 14.95 4.5c3.65 0 5.21 3.86 3.55 7.45C19 16.65 12 21 12 21z"/>
+                          </svg>
+                          {/* Floating "+1" sparkles */}
+                          {[0, 1, 2, 3, 4].map((i) => (
+                            <motion.span
+                              key={i}
+                              className="absolute text-rose-500 font-bold text-sm"
+                              initial={{ opacity: 0, x: 0, y: 0, scale: 0.5 }}
+                              animate={{
+                                opacity: [0, 1, 0],
+                                x: Math.cos((i / 5) * Math.PI * 2) * 80,
+                                y: Math.sin((i / 5) * Math.PI * 2) * 80 - 20,
+                                scale: [0.5, 1, 0.7],
+                              }}
+                              transition={{ duration: 0.8, delay: 0.05 * i, ease: "easeOut" }}
+                            >
+                              ♥
+                            </motion.span>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </motion.div>
                 ) : isFeedRefreshing ? (
                   // Suppress the "Nothing here yet" CTA while a refresh is
