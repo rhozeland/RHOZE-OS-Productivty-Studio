@@ -151,7 +151,20 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
     });
     setBusy(false);
     if (error) {
-      toast({ title: "Swap failed", description: error.message, variant: "destructive" });
+      const msg = error.message || "";
+      let friendly = msg;
+      if (/Not enough liquidity left on the curve/i.test(msg)) {
+        friendly = `Curve is nearly full — try a smaller buy. The remaining tokens fund graduation to Raydium.`;
+      } else if (/Not enough \$RHOZE liquidity/i.test(msg)) {
+        friendly = `Not enough $RHOZE in the pool to cover this sell. Try a smaller amount.`;
+      } else if (/Slippage exceeded/i.test(msg)) {
+        friendly = `Price moved too much. Bump slippage to 3% or reduce the amount.`;
+      } else if (/Insufficient \$RHOZE/i.test(msg)) {
+        friendly = `You don't have enough $RHOZE for this buy.`;
+      } else if (/Insufficient/i.test(msg) && /balance/i.test(msg)) {
+        friendly = `You don't hold enough $${ticker} to sell that much.`;
+      }
+      toast({ title: "Swap failed", description: friendly, variant: "destructive" });
       return;
     }
     const result = (data ?? {}) as {
