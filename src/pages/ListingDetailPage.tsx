@@ -445,8 +445,23 @@ const ListingDetailPage = () => {
         <ArrowLeft className="h-4 w-4" /> {isOwner ? "Back to Conversations" : "Back"}
       </Button>
 
-      <div className="grid gap-6 lg:grid-cols-5">
-        {/* Left: Media */}
+      {(() => {
+        const hasLeftContent =
+          images.length > 0 ||
+          audioFiles.length > 0 ||
+          videoFiles.length > 0 ||
+          pdfFiles.length > 0 ||
+          !!listing.cover_url ||
+          !!listing.description;
+        return null;
+      })()}
+      <div className={
+        (images.length > 0 || audioFiles.length > 0 || videoFiles.length > 0 || pdfFiles.length > 0 || listing.cover_url || listing.description)
+          ? "grid gap-6 lg:grid-cols-5"
+          : "max-w-2xl mx-auto"
+      }>
+        {/* Left: Media — only render the column when there's actually media */}
+        {(images.length > 0 || audioFiles.length > 0 || videoFiles.length > 0 || pdfFiles.length > 0 || listing.cover_url || listing.description) && (
         <div className="lg:col-span-3 space-y-4">
           {/* Image Gallery */}
           {images.length > 0 ? (
