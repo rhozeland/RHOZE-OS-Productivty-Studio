@@ -48,6 +48,9 @@ const VIEW_OPTIONS: { value: DiscoverView; label: string; icon: any; kind: Mosai
   { value: "works", label: "Works", icon: FileText, kind: "drop" },
 ];
 
+const EVENT_CATEGORIES = ["music", "art", "talk", "workshop", "screening", "exhibition", "meetup", "other"];
+const SPACE_CATEGORIES = ["studio", "gallery", "venue", "rehearsal", "co-working", "outdoor"];
+
 const getGreeting = () => {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
