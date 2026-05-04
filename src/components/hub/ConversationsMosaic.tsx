@@ -195,7 +195,7 @@ const ConversationsMosaic = ({
 
       const spaces = supabase
         .from("studios")
-        .select("id, name, cover_image_url, city, country, description")
+        .select("id, name, cover_image_url, city, country, description, category")
         .eq("is_active", true)
         .order("created_at", { ascending: false })
         .limit(6);
