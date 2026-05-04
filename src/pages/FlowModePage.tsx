@@ -1021,9 +1021,30 @@ const FlowModePage = () => {
       return;
     }
     if (action === "like") {
-      // Like is a non-blocking interaction — record it but don't auto-advance,
-      // so the heart fills under the user's thumb and they can keep reading.
-      if (user) interact.mutate({ itemId: targetItem.id, action });
+      // Toggle: if user already liked, unlike. Otherwise, like + animate +
+      // award engagement reward (capped server-side).
+      if (!user) {
+        toast.message("Sign in to like", { description: "Create an account to react to creators." });
+        return;
+      }
+      // Read current liked state from cache (engagement query).
+      const alreadyLiked = !!engagement?.liked.has(targetItem.id);
+      interact.mutate({ itemId: targetItem.id, action, unlike: alreadyLiked });
+      if (!alreadyLiked) {
+        // Heart-burst overlay + haptic + reward attempt.
+        setHeartBurst({ key: Date.now(), itemId: targetItem.id });
+        if (navigator.vibrate) navigator.vibrate([15, 40, 25]);
+        awardEngagementReward({
+          userId: user.id,
+          action: "like_work",
+          referenceId: targetItem.id,
+          description: "Liked a Flow post",
+        }).then((r) => {
+          if (r.status === "awarded" && r.amount > 0) {
+            toast.success(`+${r.amount} $RHOZE`, { description: "Thanks for the love" });
+          }
+        }).catch(() => {});
+      }
       return;
     }
     if (action === "comment") {
