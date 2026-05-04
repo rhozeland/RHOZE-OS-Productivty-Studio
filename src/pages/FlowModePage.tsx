@@ -159,6 +159,9 @@ const FlowModePage = () => {
     preferred: false,
   });
   const [currentIndex, setCurrentIndex] = useState(0);
+  // Heart-burst overlay (gamified like feedback). Re-keyed each tap so the
+  // animation replays even on rapid double-taps.
+  const [heartBurst, setHeartBurst] = useState<{ key: number; itemId: string } | null>(null);
   const [expandedCard, setExpandedCard] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"swipe" | "browse">("swipe");
