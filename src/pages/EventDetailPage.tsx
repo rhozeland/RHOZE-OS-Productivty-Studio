@@ -28,7 +28,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import TicketCheckoutDialog from "@/components/events/TicketCheckoutDialog";
+import EventCheckoutSheet from "@/components/events/EventCheckoutSheet";
 import EventInviteBanner from "@/components/events/EventInviteBanner";
 import EventMediaCarousel from "@/components/events/EventMediaCarousel";
 import LaunchCoinDialog from "@/components/launchpad/LaunchCoinDialog";
@@ -177,38 +177,6 @@ const EventDetailPage = () => {
         tierCounts: Object.fromEntries(tierCounts),
         checkedIn,
       };
-    },
-  });
-
-  const rsvpMutation = useMutation({
-    mutationFn: async (tierId: string) => {
-      if (!user) throw new Error("Sign in to RSVP");
-      const qr_token = `tk_${crypto.randomUUID().replace(/-/g, "")}`;
-      const { data, error } = await supabase
-        .from("event_tickets")
-        .insert([{
-          event_id: id!,
-          holder_id: user.id,
-          tier_id: tierId,
-          qr_token,
-          purchase_currency: "free",
-          amount_paid: 0,
-          status: "issued",
-        }])
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (ticket) => {
-      toast.success("You're in", { description: "Your ticket is ready." });
-      qc.invalidateQueries({ queryKey: ["event-my-ticket", id] });
-      navigate(`/tickets/${ticket.id}`);
-    },
-    onError: (err: unknown) => {
-      toast.error("RSVP failed", {
-        description: err instanceof Error ? err.message : "Unknown error",
-      });
     },
   });
 
@@ -545,33 +513,37 @@ const EventDetailPage = () => {
                         </p>
                       </div>
                     </div>
-                    {myTicket ? (
-                      <Button size="sm" disabled className="h-10 w-full rounded-full text-xs">
-                        Already registered
-                      </Button>
-                    ) : soldOut ? (
-                      <Button size="sm" disabled className="h-10 w-full rounded-full text-xs">
-                        Sold out
-                      </Button>
-                    ) : isFree ? (
-                      <Button
-                        size="sm"
-                        className="h-10 w-full rounded-full text-xs"
-                        disabled={!user || rsvpMutation.isPending}
-                        onClick={() => rsvpMutation.mutate(t.id)}
-                      >
-                        {!user ? "Sign in to RSVP" : "RSVP"}
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        className="h-10 w-full rounded-full text-xs"
-                        disabled={!user}
-                        onClick={() => setCheckoutTier(t)}
-                      >
-                        {!user ? "Sign in to buy" : "Get ticket"}
-                      </Button>
-                    )}
+                    {(() => {
+                      const tk = (t.tier_kind ?? (isFree ? "free_rsvp" : "paid")) as string;
+                      const cta =
+                        tk === "free_rsvp" ? "RSVP" :
+                        tk === "request" ? "Request to join" :
+                        "Get ticket";
+                      if (myTicket) {
+                        const pending = (myTicket as any).status === "pending_approval";
+                        return (
+                          <Button size="sm" disabled className="h-10 w-full rounded-full text-xs">
+                            {pending ? "Request pending" : "Already registered"}
+                          </Button>
+                        );
+                      }
+                      if (soldOut) {
+                        return (
+                          <Button size="sm" disabled className="h-10 w-full rounded-full text-xs">
+                            Sold out
+                          </Button>
+                        );
+                      }
+                      return (
+                        <Button
+                          size="sm"
+                          className="h-10 w-full rounded-full text-xs"
+                          onClick={() => setCheckoutTier(t)}
+                        >
+                          {cta}
+                        </Button>
+                      );
+                    })()}
                   </div>
                 );
               })}
@@ -654,10 +626,10 @@ const EventDetailPage = () => {
       </div>
 
       {checkoutTier && (
-        <TicketCheckoutDialog
+        <EventCheckoutSheet
           open={!!checkoutTier}
           onOpenChange={(o) => !o && setCheckoutTier(null)}
-          event={{ id: ev.id, title: ev.title, host_id: ev.host_id, currency_code: (ev as any).currency_code }}
+          event={{ id: ev.id, title: ev.title, host_id: ev.host_id, currency_code: (ev as any).currency_code, cover_url: ev.cover_url, starts_at: ev.starts_at, venue_name: ev.venue_name }}
           tier={checkoutTier}
           onIssued={() => {
             qc.invalidateQueries({ queryKey: ["event-my-ticket", id] });

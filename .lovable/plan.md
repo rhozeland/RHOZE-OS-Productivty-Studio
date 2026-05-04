@@ -1,70 +1,115 @@
 
-## Goal
+# Event Ticket Flow Polish
 
-Two intertwined features:
-
-1. **Notes** — Instagram-style thought bubbles (≤60 words, expire in 24h) shown above the DM inbox and as a chip on the creator's profile avatar. The Stream composer's **Update** kind stops posting to Stream and writes a Note instead.
-2. **Buddies** — bidirectional friend connections. The DM inbox's "Recent" section becomes "Buddies" (your active connections + their notes). You add buddies from someone's profile.
-
-Notes and Buddies plug together: only buddies see your Note in their DM inbox; anyone visiting your profile sees the Note bubble on your avatar.
+Goal: a Luma-grade buying experience for first-time visitors. They give us name + email, pay (or RSVP / request), get an emailed ticket, and a Rhozeland account is created in the background. Ticket lives in Creator Pass under a new **Tickets** tab.
 
 ---
 
-## Backend (one migration)
+## 1. Guest checkout with passwordless account creation
 
-**Table `user_notes`**
-- `user_id`, `body` (text, ≤300 chars ≈ 60 words, validated by trigger), `expires_at` (default `now() + interval '24 hours'`)
-- One active note per user — unique partial index `where expires_at > now()`
-- RLS: owner can insert/update/delete; SELECT visible to (a) the owner and (b) any user who is a confirmed buddy of the owner OR has the owner as a buddy. Profile-page reads are intentionally also allowed (notes are public-on-profile, mirroring Instagram).
-- View `active_user_notes` filtering `expires_at > now()` for cheap reads.
+**New unified `EventCheckoutSheet`** replaces the current paid-only `TicketCheckoutDialog`. Handles all three modes (Free RSVP, Request to Join, Paid USD/$RHOZE) in one consistent two-step sheet:
 
-**Table `user_buddies`**
-- `requester_id`, `addressee_id`, `status` enum (`pending`, `accepted`, `blocked`), unique pair
-- RLS: either party can read; requester can insert (pending); addressee can update status; either can delete (unfriend)
-- Helper RPC `are_buddies(a uuid, b uuid) returns boolean` (security definer) used by the notes RLS policy.
+- **Step 1 — Your info** (always shown for guests):
+  - Name *
+  - Email *
+  - Trust strip: "We'll create your free Rhozeland account so you can access your ticket and pass anytime."
+- **Step 2 — Confirm / Pay**:
+  - Free → big "Confirm RSVP" button
+  - Request → "Send request" button (host approves later)
+  - Paid → existing Square card form / Pay with $RHOZE tabs
 
-**Cleanup**: nightly cron isn't required — `expires_at` filter is enough. Optionally a `pg_cron` sweep that hard-deletes rows > 7 days old.
+If the user is already signed in: skip Step 1, prefill from profile.
 
----
+**Account creation** — on submit, call new edge function `claim-event-ticket`:
+1. Look up user by email. If none, create auth user via service role (`email_confirm: false`, random password) + matching `profiles` row (display_name from name).
+2. Send Supabase magic link to that email so they can sign in (`signInWithOtp`).
+3. Issue the ticket row owned by that user_id.
+4. Return ticket id + a one-shot ticket link signed with the user's email so guests can view their ticket immediately without waiting for the magic link.
 
-## Frontend changes
-
-### Stream composer (`src/components/stream/StreamComposer.tsx`)
-- The **Update** kind no longer creates a stream post. Selecting Update now opens the Note composer (small modal: textarea capped at 60 words live counter, "Post note · expires in 24h"). Posting writes to `user_notes` and toasts.
-- Other kinds (Offering / Event / Space / Work) unchanged.
-
-### New components
-- `src/components/notes/NoteComposer.tsx` — modal with word counter, post + delete
-- `src/components/notes/NoteBubble.tsx` — small chip used on avatars (rounded, "speech-bubble" tail)
-- `src/components/notes/BuddyNotesRow.tsx` — horizontal scroller of buddy avatars + their notes, mounted at the top of the DM inbox (matches the user's screenshot)
-
-### Profile (`src/pages/ProfileDetailPage.tsx`)
-- Render `<NoteBubble />` over the top-right of the avatar when an active note exists.
-- Add **Add buddy / Pending / Buddies** button next to Follow/Message/Book in the Support tab actions row. Reuses existing follow-button styling.
-
-### Conversations (`src/pages/MessagesPage.tsx`, DMs tab)
-- Replace the "Recent contacts" section with `<BuddyNotesRow />` at the top: first tile is "Your note" (composer trigger), then each buddy with their note bubble.
-- "Buddies" sub-list under it with online indicator + last message preview (existing DM list, but filtered to confirmed buddies — non-buddy threads stay accessible via search/Requests).
-
-### Hooks
-- `useUserNote(userId)` — fetch active note for a user
-- `useMyNote()` — current user's note + post/delete mutations
-- `useBuddies()` — list of accepted buddies + counts of pending requests
-- `useBuddyStatus(otherUserId)` — `none | pending_out | pending_in | accepted | blocked` for the profile button
+For paid flows, payment (Square charge / $RHOZE verify) happens client-side first, then `claim-event-ticket` is called with the verified payment reference. Same settlement logic as today (tier-based platform fee).
 
 ---
 
-## Memory updates
+## 2. Two new ticket modes
 
-Add core-line: *"Notes (v8.9): Instagram-style 60-word, 24h thought bubbles. Update composer writes a Note (not a Stream post). Visible on owner's avatar (profile + DM inbox) and to buddies in DM inbox via `<BuddyNotesRow />`. Backed by `user_notes` + `user_buddies` tables."*
+DB additions on `event_ticket_tiers`:
+- `tier_kind` enum: `paid` | `free_rsvp` | `request`
+- existing price columns ignored when `tier_kind != 'paid'`
 
-Add memory file `mem://features/notes-and-buddies` with the schema + visibility rules.
+DB additions on `event_tickets`:
+- `status` already exists — extend with `'pending_approval'` for request mode
+- `requested_at`, `approved_at`, `approved_by` nullable
+
+Host-side: `EventManagePage` gets a "Pending requests" panel where they Approve/Decline (approve flips status → `issued` and triggers ticket-issued email).
 
 ---
 
-## Out of scope (this pass)
+## 3. Tickets tab in Creator Pass
 
-- Push/email notifications when a buddy posts a note
-- Reactions / replies on notes (Instagram-style ❤️ reply) — leave as a follow-up
-- Block list UI (RLS supports it, no surface yet)
-- Migrating any historical "update" stream posts — they stay where they are; only future Update clicks route to Notes
+`/credits?tab=tickets` — new tab between "My Pass" and "Purchases":
+- Grid of upcoming tickets (cover image, event title, date, venue)
+- Click → existing `/tickets/:id` detail page (already has QR + 3D pass)
+- Empty state: "No tickets yet. Browse events →" linking to /discover?view=events
+- Past tickets collapsed below in a "Past events" accordion
+
+Also add a small "View tickets" link inside Purchases tab pointing here, so it's discoverable both ways.
+
+---
+
+## 4. Email confirmation
+
+Single transactional template: `event_ticket_confirmation`
+- Subject: "You're in — {{event.title}}"
+- Body: event date/venue, big "View your ticket" button (deep link to `/tickets/:id`), QR fallback as inline image, plus "Sign in to Rhozeland" magic-link CTA for new accounts.
+
+Sent from `claim-event-ticket` after successful issue.
+
+---
+
+## 5. Out of scope (this pass)
+
+- Host custom form builder (skipping per your call — saved as a follow-up)
+- Apple Wallet pass changes (keep existing `generate-apple-wallet-pass`)
+- Refund flow
+
+---
+
+## Technical details
+
+**Files added**
+- `src/components/events/EventCheckoutSheet.tsx` — unified sheet, replaces TicketCheckoutDialog at all call sites
+- `src/components/credits/TicketsTab.tsx` — list of user's tickets
+- `src/components/events/EventRequestsPanel.tsx` — host approval UI
+- `supabase/functions/claim-event-ticket/index.ts` — guest-or-user account + ticket issuance + email enqueue
+- `supabase/functions/_shared/transactional-email-templates/event-ticket-confirmation.tsx`
+
+**Files modified**
+- `src/pages/CreditShopPage.tsx` — add Tickets tab
+- `src/pages/EventDetailPage.tsx` — wire new sheet, show tier_kind correctly
+- `src/pages/EventManagePage.tsx` — pending requests panel
+- `src/components/events/TicketCheckoutDialog.tsx` — kept as thin wrapper or deleted (call sites updated)
+- transactional email registry → register new template
+
+**Migration**
+- Add `tier_kind` enum + column on `event_ticket_tiers` (default `'paid'` for backfill)
+- Add `requested_at`, `approved_at`, `approved_by` on `event_tickets`
+- Extend `event_tickets.status` allowed values (it's already text, just docs)
+- RLS: host can update status of `pending_approval` rows on their events; ticket holder can read their own rows (already covered)
+
+**Security**
+- `claim-event-ticket` validates email format, checks tier capacity, verifies payment reference server-side for paid mode (calls existing `verify-rhoze-payment` or trusts Square payment_id we just created with the user's session — same trust model as today).
+- Service-role user creation only happens after payment is confirmed for paid tiers, so no spam-account vector.
+
+---
+
+## Build order
+
+1. Migration (tier_kind + request fields)
+2. `claim-event-ticket` edge function + email template
+3. `EventCheckoutSheet` (replaces TicketCheckoutDialog)
+4. Wire into EventDetailPage
+5. Tickets tab in Creator Pass
+6. Host requests panel in EventManagePage
+7. Smoke test the three flows in browser
+
+Estimated ~1 build cycle. Ready to ship on your go-ahead.
