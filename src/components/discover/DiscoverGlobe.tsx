@@ -22,6 +22,7 @@ import { avatarGradientFor } from "@/lib/avatar-gradient";
 import ArtistSpotlightCard from "./ArtistSpotlightCard";
 import EventSpotlightCard from "./EventSpotlightCard";
 import SpaceSpotlightCard from "./SpaceSpotlightCard";
+import { ROLE_BY_ID } from "@/lib/creator-roles";
 
 const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
   KR: { lat: 37.55, lng: 126.99 },
@@ -712,9 +713,38 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                         {marker.kind}
                       </span>
                     </div>
-                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                      {marker.subtitle || "Open the orbit to see more."}
-                    </p>
+                    {marker.kind === "artist" ? (
+                      (() => {
+                        const roles = ((marker.creator_roles ?? []) as string[])
+                          .map((rid) => ROLE_BY_ID.get(rid))
+                          .filter(Boolean)
+                          .slice(0, 3) as { label: string; emoji: string }[];
+                        if (roles.length === 0) {
+                          return (
+                            <p className="mt-1 line-clamp-1 text-[11px] leading-5 text-muted-foreground/80 italic">
+                              New artist
+                            </p>
+                          );
+                        }
+                        return (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {roles.map((r) => (
+                              <span
+                                key={r.label}
+                                className="inline-flex items-center gap-1 rounded-full border border-border/45 bg-background/70 px-1.5 py-0.5 text-[10px] font-medium text-foreground/85"
+                              >
+                                <span aria-hidden>{r.emoji}</span>
+                                <span className="truncate max-w-[90px]">{r.label}</span>
+                              </span>
+                            ))}
+                          </div>
+                        );
+                      })()
+                    ) : (
+                      <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                        {marker.subtitle || "Open the orbit to see more."}
+                      </p>
+                    )}
                   </div>
                 </button>
               );
