@@ -384,7 +384,7 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
         id: artist.user_id,
         href: `/profiles/${artist.user_id}`,
         title: artist.display_name || "Untitled artist",
-        subtitle: artist.headline || artist.bio,
+        subtitle: (artist as any).subtitle ?? null,
         banner: artist.banner_url,
         avatar: artist.avatar_url,
         region_code: artist.region_code,
