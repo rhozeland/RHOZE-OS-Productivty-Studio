@@ -269,57 +269,20 @@ const StudioDetailPage = () => {
             </div>
           )}
 
-          {/* Coin drops attached to this Space — anyone can browse, owner can drop new ones. */}
-          {(() => {
-            const isOwner = user?.id === studio.owner_id;
-            const hasCoins = spaceCoins && spaceCoins.length > 0;
-            if (!hasCoins && !isOwner) return null;
-            return (
-              <div>
-                <div className="flex items-end justify-between gap-3 mb-3">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
-                      Coin drops
-                    </p>
-                    <h2 className="font-display text-lg font-semibold text-foreground">
-                      From this space.
-                    </h2>
-                  </div>
-                  {isOwner && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="rounded-full gap-1.5"
-                      onClick={() => setLaunchCoinOpen(true)}
-                    >
-                      <Coins className="h-3.5 w-3.5" />
-                      Drop a coin
-                    </Button>
-                  )}
-                </div>
-                {hasCoins ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {spaceCoins!.map((c: any) => (
-                      <DropCoinCard key={c.id} coin={c} hideContext />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border border-dashed border-border/60 p-6 text-center text-xs text-muted-foreground">
-                    No coins dropped from this space yet. Use <strong className="text-foreground">Drop a coin</strong> to launch one.
-                  </div>
-                )}
-                <LaunchCoinDialog
-                  open={launchCoinOpen}
-                  onOpenChange={setLaunchCoinOpen}
-                  spaceId={id!}
-                  contextLabel={studio.name}
-                  defaultName={studio.name}
-                  defaultImage={(studio as any).cover_url ?? undefined}
-                  onLaunched={() => refetchSpaceCoins()}
-                />
+          {/* Space coin — only render when a coin is actually linked. */}
+          {spaceCoins && spaceCoins.length > 0 && (
+            <div>
+              <div className="mb-3">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">Space coin</p>
+                <h2 className="font-display text-lg font-semibold text-foreground">Backed by this drop.</h2>
               </div>
-            );
-          })()}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {spaceCoins.map((c: any) => (
+                  <DropCoinCard key={c.id} coin={c} hideContext />
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Gallery */}
           {(() => {
