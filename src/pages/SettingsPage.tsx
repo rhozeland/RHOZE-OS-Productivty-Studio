@@ -235,6 +235,9 @@ const SettingsPage = () => {
 
   const updateProfile = useMutation({
     mutationFn: async () => {
+      if (!creatorRoles || creatorRoles.length === 0) {
+        throw new Error("Pick at least one role under \"What you are\" — fans use this to find you.");
+      }
       const { error } = await supabase.from("profiles").update({
         display_name: displayName,
         username: username.toLowerCase() || null,
