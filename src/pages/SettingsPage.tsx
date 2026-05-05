@@ -367,9 +367,9 @@ const SettingsPage = () => {
         </div>
       </div>
       <div className="space-y-2">
-        <Label>What you are</Label>
+        <Label>What you are <span className="text-destructive">*</span></Label>
         <p className="text-[11px] text-muted-foreground">
-          Pick from the list — fans use these to find you. You can pick a few if you wear multiple hats.
+          Required — pick at least one. Fans use these to find you. You can pick a few if you wear multiple hats.
         </p>
         <div className="rounded-xl border border-border bg-card/40 p-3">
           <RolePicker
