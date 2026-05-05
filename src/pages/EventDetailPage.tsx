@@ -581,46 +581,20 @@ const EventDetailPage = () => {
             </div>
           )}
 
-          {/* Coin drops attached to this event — host can drop, anyone can browse + back. */}
-          {(() => {
-            const hasCoins = eventCoins && eventCoins.length > 0;
-            if (!hasCoins && !isHost) return null;
-            return (
-              <div className="space-y-3 border-t border-border pt-5">
-                <div className="flex items-end justify-between gap-3">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">Coin drops</p>
-                    <h2 className="font-display text-lg font-bold tracking-tight">From this event.</h2>
-                  </div>
-                  {isHost && (
-                    <Button size="sm" variant="outline" className="rounded-full gap-1.5" onClick={() => setLaunchCoinOpen(true)}>
-                      <Coins className="h-3.5 w-3.5" /> Drop a coin
-                    </Button>
-                  )}
-                </div>
-                {hasCoins ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {eventCoins!.map((c: any) => (
-                      <DropCoinCard key={c.id} coin={c} hideContext />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border border-dashed border-border/60 p-6 text-center text-xs text-muted-foreground">
-                    No coins dropped for this event yet.
-                  </div>
-                )}
-                <LaunchCoinDialog
-                  open={launchCoinOpen}
-                  onOpenChange={setLaunchCoinOpen}
-                  eventId={ev.id}
-                  contextLabel={ev.title}
-                  defaultName={ev.title}
-                  defaultImage={ev.cover_url ?? undefined}
-                  onLaunched={() => refetchEventCoins()}
-                />
+          {/* Event coin — only render when a coin is actually linked. */}
+          {eventCoins && eventCoins.length > 0 && (
+            <div className="space-y-3 border-t border-border pt-5">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">Event coin</p>
+                <h2 className="font-display text-lg font-bold tracking-tight">Backed by this drop.</h2>
               </div>
-            );
-          })()}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {eventCoins.map((c: any) => (
+                  <DropCoinCard key={c.id} coin={c} hideContext />
+                ))}
+              </div>
+            </div>
+          )}
 
         </div>
       </div>
