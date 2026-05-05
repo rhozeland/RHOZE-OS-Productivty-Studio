@@ -263,12 +263,44 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
         followersCount.set(row.following_id, (followersCount.get(row.following_id) ?? 0) + 1);
       });
 
-      return profiles.map((p) => ({
-        ...p,
-        banner_url: p.banner_url ?? bannerFallback.get(p.user_id) ?? null,
-        works_count: Math.max(flowCount.get(p.user_id) ?? 0, worksCount.get(p.user_id) ?? 0),
-        followers_count: followersCount.get(p.user_id) ?? 0,
-      }));
+      const enriched = profiles.map((p) => {
+        const works = Math.max(flowCount.get(p.user_id) ?? 0, worksCount.get(p.user_id) ?? 0);
+        const followers = followersCount.get(p.user_id) ?? 0;
+        // Sanitize subtitle: prefer a meaningful headline; only fall back to
+        // bio if it's substantive (≥ 24 chars, not throwaway like "Hi").
+        const headline = (p.headline ?? "").trim();
+        const bio = (p.bio ?? "").trim();
+        const subtitle =
+          headline.length >= 8
+            ? headline
+            : bio.length >= 24
+              ? bio
+              : null;
+        // Featured-worthiness: requires real signal (verified, or has works/
+        // followers, or a real bio). Throwaway profiles never spotlight.
+        const isFeaturable =
+          (p.verification_status === "verified") ||
+          works >= 1 ||
+          followers >= 1 ||
+          !!subtitle;
+        return {
+          ...p,
+          banner_url: p.banner_url ?? bannerFallback.get(p.user_id) ?? null,
+          works_count: works,
+          followers_count: followers,
+          subtitle,
+          _score:
+            (p.verification_status === "verified" ? 1000 : 0) +
+            works * 10 +
+            followers * 3 +
+            (subtitle ? 5 : 0),
+          _featurable: isFeaturable,
+        };
+      });
+      // Only keep featurable artists, sorted by score (best first).
+      return enriched
+        .filter((p) => p._featurable)
+        .sort((a, b) => b._score - a._score);
     },
     staleTime: 60_000,
   });
@@ -352,7 +384,7 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
         id: artist.user_id,
         href: `/profiles/${artist.user_id}`,
         title: artist.display_name || "Untitled artist",
-        subtitle: artist.headline || artist.bio,
+        subtitle: (artist as any).subtitle ?? null,
         banner: artist.banner_url,
         avatar: artist.avatar_url,
         region_code: artist.region_code,
