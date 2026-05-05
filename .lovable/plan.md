@@ -1,115 +1,34 @@
+# User Testing Guide v3 (refresh)
 
-# Event Ticket Flow Polish
+A v2 PDF already exists from April. Since then the product has shifted significantly (Discover-led nav, earned-only Creator Pass tiers, verified-artist identity, simulated bonding-curve coins, ticket checkout overhaul, $RHOZE booking + reward system, tiered platform fee). I'll generate a fresh **Rhozeland_User_Testing_Guide_v3.pdf** in `/mnt/documents/` that testers can actually follow against the current build.
 
-Goal: a Luma-grade buying experience for first-time visitors. They give us name + email, pay (or RSVP / request), get an emailed ticket, and a Rhozeland account is created in the background. Ticket lives in Creator Pass under a new **Tickets** tab.
+## What it will contain
 
----
+1. **Welcome & context** — what Rhozeland is today (one paragraph), what we want to learn from this round.
+2. **Before you start** — link to https://rhozeland.app, sign in via magic link / Google, region pick, finish onboarding.
+3. **Tester profile** — quick form: role (fan / creator / verified artist hopeful), crypto experience, device.
+4. **Guided flows** (each = goal, steps, what to look for, 1–5 rating + notes):
+   - Sign-up + onboarding (Welcome → Toybox → Region → Tour)
+   - Discover globe + The Stream toggle (All / Events / Flow)
+   - Flow Mode swipes (up = profile peek, down = comment, left = pass, right = next)
+   - Browse + book a Space (try both fiat and Pay with $RHOZE if balance allows)
+   - Buy a ticket to an event (guest checkout, free RSVP, request-to-join)
+   - Open a Project, review Roadmap / Scope / Team
+   - Profile → Support tab → artist coin trade simulation
+   - Creator Pass: My Pass, Tiers, How rewards work, Verified IP, Tickets, Purchases
+   - Apply for Verified Artist (selfie video + bio)
+   - Messages: DMs, Projects, Inquiries, Listings
+5. **Targeted bug hunt prompts** — known soft spots: ticket checkout polish, event ticket email, $RHOZE chip in top bar, mobile nav, Flow comment sheet.
+6. **Open questions** — pricing perception (no subscriptions, tiers earned), trust signals on first event purchase, clarity of "Own a piece of the artists you love."
+7. **Wrap-up survey** — NPS, would-you-return, single biggest friction, one feature to add.
+8. **How to report** — short link / email + screenshot tips.
 
-## 1. Guest checkout with passwordless account creation
+## Deliverable
 
-**New unified `EventCheckoutSheet`** replaces the current paid-only `TicketCheckoutDialog`. Handles all three modes (Free RSVP, Request to Join, Paid USD/$RHOZE) in one consistent two-step sheet:
+- `/mnt/documents/Rhozeland_User_Testing_Guide_v3.pdf` (clean, branded, ~6–8 pages)
+- Generated with reportlab; brand palette (pink → fuchsia → amber accent) on a light editorial layout.
+- Surfaced via `<lov-artifact>` so you can open/download immediately.
 
-- **Step 1 — Your info** (always shown for guests):
-  - Name *
-  - Email *
-  - Trust strip: "We'll create your free Rhozeland account so you can access your ticket and pass anytime."
-- **Step 2 — Confirm / Pay**:
-  - Free → big "Confirm RSVP" button
-  - Request → "Send request" button (host approves later)
-  - Paid → existing Square card form / Pay with $RHOZE tabs
+## Open question before I build
 
-If the user is already signed in: skip Step 1, prefill from profile.
-
-**Account creation** — on submit, call new edge function `claim-event-ticket`:
-1. Look up user by email. If none, create auth user via service role (`email_confirm: false`, random password) + matching `profiles` row (display_name from name).
-2. Send Supabase magic link to that email so they can sign in (`signInWithOtp`).
-3. Issue the ticket row owned by that user_id.
-4. Return ticket id + a one-shot ticket link signed with the user's email so guests can view their ticket immediately without waiting for the magic link.
-
-For paid flows, payment (Square charge / $RHOZE verify) happens client-side first, then `claim-event-ticket` is called with the verified payment reference. Same settlement logic as today (tier-based platform fee).
-
----
-
-## 2. Two new ticket modes
-
-DB additions on `event_ticket_tiers`:
-- `tier_kind` enum: `paid` | `free_rsvp` | `request`
-- existing price columns ignored when `tier_kind != 'paid'`
-
-DB additions on `event_tickets`:
-- `status` already exists — extend with `'pending_approval'` for request mode
-- `requested_at`, `approved_at`, `approved_by` nullable
-
-Host-side: `EventManagePage` gets a "Pending requests" panel where they Approve/Decline (approve flips status → `issued` and triggers ticket-issued email).
-
----
-
-## 3. Tickets tab in Creator Pass
-
-`/credits?tab=tickets` — new tab between "My Pass" and "Purchases":
-- Grid of upcoming tickets (cover image, event title, date, venue)
-- Click → existing `/tickets/:id` detail page (already has QR + 3D pass)
-- Empty state: "No tickets yet. Browse events →" linking to /discover?view=events
-- Past tickets collapsed below in a "Past events" accordion
-
-Also add a small "View tickets" link inside Purchases tab pointing here, so it's discoverable both ways.
-
----
-
-## 4. Email confirmation
-
-Single transactional template: `event_ticket_confirmation`
-- Subject: "You're in — {{event.title}}"
-- Body: event date/venue, big "View your ticket" button (deep link to `/tickets/:id`), QR fallback as inline image, plus "Sign in to Rhozeland" magic-link CTA for new accounts.
-
-Sent from `claim-event-ticket` after successful issue.
-
----
-
-## 5. Out of scope (this pass)
-
-- Host custom form builder (skipping per your call — saved as a follow-up)
-- Apple Wallet pass changes (keep existing `generate-apple-wallet-pass`)
-- Refund flow
-
----
-
-## Technical details
-
-**Files added**
-- `src/components/events/EventCheckoutSheet.tsx` — unified sheet, replaces TicketCheckoutDialog at all call sites
-- `src/components/credits/TicketsTab.tsx` — list of user's tickets
-- `src/components/events/EventRequestsPanel.tsx` — host approval UI
-- `supabase/functions/claim-event-ticket/index.ts` — guest-or-user account + ticket issuance + email enqueue
-- `supabase/functions/_shared/transactional-email-templates/event-ticket-confirmation.tsx`
-
-**Files modified**
-- `src/pages/CreditShopPage.tsx` — add Tickets tab
-- `src/pages/EventDetailPage.tsx` — wire new sheet, show tier_kind correctly
-- `src/pages/EventManagePage.tsx` — pending requests panel
-- `src/components/events/TicketCheckoutDialog.tsx` — kept as thin wrapper or deleted (call sites updated)
-- transactional email registry → register new template
-
-**Migration**
-- Add `tier_kind` enum + column on `event_ticket_tiers` (default `'paid'` for backfill)
-- Add `requested_at`, `approved_at`, `approved_by` on `event_tickets`
-- Extend `event_tickets.status` allowed values (it's already text, just docs)
-- RLS: host can update status of `pending_approval` rows on their events; ticket holder can read their own rows (already covered)
-
-**Security**
-- `claim-event-ticket` validates email format, checks tier capacity, verifies payment reference server-side for paid mode (calls existing `verify-rhoze-payment` or trusts Square payment_id we just created with the user's session — same trust model as today).
-- Service-role user creation only happens after payment is confirmed for paid tiers, so no spam-account vector.
-
----
-
-## Build order
-
-1. Migration (tier_kind + request fields)
-2. `claim-event-ticket` edge function + email template
-3. `EventCheckoutSheet` (replaces TicketCheckoutDialog)
-4. Wire into EventDetailPage
-5. Tickets tab in Creator Pass
-6. Host requests panel in EventManagePage
-7. Smoke test the three flows in browser
-
-Estimated ~1 build cycle. Ready to ship on your go-ahead.
+Anything you specifically want testers to hammer on this round (e.g. ticket checkout flow, the new Discover globe, Flow swipes, Creator Pass clarity)? If you say "all of it" I'll cover the full list above.
