@@ -718,7 +718,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                         const roles = ((marker.creator_roles ?? []) as string[])
                           .map((rid) => ROLE_BY_ID.get(rid))
                           .filter(Boolean)
-                          .slice(0, 3) as { label: string; emoji: string }[];
+                          .slice(0, 2) as { label: string; emoji: string }[];
                         if (roles.length === 0) {
                           return (
                             <p className="mt-1 line-clamp-1 text-[11px] leading-5 text-muted-foreground/80 italic">
