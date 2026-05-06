@@ -97,7 +97,7 @@ const RhozeBalanceChip = () => {
               <div className="text-xs uppercase tracking-wide text-muted-foreground font-body mb-2">
                 Claim to wallet
               </div>
-              <ClaimRhozeButton />
+              <ClaimRhozeButton creditsToClaim={Math.floor(balanceNum)} />
             </div>
 
             <Link
