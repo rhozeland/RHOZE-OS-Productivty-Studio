@@ -146,7 +146,7 @@ const CreatorPassCard = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative rounded-2xl overflow-hidden shadow-xl"
+        className="relative tier-shimmer rounded-2xl overflow-hidden shadow-xl"
         style={{ background: gradient }}
       >
         {/* Texture overlay */}
