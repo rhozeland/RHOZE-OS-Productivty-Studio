@@ -33,10 +33,11 @@ type Tile = {
 const initials = (name: string | null | undefined) =>
   (name || "?").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 
-const truncate = (name: string | null | undefined, n = 10) => {
-  const v = name || "Buddy";
-  return v.length > n ? `${v.slice(0, n)}…` : v;
-};
+// On desktop (≥768px) show the full name; on mobile clamp with ellipsis
+// to keep the strip compact. Returned as a React-friendly object so the
+// caller can just spread the className.
+const nameClass =
+  "text-[10px] font-medium text-foreground w-full text-center truncate md:whitespace-normal md:overflow-visible md:text-clip md:text-ellipsis-none";
 
 export const BuddyNotesRow = ({ onSelectBuddy }: Props) => {
   const { user } = useAuth();
