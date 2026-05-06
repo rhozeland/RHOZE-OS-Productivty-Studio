@@ -137,8 +137,8 @@ export const BuddyNotesRow = ({ onSelectBuddy }: Props) => {
               </span>
             )}
           </div>
-          <span className="text-[10px] font-medium text-foreground truncate w-full text-center">
-            {myNote ? "Your note" : "Add note"}
+          <span className="text-[10px] font-medium text-foreground w-full text-center truncate md:whitespace-normal md:overflow-visible">
+            {myNote ? "Your note" : "Drop a Note"}
           </span>
         </button>
 
