@@ -559,9 +559,10 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                     const lastMsg = getLastMessage(profile.user_id);
                     const unread = getUnreadCount(profile.user_id);
                     const name = profile.display_name || "Creator";
-                    const preview = lastMsg
+                    const rawPreview = lastMsg
                       ? `${lastMsg.sender_id === user?.id ? "You: " : ""}${lastMsg.content}`
                       : "";
+                    const preview = rawPreview.length > 48 ? `${rawPreview.slice(0, 45).trimEnd()}...` : rawPreview;
                     return (
                       <button
                         key={profile.user_id}
