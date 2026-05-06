@@ -257,12 +257,28 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
     const now = new Date();
-    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHrs = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    if (diffMins < 1) return "now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHrs < 24) return `${diffHrs}h ago`;
     if (diffDays === 1) return "Yesterday";
     if (diffDays < 7) return date.toLocaleDateString([], { weekday: "short" });
     return date.toLocaleDateString([], { month: "short", day: "numeric" });
   };
+
+  // Deterministic HSL color from name (letter avatar background).
+  const colorFromName = (name: string | null | undefined) => {
+    const s = name || "?";
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return `hsl(${h % 360} 55% 45%)`;
+  };
+  const initialOf = (name: string | null | undefined) =>
+    (name || "?").trim().charAt(0).toUpperCase() || "?";
+
 
   // === INQUIRIES DATA ===
   const navigate = useNavigate();
