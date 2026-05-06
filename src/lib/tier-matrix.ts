@@ -108,8 +108,8 @@ export const TIERS: TierRow[] = [
       "Verified Artist fast-track",
     ],
     coinDropsPerMonth: null,
-    gradient: "linear-gradient(135deg, hsl(50 90% 58%), hsl(38 80% 40%))",
-    glowColor: "hsl(45, 85%, 52%)",
+    gradient: "linear-gradient(135deg, hsl(48 95% 62%), hsl(38 85% 38%))",
+    glowColor: "hsl(45, 95%, 55%)",
   },
 ];
 
