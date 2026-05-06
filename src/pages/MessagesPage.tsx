@@ -435,15 +435,27 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
     setActiveTab("messages");
   };
 
+  // Header subline counters
+  const unreadConvoCount = (() => {
+    if (!conversations) return 0;
+    let n = 0;
+    for (const msg of conversations.values()) {
+      if (msg.receiver_id === user?.id && !msg.read) n += 1;
+    }
+    return n;
+  })();
+
   return (
     <div className="w-full">
       <div className="w-full min-w-0 space-y-6">
       <div>
         <h1 className="font-display text-3xl font-bold text-foreground">Conversations</h1>
-        <p className="text-muted-foreground">Messages, projects, and listings — all in one place.</p>
+        <p className="text-muted-foreground">
+          {unreadConvoCount} unread {unreadConvoCount === 1 ? "message" : "messages"}
+          {" · "}
+          {pendingCount} pending {pendingCount === 1 ? "inquiry" : "inquiries"}
+        </p>
       </div>
-
-      <CreatorPassUpgradeCta />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
