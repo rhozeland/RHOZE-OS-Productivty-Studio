@@ -322,17 +322,50 @@ const CreatorPassCard = () => {
         transition={{ delay: 0.1 }}
         className="grid grid-cols-3 gap-[1px] bg-border rounded-2xl overflow-hidden"
       >
-        {[
-          { icon: FolderKanban, label: "Active Projects", value: studioStats?.activeProjects ?? 0, path: "/projects" },
-          { icon: MessageSquare, label: "Unread", value: studioStats?.unread ?? 0, path: "/messages" },
-          { icon: Calendar, label: "Upcoming", value: studioStats?.upcoming ?? 0, path: "/calendar" },
-        ].map((s) => (
-          <Link key={s.label} to={s.path} className="bg-card p-4 hover:bg-muted/50 transition-colors group">
-            <s.icon className="h-4 w-4 text-muted-foreground mb-2 group-hover:text-foreground transition-colors" />
-            <p className="font-display text-2xl text-foreground">{s.value}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider font-body">{s.label}</p>
+        {/* Active projects — always shown */}
+        <Link to="/projects" className="bg-card p-4 hover:bg-muted/50 transition-colors group">
+          <FolderKanban className="h-4 w-4 text-muted-foreground mb-2 group-hover:text-foreground transition-colors" />
+          <p className="font-display text-2xl text-foreground">{studioStats?.activeProjects ?? 0}</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider font-body">Active Projects</p>
+        </Link>
+
+        {/* Unread → Latest message preview when 0 */}
+        <Link to="/messages" className="bg-card p-4 hover:bg-muted/50 transition-colors group">
+          <MessageSquare className="h-4 w-4 text-muted-foreground mb-2 group-hover:text-foreground transition-colors" />
+          {(studioStats?.unread ?? 0) > 0 ? (
+            <>
+              <p className="font-display text-2xl text-foreground">{studioStats?.unread}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider font-body">Unread</p>
+            </>
+          ) : (
+            <>
+              <p className="font-body text-sm text-foreground line-clamp-2 leading-snug">
+                {studioStats?.latestMessage ?? "No messages yet"}
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">Latest message</p>
+            </>
+          )}
+        </Link>
+
+        {/* Upcoming → Find events button when 0 */}
+        {(studioStats?.upcoming ?? 0) > 0 ? (
+          <Link to="/calendar" className="bg-card p-4 hover:bg-muted/50 transition-colors group">
+            <Calendar className="h-4 w-4 text-muted-foreground mb-2 group-hover:text-foreground transition-colors" />
+            <p className="font-display text-2xl text-foreground">{studioStats?.upcoming}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider font-body">Upcoming</p>
           </Link>
-        ))}
+        ) : (
+          <div className="bg-card p-4 flex flex-col">
+            <Calendar className="h-4 w-4 text-muted-foreground mb-2" />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-body mb-2">Upcoming</p>
+            <Link
+              to="/events"
+              className="inline-flex items-center justify-center h-8 rounded-full border border-border hover:bg-muted text-xs font-medium font-body text-foreground transition-colors px-3"
+            >
+              Find events →
+            </Link>
+          </div>
+        )}
       </motion.div>
 
       {/* ── In-app $RHOZE Balance + Claim ── */}
