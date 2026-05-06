@@ -626,10 +626,46 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
             {/* Chat Area */}
             <div className={cn("flex flex-1 flex-col", !selectedUser ? "hidden md:flex" : "flex")}>
               {!selectedUser ? (
-                <div className="flex flex-1 flex-col items-center justify-center text-center text-muted-foreground px-4">
-                  <MessageSquare className="mb-4 h-12 w-12" />
-                  <p className="text-lg font-medium">Select a conversation</p>
-                  <p className="text-sm">Choose from your conversations or start a new one</p>
+                <div className="flex flex-1 flex-col items-center justify-center text-center px-6">
+                  {/* Characterful illustrated empty state — paper plane + speech bubble + dotted trail. */}
+                  <svg
+                    viewBox="0 0 200 140"
+                    className="mb-5 h-32 w-44 text-muted-foreground/70"
+                    fill="none"
+                    aria-hidden
+                  >
+                    <defs>
+                      <linearGradient id="empty-gr" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor="currentColor" stopOpacity="0.25" />
+                        <stop offset="100%" stopColor="currentColor" stopOpacity="0.05" />
+                      </linearGradient>
+                    </defs>
+                    {/* dotted path */}
+                    <path
+                      d="M20 110 C 60 60, 110 60, 170 30"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeDasharray="2 6"
+                      strokeLinecap="round"
+                      opacity="0.5"
+                    />
+                    {/* speech bubble */}
+                    <g opacity="0.9">
+                      <rect x="22" y="78" width="62" height="38" rx="12" fill="url(#empty-gr)" stroke="currentColor" strokeWidth="1.5" />
+                      <circle cx="38" cy="97" r="2" fill="currentColor" />
+                      <circle cx="52" cy="97" r="2" fill="currentColor" />
+                      <circle cx="66" cy="97" r="2" fill="currentColor" />
+                      <path d="M34 116 L 30 124 L 44 116 Z" fill="url(#empty-gr)" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                    </g>
+                    {/* paper plane */}
+                    <g transform="translate(140 12) rotate(18)">
+                      <path d="M0 18 L 44 4 L 26 28 L 18 22 Z" fill="url(#empty-gr)" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                      <path d="M18 22 L 26 28 L 22 36 Z" fill="currentColor" opacity="0.25" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+                    </g>
+                  </svg>
+                  <p className="font-display text-base font-semibold text-foreground">
+                    Nothing open yet — pick a conversation or start one.
+                  </p>
                 </div>
               ) : (
                 <>
