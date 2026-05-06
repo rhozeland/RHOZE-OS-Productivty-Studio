@@ -320,7 +320,14 @@ const AppLayout = () => {
                 <Search className="h-4 w-4 text-muted-foreground" />
               </button>
 
-              {/* Theme toggle moved to Settings → Account (per v8.7 cleanup). */}
+              {/* Theme toggle */}
+              <button
+                onClick={toggleTheme}
+                className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </button>
 
               {user && <NotificationBell />}
               {user && <RhozeBalanceChip />}
