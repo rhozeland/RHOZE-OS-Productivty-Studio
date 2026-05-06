@@ -35,9 +35,9 @@ import rhozelandLogo from "@/assets/rhozeland-logo.png";
 // and-forth (DMs + Projects + Inquiries + Listings).
 const pillarItems = [
   { icon: Compass, label: "Discover", path: "/discover" },
-  { icon: MessageSquare, label: "Conversations", path: "/messages" },
+  { icon: MessageSquare, label: "Inbox", path: "/messages" },
   { icon: Calendar, label: "Events", path: "/events" },
-  { icon: ShoppingBag, label: "Marketplace", path: "/discover?kind=offering" },
+  { icon: ShoppingBag, label: "Marketplace", path: "/marketplace" },
   { icon: CreditCard, label: "Creator Pass", path: "/credits" },
 ];
 
