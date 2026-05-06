@@ -43,7 +43,6 @@ import { useNavShortcuts } from "@/hooks/useNavShortcuts";
 import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 import { NAV_SHORTCUTS, formatChord, formatLeader } from "@/lib/nav-shortcuts";
 import { REGISTERED_ROUTE_PATHS } from "@/App";
-import HudDock from "@/components/hud/HudDock";
 import { CelebrationProvider } from "@/components/hud/CelebrationProvider";
 
 const PAGES = [
