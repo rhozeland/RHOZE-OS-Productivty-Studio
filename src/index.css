@@ -211,6 +211,29 @@
   animation: iridescent-flow 8s ease-in-out infinite;
 }
 
+/* Tier card shimmer — diagonal sweep, 3s loop, respects reduced motion. */
+@keyframes tier-shimmer-sweep {
+  0% { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
+  20% { opacity: 0.55; }
+  60% { opacity: 0.55; }
+  100% { transform: translateX(220%) skewX(-18deg); opacity: 0; }
+}
+.tier-shimmer { position: relative; overflow: hidden; }
+.tier-shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 0;
+  width: 35%;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 0%, rgba(255,255,255,0.18) 45%, rgba(255,255,255,0.55) 50%, rgba(255,255,255,0.18) 55%, transparent 100%);
+  filter: blur(1px);
+  animation: tier-shimmer-sweep 3s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tier-shimmer::after { animation: none; opacity: 0; }
+}
+
 /* HUD Dock — high-contrast / forced-colors fallbacks.
    Windows High Contrast Mode (and other forced-colors UAs) strips background
    gradients and box-shadows. Re-establish a visible outline + solid fills
