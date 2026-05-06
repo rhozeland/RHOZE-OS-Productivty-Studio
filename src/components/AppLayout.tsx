@@ -326,13 +326,19 @@ const AppLayout = () => {
               {user && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="h-8 w-8 rounded-full overflow-hidden border border-border hover:opacity-80 transition-opacity" aria-label="Account menu">
-                      <Avatar className="h-full w-full">
-                        <AvatarImage src={myProfile?.avatar_url ?? undefined} />
-                        <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground font-body">
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
+                    <button
+                      className="group inline-flex items-center gap-1 rounded-full pl-0.5 pr-1.5 py-0.5 hover:bg-muted/40 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      aria-label="Account menu"
+                    >
+                      <span className="block h-8 w-8 rounded-full overflow-hidden border border-border ring-0 group-hover:ring-2 group-hover:ring-white/60 transition-all">
+                        <Avatar className="h-full w-full">
+                          <AvatarImage src={myProfile?.avatar_url ?? undefined} />
+                          <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground font-body">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                      </span>
+                      <ChevronDown className="h-3 w-3 text-muted-foreground group-hover:text-foreground transition-colors" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
