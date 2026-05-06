@@ -257,12 +257,28 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
     const now = new Date();
-    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHrs = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    if (diffMins < 1) return "now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHrs < 24) return `${diffHrs}h ago`;
     if (diffDays === 1) return "Yesterday";
     if (diffDays < 7) return date.toLocaleDateString([], { weekday: "short" });
     return date.toLocaleDateString([], { month: "short", day: "numeric" });
   };
+
+  // Deterministic HSL color from name (letter avatar background).
+  const colorFromName = (name: string | null | undefined) => {
+    const s = name || "?";
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return `hsl(${h % 360} 55% 45%)`;
+  };
+  const initialOf = (name: string | null | undefined) =>
+    (name || "?").trim().charAt(0).toUpperCase() || "?";
+
 
   // === INQUIRIES DATA ===
   const navigate = useNavigate();
@@ -435,15 +451,27 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
     setActiveTab("messages");
   };
 
+  // Header subline counters
+  const unreadConvoCount = (() => {
+    if (!conversations) return 0;
+    let n = 0;
+    for (const msg of conversations.values()) {
+      if (msg.receiver_id === user?.id && !msg.read) n += 1;
+    }
+    return n;
+  })();
+
   return (
     <div className="w-full">
       <div className="w-full min-w-0 space-y-6">
       <div>
         <h1 className="font-display text-3xl font-bold text-foreground">Conversations</h1>
-        <p className="text-muted-foreground">Messages, projects, and listings — all in one place.</p>
+        <p className="text-muted-foreground">
+          {unreadConvoCount} unread {unreadConvoCount === 1 ? "message" : "messages"}
+          {" · "}
+          {pendingCount} pending {pendingCount === 1 ? "inquiry" : "inquiries"}
+        </p>
       </div>
-
-      <CreatorPassUpgradeCta />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
@@ -470,8 +498,8 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
 
         <TabsContent value="messages" className="mt-4 space-y-4">
           {!!allInquiries?.length && (
-            <details className="surface-card p-4" open={pendingCount > 0}>
-              <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-foreground">
+            <details className="surface-card p-4 group [&_summary::-webkit-details-marker]:hidden" open={allInquiries.length > 0}>
+              <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-foreground list-none">
                 <Inbox className="h-4 w-4" /> Inquiries
                 <span className="text-xs text-muted-foreground">({allInquiries.length})</span>
                 {pendingCount > 0 && (
@@ -479,6 +507,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                     {pendingCount} pending
                   </span>
                 )}
+                <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground transition-transform rotate-90 group-open:-rotate-90" />
               </summary>
               <div className="mt-3 space-y-3">
                 {allInquiries.map((i) => renderInquiry(i))}
@@ -491,7 +520,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
               "flex flex-col border-r border-border",
               selectedUser ? "hidden md:flex md:w-80" : "w-full md:w-80"
             )}>
-              <BuddyNotesRow onSelectBuddy={setSelectedUser} />
+              {/* Search first (highest-priority action), then quick-share row. */}
               <div className="p-3 space-y-2">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -506,6 +535,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                   <Plus className="h-3.5 w-3.5" /> Start a Conversation
                 </Button>
               </div>
+              <BuddyNotesRow onSelectBuddy={setSelectedUser} />
               <ScrollArea className="flex-1">
                 {contactsList.length === 0 ? (
                   <div className="p-6 text-center space-y-2">
@@ -528,34 +558,59 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                   contactsList.map((profile) => {
                     const lastMsg = getLastMessage(profile.user_id);
                     const unread = getUnreadCount(profile.user_id);
+                    const name = profile.display_name || "Creator";
+                    const rawPreview = lastMsg
+                      ? `${lastMsg.sender_id === user?.id ? "You: " : ""}${lastMsg.content}`
+                      : "";
+                    const preview = rawPreview.length > 48 ? `${rawPreview.slice(0, 45).trimEnd()}...` : rawPreview;
                     return (
                       <button
                         key={profile.user_id}
                         onClick={() => setSelectedUser(profile)}
                         className={cn(
-                          "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50",
+                          "relative flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50",
                           selectedUser?.user_id === profile.user_id && "bg-muted/70"
                         )}
                       >
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                        {/* Unread accent rail */}
+                        {unread > 0 && (
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-primary" aria-hidden />
+                        )}
+                        <div
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full overflow-hidden text-white text-sm font-semibold"
+                          style={{ backgroundColor: profile.avatar_url ? undefined : colorFromName(name) }}
+                        >
                           {profile.avatar_url ? (
                             <img src={profile.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
                           ) : (
-                            <User className="h-5 w-5 text-primary" />
+                            <span>{initialOf(name)}</span>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-foreground truncate">{profile.display_name || "Creator"}</span>
+                            <span
+                              className={cn(
+                                "text-sm text-foreground truncate",
+                                unread > 0 ? "font-semibold" : "font-medium",
+                              )}
+                            >
+                              {name}
+                            </span>
                             {lastMsg && <span className="text-[10px] text-muted-foreground shrink-0 ml-2">{formatTime(lastMsg.created_at)}</span>}
                           </div>
                           {lastMsg && (
                             <div className="flex items-center gap-2">
-                              <p className="text-xs text-muted-foreground truncate flex-1">
-                                {lastMsg.sender_id === user?.id ? "You: " : ""}{lastMsg.content}
+                              <p
+                                className={cn(
+                                  "text-xs truncate flex-1",
+                                  unread > 0 ? "text-foreground" : "text-muted-foreground",
+                                )}
+                                title={rawPreview}
+                              >
+                                {preview}
                               </p>
                               {unread > 0 && (
-                                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">{unread}</span>
+                                <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-label="unread" />
                               )}
                             </div>
                           )}
@@ -571,10 +626,46 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
             {/* Chat Area */}
             <div className={cn("flex flex-1 flex-col", !selectedUser ? "hidden md:flex" : "flex")}>
               {!selectedUser ? (
-                <div className="flex flex-1 flex-col items-center justify-center text-center text-muted-foreground px-4">
-                  <MessageSquare className="mb-4 h-12 w-12" />
-                  <p className="text-lg font-medium">Select a conversation</p>
-                  <p className="text-sm">Choose from your conversations or start a new one</p>
+                <div className="flex flex-1 flex-col items-center justify-center text-center px-6">
+                  {/* Characterful illustrated empty state — paper plane + speech bubble + dotted trail. */}
+                  <svg
+                    viewBox="0 0 200 140"
+                    className="mb-5 h-32 w-44 text-muted-foreground/70"
+                    fill="none"
+                    aria-hidden
+                  >
+                    <defs>
+                      <linearGradient id="empty-gr" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor="currentColor" stopOpacity="0.25" />
+                        <stop offset="100%" stopColor="currentColor" stopOpacity="0.05" />
+                      </linearGradient>
+                    </defs>
+                    {/* dotted path */}
+                    <path
+                      d="M20 110 C 60 60, 110 60, 170 30"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeDasharray="2 6"
+                      strokeLinecap="round"
+                      opacity="0.5"
+                    />
+                    {/* speech bubble */}
+                    <g opacity="0.9">
+                      <rect x="22" y="78" width="62" height="38" rx="12" fill="url(#empty-gr)" stroke="currentColor" strokeWidth="1.5" />
+                      <circle cx="38" cy="97" r="2" fill="currentColor" />
+                      <circle cx="52" cy="97" r="2" fill="currentColor" />
+                      <circle cx="66" cy="97" r="2" fill="currentColor" />
+                      <path d="M34 116 L 30 124 L 44 116 Z" fill="url(#empty-gr)" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                    </g>
+                    {/* paper plane */}
+                    <g transform="translate(140 12) rotate(18)">
+                      <path d="M0 18 L 44 4 L 26 28 L 18 22 Z" fill="url(#empty-gr)" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                      <path d="M18 22 L 26 28 L 22 36 Z" fill="currentColor" opacity="0.25" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+                    </g>
+                  </svg>
+                  <p className="font-display text-base font-semibold text-foreground">
+                    Nothing open yet — pick a conversation or start one.
+                  </p>
                 </div>
               ) : (
                 <>

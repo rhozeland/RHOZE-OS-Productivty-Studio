@@ -33,10 +33,11 @@ type Tile = {
 const initials = (name: string | null | undefined) =>
   (name || "?").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 
-const truncate = (name: string | null | undefined, n = 10) => {
-  const v = name || "Buddy";
-  return v.length > n ? `${v.slice(0, n)}…` : v;
-};
+// On desktop (≥768px) show the full name; on mobile clamp with ellipsis
+// to keep the strip compact. Returned as a React-friendly object so the
+// caller can just spread the className.
+const nameClass =
+  "text-[10px] font-medium text-foreground w-full text-center truncate md:whitespace-normal md:overflow-visible md:text-clip md:text-ellipsis-none";
 
 export const BuddyNotesRow = ({ onSelectBuddy }: Props) => {
   const { user } = useAuth();
@@ -111,13 +112,13 @@ export const BuddyNotesRow = ({ onSelectBuddy }: Props) => {
         <button
           type="button"
           onClick={() => setComposerOpen(true)}
-          className="flex flex-col items-center gap-1.5 shrink-0 w-20 group"
+          className="flex flex-col items-center gap-1.5 shrink-0 w-20 md:w-24 group"
         >
           <div className="h-9 flex items-end justify-center w-full">
             {myNote ? (
               <NoteBubble body={myNote.body} size="sm" />
             ) : (
-              <span className="text-[10px] text-muted-foreground/70">Tap to share</span>
+              <span className="text-[10px] text-muted-foreground/70">Share with...</span>
             )}
           </div>
           <div className="relative">
@@ -136,8 +137,8 @@ export const BuddyNotesRow = ({ onSelectBuddy }: Props) => {
               </span>
             )}
           </div>
-          <span className="text-[10px] font-medium text-foreground truncate w-full text-center">
-            {myNote ? "Your note" : "Add note"}
+          <span className="text-[10px] font-medium text-foreground w-full text-center truncate md:whitespace-normal md:overflow-visible">
+            {myNote ? "Your note" : "Drop a Note"}
           </span>
         </button>
 
@@ -153,7 +154,7 @@ export const BuddyNotesRow = ({ onSelectBuddy }: Props) => {
                 avatar_url: b.avatar_url,
               })
             }
-            className="flex flex-col items-center gap-1.5 shrink-0 w-20 group"
+            className="flex flex-col items-center gap-1.5 shrink-0 w-20 md:w-24 group"
           >
             <div className="h-9 flex items-end justify-center w-full">
               {b.note_body ? <NoteBubble body={b.note_body} size="sm" /> : <span className="h-1" />}
@@ -176,8 +177,8 @@ export const BuddyNotesRow = ({ onSelectBuddy }: Props) => {
                 )}
               </div>
             </div>
-            <span className="text-[10px] font-medium text-foreground/80 truncate w-full text-center">
-              {truncate(b.display_name)}
+            <span className="text-[10px] font-medium text-foreground/80 w-full text-center truncate md:whitespace-normal md:overflow-visible">
+              {b.display_name || "Buddy"}
             </span>
           </button>
         ))}
