@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   Flame, Coins, Shield, Download, BadgeCheck, Ticket,
-  FolderKanban, MessageSquare, Calendar,
+  FolderKanban, MessageSquare, Calendar, Check,
 } from "lucide-react";
 import ClaimRhozeButton from "@/components/ClaimRhozeButton";
 import { Input } from "@/components/ui/input";
