@@ -80,8 +80,8 @@ const GettingStartedBanner = () => {
     queryKey: ["gs-buddies", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase.rpc("list_my_buddies" as any);
-      return Array.isArray(data) ? data.length : 0;
+      const res = await (supabase as any).rpc("list_my_buddies");
+      return Array.isArray(res?.data) ? res.data.length : 0;
     },
   });
 
