@@ -296,7 +296,12 @@ const AppLayout = () => {
                   onClick={() => setSearchOpen(true)}
                   className="w-full h-9 rounded-full bg-card border border-border text-sm font-body text-muted-foreground text-left hover:bg-muted/50 transition-colors flex items-center pr-3 pl-4"
                 >
-                  Search Rhozeland...
+                  <span
+                    key={placeholderIdx}
+                    className="truncate animate-in fade-in duration-300"
+                  >
+                    {SEARCH_PLACEHOLDERS[placeholderIdx]}
+                  </span>
                   <kbd className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded font-mono text-muted-foreground">⌘K</kbd>
                 </button>
               </div>
