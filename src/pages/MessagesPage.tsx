@@ -558,34 +558,58 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                   contactsList.map((profile) => {
                     const lastMsg = getLastMessage(profile.user_id);
                     const unread = getUnreadCount(profile.user_id);
+                    const name = profile.display_name || "Creator";
+                    const preview = lastMsg
+                      ? `${lastMsg.sender_id === user?.id ? "You: " : ""}${lastMsg.content}`
+                      : "";
                     return (
                       <button
                         key={profile.user_id}
                         onClick={() => setSelectedUser(profile)}
                         className={cn(
-                          "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50",
+                          "relative flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50",
                           selectedUser?.user_id === profile.user_id && "bg-muted/70"
                         )}
                       >
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                        {/* Unread accent rail */}
+                        {unread > 0 && (
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-primary" aria-hidden />
+                        )}
+                        <div
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full overflow-hidden text-white text-sm font-semibold"
+                          style={{ backgroundColor: profile.avatar_url ? undefined : colorFromName(name) }}
+                        >
                           {profile.avatar_url ? (
                             <img src={profile.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
                           ) : (
-                            <User className="h-5 w-5 text-primary" />
+                            <span>{initialOf(name)}</span>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-foreground truncate">{profile.display_name || "Creator"}</span>
+                            <span
+                              className={cn(
+                                "text-sm text-foreground truncate",
+                                unread > 0 ? "font-semibold" : "font-medium",
+                              )}
+                            >
+                              {name}
+                            </span>
                             {lastMsg && <span className="text-[10px] text-muted-foreground shrink-0 ml-2">{formatTime(lastMsg.created_at)}</span>}
                           </div>
                           {lastMsg && (
                             <div className="flex items-center gap-2">
-                              <p className="text-xs text-muted-foreground truncate flex-1">
-                                {lastMsg.sender_id === user?.id ? "You: " : ""}{lastMsg.content}
+                              <p
+                                className={cn(
+                                  "text-xs truncate flex-1",
+                                  unread > 0 ? "text-foreground" : "text-muted-foreground",
+                                )}
+                                title={preview}
+                              >
+                                {preview}
                               </p>
                               {unread > 0 && (
-                                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">{unread}</span>
+                                <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-label="unread" />
                               )}
                             </div>
                           )}
