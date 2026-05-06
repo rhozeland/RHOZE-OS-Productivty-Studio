@@ -115,6 +115,16 @@ const AppLayout = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Rotating placeholder for the top-bar search trigger.
+  const SEARCH_PLACEHOLDERS = ["Search artists...", "Search events...", "Search spaces..."];
+  const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPlaceholderIdx((i) => (i + 1) % SEARCH_PLACEHOLDERS.length);
+    }, 3000);
+    return () => clearInterval(id);
+  }, []);
+
   // Reset query when the palette closes so the next open starts clean.
   useEffect(() => {
     if (!searchOpen) setSearchQuery("");
