@@ -482,8 +482,8 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
 
         <TabsContent value="messages" className="mt-4 space-y-4">
           {!!allInquiries?.length && (
-            <details className="surface-card p-4" open={pendingCount > 0}>
-              <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-foreground">
+            <details className="surface-card p-4 group [&_summary::-webkit-details-marker]:hidden" open={allInquiries.length > 0}>
+              <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-foreground list-none">
                 <Inbox className="h-4 w-4" /> Inquiries
                 <span className="text-xs text-muted-foreground">({allInquiries.length})</span>
                 {pendingCount > 0 && (
@@ -491,6 +491,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                     {pendingCount} pending
                   </span>
                 )}
+                <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground transition-transform rotate-90 group-open:-rotate-90" />
               </summary>
               <div className="mt-3 space-y-3">
                 {allInquiries.map((i) => renderInquiry(i))}
