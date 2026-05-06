@@ -91,8 +91,8 @@ export const TIERS: TierRow[] = [
       "Discover boost",
     ],
     coinDropsPerMonth: 10,
-    gradient: "linear-gradient(135deg, hsl(30 90% 60%), hsl(20 80% 42%))",
-    glowColor: "hsl(28, 85%, 55%)",
+    gradient: "linear-gradient(135deg, hsl(155 75% 50%), hsl(165 80% 28%))",
+    glowColor: "hsl(158, 75%, 42%)",
   },
   {
     id: "play",
