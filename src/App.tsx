@@ -40,7 +40,6 @@ import ExploreStudiosPage from "@/pages/ExploreStudiosPage";
 import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import OnboardingPage from "@/pages/OnboardingPage";
 import MarketplacePage from "@/pages/MarketplacePage";
-import CreatorsPage from "@/pages/CreatorsPage";
 import HomePage from "@/pages/HomePage";
 import DiscoverPage from "@/pages/DiscoverPage";
 import InfrastructurePage from "@/pages/InfrastructurePage";
@@ -269,8 +268,8 @@ const App = () => (
                 <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
                 <Route path="/drop-rooms" element={<Navigate to="/projects" replace />} />
                 <Route path="/drop-rooms/:id" element={<DropRoomDetailPage />} />
-                {/* Creators directory */}
-                <Route path="/creators" element={<CreatorsPage />} />
+                {/* Legacy Creators Hub → Discover */}
+                <Route path="/creators" element={<Navigate to="/discover" replace />} />
                 <Route path="/creators/:id" element={<ListingDetailPage />} />
                 {/* Marketplace — unified mosaic with a Flow shortcut */}
                 <Route path="/marketplace" element={<MarketplacePage />} />

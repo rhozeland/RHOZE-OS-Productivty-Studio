@@ -10,7 +10,6 @@ import {
   User as UserIcon,
   Calendar,
   ShoppingBag,
-  Users,
   ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -39,7 +38,6 @@ const pillarItems = [
   { icon: MessageSquare, label: "Inbox", path: "/messages" },
   { icon: Calendar, label: "Events", path: "/events" },
   { icon: ShoppingBag, label: "Marketplace", path: "/marketplace" },
-  { icon: Users, label: "Creators", path: "/creators" },
   { icon: CreditCard, label: "Creator Pass", path: "/credits" },
 ];
 
