@@ -391,8 +391,7 @@ const AppLayout = () => {
           <main className="flex-1 p-4 md:p-8 pb-8">
             <Outlet />
           </main>
-          {/* HUD Dock — gamified player bar (level / XP / streak / $RHOZE / nav) */}
-          <HudDock />
+          {/* HudDock retired — gamification stats moved to sidebar footer (SidebarHud). */}
 
         </div>
       </div>
