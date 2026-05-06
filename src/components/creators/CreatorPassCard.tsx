@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   Flame, Coins, Shield, Download, BadgeCheck, Ticket,
-  FolderKanban, MessageSquare, Calendar,
+  FolderKanban, MessageSquare, Calendar, Check,
 } from "lucide-react";
 import ClaimRhozeButton from "@/components/ClaimRhozeButton";
 import { Input } from "@/components/ui/input";
@@ -103,7 +103,7 @@ const CreatorPassCard = () => {
     queryKey: ["studio-stats-pass", user?.id],
     queryFn: async () => {
       const sb = supabase as any;
-      const [activeProj, unread, upcoming] = await Promise.all([
+      const [activeProj, unread, upcoming, latest] = await Promise.all([
         sb.from("projects")
           .select("id", { count: "exact", head: true })
           .eq("user_id", user!.id)
@@ -116,11 +116,18 @@ const CreatorPassCard = () => {
           .select("id", { count: "exact", head: true })
           .eq("user_id", user!.id)
           .gte("starts_at", new Date().toISOString()),
+        sb.from("messages")
+          .select("content, created_at")
+          .or(`sender_id.eq.${user!.id},receiver_id.eq.${user!.id}`)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
       ]);
       return {
         activeProjects: (activeProj?.count as number) ?? 0,
         unread: (unread?.count as number) ?? 0,
         upcoming: (upcoming?.count as number) ?? 0,
+        latestMessage: (latest?.data?.content as string | undefined) ?? null,
       };
     },
     enabled: !!user,
@@ -146,7 +153,7 @@ const CreatorPassCard = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative rounded-2xl overflow-hidden shadow-xl"
+        className="relative tier-shimmer rounded-2xl overflow-hidden shadow-xl"
         style={{ background: gradient }}
       >
         {/* Texture overlay */}
@@ -190,20 +197,59 @@ const CreatorPassCard = () => {
             </div>
           </div>
 
-          {/* Stats — 4 collectible metrics (no XP/Level/Rank duplication) */}
+          {/* Stats — 4 collectible metrics (with milestone hints when zero) */}
           <div className="grid grid-cols-4 gap-3">
-            {[
-              { label: "Balance", value: `${credits?.balance ?? 0}`, icon: Coins },
-              { label: "Streak", value: `${credits?.reward_streak ?? 0}d`, icon: Flame },
-              { label: "Events", value: `${eventsAttended}`, icon: Ticket },
-              { label: "Verified Works", value: `${verifiedWorks ?? 0}`, icon: Shield },
-            ].map((stat) => (
+            {([
+              {
+                label: "Balance",
+                value: `${credits?.balance ?? 0}`,
+                icon: Coins,
+                isZero: Number(credits?.balance ?? 0) === 0,
+                hint: null,
+              },
+              {
+                label: "Streak",
+                value: `${credits?.reward_streak ?? 0}d`,
+                icon: Flame,
+                isZero: Number(credits?.reward_streak ?? 0) === 0,
+                hint: { text: "Sign in daily to start", to: null as string | null },
+              },
+              {
+                label: "Events",
+                value: `${eventsAttended}`,
+                icon: Ticket,
+                isZero: eventsAttended === 0,
+                hint: { text: "Attend 1 event →", to: "/events" },
+              },
+              {
+                label: "Verified Works",
+                value: `${verifiedWorks ?? 0}`,
+                icon: Shield,
+                isZero: (verifiedWorks ?? 0) === 0,
+                hint: { text: "Submit a work →", to: "/discover" },
+              },
+            ] as const).map((stat) => (
               <div key={stat.label} className="text-center">
                 <div className="h-9 w-9 mx-auto rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center mb-1">
                   <stat.icon className="h-4 w-4" />
                 </div>
-                <p className="font-display text-sm font-bold tabular-nums">{stat.value}</p>
-                <p className="text-[9px] uppercase tracking-wider opacity-60 font-body">{stat.label}</p>
+                {stat.isZero && stat.hint ? (
+                  stat.hint.to ? (
+                    <Link
+                      to={stat.hint.to}
+                      className="block font-display text-[10px] font-semibold leading-tight underline-offset-2 hover:underline"
+                    >
+                      {stat.hint.text}
+                    </Link>
+                  ) : (
+                    <p className="font-display text-[10px] font-semibold leading-tight opacity-90">
+                      {stat.hint.text}
+                    </p>
+                  )
+                ) : (
+                  <p className="font-display text-sm font-bold tabular-nums">{stat.value}</p>
+                )}
+                <p className="text-[9px] uppercase tracking-wider opacity-60 font-body mt-0.5">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -276,112 +322,255 @@ const CreatorPassCard = () => {
         transition={{ delay: 0.1 }}
         className="grid grid-cols-3 gap-[1px] bg-border rounded-2xl overflow-hidden"
       >
-        {[
-          { icon: FolderKanban, label: "Active Projects", value: studioStats?.activeProjects ?? 0, path: "/projects" },
-          { icon: MessageSquare, label: "Unread", value: studioStats?.unread ?? 0, path: "/messages" },
-          { icon: Calendar, label: "Upcoming", value: studioStats?.upcoming ?? 0, path: "/calendar" },
-        ].map((s) => (
-          <Link key={s.label} to={s.path} className="bg-card p-4 hover:bg-muted/50 transition-colors group">
-            <s.icon className="h-4 w-4 text-muted-foreground mb-2 group-hover:text-foreground transition-colors" />
-            <p className="font-display text-2xl text-foreground">{s.value}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider font-body">{s.label}</p>
+        {/* Active projects — always shown */}
+        <Link to="/projects" className="bg-card p-4 hover:bg-muted/50 transition-colors group">
+          <FolderKanban className="h-4 w-4 text-muted-foreground mb-2 group-hover:text-foreground transition-colors" />
+          <p className="font-display text-2xl text-foreground">{studioStats?.activeProjects ?? 0}</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider font-body">Active Projects</p>
+        </Link>
+
+        {/* Unread → Latest message preview when 0 */}
+        <Link to="/messages" className="bg-card p-4 hover:bg-muted/50 transition-colors group">
+          <MessageSquare className="h-4 w-4 text-muted-foreground mb-2 group-hover:text-foreground transition-colors" />
+          {(studioStats?.unread ?? 0) > 0 ? (
+            <>
+              <p className="font-display text-2xl text-foreground">{studioStats?.unread}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider font-body">Unread</p>
+            </>
+          ) : (
+            <>
+              <p className="font-body text-sm text-foreground line-clamp-2 leading-snug">
+                {studioStats?.latestMessage ?? "No messages yet"}
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">Latest message</p>
+            </>
+          )}
+        </Link>
+
+        {/* Upcoming → Find events button when 0 */}
+        {(studioStats?.upcoming ?? 0) > 0 ? (
+          <Link to="/calendar" className="bg-card p-4 hover:bg-muted/50 transition-colors group">
+            <Calendar className="h-4 w-4 text-muted-foreground mb-2 group-hover:text-foreground transition-colors" />
+            <p className="font-display text-2xl text-foreground">{studioStats?.upcoming}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider font-body">Upcoming</p>
           </Link>
-        ))}
+        ) : (
+          <div className="bg-card p-4 flex flex-col">
+            <Calendar className="h-4 w-4 text-muted-foreground mb-2" />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-body mb-2">Upcoming</p>
+            <Link
+              to="/events"
+              className="inline-flex items-center justify-center h-8 rounded-full border border-border hover:bg-muted text-xs font-medium font-body text-foreground transition-colors px-3"
+            >
+              Find events →
+            </Link>
+          </div>
+        )}
       </motion.div>
 
       {/* ── In-app $RHOZE Balance + Claim ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* In-app balance — bank-statement style, drives tier eligibility */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="surface-card p-5 flex flex-col items-center text-center"
-        >
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Shield className="h-3.5 w-3.5" />
-            <span className="text-[10px] uppercase tracking-[0.2em] font-body font-medium">
-              $RHOZE Balance
-            </span>
-          </div>
-          <p className="font-display text-4xl md:text-5xl font-bold text-foreground tabular-nums leading-none mt-3">
-            {Number(credits?.balance ?? 0).toLocaleString()}
-          </p>
-          <p className="text-[11px] text-muted-foreground font-body uppercase tracking-widest mt-1.5">
-            $RHOZE
-          </p>
-
-          {/* Tier ladder pills */}
-          <div className="flex items-center justify-center gap-1.5 mt-4 flex-wrap">
-            {TIERS.map((t) => {
-              const isActive = t.id === holdTier;
-              return (
-                <div
-                  key={t.id}
-                  className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 transition ${
-                    isActive
-                      ? "border-foreground/30 bg-foreground/5"
-                      : "border-border/40 opacity-60"
-                  }`}
-                >
-                  <span
-                    className="h-2 w-2 rounded-full shrink-0"
-                    style={{ background: t.gradient }}
-                    aria-hidden
-                  />
-                  <span className="text-[10px] font-body font-medium text-foreground">
-                    {t.label}
-                  </span>
-                  <span className="text-[9px] text-muted-foreground tabular-nums">
-                    {t.holdLabel}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          <p className="text-[11px] text-muted-foreground font-body mt-3 max-w-xs">
-            {holdTier !== "spark" ? (
-              <>
-                You're holding <span className="font-semibold capitalize text-foreground">{holdTier}</span> tier benefits.
-              </>
-            ) : (
-              <>Hold $RHOZE to unlock tier perks — no wallet needed.</>
-            )}
-          </p>
-        </motion.div>
+        <BalanceCard balance={Number(credits?.balance ?? 0)} holdTier={holdTier} />
 
         {/* Claim to wallet */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="surface-card p-4 space-y-3 border-primary/20">
-          <div className="flex items-center gap-2">
-            <Download className="h-4 w-4 text-primary" />
-            <span className="text-sm font-body font-semibold text-foreground">Claim to Wallet</span>
-          </div>
-          <p className="text-[11px] text-muted-foreground font-body">
-            Convert earned credits into real $RHOZE tokens in your wallet.
-          </p>
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              min={1}
-              max={credits?.balance ?? 0}
-              value={claimAmount || ""}
-              onChange={(e) => setClaimAmount(Number(e.target.value))}
-              placeholder="Amount"
-              className="h-9 text-sm w-24"
-            />
-            <span className="text-xs text-muted-foreground font-body">/ {credits?.balance ?? 0} available</span>
-          </div>
-          <ClaimRhozeButton
-            creditsToClaim={claimAmount}
-            onSuccess={() => setClaimAmount(0)}
-            className="w-full"
-            disabled={claimAmount <= 0 || claimAmount > (credits?.balance ?? 0)}
-          />
-        </motion.div>
+        <ClaimToWalletCard
+          balance={Number(credits?.balance ?? 0)}
+          claimAmount={claimAmount}
+          setClaimAmount={setClaimAmount}
+        />
       </div>
 
     </div>
+  );
+};
+
+/* ─── Balance card — top-priority headline, USD ≈, progress bar, perks ─── */
+const RHOZE_USD_RATE = 1 / 100; // 100 $RHOZE ≈ $1
+
+const BalanceCard = ({ balance, holdTier }: { balance: number; holdTier: TierId }) => {
+  const [perksOpen, setPerksOpen] = useState(false);
+  const usd = balance * RHOZE_USD_RATE;
+  const tierIdx = TIER_RANK[holdTier];
+  const current = TIERS[tierIdx];
+  const next = TIERS[tierIdx + 1] ?? null;
+  const segMin = current.hold;
+  const segMax = next ? next.hold : current.hold + 1;
+  const segPct = next
+    ? Math.min(100, Math.max(2, ((balance - segMin) / (segMax - segMin)) * 100))
+    : 100;
+
+  const fmt = (n: number) =>
+    n >= 1_000_000 ? `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M` :
+    n >= 1_000 ? `${(n / 1_000).toFixed(0)}k` : n.toLocaleString();
+
+  // Perks for "Bloom" — first paid tier — to surface as the unlock target.
+  const bloomPerks = TIERS.find((t) => t.id === "bloom")?.benefits ?? [];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.15 }}
+      className="surface-card p-5 flex flex-col text-center"
+    >
+      {/* Top-priority headline */}
+      <p className="text-[13px] text-foreground font-body font-medium leading-snug">
+        {holdTier !== "spark"
+          ? <>You're holding <span className="font-semibold capitalize">{holdTier}</span> tier benefits.</>
+          : <>Hold $RHOZE to unlock tier perks — no wallet needed.</>}
+      </p>
+
+      <div className="mt-4 flex flex-col items-center">
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <Shield className="h-3.5 w-3.5" />
+          <span className="text-[10px] uppercase tracking-[0.2em] font-body font-medium">$RHOZE Balance</span>
+        </div>
+        <p className="font-display text-4xl md:text-5xl font-bold text-foreground tabular-nums leading-none mt-2">
+          {balance.toLocaleString()}
+        </p>
+        <p className="text-[11px] text-muted-foreground font-body mt-1 tabular-nums">
+          ≈ ${usd.toLocaleString(undefined, { maximumFractionDigits: 2 })} USD
+        </p>
+      </div>
+
+      {/* Progress bar to next tier */}
+      <div className="mt-5 px-1 text-left">
+        <div className="flex items-baseline justify-between text-[10px] font-body text-muted-foreground">
+          <span className="capitalize text-foreground font-medium">{current.label}</span>
+          {next ? <span>Next: <span className="capitalize text-foreground">{next.label}</span> · {fmt(next.hold)}</span> : <span>Top tier</span>}
+        </div>
+        <div className="mt-1.5 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all"
+            style={{ width: `${segPct}%`, background: current.gradient }}
+          />
+        </div>
+        <div className="mt-1 flex justify-between text-[9px] tabular-nums text-muted-foreground">
+          <span>{fmt(segMin)}</span>
+          {next && <span>{fmt(segMax)}</span>}
+        </div>
+      </div>
+
+      {/* Expandable Bloom perks */}
+      <button
+        type="button"
+        onClick={() => setPerksOpen((o) => !o)}
+        className="mt-4 inline-flex items-center justify-center gap-1 text-[11px] font-body text-foreground hover:underline underline-offset-2"
+      >
+        What you unlock at Bloom {perksOpen ? "▴" : "→"}
+      </button>
+      {perksOpen && (
+        <ul className="mt-2 text-left space-y-1 px-1">
+          {bloomPerks.map((p) => (
+            <li key={p} className="flex items-start gap-2 text-[11px] text-muted-foreground font-body">
+              <Check className="h-3 w-3 text-foreground/70 mt-0.5 shrink-0" />
+              <span>{p}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </motion.div>
+  );
+};
+
+/* ─── Claim to wallet card — preset amounts + helper links ─── */
+const ClaimToWalletCard = ({
+  balance, claimAmount, setClaimAmount,
+}: {
+  balance: number;
+  claimAmount: number;
+  setClaimAmount: (n: number) => void;
+}) => {
+  const [dismissed, setDismissed] = useState(false);
+  if (dismissed) {
+    return (
+      <div className="surface-card p-4 flex items-center justify-between gap-3">
+        <p className="text-xs text-muted-foreground font-body">Claim later. Your balance keeps earning.</p>
+        <button
+          type="button"
+          onClick={() => setDismissed(false)}
+          className="text-xs font-body text-foreground hover:underline underline-offset-2"
+        >
+          Show again
+        </button>
+      </div>
+    );
+  }
+
+  const presets: Array<{ label: string; value: number }> = [
+    { label: "1", value: 1 },
+    { label: "3", value: 3 },
+    { label: "5", value: 5 },
+    { label: "All", value: Math.floor(balance) },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+      className="surface-card p-4 space-y-3 border-primary/20"
+    >
+      <div className="flex items-center gap-2">
+        <Download className="h-4 w-4 text-primary" />
+        <span className="text-sm font-body font-semibold text-foreground">Claim to Wallet</span>
+        <span className="ml-auto text-[10px] text-muted-foreground tabular-nums font-body">
+          {balance.toLocaleString()} available
+        </span>
+      </div>
+      <p className="text-[11px] text-muted-foreground font-body">
+        Convert earned credits into real $RHOZE tokens in your wallet.
+      </p>
+
+      {/* Preset quick-select */}
+      <div className="grid grid-cols-4 gap-1.5">
+        {presets.map((p) => {
+          const disabled = p.value <= 0 || p.value > balance;
+          const active = claimAmount === p.value && !disabled;
+          return (
+            <button
+              key={p.label}
+              type="button"
+              disabled={disabled}
+              onClick={() => setClaimAmount(p.value)}
+              className={`h-9 rounded-full border text-xs font-body font-medium transition-colors ${
+                active
+                  ? "border-primary bg-primary/10 text-foreground"
+                  : "border-border bg-card text-foreground hover:bg-muted/50"
+              } disabled:opacity-40 disabled:cursor-not-allowed`}
+            >
+              {p.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <ClaimRhozeButton
+        creditsToClaim={claimAmount}
+        onSuccess={() => setClaimAmount(0)}
+        className="w-full"
+        disabled={claimAmount <= 0 || claimAmount > balance}
+      />
+
+      <div className="flex items-center justify-between gap-2 pt-1">
+        <a
+          href="https://phantom.app/learn/crypto-101/what-is-a-crypto-wallet"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[11px] font-body text-muted-foreground hover:text-foreground underline underline-offset-2"
+        >
+          What's a wallet? →
+        </a>
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          className="text-[11px] font-body text-muted-foreground hover:text-foreground"
+        >
+          Claim Later
+        </button>
+      </div>
+    </motion.div>
   );
 };
 

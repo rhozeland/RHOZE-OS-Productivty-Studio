@@ -58,8 +58,8 @@ export const TIERS: TierRow[] = [
       "1 coin drop / 30 days",
     ],
     coinDropsPerMonth: 1,
-    gradient: "linear-gradient(135deg, hsl(205 75% 65%), hsl(220 55% 42%))",
-    glowColor: "hsl(210, 70%, 55%)",
+    gradient: "linear-gradient(135deg, hsl(210 100% 60%), hsl(225 90% 38%))",
+    glowColor: "hsl(212, 100%, 55%)",
   },
   {
     id: "bloom",
@@ -74,8 +74,8 @@ export const TIERS: TierRow[] = [
       "3 coin drops / 30 days",
     ],
     coinDropsPerMonth: 3,
-    gradient: "linear-gradient(135deg, hsl(330 65% 72%), hsl(345 55% 48%))",
-    glowColor: "hsl(335, 60%, 65%)",
+    gradient: "linear-gradient(135deg, hsl(38 95% 62%), hsl(28 85% 42%))",
+    glowColor: "hsl(35, 90%, 55%)",
   },
   {
     id: "glow",
@@ -91,8 +91,8 @@ export const TIERS: TierRow[] = [
       "Discover boost",
     ],
     coinDropsPerMonth: 10,
-    gradient: "linear-gradient(135deg, hsl(30 90% 60%), hsl(20 80% 42%))",
-    glowColor: "hsl(28, 85%, 55%)",
+    gradient: "linear-gradient(135deg, hsl(155 75% 50%), hsl(165 80% 28%))",
+    glowColor: "hsl(158, 75%, 42%)",
   },
   {
     id: "play",
@@ -108,8 +108,8 @@ export const TIERS: TierRow[] = [
       "Verified Artist fast-track",
     ],
     coinDropsPerMonth: null,
-    gradient: "linear-gradient(135deg, hsl(50 90% 58%), hsl(38 80% 40%))",
-    glowColor: "hsl(45, 85%, 52%)",
+    gradient: "linear-gradient(135deg, hsl(48 95% 62%), hsl(38 85% 38%))",
+    glowColor: "hsl(45, 95%, 55%)",
   },
 ];
 
