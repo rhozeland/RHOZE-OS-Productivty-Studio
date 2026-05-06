@@ -8,7 +8,7 @@ import NotificationBell from "@/components/NotificationBell";
 import UsernamePrompt from "@/components/UsernamePrompt";
 // FlowLauncher (floating FAB) retired — Flow is now reachable via the Hub view toggle + HubFlowWidget.
 // DockBar retired in v7 (post phase-2) — navigation happens via the left side nav + global ⌘K search.
-import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Settings as SettingsIcon, LogOut, Coins } from "lucide-react";
+import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Settings as SettingsIcon, LogOut, Coins, ChevronDown } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -114,6 +114,16 @@ const AppLayout = () => {
   
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Rotating placeholder for the top-bar search trigger.
+  const SEARCH_PLACEHOLDERS = ["Search artists...", "Search events...", "Search spaces..."];
+  const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPlaceholderIdx((i) => (i + 1) % SEARCH_PLACEHOLDERS.length);
+    }, 3000);
+    return () => clearInterval(id);
+  }, []);
 
   // Reset query when the palette closes so the next open starts clean.
   useEffect(() => {
@@ -286,7 +296,12 @@ const AppLayout = () => {
                   onClick={() => setSearchOpen(true)}
                   className="w-full h-9 rounded-full bg-card border border-border text-sm font-body text-muted-foreground text-left hover:bg-muted/50 transition-colors flex items-center pr-3 pl-4"
                 >
-                  Search Rhozeland...
+                  <span
+                    key={placeholderIdx}
+                    className="truncate animate-in fade-in duration-300"
+                  >
+                    {SEARCH_PLACEHOLDERS[placeholderIdx]}
+                  </span>
                   <kbd className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded font-mono text-muted-foreground">⌘K</kbd>
                 </button>
               </div>
@@ -311,13 +326,19 @@ const AppLayout = () => {
               {user && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="h-8 w-8 rounded-full overflow-hidden border border-border hover:opacity-80 transition-opacity" aria-label="Account menu">
-                      <Avatar className="h-full w-full">
-                        <AvatarImage src={myProfile?.avatar_url ?? undefined} />
-                        <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground font-body">
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
+                    <button
+                      className="group inline-flex items-center gap-1 rounded-full pl-0.5 pr-1.5 py-0.5 hover:bg-muted/40 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      aria-label="Account menu"
+                    >
+                      <span className="block h-8 w-8 rounded-full overflow-hidden border border-border ring-0 group-hover:ring-2 group-hover:ring-white/60 transition-all">
+                        <Avatar className="h-full w-full">
+                          <AvatarImage src={myProfile?.avatar_url ?? undefined} />
+                          <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground font-body">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                      </span>
+                      <ChevronDown className="h-3 w-3 text-muted-foreground group-hover:text-foreground transition-colors" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
