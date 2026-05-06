@@ -39,7 +39,7 @@ import StudioManagePage from "@/pages/StudioManagePage";
 import ExploreStudiosPage from "@/pages/ExploreStudiosPage";
 import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import OnboardingPage from "@/pages/OnboardingPage";
-// MarketplacePage retained as a file but no longer routed — /marketplace redirects to /hub.
+import MarketplacePage from "@/pages/MarketplacePage";
 import HomePage from "@/pages/HomePage";
 import DiscoverPage from "@/pages/DiscoverPage";
 import InfrastructurePage from "@/pages/InfrastructurePage";
@@ -271,8 +271,8 @@ const App = () => (
                 {/* Legacy Creators Hub → Discover */}
                 <Route path="/creators" element={<Navigate to="/discover" replace />} />
                 <Route path="/creators/:id" element={<ListingDetailPage />} />
-                {/* Legacy Marketplace → Discover (detail pages still resolve) */}
-                <Route path="/marketplace" element={<Navigate to="/discover?kind=offering" replace />} />
+                {/* Marketplace — unified mosaic with a Flow shortcut */}
+                <Route path="/marketplace" element={<MarketplacePage />} />
                 <Route path="/marketplace/:id" element={<ListingDetailPage />} />
                 <Route path="/seller" element={<Navigate to="/settings" replace />} />
                 <Route path="/inquiries" element={<Navigate to="/messages" replace />} />
