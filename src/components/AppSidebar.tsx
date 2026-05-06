@@ -129,7 +129,7 @@ const AppSidebar = () => {
 
       <SidebarContent className="px-2 pt-3 space-y-2">
         {renderGroup(pillarItems, { label: "Explore" })}
-        {personalItems.length > 0 && renderGroup(personalItems, { label: "You" })}
+        {personalItems.length > 0 && renderGroup(personalItems)}
       </SidebarContent>
 
       <SidebarFooter className="px-0 pb-3 mt-auto">
