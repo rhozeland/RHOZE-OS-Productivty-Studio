@@ -504,7 +504,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
               "flex flex-col border-r border-border",
               selectedUser ? "hidden md:flex md:w-80" : "w-full md:w-80"
             )}>
-              <BuddyNotesRow onSelectBuddy={setSelectedUser} />
+              {/* Search first (highest-priority action), then quick-share row. */}
               <div className="p-3 space-y-2">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -519,6 +519,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                   <Plus className="h-3.5 w-3.5" /> Start a Conversation
                 </Button>
               </div>
+              <BuddyNotesRow onSelectBuddy={setSelectedUser} />
               <ScrollArea className="flex-1">
                 {contactsList.length === 0 ? (
                   <div className="p-6 text-center space-y-2">
