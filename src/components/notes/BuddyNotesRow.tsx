@@ -112,7 +112,7 @@ export const BuddyNotesRow = ({ onSelectBuddy }: Props) => {
         <button
           type="button"
           onClick={() => setComposerOpen(true)}
-          className="flex flex-col items-center gap-1.5 shrink-0 w-20 group"
+          className="flex flex-col items-center gap-1.5 shrink-0 w-20 md:w-24 group"
         >
           <div className="h-9 flex items-end justify-center w-full">
             {myNote ? (
@@ -154,7 +154,7 @@ export const BuddyNotesRow = ({ onSelectBuddy }: Props) => {
                 avatar_url: b.avatar_url,
               })
             }
-            className="flex flex-col items-center gap-1.5 shrink-0 w-20 group"
+            className="flex flex-col items-center gap-1.5 shrink-0 w-20 md:w-24 group"
           >
             <div className="h-9 flex items-end justify-center w-full">
               {b.note_body ? <NoteBubble body={b.note_body} size="sm" /> : <span className="h-1" />}
