@@ -1,25 +1,20 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
-  Box,
   Settings,
-  LogOut,
   LogIn,
-  ShieldCheck,
   CreditCard,
   MessageSquare,
   UserPlus,
-  Sparkles,
   Compass,
   User as UserIcon,
+  Calendar,
+  ShoppingBag,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTheme } from "@/contexts/ThemeContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { resolveNavLink } from "@/hooks/useNavLink";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sidebar,
   SidebarContent,
@@ -32,6 +27,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
+import SidebarHud from "@/components/hud/SidebarHud";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
 // v8: primary pillars in the side nav. Hub + My Studio retired —
@@ -40,52 +36,29 @@ import rhozelandLogo from "@/assets/rhozeland-logo.png";
 const pillarItems = [
   { icon: Compass, label: "Discover", path: "/discover" },
   { icon: MessageSquare, label: "Conversations", path: "/messages" },
+  { icon: Calendar, label: "Events", path: "/events" },
+  { icon: ShoppingBag, label: "Marketplace", path: "/discover?kind=offering" },
   { icon: CreditCard, label: "Creator Pass", path: "/credits" },
 ];
-
-// Profile is reachable via the account row at the bottom of the sidebar.
-const secondaryItems: { icon: typeof UserIcon; label: string; path: string }[] = [];
 
 const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { signOut } = useAuth();
-  const { theme } = useTheme();
   const { isAdmin } = useAdminCheck();
   const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
-
-  const { data: profile } = useQuery({
-    queryKey: ["my-profile-sidebar", user?.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("display_name, avatar_url")
-        .eq("user_id", user!.id)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!user,
-  });
-
-  const initials = profile?.display_name
-    ? profile.display_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
-    : user?.email?.charAt(0).toUpperCase() ?? "?";
-
-  const accountItems = [
-    { icon: Settings, label: "Settings", path: "/settings" },
-    ...(isAdmin ? [{ icon: ShieldCheck, label: "Admin", path: "/admin" }] : []),
-  ];
 
   const handleNavClick = () => {
     if (isMobile) setOpenMobile(false);
   };
 
-  // Use the shared resolver so the sidebar's "active" rules match the
-  // header nav and DockBar exactly (including legacy aliases + sub-routes).
-  const isActive = (path: string) =>
-    resolveNavLink({ path }, location.pathname).isActive;
+  const personalItems = user
+    ? [
+        { icon: UserIcon, label: "Profile", path: `/profiles/${user.id}` },
+        ...(isAdmin ? [{ icon: ShieldCheck, label: "Admin", path: "/admin" }] : []),
+      ]
+    : [];
 
   const renderNavItem = (item: any) => {
     const { to, isActive: active, ariaCurrent } = resolveNavLink(
@@ -117,9 +90,7 @@ const AppSidebar = () => {
               "h-[18px] w-[18px] shrink-0 transition-colors duration-250",
               active ? "text-primary" : ""
             )} />
-            {!collapsed && (
-              <span className="flex-1">{item.label}</span>
-            )}
+            {!collapsed && <span className="flex-1">{item.label}</span>}
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -141,9 +112,6 @@ const AppSidebar = () => {
     </SidebarGroup>
   );
 
-  const profilePath = user?.id ? `/profiles/${user.id}` : "/settings";
-  const profileActive = isActive(profilePath);
-
   return (
     <Sidebar collapsible="icon" className="border-r-0">
       <Link to="/discover" className={cn(
@@ -163,57 +131,15 @@ const AppSidebar = () => {
       </Link>
 
       <SidebarContent className="px-2 pt-3 space-y-2">
-        {renderGroup(pillarItems)}
-        {secondaryItems.length > 0 && renderGroup(secondaryItems)}
+        {renderGroup(pillarItems, { label: "Explore" })}
+        {personalItems.length > 0 && renderGroup(personalItems, { label: "You" })}
       </SidebarContent>
 
-      <SidebarFooter className="px-2 pb-4 mt-auto">
-        {/* Authenticated: show profile + settings + sign out */}
+      <SidebarFooter className="px-0 pb-3 mt-auto">
         {user ? (
-          <>
-            <Link
-              to={profilePath}
-              onClick={handleNavClick}
-              className={cn(
-                "flex items-center gap-3 rounded-xl px-3 py-2.5 mb-3 transition-all duration-250",
-                profileActive
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-                collapsed && "justify-center px-2"
-              )}
-            >
-              <Avatar className="h-7 w-7 border border-border shrink-0">
-                <AvatarImage src={profile?.avatar_url ?? undefined} />
-                <AvatarFallback className="text-[9px] font-semibold bg-muted text-muted-foreground font-body">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              {!collapsed && (
-                <span className="text-sm font-medium truncate">
-                  {profile?.display_name || user?.email?.split("@")[0] || "Profile"}
-                </span>
-              )}
-            </Link>
-
-            <div className="border-t border-sidebar-border pt-3">
-              <SidebarMenu className="space-y-0.5">
-                {accountItems.map(renderNavItem)}
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    tooltip={collapsed ? "Sign Out" : undefined}
-                    onClick={signOut}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-250"
-                  >
-                    <LogOut className="h-[18px] w-[18px] shrink-0" />
-                    {!collapsed && <span>Sign Out</span>}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </div>
-          </>
+          <SidebarHud />
         ) : (
-          /* Guest: show sign in / sign up */
-          <div className="border-t border-sidebar-border pt-3 space-y-1">
+          <div className="px-2 border-t border-sidebar-border pt-3 space-y-1">
             <SidebarMenu className="space-y-0.5">
               <SidebarMenuItem>
                 <SidebarMenuButton
