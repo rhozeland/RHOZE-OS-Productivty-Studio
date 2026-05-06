@@ -103,7 +103,7 @@ const CreatorPassCard = () => {
     queryKey: ["studio-stats-pass", user?.id],
     queryFn: async () => {
       const sb = supabase as any;
-      const [activeProj, unread, upcoming] = await Promise.all([
+      const [activeProj, unread, upcoming, latest] = await Promise.all([
         sb.from("projects")
           .select("id", { count: "exact", head: true })
           .eq("user_id", user!.id)
@@ -116,11 +116,18 @@ const CreatorPassCard = () => {
           .select("id", { count: "exact", head: true })
           .eq("user_id", user!.id)
           .gte("starts_at", new Date().toISOString()),
+        sb.from("messages")
+          .select("content, created_at")
+          .or(`sender_id.eq.${user!.id},receiver_id.eq.${user!.id}`)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
       ]);
       return {
         activeProjects: (activeProj?.count as number) ?? 0,
         unread: (unread?.count as number) ?? 0,
         upcoming: (upcoming?.count as number) ?? 0,
+        latestMessage: (latest?.data?.content as string | undefined) ?? null,
       };
     },
     enabled: !!user,
