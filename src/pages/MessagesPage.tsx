@@ -605,7 +605,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                                   "text-xs truncate flex-1",
                                   unread > 0 ? "text-foreground" : "text-muted-foreground",
                                 )}
-                                title={preview}
+                                title={rawPreview}
                               >
                                 {preview}
                               </p>
