@@ -9,7 +9,8 @@ import UsernamePrompt from "@/components/UsernamePrompt";
 import WelcomeModal from "@/components/onboarding/WelcomeModal";
 // FlowLauncher (floating FAB) retired — Flow is now reachable via the Hub view toggle + HubFlowWidget.
 // DockBar retired in v7 (post phase-2) — navigation happens via the left side nav + global ⌘K search.
-import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Settings as SettingsIcon, LogOut, Coins, ChevronDown } from "lucide-react";
+import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Settings as SettingsIcon, LogOut, Coins, ChevronDown, Sun, Moon } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -42,7 +43,6 @@ import { useNavShortcuts } from "@/hooks/useNavShortcuts";
 import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 import { NAV_SHORTCUTS, formatChord, formatLeader } from "@/lib/nav-shortcuts";
 import { REGISTERED_ROUTE_PATHS } from "@/App";
-import HudDock from "@/components/hud/HudDock";
 import { CelebrationProvider } from "@/components/hud/CelebrationProvider";
 
 const PAGES = [
@@ -112,7 +112,8 @@ const AppLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut } = useAuth();
-  
+  const { theme, toggleTheme } = useTheme();
+
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -318,7 +319,14 @@ const AppLayout = () => {
                 <Search className="h-4 w-4 text-muted-foreground" />
               </button>
 
-              {/* Theme toggle moved to Settings → Account (per v8.7 cleanup). */}
+              {/* Theme toggle */}
+              <button
+                onClick={toggleTheme}
+                className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </button>
 
               {user && <NotificationBell />}
               {user && <RhozeBalanceChip />}
@@ -382,8 +390,7 @@ const AppLayout = () => {
           <main className="flex-1 p-4 md:p-8 pb-8">
             <Outlet />
           </main>
-          {/* HUD Dock — gamified player bar (level / XP / streak / $RHOZE / nav) */}
-          <HudDock />
+          {/* HudDock retired — gamification stats moved to sidebar footer (SidebarHud). */}
 
         </div>
       </div>
