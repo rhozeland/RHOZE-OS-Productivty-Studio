@@ -74,8 +74,8 @@ export const TIERS: TierRow[] = [
       "3 coin drops / 30 days",
     ],
     coinDropsPerMonth: 3,
-    gradient: "linear-gradient(135deg, hsl(330 65% 72%), hsl(345 55% 48%))",
-    glowColor: "hsl(335, 60%, 65%)",
+    gradient: "linear-gradient(135deg, hsl(38 95% 62%), hsl(28 85% 42%))",
+    glowColor: "hsl(35, 90%, 55%)",
   },
   {
     id: "glow",
