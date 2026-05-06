@@ -177,8 +177,8 @@ export const BuddyNotesRow = ({ onSelectBuddy }: Props) => {
                 )}
               </div>
             </div>
-            <span className="text-[10px] font-medium text-foreground/80 truncate w-full text-center">
-              {truncate(b.display_name)}
+            <span className="text-[10px] font-medium text-foreground/80 w-full text-center truncate md:whitespace-normal md:overflow-visible">
+              {b.display_name || "Buddy"}
             </span>
           </button>
         ))}
