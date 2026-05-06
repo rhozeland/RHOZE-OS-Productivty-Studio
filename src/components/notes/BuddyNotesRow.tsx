@@ -118,7 +118,7 @@ export const BuddyNotesRow = ({ onSelectBuddy }: Props) => {
             {myNote ? (
               <NoteBubble body={myNote.body} size="sm" />
             ) : (
-              <span className="text-[10px] text-muted-foreground/70">Tap to share</span>
+              <span className="text-[10px] text-muted-foreground/70">Share with...</span>
             )}
           </div>
           <div className="relative">
