@@ -53,11 +53,8 @@ const AppSidebar = () => {
     if (isMobile) setOpenMobile(false);
   };
 
-  const personalItems = user
-    ? [
-        { icon: UserIcon, label: "Profile", path: `/profiles/${user.id}` },
-        ...(isAdmin ? [{ icon: ShieldCheck, label: "Admin", path: "/admin" }] : []),
-      ]
+  const personalItems = user && isAdmin
+    ? [{ icon: ShieldCheck, label: "Admin", path: "/admin" }]
     : [];
 
   const renderNavItem = (item: any) => {
