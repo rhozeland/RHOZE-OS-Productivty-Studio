@@ -303,6 +303,9 @@ const CreatorsPage = () => {
 
   return (
     <div className="space-y-6">
+      <Link to="/discover" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-3.5 w-3.5" /> Back to Discover
+      </Link>
       <div>
         <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 mb-1.5">
           Creators
