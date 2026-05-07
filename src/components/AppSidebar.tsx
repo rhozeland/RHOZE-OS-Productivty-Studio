@@ -12,6 +12,7 @@ import {
   ShoppingBag,
   Users,
   ShieldCheck,
+  FolderKanban,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
