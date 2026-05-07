@@ -12,6 +12,7 @@ import {
   ShoppingBag,
   Users,
   ShieldCheck,
+  FolderKanban,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
@@ -37,6 +38,7 @@ import rhozelandLogo from "@/assets/rhozeland-logo.png";
 const pillarItems = [
   { icon: Compass, label: "Discover", path: "/discover" },
   { icon: MessageSquare, label: "Inbox", path: "/messages" },
+  { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: Calendar, label: "Events", path: "/events" },
   { icon: ShoppingBag, label: "Marketplace", path: "/marketplace" },
   { icon: Users, label: "Creators", path: "/creators" },
