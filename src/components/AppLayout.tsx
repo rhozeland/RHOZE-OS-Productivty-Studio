@@ -178,7 +178,7 @@ const AppLayout = () => {
         .select("id, name, city, category")
         .eq("is_active", true)
         .eq("status", "approved")
-        .ilike("name", `%${trimmedQuery}%`)
+        .or(`name.ilike.%${trimmedQuery}%,city.ilike.%${trimmedQuery}%,category.ilike.%${trimmedQuery}%`)
         .limit(5);
       return data ?? [];
     },
@@ -190,9 +190,9 @@ const AppLayout = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("marketplace_listings")
-        .select("id, title, category")
+        .select("id, title, category, description")
         .eq("is_active", true)
-        .ilike("title", `%${trimmedQuery}%`)
+        .or(`title.ilike.%${trimmedQuery}%,category.ilike.%${trimmedQuery}%,description.ilike.%${trimmedQuery}%`)
         .limit(5);
       return data ?? [];
     },
