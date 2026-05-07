@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, MapPin, Calendar, Flame, Activity } from "lucide-react";
+import { Search, MapPin, Calendar, Flame, Activity, ArrowLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -303,6 +303,9 @@ const CreatorsPage = () => {
 
   return (
     <div className="space-y-6">
+      <Link to="/discover" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-3.5 w-3.5" /> Back to Discover
+      </Link>
       <div>
         <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 mb-1.5">
           Creators

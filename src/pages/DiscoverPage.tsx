@@ -66,11 +66,12 @@ const normalizeCategory = (value?: string | null) =>
     .trim()
     .replace(/[\s_]+/g, "-");
 
-type DiscoverView = "all" | "events" | "spaces" | "works";
+type DiscoverView = "all" | "events" | "spaces" | "works" | "offerings";
 const VIEW_OPTIONS: { value: DiscoverView; label: string; icon: any; kind: MosaicKindFilter }[] = [
   { value: "all", label: "All", icon: Sparkles, kind: "all" },
   { value: "events", label: "Events", icon: CalendarDays, kind: "event" },
   { value: "spaces", label: "Spaces", icon: MapPin, kind: "space" },
+  { value: "offerings", label: "Marketplace", icon: ShoppingBag, kind: "offering" },
   { value: "works", label: "Works", icon: FileText, kind: "drop" },
 ];
 
@@ -183,7 +184,7 @@ const DiscoverPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawView = searchParams.get("view");
   const view: DiscoverView =
-    rawView === "events" || rawView === "spaces" || rawView === "works"
+    rawView === "events" || rawView === "spaces" || rawView === "works" || rawView === "offerings"
       ? rawView
       : "all";
   const setView = (v: DiscoverView) => {
@@ -373,20 +374,34 @@ const DiscoverPage = () => {
       {/* ─── Quick access shortcuts ───────────────────────────────── */}
       <nav aria-label="Quick access" className="flex flex-wrap items-center gap-2">
         {[
-          { to: "/creators", label: "Creators", icon: Users },
-          { to: "/marketplace", label: "Marketplace", icon: ShoppingBag },
-          { to: "/events", label: "Events", icon: CalendarDays },
-          { to: "/spaces", label: "Spaces", icon: MapPin },
-        ].map(({ to, label, icon: Icon }) => (
-          <Link
-            key={to}
-            to={to}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/60 px-3.5 py-1.5 text-xs font-medium text-foreground/80 hover:border-foreground/30 hover:bg-card hover:text-foreground transition-colors"
-          >
-            <Icon className="h-3.5 w-3.5" />
-            {label}
-          </Link>
-        ))}
+          { type: "view" as const, view: "offerings" as DiscoverView, label: "Marketplace", icon: ShoppingBag },
+          { type: "view" as const, view: "events" as DiscoverView, label: "Events", icon: CalendarDays },
+          { type: "view" as const, view: "spaces" as DiscoverView, label: "Spaces", icon: MapPin },
+          { type: "link" as const, to: "/creators", label: "Creators", icon: Users },
+        ].map((item) => {
+          const Icon = item.icon;
+          const className =
+            "inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/60 px-3.5 py-1.5 text-xs font-medium text-foreground/80 hover:border-foreground/30 hover:bg-card hover:text-foreground transition-colors";
+          if (item.type === "link") {
+            return (
+              <Link key={item.label} to={item.to} className={className}>
+                <Icon className="h-3.5 w-3.5" />
+                {item.label}
+              </Link>
+            );
+          }
+          return (
+            <button
+              key={item.label}
+              type="button"
+              onClick={() => setView(item.view)}
+              className={className}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {item.label}
+            </button>
+          );
+        })}
       </nav>
 
       {/* ─── Globe-led featured orbit ──────────────────────────────── */}

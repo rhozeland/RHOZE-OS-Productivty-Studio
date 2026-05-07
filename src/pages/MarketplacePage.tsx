@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Sparkles, Flame, Briefcase, CalendarDays, Building2, LayoutGrid, ArrowRight, Search, Plus } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Sparkles, Flame, Briefcase, CalendarDays, Building2, LayoutGrid, ArrowRight, Search, Plus, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,9 @@ const MarketplacePage = () => {
 
   return (
     <div className="space-y-6">
+      <Link to="/discover" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-3.5 w-3.5" /> Back to Discover
+      </Link>
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
