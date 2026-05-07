@@ -136,7 +136,7 @@ const FillControls = ({ activeSection, fill, onUpdate }: FillControlsProps) => {
           <div>
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Pattern Color</p>
             <div className="flex gap-2">
-              {["#00000020", "#00000040", "#FFFFFF30", "#FFFFFF50", "#FF6B6B40", "#7C83FD40", "#6BCB7740", "#FFB34740"].map((c) => (
+              {["#00000040", "#FFFFFF50", "#FF6B6B40", "#7C83FD40"].map((c) => (
                 <button
                   key={c}
                   onClick={() => update({ patternColor: c })}
