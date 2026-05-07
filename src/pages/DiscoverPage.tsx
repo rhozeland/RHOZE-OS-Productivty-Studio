@@ -53,6 +53,7 @@ import {
   Users,
   Compass,
   Building2,
+  ShoppingBag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
