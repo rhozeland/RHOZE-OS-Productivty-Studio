@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Flame, Briefcase, CalendarDays, Building2, LayoutGrid, ArrowRight, Search } from "lucide-react";
+import { Sparkles, Flame, Briefcase, CalendarDays, Building2, LayoutGrid, ArrowRight, Search, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ConversationsMosaic, { type MosaicKindFilter } from "@/components/hub/ConversationsMosaic";
+import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 
 /**
  * MarketplacePage — restored as a first-class browsable mosaic.
