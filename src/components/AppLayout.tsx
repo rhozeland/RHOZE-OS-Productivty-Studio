@@ -516,6 +516,23 @@ const AppLayout = () => {
               ))}
             </CommandGroup>
           )}
+          {queryEnabled && events && events.length > 0 && (
+            <CommandGroup heading="Events">
+              {events.map((e: any) => (
+                <CommandItem
+                  key={e.id}
+                  value={`${e.title} ${e.venue_name ?? ""}`}
+                  onSelect={() => goTo(`/spaces/events/${e.id}`)}
+                >
+                  <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+                  <span className="truncate">{e.title}</span>
+                  {e.venue_name && (
+                    <span className="ml-auto text-xs text-muted-foreground truncate max-w-[120px]">{e.venue_name}</span>
+                  )}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
         </CommandList>
       </CommandDialog>
       {user && <UsernamePrompt />}
