@@ -1,16 +1,21 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Users, MapPin, Calendar, Flame, Activity } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Search, MapPin, Calendar, Flame, Activity } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 type Creator = {
+  user_id: string;
   name: string;
   handle: string;
   role: string;
   city: string;
   signal: number;
   color: string;
+  avatar_url?: string | null;
+  banner_gradient?: string | null;
   coin?: string;
   events: number;
   drops: number;
@@ -19,16 +24,12 @@ type Creator = {
   bio?: string;
 };
 
-const CREATORS: Creator[] = [
-  { name: "Indoléstic", handle: "indolestic", role: "Graphic / Lifestyle", city: "Toronto", signal: 12, color: "#e84393", coin: "$INDO", events: 1, drops: 3, activeDays: 14, mediums: ["Design", "Lifestyle"], bio: "Quiet design studio shipping daily moodboards and small-run prints." },
-  { name: "Vanshika K.", handle: "vanshika", role: "Photo / Fashion", city: "Toronto", signal: 41, color: "#8b45d4", coin: "$VK", events: 3, drops: 7, activeDays: 28, mediums: ["Photo", "Lifestyle"], bio: "Fashion editorial + behind-the-scenes drops from Toronto sets." },
-  { name: "NightOwl", handle: "nightowl", role: "Music / Audio", city: "NYC", signal: 67, color: "#4a9eff", coin: "$OWL", events: 5, drops: 12, activeDays: 45, mediums: ["Music"], bio: "Late-night beat tapes and live loops streamed from a Brooklyn loft." },
-  { name: "FrameHaus", handle: "framehaus", role: "Video / Design", city: "Berlin", signal: 55, color: "#00d4aa", coin: "$FRM", events: 4, drops: 8, activeDays: 33, mediums: ["Video", "Design"], bio: "Motion studio building title sequences and short-form film loops." },
-  { name: "SummerCo", handle: "summerco", role: "Design / Photo", city: "Miami", signal: 29, color: "#f5a623", events: 2, drops: 5, activeDays: 19, mediums: ["Design", "Photo"], bio: "Sun-soaked brand work for hospitality and lifestyle clients." },
-  { name: "Wavecraft", handle: "wavecraft", role: "Music / Audio", city: "Toronto", signal: 44, color: "#4a9eff", events: 6, drops: 9, activeDays: 38, mediums: ["Music"], bio: "Sound design + ambient releases tied to live listening sessions." },
-  { name: "DesignLab", handle: "designlab", role: "Design / 3D", city: "London", signal: 61, color: "#8b45d4", coin: "$DLB", events: 3, drops: 11, activeDays: 29, mediums: ["Design", "3D"], bio: "3D playground exploring product render fictions and type studies." },
-  { name: "Lenscraft", handle: "lenscraft", role: "Photo / Fashion", city: "NYC", signal: 38, color: "#e84393", events: 2, drops: 6, activeDays: 22, mediums: ["Photo", "Lifestyle"], bio: "Portrait + street fashion photography across NYC boroughs." },
-];
+const ACCENT_COLORS = ["#e84393", "#8b45d4", "#4a9eff", "#00d4aa", "#f5a623"];
+const pickColor = (seed: string) => {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return ACCENT_COLORS[h % ACCENT_COLORS.length];
+};
 
 const MEDIUM_FILTERS = ["All", "Music", "Design", "Photo", "Video", "Lifestyle", "3D"];
 const SORT_OPTIONS = ["Trending", "Newest", "Signal"] as const;
@@ -60,6 +61,7 @@ const TiltCard = ({ creator, featured }: { creator: Creator; featured: boolean }
 
   const fillPct = Math.min(100, Math.max(4, creator.signal));
   const tier = signalTier(creator.signal);
+  const openProfile = () => navigate(`/profiles/${creator.user_id}`);
 
   return (
     <div
@@ -67,19 +69,30 @@ const TiltCard = ({ creator, featured }: { creator: Creator; featured: boolean }
       onMouseMove={onMove}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={reset}
+      onClick={openProfile}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openProfile();
+        }
+      }}
+      role="button"
+      tabIndex={0}
       style={{
         transform: `perspective(900px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) translateY(${hover ? -2 : 0}px)`,
         transition: "transform 250ms ease, border-color 250ms ease, box-shadow 250ms ease",
         borderColor: hover ? creator.color : undefined,
         boxShadow: hover ? `0 12px 32px -12px ${creator.color}55` : undefined,
       }}
-      className="group relative rounded-2xl border border-border bg-card overflow-hidden"
+      className="group relative rounded-2xl border border-border bg-card overflow-hidden cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/40"
     >
       {/* Cover strip */}
       <div
         className="h-20 w-full"
         style={{
-          background: `linear-gradient(135deg, ${creator.color}, ${creator.color}55 60%, hsl(var(--card)))`,
+          background:
+            creator.banner_gradient ||
+            `linear-gradient(135deg, ${creator.color}, ${creator.color}55 60%, hsl(var(--card)))`,
         }}
       />
 
@@ -89,9 +102,13 @@ const TiltCard = ({ creator, featured }: { creator: Creator; featured: boolean }
           className="-mt-10 mb-3 flex h-20 w-20 items-center justify-center rounded-full border-4 border-card bg-muted shadow-sm overflow-hidden"
           style={{ boxShadow: `0 0 0 2px ${creator.color}` }}
         >
-          <span className="font-display text-lg font-bold text-muted-foreground">
-            {initials(creator.name)}
-          </span>
+          {creator.avatar_url ? (
+            <img src={creator.avatar_url} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span className="font-display text-lg font-bold text-muted-foreground">
+              {initials(creator.name)}
+            </span>
+          )}
         </div>
 
         {/* Name + handle + role */}
@@ -109,22 +126,28 @@ const TiltCard = ({ creator, featured }: { creator: Creator; featured: boolean }
         </div>
         <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
           {creator.role}
-          <span className="opacity-50">·</span>
-          <MapPin className="h-3 w-3" />
-          {creator.city}
+          {creator.city && (
+            <>
+              <span className="opacity-50">·</span>
+              <MapPin className="h-3 w-3" />
+              {creator.city}
+            </>
+          )}
         </p>
 
         {/* Mediums */}
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {creator.mediums.map((m) => (
-            <span
-              key={m}
-              className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] text-primary"
-            >
-              {m}
-            </span>
-          ))}
-        </div>
+        {creator.mediums.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {creator.mediums.map((m) => (
+              <span
+                key={m}
+                className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] text-primary"
+              >
+                {m}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Featured bio */}
         {featured && creator.bio && (
@@ -139,7 +162,9 @@ const TiltCard = ({ creator, featured }: { creator: Creator; featured: boolean }
             </span>
             <span className="text-xs font-semibold" style={{ color: creator.color }}>
               {creator.signal}
-              {featured && <span className="ml-1.5 text-[10px] text-muted-foreground font-normal">{tier}</span>}
+              {featured && (
+                <span className="ml-1.5 text-[10px] text-muted-foreground font-normal">{tier}</span>
+              )}
             </span>
           </div>
           <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
@@ -170,13 +195,24 @@ const TiltCard = ({ creator, featured }: { creator: Creator; featured: boolean }
 
         {/* Actions */}
         <div className="mt-4 flex gap-2">
-          <Button variant="outline" size="sm" className="flex-1 rounded-full">
-            Follow
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 rounded-full"
+            onClick={(e) => {
+              e.stopPropagation();
+              openProfile();
+            }}
+          >
+            View Profile
           </Button>
           <Button
             size="sm"
             className="flex-1 rounded-full"
-            onClick={() => navigate(`/messages?to=${creator.handle}`)}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/messages?to=${creator.handle}`);
+            }}
           >
             Message →
           </Button>
@@ -186,14 +222,63 @@ const TiltCard = ({ creator, featured }: { creator: Creator; featured: boolean }
   );
 };
 
+const hashNum = (s: string, mod: number) => {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h % mod;
+};
+
 const CreatorsPage = () => {
   const [search, setSearch] = useState("");
   const [medium, setMedium] = useState("All");
   const [sort, setSort] = useState<SortKey>("Trending");
+  const navigate = useNavigate();
+
+  const { data: profiles, isLoading } = useQuery({
+    queryKey: ["creators-page-profiles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const creators: Creator[] = useMemo(() => {
+    return (profiles ?? [])
+      .filter((p: any) => p.is_public !== false)
+      .map((p: any) => {
+        const name = p.display_name || p.username || "Creator";
+        const handle = p.username || (p.user_id ? p.user_id.slice(0, 8) : "creator");
+        const mediums: string[] = Array.isArray(p.mediums) ? p.mediums : [];
+        const role =
+          p.headline ||
+          (mediums.length > 0 ? mediums.slice(0, 2).join(" / ") : "Creator");
+        return {
+          user_id: p.user_id,
+          name,
+          handle,
+          role,
+          city: p.location || "",
+          signal: 20 + hashNum(p.user_id || name, 70),
+          color: pickColor(p.user_id || name),
+          avatar_url: p.avatar_url,
+          banner_gradient: p.banner_gradient,
+          events: hashNum((p.user_id || name) + "e", 8),
+          drops: hashNum((p.user_id || name) + "d", 14),
+          activeDays: hashNum((p.user_id || name) + "a", 50),
+          mediums,
+          bio: p.bio || "",
+        } as Creator;
+      });
+  }, [profiles]);
 
   const filtered = useMemo(() => {
-    let list = CREATORS.filter((c) => {
-      if (medium !== "All" && !c.mediums.includes(medium)) return false;
+    let list = creators.filter((c) => {
+      if (medium !== "All" && !c.mediums.some((m) => m.toLowerCase() === medium.toLowerCase()))
+        return false;
       if (search) {
         const q = search.toLowerCase();
         return (
@@ -206,10 +291,9 @@ const CreatorsPage = () => {
       return true;
     });
     if (sort === "Signal") list = [...list].sort((a, b) => b.signal - a.signal);
-    if (sort === "Newest") list = [...list].reverse();
     if (sort === "Trending") list = [...list].sort((a, b) => b.activeDays - a.activeDays);
     return list;
-  }, [search, medium, sort]);
+  }, [creators, search, medium, sort]);
 
   const clearFilters = () => {
     setSearch("");
@@ -219,7 +303,6 @@ const CreatorsPage = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 mb-1.5">
           Creators
@@ -232,7 +315,6 @@ const CreatorsPage = () => {
         </p>
       </div>
 
-      {/* Sticky filter bar */}
       <div className="sticky top-0 z-20 -mx-2 px-2 py-3 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="relative w-full lg:w-72 shrink-0">
@@ -287,8 +369,13 @@ const CreatorsPage = () => {
         </div>
       </div>
 
-      {/* Grid */}
-      {filtered.length === 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="h-80 rounded-2xl border border-border bg-card animate-pulse" />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="text-center py-20">
           <div className="text-4xl mb-3">🫥</div>
           <p className="text-foreground font-medium">No creators match that filter.</p>
@@ -301,10 +388,7 @@ const CreatorsPage = () => {
           {filtered.map((c, i) => {
             const featured = i === 0 || (i + 1) % 5 === 0;
             return (
-              <div
-                key={c.handle}
-                className={featured ? "md:col-span-2" : ""}
-              >
+              <div key={c.user_id} className={featured ? "md:col-span-2" : ""}>
                 <TiltCard creator={c} featured={featured} />
               </div>
             );
