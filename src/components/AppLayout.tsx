@@ -45,12 +45,17 @@ import { NAV_SHORTCUTS, formatChord, formatLeader } from "@/lib/nav-shortcuts";
 import { REGISTERED_ROUTE_PATHS } from "@/App";
 import { CelebrationProvider } from "@/components/hud/CelebrationProvider";
 
-const PAGES = [
-  { name: "Home", path: "/discover", icon: FolderKanban },
-  { name: "Projects", path: "/projects", icon: FolderKanban },
-  { name: "Messages", path: "/messages", icon: User },
-  { name: "Credits", path: "/credits", icon: ShoppingBag },
-  { name: "Settings", path: "/settings", icon: SettingsIcon },
+const PAGES: { name: string; path: string; icon: any; keywords?: string[] }[] = [
+  { name: "Discover", path: "/discover", icon: Search, keywords: ["home", "feed", "stream", "explore"] },
+  { name: "Flow Mode", path: "/flow", icon: Radio, keywords: ["swipe", "drops", "reels"] },
+  { name: "Creators", path: "/discover?view=all", icon: User, keywords: ["artists", "people", "profiles"] },
+  { name: "Marketplace", path: "/discover?view=offerings", icon: ShoppingBag, keywords: ["offerings", "services", "shop", "listings"] },
+  { name: "Events", path: "/discover?view=events", icon: Calendar, keywords: ["shows", "tickets", "calendar"] },
+  { name: "Spaces", path: "/discover?view=spaces", icon: Building2, keywords: ["studios", "venues", "rooms"] },
+  { name: "Projects", path: "/projects", icon: FolderKanban, keywords: ["work", "collabs"] },
+  { name: "Messages", path: "/messages", icon: User, keywords: ["dms", "inbox", "conversations", "chat"] },
+  { name: "Credits", path: "/credits", icon: Coins, keywords: ["rhoze", "pass", "tier", "rewards"] },
+  { name: "Settings", path: "/settings", icon: SettingsIcon, keywords: ["account", "profile", "wallet"] },
 ];
 
 // Persistent top-nav links shown in header for both guests and signed-in users.
@@ -173,7 +178,7 @@ const AppLayout = () => {
         .select("id, name, city, category")
         .eq("is_active", true)
         .eq("status", "approved")
-        .ilike("name", `%${trimmedQuery}%`)
+        .or(`name.ilike.%${trimmedQuery}%,city.ilike.%${trimmedQuery}%,category.ilike.%${trimmedQuery}%`)
         .limit(5);
       return data ?? [];
     },
@@ -185,9 +190,9 @@ const AppLayout = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("marketplace_listings")
-        .select("id, title, category")
+        .select("id, title, category, description")
         .eq("is_active", true)
-        .ilike("title", `%${trimmedQuery}%`)
+        .or(`title.ilike.%${trimmedQuery}%,category.ilike.%${trimmedQuery}%,description.ilike.%${trimmedQuery}%`)
         .limit(5);
       return data ?? [];
     },
@@ -218,6 +223,20 @@ const AppLayout = () => {
         .select("id, ticker, name, mint_address")
         .neq("status", "cancelled")
         .or(`ticker.ilike.%${trimmedQuery}%,name.ilike.%${trimmedQuery}%,mint_address.ilike.%${trimmedQuery}%`)
+        .limit(5);
+      return data ?? [];
+    },
+    enabled: queryEnabled,
+  });
+
+  const { data: events } = useQuery({
+    queryKey: ["search-events", trimmedQuery],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("events")
+        .select("id, title, venue_name, starts_at")
+        .eq("status", "published")
+        .or(`title.ilike.%${trimmedQuery}%,venue_name.ilike.%${trimmedQuery}%`)
         .limit(5);
       return data ?? [];
     },
@@ -399,7 +418,7 @@ const AppLayout = () => {
       {/* Command palette search */}
       {/* Command palette search — Pages always visible; studios/listings/creators
           only surface once the user has typed (>=2 chars). */}
-      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
+      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen} shouldFilter={false}>
         <CommandInput
           placeholder="Search handles, $tickers, contract addresses, studios..."
           value={searchQuery}
@@ -410,10 +429,18 @@ const AppLayout = () => {
             {queryEnabled ? "No results found." : "Type to search the network."}
           </CommandEmpty>
           <CommandGroup heading="Pages">
-            {PAGES.map((page) => {
+            {PAGES.filter((page) => {
+              if (!trimmedQuery) return true;
+              const q = trimmedQuery.toLowerCase();
+              return (
+                page.name.toLowerCase().includes(q) ||
+                page.path.toLowerCase().includes(q) ||
+                (page.keywords ?? []).some((k) => k.toLowerCase().includes(q))
+              );
+            }).map((page) => {
               const shortcut = NAV_SHORTCUTS.find((s) => s.path === page.path);
               return (
-                <CommandItem key={page.path} onSelect={() => goTo(page.path)}>
+                <CommandItem key={page.path} value={`${page.name} ${page.path} ${(page.keywords ?? []).join(" ")}`} onSelect={() => goTo(page.path)}>
                   <page.icon className="mr-2 h-4 w-4 text-muted-foreground" />
                   {page.name}
                   {shortcut && (
@@ -484,6 +511,23 @@ const AppLayout = () => {
                     <span className="ml-auto text-[10px] font-mono text-muted-foreground/70 truncate max-w-[140px]">
                       {c.mint_address.slice(0, 4)}…{c.mint_address.slice(-6)}
                     </span>
+                  )}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+          {queryEnabled && events && events.length > 0 && (
+            <CommandGroup heading="Events">
+              {events.map((e: any) => (
+                <CommandItem
+                  key={e.id}
+                  value={`${e.title} ${e.venue_name ?? ""}`}
+                  onSelect={() => goTo(`/spaces/events/${e.id}`)}
+                >
+                  <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+                  <span className="truncate">{e.title}</span>
+                  {e.venue_name && (
+                    <span className="ml-auto text-xs text-muted-foreground truncate max-w-[120px]">{e.venue_name}</span>
                   )}
                 </CommandItem>
               ))}
