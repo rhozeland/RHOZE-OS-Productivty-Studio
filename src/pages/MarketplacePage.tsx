@@ -105,6 +105,8 @@ const MarketplacePage = () => {
 
       {/* Mosaic */}
       <ConversationsMosaic search={search} kind={kind} />
+
+      <CreateListingDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );
 };
