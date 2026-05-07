@@ -45,12 +45,17 @@ import { NAV_SHORTCUTS, formatChord, formatLeader } from "@/lib/nav-shortcuts";
 import { REGISTERED_ROUTE_PATHS } from "@/App";
 import { CelebrationProvider } from "@/components/hud/CelebrationProvider";
 
-const PAGES = [
-  { name: "Home", path: "/discover", icon: FolderKanban },
-  { name: "Projects", path: "/projects", icon: FolderKanban },
-  { name: "Messages", path: "/messages", icon: User },
-  { name: "Credits", path: "/credits", icon: ShoppingBag },
-  { name: "Settings", path: "/settings", icon: SettingsIcon },
+const PAGES: { name: string; path: string; icon: any; keywords?: string[] }[] = [
+  { name: "Discover", path: "/discover", icon: Search, keywords: ["home", "feed", "stream", "explore"] },
+  { name: "Flow Mode", path: "/flow", icon: Radio, keywords: ["swipe", "drops", "reels"] },
+  { name: "Creators", path: "/discover?view=all", icon: User, keywords: ["artists", "people", "profiles"] },
+  { name: "Marketplace", path: "/discover?view=offerings", icon: ShoppingBag, keywords: ["offerings", "services", "shop", "listings"] },
+  { name: "Events", path: "/discover?view=events", icon: Calendar, keywords: ["shows", "tickets", "calendar"] },
+  { name: "Spaces", path: "/discover?view=spaces", icon: Building2, keywords: ["studios", "venues", "rooms"] },
+  { name: "Projects", path: "/projects", icon: FolderKanban, keywords: ["work", "collabs"] },
+  { name: "Messages", path: "/messages", icon: User, keywords: ["dms", "inbox", "conversations", "chat"] },
+  { name: "Credits", path: "/credits", icon: Coins, keywords: ["rhoze", "pass", "tier", "rewards"] },
+  { name: "Settings", path: "/settings", icon: SettingsIcon, keywords: ["account", "profile", "wallet"] },
 ];
 
 // Persistent top-nav links shown in header for both guests and signed-in users.
