@@ -404,7 +404,7 @@ const AppLayout = () => {
       {/* Command palette search */}
       {/* Command palette search — Pages always visible; studios/listings/creators
           only surface once the user has typed (>=2 chars). */}
-      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
+      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen} shouldFilter={false}>
         <CommandInput
           placeholder="Search handles, $tickers, contract addresses, studios..."
           value={searchQuery}
@@ -415,10 +415,18 @@ const AppLayout = () => {
             {queryEnabled ? "No results found." : "Type to search the network."}
           </CommandEmpty>
           <CommandGroup heading="Pages">
-            {PAGES.map((page) => {
+            {PAGES.filter((page) => {
+              if (!trimmedQuery) return true;
+              const q = trimmedQuery.toLowerCase();
+              return (
+                page.name.toLowerCase().includes(q) ||
+                page.path.toLowerCase().includes(q) ||
+                (page.keywords ?? []).some((k) => k.toLowerCase().includes(q))
+              );
+            }).map((page) => {
               const shortcut = NAV_SHORTCUTS.find((s) => s.path === page.path);
               return (
-                <CommandItem key={page.path} onSelect={() => goTo(page.path)}>
+                <CommandItem key={page.path} value={`${page.name} ${page.path} ${(page.keywords ?? []).join(" ")}`} onSelect={() => goTo(page.path)}>
                   <page.icon className="mr-2 h-4 w-4 text-muted-foreground" />
                   {page.name}
                   {shortcut && (
