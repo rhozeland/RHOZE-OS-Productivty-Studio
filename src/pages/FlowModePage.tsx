@@ -413,6 +413,21 @@ const FlowModePage = () => {
       }
     };
 
+    // Deep-link bypass: if the URL has ?item=<id>, the user is arriving from
+    // a Discover tile (or shared link) expecting to land on a specific card.
+    // Skip the calibration gate entirely so the swipe deck is interactive on
+    // arrival; preferences fall back to "all" categories.
+    if (searchParams.get("item")) {
+      setPreferredCategories(CATEGORIES);
+      setSelectedCategories(CATEGORIES);
+      setFeedScope("all");
+      setCalibrated(true);
+      return () => {
+        cancelled = true;
+        if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
+      };
+    }
+
     // Read local cache first so the UI hydrates without waiting on the network.
     const cachedRaw = localStorage.getItem(`flow-calibrated-${calibrationKey}`);
     const cachedScope = localStorage.getItem(`flow-scope-${calibrationKey}`) as
