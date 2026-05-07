@@ -229,6 +229,20 @@ const AppLayout = () => {
     enabled: queryEnabled,
   });
 
+  const { data: events } = useQuery({
+    queryKey: ["search-events", trimmedQuery],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("events")
+        .select("id, title, venue_name, starts_at")
+        .eq("status", "published")
+        .or(`title.ilike.%${trimmedQuery}%,venue_name.ilike.%${trimmedQuery}%`)
+        .limit(5);
+      return data ?? [];
+    },
+    enabled: queryEnabled,
+  });
+
   // Header avatar
   const { data: myProfile } = useQuery({
     queryKey: ["my-profile-header", user?.id],
