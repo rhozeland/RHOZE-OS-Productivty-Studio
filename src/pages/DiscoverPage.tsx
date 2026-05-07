@@ -369,6 +369,25 @@ const DiscoverPage = () => {
 
       <RegionPromptBanner />
 
+      {/* ─── Quick access shortcuts ───────────────────────────────── */}
+      <nav aria-label="Quick access" className="flex flex-wrap items-center gap-2">
+        {[
+          { to: "/creators", label: "Creators", icon: Users },
+          { to: "/marketplace", label: "Marketplace", icon: ShoppingBag },
+          { to: "/events", label: "Events", icon: CalendarDays },
+          { to: "/spaces", label: "Spaces", icon: MapPin },
+        ].map(({ to, label, icon: Icon }) => (
+          <Link
+            key={to}
+            to={to}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/60 px-3.5 py-1.5 text-xs font-medium text-foreground/80 hover:border-foreground/30 hover:bg-card hover:text-foreground transition-colors"
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+          </Link>
+        ))}
+      </nav>
+
       {/* ─── Globe-led featured orbit ──────────────────────────────── */}
       <motion.section
         initial={{ opacity: 0, y: 12 }}
