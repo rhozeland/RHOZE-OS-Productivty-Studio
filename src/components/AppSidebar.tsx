@@ -38,10 +38,6 @@ import rhozelandLogo from "@/assets/rhozeland-logo.png";
 const pillarItems = [
   { icon: Compass, label: "Discover", path: "/discover" },
   { icon: MessageSquare, label: "Inbox", path: "/messages" },
-  { icon: FolderKanban, label: "Projects", path: "/projects" },
-  { icon: Calendar, label: "Events", path: "/events" },
-  { icon: ShoppingBag, label: "Marketplace", path: "/marketplace" },
-  { icon: Users, label: "Creators", path: "/creators" },
   { icon: CreditCard, label: "Creator Pass", path: "/credits" },
 ];
 
