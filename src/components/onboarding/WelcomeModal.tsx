@@ -1,11 +1,22 @@
 /**
- * WelcomeModal — first-login welcome popup.
+ * WelcomeModal — first-login welcome popup + quick tour.
  * Shown once per user on the Discover page (localStorage flag), dismissible.
+ * Step 0: welcome. Steps 1..N: quick tour cards highlighting key features.
  */
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Globe2, Coins, Handshake, ArrowRight } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Globe2,
+  Coins,
+  Handshake,
+  ArrowRight,
+  Compass,
+  Layers,
+  MessageSquare,
+  Sparkles,
+  type LucideIcon,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -16,6 +27,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 const storageKey = (uid: string) => `rhozeland.welcome.seen.${uid}`;
 
@@ -25,15 +37,50 @@ const ROWS = [
   { Icon: Handshake, text: "Collaborate, hire, and get hired." },
 ];
 
+interface TourStep {
+  Icon: LucideIcon;
+  title: string;
+  body: string;
+  cta?: { label: string; to: string };
+}
+
+const TOUR: TourStep[] = [
+  {
+    Icon: Compass,
+    title: "Discover",
+    body: "Your home base. Browse the globe, featured artists, events, spaces, and the marketplace — all in one feed.",
+    cta: { label: "Open Discover", to: "/discover" },
+  },
+  {
+    Icon: Sparkles,
+    title: "Flow Mode",
+    body: "Swipe through the freshest drops. Up to peek the artist, down to comment, right to save — left to pass.",
+    cta: { label: "Try Flow", to: "/discover?view=flow" },
+  },
+  {
+    Icon: Layers,
+    title: "Creator Pass",
+    body: "Hold $RHOZE to unlock tiers (Spark, Bloom, Glow, Play) — lower fees, perks, and rewards.",
+    cta: { label: "View Pass", to: "/credits" },
+  },
+  {
+    Icon: MessageSquare,
+    title: "Conversations",
+    body: "DMs, projects, inquiries, and listings — every thread that matters lives here.",
+    cta: { label: "Open Inbox", to: "/messages" },
+  },
+];
+
 const WelcomeModal = () => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState<string>("");
+  const [step, setStep] = useState(0); // 0 = welcome, 1..TOUR.length = tour cards
 
   useEffect(() => {
     if (!user) return;
-    // Only show on the Discover page
     if (!location.pathname.startsWith("/discover")) return;
     const seen = window.localStorage.getItem(storageKey(user.id));
     if (seen) return;
@@ -52,6 +99,7 @@ const WelcomeModal = () => {
         user.email?.split("@")[0] ??
         "there";
       setName(first);
+      setStep(0);
       setOpen(true);
     })();
     return () => {
@@ -59,15 +107,31 @@ const WelcomeModal = () => {
     };
   }, [user, location.pathname]);
 
-  const dismiss = () => {
+  const close = () => {
     if (user) window.localStorage.setItem(storageKey(user.id), "1");
     setOpen(false);
   };
 
+  const totalSteps = TOUR.length + 1; // welcome + tour cards
+  const isWelcome = step === 0;
+  const isLast = step === TOUR.length;
+  const tour = !isWelcome ? TOUR[step - 1] : null;
+
+  const handleNext = () => {
+    if (isLast) close();
+    else setStep((s) => s + 1);
+  };
+
+  const handleCta = () => {
+    if (!tour?.cta) return;
+    close();
+    navigate(tour.cta.to);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : dismiss())}>
+    <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : close())}>
       <DialogContent className="sm:max-w-md p-0 overflow-hidden border-border/60 bg-card/90 backdrop-blur-2xl">
-        <div className="relative p-7 sm:p-8 text-center">
+        <div className="relative p-7 sm:p-8">
           <div
             aria-hidden
             className="absolute inset-0 pointer-events-none opacity-60"
@@ -77,47 +141,110 @@ const WelcomeModal = () => {
             }}
           />
           <div className="relative">
-            <p className="font-display text-xl tracking-tight bg-gradient-to-r from-primary via-fuchsia-500 to-amber-500 bg-clip-text text-transparent mb-4">
+            <p className="font-display text-xl tracking-tight bg-gradient-to-r from-primary via-fuchsia-500 to-amber-500 bg-clip-text text-transparent mb-4 text-center">
               Rhozeland
             </p>
 
-            <DialogHeader className="space-y-1.5">
-              <DialogTitle className="font-display text-2xl font-semibold leading-tight text-center">
-                Welcome to Rhozeland, {name}.
-              </DialogTitle>
-              <DialogDescription className="text-center text-sm">
-                The network for creators who show up.
-              </DialogDescription>
-            </DialogHeader>
-
-            <ul className="mt-6 space-y-2.5 text-left">
-              {ROWS.map(({ Icon, text }, i) => (
-                <motion.li
-                  key={i}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.08 + i * 0.06 }}
-                  className="flex items-center gap-3 rounded-xl border border-border/50 bg-background/40 px-3.5 py-2.5"
+            <AnimatePresence mode="wait">
+              {isWelcome ? (
+                <motion.div
+                  key="welcome"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25 }}
                 >
-                  <span className="h-9 w-9 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Icon className="h-4 w-4 text-primary" />
-                  </span>
-                  <span className="text-sm text-foreground/90 leading-snug">
-                    {text}
-                  </span>
-                </motion.li>
-              ))}
-            </ul>
+                  <DialogHeader className="space-y-1.5">
+                    <DialogTitle className="font-display text-2xl font-semibold leading-tight text-center">
+                      Welcome to Rhozeland, {name}.
+                    </DialogTitle>
+                    <DialogDescription className="text-center text-sm">
+                      The network for creators who show up.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <ul className="mt-6 space-y-2.5 text-left">
+                    {ROWS.map(({ Icon, text }, i) => (
+                      <motion.li
+                        key={i}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.08 + i * 0.06 }}
+                        className="flex items-center gap-3 rounded-xl border border-border/50 bg-background/40 px-3.5 py-2.5"
+                      >
+                        <span className="h-9 w-9 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Icon className="h-4 w-4 text-primary" />
+                        </span>
+                        <span className="text-sm text-foreground/90 leading-snug">
+                          {text}
+                        </span>
+                      </motion.li>
+                    ))}
+                  </ul>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key={`tour-${step}`}
+                  initial={{ opacity: 0, x: 16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -16 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <DialogHeader className="space-y-1.5">
+                    <DialogTitle className="sr-only">Quick tour</DialogTitle>
+                    <DialogDescription className="sr-only">
+                      Quick tour of important features
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex flex-col items-center text-center">
+                    <span className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/20 via-fuchsia-500/15 to-amber-500/15 flex items-center justify-center border border-border/50">
+                      {tour && <tour.Icon className="h-6 w-6 text-foreground" />}
+                    </span>
+                    <h3 className="mt-4 font-display text-2xl font-semibold leading-tight">
+                      {tour?.title}
+                    </h3>
+                    <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                      {tour?.body}
+                    </p>
+                    {tour?.cta && (
+                      <button
+                        onClick={handleCta}
+                        className="mt-4 text-xs font-medium text-primary hover:underline inline-flex items-center gap-1"
+                      >
+                        {tour.cta.label} <ArrowRight className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            <div className="mt-7 flex flex-col items-center gap-2">
-              <Button onClick={dismiss} size="lg" className="w-full gap-2">
-                Let's go <ArrowRight className="h-4 w-4" />
+            {/* Progress dots */}
+            <div className="mt-6 flex items-center justify-center gap-1.5">
+              {Array.from({ length: totalSteps }).map((_, i) => (
+                <span
+                  key={i}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all",
+                    i === step
+                      ? "w-5 bg-foreground"
+                      : i < step
+                        ? "w-1.5 bg-foreground/60"
+                        : "w-1.5 bg-foreground/20",
+                  )}
+                />
+              ))}
+            </div>
+
+            <div className="mt-5 flex flex-col items-center gap-2">
+              <Button onClick={handleNext} size="lg" className="w-full gap-2">
+                {isWelcome ? "Take the tour" : isLast ? "Let's go" : "Next"}
+                <ArrowRight className="h-4 w-4" />
               </Button>
               <button
-                onClick={dismiss}
+                onClick={close}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                Skip for now
+                {isWelcome ? "Skip for now" : "Skip tour"}
               </button>
             </div>
           </div>
