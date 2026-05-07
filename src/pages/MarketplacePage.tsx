@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Sparkles, Flame, Briefcase, CalendarDays, Building2, LayoutGrid, ArrowRight, Search, Plus } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Sparkles, Flame, Briefcase, CalendarDays, Building2, LayoutGrid, ArrowRight, Search, Plus, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
