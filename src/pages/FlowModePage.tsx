@@ -864,21 +864,18 @@ const FlowModePage = () => {
   // navigating from Discover to a *different* item (while the FlowModePage
   // instance is still mounted / HMR-preserved) re-applies the jump
   // instead of leaving the user stuck on the previous card.
-  const lastAppliedItemRef = useRef<string | null>(null);
   useEffect(() => {
     const targetId = searchParams.get("item");
-    console.log("[flow-deep-link]", { targetId, len: allItems.length, feedScope, lastApplied: lastAppliedItemRef.current, currentIndex });
-    if (!targetId) {
-      lastAppliedItemRef.current = null;
-      return;
-    }
-    if (lastAppliedItemRef.current === targetId) return;
+    if (!targetId) return;
     if (allItems.length === 0) return;
+    // Always check whether the item at currentIndex still matches the target —
+    // allItems can reshuffle when the feed query refetches (scope/category
+    // changes), invalidating a previously-applied index.
+    const atCursor = allItems[currentIndex % allItems.length];
+    if (atCursor?.id === targetId) return;
     const idx = allItems.findIndex((i: any) => i.id === targetId);
-    console.log("[flow-deep-link] idx=", idx, "first5=", allItems.slice(0, 5).map((i: any) => i.id));
     if (idx >= 0) {
       setCurrentIndex(idx);
-      lastAppliedItemRef.current = targetId;
     } else if (feedScope !== "all") {
       setFeedScope("all");
       setSelectedCategories(CATEGORIES);
