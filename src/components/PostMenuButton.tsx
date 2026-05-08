@@ -86,6 +86,7 @@ const OptionCard = ({
   description,
   accent,
   iconClass,
+  reward,
   onClick,
 }: {
   Icon: typeof Briefcase;
@@ -93,6 +94,7 @@ const OptionCard = ({
   description: string;
   accent: string;
   iconClass: string;
+  reward?: number;
   onClick: () => void;
 }) => (
   <button
@@ -107,7 +109,10 @@ const OptionCard = ({
         <Icon className={cn("h-5 w-5", iconClass)} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-display font-semibold text-sm text-foreground">{title}</p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="font-display font-semibold text-sm text-foreground">{title}</p>
+          {reward !== undefined && <RhozeRewardBadge amount={reward} />}
+        </div>
         <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{description}</p>
       </div>
       <ArrowRight className="h-4 w-4 text-muted-foreground opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
