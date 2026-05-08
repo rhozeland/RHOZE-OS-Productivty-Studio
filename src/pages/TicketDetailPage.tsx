@@ -47,6 +47,12 @@ function pickAccent(seed: string | number | null | undefined) {
 const TicketDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  // If we arrived from /credits (Creator Pass tickets tab), prefer going back
+  // there instead of dropping the user on the event page.
+  const fromCredits = (location.state as any)?.from?.startsWith?.("/credits") ||
+    document.referrer.includes("/credits");
 
   const { data: ticket, isLoading, refetch } = useQuery({
     queryKey: ["ticket", id],
