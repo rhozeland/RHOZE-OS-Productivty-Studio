@@ -153,6 +153,8 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
         </div>
       </div>
 
+      <RhozeIntroCard />
+
       <Tabs value={activeTab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="pass" className="gap-1.5"><Award className="h-3.5 w-3.5" /> My Pass</TabsTrigger>
