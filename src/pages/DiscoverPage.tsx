@@ -67,13 +67,14 @@ const normalizeCategory = (value?: string | null) =>
     .trim()
     .replace(/[\s_]+/g, "-");
 
-type DiscoverView = "all" | "events" | "spaces" | "works" | "offerings";
+type DiscoverView = "all" | "events" | "spaces" | "works" | "offerings" | "creators";
 const VIEW_OPTIONS: { value: DiscoverView; label: string; icon: any; kind: MosaicKindFilter }[] = [
   { value: "all", label: "All", icon: Sparkles, kind: "all" },
   { value: "events", label: "Events", icon: CalendarDays, kind: "event" },
   { value: "spaces", label: "Spaces", icon: MapPin, kind: "space" },
   { value: "offerings", label: "Marketplace", icon: ShoppingBag, kind: "offering" },
   { value: "works", label: "Works", icon: FileText, kind: "drop" },
+  { value: "creators", label: "Creators", icon: Users, kind: "all" },
 ];
 
 const EVENT_CATEGORY_DEFS = [
