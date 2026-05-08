@@ -79,7 +79,8 @@ const RhozeBalanceChip = () => {
               <RhozeInfoPopover size={14} />
             </SheetTitle>
             <SheetDescription className="font-body">
-              In-app balance · earned through activity and rewards.
+              In-app balance · earned by creators making work and fans showing
+              up. Spend on services, artist coins, or cash out.
             </SheetDescription>
           </SheetHeader>
 
