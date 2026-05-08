@@ -61,15 +61,14 @@ const DiscoverEventsGrid = ({ category = null, search = "" }: DiscoverEventsGrid
 
   if (!filtered.length) {
     return (
-      <div className="rounded-3xl border border-dashed border-border bg-card/50 p-12 text-center">
-        <Sparkles className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-        <p className="text-sm text-foreground font-medium">
-          {category ? `No upcoming ${category} events.` : "No upcoming events yet."}
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Try another category or check back soon.
-        </p>
-      </div>
+      <EmptyState
+        icon={CalendarDays}
+        title={category ? `No upcoming ${category} events` : "No upcoming events"}
+        description="Be the first to host one — workshops, screenings, listening parties, anything."
+        cta={{ label: "Host an event", to: "/spaces/events/new" }}
+        secondary={category ? { label: "Show all events", onClick: () => navigate("/discover?view=events") } : undefined}
+        size="lg"
+      />
     );
   }
 
