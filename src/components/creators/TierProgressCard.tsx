@@ -13,16 +13,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { TIERS, getHoldTier, type TierId } from "@/lib/tier-matrix";
 import { cn } from "@/lib/utils";
+import PostMenuButton from "@/components/PostMenuButton";
 
 interface EarnAction {
   label: string;
   reward: string;
-  to: string;
+  to?: string;
   icon: React.ComponentType<{ className?: string }>;
+  action?: "post";
 }
 
 const EARN_ACTIONS: EarnAction[] = [
-  { label: "Post Work", reward: "+10 $RHOZE", to: "/works?compose=1", icon: Sparkles },
+  { label: "Post Work", reward: "+10 $RHOZE", action: "post", icon: Sparkles },
   { label: "Attend Event", reward: "+25 $RHOZE", to: "/events", icon: Calendar },
   { label: "Complete Collab", reward: "+50 $RHOZE", to: "/messages?tab=projects", icon: Users },
 ];
