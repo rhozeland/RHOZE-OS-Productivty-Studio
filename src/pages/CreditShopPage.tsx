@@ -168,6 +168,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
         {/* ═══════ My Pass ═══════ */}
         <TabsContent value="pass" className="mt-4 space-y-4">
           <NextStepCard />
+          <TierProgressCard />
           <CreatorPassCard />
           <GettingStartedBanner />
           <StreakCard />
@@ -188,6 +189,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
               a threshold — no subscriptions, no applications.
             </p>
           </div>
+          <TierProgressCard />
           <TierMatrix activeTier={currentTier as any} />
         </TabsContent>
 
