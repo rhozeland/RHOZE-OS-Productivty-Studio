@@ -964,6 +964,16 @@ const ProfileDetailPage = () => {
 
         </Tabs>
 
+        {/* Invest & Unlock — primary CTA sheet (Section 2: The Heart) */}
+        {!isOwnProfile && id && (
+          <InvestUnlockSheet
+            open={investOpen}
+            onOpenChange={setInvestOpen}
+            artistId={id}
+            artistName={p.display_name || p.username || null}
+          />
+        )}
+
         {/* Booking modal — opened from the "Book a session" support card */}
         <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
           <DialogContent className="max-w-6xl w-[95vw] max-h-[92vh] overflow-y-auto p-0">
