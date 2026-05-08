@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ConversationsMosaic, { type MosaicKindFilter } from "@/components/hub/ConversationsMosaic";
-import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
+import PostMenuButton from "@/components/PostMenuButton";
 
 /**
  * MarketplacePage — restored as a first-class browsable mosaic.
