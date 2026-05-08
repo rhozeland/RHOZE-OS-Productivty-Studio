@@ -65,15 +65,16 @@ const CreatorPassCard = () => {
     enabled: !!user,
   });
 
-  // Verified Works (anchored creative IP) — replaces the old "Anchored" generic count.
+  // Verified Works (creator IP fingerprinted in `works`). Counts every
+  // registered work the user owns — anchored or not — so the Creator Pass
+  // reflects the same number you see in the Verified IP vault.
   const { data: verifiedWorks } = useQuery({
     queryKey: ["verified-works-pass", user?.id],
     queryFn: async () => {
       const { count } = await supabase
-        .from("contribution_proofs")
+        .from("works")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", user!.id)
-        .not("solana_signature", "is", null);
+        .eq("user_id", user!.id);
       return count ?? 0;
     },
     enabled: !!user,
