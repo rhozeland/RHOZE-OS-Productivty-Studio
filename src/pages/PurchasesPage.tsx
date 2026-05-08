@@ -17,6 +17,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { format } from "date-fns";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const CAT_ICONS: Record<string, any> = {
   music: Music,
