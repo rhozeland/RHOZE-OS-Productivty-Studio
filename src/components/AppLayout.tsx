@@ -393,6 +393,12 @@ const AppLayout = () => {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
+                      <Link to="/my-projects" className="cursor-pointer">
+                        <FolderKanban className="mr-2 h-4 w-4" />
+                        My Projects
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
                       <Link to="/settings" className="cursor-pointer">
                         <SettingsIcon className="mr-2 h-4 w-4" />
                         Settings
