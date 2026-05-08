@@ -31,6 +31,8 @@ const EventsListPanel = () => {
     },
   });
 
+  const { data: ctaMap } = useEventsCta((events ?? []).map((e: any) => e.id));
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
