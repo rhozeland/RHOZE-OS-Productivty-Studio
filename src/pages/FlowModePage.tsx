@@ -863,11 +863,13 @@ const FlowModePage = () => {
   // swipes after arrival aren't reverted.
   const consumedItemParamRef = useRef(false);
   useEffect(() => {
-    if (consumedItemParamRef.current) return;
     const targetId = searchParams.get("item");
+    console.log("[flow-deep-link]", { targetId, consumed: consumedItemParamRef.current, allItemsLen: allItems.length, ids: allItems.map((i:any)=>i.id) });
+    if (consumedItemParamRef.current) return;
     if (!targetId) return;
     if (allItems.length === 0) return;
     const idx = allItems.findIndex((i: any) => i.id === targetId);
+    console.log("[flow-deep-link] idx", idx);
     if (idx >= 0) {
       setCurrentIndex(idx);
       consumedItemParamRef.current = true;
