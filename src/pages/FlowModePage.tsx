@@ -829,7 +829,32 @@ const FlowModePage = () => {
   // after a scope toggle, treat the list as empty so the swipe view doesn't
   // briefly render a card from the previous scope (which would "mix" the
   // sequence the user sees). The skeleton/empty state below renders instead.
-  const allItems = flowItemsFetching ? [] : flowItems ?? [];
+  const baseItems = flowItemsFetching ? [] : flowItems ?? [];
+
+  // Deep-link fallback: when ?item=<id> points to an item that's outside the
+  // current feed (different category, hidden by RLS, etc.), fetch it directly
+  // and prepend it so the user lands on the card they actually clicked.
+  const deepLinkId = searchParams.get("item");
+  const inFeed = deepLinkId ? baseItems.some((i: any) => i.id === deepLinkId) : true;
+  const { data: deepLinkItem } = useQuery({
+    queryKey: ["flow-deep-link-item", deepLinkId],
+    enabled: !!deepLinkId && !inFeed && !flowItemsFetching,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("flow_items")
+        .select("*")
+        .eq("id", deepLinkId!)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const allItems = useMemo(() => {
+    if (deepLinkItem && !baseItems.some((i: any) => i.id === deepLinkItem.id)) {
+      return [deepLinkItem, ...baseItems];
+    }
+    return baseItems;
+  }, [baseItems, deepLinkItem]);
 
   // Engagement counts (likes + comments) and per-user liked set for visible items.
   const visibleIds = allItems.map((i: any) => i.id);
@@ -864,26 +889,23 @@ const FlowModePage = () => {
   // navigating from Discover to a *different* item (while the FlowModePage
   // instance is still mounted / HMR-preserved) re-applies the jump
   // instead of leaving the user stuck on the previous card.
-  const lastAppliedItemRef = useRef<string | null>(null);
   useEffect(() => {
     const targetId = searchParams.get("item");
-    if (!targetId) {
-      lastAppliedItemRef.current = null;
-      return;
-    }
-    if (lastAppliedItemRef.current === targetId) return;
+    if (!targetId) return;
     if (allItems.length === 0) return;
+    // Always check whether the item at currentIndex still matches the target —
+    // allItems can reshuffle when the feed query refetches (scope/category
+    // changes), invalidating a previously-applied index.
+    const atCursor = allItems[currentIndex % allItems.length];
+    if (atCursor?.id === targetId) return;
     const idx = allItems.findIndex((i: any) => i.id === targetId);
     if (idx >= 0) {
       setCurrentIndex(idx);
-      lastAppliedItemRef.current = targetId;
     } else if (feedScope !== "all") {
-      // Item not in current preferred slice — broaden to All so the deep
-      // link always lands on the right card instead of a random one.
       setFeedScope("all");
       setSelectedCategories(CATEGORIES);
     }
-  }, [allItems, searchParams, feedScope]);
+  }, [allItems, searchParams, feedScope, currentIndex]);
 
   // Batched coin lookup keyed by uploader (creator_id). Coins are now
   // profile-bound, so the "$TICKER → speculate" pill on a Flow card means
