@@ -177,14 +177,11 @@ const SpaceSpotlightCard = ({
       </div>
 
       <div className="border-t border-border/40 px-4 py-2.5 text-center">
-        <Link
-          to={href}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-transform hover:translate-x-0.5"
-        >
+        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-transform group-hover:translate-x-0.5">
           View space <ArrowUpRight className="h-4 w-4" />
-        </Link>
+        </span>
       </div>
-    </div>
+    </Link>
   );
 };
 
