@@ -12,7 +12,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import RegionChip from "@/components/profile/RegionChip";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Users } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const initials = (name?: string | null) =>
   (name ?? "")
