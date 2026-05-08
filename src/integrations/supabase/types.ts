@@ -4825,6 +4825,14 @@ export type Database = {
         }
         Returns: Json
       }
+      tick_reward_streak: {
+        Args: never
+        Returns: {
+          awarded_bonus: boolean
+          last_reward_login: string
+          reward_streak: number
+        }[]
+      }
       touch_user_activity: { Args: { _user_id: string }; Returns: undefined }
       update_platform_fee_tiers: {
         Args: { _payload: Json }
