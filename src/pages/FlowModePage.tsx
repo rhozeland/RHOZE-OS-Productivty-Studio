@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -850,8 +850,8 @@ const FlowModePage = () => {
   });
 
   const allItems = useMemo(() => {
-    if (deepLinkItem && !baseItems.some((i: any) => i.id === deepLinkItem.id)) {
-      return [deepLinkItem, ...baseItems];
+    if (deepLinkItem && !baseItems.some((i: any) => i.id === (deepLinkItem as any).id)) {
+      return [deepLinkItem as any, ...baseItems];
     }
     return baseItems;
   }, [baseItems, deepLinkItem]);
