@@ -37,6 +37,8 @@ const EventSpotlightCard = ({
 }: Props) => {
   const grad = avatarGradientFor(id);
   const start = new Date(starts_at);
+  const { data: ctaMap } = useEventsCta([id]);
+  const cta = ctaMap?.get(id);
 
   return (
     <div className="overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75">
