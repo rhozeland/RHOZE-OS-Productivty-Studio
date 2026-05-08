@@ -209,7 +209,7 @@ const AppLayout = () => {
     queryKey: ["search-profiles", safeQuery],
     queryFn: async () => {
       // Match either display name OR @username so handles are findable.
-      const q = trimmedQuery.replace(/^@/, "");
+      const q = safeQuery.replace(/^@/, "");
       const { data } = await supabase
         .from("profiles")
         .select("user_id, display_name, username")
