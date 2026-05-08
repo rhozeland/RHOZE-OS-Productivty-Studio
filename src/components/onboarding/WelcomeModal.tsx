@@ -21,6 +21,8 @@ import {
   Check,
   X,
   Loader2,
+  Brush,
+  TrendingUp,
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -87,11 +89,15 @@ const WelcomeModal = () => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState<string>("");
   // step semantics:
-  //   -1 = username (only shown when the profile has no username yet)
+  //   -2 = role pick (only when profile.primary_role is null)
+  //   -1 = username (only when profile has no username yet)
   //    0 = welcome
   //    1..TOUR.length = tour cards
   const [step, setStep] = useState(0);
   const [needsUsername, setNeedsUsername] = useState(false);
+  const [needsRole, setNeedsRole] = useState(false);
+  const [chosenRole, setChosenRole] = useState<"creator" | "investor" | null>(null);
+  const [savingRole, setSavingRole] = useState(false);
 
   // Username form state
   const [username, setUsername] = useState("");
@@ -107,7 +113,7 @@ const WelcomeModal = () => {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, username")
+        .select("display_name, username, primary_role")
         .eq("user_id", user.id)
         .maybeSingle();
       if (cancelled) return;
@@ -119,11 +125,13 @@ const WelcomeModal = () => {
       setName(first);
 
       const missingUsername = !((data as any)?.username);
-      // If user has seen the welcome AND has a username, don't reopen.
-      if (seen && !missingUsername) return;
+      const missingRole = !((data as any)?.primary_role);
+      // If user has seen the welcome AND has username + role, don't reopen.
+      if (seen && !missingUsername && !missingRole) return;
 
       setNeedsUsername(missingUsername);
-      setStep(missingUsername ? -1 : 0);
+      setNeedsRole(missingRole);
+      setStep(missingRole ? -2 : missingUsername ? -1 : 0);
       setOpen(true);
     })();
     return () => {
