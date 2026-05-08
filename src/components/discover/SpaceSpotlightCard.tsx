@@ -71,7 +71,10 @@ const SpaceSpotlightCard = ({
   const topAmenities = (amenities ?? []).filter(Boolean).slice(0, 3);
 
   return (
-    <div className="overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75">
+    <Link
+      to={href}
+      className="block overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75 transition-colors hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
       {/* Compact landscape hero — sized so total card height matches the artist/event spotlights */}
       <div
         className="relative w-full aspect-[21/9] overflow-hidden"
