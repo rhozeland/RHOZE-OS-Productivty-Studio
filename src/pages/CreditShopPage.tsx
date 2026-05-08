@@ -29,6 +29,7 @@ import CreatorPassCard from "@/components/creators/CreatorPassCard";
 import NextStepCard from "@/components/creators/NextStepCard";
 import GettingStartedBanner from "@/components/creators/GettingStartedBanner";
 import TierMatrix from "@/components/creators/TierMatrix";
+import TierProgressCard from "@/components/creators/TierProgressCard";
 import CoinPortfolio from "@/components/creators/CoinPortfolio";
 import { StreakCard } from "@/components/creators/StreakCard";
 import { REWARDS_BY_LANE } from "@/lib/rewards-catalog";
