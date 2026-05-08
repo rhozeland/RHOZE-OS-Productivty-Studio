@@ -32,6 +32,7 @@ import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import NoteBubble from "@/components/notes/NoteBubble";
 import { useUserNote } from "@/hooks/useNotes";
 import { useBuddyStatus } from "@/hooks/useBuddies";
+import { EmptyState } from "@/components/ui/empty-state";
 
 // Human-readable labels + destinations for on-chain reputation tiles.
 // Tiles are clickable when href is set; otherwise rendered as static cards.
