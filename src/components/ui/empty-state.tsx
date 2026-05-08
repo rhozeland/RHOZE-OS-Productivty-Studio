@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, isValidElement, createElement } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
