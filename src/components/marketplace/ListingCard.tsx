@@ -236,15 +236,35 @@ const ListingCard = ({
             )}
           </div>
           {!isOwner && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs gap-1 rounded-full"
-              onClick={(e) => { e.stopPropagation(); onInquire(); }}
-            >
-              <MessageCircle className="h-3 w-3" />
-              {isRequest ? "Apply" : "Inquire"}
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs gap-1 rounded-full"
+                onClick={(e) => { e.stopPropagation(); onInquire(); }}
+              >
+                <MessageCircle className="h-3 w-3" />
+                Message
+              </Button>
+              {!isRequest && (
+                <Button
+                  size="sm"
+                  className="h-7 text-xs gap-1 rounded-full px-3"
+                  onClick={(e) => { e.stopPropagation(); onInquire(); }}
+                >
+                  Book Now
+                </Button>
+              )}
+              {isRequest && (
+                <Button
+                  size="sm"
+                  className="h-7 text-xs gap-1 rounded-full px-3"
+                  onClick={(e) => { e.stopPropagation(); onInquire(); }}
+                >
+                  Apply
+                </Button>
+              )}
+            </div>
           )}
         </div>
       </div>
