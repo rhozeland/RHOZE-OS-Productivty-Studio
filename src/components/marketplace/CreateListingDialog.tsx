@@ -33,6 +33,7 @@ import {
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
+import RhozeRewardBadge from "@/components/RhozeRewardBadge";
 
 const LISTING_TYPES = [
   { key: "service", label: "Offering a Service", desc: "I can do this for you", icon: Briefcase },
