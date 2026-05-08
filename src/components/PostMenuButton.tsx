@@ -198,6 +198,7 @@ const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
                   description="Register a file as Verified IP — audio, image, video, text."
                   accent="from-emerald-500/20 to-emerald-500/5"
                   iconClass="text-emerald-500"
+                  reward={10}
                   onClick={() => closeAndNavigate("/settings#provenance")}
                 />
                 <OptionCard
@@ -206,6 +207,7 @@ const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
                   description="Sell a service, ask for help, or find collaborators."
                   accent="from-sky-500/20 to-sky-500/5"
                   iconClass="text-sky-500"
+                  reward={5}
                   onClick={() => setShowListingSubOptions(true)}
                 />
                 <OptionCard
@@ -214,6 +216,7 @@ const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
                   description="Host a show, workshop, screening, or meetup."
                   accent="from-pink-500/20 to-pink-500/5"
                   iconClass="text-pink-500"
+                  reward={25}
                   onClick={() => closeAndNavigate("/spaces/events/new")}
                 />
               </>
