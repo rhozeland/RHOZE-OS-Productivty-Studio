@@ -138,7 +138,10 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground">Creator Pass</h1>
-            <p className="text-muted-foreground">Earned tiers — hold $RHOZE or show up. No subscriptions.</p>
+            <p className="text-muted-foreground inline-flex items-center gap-1.5">
+              Earned tiers — hold <span className="font-medium">$RHOZE</span>
+              <RhozeInfoPopover size={13} /> or show up. No subscriptions.
+            </p>
           </div>
           <div className="surface-card flex items-center gap-3 px-5 py-3">
             <Coins className="h-5 w-5 text-primary" />
