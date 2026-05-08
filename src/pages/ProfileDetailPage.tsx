@@ -63,7 +63,7 @@ const ProfileDetailPage = () => {
   const tabFromUrl = rawTab === "coin" ? "support" : rawTab;
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [bookingOpen, setBookingOpen] = useState(false);
-  const [buddyConfirmOpen, setBuddyConfirmOpen] = useState(false);
+  
   const handleTabChange = (v: string) => {
     setActiveTab(v);
     const next = new URLSearchParams(searchParams);
