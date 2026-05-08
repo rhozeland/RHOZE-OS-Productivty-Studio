@@ -17,10 +17,12 @@ import {
   ArrowRight,
   Globe2,
   MapPin,
+  Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type Tab = "events" | "spaces" | "artists";
 
@@ -119,7 +121,12 @@ const ConversationsRightRail = () => {
       <ScrollArea className="flex-1 px-3 pb-3">
         <div className="space-y-2">
           {tab === "events" && events.length === 0 && (
-            <EmptyState label="No upcoming events." />
+            <EmptyState
+              icon={CalendarDays}
+              title="No upcoming events"
+              cta={{ label: "Host one", to: "/spaces/events/new" }}
+              size="sm"
+            />
           )}
           {tab === "events" &&
             events.map((e: any) => (
@@ -165,7 +172,12 @@ const ConversationsRightRail = () => {
             ))}
 
           {tab === "spaces" && spaces.length === 0 && (
-            <EmptyState label="No spaces listed yet." />
+            <EmptyState
+              icon={Building2}
+              title="No spaces listed yet"
+              cta={{ label: "List a space", to: "/studios/new" }}
+              size="sm"
+            />
           )}
           {tab === "spaces" &&
             spaces.map((s: any) => (
@@ -200,7 +212,12 @@ const ConversationsRightRail = () => {
             ))}
 
           {tab === "artists" && artists.length === 0 && (
-            <EmptyState label="No verified artists yet." />
+            <EmptyState
+              icon={Users}
+              title="No verified artists yet"
+              cta={{ label: "Apply to verify", to: "/verification" }}
+              size="sm"
+            />
           )}
           {tab === "artists" &&
             artists.map((a: any) => (
@@ -236,8 +253,6 @@ const ConversationsRightRail = () => {
   );
 };
 
-const EmptyState = ({ label }: { label: string }) => (
-  <p className="text-xs text-muted-foreground/70 text-center py-8">{label}</p>
-);
+// Local EmptyState replaced with the shared `<EmptyState />` component.
 
 export default ConversationsRightRail;

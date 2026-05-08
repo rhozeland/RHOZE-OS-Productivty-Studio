@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const EventsListPanel = () => {
   const { user } = useAuth();
@@ -41,41 +42,13 @@ const EventsListPanel = () => {
 
   if (!events || events.length === 0) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center"
-      >
-        <div className="mx-auto h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-          <CalendarDays className="h-6 w-6 text-primary" />
-        </div>
-        <h2 className="font-display text-xl font-bold text-foreground mb-1.5">
-          No events yet
-        </h2>
-        <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          Be the first to host. Every event manifest, artifact, and ticket is
-          SHA-256 anchored on Solana — verifiable receipts for the whole
-          gathering.
-        </p>
-        {user && (
-          <Link to="/spaces/events/new">
-            <Button className="mt-5 rounded-full gap-1.5">
-              <Plus className="h-4 w-4" /> Host the first event
-            </Button>
-          </Link>
-        )}
-        <div className="flex items-center justify-center gap-2 mt-5 flex-wrap">
-          <span className="inline-flex items-center gap-1.5 text-[11px] rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
-            <Sparkles className="h-3 w-3" /> Manifest hash on publish
-          </span>
-          <span className="inline-flex items-center gap-1.5 text-[11px] rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
-            <Sparkles className="h-3 w-3" /> Verified artifacts
-          </span>
-          <span className="inline-flex items-center gap-1.5 text-[11px] rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
-            <Sparkles className="h-3 w-3" /> Proof of attendance
-          </span>
-        </div>
-      </motion.div>
+      <EmptyState
+        icon={CalendarDays}
+        title="No upcoming events"
+        description="Host a show, workshop, screening, or meetup. Every manifest, artifact, and ticket is anchored on-chain."
+        cta={user ? { label: "Host the first event", to: "/spaces/events/new" } : { label: "Browse events", to: "/discover?view=events" }}
+        size="lg"
+      />
     );
   }
 

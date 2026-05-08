@@ -17,6 +17,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { format } from "date-fns";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const CAT_ICONS: Record<string, any> = {
   music: Music,
@@ -93,13 +94,12 @@ const PurchasesPage = () => {
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
       ) : !purchases?.length ? (
-        <div className="text-center py-20 space-y-4">
-          <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground/40" />
-          <p className="text-muted-foreground">No purchases yet</p>
-          <Link to="/marketplace">
-            <Button variant="outline" className="rounded-full">Browse Marketplace</Button>
-          </Link>
-        </div>
+        <EmptyState
+          icon={ShoppingBag}
+          title="No purchases yet"
+          description="Anything you buy from the marketplace shows up here with download links and receipts."
+          cta={{ label: "Browse the marketplace", to: "/discover?kind=offering" }}
+        />
       ) : (
         <div className="space-y-4">
           {purchases.map((purchase: any) => {

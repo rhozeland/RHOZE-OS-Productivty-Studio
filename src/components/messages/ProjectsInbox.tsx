@@ -23,6 +23,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
+import { EmptyState } from "@/components/ui/empty-state";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -225,12 +226,21 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
 
           <ScrollArea className="flex-1">
             {projects.length === 0 ? (
-              <div className="p-6 text-center space-y-2">
-                <FolderKanban className="h-8 w-8 mx-auto text-muted-foreground/30" />
-                <p className="text-sm text-muted-foreground">No projects yet</p>
-                <p className="text-[11px] text-muted-foreground/70">
-                  Start one to track milestones, vault, and splits in one thread.
-                </p>
+              <div className="p-4">
+                <EmptyState
+                  icon={FolderKanban}
+                  title="No projects yet"
+                  description="Spin one up to coordinate milestones, vault, and splits in a single thread."
+                  cta={{
+                    label: "Start a project",
+                    onClick: () => {
+                      const next = new URLSearchParams(params);
+                      next.set("new", "1");
+                      setParams(next, { replace: true });
+                    },
+                  }}
+                  size="sm"
+                />
               </div>
             ) : (
               projects.map((p) => {

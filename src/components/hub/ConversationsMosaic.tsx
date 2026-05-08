@@ -40,6 +40,7 @@ import { supabase } from "@/integrations/supabase/client";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
 
 // ─── Tile shape ────────────────────────────────────────────────────────
 // Note: "work" + "opportunity" no longer exist as standalone tile kinds.
@@ -292,15 +293,13 @@ const ConversationsMosaic = ({
   if (tiles.length === 0) {
     const hasSearch = search.trim().length > 0;
     return (
-      <div className="rounded-3xl border border-dashed border-border bg-card/50 p-12 text-center">
-        <Sparkles className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-        <p className="text-sm text-foreground font-medium">
-          {hasSearch ? "Nothing matches that search." : kind !== "all" ? "Nothing here yet." : "The Stream is quiet."}
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          {hasSearch ? "Try a different word, or clear the filter." : "Be the first to drop something above."}
-        </p>
-      </div>
+      <EmptyState
+        icon={Sparkles}
+        title={hasSearch ? "Nothing matches that search" : kind !== "all" ? "Nothing here yet" : "The Stream is quiet"}
+        description={hasSearch ? "Try a different word, or clear the filter." : "Be the first to drop something — share an update, work, or offering."}
+        cta={!hasSearch ? { label: "Post something", to: "/discover" } : undefined}
+        size="lg"
+      />
     );
   }
 

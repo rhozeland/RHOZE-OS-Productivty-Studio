@@ -23,6 +23,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { format } from "date-fns";
+import { EmptyState } from "@/components/ui/empty-state";
 import { toast } from "sonner";
 import CuratorInvitesInbox from "@/components/revenue/CuratorInvitesInbox";
 
@@ -223,10 +224,12 @@ const InquiriesPage = () => {
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
       ) : !inquiries?.length ? (
-        <div className="text-center py-16 space-y-3">
-          <Inbox className="h-10 w-10 mx-auto text-muted-foreground/30" />
-          <p className="text-sm text-muted-foreground">No inquiries yet</p>
-        </div>
+        <EmptyState
+          icon={Inbox}
+          title="No inquiries yet"
+          description="When someone reaches out about a listing or service, you'll see their message here."
+          cta={{ label: "Post a listing", to: "/discover?kind=offering" }}
+        />
       ) : (
         <div className="space-y-3">
           {inquiries.map((i) => renderInquiry(i))}

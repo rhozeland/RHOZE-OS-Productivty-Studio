@@ -12,7 +12,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import RegionChip from "@/components/profile/RegionChip";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Users } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const initials = (name?: string | null) =>
   (name ?? "")
@@ -64,12 +65,13 @@ const CreatorsGrid = ({ search = "" }: { search?: string }) => {
 
   if (!filtered.length) {
     return (
-      <div className="rounded-3xl border border-dashed border-border bg-card/50 p-12 text-center">
-        <Sparkles className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-        <p className="text-sm text-foreground font-medium">
-          {term ? "No creators match that search." : "No creators yet."}
-        </p>
-      </div>
+      <EmptyState
+        icon={Users}
+        title={term ? "No creators match that search" : "No creators yet"}
+        description={term ? "Try a different word, or clear the search." : "Invite the artists you love — they'll get a $RHOZE reward when they join."}
+        cta={!term ? { label: "Complete your profile", to: "/settings" } : undefined}
+        size="lg"
+      />
     );
   }
 
