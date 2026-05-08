@@ -419,11 +419,14 @@ const ProfileDetailPage = () => {
                       Send a professional network request
                     </span>
                   </div>
-                  {isConnected && (
+                  <div className="flex flex-col gap-1">
                     <Button variant="outline" size="sm" onClick={() => navigate(`/messages?to=${id}`)} className="self-start">
                       <MessageSquare className="mr-1.5 h-4 w-4" /> Message
                     </Button>
-                  )}
+                    <span className="text-[11px] text-muted-foreground max-w-[220px] leading-snug">
+                      Send a direct message
+                    </span>
+                  </div>
                   {buddy.status === "none" && (
                     <div className="flex flex-col gap-1">
                       <Button variant="outline" size="sm" onClick={() => setBuddyConfirmOpen(true)} disabled={buddy.request.isPending}>
