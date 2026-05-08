@@ -859,20 +859,24 @@ const FlowModePage = () => {
   const currentItem = allItems.length > 0 ? allItems[currentIndex % allItems.length] : null;
 
   // Deep-link: when navigated with ?item=<flow_item_id>, jump the swipe
-  // cursor to that card as soon as the feed loads. Consumed once so user
-  // swipes after arrival aren't reverted.
-  const consumedItemParamRef = useRef(false);
+  // cursor to that card as soon as the feed loads. We track the last
+  // applied targetId rather than a one-shot consumed flag so that
+  // navigating from Discover to a *different* item (while the FlowModePage
+  // instance is still mounted / HMR-preserved) re-applies the jump
+  // instead of leaving the user stuck on the previous card.
+  const lastAppliedItemRef = useRef<string | null>(null);
   useEffect(() => {
     const targetId = searchParams.get("item");
-    console.log("[flow-deep-link]", { targetId, consumed: consumedItemParamRef.current, allItemsLen: allItems.length, ids: allItems.map((i:any)=>i.id) });
-    if (consumedItemParamRef.current) return;
-    if (!targetId) return;
+    if (!targetId) {
+      lastAppliedItemRef.current = null;
+      return;
+    }
+    if (lastAppliedItemRef.current === targetId) return;
     if (allItems.length === 0) return;
     const idx = allItems.findIndex((i: any) => i.id === targetId);
-    console.log("[flow-deep-link] idx", idx);
     if (idx >= 0) {
       setCurrentIndex(idx);
-      consumedItemParamRef.current = true;
+      lastAppliedItemRef.current = targetId;
     } else if (feedScope !== "all") {
       // Item not in current preferred slice — broaden to All so the deep
       // link always lands on the right card instead of a random one.
