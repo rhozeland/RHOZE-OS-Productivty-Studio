@@ -77,7 +77,9 @@ const CreateListingDialog = ({ open, onOpenChange, prefill, editListing }: Creat
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isEdit = !!editListing;
-  const [step, setStep] = useState(isEdit ? 1 : 0);
+  // Skip the type picker (step 0) when caller provided a listing_type via prefill.
+  const skipPicker = !!prefill?.listing_type;
+  const [step, setStep] = useState(isEdit || skipPicker ? 1 : 0);
 
   // Form
   const [listingType, setListingType] = useState(editListing?.listing_type ?? prefill?.listing_type ?? "service");
