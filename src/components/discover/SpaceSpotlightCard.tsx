@@ -71,7 +71,10 @@ const SpaceSpotlightCard = ({
   const topAmenities = (amenities ?? []).filter(Boolean).slice(0, 3);
 
   return (
-    <div className="overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75">
+    <Link
+      to={href}
+      className="block overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75 transition-colors hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
       {/* Compact landscape hero — sized so total card height matches the artist/event spotlights */}
       <div
         className="relative w-full aspect-[21/9] overflow-hidden"
@@ -174,14 +177,11 @@ const SpaceSpotlightCard = ({
       </div>
 
       <div className="border-t border-border/40 px-4 py-2.5 text-center">
-        <Link
-          to={href}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-transform hover:translate-x-0.5"
-        >
+        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-transform group-hover:translate-x-0.5">
           View space <ArrowUpRight className="h-4 w-4" />
-        </Link>
+        </span>
       </div>
-    </div>
+    </Link>
   );
 };
 
