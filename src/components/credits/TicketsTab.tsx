@@ -39,13 +39,12 @@ const TicketsTab = ({ userId }: { userId: string }) => {
   }
   if (!rows.length) {
     return (
-      <div className="text-center py-12 space-y-4">
-        <Ticket className="h-12 w-12 mx-auto text-muted-foreground/40" />
-        <p className="text-muted-foreground">No tickets yet</p>
-        <Link to="/discover?view=events">
-          <Button variant="outline" className="rounded-full">Browse events</Button>
-        </Link>
-      </div>
+      <EmptyState
+        icon={Ticket}
+        title="No tickets yet"
+        description="RSVP or grab a ticket to an event and it'll appear here with your QR + receipt."
+        cta={{ label: "Browse events", to: "/discover?view=events" }}
+      />
     );
   }
 
