@@ -59,7 +59,11 @@ const ArtistSpotlightCard = ({
     .filter(Boolean) as { label: string; emoji: string }[];
 
   return (
-    <div className="overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75">
+    <Link
+      to={href}
+      className="group block overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75 transition-all hover:border-foreground/40 hover:shadow-[0_18px_48px_hsl(var(--background)/0.45)] focus:outline-none focus:ring-2 focus:ring-primary/40"
+      aria-label={`View ${title}'s profile`}
+    >
       {/* Header strip — flag + featured chip */}
       <div className="flex flex-wrap items-center gap-1.5 px-4 pt-4">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-foreground bg-foreground px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-background">
@@ -91,7 +95,6 @@ const ArtistSpotlightCard = ({
           )}
         </div>
 
-        {/* Roles row */}
         {roleLabels.length > 0 ? (
           <p className="mt-1.5 text-center text-[12px] font-medium text-foreground/80 line-clamp-1">
             {roleLabels.map((r) => `${r.emoji} ${r.label}`).join(" · ")}
@@ -103,7 +106,6 @@ const ArtistSpotlightCard = ({
         ) : null}
       </div>
 
-      {/* Single centered stat — Works */}
       <div className="border-t border-border/40 bg-background/30 py-3 text-center">
         <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
           <FileImage className="h-3.5 w-3.5" />
@@ -113,14 +115,11 @@ const ArtistSpotlightCard = ({
       </div>
 
       <div className="border-t border-border/40 px-4 py-3 text-center">
-        <Link
-          to={href}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-transform hover:translate-x-0.5"
-        >
+        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-transform group-hover:translate-x-0.5">
           View profile <ArrowUpRight className="h-4 w-4" />
-        </Link>
+        </span>
       </div>
-    </div>
+    </Link>
   );
 };
 
