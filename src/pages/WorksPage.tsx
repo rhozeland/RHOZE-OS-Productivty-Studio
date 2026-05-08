@@ -248,8 +248,13 @@ const WorksPage = ({ embedded = false }: WorksPageProps = {}) => {
           ) : myWorks.length === 0 ? (
             <EmptyState
               icon={Upload}
-              title="No works yet"
-              body="Upload your first piece to mint a content-hash fingerprint."
+              title="Nothing shared yet"
+              body="Drop your first track, image, or video to register it as Verified IP."
+              cta={
+                <Link to="/settings#provenance">
+                  <Button>Post your first work →</Button>
+                </Link>
+              }
             />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
