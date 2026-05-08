@@ -23,8 +23,7 @@ import {
 } from "lucide-react";
 import TicketsTab from "@/components/credits/TicketsTab";
 import { RhozeInfoPopover } from "@/components/RhozeInfoPopover";
-import { formatDistanceToNow } from "date-fns";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { Link, useSearchParams } from "react-router-dom";
 import CreatorPassCard from "@/components/creators/CreatorPassCard";
 import NextStepCard from "@/components/creators/NextStepCard";
