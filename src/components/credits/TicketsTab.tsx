@@ -55,6 +55,7 @@ const TicketsTab = ({ userId }: { userId: string }) => {
     return (
       <Link
         to={`/tickets/${row.id}`}
+        state={{ from: "/credits?tab=tickets" }}
         className="group rounded-2xl border border-border bg-card overflow-hidden hover:border-foreground/30 transition-colors flex"
       >
         <div className="w-28 sm:w-36 aspect-square bg-muted shrink-0 overflow-hidden">
