@@ -417,16 +417,28 @@ const CreatorsPage = () => {
   }, [profiles]);
 
   const filtered = useMemo(() => {
+    const mediumAliases: Record<string, string[]> = {
+      music: ["music", "audio", "beat", "producer", "sound", "dj", "vocal", "song"],
+      design: ["design", "graphic", "illustration", "brand", "ui", "ux", "art direct"],
+      photo: ["photo", "photography", "photographer"],
+      video: ["video", "film", "cinema", "editor", "director", "motion"],
+      lifestyle: ["lifestyle", "fashion", "style", "wellness", "travel", "food"],
+      "3d": ["3d", "blender", "cinema 4d", "c4d", "render", "sculpt"],
+    };
     let list = creators.filter((c) => {
-      if (medium !== "All" && !c.mediums.some((m) => m.toLowerCase() === medium.toLowerCase()))
-        return false;
+      if (medium !== "All") {
+        const tags = (c as any)._tags as string;
+        const needles = mediumAliases[medium.toLowerCase()] || [medium.toLowerCase()];
+        if (!needles.some((n) => tags.includes(n))) return false;
+      }
       if (search) {
         const q = search.toLowerCase();
         return (
           c.name.toLowerCase().includes(q) ||
           c.handle.toLowerCase().includes(q) ||
           c.role.toLowerCase().includes(q) ||
-          c.city.toLowerCase().includes(q)
+          c.city.toLowerCase().includes(q) ||
+          ((c as any)._tags as string).includes(q)
         );
       }
       return true;
