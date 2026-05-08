@@ -23,6 +23,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { format } from "date-fns";
+import { EmptyState } from "@/components/ui/empty-state";
 import { toast } from "sonner";
 import CuratorInvitesInbox from "@/components/revenue/CuratorInvitesInbox";
 
