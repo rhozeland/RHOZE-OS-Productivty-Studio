@@ -6,10 +6,11 @@
  * carry the visual weight, since that's what people actually decide on.
  */
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Clock, Globe2, MapPin, Sparkles } from "lucide-react";
+import { ArrowUpRight, Clock, Globe2, MapPin, Sparkles, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import RegionChip from "@/components/profile/RegionChip";
 import { avatarGradientFor } from "@/lib/avatar-gradient";
+import { useEventsCta } from "@/hooks/useEventsCta";
 
 interface Props {
   id: string;
