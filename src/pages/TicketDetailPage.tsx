@@ -183,12 +183,16 @@ const TicketDetailPage = () => {
 
   return (
     <div className="max-w-md mx-auto space-y-5">
-      <Link
-        to={`/spaces/events/${ticket.event_id}`}
+      <button
+        type="button"
+        onClick={() => {
+          if (fromCredits) navigate("/credits?tab=tickets");
+          else navigate(-1);
+        }}
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to event
-      </Link>
+        <ArrowLeft className="h-4 w-4" /> {fromCredits ? "Back to Creator Pass" : "Back"}
+      </button>
 
       <Tilt3D maxTilt={14} className="rounded-3xl">
       <motion.div
