@@ -1,155 +1,94 @@
-import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Coins,
-  Download,
-  ShoppingBag,
-  Music,
-  Palette,
-  Camera,
-  Video,
-  PenTool,
-  Sparkles,
-  ExternalLink,
-} from "lucide-react";
+import { ShoppingBag, Coins, ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { format } from "date-fns";
 import { EmptyState } from "@/components/ui/empty-state";
 
-const CAT_ICONS: Record<string, any> = {
-  music: Music,
-  design: Palette,
-  photo: Camera,
-  video: Video,
-  writing: PenTool,
-};
-
+/**
+ * PurchasesPage — unified purchase history.
+ *
+ * Reads from `credit_transactions` so every kind of purchase shows up:
+ * marketplace listings, event tickets, studio bookings, $RHOZE top-ups,
+ * subscriptions, etc. Anything that touches a user's credits ledger.
+ */
 const PurchasesPage = () => {
   const { user } = useAuth();
 
-  const { data: purchases, isLoading } = useQuery({
-    queryKey: ["my-purchases", user?.id],
+  const { data: txs, isLoading } = useQuery({
+    queryKey: ["my-purchase-history", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("purchases" as any)
+        .from("credit_transactions")
         .select("*")
-        .eq("buyer_id", user!.id)
+        .eq("user_id", user!.id)
+        .in("type", ["purchase", "usage", "subscription", "renewal"])
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as any[];
+      return data ?? [];
     },
     enabled: !!user,
-  });
-
-  // Fetch listing details for all purchases
-  const listingIds = purchases?.map((p: any) => p.listing_id) ?? [];
-  const { data: listings } = useQuery({
-    queryKey: ["purchased-listings", listingIds],
-    queryFn: async () => {
-      // Need to query including inactive listings for purchase history
-      const { data, error } = await supabase
-        .from("marketplace_listings")
-        .select("*")
-        .in("id", listingIds);
-      if (error) throw error;
-      return data;
-    },
-    enabled: listingIds.length > 0,
-  });
-
-  // Fetch media for digital product downloads
-  const { data: allMedia } = useQuery({
-    queryKey: ["purchased-media", listingIds],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("listing_media")
-        .select("*")
-        .in("listing_id", listingIds)
-        .order("sort_order");
-      if (error) throw error;
-      return data;
-    },
-    enabled: listingIds.length > 0,
-  });
-
-  const listingsMap = new Map(listings?.map((l) => [l.id, l]) ?? []);
-  const mediaMap = new Map<string, typeof allMedia>();
-  allMedia?.forEach((m) => {
-    if (!mediaMap.has(m.listing_id)) mediaMap.set(m.listing_id, []);
-    mediaMap.get(m.listing_id)!.push(m);
   });
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl font-bold text-foreground">My Purchases</h1>
-        <p className="text-muted-foreground">Your purchased items and download history</p>
+        <p className="text-muted-foreground">
+          Everything you've bought or spent credits on — bookings, tickets, top-ups, and more.
+        </p>
       </div>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
-      ) : !purchases?.length ? (
+      ) : !txs?.length ? (
         <EmptyState
           icon={ShoppingBag}
           title="No purchases yet"
-          description="Anything you buy from the marketplace shows up here with download links and receipts."
+          description="Anything you buy on Rhozeland — listings, tickets, bookings, $RHOZE top-ups — shows up here."
           cta={{ label: "Browse the marketplace", to: "/discover?kind=offering" }}
         />
       ) : (
-        <div className="space-y-4">
-          {purchases.map((purchase: any) => {
-            const listing = listingsMap.get(purchase.listing_id);
-            const media = mediaMap.get(purchase.listing_id) ?? [];
-            const CatIcon = CAT_ICONS[listing?.category] ?? Sparkles;
-
+        <div className="space-y-3">
+          {txs.map((tx: any) => {
+            const isCredit = tx.amount > 0;
             return (
-              <div key={purchase.id} className="surface-card p-4 space-y-3">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <CatIcon className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="min-w-0">
-                      <Link
-                        to={`/marketplace/${purchase.listing_id}`}
-                        className="font-semibold text-foreground hover:text-primary transition-colors truncate block"
-                      >
-                        {listing?.title ?? "Listing"}
-                      </Link>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(purchase.created_at), "MMM d, yyyy 'at' h:mm a")}
-                      </p>
-                    </div>
+              <div key={tx.id} className="surface-card p-4 flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className={`h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      isCredit ? "bg-emerald-500/10" : "bg-primary/10"
+                    }`}
+                  >
+                    {isCredit ? (
+                      <ArrowDownRight className="h-5 w-5 text-emerald-500" />
+                    ) : (
+                      <ArrowUpRight className="h-5 w-5 text-primary" />
+                    )}
                   </div>
-                  <Badge variant="secondary" className="gap-1 flex-shrink-0">
-                    <Coins className="h-3 w-3" />
-                    {purchase.credits_paid}
-                  </Badge>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-foreground truncate">
+                      {tx.description || (isCredit ? "Credits added" : "Credits spent")}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(tx.created_at), "MMM d, yyyy 'at' h:mm a")}
+                      {tx.payment_method ? ` · ${tx.payment_method}` : ""}
+                    </p>
+                  </div>
                 </div>
-
-                {/* Download files */}
-                {media.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {media.map((m: any) => (
-                      <a
-                        key={m.id}
-                        href={m.file_url}
-                        download={m.file_name}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-xs text-primary hover:bg-muted/80 transition-colors"
-                      >
-                        <Download className="h-3 w-3" />
-                        {m.file_name}
-                      </a>
-                    ))}
-                  </div>
-                )}
+                <Badge
+                  variant="secondary"
+                  className={`gap-1 flex-shrink-0 ${
+                    isCredit ? "text-emerald-500" : "text-foreground"
+                  }`}
+                >
+                  <Coins className="h-3 w-3" />
+                  {isCredit ? "+" : ""}
+                  {tx.amount} $RHOZE
+                </Badge>
               </div>
             );
           })}
