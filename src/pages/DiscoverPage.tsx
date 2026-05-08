@@ -28,6 +28,8 @@ import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import StreamComposer from "@/components/stream/StreamComposer";
 import ConversationsMosaic, { type MosaicKindFilter } from "@/components/hub/ConversationsMosaic";
 import CreatorsGrid from "@/components/discover/CreatorsGrid";
+import DiscoverEventsGrid from "@/components/discover/DiscoverEventsGrid";
+import EventCategoryPills from "@/components/discover/EventCategoryPills";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -488,20 +490,33 @@ const DiscoverPage = () => {
           </div>
         </div>
 
-        {categoryDefs && (
-          <StreamCategorySection
-            defs={categoryDefs}
-            noun={view === "events" ? "event" : "space"}
-            activeCategory={normalizedCategory}
-            counts={categoryCounts}
-            onSelect={setCategory}
-          />
-        )}
-
-        {view === "creators" ? (
-          <CreatorsGrid />
+        {view === "events" ? (
+          <>
+            <EventCategoryPills
+              defs={EVENT_CATEGORY_DEFS}
+              activeCategory={normalizedCategory}
+              counts={categoryCounts}
+              onSelect={setCategory}
+            />
+            <DiscoverEventsGrid category={normalizedCategory} />
+          </>
         ) : (
-          <ConversationsMosaic kind={activeOption.kind} category={normalizedCategory} />
+          <>
+            {categoryDefs && (
+              <StreamCategorySection
+                defs={categoryDefs}
+                noun="space"
+                activeCategory={normalizedCategory}
+                counts={categoryCounts}
+                onSelect={setCategory}
+              />
+            )}
+            {view === "creators" ? (
+              <CreatorsGrid />
+            ) : (
+              <ConversationsMosaic kind={activeOption.kind} category={normalizedCategory} />
+            )}
+          </>
         )}
       </section>
 
