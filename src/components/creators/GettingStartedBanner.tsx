@@ -25,13 +25,31 @@ import { cn } from "@/lib/utils";
 
 const DISMISS_KEY = "rhozeland.gettingstarted.dismissed";
 const CELEBRATED_KEY = "rhozeland.gettingstarted.celebrated";
+const CLAIMED_KEY = "rhozeland.gettingstarted.claimed";
 
 interface Step {
   id: string;
   done: boolean;
   label: string;
   href: string;
+  reward: number;
+  rewardLabel: string;
 }
+
+// Per-step $RHOZE payouts. These map to the milestone catalog in
+// src/lib/rewards-catalog.ts but are credited directly via
+// `adjust_user_credits` so users get instant feedback for finishing
+// onboarding steps. localStorage dedupes per (user, step).
+const STEP_REWARDS: Record<string, { amount: number; label: string }> = {
+  join: { amount: 5, label: "Welcome to Rhozeland" },
+  drop: { amount: 10, label: "First work uploaded" },
+  event: { amount: 5, label: "Attended your first event" },
+  connect: { amount: 10, label: "Connected with 3 creators" },
+  streak: { amount: 5, label: "7-day streak" },
+};
+
+const claimedKeyFor = (userId: string, stepId: string) =>
+  `${CLAIMED_KEY}.${userId}.${stepId}`;
 
 const fireCompletionConfetti = () => {
   const colors = ["#ec4899", "#a78bfa", "#fbbf24", "#34d399", "#60a5fa"];
