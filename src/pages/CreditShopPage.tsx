@@ -29,6 +29,7 @@ import CreatorPassCard from "@/components/creators/CreatorPassCard";
 import NextStepCard from "@/components/creators/NextStepCard";
 import GettingStartedBanner from "@/components/creators/GettingStartedBanner";
 import TierMatrix from "@/components/creators/TierMatrix";
+import TierProgressCard from "@/components/creators/TierProgressCard";
 import CoinPortfolio from "@/components/creators/CoinPortfolio";
 import { StreakCard } from "@/components/creators/StreakCard";
 import { REWARDS_BY_LANE } from "@/lib/rewards-catalog";
@@ -167,6 +168,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
         {/* ═══════ My Pass ═══════ */}
         <TabsContent value="pass" className="mt-4 space-y-4">
           <NextStepCard />
+          <TierProgressCard />
           <CreatorPassCard />
           <GettingStartedBanner />
           <StreakCard />
@@ -187,6 +189,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
               a threshold — no subscriptions, no applications.
             </p>
           </div>
+          <TierProgressCard />
           <TierMatrix activeTier={currentTier as any} />
         </TabsContent>
 
