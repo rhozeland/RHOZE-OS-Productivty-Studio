@@ -115,16 +115,12 @@ const CoinPortfolio = () => {
       {loading ? (
         <div className="surface-card p-6 text-center text-sm text-muted-foreground">Loading…</div>
       ) : enriched.length === 0 ? (
-        <div className="surface-card p-8 text-center space-y-2">
-          <Coins className="h-8 w-8 mx-auto text-muted-foreground/30" />
-          <p className="text-sm text-muted-foreground">You don't hold any artist coins yet.</p>
-          <Link
-            to="/discover"
-            className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-          >
-            Find artists to support <ArrowRight className="h-3 w-3" />
-          </Link>
-        </div>
+        <EmptyState
+          icon={Coins}
+          title="No artist coins held yet"
+          description="Back the artists you love. Their coins live here as proof of support."
+          cta={{ label: "Find artists to support", to: "/discover?view=creators" }}
+        />
       ) : (
         <div className="surface-card divide-y divide-border overflow-hidden">
           {/* Header */}
