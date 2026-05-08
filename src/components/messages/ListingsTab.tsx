@@ -46,18 +46,12 @@ const ListingsTab = ({ userId }: { userId: string }) => {
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
       ) : !listings || listings.length === 0 ? (
-        <div className="text-center py-16 surface-card">
-          <Store className="h-10 w-10 mx-auto text-muted-foreground/30" />
-          <p className="text-sm text-muted-foreground mt-3">No listings yet</p>
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-full gap-1.5 mt-4"
-            onClick={() => setCreateOpen(true)}
-          >
-            <Plus className="h-3.5 w-3.5" /> Post your first listing
-          </Button>
-        </div>
+        <EmptyState
+          icon={Store}
+          title="No listings yet"
+          description="Post a service, an open call, or a fixed-price offering. Inquiries land in your inbox."
+          cta={{ label: "Post your first listing", onClick: () => setCreateOpen(true) }}
+        />
       ) : (
         <div className="space-y-2">
           {listings.map((l: any) => (
