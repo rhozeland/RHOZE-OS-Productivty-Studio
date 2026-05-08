@@ -19,10 +19,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Coins, Sparkles, Check, Wallet, ShoppingBag, Download, Music, Info, Shield,
   Award, Palette, Camera, Video, PenTool, ExternalLink, Star, Heart, Trophy,
-  HelpCircle, Ticket,
+  HelpCircle, Ticket, TrendingUp,
 } from "lucide-react";
 import TicketsTab from "@/components/credits/TicketsTab";
-import { format } from "date-fns";
+import { RhozeInfoPopover } from "@/components/RhozeInfoPopover";
+import { format, formatDistanceToNow } from "date-fns";
 import { Link, useSearchParams } from "react-router-dom";
 import CreatorPassCard from "@/components/creators/CreatorPassCard";
 import NextStepCard from "@/components/creators/NextStepCard";
@@ -137,7 +138,10 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground">Creator Pass</h1>
-            <p className="text-muted-foreground">Earned tiers — hold $RHOZE or show up. No subscriptions.</p>
+            <p className="text-muted-foreground inline-flex items-center gap-1.5">
+              Earned tiers — hold <span className="font-medium">$RHOZE</span>
+              <RhozeInfoPopover size={13} /> or show up. No subscriptions.
+            </p>
           </div>
           <div className="surface-card flex items-center gap-3 px-5 py-3">
             <Coins className="h-5 w-5 text-primary" />
@@ -148,6 +152,8 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
           </div>
         </div>
       </div>
+
+      <RhozeIntroCard />
 
       <Tabs value={activeTab} onValueChange={setTab}>
         <TabsList>
@@ -164,6 +170,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
           <CreatorPassCard />
           <GettingStartedBanner />
           <StreakCard />
+          <EarnHistory userId={user.id} />
           <CoinPortfolio />
         </TabsContent>
 
@@ -613,6 +620,104 @@ const VerifiedIPSection = ({ userId }: { userId: string | null }) => {
           </ul>
         )}
       </div>
+    </div>
+  );
+};
+
+
+/* ─── Intro card explaining $RHOZE — sits at the top of Creator Pass ─── */
+const RhozeIntroCard = () => (
+  <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-sm p-5 sm:p-6 space-y-3">
+    <div className="flex items-start gap-2">
+      <Coins className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+      <p className="text-sm leading-relaxed">
+        <span className="font-semibold text-foreground">What is $RHOZE? </span>
+        <span className="text-muted-foreground">
+          Rhozeland's currency — earned by creating, attending events, and collaborating.
+        </span>
+      </p>
+    </div>
+    <div className="flex items-start gap-2">
+      <Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+      <p className="text-sm leading-relaxed">
+        <span className="font-semibold text-foreground">How to earn more: </span>
+        <span className="text-muted-foreground">
+          Post work · Attend events · Complete collabs · Maintain streaks
+        </span>
+      </p>
+    </div>
+    <div className="flex items-start gap-2">
+      <Wallet className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+      <p className="text-sm leading-relaxed">
+        <span className="font-semibold text-foreground">What to spend it on: </span>
+        <span className="text-muted-foreground">
+          Rhozeland services · Hold to level up · Cash out to wallet
+        </span>
+      </p>
+    </div>
+  </div>
+);
+
+/* ─── Earn History — log of every $RHOZE earn event ─── */
+const EarnHistory = ({ userId }: { userId: string }) => {
+  const { data: earns, isLoading } = useQuery({
+    queryKey: ["rhoze-earn-history", userId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("credit_transactions")
+        .select("id, amount, description, type, created_at")
+        .eq("user_id", userId)
+        .gt("amount", 0)
+        .neq("type", "claim")
+        .order("created_at", { ascending: false })
+        .limit(25);
+      return data ?? [];
+    },
+  });
+
+  return (
+    <div className="surface-card p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <TrendingUp className="h-4 w-4 text-primary" />
+        <h3 className="font-display text-base font-semibold text-foreground">Earn History</h3>
+        <span className="ml-auto text-[10px] text-muted-foreground">
+          Every time you earned $RHOZE
+        </span>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-1.5">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-12 rounded-lg bg-muted/40 animate-pulse" />
+          ))}
+        </div>
+      ) : earns && earns.length > 0 ? (
+        <ul className="divide-y divide-border/60">
+          {earns.map((tx: any) => (
+            <li key={tx.id} className="flex items-center gap-3 py-2.5">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <Coins className="h-3.5 w-3.5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {tx.description || "Earned $RHOZE"}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {formatDistanceToNow(new Date(tx.created_at), { addSuffix: true })}
+                </p>
+              </div>
+              <span className="text-sm font-semibold text-primary whitespace-nowrap">
+                +{Math.abs(Number(tx.amount)).toLocaleString()} $RHOZE
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-xs text-muted-foreground py-4 text-center">
+          No earnings yet. Post work, attend an event, or join a collab to start
+          earning $RHOZE.
+        </p>
+      )}
     </div>
   );
 };

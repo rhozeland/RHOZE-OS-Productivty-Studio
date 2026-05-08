@@ -20,6 +20,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import ClaimRhozeButton from "@/components/ClaimRhozeButton";
+import { RhozeInfoPopover } from "@/components/RhozeInfoPopover";
 
 const formatBalance = (n: number) => {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`;
@@ -73,7 +74,10 @@ const RhozeBalanceChip = () => {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="right" className="w-[360px] sm:w-[400px]">
           <SheetHeader>
-            <SheetTitle className="font-display">Your $RHOZE</SheetTitle>
+            <SheetTitle className="font-display inline-flex items-center gap-1.5">
+              Your $RHOZE
+              <RhozeInfoPopover size={14} />
+            </SheetTitle>
             <SheetDescription className="font-body">
               In-app balance · earned through activity and rewards.
             </SheetDescription>

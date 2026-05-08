@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import Tilt3D from "@/components/ui/Tilt3D";
 import { useState } from "react";
 import { format } from "date-fns";
+import { RhozeInfoPopover } from "@/components/RhozeInfoPopover";
 
 // Levels/XP removed in v8.7 — Creator Pass surfaces $RHOZE hold + collectible
 // stats only. Level + XP previously double-displayed alongside the tier.
@@ -442,6 +443,7 @@ const BalanceCard = ({ balance, holdTier }: { balance: number; holdTier: TierId 
         <div className="flex items-center gap-1.5 text-muted-foreground">
           <Shield className="h-3.5 w-3.5" />
           <span className="text-[10px] uppercase tracking-[0.2em] font-body font-medium">$RHOZE Balance</span>
+          <RhozeInfoPopover size={11} />
         </div>
         <p className="font-display text-4xl md:text-5xl font-bold text-foreground tabular-nums leading-none mt-2">
           {balance.toLocaleString()}
