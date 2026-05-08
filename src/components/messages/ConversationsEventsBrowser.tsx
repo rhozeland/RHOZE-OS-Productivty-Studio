@@ -230,10 +230,12 @@ const ConversationsEventsBrowser = ({ hideHeading = false }: { hideHeading?: boo
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border p-10 text-center">
-            <CalendarDays className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
-            <p className="text-sm text-muted-foreground">No upcoming events here yet.</p>
-          </div>
+          <EmptyState
+            icon={CalendarDays}
+            title="No upcoming events"
+            description="Be the first to host one in this category."
+            cta={{ label: "Host an event", to: "/spaces/events/new" }}
+          />
         ) : (
           <div className="grid md:grid-cols-2 gap-4">
             {filtered.map((e) => (
