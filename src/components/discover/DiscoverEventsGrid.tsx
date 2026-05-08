@@ -149,18 +149,30 @@ const DiscoverEventsGrid = ({ category = null, search = "" }: DiscoverEventsGrid
                 </div>
               </div>
 
-              <Button
-                size="sm"
-                className="mt-2 w-full gap-1.5"
-                onClick={(ev) => {
-                  ev.stopPropagation();
-                  navigate(`/spaces/events/${e.id}`);
-                }}
-              >
-                Show interest
-                <RhozeRewardBadge amount={25} className="bg-background/20 border-background/30 text-background" />
-                <ArrowRight className="ml-0.5 h-3.5 w-3.5" />
-              </Button>
+              {(() => {
+                const cta = ctaMap?.get(e.id);
+                const label = cta?.label ?? "View event";
+                const isRegistered = cta?.kind === "registered";
+                const isSoldOut = cta?.kind === "sold_out";
+                return (
+                  <Button
+                    size="sm"
+                    variant={isRegistered ? "outline" : "default"}
+                    disabled={isSoldOut}
+                    className="mt-2 w-full gap-1.5"
+                    onClick={(ev) => {
+                      ev.stopPropagation();
+                      navigate(`/spaces/events/${e.id}`);
+                    }}
+                  >
+                    {label}
+                    {!isRegistered && !isSoldOut && (
+                      <RhozeRewardBadge amount={25} className="bg-background/20 border-background/30 text-background" />
+                    )}
+                    {!isRegistered && <ArrowRight className="ml-0.5 h-3.5 w-3.5" />}
+                  </Button>
+                );
+              })()}
             </div>
           </motion.article>
         );
