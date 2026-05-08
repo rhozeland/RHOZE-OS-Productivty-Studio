@@ -20,6 +20,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import ClaimRhozeButton from "@/components/ClaimRhozeButton";
+import { RhozeInfoPopover } from "@/components/RhozeInfoPopover";
 
 const formatBalance = (n: number) => {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`;
