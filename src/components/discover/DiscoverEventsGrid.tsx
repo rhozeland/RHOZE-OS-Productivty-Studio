@@ -14,6 +14,7 @@ import { CalendarDays, MapPin, Globe2, Sparkles, ArrowRight } from "lucide-react
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import RhozeRewardBadge from "@/components/RhozeRewardBadge";
 
 interface DiscoverEventsGridProps {
   /** Normalized category slug (e.g. "music") or null for "all". */
@@ -147,14 +148,15 @@ const DiscoverEventsGrid = ({ category = null, search = "" }: DiscoverEventsGrid
 
               <Button
                 size="sm"
-                className="mt-2 w-full"
+                className="mt-2 w-full gap-1.5"
                 onClick={(ev) => {
                   ev.stopPropagation();
                   navigate(`/spaces/events/${e.id}`);
                 }}
               >
                 Show interest
-                <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                <RhozeRewardBadge amount={25} className="bg-background/20 border-background/30 text-background" />
+                <ArrowRight className="ml-0.5 h-3.5 w-3.5" />
               </Button>
             </div>
           </motion.article>

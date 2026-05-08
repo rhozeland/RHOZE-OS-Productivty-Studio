@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { Flame, Trophy, Sparkles } from "lucide-react";
+import RhozeRewardBadge from "@/components/RhozeRewardBadge";
 
 export interface StreakInfo {
   current: number;
@@ -244,6 +245,9 @@ const RhozeStreakBadge = ({ streak, className }: RhozeStreakBadgeProps) => {
                   {tier.label}
                 </span>
               )}
+            </div>
+            <div className="mt-1.5">
+              <RhozeRewardBadge amount={5} suffix="every 7 days" />
             </div>
 
             {/* Progress to next milestone */}

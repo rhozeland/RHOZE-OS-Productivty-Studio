@@ -63,6 +63,7 @@ import { InlineFormPanel } from "@/components/ui/inline-form-panel";
 import TokenGateDialog from "@/components/works/TokenGateDialog";
 import UnlockButton from "@/components/works/UnlockButton";
 import UnverifiedWorkChip from "@/components/works/UnverifiedWorkChip";
+import RhozeRewardBadge from "@/components/RhozeRewardBadge";
 
 type WorkKind = "audio" | "image" | "video" | "text" | "other";
 
@@ -252,7 +253,10 @@ const WorksPage = ({ embedded = false }: WorksPageProps = {}) => {
               body="Drop your first track, image, or video to register it as Verified IP."
               cta={
                 <Link to="/settings#provenance">
-                  <Button>Post your first work →</Button>
+                  <Button className="gap-2">
+                    Post your first work →
+                    <RhozeRewardBadge amount={10} className="bg-background/30 border-background/40 text-background" />
+                  </Button>
                 </Link>
               }
             />
