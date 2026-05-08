@@ -867,7 +867,6 @@ const FlowModePage = () => {
   const lastAppliedItemRef = useRef<string | null>(null);
   useEffect(() => {
     const targetId = searchParams.get("item");
-    console.log("[deep-link]", { targetId, last: lastAppliedItemRef.current, len: allItems.length, currentIndex });
     if (!targetId) {
       lastAppliedItemRef.current = null;
       return;
@@ -875,15 +874,16 @@ const FlowModePage = () => {
     if (lastAppliedItemRef.current === targetId) return;
     if (allItems.length === 0) return;
     const idx = allItems.findIndex((i: any) => i.id === targetId);
-    console.log("[deep-link] idx", idx);
     if (idx >= 0) {
       setCurrentIndex(idx);
       lastAppliedItemRef.current = targetId;
     } else if (feedScope !== "all") {
+      // Item not in current preferred slice — broaden to All so the deep
+      // link always lands on the right card instead of a random one.
       setFeedScope("all");
       setSelectedCategories(CATEGORIES);
     }
-  }, [allItems, searchParams, feedScope, currentIndex]);
+  }, [allItems, searchParams, feedScope]);
 
   // Batched coin lookup keyed by uploader (creator_id). Coins are now
   // profile-bound, so the "$TICKER → speculate" pill on a Flow card means
