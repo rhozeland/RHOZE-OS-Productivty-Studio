@@ -132,6 +132,39 @@ const GettingStartedBanner = () => {
   const total = steps.length;
   const allDone = completed === total;
 
+  // Auto-claim $RHOZE for any step that's done but hasn't been paid out
+  // yet. Each (user, step) is deduped via localStorage so we never
+  // double-credit. Runs whenever step state changes.
+  useEffect(() => {
+    if (!user) return;
+    const toClaim = steps.filter(
+      (s) => s.done && window.localStorage.getItem(claimedKeyFor(user.id, s.id)) !== "1",
+    );
+    if (toClaim.length === 0) return;
+
+    (async () => {
+      for (const step of toClaim) {
+        // Mark claimed immediately so concurrent renders don't retry.
+        window.localStorage.setItem(claimedKeyFor(user.id, step.id), "1");
+        const { error } = await supabase.rpc("adjust_user_credits", {
+          _user_id: user.id,
+          _amount: step.reward,
+          _type: "reward",
+          _description: `${step.rewardLabel} · +${step.reward} $RHOZE`,
+        });
+        if (error) {
+          // Roll back the claim flag so we retry next mount.
+          window.localStorage.removeItem(claimedKeyFor(user.id, step.id));
+          console.error("Failed to credit step reward:", step.id, error);
+          continue;
+        }
+        toast.success(`+${step.reward} $RHOZE`, {
+          description: step.rewardLabel,
+        });
+      }
+    })().catch(console.error);
+  }, [user, steps]);
+
   // Fire celebration once when fully complete
   useEffect(() => {
     if (!user || !allDone) return;
