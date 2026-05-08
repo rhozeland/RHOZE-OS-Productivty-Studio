@@ -27,11 +27,11 @@ const VaultRoomPage = () => {
     queryKey: ["vault-coin-holdings", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("coin_holdings")
         .select("coin_id, balance")
         .eq("user_id", user!.id);
-      return data ?? [];
+      return (data ?? []) as Array<{ coin_id: string; balance: number }>;
     },
   });
 
