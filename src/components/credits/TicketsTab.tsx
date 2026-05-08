@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { CalendarDays, MapPin, Globe2, Ticket, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const TicketsTab = ({ userId }: { userId: string }) => {
   const { data: rows = [], isLoading } = useQuery({
