@@ -186,7 +186,7 @@ const DiscoverPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawView = searchParams.get("view");
   const view: DiscoverView =
-    rawView === "events" || rawView === "spaces" || rawView === "works" || rawView === "offerings"
+    rawView === "events" || rawView === "spaces" || rawView === "works" || rawView === "offerings" || rawView === "creators"
       ? rawView
       : "all";
   const setView = (v: DiscoverView) => {
