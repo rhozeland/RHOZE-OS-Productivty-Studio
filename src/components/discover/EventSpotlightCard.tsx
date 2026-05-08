@@ -116,9 +116,18 @@ const EventSpotlightCard = ({
       <div className="border-t border-border/40 px-4 py-3 text-center">
         <Link
           to={href}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-transform hover:translate-x-0.5"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground transition-transform hover:translate-x-0.5"
         >
-          View event <ArrowUpRight className="h-4 w-4" />
+          {cta?.kind === "registered" ? (
+            <>
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              Registered ✓
+            </>
+          ) : (
+            <>
+              {cta?.label ?? "View event"} <ArrowUpRight className="h-4 w-4" />
+            </>
+          )}
         </Link>
       </div>
     </div>
