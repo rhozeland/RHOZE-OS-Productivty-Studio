@@ -148,6 +148,9 @@ const SidebarHud = () => {
             </TooltipContent>
           </Tooltip>
         </div>
+        <p className="text-[9px] text-muted-foreground/80 leading-tight pt-0.5">
+          $RHOZE — earn it, hold it, spend it.
+        </p>
       </div>
     </TooltipProvider>
   );
