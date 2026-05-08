@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import RhozeRewardBadge from "@/components/RhozeRewardBadge";
+import { useEventsCta } from "@/hooks/useEventsCta";
 
 interface DiscoverEventsGridProps {
   /** Normalized category slug (e.g. "music") or null for "all". */
