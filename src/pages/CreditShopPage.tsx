@@ -170,6 +170,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
           <CreatorPassCard />
           <GettingStartedBanner />
           <StreakCard />
+          <EarnHistory userId={user.id} />
           <CoinPortfolio />
         </TabsContent>
 
