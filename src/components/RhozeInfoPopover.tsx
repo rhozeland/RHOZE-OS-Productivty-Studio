@@ -38,11 +38,11 @@ export const RhozeInfoPopover = ({
     >
       <div className="flex items-center gap-1.5">
         <Coins className="h-3.5 w-3.5 text-primary" />
-        <p className="text-sm font-semibold text-foreground">What is $RHOZE?</p>
+        <p className="text-sm font-semibold text-foreground">What are Platform Credits?</p>
       </div>
       <p className="text-xs text-muted-foreground leading-relaxed">
-        Rhozeland's currency — for both creators and fans. Creators earn it
-        by making work; fans earn it by showing up and supporting artists.
+        The in-app currency you spend on Artist Shares, services, and tier
+        perks. They never leave the platform.
       </p>
       <div className="flex items-start gap-2">
         <Sparkles className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
@@ -58,16 +58,16 @@ export const RhozeInfoPopover = ({
         <div className="text-xs leading-relaxed">
           <span className="text-foreground font-medium">Fans earn by: </span>
           <span className="text-muted-foreground">
-            Attending events · Following · Holding artist coins
+            Attending events · Following · Holding Artist Shares
           </span>
         </div>
       </div>
       <div className="flex items-start gap-2">
         <Wallet className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
         <div className="text-xs leading-relaxed">
-          <span className="text-foreground font-medium">Spend it on: </span>
+          <span className="text-foreground font-medium">Spend on: </span>
           <span className="text-muted-foreground">
-            Rhozeland services · Artist coins · Hold to level up · Cash out
+            Artist Shares · Services · Hold to level up · Cash out
           </span>
         </div>
       </div>

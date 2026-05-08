@@ -59,15 +59,15 @@ const RhozeBalanceChip = () => {
             type="button"
             onClick={() => setOpen(true)}
             className="h-8 inline-flex items-center gap-1.5 rounded-full border border-border bg-card hover:bg-muted/50 px-3 text-xs font-medium font-body text-foreground transition-colors"
-            aria-label="Your $RHOZE balance"
+            aria-label="Your Platform Credits balance"
           >
             <Coins className="h-3.5 w-3.5 text-primary" />
             <span className="tabular-nums">{formatBalance(balanceNum)}</span>
-            <span className="text-muted-foreground">$RHOZE</span>
+            <span className="text-muted-foreground">Credits</span>
           </button>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="text-xs font-body">
-          In-app $RHOZE balance
+          In-app Platform Credits balance
         </TooltipContent>
       </Tooltip>
 
@@ -75,12 +75,12 @@ const RhozeBalanceChip = () => {
         <SheetContent side="right" className="w-[360px] sm:w-[400px]">
           <SheetHeader>
             <SheetTitle className="font-display inline-flex items-center gap-1.5">
-              Your $RHOZE
+              Your Platform Credits
               <RhozeInfoPopover size={14} />
             </SheetTitle>
             <SheetDescription className="font-body">
-              In-app balance · earned by creators making work and fans showing
-              up. Spend on services, artist coins, or cash out.
+              In-app currency · earn by being active, spend on Artist Shares,
+              services, or hold to level up your tier.
             </SheetDescription>
           </SheetHeader>
 
@@ -93,7 +93,7 @@ const RhozeBalanceChip = () => {
               <span className="text-4xl font-display font-semibold tabular-nums">
                 {Math.round(balanceNum).toLocaleString()}
               </span>
-              <span className="text-sm text-muted-foreground font-body">$RHOZE</span>
+              <span className="text-sm text-muted-foreground font-body">Credits</span>
             </div>
           </div>
 
