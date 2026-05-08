@@ -388,11 +388,12 @@ const CreateListingDialog = ({ open, onOpenChange, prefill, editListing }: Creat
                 Back
               </Button>
               <Button
-                className="flex-1"
+                className="flex-1 gap-2"
                 onClick={() => createListing.mutate()}
                 disabled={uploading}
               >
                 {uploading ? "Publishing..." : "Publish Listing"}
+                {!uploading && <RhozeRewardBadge amount={50} suffix="on sale" className="bg-background/20 border-background/30 text-background" />}
               </Button>
             </div>
           </div>
