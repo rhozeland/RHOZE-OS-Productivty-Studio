@@ -45,6 +45,8 @@ const ConversationsRightRail = () => {
     enabled: tab === "events",
   });
 
+  const { data: ctaMap } = useEventsCta(events.map((e: any) => e.id));
+
   const { data: spaces = [] } = useQuery({
     queryKey: ["right-rail-spaces"],
     queryFn: async () => {
