@@ -124,6 +124,27 @@ const EventsListPanel = () => {
                     </span>
                   </div>
                 )}
+                {(() => {
+                  const cta = ctaMap?.get(ev.id);
+                  if (!cta) return null;
+                  const styles =
+                    cta.kind === "registered"
+                      ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                      : cta.kind === "sold_out"
+                      ? "border border-border bg-muted text-muted-foreground"
+                      : cta.kind === "paid"
+                      ? "bg-foreground text-background"
+                      : "bg-primary text-primary-foreground";
+                  return (
+                    <div className="pt-2">
+                      <span
+                        className={`inline-flex w-full items-center justify-center rounded-full px-3 py-1.5 text-xs font-semibold ${styles}`}
+                      >
+                        {cta.label}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
             </Link>
           </motion.div>
