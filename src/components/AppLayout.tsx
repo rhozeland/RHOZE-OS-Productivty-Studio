@@ -141,7 +141,12 @@ const AppLayout = () => {
   // Only run remote search after the user actually types something — avoids
   // dumping every studio/creator/listing into the palette by default.
   const trimmedQuery = searchQuery.trim();
-  const queryEnabled = searchOpen && trimmedQuery.length >= 2;
+  // PostgREST `.or(...)` filters break on commas, parens, colons, and quotes
+  // because those are reserved separators in the filter grammar. Strip them
+  // (and ilike wildcards) so a stray "," or "(" never silently kills the search.
+  const safeQuery = trimmedQuery.replace(/[,():"'%*\\]/g, " ").replace(/\s+/g, " ").trim();
+  const queryEnabled = searchOpen && safeQuery.length >= 2;
+
 
   // Only run reward streak for authenticated users
   useRewardStreak();
