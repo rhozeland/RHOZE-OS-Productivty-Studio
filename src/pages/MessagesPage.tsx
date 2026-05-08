@@ -498,7 +498,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
 
         <TabsContent value="messages" className="mt-4 space-y-4">
           {!!allInquiries?.length && (
-            <details className="surface-card p-4 group [&_summary::-webkit-details-marker]:hidden" open={allInquiries.length > 0}>
+            <details id="inquiries-section" className="surface-card p-4 group [&_summary::-webkit-details-marker]:hidden scroll-mt-24" open={allInquiries.length > 0}>
               <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-foreground list-none">
                 <Inbox className="h-4 w-4" /> Inquiries
                 <span className="text-xs text-muted-foreground">({allInquiries.length})</span>
