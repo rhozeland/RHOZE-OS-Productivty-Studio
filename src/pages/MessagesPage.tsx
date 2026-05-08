@@ -856,6 +856,17 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
         </DialogContent>
       </Dialog>
 
+      {/* People you follow */}
+      <FollowingPickerDialog
+        open={followingOpen}
+        onOpenChange={setFollowingOpen}
+        userId={user.id}
+        onPick={(profile) => {
+          setSelectedUser(profile);
+          setFollowingOpen(false);
+        }}
+      />
+
       {/* Convert to Project Dialog */}
       <Dialog open={!!convertDialog} onOpenChange={(open) => !open && setConvertDialog(null)}>
         <DialogContent className="max-w-sm">
