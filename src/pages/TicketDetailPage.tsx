@@ -4,7 +4,7 @@
  * Shows ticket QR + event summary, and lets the holder anchor their
  * proof-of-attendance on Solana (SHA-256 of ticket+event metadata).
  */
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
