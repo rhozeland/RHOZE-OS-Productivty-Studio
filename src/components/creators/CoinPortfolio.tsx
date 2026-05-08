@@ -120,7 +120,7 @@ const CoinPortfolio = () => {
           icon={Coins}
           title="No artist coins held yet"
           description="Back the artists you love. Their coins live here as proof of support."
-          cta={{ label: "Find artists to support", to: "/discover?view=creators" }}
+          cta={{ label: "Find artists to support", to: "/explore/creators" }}
         />
       ) : (
         <div className="surface-card divide-y divide-border overflow-hidden">
