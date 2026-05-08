@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAuthGate } from "@/components/AuthGateDialog";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
+import RhozeRewardBadge from "@/components/RhozeRewardBadge";
 import { cn } from "@/lib/utils";
 
 type ListingKind = "service" | "project_request" | "collaboration";
