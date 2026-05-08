@@ -186,6 +186,33 @@ const HomePage = () => {
               </Button>
             </Link>
           </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.45 }}
+            className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-10 max-w-3xl mx-auto text-left"
+          >
+            <div className="rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-5">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/80 mb-2">
+                For creators
+              </p>
+              <p className="text-sm text-foreground/90 leading-relaxed">
+                Earn $RHOZE by posting work, listing services, and attending
+                events. Spend it on Rhozeland's photography, videography, and
+                development services.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-5">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/80 mb-2">
+                For fans
+              </p>
+              <p className="text-sm text-foreground/90 leading-relaxed">
+                Buy and hold Artist Coins to support creators you believe in.
+                When they grow, your coin grows with them.
+              </p>
+            </div>
+          </motion.div>
         </div>
       </section>
 
