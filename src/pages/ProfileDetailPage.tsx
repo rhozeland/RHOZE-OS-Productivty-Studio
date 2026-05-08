@@ -945,11 +945,20 @@ const ProfileDetailPage = () => {
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-8 text-center text-sm text-muted-foreground">
-                {isOwnProfile
-                  ? "No active projects yet. Start one from the Projects page."
-                  : "Nothing public to share here yet."}
-              </div>
+              <EmptyState
+                icon={FolderKanban}
+                title={isOwnProfile ? "Nothing shared yet" : "Nothing public to share here yet"}
+                description={
+                  isOwnProfile
+                    ? "Projects you start or collaborate on will appear here."
+                    : `When ${p.display_name || p.username} shares a project, you'll see it here.`
+                }
+                cta={
+                  isOwnProfile
+                    ? { label: "Start a project", to: "/messages?tab=projects" }
+                    : undefined
+                }
+              />
             )}
           </TabsContent>
 
