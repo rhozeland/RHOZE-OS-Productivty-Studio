@@ -119,7 +119,12 @@ const ConversationsRightRail = () => {
       <ScrollArea className="flex-1 px-3 pb-3">
         <div className="space-y-2">
           {tab === "events" && events.length === 0 && (
-            <EmptyState label="No upcoming events." />
+            <EmptyState
+              icon={CalendarDays}
+              title="No upcoming events"
+              cta={{ label: "Host one", to: "/spaces/events/new" }}
+              size="sm"
+            />
           )}
           {tab === "events" &&
             events.map((e: any) => (
