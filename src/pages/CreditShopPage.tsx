@@ -19,9 +19,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Coins, Sparkles, Check, Wallet, ShoppingBag, Download, Music, Info, Shield,
   Award, Palette, Camera, Video, PenTool, ExternalLink, Star, Heart, Trophy,
-  HelpCircle, Ticket,
+  HelpCircle, Ticket, TrendingUp,
 } from "lucide-react";
 import TicketsTab from "@/components/credits/TicketsTab";
+import { RhozeInfoPopover } from "@/components/RhozeInfoPopover";
+import { formatDistanceToNow } from "date-fns";
 import { format } from "date-fns";
 import { Link, useSearchParams } from "react-router-dom";
 import CreatorPassCard from "@/components/creators/CreatorPassCard";
