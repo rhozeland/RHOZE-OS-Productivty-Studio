@@ -268,7 +268,79 @@ const WelcomeModal = () => {
             </p>
 
             <AnimatePresence mode="wait">
-              {isUsername ? (
+              {isRole ? (
+                <motion.div
+                  key="role"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <DialogHeader className="space-y-1.5">
+                    <DialogTitle className="font-display text-2xl font-semibold leading-tight text-center">
+                      Are you here to <span className="bg-gradient-to-r from-primary via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">create</span> or <span className="bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 bg-clip-text text-transparent">invest</span>?
+                    </DialogTitle>
+                    <DialogDescription className="text-center text-sm">
+                      We'll set up your home room. You can switch any time.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="mt-5 grid grid-cols-2 gap-3">
+                    {([
+                      {
+                        role: "creator" as const,
+                        Icon: Brush,
+                        title: "Create",
+                        body: "Sell work, book studios, take on projects.",
+                        chip: "Lands in The Market",
+                      },
+                      {
+                        role: "investor" as const,
+                        Icon: TrendingUp,
+                        title: "Invest",
+                        body: "Discover artists, back their coins, earn $RHOZE.",
+                        chip: "Lands in The Scene",
+                      },
+                    ]).map(({ role, Icon, title, body, chip }) => {
+                      const selected = chosenRole === role;
+                      return (
+                        <button
+                          key={role}
+                          type="button"
+                          disabled={savingRole}
+                          onClick={() => void saveRole(role)}
+                          className={cn(
+                            "group relative rounded-xl border bg-background/40 p-4 text-left transition-all",
+                            selected
+                              ? "border-foreground bg-foreground text-background"
+                              : "border-border hover:border-foreground/40 hover:bg-background/70",
+                            savingRole && !selected && "opacity-50",
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "inline-flex h-9 w-9 items-center justify-center rounded-lg mb-2.5",
+                              selected ? "bg-background/15" : "bg-primary/10",
+                            )}
+                          >
+                            {savingRole && selected ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Icon className={cn("h-4 w-4", selected ? "text-background" : "text-primary")} />
+                            )}
+                          </span>
+                          <div className="font-display text-base font-semibold leading-tight">{title}</div>
+                          <div className={cn("text-[11px] mt-1 leading-snug", selected ? "opacity-80" : "text-muted-foreground")}>
+                            {body}
+                          </div>
+                          <div className={cn("mt-2.5 text-[9px] uppercase tracking-[0.18em]", selected ? "opacity-70" : "text-muted-foreground/70")}>
+                            {chip}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              ) : isUsername ? (
                 <motion.div
                   key="username"
                   initial={{ opacity: 0, y: 8 }}
@@ -402,8 +474,8 @@ const WelcomeModal = () => {
               )}
             </AnimatePresence>
 
-            {/* Progress dots — hidden on the username step */}
-            {!isUsername && (
+            {/* Progress dots — hidden on role + username steps */}
+            {!isUsername && !isRole && (
               <div className="mt-6 flex items-center justify-center gap-1.5">
                 {Array.from({ length: totalSteps }).map((_, i) => (
                   <span
@@ -421,39 +493,41 @@ const WelcomeModal = () => {
               </div>
             )}
 
-            <div className="mt-5 flex flex-col items-center gap-2">
-              <Button
-                onClick={handleNext}
-                size="lg"
-                className="w-full gap-2"
-                disabled={isUsername && (!canSaveUsername || savingUsername)}
-              >
-                {isUsername ? (
-                  savingUsername ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" /> Saving…
-                    </>
+            {!isRole && (
+              <div className="mt-5 flex flex-col items-center gap-2">
+                <Button
+                  onClick={handleNext}
+                  size="lg"
+                  className="w-full gap-2"
+                  disabled={isUsername && (!canSaveUsername || savingUsername)}
+                >
+                  {isUsername ? (
+                    savingUsername ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                      </>
+                    ) : (
+                      <>
+                        Continue <ArrowRight className="h-4 w-4" />
+                      </>
+                    )
                   ) : (
                     <>
-                      Continue <ArrowRight className="h-4 w-4" />
+                      {isWelcome ? "Take the tour" : isLast ? "Let's go" : "Next"}
+                      <ArrowRight className="h-4 w-4" />
                     </>
-                  )
-                ) : (
-                  <>
-                    {isWelcome ? "Take the tour" : isLast ? "Let's go" : "Next"}
-                    <ArrowRight className="h-4 w-4" />
-                  </>
+                  )}
+                </Button>
+                {!isUsername && (
+                  <button
+                    onClick={close}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {isWelcome ? "Skip for now" : "Skip tour"}
+                  </button>
                 )}
-              </Button>
-              {!isUsername && (
-                <button
-                  onClick={close}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {isWelcome ? "Skip for now" : "Skip tour"}
-                </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>
