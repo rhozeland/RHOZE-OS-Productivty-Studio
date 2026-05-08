@@ -119,11 +119,11 @@ const GettingStartedBanner = () => {
 
   const steps = useMemo<Step[]>(
     () => [
-      { id: "join", done: true, label: "Join Rhozeland", href: "/discover" },
-      { id: "drop", done: (workCount ?? 0) > 0, label: "Drop your first work", href: "/works" },
-      { id: "event", done: (ticketCount ?? 0) > 0, label: "Attend an event", href: "/events" },
-      { id: "connect", done: (buddyCount ?? 0) >= 3, label: "Connect with 3 creators", href: "/discover" },
-      { id: "streak", done: (streak ?? 0) >= 7, label: "Reach a 7-day streak", href: "/credits" },
+      { id: "join", done: true, label: "Join Rhozeland", href: "/discover", reward: STEP_REWARDS.join.amount, rewardLabel: STEP_REWARDS.join.label },
+      { id: "drop", done: (workCount ?? 0) > 0, label: "Drop your first work", href: "/works", reward: STEP_REWARDS.drop.amount, rewardLabel: STEP_REWARDS.drop.label },
+      { id: "event", done: (ticketCount ?? 0) > 0, label: "Attend an event", href: "/events", reward: STEP_REWARDS.event.amount, rewardLabel: STEP_REWARDS.event.label },
+      { id: "connect", done: (buddyCount ?? 0) >= 3, label: "Connect with 3 creators", href: "/discover", reward: STEP_REWARDS.connect.amount, rewardLabel: STEP_REWARDS.connect.label },
+      { id: "streak", done: (streak ?? 0) >= 7, label: "Reach a 7-day streak", href: "/credits", reward: STEP_REWARDS.streak.amount, rewardLabel: STEP_REWARDS.streak.label },
     ],
     [workCount, ticketCount, buddyCount, streak],
   );
