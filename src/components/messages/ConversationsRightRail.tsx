@@ -170,6 +170,25 @@ const ConversationsRightRail = () => {
                       </>
                     ) : null}
                   </p>
+                  {(() => {
+                    const cta = ctaMap?.get(e.id);
+                    if (!cta) return null;
+                    const styles =
+                      cta.kind === "registered"
+                        ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                        : cta.kind === "sold_out"
+                        ? "border border-border bg-muted text-muted-foreground"
+                        : cta.kind === "paid"
+                        ? "bg-foreground text-background"
+                        : "bg-primary text-primary-foreground";
+                    return (
+                      <span
+                        className={`mt-1.5 inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${styles}`}
+                      >
+                        {cta.label}
+                      </span>
+                    );
+                  })()}
                 </div>
               </Link>
             ))}
