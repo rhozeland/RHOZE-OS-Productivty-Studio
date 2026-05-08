@@ -293,13 +293,21 @@ const ConversationsMosaic = ({
   if (tiles.length === 0) {
     const hasSearch = search.trim().length > 0;
     return (
-      <EmptyState
-        icon={Sparkles}
-        title={hasSearch ? "Nothing matches that search" : kind !== "all" ? "Nothing here yet" : "The Stream is quiet"}
-        description={hasSearch ? "Try a different word, or clear the filter." : "Be the first to drop something — share an update, work, or offering."}
-        cta={!hasSearch ? { label: "Post something", to: "/discover" } : undefined}
-        size="lg"
-      />
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 p-5 flex items-start gap-3">
+          <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+          <div>
+            <p className="font-display text-sm font-semibold text-foreground">
+              {hasSearch ? "Nothing matches that search" : kind !== "all" ? "Nothing here yet" : "The Stream is quiet"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {hasSearch ? "While you're here, check who's trending." : "While the stream fills up, here's who's trending."}
+            </p>
+          </div>
+        </div>
+        {/* Lazy import to avoid circular hub deps */}
+        <FallbackTrendingArtists />
+      </div>
     );
   }
 
