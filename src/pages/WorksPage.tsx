@@ -252,7 +252,10 @@ const WorksPage = ({ embedded = false }: WorksPageProps = {}) => {
               body="Drop your first track, image, or video to register it as Verified IP."
               cta={
                 <Link to="/settings#provenance">
-                  <Button>Post your first work →</Button>
+                  <Button className="gap-2">
+                    Post your first work →
+                    <RhozeRewardBadge amount={10} className="bg-background/30 border-background/40 text-background" />
+                  </Button>
                 </Link>
               }
             />
