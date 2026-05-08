@@ -211,7 +211,12 @@ const ConversationsRightRail = () => {
             ))}
 
           {tab === "artists" && artists.length === 0 && (
-            <EmptyState label="No verified artists yet." />
+            <EmptyState
+              icon={Users}
+              title="No verified artists yet"
+              cta={{ label: "Apply to verify", to: "/verification" }}
+              size="sm"
+            />
           )}
           {tab === "artists" &&
             artists.map((a: any) => (
