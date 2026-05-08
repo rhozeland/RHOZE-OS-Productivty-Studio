@@ -28,6 +28,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { useEventsCta } from "@/hooks/useEventsCta";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 
@@ -93,6 +94,8 @@ const ConversationsEventsBrowser = ({ hideHeading = false }: { hideHeading?: boo
   }, [events, activeCategory]);
 
   const featured = events[0];
+
+  const { data: ctaMap } = useEventsCta(filtered.map((e) => e.id));
 
   return (
     <div className="space-y-8">
@@ -280,6 +283,25 @@ const ConversationsEventsBrowser = ({ hideHeading = false }: { hideHeading?: boo
                       </>
                     ) : null}
                   </div>
+                  {(() => {
+                    const cta = ctaMap?.get(e.id);
+                    if (!cta) return null;
+                    const styles =
+                      cta.kind === "registered"
+                        ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                        : cta.kind === "sold_out"
+                        ? "border border-border bg-muted text-muted-foreground"
+                        : cta.kind === "paid"
+                        ? "bg-foreground text-background"
+                        : "bg-primary text-primary-foreground";
+                    return (
+                      <span
+                        className={`mt-2 inline-flex w-full items-center justify-center rounded-full px-3 py-1.5 text-xs font-semibold ${styles}`}
+                      >
+                        {cta.label}
+                      </span>
+                    );
+                  })()}
                 </div>
               </Link>
             ))}

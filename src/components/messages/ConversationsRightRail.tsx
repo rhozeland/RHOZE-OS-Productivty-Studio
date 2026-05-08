@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useEventsCta } from "@/hooks/useEventsCta";
 
 type Tab = "events" | "spaces" | "artists";
 
@@ -43,6 +44,8 @@ const ConversationsRightRail = () => {
     },
     enabled: tab === "events",
   });
+
+  const { data: ctaMap } = useEventsCta(events.map((e: any) => e.id));
 
   const { data: spaces = [] } = useQuery({
     queryKey: ["right-rail-spaces"],
@@ -167,6 +170,25 @@ const ConversationsRightRail = () => {
                       </>
                     ) : null}
                   </p>
+                  {(() => {
+                    const cta = ctaMap?.get(e.id);
+                    if (!cta) return null;
+                    const styles =
+                      cta.kind === "registered"
+                        ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                        : cta.kind === "sold_out"
+                        ? "border border-border bg-muted text-muted-foreground"
+                        : cta.kind === "paid"
+                        ? "bg-foreground text-background"
+                        : "bg-primary text-primary-foreground";
+                    return (
+                      <span
+                        className={`mt-1.5 inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${styles}`}
+                      >
+                        {cta.label}
+                      </span>
+                    );
+                  })()}
                 </div>
               </Link>
             ))}

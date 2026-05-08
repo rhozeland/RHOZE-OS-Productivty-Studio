@@ -209,6 +209,39 @@ const EventDetailPage = () => {
     (t: any) => (Number(t.price_usd) || 0) > 0 || (Number(t.price_rhoze) || 0) > 0
   );
 
+  // Hero registration CTA — pick the cheapest available tier as the
+  // primary action. If the user already holds a ticket, show their
+  // registered state instead. Mirrors the per-tier CTA logic below so
+  // the big button always tracks reality.
+  const activeTiers = (tiers ?? []).filter((t: any) => t.is_active !== false);
+  const availableTiers = activeTiers.filter(
+    (t: any) => t.quantity_total == null || (t.quantity_sold ?? 0) < t.quantity_total,
+  );
+  const cheapestTier = [...availableTiers].sort(
+    (a: any, b: any) => (Number(a.price_usd) || 0) - (Number(b.price_usd) || 0),
+  )[0];
+  const heroPrice = cheapestTier ? Number(cheapestTier.price_usd) || 0 : 0;
+  const heroCurrency = cheapestTier?.currency_code || (ev as any).currency_code || "USD";
+  const heroIsFree =
+    cheapestTier &&
+    (Number(cheapestTier.price_usd) || 0) === 0 &&
+    (Number(cheapestTier.price_rhoze) || 0) === 0;
+  const heroLabel = myTicket
+    ? "Registered ✓"
+    : !cheapestTier
+    ? activeTiers.length > 0 ? "Sold out" : "RSVP Free"
+    : heroIsFree
+    ? "RSVP Free"
+    : `Get Ticket · ${new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency: heroCurrency,
+        maximumFractionDigits: heroPrice % 1 === 0 ? 0 : 2,
+      }).format(heroPrice)}`;
+  const heroDisabled = !!myTicket || (activeTiers.length > 0 && !cheapestTier);
+  const heroVariant: "default" | "outline" | "secondary" = myTicket
+    ? "outline"
+    : "default";
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 pb-12 md:px-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -228,6 +261,48 @@ const EventDetailPage = () => {
       </div>
 
       <EventInviteBanner eventId={ev.id} eventTitle={ev.title} />
+
+      {/* Hero registration CTA — the largest, most prominent action on the page. */}
+      <motion.section
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-[24px] border border-border bg-gradient-to-br from-primary/10 via-card to-card p-5 md:p-7"
+      >
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0 space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              {format(start, "EEE, MMM d · h:mm a")}
+            </p>
+            <h2 className="font-display text-2xl font-bold leading-tight text-foreground md:text-3xl line-clamp-2">
+              {ev.title}
+            </h2>
+          </div>
+          {myTicket ? (
+            <Link to={`/tickets/${myTicket.id}`} className="shrink-0">
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-16 rounded-2xl px-8 text-lg font-bold border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/15"
+              >
+                <CheckCircle2 className="h-5 w-5 mr-2" />
+                Registered ✓ · View ticket
+              </Button>
+            </Link>
+          ) : (
+            <Button
+              size="lg"
+              variant={heroVariant}
+              disabled={heroDisabled}
+              onClick={() => cheapestTier && setCheckoutTier(cheapestTier)}
+              className="h-16 rounded-2xl px-8 text-lg font-bold shadow-lg shrink-0 md:min-w-[260px]"
+            >
+              <Ticket className="h-5 w-5 mr-2" />
+              {heroLabel}
+            </Button>
+          )}
+        </div>
+      </motion.section>
+
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-[240px_minmax(0,1fr)] md:gap-10 xl:grid-cols-[300px_minmax(0,1fr)]">
         {/* LEFT — compact poster + host rail */}

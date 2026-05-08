@@ -6,10 +6,11 @@
  * carry the visual weight, since that's what people actually decide on.
  */
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Clock, Globe2, MapPin, Sparkles } from "lucide-react";
+import { ArrowUpRight, Clock, Globe2, MapPin, Sparkles, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import RegionChip from "@/components/profile/RegionChip";
 import { avatarGradientFor } from "@/lib/avatar-gradient";
+import { useEventsCta } from "@/hooks/useEventsCta";
 
 interface Props {
   id: string;
@@ -36,6 +37,8 @@ const EventSpotlightCard = ({
 }: Props) => {
   const grad = avatarGradientFor(id);
   const start = new Date(starts_at);
+  const { data: ctaMap } = useEventsCta([id]);
+  const cta = ctaMap?.get(id);
 
   return (
     <div className="overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75">
@@ -113,9 +116,18 @@ const EventSpotlightCard = ({
       <div className="border-t border-border/40 px-4 py-3 text-center">
         <Link
           to={href}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-transform hover:translate-x-0.5"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground transition-transform hover:translate-x-0.5"
         >
-          View event <ArrowUpRight className="h-4 w-4" />
+          {cta?.kind === "registered" ? (
+            <>
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              Registered ✓
+            </>
+          ) : (
+            <>
+              {cta?.label ?? "View event"} <ArrowUpRight className="h-4 w-4" />
+            </>
+          )}
         </Link>
       </div>
     </div>
