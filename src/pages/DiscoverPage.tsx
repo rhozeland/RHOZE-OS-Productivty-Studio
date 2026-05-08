@@ -28,6 +28,8 @@ import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import StreamComposer from "@/components/stream/StreamComposer";
 import ConversationsMosaic, { type MosaicKindFilter } from "@/components/hub/ConversationsMosaic";
 import CreatorsGrid from "@/components/discover/CreatorsGrid";
+import DiscoverEventsGrid from "@/components/discover/DiscoverEventsGrid";
+import EventCategoryPills from "@/components/discover/EventCategoryPills";
 import {
   DropdownMenu,
   DropdownMenuContent,
