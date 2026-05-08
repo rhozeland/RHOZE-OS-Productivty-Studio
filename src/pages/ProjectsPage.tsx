@@ -33,12 +33,18 @@ const ProjectsPage = () => {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
 
   const { data: projects, isLoading } = useQuery({
-    queryKey: ["projects"],
+    queryKey: ["my-projects", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("projects").select("*").order("created_at", { ascending: false });
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
+    enabled: !!user,
   });
 
   // Fetch collaborator counts per project
