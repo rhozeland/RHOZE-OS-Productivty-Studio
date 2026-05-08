@@ -63,6 +63,7 @@ import { InlineFormPanel } from "@/components/ui/inline-form-panel";
 import TokenGateDialog from "@/components/works/TokenGateDialog";
 import UnlockButton from "@/components/works/UnlockButton";
 import UnverifiedWorkChip from "@/components/works/UnverifiedWorkChip";
+import RhozeRewardBadge from "@/components/RhozeRewardBadge";
 
 type WorkKind = "audio" | "image" | "video" | "text" | "other";
 
