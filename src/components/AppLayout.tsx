@@ -141,7 +141,12 @@ const AppLayout = () => {
   // Only run remote search after the user actually types something — avoids
   // dumping every studio/creator/listing into the palette by default.
   const trimmedQuery = searchQuery.trim();
-  const queryEnabled = searchOpen && trimmedQuery.length >= 2;
+  // PostgREST `.or(...)` filters break on commas, parens, colons, and quotes
+  // because those are reserved separators in the filter grammar. Strip them
+  // (and ilike wildcards) so a stray "," or "(" never silently kills the search.
+  const safeQuery = trimmedQuery.replace(/[,():"'%*\\]/g, " ").replace(/\s+/g, " ").trim();
+  const queryEnabled = searchOpen && safeQuery.length >= 2;
+
 
   // Only run reward streak for authenticated users
   useRewardStreak();
@@ -172,14 +177,14 @@ const AppLayout = () => {
   // Keeps the palette quiet by default (Pages only) and prevents an
   // ever-growing dump of every studio/creator/listing in the system.
   const { data: studios } = useQuery({
-    queryKey: ["search-studios", trimmedQuery],
+    queryKey: ["search-studios", safeQuery],
     queryFn: async () => {
       const { data } = await supabase
         .from("studios")
         .select("id, name, city, category")
         .eq("is_active", true)
         .eq("status", "approved")
-        .or(`name.ilike.%${trimmedQuery}%,city.ilike.%${trimmedQuery}%,category.ilike.%${trimmedQuery}%`)
+        .or(`name.ilike.%${safeQuery}%,city.ilike.%${safeQuery}%,category.ilike.%${safeQuery}%`)
         .limit(5);
       return data ?? [];
     },
@@ -187,13 +192,13 @@ const AppLayout = () => {
   });
 
   const { data: listings } = useQuery({
-    queryKey: ["search-listings", trimmedQuery],
+    queryKey: ["search-listings", safeQuery],
     queryFn: async () => {
       const { data } = await supabase
         .from("marketplace_listings")
         .select("id, title, category, description")
         .eq("is_active", true)
-        .or(`title.ilike.%${trimmedQuery}%,category.ilike.%${trimmedQuery}%,description.ilike.%${trimmedQuery}%`)
+        .or(`title.ilike.%${safeQuery}%,category.ilike.%${safeQuery}%,description.ilike.%${safeQuery}%`)
         .limit(5);
       return data ?? [];
     },
@@ -201,10 +206,10 @@ const AppLayout = () => {
   });
 
   const { data: profiles } = useQuery({
-    queryKey: ["search-profiles", trimmedQuery],
+    queryKey: ["search-profiles", safeQuery],
     queryFn: async () => {
       // Match either display name OR @username so handles are findable.
-      const q = trimmedQuery.replace(/^@/, "");
+      const q = safeQuery.replace(/^@/, "");
       const { data } = await supabase
         .from("profiles")
         .select("user_id, display_name, username")
@@ -217,13 +222,13 @@ const AppLayout = () => {
   });
 
   const { data: coins } = useQuery({
-    queryKey: ["search-coins", trimmedQuery],
+    queryKey: ["search-coins", safeQuery],
     queryFn: async () => {
       const { data } = await supabase
         .from("coin_launches")
         .select("id, ticker, name, mint_address")
         .neq("status", "cancelled")
-        .or(`ticker.ilike.%${trimmedQuery}%,name.ilike.%${trimmedQuery}%,mint_address.ilike.%${trimmedQuery}%`)
+        .or(`ticker.ilike.%${safeQuery}%,name.ilike.%${safeQuery}%,mint_address.ilike.%${safeQuery}%`)
         .limit(5);
       return data ?? [];
     },
@@ -231,13 +236,13 @@ const AppLayout = () => {
   });
 
   const { data: events } = useQuery({
-    queryKey: ["search-events", trimmedQuery],
+    queryKey: ["search-events", safeQuery],
     queryFn: async () => {
       const { data } = await supabase
         .from("events")
         .select("id, title, venue_name, starts_at")
         .eq("status", "published")
-        .or(`title.ilike.%${trimmedQuery}%,venue_name.ilike.%${trimmedQuery}%`)
+        .or(`title.ilike.%${safeQuery}%,venue_name.ilike.%${safeQuery}%`)
         .limit(5);
       return data ?? [];
     },
