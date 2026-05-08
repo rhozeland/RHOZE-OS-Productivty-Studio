@@ -74,7 +74,10 @@ const RhozeBalanceChip = () => {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="right" className="w-[360px] sm:w-[400px]">
           <SheetHeader>
-            <SheetTitle className="font-display">Your $RHOZE</SheetTitle>
+            <SheetTitle className="font-display inline-flex items-center gap-1.5">
+              Your $RHOZE
+              <RhozeInfoPopover size={14} />
+            </SheetTitle>
             <SheetDescription className="font-body">
               In-app balance · earned through activity and rewards.
             </SheetDescription>
