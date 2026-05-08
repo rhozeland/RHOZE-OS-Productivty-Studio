@@ -103,7 +103,7 @@ const CreateListingDialog = ({ open, onOpenChange, prefill, editListing }: Creat
   };
 
   const reset = () => {
-    setStep(isEdit ? 1 : 0);
+    setStep(isEdit || skipPicker ? 1 : 0);
     if (isEdit) return;
     setListingType(prefill?.listing_type ?? "service");
     setTitle(prefill?.title ?? "");
