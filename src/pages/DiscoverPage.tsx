@@ -27,6 +27,7 @@ import RegionPromptBanner from "@/components/discover/RegionPromptBanner";
 import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import StreamComposer from "@/components/stream/StreamComposer";
 import ConversationsMosaic, { type MosaicKindFilter } from "@/components/hub/ConversationsMosaic";
+import CreatorsGrid from "@/components/discover/CreatorsGrid";
 import {
   DropdownMenu,
   DropdownMenuContent,
