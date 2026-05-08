@@ -498,7 +498,11 @@ const DiscoverPage = () => {
           />
         )}
 
-        <ConversationsMosaic kind={activeOption.kind} category={normalizedCategory} />
+        {view === "creators" ? (
+          <CreatorsGrid />
+        ) : (
+          <ConversationsMosaic kind={activeOption.kind} category={normalizedCategory} />
+        )}
       </section>
 
       {/* ─── Coins moving today ─────────────────────────────────────── */}
