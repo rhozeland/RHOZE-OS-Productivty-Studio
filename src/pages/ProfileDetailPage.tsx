@@ -23,6 +23,7 @@ import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
+import InvestUnlockSheet from "@/components/profile/InvestUnlockSheet";
 import CreatorDropsCatalog from "@/components/profile/CreatorDropsCatalog";
 import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -63,6 +64,7 @@ const ProfileDetailPage = () => {
   const tabFromUrl = rawTab === "coin" ? "support" : rawTab;
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [investOpen, setInvestOpen] = useState(false);
   
   const handleTabChange = (v: string) => {
     setActiveTab(v);
@@ -391,38 +393,39 @@ const ProfileDetailPage = () => {
             {/* Action buttons for visitors */}
             {!isOwnProfile && user && (
               <div className="flex flex-col gap-3 mt-4">
+                {/* Primary CTA — Invest & Unlock */}
+                <div className="flex flex-col gap-1.5">
+                  <Button
+                    size="lg"
+                    onClick={() => setInvestOpen(true)}
+                    className="self-start gap-1.5 bg-gradient-to-r from-primary to-fuchsia-500 hover:opacity-90 text-primary-foreground shadow-lg"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    Invest & Unlock
+                  </Button>
+                  <span className="text-[11px] text-muted-foreground max-w-[280px] leading-snug">
+                    Buy a Share to unlock private posts, drops, and behind-the-scenes.
+                  </span>
+                </div>
+
+                {/* Secondary actions — Follow / Connect / Message */}
                 <div className="flex gap-2 flex-wrap">
-                  <div className="flex flex-col gap-1">
-                    <Button variant={isFollowing ? "outline" : "default"} size="sm" onClick={() => followMutation.mutate()} disabled={followMutation.isPending}>
-                      {isFollowing ? <><UserCheck className="mr-1.5 h-4 w-4" /> Following</> : <><UserPlus className="mr-1.5 h-4 w-4" /> Follow</>}
+                  <Button variant={isFollowing ? "outline" : "secondary"} size="sm" onClick={() => followMutation.mutate()} disabled={followMutation.isPending}>
+                    {isFollowing ? <><UserCheck className="mr-1.5 h-4 w-4" /> Following</> : <><UserPlus className="mr-1.5 h-4 w-4" /> Follow</>}
+                  </Button>
+                  {receivedConnectRequest ? (
+                    <Button variant="outline" size="sm" onClick={() => acceptConnectMutation.mutate()} disabled={acceptConnectMutation.isPending}>
+                      <UserCheck className="mr-1.5 h-4 w-4" /> Accept
                     </Button>
-                    <span className="text-[11px] text-muted-foreground max-w-[220px] leading-snug">
-                      Free · See their updates and drops first
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    {receivedConnectRequest ? (
-                      <Button size="sm" onClick={() => acceptConnectMutation.mutate()} disabled={acceptConnectMutation.isPending}>
-                        <UserCheck className="mr-1.5 h-4 w-4" /> Accept
-                      </Button>
-                    ) : (
-                      <Button variant={isConnected ? "outline" : "secondary"} size="sm" onClick={() => connectMutation.mutate()}
-                        disabled={connectMutation.isPending || (hasPendingConnect && !receivedConnectRequest)}>
-                        {isConnected ? "Connected" : hasPendingConnect ? "Pending…" : "Connect"}
-                      </Button>
-                    )}
-                    <span className="text-[11px] text-muted-foreground max-w-[220px] leading-snug">
-                      Send a professional network request
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <Button variant="outline" size="sm" onClick={() => navigate(`/messages?to=${id}`)} className="self-start">
-                      <MessageSquare className="mr-1.5 h-4 w-4" /> Message
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={() => connectMutation.mutate()}
+                      disabled={connectMutation.isPending || (hasPendingConnect && !receivedConnectRequest)}>
+                      {isConnected ? "Connected" : hasPendingConnect ? "Pending…" : "Connect"}
                     </Button>
-                    <span className="text-[11px] text-muted-foreground max-w-[220px] leading-snug">
-                      Send a direct message
-                    </span>
-                  </div>
+                  )}
+                  <Button variant="outline" size="sm" onClick={() => navigate(`/messages?to=${id}`)}>
+                    <MessageSquare className="mr-1.5 h-4 w-4" /> Message
+                  </Button>
                 </div>
               </div>
             )}
@@ -960,6 +963,16 @@ const ProfileDetailPage = () => {
           </TabsContent>
 
         </Tabs>
+
+        {/* Invest & Unlock — primary CTA sheet (Section 2: The Heart) */}
+        {!isOwnProfile && id && (
+          <InvestUnlockSheet
+            open={investOpen}
+            onOpenChange={setInvestOpen}
+            artistId={id}
+            artistName={p.display_name || p.username || null}
+          />
+        )}
 
         {/* Booking modal — opened from the "Book a session" support card */}
         <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>

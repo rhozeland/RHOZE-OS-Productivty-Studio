@@ -15,7 +15,7 @@ import RhozeBalanceChip from "@/components/RhozeBalanceChip";
 const VAULT_LINKS = [
   { to: "/credits", label: "Creator Pass", desc: "Tier · rewards · how it works", Icon: CreditCard },
   { to: "/credits?tab=purchases", label: "Purchases", desc: "Tickets & receipts", Icon: ShoppingBag },
-  { to: "/swaps", label: "Swaps", desc: "$RHOZE ↔ artist coins", Icon: Repeat },
+  { to: "/swaps", label: "Swaps", desc: "Credits ↔ Artist Shares", Icon: Repeat },
   { to: "/settings", label: "Wallet & Payouts", desc: "Withdraw earnings", Icon: Wallet },
 ];
 
@@ -59,7 +59,7 @@ const VaultRoomPage = () => {
               Own what you back.
             </h1>
             <p className="text-sm text-muted-foreground mt-1.5 max-w-md">
-              Track your $RHOZE, the artist coins you hold, and your earnings — all in one room.
+              Track your Platform Credits, the Artist Shares you hold, and your earnings — all in one room.
             </p>
           </div>
           <div className="flex flex-col items-start sm:items-end gap-2">
@@ -67,7 +67,7 @@ const VaultRoomPage = () => {
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <TrendingUp className="h-3.5 w-3.5" />
               <span>
-                {heldCoins} artist coin{heldCoins === 1 ? "" : "s"} held
+                {heldCoins} Artist Share{heldCoins === 1 ? "" : "s"} held
               </span>
             </div>
           </div>
@@ -98,7 +98,7 @@ const VaultRoomPage = () => {
       <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-4 flex items-center gap-3">
         <Coins className="h-5 w-5 text-primary shrink-0" />
         <div className="text-xs text-muted-foreground">
-          Earn $RHOZE by being active across Rhozeland — hold it to unlock Spark · Bloom · Glow · Play tier perks.
+          Earn Platform Credits by being active across Rhozeland — hold them to unlock Spark · Bloom · Glow · Play tier perks.
           <Link to="/credits?tab=how" className="ml-1 text-foreground underline underline-offset-2 hover:no-underline">
             How rewards work →
           </Link>

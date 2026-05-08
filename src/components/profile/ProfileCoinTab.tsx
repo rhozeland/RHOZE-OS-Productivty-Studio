@@ -75,18 +75,18 @@ const ProfileCoinTab = ({ creatorId, isOwnProfile, defaultName, defaultImage, me
           </div>
           <div>
             <h3 className="font-display text-base font-semibold text-foreground">
-              {isOwnProfile ? "Launch your artist token" : "No artist token yet"}
+              {isOwnProfile ? "Launch your Artist Shares" : "No Artist Shares yet"}
             </h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
               {isOwnProfile
-                ? "Mint a token tied to your profile so fans can back your career and share in the upside."
-                : "This artist hasn't issued a token yet."}
+                ? "Issue Shares tied to your profile so fans can back your career and share in the upside."
+                : "This artist hasn't issued Shares yet."}
             </p>
           </div>
           {isOwnProfile && (
             <Button onClick={() => setLaunchOpen(true)} size="sm" className="gap-2">
               <Sparkles className="h-4 w-4" />
-              Launch token
+              Launch Shares
             </Button>
           )}
           <LaunchCoinDialog
@@ -136,7 +136,7 @@ const ProfileCoinTab = ({ creatorId, isOwnProfile, defaultName, defaultImage, me
         <div className="text-right text-[11px] text-muted-foreground flex items-center gap-1">
           <TrendingUp className="h-3 w-3" />
           <span className="font-mono">
-            {(Number(coin.real_sol_reserves) * 100).toFixed(0)} / {Number(coin.graduation_sol_target) * 100} $RHOZE
+            Market Growth · {((Number(coin.real_sol_reserves) / Math.max(Number(coin.graduation_sol_target), 1e-9)) * 100).toFixed(1)}%
           </span>
         </div>
       </Link>
