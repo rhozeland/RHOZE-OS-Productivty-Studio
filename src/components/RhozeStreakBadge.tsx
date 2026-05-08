@@ -246,6 +246,8 @@ const RhozeStreakBadge = ({ streak, className }: RhozeStreakBadgeProps) => {
                 </span>
               )}
             </div>
+            <div className="mt-1.5">
+              <RhozeRewardBadge amount={5} suffix="every 7 days" />
 
             {/* Progress to next milestone */}
             <div className="mt-3 space-y-1">
