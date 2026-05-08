@@ -63,6 +63,9 @@ import LaunchDetailPage from "@/pages/LaunchDetailPage";
 import SwapHistoryPage from "@/pages/SwapHistoryPage";
 import UnsubscribePage from "@/pages/UnsubscribePage";
 import VerificationPage from "@/pages/VerificationPage";
+import SceneRoomPage from "@/pages/SceneRoomPage";
+import MarketRoomPage from "@/pages/MarketRoomPage";
+import VaultRoomPage from "@/pages/VaultRoomPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -87,6 +90,9 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/explore/creators/:id",
   "/",
   "/dashboard",
+  "/scene",
+  "/market",
+  "/vault",
   "/discover",
   "/stream",
   "/hub",
@@ -215,6 +221,11 @@ const App = () => (
               <Route element={<AppLayout />}>
                 {/* v8: My Studio retired. /dashboard → Discover. */}
                 <Route path="/dashboard" element={<Navigate to="/discover" replace />} />
+                {/* Three-Room front doors (Scene · Market · Vault) — additive,
+                    organize existing routes without removing any. */}
+                <Route path="/scene" element={<SceneRoomPage />} />
+                <Route path="/market" element={<MarketRoomPage />} />
+                <Route path="/vault" element={<ProtectedRoute><VaultRoomPage /></ProtectedRoute>} />
                 <Route path="/discover" element={<DiscoverPage />} />
                 {/* v8: Hub/Stream retired — Discover is the unified front
                     door. Mosaic + composer + flow toggle all live there.
