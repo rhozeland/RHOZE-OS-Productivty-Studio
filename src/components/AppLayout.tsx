@@ -6,7 +6,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import RhozeBalanceChip from "@/components/RhozeBalanceChip";
 import NotificationBell from "@/components/NotificationBell";
 import PostMenuButton from "@/components/PostMenuButton";
-import UsernamePrompt from "@/components/UsernamePrompt";
+
 import WelcomeModal from "@/components/onboarding/WelcomeModal";
 // FlowLauncher (floating FAB) retired — Flow is now reachable via the Hub view toggle + HubFlowWidget.
 // DockBar retired in v7 (post phase-2) — navigation happens via the left side nav + global ⌘K search.
@@ -545,7 +545,7 @@ const AppLayout = () => {
           )}
         </CommandList>
       </CommandDialog>
-      {user && <UsernamePrompt />}
+      
       {user && <WelcomeModal />}
       </CelebrationProvider>
     </SidebarProvider>
