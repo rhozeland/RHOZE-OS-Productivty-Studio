@@ -27,7 +27,6 @@ const MarketplacePage = () => {
   const navigate = useNavigate();
   const [kind, setKind] = useState<MosaicKindFilter>("all");
   const [search, setSearch] = useState("");
-  const [createOpen, setCreateOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -49,16 +48,18 @@ const MarketplacePage = () => {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
-            <Button
-              onClick={() => setCreateOpen(true)}
-              className="rounded-full shadow-md"
-              size="lg"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Post a Listing
-            </Button>
-          </motion.div>
+          <PostMenuButton
+            trigger={
+              <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
+                <Button className="rounded-full shadow-md" size="lg" asChild>
+                  <span>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Post a Listing
+                  </span>
+                </Button>
+              </motion.div>
+            }
+          />
           <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
             <Button
               onClick={() => navigate("/flow")}
