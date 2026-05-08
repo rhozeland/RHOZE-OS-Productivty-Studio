@@ -246,8 +246,6 @@ const ConversationsRightRail = () => {
   );
 };
 
-const EmptyState = ({ label }: { label: string }) => (
-  <p className="text-xs text-muted-foreground/70 text-center py-8">{label}</p>
-);
+// Local EmptyState replaced with the shared `<EmptyState />` component.
 
 export default ConversationsRightRail;
