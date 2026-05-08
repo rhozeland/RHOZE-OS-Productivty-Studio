@@ -389,6 +389,8 @@ const CreatorsPage = () => {
         const name = p.display_name || p.username || "Creator";
         const handle = p.username || (p.user_id ? p.user_id.slice(0, 8) : "creator");
         const mediums: string[] = Array.isArray(p.mediums) ? p.mediums : [];
+        const skills: string[] = Array.isArray(p.skills) ? p.skills : [];
+        const roles: string[] = Array.isArray(p.creator_roles) ? p.creator_roles : [];
         const role =
           p.headline ||
           (mediums.length > 0 ? mediums.slice(0, 2).join(" / ") : "Creator");
@@ -407,7 +409,10 @@ const CreatorsPage = () => {
           activeDays: hashNum((p.user_id || name) + "a", 50),
           mediums,
           bio: p.bio || "",
-        } as Creator;
+          _tags: [...mediums, ...skills, ...roles, p.headline || "", p.bio || ""]
+            .join(" ")
+            .toLowerCase(),
+        } as Creator & { _tags: string };
       });
   }, [profiles]);
 
