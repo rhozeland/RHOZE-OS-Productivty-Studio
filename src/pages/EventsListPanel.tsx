@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useEventsCta } from "@/hooks/useEventsCta";
 
 const EventsListPanel = () => {
   const { user } = useAuth();
