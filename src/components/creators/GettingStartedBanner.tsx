@@ -25,13 +25,31 @@ import { cn } from "@/lib/utils";
 
 const DISMISS_KEY = "rhozeland.gettingstarted.dismissed";
 const CELEBRATED_KEY = "rhozeland.gettingstarted.celebrated";
+const CLAIMED_KEY = "rhozeland.gettingstarted.claimed";
 
 interface Step {
   id: string;
   done: boolean;
   label: string;
   href: string;
+  reward: number;
+  rewardLabel: string;
 }
+
+// Per-step $RHOZE payouts. These map to the milestone catalog in
+// src/lib/rewards-catalog.ts but are credited directly via
+// `adjust_user_credits` so users get instant feedback for finishing
+// onboarding steps. localStorage dedupes per (user, step).
+const STEP_REWARDS: Record<string, { amount: number; label: string }> = {
+  join: { amount: 5, label: "Welcome to Rhozeland" },
+  drop: { amount: 10, label: "First work uploaded" },
+  event: { amount: 5, label: "Attended your first event" },
+  connect: { amount: 10, label: "Connected with 3 creators" },
+  streak: { amount: 5, label: "7-day streak" },
+};
+
+const claimedKeyFor = (userId: string, stepId: string) =>
+  `${CLAIMED_KEY}.${userId}.${stepId}`;
 
 const fireCompletionConfetti = () => {
   const colors = ["#ec4899", "#a78bfa", "#fbbf24", "#34d399", "#60a5fa"];
@@ -101,11 +119,11 @@ const GettingStartedBanner = () => {
 
   const steps = useMemo<Step[]>(
     () => [
-      { id: "join", done: true, label: "Join Rhozeland", href: "/discover" },
-      { id: "drop", done: (workCount ?? 0) > 0, label: "Drop your first work", href: "/works" },
-      { id: "event", done: (ticketCount ?? 0) > 0, label: "Attend an event", href: "/events" },
-      { id: "connect", done: (buddyCount ?? 0) >= 3, label: "Connect with 3 creators", href: "/discover" },
-      { id: "streak", done: (streak ?? 0) >= 7, label: "Reach a 7-day streak", href: "/credits" },
+      { id: "join", done: true, label: "Join Rhozeland", href: "/discover", reward: STEP_REWARDS.join.amount, rewardLabel: STEP_REWARDS.join.label },
+      { id: "drop", done: (workCount ?? 0) > 0, label: "Drop your first work", href: "/works", reward: STEP_REWARDS.drop.amount, rewardLabel: STEP_REWARDS.drop.label },
+      { id: "event", done: (ticketCount ?? 0) > 0, label: "Attend an event", href: "/events", reward: STEP_REWARDS.event.amount, rewardLabel: STEP_REWARDS.event.label },
+      { id: "connect", done: (buddyCount ?? 0) >= 3, label: "Connect with 3 creators", href: "/discover", reward: STEP_REWARDS.connect.amount, rewardLabel: STEP_REWARDS.connect.label },
+      { id: "streak", done: (streak ?? 0) >= 7, label: "Reach a 7-day streak", href: "/credits", reward: STEP_REWARDS.streak.amount, rewardLabel: STEP_REWARDS.streak.label },
     ],
     [workCount, ticketCount, buddyCount, streak],
   );
@@ -113,6 +131,39 @@ const GettingStartedBanner = () => {
   const completed = steps.filter((s) => s.done).length;
   const total = steps.length;
   const allDone = completed === total;
+
+  // Auto-claim $RHOZE for any step that's done but hasn't been paid out
+  // yet. Each (user, step) is deduped via localStorage so we never
+  // double-credit. Runs whenever step state changes.
+  useEffect(() => {
+    if (!user) return;
+    const toClaim = steps.filter(
+      (s) => s.done && window.localStorage.getItem(claimedKeyFor(user.id, s.id)) !== "1",
+    );
+    if (toClaim.length === 0) return;
+
+    (async () => {
+      for (const step of toClaim) {
+        // Mark claimed immediately so concurrent renders don't retry.
+        window.localStorage.setItem(claimedKeyFor(user.id, step.id), "1");
+        const { error } = await supabase.rpc("adjust_user_credits", {
+          _user_id: user.id,
+          _amount: step.reward,
+          _type: "reward",
+          _description: `${step.rewardLabel} · +${step.reward} $RHOZE`,
+        });
+        if (error) {
+          // Roll back the claim flag so we retry next mount.
+          window.localStorage.removeItem(claimedKeyFor(user.id, step.id));
+          console.error("Failed to credit step reward:", step.id, error);
+          continue;
+        }
+        toast.success(`+${step.reward} $RHOZE`, {
+          description: step.rewardLabel,
+        });
+      }
+    })().catch(console.error);
+  }, [user, steps]);
 
   // Fire celebration once when fully complete
   useEffect(() => {
@@ -251,6 +302,11 @@ const GettingStartedBanner = () => {
                       >
                         {step.label}
                       </p>
+                      {!step.done && (
+                        <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                          +{step.reward} $RHOZE
+                        </span>
+                      )}
                       {!step.done && (
                         <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
                       )}
