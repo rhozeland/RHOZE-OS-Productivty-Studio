@@ -160,6 +160,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
 
         {/* ═══════ My Pass ═══════ */}
         <TabsContent value="pass" className="mt-4 space-y-4">
+          <NextStepCard />
           <CreatorPassCard />
           <GettingStartedBanner />
           <StreakCard />
