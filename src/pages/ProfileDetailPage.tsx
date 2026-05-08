@@ -8,10 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   Globe, CheckCircle, UserPlus, UserCheck, MessageSquare, MapPin, Clock,
   EyeOff, Loader2, Settings, Store, Star, ExternalLink, ShoppingBag,
   Sparkles, Image as ImageIcon, Play, Music, FileText, Award, Shield,
@@ -35,7 +31,7 @@ import { ROLE_BY_ID } from "@/lib/creator-roles";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import NoteBubble from "@/components/notes/NoteBubble";
 import { useUserNote } from "@/hooks/useNotes";
-import { useBuddyStatus } from "@/hooks/useBuddies";
+
 import { EmptyState } from "@/components/ui/empty-state";
 
 // Human-readable labels + destinations for on-chain reputation tiles.
@@ -59,7 +55,7 @@ const ProfileDetailPage = () => {
 
   const isOwnProfile = user?.id === id;
   const { data: profileNote } = useUserNote(id);
-  const buddy = useBuddyStatus(isOwnProfile ? null : id);
+  
 
   // Tabs: Overview · Support · Works · Building.
   // ?tab=coin (legacy) deep-links into Support where the artist token now lives.
@@ -67,7 +63,7 @@ const ProfileDetailPage = () => {
   const tabFromUrl = rawTab === "coin" ? "support" : rawTab;
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [bookingOpen, setBookingOpen] = useState(false);
-  const [buddyConfirmOpen, setBuddyConfirmOpen] = useState(false);
+  
   const handleTabChange = (v: string) => {
     setActiveTab(v);
     const next = new URLSearchParams(searchParams);
@@ -427,63 +423,10 @@ const ProfileDetailPage = () => {
                       Send a direct message
                     </span>
                   </div>
-                  {buddy.status === "none" && (
-                    <div className="flex flex-col gap-1">
-                      <Button variant="outline" size="sm" onClick={() => setBuddyConfirmOpen(true)} disabled={buddy.request.isPending}>
-                        <UserPlus className="mr-1.5 h-4 w-4" /> Add Buddy
-                      </Button>
-                      <span className="text-[11px] text-muted-foreground max-w-[260px] leading-snug">
-                        For close collaborators · Unlocks shared projects and direct collab tools
-                      </span>
-                    </div>
-                  )}
-                  {buddy.status === "pending_out" && (
-                    <Button variant="outline" size="sm" disabled className="self-start">
-                      <Clock className="mr-1.5 h-4 w-4" /> Buddy pending
-                    </Button>
-                  )}
-                  {buddy.status === "pending_in" && (
-                    <Button size="sm" onClick={() => buddy.accept.mutate(undefined, {
-                      onSuccess: () => toast.success("You're buddies!"),
-                    })} disabled={buddy.accept.isPending} className="self-start">
-                      <UserCheck className="mr-1.5 h-4 w-4" /> Accept buddy
-                    </Button>
-                  )}
-                  {buddy.status === "accepted" && (
-                    <Button variant="outline" size="sm" onClick={() => buddy.remove.mutate(undefined, {
-                      onSuccess: () => toast.success("Buddy removed"),
-                    })} className="self-start">
-                      <UserCheck className="mr-1.5 h-4 w-4" /> Buddies
-                    </Button>
-                  )}
                 </div>
               </div>
             )}
-
-            <AlertDialog open={buddyConfirmOpen} onOpenChange={setBuddyConfirmOpen}>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Send a buddy request?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Buddy requests are for people you actively work with. They'll need to accept.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => {
-                      buddy.request.mutate(undefined, {
-                        onSuccess: () => toast.success("Buddy request sent"),
-                        onError: (e: any) => toast.error(e.message ?? "Couldn't send request"),
-                      });
-                      setBuddyConfirmOpen(false);
-                    }}
-                  >
-                    Send request
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+{/* buddy-removed */}
           </div>
         </motion.div>
 
