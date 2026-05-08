@@ -40,6 +40,7 @@ import { supabase } from "@/integrations/supabase/client";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
 
 // ─── Tile shape ────────────────────────────────────────────────────────
 // Note: "work" + "opportunity" no longer exist as standalone tile kinds.
