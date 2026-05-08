@@ -41,6 +41,9 @@ import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
+import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
+
+const FallbackTrendingArtists = () => <TrendingArtistsLane marketFilter="All" />;
 
 // ─── Tile shape ────────────────────────────────────────────────────────
 // Note: "work" + "opportunity" no longer exist as standalone tile kinds.
