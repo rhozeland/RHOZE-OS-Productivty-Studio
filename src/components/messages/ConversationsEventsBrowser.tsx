@@ -95,6 +95,8 @@ const ConversationsEventsBrowser = ({ hideHeading = false }: { hideHeading?: boo
 
   const featured = events[0];
 
+  const { data: ctaMap } = useEventsCta(filtered.map((e) => e.id));
+
   return (
     <div className="space-y-8">
       {/* Header */}
