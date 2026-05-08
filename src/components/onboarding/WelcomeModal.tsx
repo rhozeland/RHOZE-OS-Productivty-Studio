@@ -21,6 +21,8 @@ import {
   Check,
   X,
   Loader2,
+  Brush,
+  TrendingUp,
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -87,11 +89,15 @@ const WelcomeModal = () => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState<string>("");
   // step semantics:
-  //   -1 = username (only shown when the profile has no username yet)
+  //   -2 = role pick (only when profile.primary_role is null)
+  //   -1 = username (only when profile has no username yet)
   //    0 = welcome
   //    1..TOUR.length = tour cards
   const [step, setStep] = useState(0);
   const [needsUsername, setNeedsUsername] = useState(false);
+  const [needsRole, setNeedsRole] = useState(false);
+  const [chosenRole, setChosenRole] = useState<"creator" | "investor" | null>(null);
+  const [savingRole, setSavingRole] = useState(false);
 
   // Username form state
   const [username, setUsername] = useState("");
@@ -107,7 +113,7 @@ const WelcomeModal = () => {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, username")
+        .select("display_name, username, primary_role")
         .eq("user_id", user.id)
         .maybeSingle();
       if (cancelled) return;
@@ -119,11 +125,13 @@ const WelcomeModal = () => {
       setName(first);
 
       const missingUsername = !((data as any)?.username);
-      // If user has seen the welcome AND has a username, don't reopen.
-      if (seen && !missingUsername) return;
+      const missingRole = !((data as any)?.primary_role);
+      // If user has seen the welcome AND has username + role, don't reopen.
+      if (seen && !missingUsername && !missingRole) return;
 
       setNeedsUsername(missingUsername);
-      setStep(missingUsername ? -1 : 0);
+      setNeedsRole(missingRole);
+      setStep(missingRole ? -2 : missingUsername ? -1 : 0);
       setOpen(true);
     })();
     return () => {
@@ -156,13 +164,40 @@ const WelcomeModal = () => {
   const close = () => {
     if (user) window.localStorage.setItem(storageKey(user.id), "1");
     setOpen(false);
+    // Role-based landing — only redirect on first-time completion (when a
+    // role was just chosen this session). Returning users won't be yanked.
+    if (chosenRole) {
+      navigate(chosenRole === "creator" ? "/market" : "/scene");
+    }
   };
 
-  const totalSteps = TOUR.length + 1; // welcome + tour cards (username step not counted in dots)
+  const totalSteps = TOUR.length + 1; // welcome + tour cards (role/username steps not counted)
+  const isRole = step === -2;
   const isUsername = step === -1;
   const isWelcome = step === 0;
   const isLast = step === TOUR.length;
   const tour = step > 0 ? TOUR[step - 1] : null;
+
+  const saveRole = async (role: "creator" | "investor") => {
+    if (!user) return;
+    setSavingRole(true);
+    setChosenRole(role);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ primary_role: role } as any)
+        .eq("user_id", user.id);
+      if (error) throw error;
+      setNeedsRole(false);
+      // Advance: username step if still needed, else welcome.
+      setStep(needsUsername ? -1 : 0);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save role");
+      setChosenRole(null);
+    } finally {
+      setSavingRole(false);
+    }
+  };
 
   const saveUsername = async () => {
     if (!canSaveUsername || !user) return;
@@ -184,6 +219,7 @@ const WelcomeModal = () => {
   };
 
   const handleNext = () => {
+    if (isRole) return; // role advances via card click, not Next
     if (isUsername) {
       void saveUsername();
       return;
@@ -202,8 +238,8 @@ const WelcomeModal = () => {
     <Dialog
       open={open}
       onOpenChange={(v) => {
-        // Don't allow dismiss while username is required.
-        if (isUsername) return;
+        // Don't allow dismiss while role or username is required.
+        if (isUsername || isRole) return;
         if (v) setOpen(true);
         else close();
       }}
@@ -211,10 +247,10 @@ const WelcomeModal = () => {
       <DialogContent
         className="sm:max-w-md p-0 overflow-hidden border-border/60 bg-card/90 backdrop-blur-2xl"
         onPointerDownOutside={(e) => {
-          if (isUsername) e.preventDefault();
+          if (isUsername || isRole) e.preventDefault();
         }}
         onEscapeKeyDown={(e) => {
-          if (isUsername) e.preventDefault();
+          if (isUsername || isRole) e.preventDefault();
         }}
       >
         <div className="relative p-7 sm:p-8">
@@ -232,7 +268,79 @@ const WelcomeModal = () => {
             </p>
 
             <AnimatePresence mode="wait">
-              {isUsername ? (
+              {isRole ? (
+                <motion.div
+                  key="role"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <DialogHeader className="space-y-1.5">
+                    <DialogTitle className="font-display text-2xl font-semibold leading-tight text-center">
+                      Are you here to <span className="bg-gradient-to-r from-primary via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">create</span> or <span className="bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 bg-clip-text text-transparent">invest</span>?
+                    </DialogTitle>
+                    <DialogDescription className="text-center text-sm">
+                      We'll set up your home room. You can switch any time.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="mt-5 grid grid-cols-2 gap-3">
+                    {([
+                      {
+                        role: "creator" as const,
+                        Icon: Brush,
+                        title: "Create",
+                        body: "Sell work, book studios, take on projects.",
+                        chip: "Lands in The Market",
+                      },
+                      {
+                        role: "investor" as const,
+                        Icon: TrendingUp,
+                        title: "Invest",
+                        body: "Discover artists, back their coins, earn $RHOZE.",
+                        chip: "Lands in The Scene",
+                      },
+                    ]).map(({ role, Icon, title, body, chip }) => {
+                      const selected = chosenRole === role;
+                      return (
+                        <button
+                          key={role}
+                          type="button"
+                          disabled={savingRole}
+                          onClick={() => void saveRole(role)}
+                          className={cn(
+                            "group relative rounded-xl border bg-background/40 p-4 text-left transition-all",
+                            selected
+                              ? "border-foreground bg-foreground text-background"
+                              : "border-border hover:border-foreground/40 hover:bg-background/70",
+                            savingRole && !selected && "opacity-50",
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "inline-flex h-9 w-9 items-center justify-center rounded-lg mb-2.5",
+                              selected ? "bg-background/15" : "bg-primary/10",
+                            )}
+                          >
+                            {savingRole && selected ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Icon className={cn("h-4 w-4", selected ? "text-background" : "text-primary")} />
+                            )}
+                          </span>
+                          <div className="font-display text-base font-semibold leading-tight">{title}</div>
+                          <div className={cn("text-[11px] mt-1 leading-snug", selected ? "opacity-80" : "text-muted-foreground")}>
+                            {body}
+                          </div>
+                          <div className={cn("mt-2.5 text-[9px] uppercase tracking-[0.18em]", selected ? "opacity-70" : "text-muted-foreground/70")}>
+                            {chip}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              ) : isUsername ? (
                 <motion.div
                   key="username"
                   initial={{ opacity: 0, y: 8 }}
@@ -366,8 +474,8 @@ const WelcomeModal = () => {
               )}
             </AnimatePresence>
 
-            {/* Progress dots — hidden on the username step */}
-            {!isUsername && (
+            {/* Progress dots — hidden on role + username steps */}
+            {!isUsername && !isRole && (
               <div className="mt-6 flex items-center justify-center gap-1.5">
                 {Array.from({ length: totalSteps }).map((_, i) => (
                   <span
@@ -385,39 +493,41 @@ const WelcomeModal = () => {
               </div>
             )}
 
-            <div className="mt-5 flex flex-col items-center gap-2">
-              <Button
-                onClick={handleNext}
-                size="lg"
-                className="w-full gap-2"
-                disabled={isUsername && (!canSaveUsername || savingUsername)}
-              >
-                {isUsername ? (
-                  savingUsername ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" /> Saving…
-                    </>
+            {!isRole && (
+              <div className="mt-5 flex flex-col items-center gap-2">
+                <Button
+                  onClick={handleNext}
+                  size="lg"
+                  className="w-full gap-2"
+                  disabled={isUsername && (!canSaveUsername || savingUsername)}
+                >
+                  {isUsername ? (
+                    savingUsername ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                      </>
+                    ) : (
+                      <>
+                        Continue <ArrowRight className="h-4 w-4" />
+                      </>
+                    )
                   ) : (
                     <>
-                      Continue <ArrowRight className="h-4 w-4" />
+                      {isWelcome ? "Take the tour" : isLast ? "Let's go" : "Next"}
+                      <ArrowRight className="h-4 w-4" />
                     </>
-                  )
-                ) : (
-                  <>
-                    {isWelcome ? "Take the tour" : isLast ? "Let's go" : "Next"}
-                    <ArrowRight className="h-4 w-4" />
-                  </>
+                  )}
+                </Button>
+                {!isUsername && (
+                  <button
+                    onClick={close}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {isWelcome ? "Skip for now" : "Skip tour"}
+                  </button>
                 )}
-              </Button>
-              {!isUsername && (
-                <button
-                  onClick={close}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {isWelcome ? "Skip for now" : "Skip tour"}
-                </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>

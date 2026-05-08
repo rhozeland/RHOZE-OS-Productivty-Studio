@@ -2327,6 +2327,7 @@ export type Database = {
           location: string | null
           mediums: string[] | null
           portfolio_url: string | null
+          primary_role: string | null
           profile_background: string | null
           profile_layout: Json | null
           region_code: string | null
@@ -2379,6 +2380,7 @@ export type Database = {
           location?: string | null
           mediums?: string[] | null
           portfolio_url?: string | null
+          primary_role?: string | null
           profile_background?: string | null
           profile_layout?: Json | null
           region_code?: string | null
@@ -2431,6 +2433,7 @@ export type Database = {
           location?: string | null
           mediums?: string[] | null
           portfolio_url?: string | null
+          primary_role?: string | null
           profile_background?: string | null
           profile_layout?: Json | null
           region_code?: string | null
