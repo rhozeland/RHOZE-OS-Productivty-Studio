@@ -1,41 +1,63 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Coins, CreditCard, ShoppingBag, Repeat, Wallet, ArrowRight, TrendingUp } from "lucide-react";
+import { Coins, CreditCard, ShoppingBag, Repeat, Wallet, ArrowRight, ArrowDownToLine } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import RhozeBalanceChip from "@/components/RhozeBalanceChip";
+import { Button } from "@/components/ui/button";
 
 /**
  * THE VAULT — Room 3 (Finance / Growth).
- *
- * Front door for portfolio, $RHOZE balance, credits, purchases, swaps, and
- * payouts. Composes existing finance-related surfaces — every linked route
- * is unchanged.
+ * Shows portfolio value of held Artist Shares + a clear Cash Out CTA.
  */
 const VAULT_LINKS = [
   { to: "/credits", label: "Creator Pass", desc: "Tier · rewards · how it works", Icon: CreditCard },
   { to: "/credits?tab=purchases", label: "Purchases", desc: "Tickets & receipts", Icon: ShoppingBag },
   { to: "/swaps", label: "Swaps", desc: "Credits ↔ Artist Shares", Icon: Repeat },
-  { to: "/settings", label: "Wallet & Payouts", desc: "Withdraw earnings", Icon: Wallet },
+  { to: "/settings", label: "Wallet", desc: "Payout details & history", Icon: Wallet },
 ];
 
 const VaultRoomPage = () => {
   const { user } = useAuth();
 
-  // Lightweight portfolio peek — coin holdings count + $RHOZE balance.
-  const { data: holdings } = useQuery({
-    queryKey: ["vault-coin-holdings", user?.id],
+  // Holdings + live coin prices → estimated portfolio value (in $RHOZE)
+  const { data: portfolio } = useQuery({
+    queryKey: ["vault-portfolio", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data: holdings } = await (supabase as any)
         .from("coin_holdings")
-        .select("coin_id, balance")
-        .eq("user_id", user!.id);
-      return (data ?? []) as Array<{ coin_id: string; balance: number }>;
+        .select("launch_id, balance")
+        .eq("trader_id", user!.id)
+        .gt("balance", 0);
+
+      const rows = (holdings ?? []) as Array<{ launch_id: string; balance: number }>;
+      if (!rows.length) return { heldCoins: 0, valueRhoze: 0 };
+
+      const launchIds = rows.map((r) => r.launch_id);
+      const { data: launches } = await supabase
+        .from("coin_launches")
+        .select("id, virtual_sol_reserves, virtual_token_reserves")
+        .in("id", launchIds);
+
+      const priceById = new Map<string, number>();
+      (launches ?? []).forEach((l: any) => {
+        const p = l.virtual_token_reserves > 0 ? l.virtual_sol_reserves / l.virtual_token_reserves : 0;
+        priceById.set(l.id, p);
+      });
+
+      const valueRhoze = rows.reduce(
+        (sum, r) => sum + Number(r.balance) * (priceById.get(r.launch_id) ?? 0),
+        0,
+      );
+      return { heldCoins: rows.length, valueRhoze };
     },
   });
 
-  const heldCoins = (holdings ?? []).filter((h: any) => Number(h.balance) > 0).length;
+  const heldCoins = portfolio?.heldCoins ?? 0;
+  const valueRhoze = portfolio?.valueRhoze ?? 0;
+  // 100 $RHOZE ≈ $1
+  const valueUsd = valueRhoze / 100;
 
   return (
     <div className="space-y-6">
@@ -48,28 +70,30 @@ const VaultRoomPage = () => {
         </span>
       </div>
 
-      {/* Header: balance + portfolio summary */}
+      {/* Header: portfolio value + Cash Out */}
       <div className="rounded-2xl border border-border bg-gradient-to-br from-card to-muted/30 p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
             <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 mb-1">
-              Your portfolio
+              Portfolio value
             </p>
-            <h1 className="font-display text-3xl sm:text-4xl font-bold leading-tight">
-              Own what you back.
+            <h1 className="font-display text-4xl sm:text-5xl font-bold leading-none">
+              ${valueUsd.toFixed(2)}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1.5 max-w-md">
-              Track your Platform Credits, the Artist Shares you hold, and your earnings — all in one room.
+            <p className="text-xs text-muted-foreground mt-2">
+              <span className="font-mono">{valueRhoze.toFixed(0)}</span> $RHOZE across{" "}
+              <span className="font-medium text-foreground">{heldCoins}</span> Artist Share
+              {heldCoins === 1 ? "" : "s"}
             </p>
           </div>
           <div className="flex flex-col items-start sm:items-end gap-2">
             <RhozeBalanceChip />
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <TrendingUp className="h-3.5 w-3.5" />
-              <span>
-                {heldCoins} Artist Share{heldCoins === 1 ? "" : "s"} held
-              </span>
-            </div>
+            <Button asChild size="sm" className="rounded-full gap-1.5">
+              <Link to="/settings">
+                <ArrowDownToLine className="h-3.5 w-3.5" />
+                Cash Out
+              </Link>
+            </Button>
           </div>
         </div>
       </div>

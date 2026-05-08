@@ -8,9 +8,10 @@
  * type-led, and never empty: even a brand-new artist gets a strong-looking
  * card via the avatar-derived gradient halo.
  */
-import { Link } from "react-router-dom";
-import { ArrowUpRight, Sparkles, FileImage } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowUpRight, Sparkles, FileImage, MessageCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import RegionChip from "@/components/profile/RegionChip";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import { ROLE_BY_ID } from "@/lib/creator-roles";
@@ -52,6 +53,7 @@ const ArtistSpotlightCard = ({
   works_count = 0,
   followers_count = 0,
 }: Props) => {
+  const navigate = useNavigate();
   const grad = avatarGradientFor(id);
   const roleLabels = (creator_roles ?? [])
     .slice(0, 3)
@@ -114,7 +116,19 @@ const ArtistSpotlightCard = ({
         <p className="mt-0.5 font-display text-xl text-foreground">{works_count}</p>
       </div>
 
-      <div className="border-t border-border/40 px-4 py-3 text-center">
+      <div className="border-t border-border/40 px-4 py-3 flex items-center justify-center gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 rounded-full text-xs gap-1.5"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            navigate(`/messages?to=${id}`);
+          }}
+        >
+          <MessageCircle className="h-3.5 w-3.5" /> Message
+        </Button>
         <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-transform group-hover:translate-x-0.5">
           View profile <ArrowUpRight className="h-4 w-4" />
         </span>
