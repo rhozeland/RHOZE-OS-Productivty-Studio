@@ -27,6 +27,7 @@ import RegionPromptBanner from "@/components/discover/RegionPromptBanner";
 import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import StreamComposer from "@/components/stream/StreamComposer";
 import ConversationsMosaic, { type MosaicKindFilter } from "@/components/hub/ConversationsMosaic";
+import CreatorsGrid from "@/components/discover/CreatorsGrid";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,13 +67,14 @@ const normalizeCategory = (value?: string | null) =>
     .trim()
     .replace(/[\s_]+/g, "-");
 
-type DiscoverView = "all" | "events" | "spaces" | "works" | "offerings";
+type DiscoverView = "all" | "events" | "spaces" | "works" | "offerings" | "creators";
 const VIEW_OPTIONS: { value: DiscoverView; label: string; icon: any; kind: MosaicKindFilter }[] = [
   { value: "all", label: "All", icon: Sparkles, kind: "all" },
   { value: "events", label: "Events", icon: CalendarDays, kind: "event" },
   { value: "spaces", label: "Spaces", icon: MapPin, kind: "space" },
   { value: "offerings", label: "Marketplace", icon: ShoppingBag, kind: "offering" },
   { value: "works", label: "Works", icon: FileText, kind: "drop" },
+  { value: "creators", label: "Creators", icon: Users, kind: "all" },
 ];
 
 const EVENT_CATEGORY_DEFS = [
@@ -184,7 +186,7 @@ const DiscoverPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawView = searchParams.get("view");
   const view: DiscoverView =
-    rawView === "events" || rawView === "spaces" || rawView === "works" || rawView === "offerings"
+    rawView === "events" || rawView === "spaces" || rawView === "works" || rawView === "offerings" || rawView === "creators"
       ? rawView
       : "all";
   const setView = (v: DiscoverView) => {
@@ -496,7 +498,11 @@ const DiscoverPage = () => {
           />
         )}
 
-        <ConversationsMosaic kind={activeOption.kind} category={normalizedCategory} />
+        {view === "creators" ? (
+          <CreatorsGrid />
+        ) : (
+          <ConversationsMosaic kind={activeOption.kind} category={normalizedCategory} />
+        )}
       </section>
 
       {/* ─── Coins moving today ─────────────────────────────────────── */}
