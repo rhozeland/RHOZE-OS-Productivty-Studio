@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { CalendarDays, MapPin, Globe2, Sparkles, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface DiscoverEventsGridProps {
   /** Normalized category slug (e.g. "music") or null for "all". */
