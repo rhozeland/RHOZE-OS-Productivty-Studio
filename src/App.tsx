@@ -250,6 +250,7 @@ const App = () => (
                     detail page stays live so existing thread links and
                     deep-links from Tools tabs still resolve. */}
                 <Route path="/projects" element={<Navigate to="/messages?tab=projects" replace />} />
+                <Route path="/my-projects" element={<ProjectsPage />} />
                 <Route path="/projects/:id" element={<ProjectDetailPage />} />
                 {/* Works is now the personal vault under Settings → Provenance.
                     /works keeps working as a deep link via redirect. */}

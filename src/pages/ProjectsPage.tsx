@@ -33,12 +33,18 @@ const ProjectsPage = () => {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
 
   const { data: projects, isLoading } = useQuery({
-    queryKey: ["projects"],
+    queryKey: ["my-projects", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("projects").select("*").order("created_at", { ascending: false });
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
+    enabled: !!user,
   });
 
   // Fetch collaborator counts per project
@@ -82,7 +88,7 @@ const ProjectsPage = () => {
       queryClient.setQueryData(["projects"], (old: any[] | undefined) =>
         old ? [newProject, ...old] : [newProject]
       );
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["my-projects", user?.id] });
       setOpen(false);
       setTitle("");
       setDescription("");
@@ -100,7 +106,7 @@ const ProjectsPage = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["my-projects", user?.id] });
       toast.success("Project deleted");
       setDeleteTarget(null);
     },
@@ -144,10 +150,10 @@ const ProjectsPage = () => {
               Workspace
             </p>
             <h1 className="font-display text-3xl md:text-4xl font-bold text-white leading-tight">
-              Projects
+              My Projects
             </h1>
             <p className="text-sm text-white/70 mt-1 max-w-md font-body">
-              Manage your creative projects, track milestones, and collaborate with your team.
+              Every project you've created — manage milestones, collaborators, and progress in one place.
             </p>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
