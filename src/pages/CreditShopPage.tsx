@@ -151,7 +151,6 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
       <Tabs value={activeTab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="pass" className="gap-1.5"><Award className="h-3.5 w-3.5" /> My Pass</TabsTrigger>
-          <TabsTrigger value="tickets" className="gap-1.5"><Ticket className="h-3.5 w-3.5" /> Tickets</TabsTrigger>
           <TabsTrigger value="tiers" className="gap-1.5"><Star className="h-3.5 w-3.5" /> Tiers</TabsTrigger>
           <TabsTrigger value="how" className="gap-1.5"><HelpCircle className="h-3.5 w-3.5" /> How rewards work</TabsTrigger>
           <TabsTrigger value="works" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Verified IP</TabsTrigger>
@@ -547,11 +546,18 @@ const VerifiedIPSection = ({ userId }: { userId: string | null }) => {
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Anchored on Solana</p>
             <p className="font-display text-2xl font-bold text-foreground">{anchoredCount}</p>
           </div>
-          <div className="rounded-xl border border-border p-3 flex items-center">
-            <Link to="/works" className="text-sm font-medium text-foreground hover:underline inline-flex items-center gap-1">
+          <Link to="/works" className="rounded-xl border border-border p-3 flex items-center hover:bg-muted/40 transition-colors">
+            <span className="text-sm font-medium text-foreground inline-flex items-center gap-1">
               Open the vault →
-            </Link>
-          </div>
+            </span>
+          </Link>
+        </div>
+        <div className="mt-4">
+          <Link to="/works">
+            <Button size="sm" className="rounded-full gap-1.5">
+              <Shield className="h-3.5 w-3.5" /> Register a work
+            </Button>
+          </Link>
         </div>
       </div>
 

@@ -4,7 +4,7 @@
  * Shows ticket QR + event summary, and lets the holder anchor their
  * proof-of-attendance on Solana (SHA-256 of ticket+event metadata).
  */
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -47,6 +47,12 @@ function pickAccent(seed: string | number | null | undefined) {
 const TicketDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  // If we arrived from /credits (Creator Pass tickets tab), prefer going back
+  // there instead of dropping the user on the event page.
+  const fromCredits = (location.state as any)?.from?.startsWith?.("/credits") ||
+    document.referrer.includes("/credits");
 
   const { data: ticket, isLoading, refetch } = useQuery({
     queryKey: ["ticket", id],
@@ -177,12 +183,16 @@ const TicketDetailPage = () => {
 
   return (
     <div className="max-w-md mx-auto space-y-5">
-      <Link
-        to={`/spaces/events/${ticket.event_id}`}
+      <button
+        type="button"
+        onClick={() => {
+          if (fromCredits) navigate("/credits?tab=tickets");
+          else navigate(-1);
+        }}
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to event
-      </Link>
+        <ArrowLeft className="h-4 w-4" /> {fromCredits ? "Back to Creator Pass" : "Back"}
+      </button>
 
       <Tilt3D maxTilt={14} className="rounded-3xl">
       <motion.div

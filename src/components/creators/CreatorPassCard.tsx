@@ -197,7 +197,8 @@ const CreatorPassCard = () => {
             </div>
           </div>
 
-          {/* Stats — 4 collectible metrics (with milestone hints when zero) */}
+          {/* Stats — 4 collectible metrics. Events + Verified Works link out
+              to dedicated views (tickets list / works vault). */}
           <div className="grid grid-cols-4 gap-3">
             {([
               {
@@ -205,7 +206,8 @@ const CreatorPassCard = () => {
                 value: `${credits?.balance ?? 0}`,
                 icon: Coins,
                 isZero: Number(credits?.balance ?? 0) === 0,
-                hint: null,
+                hint: { text: "Earn $RHOZE →", to: "/credits?tab=how" },
+                to: null,
               },
               {
                 label: "Streak",
@@ -213,45 +215,59 @@ const CreatorPassCard = () => {
                 icon: Flame,
                 isZero: Number(credits?.reward_streak ?? 0) === 0,
                 hint: { text: "Sign in daily to start", to: null as string | null },
+                to: null,
               },
               {
-                label: "Events",
-                value: `${eventsAttended}`,
+                label: "Events Attended",
+                value: `${ticketsData?.length ?? 0}`,
                 icon: Ticket,
-                isZero: eventsAttended === 0,
+                isZero: (ticketsData?.length ?? 0) === 0,
                 hint: { text: "Attend 1 event →", to: "/events" },
+                to: "/credits?tab=tickets",
               },
               {
                 label: "Verified Works",
                 value: `${verifiedWorks ?? 0}`,
                 icon: Shield,
                 isZero: (verifiedWorks ?? 0) === 0,
-                hint: { text: "Submit a work →", to: "/discover" },
+                hint: { text: "Register a work →", to: "/works" },
+                to: "/works",
               },
-            ] as const).map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="h-9 w-9 mx-auto rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center mb-1">
-                  <stat.icon className="h-4 w-4" />
-                </div>
-                {stat.isZero && stat.hint ? (
-                  stat.hint.to ? (
-                    <Link
-                      to={stat.hint.to}
-                      className="block font-display text-[10px] font-semibold leading-tight underline-offset-2 hover:underline"
-                    >
-                      {stat.hint.text}
-                    </Link>
+            ] as const).map((stat) => {
+              const showHint = stat.isZero && stat.hint;
+              const wrapperTo = !showHint ? (stat as any).to : null;
+              const Body = (
+                <>
+                  <div className="h-9 w-9 mx-auto rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center mb-1">
+                    <stat.icon className="h-4 w-4" />
+                  </div>
+                  {showHint ? (
+                    stat.hint!.to ? (
+                      <Link
+                        to={stat.hint!.to}
+                        className="block font-display text-[10px] font-semibold leading-tight underline-offset-2 hover:underline"
+                      >
+                        {stat.hint!.text}
+                      </Link>
+                    ) : (
+                      <p className="font-display text-[10px] font-semibold leading-tight opacity-90">
+                        {stat.hint!.text}
+                      </p>
+                    )
                   ) : (
-                    <p className="font-display text-[10px] font-semibold leading-tight opacity-90">
-                      {stat.hint.text}
-                    </p>
-                  )
-                ) : (
-                  <p className="font-display text-sm font-bold tabular-nums">{stat.value}</p>
-                )}
-                <p className="text-[9px] uppercase tracking-wider opacity-60 font-body mt-0.5">{stat.label}</p>
-              </div>
-            ))}
+                    <p className="font-display text-sm font-bold tabular-nums">{stat.value}</p>
+                  )}
+                  <p className="text-[9px] uppercase tracking-wider opacity-60 font-body mt-0.5">{stat.label}</p>
+                </>
+              );
+              return wrapperTo ? (
+                <Link key={stat.label} to={wrapperTo} className="text-center group hover:opacity-90 transition-opacity">
+                  {Body}
+                </Link>
+              ) : (
+                <div key={stat.label} className="text-center">{Body}</div>
+              );
+            })}
           </div>
         </div>
       </motion.div>
