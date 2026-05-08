@@ -164,13 +164,40 @@ const WelcomeModal = () => {
   const close = () => {
     if (user) window.localStorage.setItem(storageKey(user.id), "1");
     setOpen(false);
+    // Role-based landing — only redirect on first-time completion (when a
+    // role was just chosen this session). Returning users won't be yanked.
+    if (chosenRole) {
+      navigate(chosenRole === "creator" ? "/market" : "/scene");
+    }
   };
 
-  const totalSteps = TOUR.length + 1; // welcome + tour cards (username step not counted in dots)
+  const totalSteps = TOUR.length + 1; // welcome + tour cards (role/username steps not counted)
+  const isRole = step === -2;
   const isUsername = step === -1;
   const isWelcome = step === 0;
   const isLast = step === TOUR.length;
   const tour = step > 0 ? TOUR[step - 1] : null;
+
+  const saveRole = async (role: "creator" | "investor") => {
+    if (!user) return;
+    setSavingRole(true);
+    setChosenRole(role);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ primary_role: role } as any)
+        .eq("user_id", user.id);
+      if (error) throw error;
+      setNeedsRole(false);
+      // Advance: username step if still needed, else welcome.
+      setStep(needsUsername ? -1 : 0);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save role");
+      setChosenRole(null);
+    } finally {
+      setSavingRole(false);
+    }
+  };
 
   const saveUsername = async () => {
     if (!canSaveUsername || !user) return;
@@ -192,6 +219,7 @@ const WelcomeModal = () => {
   };
 
   const handleNext = () => {
+    if (isRole) return; // role advances via card click, not Next
     if (isUsername) {
       void saveUsername();
       return;
