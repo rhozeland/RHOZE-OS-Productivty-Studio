@@ -545,7 +545,7 @@ const AppLayout = () => {
           )}
         </CommandList>
       </CommandDialog>
-      {user && <UsernamePrompt />}
+      
       {user && <WelcomeModal />}
       </CelebrationProvider>
     </SidebarProvider>
