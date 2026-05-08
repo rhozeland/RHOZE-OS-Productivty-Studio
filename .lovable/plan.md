@@ -1,57 +1,54 @@
-# Rhozeland Pitch Decks — 4 Versions
+# Three-Room Restructure
 
-Generate **4 separate .pptx files**, all 16:9 at 1920×1080, editable in Google Slides, matching the live app aesthetic (high-contrast B&W editorial, glassmorphism, Inter, $RHOZE accents). Built with `pptxgenjs` so every text box, shape, and image is fully editable after import to Google Slides.
+Reorganize Rhozeland into three "Rooms" via a permanent bottom nav, plus a role-based onboarding step that routes Creators → Market and Investors → Scene. **No features are removed** — every existing route stays mounted; the Rooms are organizing front doors that link into them.
 
-## The 4 decks
+## Room mapping (existing routes preserved)
 
-| # | File | Audience | Emphasis |
-|---|------|----------|----------|
-| 1 | `rhozeland-investors-vc.pptx` | Investors / VCs / Solana Hackathon / Pump.fun | **Creator OS** product-led; Rhozeland Studio mentioned light |
-| 2 | `rhozeland-partners-artists.pptx` | Partners + Artists | Same scope, reframed: "Own your audience, monetize your IP" |
-| 3 | `rhozeland-general.pptx` | General / mixed audience | Balanced — Rhozeland Studio (production house) + Creator OS (app + $RHOZE credits) equally |
-| 4 | `rhozeland-investors-studio.pptx` | Investors with studio focus | Investor framing but heavier weight on Rhozeland Studio (production → distribution flywheel) |
+**Room 1 — THE SCENE** (Social / Discovery)
+- Front door: `/scene` (new) → renders the existing Discover layout (globe + featured + Stream + Flow toggle)
+- Links into: `/discover`, `/flow`, `/stream`, `/people`, `/profiles`, `/creators`
 
-## Shared 15-slide structure
+**Room 2 — THE MARKET** (Work / Utility)
+- Front door: `/market` (new) → existing MarketplacePage content (mosaic with Drops · Offerings · Events · Spaces) + quick links to studios, services, projects
+- Links into: `/marketplace`, `/spaces`, `/studios`, `/services`, `/projects`, `/bookings`, `/calendar`, `/messages`
 
-1. **Intro** — Wordmark, one-liner, Michael Lé Founder + PFP
-2. **Problem**
-3. **Value Proposition**
-4. **Main Features** (app screenshots)
-5. **Demo** (annotated screenshot walkthrough)
-6. **Market** (TAM/SAM/SOM with researched numbers)
-7. **Competition** (matrix: Patreon, Pump.fun, Bags.fm, Sound.xyz, Bandcamp)
-8. **Business Model** — tier-based platform fee (Spark/Bloom 15% · Glow 10% · Play 7%) + coin launch fee + $RHOZE economy
-9. **Traction** — Nomu-style colored card grid (the design from screenshot 3)
-10. **Growth Strategy** — Studio→Content→Distribution flywheel: Rhozeland Studio produces for artists → app distributes → community + $RHOZE rewards drive retention. 3 solid channels (artist partnerships, Solana ecosystem co-marketing, IRL events / Spaces hosts)
-11. **Roadmap** — Q-based timeline pulled from whitepaper/memory (Verified IP live → on-chain launchpad → Studio collabs → token-gated drops)
-12. **Team** — 4–5 placeholder cards: name + role + "killer fact"
-13. **The Ask** (investor decks) / **The Offer** (partners deck)
-14. **Call-to-Action** — QR to app + $RHOZE signup reward + contact
-15. **Thank You** — wordmark close
+**Room 3 — THE VAULT** (Finance / Growth)
+- Front door: `/vault` (new) → portfolio dashboard pulling existing components: `RhozeBalanceChip`, `WithdrawalPanel`, coin holdings, purchases, credits/rewards
+- Links into: `/credits`, `/purchases`, `/seller-dashboard`, `/swap-history`, profile Coin tab
 
-Per-audience slides swap framing (e.g. deck 2 replaces "Ask" with partnership tiers; deck 3 adds a Studio-vs-OS architecture slide; deck 4 adds a Studio P&L / production capacity slide).
+## Implementation
 
-## Design system (all decks)
+### 1. Bottom nav bar (new)
+New component `src/components/RoomsBottomNav.tsx` — fixed bottom, 3 large tabs (Scene · Market · Vault) with icons (Sparkles, Store, Coins). Mounted in `AppLayout.tsx` for authenticated users. Active state by route prefix. Mobile-first, but visible on all breakpoints (similar to existing DockBar styling, but always visible, three items only).
 
-- **Palette:** near-black `#0A0A0A` bg / off-white `#F5F3EE` content / $RHOZE accent `#FF4D8B` (or app's pink-amber gradient)
-- **Type:** Inter (Bold for display, Regular for body) — universally available in Google Slides
-- **Motif:** thin top-left wordmark + page number bottom-right; one bold accent shape per slide; Nomu-style rounded card grid for traction
-- **Sandwich:** dark intro/closer, light content slides
+### 2. Three Room pages (new)
+- `src/pages/SceneRoomPage.tsx` — renders `<DiscoverPage />` content (or re-exports it), header chip "THE SCENE".
+- `src/pages/MarketRoomPage.tsx` — renders `<MarketplacePage />` content with header chip "THE MARKET".
+- `src/pages/VaultRoomPage.tsx` — composes existing finance widgets: balance chip, credits summary, purchases link, withdrawal panel, swap history link, "Your coins" section.
 
-## Technical approach
+Each Room page is a thin wrapper — no business logic moved, just composition.
 
-1. Use the `pptx` skill (`pptxgenjs`) — full editability in Google Slides preserved
-2. Pull live app screenshots from preview URL (Discover, Profile, Creator Pass, Flow, Project Vault) embedded as base64
-3. Generate one `buildDeck(audience)` builder + 4 thin config files
-4. Output to `/mnt/documents/`
-5. **Mandatory QA:** Convert each deck to PDF via LibreOffice → render every slide to JPG → inspect for clipping, overlap, contrast, leftover placeholders → fix → re-render until clean
-6. Deliver via `<lov-artifact>` tags
+### 3. Routes (App.tsx)
+Add `/scene`, `/market`, `/vault` routes. Keep all existing routes intact.
 
-## Open questions before I build
+### 4. Navigation config
+Add three Room entries to `src/config/navigation.ts` so they're recognized. Don't change DEFAULT_DOCK_IDS yet.
 
-- **Roadmap quarters** — should I anchor to Q2 2026 (now) → Q4 2026 / Q1–Q2 2027 with milestones I infer from memory (Verified IP shipped, on-chain Launchpad next, Studio collabs, etc.)? Or do you have specific milestones to lock in?
-- **The Ask** (deck 1 & 4) — raise amount + use of funds? If unknown I'll use clearly-marked placeholders (`[$X.XM seed]`, `40% product / 30% studio / 20% growth / 10% ops`) so you can edit.
-- **Team placeholders** — 4 or 5 cards? I'll use Michael Lé (Founder) + 4 `[Name — Role]` slots with placeholder "killer fact" lines.
-- **Contact** — for the CTA slide: telegram handle / email / app URL. I'll use `rhozeland.app` + `[contact placeholder]` if not provided.
+### 5. Role-based onboarding
+Add a new step to `WelcomeModal.tsx` (after username, before tour): "Are you here to **Create** or **Invest**?" — two large cards. Selection is saved to `profiles.primary_role` ('creator' | 'investor') via existing profiles update pattern. After onboarding completes:
+- Creator → navigate to `/market`
+- Investor → navigate to `/scene`
 
-I can proceed with sensible placeholders for all of the above (since the whole point is editability) — just confirm "go" or answer any of the four and I'll build all 4 decks in one pass.
+### 6. Database
+Migration: add `primary_role text` column to `profiles` (nullable, no constraint — values 'creator' | 'investor').
+
+## Technical notes
+- Bottom nav uses `position: fixed; bottom: 0` with safe-area-inset padding; adds `pb-20` spacer to AppLayout main when present.
+- Room pages reuse existing page components by importing and rendering them — zero duplication.
+- Onboarding role choice stored both in modal state (immediate redirect) and persisted to profile (future personalization).
+- Existing DockBar stays hidden (per memory: bottom dock currently hidden). The new Rooms bar is the replacement.
+
+## Out of scope
+- Renaming/removing existing routes
+- Moving feature implementations between files
+- Changing the side nav (AppSidebar) — Rooms are additive
