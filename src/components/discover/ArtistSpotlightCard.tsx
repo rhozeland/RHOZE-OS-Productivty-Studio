@@ -8,9 +8,10 @@
  * type-led, and never empty: even a brand-new artist gets a strong-looking
  * card via the avatar-derived gradient halo.
  */
-import { Link } from "react-router-dom";
-import { ArrowUpRight, Sparkles, FileImage } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowUpRight, Sparkles, FileImage, MessageCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import RegionChip from "@/components/profile/RegionChip";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import { ROLE_BY_ID } from "@/lib/creator-roles";
