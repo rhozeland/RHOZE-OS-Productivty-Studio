@@ -8,6 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Globe, CheckCircle, UserPlus, UserCheck, MessageSquare, MapPin, Clock,
   EyeOff, Loader2, Settings, Store, Star, ExternalLink, ShoppingBag,
   Sparkles, Image as ImageIcon, Play, Music, FileText, Award, Shield,
@@ -63,6 +67,7 @@ const ProfileDetailPage = () => {
   const tabFromUrl = rawTab === "coin" ? "support" : rawTab;
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [buddyConfirmOpen, setBuddyConfirmOpen] = useState(false);
   const handleTabChange = (v: string) => {
     setActiveTab(v);
     const next = new URLSearchParams(searchParams);
@@ -389,54 +394,93 @@ const ProfileDetailPage = () => {
 
             {/* Action buttons for visitors */}
             {!isOwnProfile && user && (
-              <div className="flex gap-2 mt-4 flex-wrap">
-                <Button variant={isFollowing ? "outline" : "default"} size="sm" onClick={() => followMutation.mutate()} disabled={followMutation.isPending}>
-                  {isFollowing ? <><UserCheck className="mr-1.5 h-4 w-4" /> Following</> : <><UserPlus className="mr-1.5 h-4 w-4" /> Follow</>}
-                </Button>
-                {receivedConnectRequest ? (
-                  <Button size="sm" onClick={() => acceptConnectMutation.mutate()} disabled={acceptConnectMutation.isPending}>
-                    <UserCheck className="mr-1.5 h-4 w-4" /> Accept
-                  </Button>
-                ) : (
-                  <Button variant={isConnected ? "outline" : "secondary"} size="sm" onClick={() => connectMutation.mutate()}
-                    disabled={connectMutation.isPending || (hasPendingConnect && !receivedConnectRequest)}>
-                    {isConnected ? "Connected" : hasPendingConnect ? "Pending…" : "Connect"}
-                  </Button>
-                )}
-                {isConnected && (
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/messages?to=${id}`)}>
-                    <MessageSquare className="mr-1.5 h-4 w-4" /> Message
-                  </Button>
-                )}
-                {buddy.status === "none" && (
-                  <Button variant="outline" size="sm" onClick={() => buddy.request.mutate(undefined, {
-                    onSuccess: () => toast.success("Buddy request sent"),
-                    onError: (e: any) => toast.error(e.message ?? "Couldn't send request"),
-                  })} disabled={buddy.request.isPending}>
-                    <UserPlus className="mr-1.5 h-4 w-4" /> Add Buddy
-                  </Button>
-                )}
-                {buddy.status === "pending_out" && (
-                  <Button variant="outline" size="sm" disabled>
-                    <Clock className="mr-1.5 h-4 w-4" /> Buddy pending
-                  </Button>
-                )}
-                {buddy.status === "pending_in" && (
-                  <Button size="sm" onClick={() => buddy.accept.mutate(undefined, {
-                    onSuccess: () => toast.success("You're buddies!"),
-                  })} disabled={buddy.accept.isPending}>
-                    <UserCheck className="mr-1.5 h-4 w-4" /> Accept buddy
-                  </Button>
-                )}
-                {buddy.status === "accepted" && (
-                  <Button variant="outline" size="sm" onClick={() => buddy.remove.mutate(undefined, {
-                    onSuccess: () => toast.success("Buddy removed"),
-                  })}>
-                    <UserCheck className="mr-1.5 h-4 w-4" /> Buddies
-                  </Button>
-                )}
+              <div className="flex flex-col gap-3 mt-4">
+                <div className="flex gap-2 flex-wrap">
+                  <div className="flex flex-col gap-1">
+                    <Button variant={isFollowing ? "outline" : "default"} size="sm" onClick={() => followMutation.mutate()} disabled={followMutation.isPending}>
+                      {isFollowing ? <><UserCheck className="mr-1.5 h-4 w-4" /> Following</> : <><UserPlus className="mr-1.5 h-4 w-4" /> Follow</>}
+                    </Button>
+                    <span className="text-[11px] text-muted-foreground max-w-[220px] leading-snug">
+                      Free · See their updates and drops first
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    {receivedConnectRequest ? (
+                      <Button size="sm" onClick={() => acceptConnectMutation.mutate()} disabled={acceptConnectMutation.isPending}>
+                        <UserCheck className="mr-1.5 h-4 w-4" /> Accept
+                      </Button>
+                    ) : (
+                      <Button variant={isConnected ? "outline" : "secondary"} size="sm" onClick={() => connectMutation.mutate()}
+                        disabled={connectMutation.isPending || (hasPendingConnect && !receivedConnectRequest)}>
+                        {isConnected ? "Connected" : hasPendingConnect ? "Pending…" : "Connect"}
+                      </Button>
+                    )}
+                    <span className="text-[11px] text-muted-foreground max-w-[220px] leading-snug">
+                      Send a professional network request
+                    </span>
+                  </div>
+                  {isConnected && (
+                    <Button variant="outline" size="sm" onClick={() => navigate(`/messages?to=${id}`)} className="self-start">
+                      <MessageSquare className="mr-1.5 h-4 w-4" /> Message
+                    </Button>
+                  )}
+                  {buddy.status === "none" && (
+                    <div className="flex flex-col gap-1">
+                      <Button variant="outline" size="sm" onClick={() => setBuddyConfirmOpen(true)} disabled={buddy.request.isPending}>
+                        <UserPlus className="mr-1.5 h-4 w-4" /> Add Buddy
+                      </Button>
+                      <span className="text-[11px] text-muted-foreground max-w-[260px] leading-snug">
+                        For close collaborators · Unlocks shared projects and direct collab tools
+                      </span>
+                    </div>
+                  )}
+                  {buddy.status === "pending_out" && (
+                    <Button variant="outline" size="sm" disabled className="self-start">
+                      <Clock className="mr-1.5 h-4 w-4" /> Buddy pending
+                    </Button>
+                  )}
+                  {buddy.status === "pending_in" && (
+                    <Button size="sm" onClick={() => buddy.accept.mutate(undefined, {
+                      onSuccess: () => toast.success("You're buddies!"),
+                    })} disabled={buddy.accept.isPending} className="self-start">
+                      <UserCheck className="mr-1.5 h-4 w-4" /> Accept buddy
+                    </Button>
+                  )}
+                  {buddy.status === "accepted" && (
+                    <Button variant="outline" size="sm" onClick={() => buddy.remove.mutate(undefined, {
+                      onSuccess: () => toast.success("Buddy removed"),
+                    })} className="self-start">
+                      <UserCheck className="mr-1.5 h-4 w-4" /> Buddies
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
+
+            <AlertDialog open={buddyConfirmOpen} onOpenChange={setBuddyConfirmOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Send a buddy request?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Buddy requests are for people you actively work with. They'll need to accept.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      buddy.request.mutate(undefined, {
+                        onSuccess: () => toast.success("Buddy request sent"),
+                        onError: (e: any) => toast.error(e.message ?? "Couldn't send request"),
+                      });
+                      setBuddyConfirmOpen(false);
+                    }}
+                  >
+                    Send request
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </motion.div>
 
