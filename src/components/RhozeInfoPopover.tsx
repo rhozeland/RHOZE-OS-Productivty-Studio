@@ -5,7 +5,7 @@
  * "$RHOZE" text followed by the help icon. Reusable anywhere $RHOZE
  * is mentioned so users can always learn what it is in-context.
  */
-import { HelpCircle, Coins, Sparkles, Wallet } from "lucide-react";
+import { HelpCircle, Coins, Sparkles, Wallet, Heart } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
