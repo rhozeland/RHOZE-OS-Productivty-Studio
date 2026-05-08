@@ -9,7 +9,7 @@ import MarketplacePage from "@/pages/MarketplacePage";
  */
 const CATEGORIES = [
   {
-    to: "/explore/studios",
+    to: "/marketplace?kind=space",
     label: "Studio Booking",
     desc: "Book studios, venues & spaces",
     Icon: Building2,
