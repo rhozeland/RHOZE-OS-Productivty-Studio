@@ -238,8 +238,8 @@ const WelcomeModal = () => {
     <Dialog
       open={open}
       onOpenChange={(v) => {
-        // Don't allow dismiss while username is required.
-        if (isUsername) return;
+        // Don't allow dismiss while role or username is required.
+        if (isUsername || isRole) return;
         if (v) setOpen(true);
         else close();
       }}
@@ -247,10 +247,10 @@ const WelcomeModal = () => {
       <DialogContent
         className="sm:max-w-md p-0 overflow-hidden border-border/60 bg-card/90 backdrop-blur-2xl"
         onPointerDownOutside={(e) => {
-          if (isUsername) e.preventDefault();
+          if (isUsername || isRole) e.preventDefault();
         }}
         onEscapeKeyDown={(e) => {
-          if (isUsername) e.preventDefault();
+          if (isUsername || isRole) e.preventDefault();
         }}
       >
         <div className="relative p-7 sm:p-8">
