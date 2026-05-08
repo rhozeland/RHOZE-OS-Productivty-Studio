@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, isValidElement, createElement } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -46,11 +46,16 @@ export function EmptyState({
 
   let iconNode: ReactNode = null;
   if (icon) {
-    if (typeof icon === "function") {
-      const Icon = icon as LucideIcon;
-      iconNode = <Icon size={iconSize} className="text-muted-foreground" strokeWidth={1.6} />;
-    } else {
+    if (isValidElement(icon)) {
       iconNode = icon;
+    } else {
+      // Lucide icons are forwardRef objects, not plain functions — render
+      // via createElement so both function components and forwardRef components work.
+      iconNode = createElement(icon as any, {
+        size: iconSize,
+        className: "text-muted-foreground",
+        strokeWidth: 1.6,
+      });
     }
   }
 
