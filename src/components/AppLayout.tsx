@@ -8,6 +8,7 @@ import NotificationBell from "@/components/NotificationBell";
 import PostMenuButton from "@/components/PostMenuButton";
 
 import WelcomeModal from "@/components/onboarding/WelcomeModal";
+import RoomsBottomNav from "@/components/RoomsBottomNav";
 // FlowLauncher (floating FAB) retired — Flow is now reachable via the Hub view toggle + HubFlowWidget.
 // DockBar retired in v7 (post phase-2) — navigation happens via the left side nav + global ⌘K search.
 import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Settings as SettingsIcon, LogOut, Coins, ChevronDown, Sun, Moon } from "lucide-react";
@@ -416,7 +417,7 @@ const AppLayout = () => {
               )}
             </div>
           </header>
-          <main className="flex-1 p-4 md:p-8 pb-8">
+          <main className="flex-1 p-4 md:p-8 pb-28">
             <Outlet />
           </main>
           {/* HudDock retired — gamification stats moved to sidebar footer (SidebarHud). */}
@@ -547,6 +548,7 @@ const AppLayout = () => {
       </CommandDialog>
       
       {user && <WelcomeModal />}
+      {user && <RoomsBottomNav />}
       </CelebrationProvider>
     </SidebarProvider>
   );
