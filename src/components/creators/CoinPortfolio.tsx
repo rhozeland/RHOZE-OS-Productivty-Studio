@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Coins, TrendingUp, TrendingDown, ArrowRight, Wallet } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type Holding = {
   launch_id: string;
