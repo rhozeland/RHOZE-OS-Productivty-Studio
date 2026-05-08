@@ -5,6 +5,7 @@ import AppSidebar from "@/components/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import RhozeBalanceChip from "@/components/RhozeBalanceChip";
 import NotificationBell from "@/components/NotificationBell";
+import PostMenuButton from "@/components/PostMenuButton";
 import UsernamePrompt from "@/components/UsernamePrompt";
 import WelcomeModal from "@/components/onboarding/WelcomeModal";
 // FlowLauncher (floating FAB) retired — Flow is now reachable via the Hub view toggle + HubFlowWidget.
