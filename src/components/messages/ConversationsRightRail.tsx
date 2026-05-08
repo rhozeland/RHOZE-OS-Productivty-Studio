@@ -170,7 +170,12 @@ const ConversationsRightRail = () => {
             ))}
 
           {tab === "spaces" && spaces.length === 0 && (
-            <EmptyState label="No spaces listed yet." />
+            <EmptyState
+              icon={Building2}
+              title="No spaces listed yet"
+              cta={{ label: "List a space", to: "/studios/new" }}
+              size="sm"
+            />
           )}
           {tab === "spaces" &&
             spaces.map((s: any) => (
