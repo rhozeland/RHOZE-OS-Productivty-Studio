@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { Flame, Trophy, Sparkles } from "lucide-react";
+import RhozeRewardBadge from "@/components/RhozeRewardBadge";
 
 export interface StreakInfo {
   current: number;
