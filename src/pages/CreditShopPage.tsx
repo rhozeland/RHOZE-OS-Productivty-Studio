@@ -624,4 +624,102 @@ const VerifiedIPSection = ({ userId }: { userId: string | null }) => {
   );
 };
 
+
+/* ─── Intro card explaining $RHOZE — sits at the top of Creator Pass ─── */
+const RhozeIntroCard = () => (
+  <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-sm p-5 sm:p-6 space-y-3">
+    <div className="flex items-start gap-2">
+      <Coins className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+      <p className="text-sm leading-relaxed">
+        <span className="font-semibold text-foreground">What is $RHOZE? </span>
+        <span className="text-muted-foreground">
+          Rhozeland's currency — earned by creating, attending events, and collaborating.
+        </span>
+      </p>
+    </div>
+    <div className="flex items-start gap-2">
+      <Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+      <p className="text-sm leading-relaxed">
+        <span className="font-semibold text-foreground">How to earn more: </span>
+        <span className="text-muted-foreground">
+          Post work · Attend events · Complete collabs · Maintain streaks
+        </span>
+      </p>
+    </div>
+    <div className="flex items-start gap-2">
+      <Wallet className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+      <p className="text-sm leading-relaxed">
+        <span className="font-semibold text-foreground">What to spend it on: </span>
+        <span className="text-muted-foreground">
+          Rhozeland services · Hold to level up · Cash out to wallet
+        </span>
+      </p>
+    </div>
+  </div>
+);
+
+/* ─── Earn History — log of every $RHOZE earn event ─── */
+const EarnHistory = ({ userId }: { userId: string }) => {
+  const { data: earns, isLoading } = useQuery({
+    queryKey: ["rhoze-earn-history", userId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("credit_transactions")
+        .select("id, amount, description, type, created_at")
+        .eq("user_id", userId)
+        .gt("amount", 0)
+        .neq("type", "claim")
+        .order("created_at", { ascending: false })
+        .limit(25);
+      return data ?? [];
+    },
+  });
+
+  return (
+    <div className="surface-card p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <TrendingUp className="h-4 w-4 text-primary" />
+        <h3 className="font-display text-base font-semibold text-foreground">Earn History</h3>
+        <span className="ml-auto text-[10px] text-muted-foreground">
+          Every time you earned $RHOZE
+        </span>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-1.5">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-12 rounded-lg bg-muted/40 animate-pulse" />
+          ))}
+        </div>
+      ) : earns && earns.length > 0 ? (
+        <ul className="divide-y divide-border/60">
+          {earns.map((tx: any) => (
+            <li key={tx.id} className="flex items-center gap-3 py-2.5">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <Coins className="h-3.5 w-3.5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {tx.description || "Earned $RHOZE"}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {formatDistanceToNow(new Date(tx.created_at), { addSuffix: true })}
+                </p>
+              </div>
+              <span className="text-sm font-semibold text-primary whitespace-nowrap">
+                +{Math.abs(Number(tx.amount)).toLocaleString()} $RHOZE
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-xs text-muted-foreground py-4 text-center">
+          No earnings yet. Post work, attend an event, or join a collab to start
+          earning $RHOZE.
+        </p>
+      )}
+    </div>
+  );
+};
+
 export default CreditShopPage;
