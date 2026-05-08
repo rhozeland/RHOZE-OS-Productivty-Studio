@@ -318,6 +318,49 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
   );
 };
 
+/* ─── Two-audience split: Creator vs Supporter ─── */
+const AudienceSplit = () => (
+  <section className="grid md:grid-cols-2 gap-4">
+    <div className="rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-5 space-y-3">
+      <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/15 px-2.5 py-0.5">
+        <Sparkles className="h-3 w-3 text-primary" />
+        <span className="text-[10px] font-semibold tracking-wide uppercase text-primary">As a Creator</span>
+      </div>
+      <h3 className="font-display text-lg font-semibold text-foreground leading-tight">
+        Earn $RHOZE for the work you already do.
+      </h3>
+      <ul className="text-sm text-muted-foreground space-y-1.5 leading-relaxed">
+        <li><span className="text-foreground font-medium">Earn by:</span> posting work, listing services, attending events, completing collabs, keeping streaks.</li>
+        <li><span className="text-foreground font-medium">Spend on:</span> Rhozeland's photography, videography, and development services.</li>
+        <li><span className="text-foreground font-medium">Hold to:</span> climb tiers (Spark → Bloom → Glow → Play) and lower your platform fee.</li>
+      </ul>
+      <div className="flex flex-wrap gap-2 pt-1">
+        <Link to="/discover"><Button size="sm" variant="secondary" className="rounded-full">Post work</Button></Link>
+        <Link to="/discover?view=offerings"><Button size="sm" variant="outline" className="rounded-full">Browse services</Button></Link>
+      </div>
+    </div>
+
+    <div className="rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-5 space-y-3">
+      <div className="inline-flex items-center gap-1.5 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/20 px-2.5 py-0.5">
+        <Heart className="h-3 w-3 text-fuchsia-500" />
+        <span className="text-[10px] font-semibold tracking-wide uppercase text-fuchsia-500">As a Supporter</span>
+      </div>
+      <h3 className="font-display text-lg font-semibold text-foreground leading-tight">
+        Back the artists you believe in — early.
+      </h3>
+      <ul className="text-sm text-muted-foreground space-y-1.5 leading-relaxed">
+        <li><span className="text-foreground font-medium">Buy:</span> Artist Coins on a creator's Support tab using $RHOZE.</li>
+        <li><span className="text-foreground font-medium">Hold:</span> as the artist grows, demand for their coin grows with them.</li>
+        <li><span className="text-foreground font-medium">Unlock:</span> token-gated works, perks, and a public on-chain backer signal.</li>
+      </ul>
+      <div className="flex flex-wrap gap-2 pt-1">
+        <Link to="/discover?kind=artist"><Button size="sm" variant="secondary" className="rounded-full">Discover artists</Button></Link>
+        <Link to="/discover"><Button size="sm" variant="outline" className="rounded-full">Browse coins</Button></Link>
+      </div>
+    </div>
+  </section>
+);
+
 /* ─── How rewards work — inlined explainer (was /rewards) ─── */
 const RewardsExplainer = () => (
   <div className="space-y-8">
