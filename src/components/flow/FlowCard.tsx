@@ -372,6 +372,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             </div>
           </div>
         )}
+        </FlowUnlockGate>
 
         {/* ═══ Category badge (inline variant) + ACTION BAR ═══
             Inline render keeps the legacy layout with the badge to the
