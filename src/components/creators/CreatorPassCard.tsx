@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import Tilt3D from "@/components/ui/Tilt3D";
 import { useState } from "react";
 import { format } from "date-fns";
+import { RhozeInfoPopover } from "@/components/RhozeInfoPopover";
 
 // Levels/XP removed in v8.7 — Creator Pass surfaces $RHOZE hold + collectible
 // stats only. Level + XP previously double-displayed alongside the tier.
