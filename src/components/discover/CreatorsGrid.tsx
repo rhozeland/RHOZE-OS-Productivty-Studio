@@ -65,12 +65,13 @@ const CreatorsGrid = ({ search = "" }: { search?: string }) => {
 
   if (!filtered.length) {
     return (
-      <div className="rounded-3xl border border-dashed border-border bg-card/50 p-12 text-center">
-        <Sparkles className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-        <p className="text-sm text-foreground font-medium">
-          {term ? "No creators match that search." : "No creators yet."}
-        </p>
-      </div>
+      <EmptyState
+        icon={Users}
+        title={term ? "No creators match that search" : "No creators yet"}
+        description={term ? "Try a different word, or clear the search." : "Invite the artists you love — they'll get a $RHOZE reward when they join."}
+        cta={!term ? { label: "Complete your profile", to: "/settings" } : undefined}
+        size="lg"
+      />
     );
   }
 
