@@ -209,6 +209,39 @@ const EventDetailPage = () => {
     (t: any) => (Number(t.price_usd) || 0) > 0 || (Number(t.price_rhoze) || 0) > 0
   );
 
+  // Hero registration CTA — pick the cheapest available tier as the
+  // primary action. If the user already holds a ticket, show their
+  // registered state instead. Mirrors the per-tier CTA logic below so
+  // the big button always tracks reality.
+  const activeTiers = (tiers ?? []).filter((t: any) => t.is_active !== false);
+  const availableTiers = activeTiers.filter(
+    (t: any) => t.quantity_total == null || (t.quantity_sold ?? 0) < t.quantity_total,
+  );
+  const cheapestTier = [...availableTiers].sort(
+    (a: any, b: any) => (Number(a.price_usd) || 0) - (Number(b.price_usd) || 0),
+  )[0];
+  const heroPrice = cheapestTier ? Number(cheapestTier.price_usd) || 0 : 0;
+  const heroCurrency = cheapestTier?.currency_code || (ev as any).currency_code || "USD";
+  const heroIsFree =
+    cheapestTier &&
+    (Number(cheapestTier.price_usd) || 0) === 0 &&
+    (Number(cheapestTier.price_rhoze) || 0) === 0;
+  const heroLabel = myTicket
+    ? "Registered ✓"
+    : !cheapestTier
+    ? activeTiers.length > 0 ? "Sold out" : "RSVP Free"
+    : heroIsFree
+    ? "RSVP Free"
+    : `Get Ticket · ${new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency: heroCurrency,
+        maximumFractionDigits: heroPrice % 1 === 0 ? 0 : 2,
+      }).format(heroPrice)}`;
+  const heroDisabled = !!myTicket || (activeTiers.length > 0 && !cheapestTier);
+  const heroVariant: "default" | "outline" | "secondary" = myTicket
+    ? "outline"
+    : "default";
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 pb-12 md:px-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
