@@ -13,6 +13,7 @@ import {
 } from "@/lib/flow-card-prefs";
 import FlowProvenanceChip from "@/components/flow/FlowProvenanceChip";
 import VerifyWorkDialog from "@/components/works/VerifyWorkDialog";
+import FlowUnlockGate from "@/components/flow/FlowUnlockGate";
 import { ShieldCheck } from "lucide-react";
 
 /* ─── Platform detection ─── */
@@ -173,6 +174,10 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
           <div className={badgePlacementClass}>{categoryBadge}</div>
         )}
 
+        <FlowUnlockGate
+          artistId={item.user_id}
+          artistName={(item as any).profiles?.display_name ?? item.creator_name ?? null}
+        >
         {/* ═══ PHOTO / DESIGN — Full image with click to enlarge ═══ */}
         {isImage && item.file_url && (
           <div className="relative group">
