@@ -41,24 +41,33 @@ export const RhozeInfoPopover = ({
         <p className="text-sm font-semibold text-foreground">What is $RHOZE?</p>
       </div>
       <p className="text-xs text-muted-foreground leading-relaxed">
-        Rhozeland's currency — earned by creating, attending events, and
-        collaborating.
+        Rhozeland's currency — for both creators and fans. Creators earn it
+        by making work; fans earn it by showing up and supporting artists.
       </p>
       <div className="flex items-start gap-2">
         <Sparkles className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
         <div className="text-xs leading-relaxed">
-          <span className="text-foreground font-medium">How to earn more: </span>
+          <span className="text-foreground font-medium">Creators earn by: </span>
           <span className="text-muted-foreground">
-            Post work · Attend events · Complete collabs · Maintain streaks
+            Posting work · Listing services · Completing collabs · Streaks
+          </span>
+        </div>
+      </div>
+      <div className="flex items-start gap-2">
+        <Heart className="h-3.5 w-3.5 text-fuchsia-500 mt-0.5 shrink-0" />
+        <div className="text-xs leading-relaxed">
+          <span className="text-foreground font-medium">Fans earn by: </span>
+          <span className="text-muted-foreground">
+            Attending events · Following · Holding artist coins
           </span>
         </div>
       </div>
       <div className="flex items-start gap-2">
         <Wallet className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
         <div className="text-xs leading-relaxed">
-          <span className="text-foreground font-medium">What to spend it on: </span>
+          <span className="text-foreground font-medium">Spend it on: </span>
           <span className="text-muted-foreground">
-            Rhozeland services · Hold to level up · Cash out to wallet
+            Rhozeland services · Artist coins · Hold to level up · Cash out
           </span>
         </div>
       </div>
