@@ -195,6 +195,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
 
         {/* ═══════ How rewards work — inlined from old /rewards page ═══════ */}
         <TabsContent value="how" className="mt-4 space-y-6">
+          <AudienceSplit />
           <RewardsExplainer />
         </TabsContent>
 
