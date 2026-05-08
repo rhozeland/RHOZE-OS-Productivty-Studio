@@ -64,29 +64,36 @@ const SidebarHud = () => {
   return (
     <TooltipProvider delayDuration={150}>
       <div className="mx-2 mb-2 rounded-xl border border-border bg-card/60 backdrop-blur-sm p-3 space-y-2.5">
-        <Link
-          to="/credits"
-          aria-label={`Level ${level}, ${title}. Open Creator Pass.`}
-          className="flex items-center gap-2.5 group"
-        >
-          <div
-            className="relative h-10 w-10 rounded-full overflow-hidden shrink-0"
-            style={{
-              background: `radial-gradient(circle at 35% 30%, hsl(${tierColor} / 0.95), hsl(${tierColor} / 0.5) 55%, hsl(${tierColor} / 0.15) 90%)`,
-              boxShadow: `0 0 14px hsl(${tierColor} / 0.5), inset 0 -2px 6px hsl(${tierColor} / 0.4), inset 0 2px 5px rgba(255,255,255,0.4)`,
-            }}
-          >
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-[11px] font-bold text-white drop-shadow-md" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}>
-                {level}
-              </span>
-            </div>
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-foreground truncate">{title}</p>
-            <p className="text-[9px] text-muted-foreground tabular-nums">{totalXP}/{nextLevelXP} XP</p>
-          </div>
-        </Link>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              to="/credits"
+              aria-label={`Level ${level}, ${title}. Open Creator Pass.`}
+              className="flex items-center gap-2.5 group hover:opacity-90 transition-opacity"
+            >
+              <div
+                className="relative h-10 w-10 rounded-full overflow-hidden shrink-0"
+                style={{
+                  background: `radial-gradient(circle at 35% 30%, hsl(${tierColor} / 0.95), hsl(${tierColor} / 0.5) 55%, hsl(${tierColor} / 0.15) 90%)`,
+                  boxShadow: `0 0 14px hsl(${tierColor} / 0.5), inset 0 -2px 6px hsl(${tierColor} / 0.4), inset 0 2px 5px rgba(255,255,255,0.4)`,
+                }}
+              >
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[11px] font-bold text-white drop-shadow-md" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}>
+                    {level}
+                  </span>
+                </div>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-foreground truncate">{title}</p>
+                <p className="text-[9px] text-muted-foreground tabular-nums">{totalXP}/{nextLevelXP} XP</p>
+              </div>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="max-w-[220px] text-xs leading-relaxed">
+            Complete actions to earn XP and level up your status on Rhozeland. XP unlocks new features and boosts your visibility.
+          </TooltipContent>
+        </Tooltip>
 
         <div
           role="progressbar"
