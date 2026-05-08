@@ -53,6 +53,7 @@ const ArtistSpotlightCard = ({
   works_count = 0,
   followers_count = 0,
 }: Props) => {
+  const navigate = useNavigate();
   const grad = avatarGradientFor(id);
   const roleLabels = (creator_roles ?? [])
     .slice(0, 3)
