@@ -849,9 +849,9 @@ const FlowModePage = () => {
     },
   });
 
-  const allItems = useMemo<FlowItemWithProfile[]>(() => {
+  const allItems = useMemo(() => {
     if (deepLinkItem && !baseItems.some((i: any) => i.id === (deepLinkItem as any).id)) {
-      return [deepLinkItem as unknown as FlowItemWithProfile, ...baseItems];
+      return [deepLinkItem as any, ...baseItems];
     }
     return baseItems;
   }, [baseItems, deepLinkItem]);
