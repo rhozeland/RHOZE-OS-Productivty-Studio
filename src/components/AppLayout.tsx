@@ -264,7 +264,10 @@ const AppLayout = () => {
 
   const goTo = useCallback((path: string) => {
     setSearchOpen(false);
-    navigate(path);
+    // Defer navigation a tick so the CommandDialog can close cleanly first.
+    // Without this, same-route + search-param-only changes (e.g. /discover?view=spaces -> /discover?view=offerings)
+    // can be swallowed while the dialog teardown is still running.
+    setTimeout(() => navigate(path), 0);
   }, [navigate]);
 
   return (
