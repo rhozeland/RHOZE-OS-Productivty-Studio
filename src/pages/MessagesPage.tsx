@@ -33,6 +33,7 @@ import GuestMessagesPreview from "@/components/guest/GuestMessagesPreview";
 import ProjectsInbox from "@/components/messages/ProjectsInbox";
 import ListingsTab from "@/components/messages/ListingsTab";
 import HubFlowWidget from "@/components/hub/HubFlowWidget";
+import FollowingPickerDialog from "@/components/messages/FollowingPickerDialog";
 import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
 
 import ConversationsEventsBrowser from "@/components/messages/ConversationsEventsBrowser";
