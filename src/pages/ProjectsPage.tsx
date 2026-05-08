@@ -150,10 +150,10 @@ const ProjectsPage = () => {
               Workspace
             </p>
             <h1 className="font-display text-3xl md:text-4xl font-bold text-white leading-tight">
-              Projects
+              My Projects
             </h1>
             <p className="text-sm text-white/70 mt-1 max-w-md font-body">
-              Manage your creative projects, track milestones, and collaborate with your team.
+              Every project you've created — manage milestones, collaborators, and progress in one place.
             </p>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
