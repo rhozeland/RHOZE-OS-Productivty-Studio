@@ -628,46 +628,65 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
             {/* Chat Area */}
             <div className={cn("flex flex-1 flex-col", !selectedUser ? "hidden md:flex" : "flex")}>
               {!selectedUser ? (
-                <div className="flex flex-1 flex-col items-center justify-center text-center px-6">
-                  {/* Characterful illustrated empty state — paper plane + speech bubble + dotted trail. */}
-                  <svg
-                    viewBox="0 0 200 140"
-                    className="mb-5 h-32 w-44 text-muted-foreground/70"
-                    fill="none"
-                    aria-hidden
-                  >
-                    <defs>
-                      <linearGradient id="empty-gr" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stopColor="currentColor" stopOpacity="0.25" />
-                        <stop offset="100%" stopColor="currentColor" stopOpacity="0.05" />
-                      </linearGradient>
-                    </defs>
-                    {/* dotted path */}
-                    <path
-                      d="M20 110 C 60 60, 110 60, 170 30"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeDasharray="2 6"
-                      strokeLinecap="round"
-                      opacity="0.5"
-                    />
-                    {/* speech bubble */}
-                    <g opacity="0.9">
-                      <rect x="22" y="78" width="62" height="38" rx="12" fill="url(#empty-gr)" stroke="currentColor" strokeWidth="1.5" />
-                      <circle cx="38" cy="97" r="2" fill="currentColor" />
-                      <circle cx="52" cy="97" r="2" fill="currentColor" />
-                      <circle cx="66" cy="97" r="2" fill="currentColor" />
-                      <path d="M34 116 L 30 124 L 44 116 Z" fill="url(#empty-gr)" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                    </g>
-                    {/* paper plane */}
-                    <g transform="translate(140 12) rotate(18)">
-                      <path d="M0 18 L 44 4 L 26 28 L 18 22 Z" fill="url(#empty-gr)" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                      <path d="M18 22 L 26 28 L 22 36 Z" fill="currentColor" opacity="0.25" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-                    </g>
-                  </svg>
-                  <p className="font-display text-base font-semibold text-foreground">
-                    Nothing open yet — pick a conversation or start one.
+                <div className="flex flex-1 flex-col items-center justify-center px-6 py-8">
+                  <p className="font-display text-base font-semibold text-foreground mb-1">
+                    Nothing open yet
                   </p>
+                  <p className="text-xs text-muted-foreground mb-6">
+                    Start a conversation, or try one of these:
+                  </p>
+                  <div className="w-full max-w-sm space-y-2">
+                    {[
+                      {
+                        icon: UserPlus,
+                        title: "Message someone you follow",
+                        desc: "Pick from people you follow",
+                        onClick: () => setFollowingOpen(true),
+                      },
+                      {
+                        icon: Inbox,
+                        title: "Respond to an inquiry",
+                        desc: allInquiries?.length
+                          ? `${allInquiries.length} waiting`
+                          : "Check pending inquiries",
+                        onClick: () => {
+                          const el = document.getElementById("inquiries-section");
+                          if (el) {
+                            (el as HTMLDetailsElement).open = true;
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          } else {
+                            toast.info("No inquiries yet");
+                          }
+                        },
+                      },
+                      {
+                        icon: Compass,
+                        title: "Browse listings to find collabs",
+                        desc: "Open Discover · Offerings",
+                        onClick: () => navigate("/discover?view=offerings"),
+                      },
+                    ].map((s) => (
+                      <button
+                        key={s.title}
+                        type="button"
+                        onClick={s.onClick}
+                        className="group w-full flex items-center gap-3 rounded-xl border border-border bg-card hover:border-foreground/30 hover:bg-muted/40 transition-all px-4 py-3 text-left"
+                      >
+                        <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <s.icon className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-foreground truncate">
+                            {s.title}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground truncate">
+                            {s.desc}
+                          </p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
+                      </button>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <>
