@@ -303,6 +303,11 @@ const GettingStartedBanner = () => {
                         {step.label}
                       </p>
                       {!step.done && (
+                        <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                          +{step.reward} $RHOZE
+                        </span>
+                      )}
+                      {!step.done && (
                         <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
                       )}
                     </Link>
