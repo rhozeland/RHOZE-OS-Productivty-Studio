@@ -88,7 +88,7 @@ const ProjectsPage = () => {
       queryClient.setQueryData(["projects"], (old: any[] | undefined) =>
         old ? [newProject, ...old] : [newProject]
       );
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["my-projects", user?.id] });
       setOpen(false);
       setTitle("");
       setDescription("");
@@ -106,7 +106,7 @@ const ProjectsPage = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["my-projects", user?.id] });
       toast.success("Project deleted");
       setDeleteTarget(null);
     },
