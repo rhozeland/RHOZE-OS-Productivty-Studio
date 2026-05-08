@@ -349,6 +349,7 @@ const AppLayout = () => {
               </button>
 
               {user && <NotificationBell />}
+              {user && <PostMenuButton />}
               {user && <RhozeBalanceChip />}
 
               {/* Profile dropdown — top-right */}
