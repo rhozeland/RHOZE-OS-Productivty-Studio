@@ -49,7 +49,7 @@ import { CelebrationProvider } from "@/components/hud/CelebrationProvider";
 const PAGES: { name: string; path: string; icon: any; keywords?: string[] }[] = [
   { name: "Discover", path: "/discover", icon: Search, keywords: ["home", "feed", "stream", "explore"] },
   { name: "Flow Mode", path: "/flow", icon: Radio, keywords: ["swipe", "drops", "reels"] },
-  { name: "Creators", path: "/discover?view=all", icon: User, keywords: ["artists", "people", "profiles"] },
+  { name: "Creators", path: "/discover?view=creators", icon: User, keywords: ["artists", "people", "profiles"] },
   { name: "Marketplace", path: "/discover?view=offerings", icon: ShoppingBag, keywords: ["offerings", "services", "shop", "listings"] },
   { name: "Events", path: "/discover?view=events", icon: Calendar, keywords: ["shows", "tickets", "calendar"] },
   { name: "Spaces", path: "/discover?view=spaces", icon: Building2, keywords: ["studios", "venues", "rooms"] },
