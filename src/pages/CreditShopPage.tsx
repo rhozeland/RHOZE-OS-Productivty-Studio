@@ -25,6 +25,7 @@ import TicketsTab from "@/components/credits/TicketsTab";
 import { format } from "date-fns";
 import { Link, useSearchParams } from "react-router-dom";
 import CreatorPassCard from "@/components/creators/CreatorPassCard";
+import NextStepCard from "@/components/creators/NextStepCard";
 import GettingStartedBanner from "@/components/creators/GettingStartedBanner";
 import TierMatrix from "@/components/creators/TierMatrix";
 import CoinPortfolio from "@/components/creators/CoinPortfolio";
@@ -159,6 +160,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
 
         {/* ═══════ My Pass ═══════ */}
         <TabsContent value="pass" className="mt-4 space-y-4">
+          <NextStepCard />
           <CreatorPassCard />
           <GettingStartedBanner />
           <StreakCard />
