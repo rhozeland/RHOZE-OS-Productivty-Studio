@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Store, ArrowRight, Loader2 } from "lucide-react";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const ListingsTab = ({ userId }: { userId: string }) => {
   const [createOpen, setCreateOpen] = useState(false);
