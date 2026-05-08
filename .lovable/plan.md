@@ -1,54 +1,64 @@
-# Three-Room Restructure
+## Section 2 — The Heart: Fan Investment & Content
 
-Reorganize Rhozeland into three "Rooms" via a permanent bottom nav, plus a role-based onboarding step that routes Creators → Market and Investors → Scene. **No features are removed** — every existing route stays mounted; the Rooms are organizing front doors that link into them.
+Three coordinated changes that reframe the economy as "shares in artists" and turn The Flow into a VIP-style unlock loop. Strictly UI/copy + a thin gating layer — no DB schema changes, no economic logic changes.
 
-## Room mapping (existing routes preserved)
+---
 
-**Room 1 — THE SCENE** (Social / Discovery)
-- Front door: `/scene` (new) → renders the existing Discover layout (globe + featured + Stream + Flow toggle)
-- Links into: `/discover`, `/flow`, `/stream`, `/people`, `/profiles`, `/creators`
+### 1. Language pivot (UI copy only)
 
-**Room 2 — THE MARKET** (Work / Utility)
-- Front door: `/market` (new) → existing MarketplacePage content (mosaic with Drops · Offerings · Events · Spaces) + quick links to studios, services, projects
-- Links into: `/marketplace`, `/spaces`, `/studios`, `/services`, `/projects`, `/bookings`, `/calendar`, `/messages`
+A single source-of-truth helper `src/lib/economy-copy.ts` exporting:
+- `CREDITS_LABEL = "Platform Credits"` (was "$RHOZE Token" in user-facing copy)
+- `SHARES_LABEL = "Artist Shares"` / `SHARE_LABEL = "Share"` (was "Artist Coin")
+- `MARKET_GROWTH_LABEL = "Market Growth"` (used wherever we currently say "bonding curve", "market cap progress", "price impact", etc.)
+- Helpers: `formatShares(n)`, `formatCredits(n)`.
 
-**Room 3 — THE VAULT** (Finance / Growth)
-- Front door: `/vault` (new) → portfolio dashboard pulling existing components: `RhozeBalanceChip`, `WithdrawalPanel`, coin holdings, purchases, credits/rewards
-- Links into: `/credits`, `/purchases`, `/seller-dashboard`, `/swap-history`, profile Coin tab
+Then sweep the high-traffic surfaces and replace strings:
+- `RhozeBalanceChip`, `RhozeInfoPopover`, `ClaimRhozeButton`, `PayWithRhozeButton` button labels
+- Creator Pass page (`/credits`) tabs + copy: "$RHOZE" → "Platform Credits"
+- Launchpad / Coin tab / `ProfileCoinTab` / `LaunchDetailPage` / `TradePanel` / `CreatorReadinessCard`: "Coin" → "Share", "bonding curve / market cap" → "Market Growth"
+- `MintAddressChip`, `VaultRoomPage` ("Artist coins" → "Artist Shares")
+- `CoinSwapPanel` / swap history: "Swap $RHOZE for Coin" → "Buy Shares with Platform Credits"
 
-## Implementation
+Internal code identifiers, table names, RPC names, env vars, ticker symbols on chain, and the on-chain `$RHOZE` SPL token name stay unchanged. The wordmark `$RHOZE` is preserved in the brand wallet/withdrawal contexts where it refers to the literal Solana token (per memory rule).
 
-### 1. Bottom nav bar (new)
-New component `src/components/RoomsBottomNav.tsx` — fixed bottom, 3 large tabs (Scene · Market · Vault) with icons (Sparkles, Store, Coins). Mounted in `AppLayout.tsx` for authenticated users. Active state by route prefix. Mobile-first, but visible on all breakpoints (similar to existing DockBar styling, but always visible, three items only).
+The `RhozeInfoPopover` gets a one-liner: *"Platform Credits are the in-app currency you spend on Artist Shares. They never leave the platform."*
 
-### 2. Three Room pages (new)
-- `src/pages/SceneRoomPage.tsx` — renders `<DiscoverPage />` content (or re-exports it), header chip "THE SCENE".
-- `src/pages/MarketRoomPage.tsx` — renders `<MarketplacePage />` content with header chip "THE MARKET".
-- `src/pages/VaultRoomPage.tsx` — composes existing finance widgets: balance chip, credits summary, purchases link, withdrawal panel, swap history link, "Your coins" section.
+### 2. The Flow — blur + Invest & Unlock
 
-Each Room page is a thin wrapper — no business logic moved, just composition.
+New component `src/components/flow/FlowUnlockGate.tsx` wraps the FlowCard media area and:
+- Reads the viewer's `coin_holdings` for that artist (cached via React Query, key includes viewer + artist user_id).
+- If viewer is signed-out OR holds 0 shares of the post author → render the media with `filter: blur(28px) saturate(0.6)` and a centered glass card:
+  - Title: *"Locked · Hold shares to unlock"*
+  - Subtitle: *"Invest in @artist to unlock their private feed"*
+  - Primary button: **Invest & Unlock** → opens a new `<InvestUnlockSheet />` (bottom sheet on mobile, dialog on desktop) prefilled with the artist's launch / share-purchase flow.
+- If viewer holds ≥ 1 share OR is the author → render normally (no blur). Owners pass through.
+- Likes/comments/swipe still work on locked cards (blurred preview is teaser, action bar visible) but tapping the card body opens the unlock sheet instead of the comment sheet.
 
-### 3. Routes (App.tsx)
-Add `/scene`, `/market`, `/vault` routes. Keep all existing routes intact.
+`InvestUnlockSheet` reuses the existing share-purchase RPC (`swap_rhoze_for_coin`) — buys 1 share by default with a slider for more, shows current Market Growth %, confirms with toast and invalidates the holdings query so the same card un-blurs in place.
 
-### 4. Navigation config
-Add three Room entries to `src/config/navigation.ts` so they're recognized. Don't change DEFAULT_DOCK_IDS yet.
+Loading state: render skeleton (no blur flicker) while holdings query is pending for signed-in users.
 
-### 5. Role-based onboarding
-Add a new step to `WelcomeModal.tsx` (after username, before tour): "Are you here to **Create** or **Invest**?" — two large cards. Selection is saved to `profiles.primary_role` ('creator' | 'investor') via existing profiles update pattern. After onboarding completes:
-- Creator → navigate to `/market`
-- Investor → navigate to `/scene`
+### 3. Profile — primary CTA becomes Invest & Unlock
 
-### 6. Database
-Migration: add `primary_role text` column to `profiles` (nullable, no constraint — values 'creator' | 'investor').
+In `ProfileDetailPage.tsx` (and the Support tab), promote a single primary CTA above Follow/Message/Book:
+- **Invest & Unlock** — opens the same `InvestUnlockSheet` for that artist.
+- Sub-line: *"Buy a share to unlock private posts, drops, and behind-the-scenes."*
+- If viewer already holds shares: button label flips to **Buy More Shares** and a green chip *"Unlocked · X shares"* appears next to it.
+- If artist hasn't launched a share yet: CTA shows **Notify me when shares launch** (disabled action, tracked via existing follow).
+- Existing Follow / Message / Book buttons demote to secondary (smaller, outline variant) below the primary CTA.
 
-## Technical notes
-- Bottom nav uses `position: fixed; bottom: 0` with safe-area-inset padding; adds `pb-20` spacer to AppLayout main when present.
-- Room pages reuse existing page components by importing and rendering them — zero duplication.
-- Onboarding role choice stored both in modal state (immediate redirect) and persisted to profile (future personalization).
-- Existing DockBar stays hidden (per memory: bottom dock currently hidden). The new Rooms bar is the replacement.
+The Support tab keeps `<ProfileCoinTab />` but the heading becomes *"Artist Shares"* and the explainer is rewritten in plain language (no "bonding curve").
 
-## Out of scope
-- Renaming/removing existing routes
-- Moving feature implementations between files
-- Changing the side nav (AppSidebar) — Rooms are additive
+---
+
+### Out of scope
+
+- No DB migrations. Holdings, ledger tables, RPC names, on-chain ticker stay as-is.
+- No changes to fee math, reward catalog, tier matrix.
+- Pay-with-$RHOZE checkout (BookingCheckoutModal, etc.) keeps its $RHOZE label because that surface is the literal on-chain token, not platform credits. Only the in-app credit balance + artist coin language is renamed.
+- Admin/dev-only surfaces (AdminPage internals, console logs) keep technical names.
+
+### Files touched
+
+New: `src/lib/economy-copy.ts`, `src/components/flow/FlowUnlockGate.tsx`, `src/components/profile/InvestUnlockSheet.tsx`.
+Edited: `RhozeBalanceChip`, `RhozeInfoPopover`, `VaultRoomPage`, `CreditShopPage` (Creator Pass), `ProfileCoinTab`, `LaunchDetailPage`, `TradePanel`, `CoinSwapPanel`, `ProfileDetailPage`, `FlowCard` (wrap media in gate), `MintAddressChip`, `CreatorReadinessCard`.
