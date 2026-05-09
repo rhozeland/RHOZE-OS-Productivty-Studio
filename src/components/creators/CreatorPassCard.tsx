@@ -219,12 +219,12 @@ const CreatorPassCard = () => {
           <div className="grid grid-cols-4 gap-3">
             {([
               {
-                label: "Balance",
-                value: `${credits?.balance ?? 0}`,
+                label: "Tokens Launched",
+                value: `${tokensLaunched ?? 0}`,
                 icon: Coins,
-                isZero: Number(credits?.balance ?? 0) === 0,
-                hint: { text: "Earn $RHOZE →", to: "/credits?tab=how" },
-                to: null,
+                isZero: (tokensLaunched ?? 0) === 0,
+                hint: { text: "Launch a coin →", to: "/launchpad" },
+                to: "/launchpad",
               },
               {
                 label: "Streak",
@@ -236,10 +236,10 @@ const CreatorPassCard = () => {
               },
               {
                 label: "Events Attended",
-                value: `${ticketsData?.length ?? 0}`,
+                value: `${eventsAttended}`,
                 icon: Ticket,
-                isZero: (ticketsData?.length ?? 0) === 0,
-                hint: { text: "Attend 1 event →", to: "/events" },
+                isZero: false,
+                hint: { text: "", to: null as string | null },
                 to: "/credits?tab=tickets",
               },
               {
@@ -247,8 +247,8 @@ const CreatorPassCard = () => {
                 value: `${verifiedWorks ?? 0}`,
                 icon: Shield,
                 isZero: (verifiedWorks ?? 0) === 0,
-                hint: { text: "Register a work →", to: "/works" },
-                to: "/works",
+                hint: { text: "Register a work →", to: "/credits?tab=verified-ip" },
+                to: "/credits?tab=verified-ip",
               },
             ] as const).map((stat) => {
               const showHint = stat.isZero && stat.hint;
