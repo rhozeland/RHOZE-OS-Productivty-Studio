@@ -284,7 +284,54 @@ const RichMessageCard = ({ content, isMine, timestamp, formatTime, messageId, se
     );
   }
 
-  // STAFF_INVITE
+  // FLOW (shared from Flow mode). Supports the `[FLOW:` prefix as well as
+  // the legacy raw-JSON `{"type":"flow_share",...}` payload.
+  if (content.startsWith("[FLOW:") || content.startsWith('{"type":"flow_share"')) {
+    let data: any = null;
+    if (content.startsWith("[FLOW:")) {
+      data = parseRich(content, "[FLOW:");
+    } else {
+      try { data = JSON.parse(content); } catch { /* noop */ }
+    }
+    if (!data) return null;
+
+    const href = data.link_url || (data.item_id ? `/flow?item=${data.item_id}` : "/flow");
+    const isExternal = !!data.link_url;
+    const Wrapper: any = isExternal ? "a" : Link;
+    const wrapperProps = isExternal
+      ? { href, target: "_blank", rel: "noopener noreferrer" }
+      : { to: href };
+
+    return (
+      <Wrapper {...wrapperProps} className="block">
+        <div className={cn(
+          "max-w-[70%] rounded-2xl overflow-hidden border hover:shadow-md transition-shadow",
+          isMine ? "bg-primary/5 border-primary/20 rounded-br-md" : "bg-muted border-border rounded-bl-md"
+        )}>
+          {data.file_url && (
+            <img src={data.file_url} alt={data.title || ""} className="w-full max-h-48 object-cover" />
+          )}
+          <div className="px-3 py-2.5">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Sparkles className="h-3 w-3 text-primary" />
+              <span className="text-[10px] font-medium text-primary uppercase tracking-wider">
+                From Flow
+              </span>
+            </div>
+            <p className="text-sm font-medium text-foreground line-clamp-2">
+              {data.title || "Flow item"}
+            </p>
+            {data.category && (
+              <p className="text-[11px] text-muted-foreground capitalize mt-0.5">{data.category}</p>
+            )}
+            <p className="mt-1.5 text-[10px] text-muted-foreground">{formatTime(timestamp)}</p>
+          </div>
+        </div>
+      </Wrapper>
+    );
+  }
+
+
   if (content.startsWith("[STAFF_INVITE:")) {
     const data = parseRich(content, "[STAFF_INVITE:");
     if (!data) return null;
