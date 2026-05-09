@@ -948,6 +948,7 @@ export type Database = {
           invitee_id: string
           inviter_id: string
           message: string | null
+          pct: number
           responded_at: string | null
           split_config_id: string
           status: string
@@ -959,6 +960,7 @@ export type Database = {
           invitee_id: string
           inviter_id: string
           message?: string | null
+          pct?: number
           responded_at?: string | null
           split_config_id: string
           status?: string
@@ -970,6 +972,7 @@ export type Database = {
           invitee_id?: string
           inviter_id?: string
           message?: string | null
+          pct?: number
           responded_at?: string | null
           split_config_id?: string
           status?: string
@@ -3138,8 +3141,12 @@ export type Database = {
           creator_amount: number
           curator_amount: number
           id: string
+          platform_amount: number | null
+          platform_fee_bps: number | null
           purchase_id: string | null
           solana_signature: string | null
+          splits: Json | null
+          splits_hash: string | null
           total_amount: number
         }
         Insert: {
@@ -3149,8 +3156,12 @@ export type Database = {
           creator_amount: number
           curator_amount?: number
           id?: string
+          platform_amount?: number | null
+          platform_fee_bps?: number | null
           purchase_id?: string | null
           solana_signature?: string | null
+          splits?: Json | null
+          splits_hash?: string | null
           total_amount: number
         }
         Update: {
@@ -3160,8 +3171,12 @@ export type Database = {
           creator_amount?: number
           curator_amount?: number
           id?: string
+          platform_amount?: number | null
+          platform_fee_bps?: number | null
           purchase_id?: string | null
           solana_signature?: string | null
+          splits?: Json | null
+          splits_hash?: string | null
           total_amount?: number
         }
         Relationships: [
