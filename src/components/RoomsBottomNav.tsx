@@ -62,7 +62,6 @@ const RoomsBottomNav = () => {
   const totalXP = xp?.totalXP ?? 0;
   const nextLevelXP = xp?.nextLevelXP ?? 20;
   const streak = xp?.streak ?? 0;
-  const balance = xp?.rhozeBalance ?? 0;
 
   return (
     <TooltipProvider delayDuration={150}>
