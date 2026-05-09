@@ -81,6 +81,21 @@ const CreatorPassCard = () => {
     enabled: !!user,
   });
 
+  // Tokens launched — live coin_launches the user is creator of. Replaces
+  // the in-card $RHOZE balance metric (balance still drives tier eligibility,
+  // but it no longer needs to be displayed front-and-center).
+  const { data: tokensLaunched } = useQuery({
+    queryKey: ["tokens-launched-pass", user?.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("coin_launches")
+        .select("id", { count: "exact", head: true })
+        .eq("creator_id", user!.id);
+      return count ?? 0;
+    },
+    enabled: !!user,
+  });
+
   // Events attended — count of issued/checked-in tickets the user holds.
   const { data: ticketsData } = useQuery({
     queryKey: ["pass-tickets", user?.id],
