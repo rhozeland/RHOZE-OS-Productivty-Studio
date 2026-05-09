@@ -373,7 +373,7 @@ const CreatorPassCard = () => {
           ) : (
             <>
               <p className="font-body text-sm text-foreground line-clamp-2 leading-snug">
-                {studioStats?.latestMessage ?? "No messages yet"}
+                {prettifyMessagePreview(studioStats?.latestMessage)}
               </p>
               <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">Latest message</p>
             </>
