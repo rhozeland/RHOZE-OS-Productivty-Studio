@@ -37,7 +37,6 @@ import {
 } from "lucide-react";
 import CuratorInviteSection from "./CuratorInviteSection";
 import { shortHash } from "@/lib/content-hash";
-import { useRhozeBalance } from "@/hooks/useRhozeBalance";
 import { feeForBalance, usePlatformFeeTiers } from "@/hooks/usePlatformFeeTiers";
 
 interface RevenueSplitConfigProps {
@@ -60,7 +59,21 @@ const RevenueSplitConfig = ({ listingId, contractId }: RevenueSplitConfigProps) 
   const qc = useQueryClient();
   const [workId, setWorkId] = useState<string>("");
   const { data: tiers = [] } = usePlatformFeeTiers();
-  const { balance: rhozeBalance = 0 } = useRhozeBalance();
+
+  // Tier source per v8.1: in-app user_credits.balance (NOT on-chain).
+  const { data: rhozeBalance = 0 } = useQuery({
+    queryKey: ["user-credits-balance", user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      const { data } = await supabase
+        .from("user_credits")
+        .select("balance")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return Number(data?.balance ?? 0);
+    },
+    enabled: !!user,
+  });
   const platformFee = feeForBalance(rhozeBalance, tiers);
 
   // Find or create the config row.
