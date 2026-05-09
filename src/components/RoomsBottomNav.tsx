@@ -191,40 +191,33 @@ const RoomsBottomNav = () => {
               </div>
             )}
 
-            {/* ── Rooms (right) ── */}
-            <div className="flex items-stretch gap-1 flex-1 min-w-0">
+            {/* ── Rooms (right) — compact icon-only pills with tooltip
+                labels so the bar stays small even with the HUD on. ── */}
+            <div className="flex items-center gap-1">
               {ROOMS.map(({ id, label, sub, Icon, to, matches }) => {
                 const active = isMatch(pathname, matches);
                 return (
-                  <NavLink
-                    key={id}
-                    to={to}
-                    aria-current={active ? "page" : undefined}
-                    className="flex-1 min-w-0"
-                  >
-                    <motion.div
-                      whileTap={{ scale: 0.95 }}
-                      className={cn(
-                        "flex flex-col items-center justify-center gap-0.5 rounded-xl py-2 px-2 transition-colors h-full",
-                        active
-                          ? "bg-foreground text-background"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
-                      <span className="text-[11px] font-display font-semibold leading-none tracking-wide uppercase">
-                        {label}
-                      </span>
-                      <span
-                        className={cn(
-                          "text-[9px] leading-none tracking-[0.18em] uppercase hidden sm:block",
-                          active ? "opacity-70" : "opacity-50",
-                        )}
-                      >
-                        {sub}
-                      </span>
-                    </motion.div>
-                  </NavLink>
+                  <Tooltip key={id}>
+                    <TooltipTrigger asChild>
+                      <NavLink to={to} aria-current={active ? "page" : undefined} aria-label={`${label} · ${sub}`}>
+                        <motion.div
+                          whileTap={{ scale: 0.92 }}
+                          className={cn(
+                            "h-9 w-9 flex items-center justify-center rounded-full transition-colors",
+                            active
+                              ? "bg-foreground text-background"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+                          )}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </motion.div>
+                      </NavLink>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs">
+                      <p className="font-bold">{label}</p>
+                      <p className="text-muted-foreground">{sub}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 );
               })}
             </div>
