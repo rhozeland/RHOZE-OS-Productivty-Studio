@@ -70,8 +70,8 @@ const RoomsBottomNav = () => {
         className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
-        <div className="mx-auto max-w-2xl px-3 pb-3 pointer-events-auto">
-          <div className="flex items-stretch gap-1 rounded-full border border-border bg-card/95 backdrop-blur-xl shadow-lg shadow-foreground/10 p-1">
+        <div className="mx-auto w-fit max-w-[calc(100vw-1.5rem)] px-3 pb-3 pointer-events-auto">
+          <div className="inline-flex items-stretch gap-1 rounded-full border border-border bg-card/95 backdrop-blur-xl shadow-lg shadow-foreground/10 p-1">
             {/* ── Player HUD (left) ── */}
             {user && (
               <div className="flex items-center gap-2 pl-1.5 pr-2 min-w-0 shrink">
@@ -175,11 +175,11 @@ const RoomsBottomNav = () => {
                   <TooltipTrigger asChild>
                     <Link
                       to="/discover"
-                      className="hidden md:flex items-center gap-1 px-2 py-1 rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors"
+                      className="flex items-center gap-1.5 px-3 h-9 rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors shadow-sm"
                       aria-label="Upload work"
                     >
-                      <Upload className="h-3 w-3" />
-                      <span className="text-[10px] font-bold uppercase tracking-wide">Upload</span>
+                      <Upload className="h-3.5 w-3.5" strokeWidth={2.5} />
+                      <span className="hidden sm:inline text-xs font-bold uppercase tracking-wide">Upload</span>
                     </Link>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="text-xs">
