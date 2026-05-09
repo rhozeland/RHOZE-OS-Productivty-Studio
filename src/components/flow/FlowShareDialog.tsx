@@ -56,14 +56,15 @@ const FlowShareDialog = ({ open, onOpenChange, item }: FlowShareDialogProps) => 
     setSending(recipientId);
 
     try {
-      const shareContent = JSON.stringify({
-        type: "flow_share",
+      // Wrap as a rich `[FLOW:...]` payload so RichMessageCard renders a
+      // proper preview instead of dumping the raw JSON in the bubble.
+      const shareContent = `[FLOW:${JSON.stringify({
         item_id: item.id,
         title: item.title,
         category: item.category,
         file_url: item.file_url || null,
         link_url: item.link_url || null,
-      });
+      })}]`;
 
       const { error } = await supabase.from("messages").insert({
         sender_id: user.id,
