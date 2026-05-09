@@ -176,10 +176,10 @@ const RoomsBottomNav = () => {
                     <Link
                       to="/discover"
                       className="flex items-center gap-1.5 px-3 h-9 rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors shadow-sm"
-                      aria-label="Upload work"
+                      aria-label="Post work"
                     >
                       <Upload className="h-3.5 w-3.5" strokeWidth={2.5} />
-                      <span className="hidden sm:inline text-xs font-bold uppercase tracking-wide">Upload</span>
+                      <span className="hidden sm:inline text-xs font-bold uppercase tracking-wide">Post</span>
                     </Link>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="text-xs">
