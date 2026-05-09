@@ -169,20 +169,21 @@ const RoomsBottomNav = () => {
                   </Tooltip>
                 )}
 
-                {/* $RHOZE chip */}
+                {/* Upload shortcut — replaces the $RHOZE balance chip so the
+                    primary creation surface is one tap from anywhere. */}
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Link
-                      to="/credits"
-                      className="hidden md:flex items-center gap-1 px-2 py-1 rounded-full bg-[hsl(var(--pink)/0.15)] border border-[hsl(var(--pink)/0.35)] hover:bg-[hsl(var(--pink)/0.25)] transition-colors"
-                      aria-label={`${balance.toLocaleString()} $RHOZE`}
+                      to="/discover"
+                      className="hidden md:flex items-center gap-1 px-2 py-1 rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors"
+                      aria-label="Upload work"
                     >
-                      <Coins className="h-3 w-3" style={{ color: "hsl(var(--pink))" }} />
-                      <span className="text-[10px] font-bold tabular-nums">{balance.toLocaleString()}</span>
+                      <Upload className="h-3 w-3" />
+                      <span className="text-[10px] font-bold uppercase tracking-wide">Upload</span>
                     </Link>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="text-xs">
-                    {balance.toLocaleString()} $RHOZE
+                    Drop a work, offering, or update
                   </TooltipContent>
                 </Tooltip>
 
