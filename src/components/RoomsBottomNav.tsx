@@ -1,5 +1,5 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { Sparkles, Store, Coins, Flame } from "lucide-react";
+import { Sparkles, Store, Coins, Flame, Upload } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
