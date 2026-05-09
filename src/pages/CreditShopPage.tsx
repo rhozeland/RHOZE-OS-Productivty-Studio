@@ -194,13 +194,12 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
 
         {/* ═══════ How rewards work — inlined from old /rewards page ═══════ */}
         <TabsContent value="how" className="mt-4 space-y-6">
-          <AudienceSplit />
-          <RewardsExplainer />
+          <RewardsExplainerV2 />
         </TabsContent>
 
         {/* ═══════ Verified IP ═══════ */}
         <TabsContent value="works" className="mt-4 space-y-6">
-          <VerifiedIPSection userId={user?.id ?? null} />
+          <VerifiedIPHub userId={user?.id ?? null} />
         </TabsContent>
 
         {/* ═══════ Purchases / Buy $RHOZE ═══════ */}
@@ -275,41 +274,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
               <TransactionHistory userId={user?.id} />
             </>
           ) : (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-6">
-                  <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                    <h2 className="font-display text-2xl font-bold text-foreground">$RHOZE Token</h2>
-                    <p className="text-muted-foreground">
-                      $RHOZE is the native utility token for Rhozeland. Use it to pay for studio bookings at a discount,
-                      trade on the marketplace, and support creators directly.
-                    </p>
-                    <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contract Address</p>
-                      <code className="text-xs text-foreground bg-muted px-2 py-1 rounded font-mono break-all block">{RHOZE_CA}</code>
-                      <p className="text-xs text-muted-foreground">Solana · SPL Token</p>
-                    </div>
-                    <a href={PUMP_FUN_URL} target="_blank" rel="noopener noreferrer">
-                      <Button className="w-full h-12 text-base rounded-full gap-2">
-                        <ExternalLink className="h-4 w-4" /> Buy on Pump Fun
-                      </Button>
-                    </a>
-                  </motion.div>
-                </div>
-                <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="rounded-2xl border border-border bg-card overflow-hidden">
-                  <div className="p-4 border-b border-border">
-                    <h3 className="font-display font-semibold text-foreground">Swap Widget</h3>
-                    <p className="text-xs text-muted-foreground">Swap SOL → $RHOZE directly — powered by Jupiter</p>
-                  </div>
-                  <iframe
-                    src={`https://jup.ag/swap/SOL-${RHOZE_CA}?embedded=true`}
-                    className="w-full h-[500px] border-0"
-                    title="Buy $RHOZE"
-                    allow="clipboard-write; clipboard-read"
-                  />
-                </motion.div>
-              </div>
-            </div>
+            <BuyRhozeSection />
           )}
         </TabsContent>
       </Tabs>
