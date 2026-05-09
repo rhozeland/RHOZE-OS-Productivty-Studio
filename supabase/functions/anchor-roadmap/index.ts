@@ -73,30 +73,41 @@ Deno.serve(async (req) => {
       return respond(403, { error: "Not a party to this contract" });
     }
 
-    // Optional split config (specialist may or may not have set one yet).
+    // Splits v2: load the locked split + collaborator pcts so the memo
+    // carries the canonical fingerprint, not the legacy creator/curator/buyback shape.
     const { data: split } = await adminClient
       .from("revenue_split_configs")
-      .select("creator_pct, curator_pct, buyback_pct, buyback_wallet, curator_id")
+      .select("id, locked_platform_fee_bps, splits_hash")
       .eq("contract_id", contract_id)
       .eq("is_active", true)
       .maybeSingle();
 
+    let collaborators: Array<{ user_id: string; pct: number }> = [];
+    if (split?.id) {
+      const { data: rows } = await adminClient
+        .from("revenue_split_collaborators")
+        .select("user_id, pct")
+        .eq("config_id", split.id);
+      collaborators = (rows ?? []).map((r) => ({
+        user_id: r.user_id,
+        pct: Number(r.pct),
+      }));
+    }
+
     // Build the public memo.
     const memo = JSON.stringify({
       protocol: "rhozeland",
-      version: "1",
+      version: "2",
       type: "roadmap_lock",
       contract: contract.id.slice(0, 8),
       project: contract.project_id.slice(0, 8),
       client: contract.client_id.slice(0, 8),
       specialist: contract.specialist_id.slice(0, 8),
       total: Number(contract.total_credits),
-      splits: split
-        ? {
-            creator: Number(split.creator_pct),
-            curator: Number(split.curator_pct),
-            buyback: Number(split.buyback_pct),
-          }
+      splits_hash: split?.splits_hash ?? null,
+      platform_bps: split?.locked_platform_fee_bps ?? null,
+      collaborators: collaborators.length
+        ? collaborators.map((c) => ({ u: c.user_id.slice(0, 8), p: c.pct }))
         : null,
       ts: new Date().toISOString(),
     });

@@ -1,26 +1,16 @@
+// Splits v2 — payout collaborators + platform fee.
+//
+// Requires the split config to be locked (locked_at + locked_platform_fee_bps).
+// 1. Verify caller is a party to the contract + the milestone is approved.
+// 2. Compute platform fee from locked_platform_fee_bps.
+// 3. Distribute the remainder to every collaborator by their locked %.
+// 4. Memo the canonical payload on Solana (best-effort).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import {
-  Connection,
-  Keypair,
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-  clusterApiUrl,
-} from "https://esm.sh/@solana/web3.js@1.98.4";
-import {
-  getAssociatedTokenAddressSync as getAssociatedTokenAddress,
-  createTransferInstruction,
-  createAssociatedTokenAccountInstruction,
-} from "https://esm.sh/@solana/spl-token@0.4.9";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const RHOZE_MINT = new PublicKey("7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump");
-const MEMO_PROGRAM_ID = new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
-const TOKEN_DECIMALS = 6;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -30,241 +20,201 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: "No auth" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResp(401, { error: "No auth" });
     }
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
+      { global: { headers: { Authorization: authHeader } } },
     );
-
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (authError || !user) return jsonResp(401, { error: "Unauthorized" });
 
     const { config_id, purchase_id } = await req.json();
-    // purchase_id here = milestone_id (per MilestoneTracker caller)
     if (!config_id || !purchase_id) {
-      return new Response(JSON.stringify({ error: "config_id and purchase_id required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResp(400, { error: "config_id and purchase_id required" });
     }
 
-    const adminClient = createClient(
+    const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // Get split config
-    const { data: config, error: configError } = await adminClient
+    // Load config + collaborators.
+    const { data: config } = await admin
       .from("revenue_split_configs")
       .select("*")
       .eq("id", config_id)
       .eq("is_active", true)
       .single();
+    if (!config) return jsonResp(404, { error: "Split config not found" });
 
-    if (configError || !config) {
-      return new Response(JSON.stringify({ error: "Split config not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (!config.locked_at || !config.locked_platform_fee_bps) {
+      return jsonResp(400, {
+        error: "Splits must be locked before payout. Lock the project first.",
       });
     }
 
-    // Verify the milestone exists, is approved, belongs to the same contract,
-    // and that the caller is the contract's client (the one paying).
-    const { data: milestone, error: msErr } = await adminClient
+    // Verify milestone + contract ownership.
+    const { data: milestone } = await admin
       .from("project_milestones")
       .select("id, contract_id, credit_amount, status")
       .eq("id", purchase_id)
       .maybeSingle();
-    if (msErr || !milestone) {
-      return new Response(JSON.stringify({ error: "Milestone not found" }), {
-        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!milestone) return jsonResp(404, { error: "Milestone not found" });
     if (milestone.contract_id !== config.contract_id) {
-      return new Response(JSON.stringify({ error: "Milestone/config mismatch" }), {
-        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResp(403, { error: "Milestone/config mismatch" });
     }
     if (milestone.status !== "approved" && milestone.status !== "released") {
-      return new Response(JSON.stringify({ error: "Milestone not approved" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResp(400, { error: "Milestone not approved" });
     }
-    const { data: contract } = await adminClient
+    const { data: contract } = await admin
       .from("project_contracts")
       .select("client_id, specialist_id")
       .eq("id", milestone.contract_id)
       .maybeSingle();
     if (!contract || (contract.client_id !== user.id && contract.specialist_id !== user.id)) {
-      return new Response(JSON.stringify({ error: "Not authorized for this contract" }), {
-        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResp(403, { error: "Not authorized for this contract" });
     }
 
-    // Server-derived amount — never trust client value
     const total_amount = Number(milestone.credit_amount);
     if (!total_amount || total_amount <= 0) {
-      return new Response(JSON.stringify({ error: "Invalid milestone amount" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return jsonResp(400, { error: "Invalid milestone amount" });
+    }
+
+    // Platform fee off the top.
+    const platformBps = Number(config.locked_platform_fee_bps);
+    const platformAmount = Math.floor((total_amount * platformBps) / 10000);
+    const pool = total_amount - platformAmount;
+
+    // Load collaborators.
+    const { data: collaborators } = await admin
+      .from("revenue_split_collaborators")
+      .select("user_id, pct")
+      .eq("config_id", config_id);
+    if (!collaborators?.length) {
+      return jsonResp(400, { error: "No collaborators on this split" });
+    }
+
+    // Distribute. Rounding dust → lead.
+    const splits: Array<{ user_id: string; amount: number; pct: number }> = [];
+    let distributed = 0;
+    for (const c of collaborators) {
+      const amount = Math.floor((pool * Number(c.pct)) / 100);
+      splits.push({ user_id: c.user_id, amount, pct: Number(c.pct) });
+      distributed += amount;
+    }
+    const dust = pool - distributed;
+    if (dust !== 0) {
+      const leadIdx = splits.findIndex((s) => s.user_id === config.creator_id);
+      if (leadIdx >= 0) splits[leadIdx].amount += dust;
+      else splits[0].amount += dust;
+    }
+
+    // Award credits.
+    for (const s of splits) {
+      if (s.amount <= 0) continue;
+      await admin.rpc("award_rhoze", {
+        _user_id: s.user_id,
+        _amount: s.amount,
+        _description: `Revenue split: ${s.pct}% of ${total_amount} credits`,
       });
     }
 
-    // Calculate splits
-    const creatorAmount = Math.floor(total_amount * (config.creator_pct / 100));
-    const curatorAmount = config.curator_id
-      ? Math.floor(total_amount * (config.curator_pct / 100))
-      : 0;
-    const buybackAmount = total_amount - creatorAmount - curatorAmount;
-
-    // Get wallets - look up profiles for Solana wallet addresses
-    // For now, distribute as off-chain credits and log the split
-    // On-chain splits happen when buyback_wallet is set
-
-    // Off-chain credit distribution
-    // Creator gets their share
-    await adminClient.rpc("award_rhoze", {
-      _user_id: config.creator_id,
-      _amount: creatorAmount,
-      _description: `Revenue split: ${config.creator_pct}% of ${total_amount} credits`,
-    });
-
-    // Curator gets their share if present
-    if (config.curator_id && curatorAmount > 0) {
-      await adminClient.rpc("award_rhoze", {
-        _user_id: config.curator_id,
-        _amount: curatorAmount,
-        _description: `Curation split: ${config.curator_pct}% of ${total_amount} credits`,
-      });
-    }
-
-    // Buyback pool: if wallet is set, transfer on-chain
-    let solanaSignature = null;
-
-    if (config.buyback_wallet && buybackAmount > 0) {
-      try {
-        const privateKeyStr = Deno.env.get("RHOZE_AIRDROP_PRIVATE_KEY");
-        if (privateKeyStr) {
-          const privateKeyArray = JSON.parse(privateKeyStr);
-          const keypair = Keypair.fromSecretKey(new Uint8Array(privateKeyArray));
-          const connection = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
-
-          const buybackPubkey = new PublicKey(config.buyback_wallet);
-          const sourceATA = getAssociatedTokenAddress(RHOZE_MINT, keypair.publicKey);
-          const destATA = getAssociatedTokenAddress(RHOZE_MINT, buybackPubkey);
-
-          const tokenAmount = BigInt(buybackAmount) * BigInt(10 ** TOKEN_DECIMALS);
-          const instructions: TransactionInstruction[] = [];
-
-          // Try to check if dest ATA exists, create if not
-          try {
-            await connection.getAccountInfo(destATA);
-          } catch {
-            instructions.push(
-              createAssociatedTokenAccountInstruction(
-                keypair.publicKey,
-                destATA,
-                buybackPubkey,
-                RHOZE_MINT
-              )
-            );
-          }
-
-          instructions.push(
-            createTransferInstruction(sourceATA, destATA, keypair.publicKey, tokenAmount)
-          );
-
-          // Add memo
-          const memo = JSON.stringify({
-            protocol: "rhozeland",
-            type: "buyback",
-            amount: buybackAmount,
-            config_id,
-          });
-          instructions.push(
-            new TransactionInstruction({
-              keys: [{ pubkey: keypair.publicKey, isSigner: true, isWritable: false }],
-              programId: MEMO_PROGRAM_ID,
-              data: new TextEncoder().encode(memo),
-            })
-          );
-
-          const tx = new Transaction().add(...instructions);
-          const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-          tx.recentBlockhash = blockhash;
-          tx.lastValidBlockHeight = lastValidBlockHeight;
-          tx.feePayer = keypair.publicKey;
-          tx.sign(keypair);
-
-          solanaSignature = await connection.sendRawTransaction(tx.serialize());
-        }
-      } catch (err) {
-        console.error("Buyback transfer failed:", err.message);
-        // Still log the split even if on-chain buyback fails
+    // Memo on Solana (best-effort).
+    let solana_signature: string | null = null;
+    try {
+      const privateKeyStr = Deno.env.get("RHOZE_AIRDROP_PRIVATE_KEY");
+      if (privateKeyStr) {
+        const memo = JSON.stringify({
+          protocol: "rhozeland",
+          version: "2",
+          type: "split_payout",
+          config_id,
+          milestone: purchase_id.slice(0, 8),
+          splits_hash: config.splits_hash,
+          platform_bps: platformBps,
+          total: total_amount,
+          platform_amount: platformAmount,
+          ts: new Date().toISOString(),
+        });
+        const {
+          Connection,
+          Keypair,
+          PublicKey,
+          Transaction,
+          TransactionInstruction,
+          clusterApiUrl,
+        } = await import("npm:@solana/web3.js@1.98.0");
+        const MEMO_PROGRAM_ID = new PublicKey(
+          "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
+        );
+        const kp = Keypair.fromSecretKey(new Uint8Array(JSON.parse(privateKeyStr)));
+        const conn = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
+        const tx = new Transaction().add(
+          new TransactionInstruction({
+            keys: [{ pubkey: kp.publicKey, isSigner: true, isWritable: false }],
+            programId: MEMO_PROGRAM_ID,
+            data: new TextEncoder().encode(memo),
+          }),
+        );
+        const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash();
+        tx.recentBlockhash = blockhash;
+        tx.lastValidBlockHeight = lastValidBlockHeight;
+        tx.feePayer = kp.publicKey;
+        tx.sign(kp);
+        solana_signature = await conn.sendRawTransaction(tx.serialize());
       }
+    } catch (err) {
+      console.error("Memo anchor failed:", err instanceof Error ? err.message : err);
     }
 
-    // Log the split
-    await adminClient.from("revenue_split_logs").insert({
+    // Log + back-compat fields for existing dashboards.
+    await admin.from("revenue_split_logs").insert({
       config_id,
-      purchase_id: purchase_id || null,
+      purchase_id,
       total_amount,
-      creator_amount: creatorAmount,
-      curator_amount: curatorAmount,
-      buyback_amount: buybackAmount,
-      solana_signature: solanaSignature,
+      platform_amount: platformAmount,
+      platform_fee_bps: platformBps,
+      splits_hash: config.splits_hash,
+      splits: splits.map((s) => ({ user_id: s.user_id, amount: s.amount, pct: s.pct })),
+      creator_amount: splits.find((s) => s.user_id === config.creator_id)?.amount ?? 0,
+      curator_amount: 0,
+      buyback_amount: 0,
+      solana_signature,
     });
 
-    // Notify recipients so the money "moves" visibly in the UI
-    const notifications: Array<Record<string, unknown>> = [];
-    if (creatorAmount > 0) {
-      notifications.push({
-        user_id: config.creator_id,
+    // Notify each collaborator.
+    const notifications = splits
+      .filter((s) => s.amount > 0)
+      .map((s) => ({
+        user_id: s.user_id,
         type: "purchase",
-        title: `+${creatorAmount} $RHOZE released`,
-        body: `Your ${config.creator_pct}% creator share from a ${total_amount}-credit milestone just landed.`,
+        title: `+${s.amount} $RHOZE released`,
+        body: `Your ${s.pct}% share of a ${total_amount}-credit milestone just landed.`,
         link: "/seller-dashboard",
-      });
-    }
-    if (config.curator_id && curatorAmount > 0) {
-      notifications.push({
-        user_id: config.curator_id,
-        type: "purchase",
-        title: `+${curatorAmount} $RHOZE curation reward`,
-        body: `You earned ${config.curator_pct}% on a project you helped surface.`,
-        link: "/seller-dashboard",
-      });
-    }
+      }));
     if (notifications.length) {
-      await adminClient.from("notifications").insert(notifications);
+      await admin.from("notifications").insert(notifications);
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        splits: {
-          creator: creatorAmount,
-          curator: curatorAmount,
-          buyback: buybackAmount,
-        },
-        solana_signature: solanaSignature,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return jsonResp(200, {
+      success: true,
+      total: total_amount,
+      platform_amount: platformAmount,
+      platform_bps: platformBps,
+      splits,
+      solana_signature,
     });
+  } catch (err) {
+    return jsonResp(500, { error: err instanceof Error ? err.message : String(err) });
   }
 });
+
+function jsonResp(status: number, body: unknown) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
