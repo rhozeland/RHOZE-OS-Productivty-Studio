@@ -33,7 +33,11 @@ export const isRichMessage = (content: string) =>
   content.startsWith("[LISTING:") ||
   content.startsWith("[LINK:") ||
   content.startsWith("[EVENT:") ||
-  content.startsWith("[STAFF_INVITE:");
+  content.startsWith("[FLOW:") ||
+  content.startsWith("[STAFF_INVITE:") ||
+  // Legacy: early FlowShareDialog persisted raw JSON. Detect & render it
+  // the same way so old chats don't show the payload as plain text.
+  content.startsWith('{"type":"flow_share"');
 
 const parseRich = (content: string, prefix: string) => {
   try {
