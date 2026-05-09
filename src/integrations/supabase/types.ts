@@ -3019,49 +3019,90 @@ export type Database = {
           },
         ]
       }
+      revenue_split_collaborators: {
+        Row: {
+          config_id: string
+          created_at: string
+          id: string
+          pct: number
+          user_id: string
+        }
+        Insert: {
+          config_id: string
+          created_at?: string
+          id?: string
+          pct: number
+          user_id: string
+        }
+        Update: {
+          config_id?: string
+          created_at?: string
+          id?: string
+          pct?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_split_collaborators_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "revenue_split_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       revenue_split_configs: {
         Row: {
-          buyback_pct: number
+          buyback_pct: number | null
           buyback_wallet: string | null
           contract_id: string | null
           created_at: string
           creator_id: string
-          creator_pct: number
+          creator_pct: number | null
           curator_id: string | null
-          curator_pct: number
+          curator_pct: number | null
           id: string
           is_active: boolean
           listing_id: string | null
+          locked_at: string | null
+          locked_platform_fee_bps: number | null
+          splits_hash: string | null
           updated_at: string
           work_id: string | null
         }
         Insert: {
-          buyback_pct?: number
+          buyback_pct?: number | null
           buyback_wallet?: string | null
           contract_id?: string | null
           created_at?: string
           creator_id: string
-          creator_pct?: number
+          creator_pct?: number | null
           curator_id?: string | null
-          curator_pct?: number
+          curator_pct?: number | null
           id?: string
           is_active?: boolean
           listing_id?: string | null
+          locked_at?: string | null
+          locked_platform_fee_bps?: number | null
+          splits_hash?: string | null
           updated_at?: string
           work_id?: string | null
         }
         Update: {
-          buyback_pct?: number
+          buyback_pct?: number | null
           buyback_wallet?: string | null
           contract_id?: string | null
           created_at?: string
           creator_id?: string
-          creator_pct?: number
+          creator_pct?: number | null
           curator_id?: string | null
-          curator_pct?: number
+          curator_pct?: number | null
           id?: string
           is_active?: boolean
           listing_id?: string | null
+          locked_at?: string | null
+          locked_platform_fee_bps?: number | null
+          splits_hash?: string | null
           updated_at?: string
           work_id?: string | null
         }
@@ -4692,6 +4733,10 @@ export type Database = {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
       }
+      is_split_collaborator: {
+        Args: { _config_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_verified_artist: { Args: { _user_id: string }; Returns: boolean }
       list_my_buddies: {
         Args: never
@@ -4708,6 +4753,33 @@ export type Database = {
       lock_escrow_credits: {
         Args: { _amount: number; _client_id: string; _contract_id: string }
         Returns: undefined
+      }
+      lock_split_config: {
+        Args: { _config_id: string }
+        Returns: {
+          buyback_pct: number | null
+          buyback_wallet: string | null
+          contract_id: string | null
+          created_at: string
+          creator_id: string
+          creator_pct: number | null
+          curator_id: string | null
+          curator_pct: number | null
+          id: string
+          is_active: boolean
+          listing_id: string | null
+          locked_at: string | null
+          locked_platform_fee_bps: number | null
+          splits_hash: string | null
+          updated_at: string
+          work_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "revenue_split_configs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       lookup_user_by_display_name: {
         Args: { _name: string }
