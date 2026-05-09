@@ -1,4 +1,14 @@
-import { useState, useEffect } from "react";
+/**
+ * RevenueSplitConfig — Splits v2.
+ *
+ * One model: a Collaborators pool (must sum to 100%) + a tier-based
+ * platform fee taken off the top. Splits + fee are frozen at project
+ * lock and a SHA-256 fingerprint is anchored on Solana.
+ *
+ * No more "creator vs curator vs buyback" — everyone working on the
+ * thing is just a collaborator.
+ */
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,7 +16,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -16,100 +26,110 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, PieChart, Wallet, Fingerprint, ShieldCheck } from "lucide-react";
+import {
+  Loader2,
+  PieChart,
+  Fingerprint,
+  ShieldCheck,
+  Lock,
+  Users,
+  ExternalLink,
+} from "lucide-react";
 import CuratorInviteSection from "./CuratorInviteSection";
 import { shortHash } from "@/lib/content-hash";
-
-/**
- * Compute a SHA-256 fingerprint of the canonical split table.
- * Mirrors the `splits_hash` field defined in the future Anchor program
- * spec — surfacing it now primes users for the eventual on-chain freeze
- * at lock time, without changing any DB shape.
- */
-async function computeSplitsHash(parts: {
-  creator_pct: number;
-  curator_pct: number;
-  buyback_pct: number;
-  buyback_wallet: string | null;
-}): Promise<string> {
-  const canonical = JSON.stringify({
-    creator: parts.creator_pct,
-    curator: parts.curator_pct,
-    buyback: parts.buyback_pct,
-    wallet: parts.buyback_wallet ?? "",
-  });
-  const buf = new TextEncoder().encode(canonical);
-  const hashBuf = await crypto.subtle.digest("SHA-256", buf);
-  return Array.from(new Uint8Array(hashBuf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
+import { feeForBalance, usePlatformFeeTiers } from "@/hooks/usePlatformFeeTiers";
 
 interface RevenueSplitConfigProps {
   listingId?: string;
   contractId?: string;
 }
 
+type Collaborator = {
+  user_id: string;
+  pct: number;
+  profile?: {
+    username: string | null;
+    display_name: string | null;
+    avatar_url: string | null;
+  } | null;
+};
+
 const RevenueSplitConfig = ({ listingId, contractId }: RevenueSplitConfigProps) => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const [creatorPct, setCreatorPct] = useState(80);
-  const [curatorPct, setCuratorPct] = useState(10);
-  const [buybackWallet, setBuybackWallet] = useState("");
-  const [splitsHash, setSplitsHash] = useState<string>("");
-  // Phase 3: bind the split to a specific Work (the IP being monetized).
-  // The work's content_hash + this splits hash form the full provenance chain.
+  const qc = useQueryClient();
   const [workId, setWorkId] = useState<string>("");
+  const { data: tiers = [] } = usePlatformFeeTiers();
 
-  const buybackPct = 100 - creatorPct - curatorPct;
+  // Tier source per v8.1: in-app user_credits.balance (NOT on-chain).
+  const { data: rhozeBalance = 0 } = useQuery({
+    queryKey: ["user-credits-balance", user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      const { data } = await supabase
+        .from("user_credits")
+        .select("balance")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return Number(data?.balance ?? 0);
+    },
+    enabled: !!user,
+  });
+  const platformFee = feeForBalance(rhozeBalance, tiers);
 
-  // Recompute the canonical SHA-256 fingerprint whenever any split input
-  // changes. Mirrors the future on-chain `splits_hash` in the Anchor spec.
-  useEffect(() => {
-    let cancelled = false;
-    computeSplitsHash({
-      creator_pct: creatorPct,
-      curator_pct: curatorPct,
-      buyback_pct: buybackPct,
-      buyback_wallet: buybackWallet || null,
-    }).then((h) => {
-      if (!cancelled) setSplitsHash(h);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [creatorPct, curatorPct, buybackPct, buybackWallet]);
-
+  // Find or create the config row.
   const { data: existingConfig, isLoading } = useQuery({
     queryKey: ["split-config", listingId, contractId],
     queryFn: async () => {
-      let query = supabase.from("revenue_split_configs").select("*");
-      if (listingId) query = query.eq("listing_id", listingId);
-      if (contractId) query = query.eq("contract_id", contractId);
-      const { data, error } = await query.eq("is_active", true).maybeSingle();
-      if (error) throw error;
-      if (data) {
-        setCreatorPct(data.creator_pct);
-        setCuratorPct(data.curator_pct);
-        setBuybackWallet(data.buyback_wallet || "");
-        setWorkId((data as { work_id?: string | null }).work_id ?? "");
-      }
+      let q = supabase.from("revenue_split_configs").select("*");
+      if (listingId) q = q.eq("listing_id", listingId);
+      if (contractId) q = q.eq("contract_id", contractId);
+      const { data } = await q.eq("is_active", true).maybeSingle();
+      if (data) setWorkId((data as { work_id?: string | null }).work_id ?? "");
       return data;
     },
     enabled: !!(listingId || contractId),
   });
+
+  const isLocked = !!existingConfig?.locked_at;
+
+  // Live collaborator list for this config.
+  const { data: collaborators = [] } = useQuery({
+    queryKey: ["split-collaborators", existingConfig?.id],
+    queryFn: async (): Promise<Collaborator[]> => {
+      if (!existingConfig?.id) return [];
+      const { data: rows } = await supabase
+        .from("revenue_split_collaborators")
+        .select("user_id, pct")
+        .eq("config_id", existingConfig.id);
+      const ids = (rows ?? []).map((r) => r.user_id);
+      if (!ids.length) return [];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, username, display_name, avatar_url")
+        .in("user_id", ids);
+      const map = new Map((profiles ?? []).map((p) => [p.user_id, p]));
+      return (rows ?? []).map((r) => ({
+        user_id: r.user_id,
+        pct: Number(r.pct),
+        profile: map.get(r.user_id) ?? null,
+      }));
+    },
+    enabled: !!existingConfig?.id,
+  });
+
+  const totalPct = collaborators.reduce((s, c) => s + c.pct, 0);
+  const summed100 = Math.round(totalPct) === 100;
 
   // The creator's own works, for the Linked Work picker.
   const { data: myWorks = [] } = useQuery({
     queryKey: ["works-for-split", user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("works")
         .select("id, title, kind, content_hash, solana_signature")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
-      if (error) throw error;
       return data ?? [];
     },
     enabled: !!user,
@@ -117,46 +137,117 @@ const RevenueSplitConfig = ({ listingId, contractId }: RevenueSplitConfigProps) 
 
   const linkedWork = myWorks.find((w) => w.id === workId);
 
-  const saveMutation = useMutation({
+  // Create the config (if missing) so collaborator rows can attach.
+  const ensureConfig = useMutation({
     mutationFn: async () => {
-      if (buybackPct < 0) throw new Error("Percentages must sum to 100");
-
+      if (existingConfig) return existingConfig;
       const payload = {
         listing_id: listingId || null,
         contract_id: contractId || null,
         creator_id: user!.id,
-        creator_pct: creatorPct,
-        curator_pct: curatorPct,
-        buyback_pct: buybackPct,
-        buyback_wallet: buybackWallet || null,
+        creator_pct: 100,
+        curator_pct: 0,
+        buyback_pct: 0,
         work_id: workId || null,
         is_active: true,
       };
+      const { data, error } = await supabase
+        .from("revenue_split_configs")
+        .insert(payload)
+        .select()
+        .single();
+      if (error) throw error;
+      // Seed the lead at 100%.
+      await supabase
+        .from("revenue_split_collaborators")
+        .insert({ config_id: data.id, user_id: user!.id, pct: 100 });
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["split-config"] });
+      qc.invalidateQueries({ queryKey: ["split-collaborators"] });
+    },
+    onError: (e: { message: string }) => toast.error(e.message),
+  });
 
-      if (existingConfig) {
-        const { error } = await supabase
-          .from("revenue_split_configs")
-          .update(payload)
-          .eq("id", existingConfig.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("revenue_split_configs")
-          .insert(payload);
-        if (error) throw error;
+  // Update workId on the config.
+  const saveWork = useMutation({
+    mutationFn: async () => {
+      if (!existingConfig) return;
+      const { error } = await supabase
+        .from("revenue_split_configs")
+        .update({ work_id: workId || null })
+        .eq("id", existingConfig.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["split-config"] });
+      toast.success("Linked work updated");
+    },
+  });
+
+  // Update a single collaborator pct.
+  const updatePct = useMutation({
+    mutationFn: async ({ userId, pct }: { userId: string; pct: number }) => {
+      if (!existingConfig) return;
+      const { error } = await supabase
+        .from("revenue_split_collaborators")
+        .update({ pct })
+        .eq("config_id", existingConfig.id)
+        .eq("user_id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["split-collaborators", existingConfig?.id] }),
+  });
+
+  // Remove a non-lead collaborator.
+  const removeCollab = useMutation({
+    mutationFn: async (userId: string) => {
+      if (!existingConfig) return;
+      const removed = collaborators.find((c) => c.user_id === userId);
+      const { error } = await supabase
+        .from("revenue_split_collaborators")
+        .delete()
+        .eq("config_id", existingConfig.id)
+        .eq("user_id", userId);
+      if (error) throw error;
+      // Give the share back to the lead.
+      if (removed && existingConfig.creator_id) {
+        const lead = collaborators.find((c) => c.user_id === existingConfig.creator_id);
+        await supabase
+          .from("revenue_split_collaborators")
+          .update({ pct: (lead?.pct ?? 0) + removed.pct })
+          .eq("config_id", existingConfig.id)
+          .eq("user_id", existingConfig.creator_id);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["split-config"] });
-      toast.success("Revenue split saved!");
+      qc.invalidateQueries({ queryKey: ["split-collaborators"] });
+      toast.success("Collaborator removed");
     },
-    onError: (e) => toast.error(e.message),
+  });
+
+  // Lock the splits — calls the SECURITY DEFINER RPC.
+  const lockSplits = useMutation({
+    mutationFn: async () => {
+      if (!existingConfig) return;
+      const { error } = await (supabase as unknown as {
+        rpc: (n: string, p: Record<string, unknown>) => Promise<{ error: unknown }>;
+      }).rpc("lock_split_config", { _config_id: existingConfig.id });
+      if (error) throw error as { message: string };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["split-config"] });
+      toast.success("Splits locked + fingerprint anchored");
+    },
+    onError: (e: { message: string }) => toast.error(e.message),
   });
 
   if (isLoading) {
     return (
       <div className="flex items-center gap-2 text-muted-foreground p-4">
-        <Loader2 className="h-4 w-4 animate-spin" /> Loading split config...
+        <Loader2 className="h-4 w-4 animate-spin" /> Loading split config…
       </div>
     );
   }
@@ -167,181 +258,225 @@ const RevenueSplitConfig = ({ listingId, contractId }: RevenueSplitConfigProps) 
         <div className="flex items-center gap-2">
           <PieChart className="h-5 w-5 text-accent" />
           <h3 className="font-display text-lg font-semibold text-foreground">
-            Programmable Split
+            Split with collaborators
           </h3>
+          {isLocked && (
+            <Badge variant="outline" className="bg-primary/15 text-primary gap-1">
+              <Lock className="h-3 w-3" /> Locked
+            </Badge>
+          )}
         </div>
         <p className="text-xs text-muted-foreground italic pl-7">
-          Executable code, not a contract clause.
+          Split the pool with anyone working on this. Platform fee comes off the top.
         </p>
       </div>
 
-      {/* Visual split */}
-      <div className="flex h-4 rounded-full overflow-hidden">
-        <div
-          className="bg-primary transition-all"
-          style={{ width: `${creatorPct}%` }}
-        />
-        <div
-          className="bg-accent transition-all"
-          style={{ width: `${curatorPct}%` }}
-        />
-        <div
-          className="bg-muted-foreground/30 transition-all"
-          style={{ width: `${buybackPct}%` }}
-        />
-      </div>
-
-      <div className="flex items-center justify-between text-sm">
-        <Badge variant="outline" className="bg-primary/15 text-primary">
-          Creator {creatorPct}%
-        </Badge>
-        <Badge variant="outline" className="bg-accent/15 text-accent">
-          Curator {curatorPct}%
-        </Badge>
-        <Badge variant="outline">
-          Buyback {buybackPct}%
-        </Badge>
-      </div>
-
-      {/* Sliders */}
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label>Creator Share: {creatorPct}%</Label>
-          <Slider
-            value={[creatorPct]}
-            onValueChange={([v]) => {
-              setCreatorPct(v);
-              if (v + curatorPct > 100) setCuratorPct(100 - v);
-            }}
-            min={50}
-            max={95}
-            step={5}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Curator Share: {curatorPct}%</Label>
-          <Slider
-            value={[curatorPct]}
-            onValueChange={([v]) => {
-              setCuratorPct(v);
-              if (creatorPct + v > 100) setCreatorPct(100 - v);
-            }}
-            min={0}
-            max={25}
-            step={5}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label className="flex items-center gap-1.5">
-            <Wallet className="h-3.5 w-3.5" />
-            Buyback Pool Wallet (optional)
-          </Label>
-          <Input
-            placeholder="Solana wallet address for $RHOZE buyback"
-            value={buybackWallet}
-            onChange={(e) => setBuybackWallet(e.target.value)}
-            className="font-mono text-sm"
-          />
-          <p className="text-xs text-muted-foreground">
-            {buybackPct}% of revenue goes to the buyback pool.
-            {!buybackWallet && " Set a wallet to enable on-chain buyback transfers."}
-          </p>
-        </div>
-
-        {/* Phase 3: Bind to a registered Work so the IP's content_hash
-            travels with the split. Optional but recommended. */}
-        <div className="space-y-2">
-          <Label className="flex items-center gap-1.5">
-            <Fingerprint className="h-3.5 w-3.5" />
-            Linked work (optional)
-          </Label>
-          <Select
-            value={workId || "__none__"}
-            onValueChange={(v) => setWorkId(v === "__none__" ? "" : v)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Pick a registered work…" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__none__">No work linked</SelectItem>
-              {myWorks.map((w) => (
-                <SelectItem key={w.id} value={w.id}>
-                  <span className="flex items-center gap-2">
-                    {w.title}
-                    {w.solana_signature && (
-                      <ShieldCheck className="h-3 w-3 text-primary" />
-                    )}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {linkedWork ? (
-            <div
-              className="text-[11px] font-mono text-muted-foreground truncate"
-              title={linkedWork.content_hash}
-            >
-              sha256:{shortHash(linkedWork.content_hash)}
-              {linkedWork.solana_signature && (
-                <>
-                  {" · "}
-                  <a
-                    href={`https://solscan.io/tx/${linkedWork.solana_signature}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline-offset-4 hover:underline"
-                  >
-                    Solscan ↗
-                  </a>
-                </>
-              )}
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              Bind a Work so its content hash flows into this split.{" "}
-              <Link to="/works" className="text-primary hover:underline">
-                Register a work →
-              </Link>
-            </p>
-          )}
-        </div>
-      </div>
-
-      <Button
-        onClick={() => saveMutation.mutate()}
-        disabled={saveMutation.isPending || buybackPct < 0}
-        className="w-full"
-      >
-        {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {existingConfig ? "Update Split" : "Set Split"}
-      </Button>
-
-      {/* Splits fingerprint — SHA-256 of the canonical split table.
-          Same field the future Anchor program freezes at lock time. */}
-      {splitsHash && (
-        <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-xs">
-          <Fingerprint className="h-3.5 w-3.5 text-accent shrink-0" />
-          <div className="flex-1 min-w-0">
-            <div className="font-mono uppercase tracking-wider text-[10px] text-muted-foreground">
-              Splits fingerprint · SHA-256
-            </div>
-            <div
-              className="font-mono text-[11px] text-foreground/80 truncate"
-              title={splitsHash}
-            >
-              {splitsHash.slice(0, 24)}…{splitsHash.slice(-8)}
-            </div>
-          </div>
-        </div>
+      {/* No config yet */}
+      {!existingConfig && (
+        <Button
+          onClick={() => ensureConfig.mutate()}
+          disabled={ensureConfig.isPending}
+          className="w-full"
+        >
+          {ensureConfig.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Set up split
+        </Button>
       )}
 
-      {existingConfig && curatorPct > 0 && (
-        <CuratorInviteSection
-          splitConfigId={existingConfig.id}
-          curatorId={existingConfig.curator_id ?? null}
-        />
+      {existingConfig && (
+        <>
+          {/* Visual bar */}
+          <div className="flex h-3 rounded-full overflow-hidden bg-muted/40">
+            {collaborators.map((c, i) => (
+              <div
+                key={c.user_id}
+                className={i === 0 ? "bg-primary" : i % 2 ? "bg-accent" : "bg-primary/60"}
+                style={{ width: `${c.pct}%` }}
+              />
+            ))}
+          </div>
+
+          {/* Collaborator list */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5" />
+                Collaborators
+              </Label>
+              <span
+                className={`text-xs font-mono ${
+                  summed100 ? "text-muted-foreground" : "text-destructive"
+                }`}
+              >
+                {Math.round(totalPct)}% / 100%
+              </span>
+            </div>
+            {collaborators.map((c) => {
+              const isLead = c.user_id === existingConfig.creator_id;
+              return (
+                <div
+                  key={c.user_id}
+                  className="flex items-center gap-3 rounded-lg border border-border/60 bg-background/40 p-2.5"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={c.profile?.avatar_url ?? undefined} />
+                    <AvatarFallback>
+                      {(c.profile?.display_name || "?").slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-medium truncate">
+                        {c.profile?.display_name || c.profile?.username || "Collaborator"}
+                      </p>
+                      {isLead && (
+                        <Badge variant="outline" className="text-[10px] h-4">
+                          Lead
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <Input
+                    type="number"
+                    value={c.pct}
+                    min={0}
+                    max={100}
+                    disabled={isLocked}
+                    onChange={(e) => {
+                      const v = Math.max(0, Math.min(100, Number(e.target.value)));
+                      updatePct.mutate({ userId: c.user_id, pct: v });
+                    }}
+                    className="w-20 text-right font-mono"
+                  />
+                  <span className="text-sm text-muted-foreground">%</span>
+                  {!isLead && !isLocked && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeCollab.mutate(c.user_id)}
+                    >
+                      Remove
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Platform fee read-out */}
+          <div className="rounded-lg border border-border/60 bg-background/40 p-3 text-xs space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Platform fee (your tier)</span>
+              <span className="font-mono font-semibold">
+                {Math.round(
+                  (isLocked
+                    ? (existingConfig.locked_platform_fee_bps ?? 1500) / 10000
+                    : platformFee) * 100,
+                )}
+                %
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              {isLocked
+                ? "Frozen at lock — same fee applies to every milestone."
+                : "Hold more $RHOZE to drop your fee. Spark/Bloom 15% · Glow 10% · Play 7%."}
+            </p>
+          </div>
+
+          {/* Linked work */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5">
+              <Fingerprint className="h-3.5 w-3.5" />
+              Linked work (optional)
+            </Label>
+            <Select
+              value={workId || "__none__"}
+              disabled={isLocked}
+              onValueChange={(v) => {
+                const next = v === "__none__" ? "" : v;
+                setWorkId(next);
+                saveWork.mutate();
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Pick a registered work…" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">No work linked</SelectItem>
+                {myWorks.map((w) => (
+                  <SelectItem key={w.id} value={w.id}>
+                    <span className="flex items-center gap-2">
+                      {w.title}
+                      {w.solana_signature && (
+                        <ShieldCheck className="h-3 w-3 text-primary" />
+                      )}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {linkedWork ? (
+              <div
+                className="text-[11px] font-mono text-muted-foreground truncate"
+                title={linkedWork.content_hash}
+              >
+                sha256:{shortHash(linkedWork.content_hash)}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Bind a Work so its content hash flows into this split.{" "}
+                <Link to="/works" className="text-primary hover:underline">
+                  Register a work →
+                </Link>
+              </p>
+            )}
+          </div>
+
+          {/* Lock action / locked state */}
+          {!isLocked ? (
+            <Button
+              onClick={() => lockSplits.mutate()}
+              disabled={lockSplits.isPending || !summed100}
+              className="w-full"
+              variant="default"
+            >
+              {lockSplits.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Lock className="h-4 w-4 mr-2" />
+              {summed100 ? "Lock splits" : `Sum must equal 100% (now ${Math.round(totalPct)}%)`}
+            </Button>
+          ) : (
+            <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 text-xs space-y-1">
+              <div className="flex items-center gap-1.5 font-semibold text-primary">
+                <Lock className="h-3.5 w-3.5" />
+                Locked {existingConfig.locked_at
+                  ? new Date(existingConfig.locked_at).toLocaleDateString()
+                  : ""}
+              </div>
+              {existingConfig.splits_hash && (
+                <div
+                  className="font-mono text-[11px] text-muted-foreground truncate"
+                  title={existingConfig.splits_hash}
+                >
+                  fingerprint: {existingConfig.splits_hash.slice(0, 24)}…
+                  {existingConfig.splits_hash.slice(-8)}
+                </div>
+              )}
+              <p className="text-[11px] text-muted-foreground">
+                Splits cannot be rewritten mid-project. Each payout references this fingerprint.
+              </p>
+            </div>
+          )}
+
+          {/* Invite collaborator (reuses curator_invites under the hood) */}
+          {!isLocked && (
+            <CuratorInviteSection
+              splitConfigId={existingConfig.id}
+              leadCurrentPct={
+                collaborators.find((c) => c.user_id === existingConfig.creator_id)?.pct ?? 100
+              }
+            />
+          )}
+        </>
       )}
     </div>
   );

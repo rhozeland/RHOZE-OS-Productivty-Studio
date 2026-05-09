@@ -105,16 +105,16 @@ const MilestoneTracker = ({ contractId }: MilestoneTrackerProps) => {
       if (error) throw error;
 
       // After successful release, fire revenue split if a config exists for this contract.
-      let splitResult: { creator: number; curator: number; buyback: number; solana_signature: string | null } | null = null;
+      let splitResult: { total: number; platform_amount: number; splits: Array<{ user_id: string; amount: number; pct: number }>; solana_signature: string | null } | null = null;
       try {
         const { data: splitConfig } = await supabase
           .from("revenue_split_configs")
-          .select("id")
+          .select("id, locked_at")
           .eq("contract_id", contractId)
           .eq("is_active", true)
           .maybeSingle();
 
-        if (splitConfig?.id && milestone?.credit_amount) {
+        if (splitConfig?.id && splitConfig.locked_at && milestone?.credit_amount) {
           const { data } = await supabase.functions.invoke("split-revenue", {
             body: {
               config_id: splitConfig.id,
@@ -123,7 +123,12 @@ const MilestoneTracker = ({ contractId }: MilestoneTrackerProps) => {
             },
           });
           if (data?.splits) {
-            splitResult = { ...data.splits, solana_signature: data.solana_signature ?? null };
+            splitResult = {
+              total: Number(data.total ?? milestone.credit_amount),
+              platform_amount: Number(data.platform_amount ?? 0),
+              splits: data.splits,
+              solana_signature: data.solana_signature ?? null,
+            };
           }
         }
       } catch (splitErr) {
@@ -138,12 +143,10 @@ const MilestoneTracker = ({ contractId }: MilestoneTrackerProps) => {
       setActiveDialog(null);
 
       if (splitResult) {
-        const lines: string[] = [];
-        if (splitResult.creator > 0) lines.push(`Creator +${splitResult.creator}`);
-        if (splitResult.curator > 0) lines.push(`Curator +${splitResult.curator}`);
-        if (splitResult.buyback > 0) lines.push(`Buyback +${splitResult.buyback}`);
+        const collabCount = splitResult.splits.length;
+        const desc = `${collabCount} collaborator${collabCount === 1 ? "" : "s"} paid · ${splitResult.platform_amount} cr platform fee${splitResult.solana_signature ? "  ·  on-chain ✓" : ""}`;
         toast.success(`💸 ${amount} credits released & split`, {
-          description: lines.join(" · ") + (splitResult.solana_signature ? "  ·  on-chain ✓" : ""),
+          description: desc,
           duration: 6000,
         });
       } else {

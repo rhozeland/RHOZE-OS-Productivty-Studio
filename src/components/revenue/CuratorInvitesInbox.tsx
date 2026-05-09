@@ -1,8 +1,7 @@
 /**
- * CuratorInvitesInbox — incoming curator invites for the current user.
+ * CuratorInvitesInbox — incoming collaborator invites for the current user.
  *
- * Renders a section above the regular inquiries list with Accept / Decline
- * buttons. Hidden when there are no pending invites.
+ * Splits v2: shows the offered share (pct) instead of an old curator_pct.
  */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,10 +22,7 @@ const CuratorInvitesInbox = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("curator_invites")
-        .select(`
-          *,
-          revenue_split_configs ( creator_pct, curator_pct, buyback_pct )
-        `)
+        .select("*")
         .eq("invitee_id", user!.id)
         .eq("status", "pending")
         .order("created_at", { ascending: false });
@@ -36,9 +32,9 @@ const CuratorInvitesInbox = () => {
     enabled: !!user,
   });
 
-  const inviterIds = invites?.map((i: any) => i.inviter_id) ?? [];
+  const inviterIds = invites?.map((i) => i.inviter_id) ?? [];
   const { data: profiles } = useQuery({
-    queryKey: ["curator-invite-profiles", inviterIds],
+    queryKey: ["collab-invite-profiles", inviterIds],
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
@@ -61,9 +57,12 @@ const CuratorInvitesInbox = () => {
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["incoming-curator-invites"] });
-      toast.success(vars.status === "accepted" ? "You're now a curator!" : "Invite declined");
+      qc.invalidateQueries({ queryKey: ["split-collaborators"] });
+      toast.success(
+        vars.status === "accepted" ? "You're in. Share locked when project locks." : "Invite declined",
+      );
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: { message: string }) => toast.error(e.message),
   });
 
   if (isLoading || !invites?.length) return null;
@@ -72,20 +71,17 @@ const CuratorInvitesInbox = () => {
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-accent" />
-        <h2 className="font-display text-lg font-semibold">Curator Invites</h2>
+        <h2 className="font-display text-lg font-semibold">Collaboration invites</h2>
         <Badge variant="outline" className="bg-accent/15 text-accent text-xs">
           {invites.length}
         </Badge>
       </div>
 
-      {invites.map((inv: any) => {
+      {invites.map((inv) => {
         const inviter = profileMap.get(inv.inviter_id);
-        const config = inv.revenue_split_configs;
+        const sharePct = (inv as { pct?: number }).pct ?? 0;
         return (
-          <div
-            key={inv.id}
-            className="surface-card p-4 space-y-3 border border-accent/30"
-          >
+          <div key={inv.id} className="surface-card p-4 space-y-3 border border-accent/30">
             <div className="flex items-start gap-3">
               <Avatar className="h-10 w-10">
                 <AvatarImage src={inviter?.avatar_url ?? undefined} />
@@ -98,12 +94,12 @@ const CuratorInvitesInbox = () => {
                   {inviter?.display_name || inviter?.username || "Someone"}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  invited you to curate · {format(new Date(inv.created_at), "MMM d")}
+                  invited you to collaborate · {format(new Date(inv.created_at), "MMM d")}
                 </p>
               </div>
-              {config && (
+              {sharePct > 0 && (
                 <Badge variant="outline" className="bg-accent/10 text-accent text-xs shrink-0">
-                  {config.curator_pct}% share
+                  {sharePct}% of pool
                 </Badge>
               )}
             </div>

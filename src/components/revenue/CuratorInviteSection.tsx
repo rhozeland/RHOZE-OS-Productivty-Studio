@@ -1,10 +1,10 @@
 /**
- * CuratorInviteSection — invite a curator by username on a revenue split config.
+ * CuratorInviteSection — invite a collaborator on a revenue split config.
  *
- * Renders three states:
- *   1. No curator yet → search-by-username + send invite
- *   2. Pending invite → show invitee name + revoke button
- *   3. Accepted curator → show curator card + remove option
+ * Splits v2: invites carry a `pct` field; on accept, a DB trigger moves
+ * that share from the lead to the invitee in revenue_split_collaborators.
+ *
+ * The component name is kept to avoid churn — copy is collaborator-first.
  */
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -16,21 +16,22 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, UserPlus, X, Check, Clock, Search } from "lucide-react";
+import { Loader2, UserPlus, X, Clock, Search } from "lucide-react";
 
 interface Props {
   splitConfigId: string;
-  curatorId: string | null;
+  /** Lead's current % — invite share cannot exceed this. */
+  leadCurrentPct: number;
 }
 
-const CuratorInviteSection = ({ splitConfigId, curatorId }: Props) => {
+const CuratorInviteSection = ({ splitConfigId, leadCurrentPct }: Props) => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState("");
+  const [pct, setPct] = useState(10);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
-  // Pending invite (if any)
   const { data: pendingInvite } = useQuery({
     queryKey: ["curator-invite", splitConfigId],
     queryFn: async () => {
@@ -44,22 +45,6 @@ const CuratorInviteSection = ({ splitConfigId, curatorId }: Props) => {
     },
   });
 
-  // Curator profile (if accepted)
-  const { data: curator } = useQuery({
-    queryKey: ["profile", curatorId],
-    queryFn: async () => {
-      if (!curatorId) return null;
-      const { data } = await supabase
-        .from("profiles")
-        .select("user_id, username, display_name, avatar_url")
-        .eq("user_id", curatorId)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!curatorId,
-  });
-
-  // Pending invitee profile
   const { data: pendingProfile } = useQuery({
     queryKey: ["profile", pendingInvite?.invitee_id],
     queryFn: async () => {
@@ -74,9 +59,8 @@ const CuratorInviteSection = ({ splitConfigId, curatorId }: Props) => {
     enabled: !!pendingInvite,
   });
 
-  // Username search
   const { data: searchResults, isFetching: searching } = useQuery({
-    queryKey: ["curator-search", query],
+    queryKey: ["collaborator-search", query],
     queryFn: async () => {
       if (query.trim().length < 2) return [];
       const { data } = await supabase
@@ -87,19 +71,27 @@ const CuratorInviteSection = ({ splitConfigId, curatorId }: Props) => {
         .limit(5);
       return data ?? [];
     },
-    enabled: query.trim().length >= 2 && !curatorId && !pendingInvite,
+    enabled: query.trim().length >= 2 && !pendingInvite,
   });
 
   const sendInvite = useMutation({
     mutationFn: async () => {
       if (!selectedUserId) throw new Error("Pick a user first");
-      const { error } = await supabase.from("curator_invites").insert({
-        split_config_id: splitConfigId,
-        inviter_id: user!.id,
-        invitee_id: selectedUserId,
-        message: message.trim() || null,
-      });
-      if (error) throw error;
+      if (pct <= 0 || pct >= leadCurrentPct) {
+        throw new Error(`Share must be between 1% and ${leadCurrentPct - 1}%`);
+      }
+      const { error } = await (supabase as unknown as {
+        from: (t: string) => { insert: (p: Record<string, unknown>) => Promise<{ error: unknown }> };
+      })
+        .from("curator_invites")
+        .insert({
+          split_config_id: splitConfigId,
+          inviter_id: user!.id,
+          invitee_id: selectedUserId,
+          message: message.trim() || null,
+          pct,
+        });
+      if (error) throw error as { message: string };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["curator-invite", splitConfigId] });
@@ -108,7 +100,7 @@ const CuratorInviteSection = ({ splitConfigId, curatorId }: Props) => {
       setSelectedUserId(null);
       setMessage("");
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: { message: string }) => toast.error(e.message),
   });
 
   const revokeInvite = useMutation({
@@ -126,63 +118,12 @@ const CuratorInviteSection = ({ splitConfigId, curatorId }: Props) => {
     },
   });
 
-  const removeCurator = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase
-        .from("revenue_split_configs")
-        .update({ curator_id: null })
-        .eq("id", splitConfigId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["split-config"] });
-      qc.invalidateQueries({ queryKey: ["profile"] });
-      toast.success("Curator removed");
-    },
-  });
+  const initials = (s?: string | null) => (s || "?").slice(0, 2).toUpperCase();
 
-  const initials = (s?: string | null) =>
-    (s || "?").slice(0, 2).toUpperCase();
-
-  // ── Accepted curator ─────────────────────────────────────────────
-  if (curatorId && curator) {
-    return (
-      <div className="rounded-xl border border-accent/30 bg-accent/5 p-4 space-y-3">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={curator.avatar_url ?? undefined} />
-            <AvatarFallback>{initials(curator.display_name)}</AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="font-medium truncate">
-                {curator.display_name || curator.username}
-              </p>
-              <Badge variant="outline" className="bg-accent/15 text-accent text-xs">
-                <Check className="h-3 w-3 mr-1" /> Curator
-              </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground truncate">
-              @{curator.username} · receives curator share on every release
-            </p>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => removeCurator.mutate()}
-            disabled={removeCurator.isPending}
-          >
-            Remove
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Pending invite ───────────────────────────────────────────────
+  // Pending invite
   if (pendingInvite && pendingProfile) {
     return (
-      <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+      <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10">
             <AvatarImage src={pendingProfile.avatar_url ?? undefined} />
@@ -194,12 +135,10 @@ const CuratorInviteSection = ({ splitConfigId, curatorId }: Props) => {
                 {pendingProfile.display_name || pendingProfile.username}
               </p>
               <Badge variant="outline" className="bg-amber-500/15 text-amber-600 text-xs">
-                <Clock className="h-3 w-3 mr-1" /> Pending
+                <Clock className="h-3 w-3 mr-1" /> Pending · {pendingInvite.pct}%
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground truncate">
-              Awaiting their response
-            </p>
+            <p className="text-xs text-muted-foreground truncate">Awaiting their response</p>
           </div>
           <Button
             variant="ghost"
@@ -214,15 +153,14 @@ const CuratorInviteSection = ({ splitConfigId, curatorId }: Props) => {
     );
   }
 
-  // ── Invite a curator ─────────────────────────────────────────────
   return (
     <div className="rounded-xl border border-border/60 bg-muted/20 p-4 space-y-3">
       <div className="flex items-center gap-2">
         <UserPlus className="h-4 w-4 text-accent" />
-        <Label className="text-sm font-medium">Invite a curator</Label>
+        <Label className="text-sm font-medium">Invite a collaborator</Label>
       </div>
       <p className="text-xs text-muted-foreground">
-        Curators help you ship and get paid automatically on every release.
+        They'll get the share you set when they accept. Comes out of your share, not the platform fee.
       </p>
 
       <div className="relative">
@@ -246,7 +184,7 @@ const CuratorInviteSection = ({ splitConfigId, curatorId }: Props) => {
 
       {searchResults && searchResults.length > 0 && !selectedUserId && (
         <div className="space-y-1 max-h-48 overflow-y-auto">
-          {searchResults.map((p: any) => (
+          {searchResults.map((p) => (
             <button
               key={p.user_id}
               onClick={() => {
@@ -272,6 +210,18 @@ const CuratorInviteSection = ({ splitConfigId, curatorId }: Props) => {
 
       {selectedUserId && (
         <>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs">Share</Label>
+            <Input
+              type="number"
+              min={1}
+              max={Math.max(1, leadCurrentPct - 1)}
+              value={pct}
+              onChange={(e) => setPct(Number(e.target.value))}
+              className="w-20 font-mono text-right"
+            />
+            <span className="text-sm text-muted-foreground">% of pool</span>
+          </div>
           <Input
             placeholder="Optional message…"
             value={message}
