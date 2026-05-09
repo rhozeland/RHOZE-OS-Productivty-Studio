@@ -22,9 +22,8 @@ interface SettlementRow {
   fileUrl: string | null;
   events: number;
   gross: number;
-  creator: number;
-  curator: number;
-  buyback: number;
+  payout: number;   // total paid out to all collaborators
+  platform: number; // platform fee
   lastEvent: string | null;
   configIds: Set<string>;
   onChainEvents: number;
@@ -104,7 +103,7 @@ const WorkSettlements = ({ userId }: WorkSettlementsProps) => {
       if (allConfigIds.length > 0) {
         const { data: logRows } = await supabase
           .from("revenue_split_logs")
-          .select("id, config_id, total_amount, creator_amount, curator_amount, buyback_amount, solana_signature, created_at")
+          .select("id, config_id, total_amount, platform_amount, creator_amount, curator_amount, buyback_amount, solana_signature, created_at")
           .in("config_id", allConfigIds)
           .order("created_at", { ascending: false });
         logs = logRows || [];
@@ -122,9 +121,8 @@ const WorkSettlements = ({ userId }: WorkSettlementsProps) => {
           fileUrl: w.file_url,
           events: 0,
           gross: 0,
-          creator: 0,
-          curator: 0,
-          buyback: 0,
+          payout: 0,
+          platform: 0,
           lastEvent: null,
           configIds: new Set(),
           onChainEvents: 0,
@@ -134,16 +132,23 @@ const WorkSettlements = ({ userId }: WorkSettlementsProps) => {
       logs.forEach((log) => {
         const linkedWorks = configToWorks.get(log.config_id);
         if (!linkedWorks) return;
-        // Distribute the log's totals evenly across linked works (most often 1:1)
         const share = 1 / linkedWorks.size;
+        // v2 shape: platform_amount + (total - platform_amount) collaborator payout
+        // Legacy fallback: creator + curator + buyback
+        const total = Number(log.total_amount);
+        const platform = log.platform_amount != null
+          ? Number(log.platform_amount)
+          : 0;
+        const payout = log.platform_amount != null
+          ? total - platform
+          : Number(log.creator_amount ?? 0) + Number(log.curator_amount ?? 0) + Number(log.buyback_amount ?? 0);
         linkedWorks.forEach((wid) => {
           const row = rows.get(wid);
           if (!row) return;
           row.events += 1;
-          row.gross += Number(log.total_amount) * share;
-          row.creator += Number(log.creator_amount) * share;
-          row.curator += Number(log.curator_amount) * share;
-          row.buyback += Number(log.buyback_amount) * share;
+          row.gross += total * share;
+          row.payout += payout * share;
+          row.platform += platform * share;
           row.configIds.add(log.config_id);
           if (log.solana_signature) row.onChainEvents += 1;
           if (!row.lastEvent || log.created_at > row.lastEvent) {
@@ -191,14 +196,13 @@ const WorkSettlements = ({ userId }: WorkSettlementsProps) => {
   const totals = data.reduce(
     (acc, r) => {
       acc.gross += r.gross;
-      acc.creator += r.creator;
-      acc.curator += r.curator;
-      acc.buyback += r.buyback;
+      acc.payout += r.payout;
+      acc.platform += r.platform;
       acc.events += r.events;
       acc.onChain += r.onChainEvents;
       return acc;
     },
-    { gross: 0, creator: 0, curator: 0, buyback: 0, events: 0, onChain: 0 }
+    { gross: 0, payout: 0, platform: 0, events: 0, onChain: 0 }
   );
 
   return (
@@ -269,18 +273,14 @@ const WorkSettlements = ({ userId }: WorkSettlementsProps) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/40">
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/40">
                 <div>
-                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Creator</p>
-                  <p className="text-sm font-semibold text-emerald-500">{fmt(row.creator)}</p>
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Collaborators</p>
+                  <p className="text-sm font-semibold text-emerald-500">{fmt(row.payout)}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Curator</p>
-                  <p className="text-sm font-semibold text-blue-500">{fmt(row.curator)}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Buyback</p>
-                  <p className="text-sm font-semibold text-violet-500">{fmt(row.buyback)}</p>
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Platform fee</p>
+                  <p className="text-sm font-semibold text-violet-500">{fmt(row.platform)}</p>
                 </div>
               </div>
 

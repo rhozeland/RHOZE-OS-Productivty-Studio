@@ -112,7 +112,7 @@ export const REWARDS_CATALOG: RewardEntry[] = [
     description: "Earn 2% of your sale price as $RHOZE on top of the 75% payout.",
     amount: "2% of sale",
     category: "commerce",
-    detail: "Stacks with the 75/15/10 split — the artist's reward, not the buyer's.",
+    detail: "Stacks with the locked collaborator splits — the artist's reward, not the buyer's.",
   },
   {
     action: "publish_listing",

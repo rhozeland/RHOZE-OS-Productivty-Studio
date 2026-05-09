@@ -63,7 +63,7 @@ const LAYERS: Layer[] = [
     body:
       "A revenue split on Rhozeland isn't a PDF — it's a row of basis points stored on the platform and fingerprinted with a SHA-256 hash. When a milestone is approved, the split fires automatically. Curators are added through a verifiable invite handshake.",
     liveToday:
-      "Creator / curator / buyback splits, curator invite & accept flow, milestone-triggered fan-out, and direct binding to a registered Work's content hash.",
+      "Collaborator splits with tier-based platform fee, invite & accept flow, milestone-triggered fan-out, and direct binding to a registered Work's content hash. Splits + fee are frozen at project lock and a SHA-256 fingerprint is anchored on Solana.",
     comingSoon:
       "N-recipient splits for full music collaboration (producer / writer / vocalist / label) and royalty-on-resale.",
     status: "live",
