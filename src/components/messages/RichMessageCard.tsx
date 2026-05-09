@@ -18,6 +18,7 @@ import {
   MapPin,
   Globe2,
   Clock,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
