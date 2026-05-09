@@ -22,6 +22,9 @@ import {
   HelpCircle, Ticket, TrendingUp,
 } from "lucide-react";
 import TicketsTab from "@/components/credits/TicketsTab";
+import RewardsExplainerV2 from "@/components/credits/RewardsExplainerV2";
+import VerifiedIPHub from "@/components/credits/VerifiedIPHub";
+import BuyRhozeSection from "@/components/credits/BuyRhozeSection";
 import { RhozeInfoPopover } from "@/components/RhozeInfoPopover";
 import { format, formatDistanceToNow } from "date-fns";
 import { Link, useSearchParams } from "react-router-dom";
@@ -32,10 +35,6 @@ import TierMatrix from "@/components/creators/TierMatrix";
 import TierProgressCard from "@/components/creators/TierProgressCard";
 import CoinPortfolio from "@/components/creators/CoinPortfolio";
 import { StreakCard } from "@/components/creators/StreakCard";
-import { REWARDS_BY_LANE } from "@/lib/rewards-catalog";
-import {
-  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
-} from "@/components/ui/accordion";
 
 const CAT_ICONS: Record<string, any> = {
   music: Music, design: Palette, photo: Camera, video: Video, writing: PenTool,
