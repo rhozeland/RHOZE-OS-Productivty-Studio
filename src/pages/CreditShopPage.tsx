@@ -41,8 +41,6 @@ const CAT_ICONS: Record<string, any> = {
   music: Music, design: Palette, photo: Camera, video: Video, writing: PenTool,
 };
 
-const RHOZE_CA = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
-const PUMP_FUN_URL = `https://pump.fun/coin/${RHOZE_CA}`;
 
 const CreditShopPage = () => {
   const { user } = useAuth();
