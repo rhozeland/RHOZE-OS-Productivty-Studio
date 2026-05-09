@@ -4847,6 +4847,15 @@ export type Database = {
           read_ct: number
         }[]
       }
+      record_rhoze_topup: {
+        Args: {
+          p_amount_cents: number
+          p_credits: number
+          p_payment_reference: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       reject_pending_reward: {
         Args: { _admin_id: string; _note?: string; _reward_id: string }
         Returns: undefined
