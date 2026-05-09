@@ -175,11 +175,11 @@ const RoomsBottomNav = () => {
                   <TooltipTrigger asChild>
                     <Link
                       to="/discover"
-                      className="hidden md:flex items-center gap-1 px-2 py-1 rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors"
+                      className="flex items-center gap-1.5 px-3 h-9 rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors shadow-sm"
                       aria-label="Upload work"
                     >
-                      <Upload className="h-3 w-3" />
-                      <span className="text-[10px] font-bold uppercase tracking-wide">Upload</span>
+                      <Upload className="h-3.5 w-3.5" strokeWidth={2.5} />
+                      <span className="hidden sm:inline text-xs font-bold uppercase tracking-wide">Upload</span>
                     </Link>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="text-xs">
