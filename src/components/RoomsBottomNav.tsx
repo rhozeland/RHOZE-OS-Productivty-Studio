@@ -1,5 +1,5 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { Sparkles, Store, Coins, Flame } from "lucide-react";
+import { Sparkles, Store, Coins, Flame, Upload } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -62,7 +62,6 @@ const RoomsBottomNav = () => {
   const totalXP = xp?.totalXP ?? 0;
   const nextLevelXP = xp?.nextLevelXP ?? 20;
   const streak = xp?.streak ?? 0;
-  const balance = xp?.rhozeBalance ?? 0;
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -71,8 +70,8 @@ const RoomsBottomNav = () => {
         className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
-        <div className="mx-auto max-w-3xl px-3 pb-3 pointer-events-auto">
-          <div className="flex items-stretch gap-2 rounded-2xl border border-border bg-card/95 backdrop-blur-xl shadow-lg shadow-foreground/10 p-1.5">
+        <div className="mx-auto max-w-2xl px-3 pb-3 pointer-events-auto">
+          <div className="flex items-stretch gap-1 rounded-full border border-border bg-card/95 backdrop-blur-xl shadow-lg shadow-foreground/10 p-1">
             {/* ── Player HUD (left) ── */}
             {user && (
               <div className="flex items-center gap-2 pl-1.5 pr-2 min-w-0 shrink">
@@ -170,20 +169,21 @@ const RoomsBottomNav = () => {
                   </Tooltip>
                 )}
 
-                {/* $RHOZE chip */}
+                {/* Upload shortcut — replaces the $RHOZE balance chip so the
+                    primary creation surface is one tap from anywhere. */}
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Link
-                      to="/credits"
-                      className="hidden md:flex items-center gap-1 px-2 py-1 rounded-full bg-[hsl(var(--pink)/0.15)] border border-[hsl(var(--pink)/0.35)] hover:bg-[hsl(var(--pink)/0.25)] transition-colors"
-                      aria-label={`${balance.toLocaleString()} $RHOZE`}
+                      to="/discover"
+                      className="hidden md:flex items-center gap-1 px-2 py-1 rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors"
+                      aria-label="Upload work"
                     >
-                      <Coins className="h-3 w-3" style={{ color: "hsl(var(--pink))" }} />
-                      <span className="text-[10px] font-bold tabular-nums">{balance.toLocaleString()}</span>
+                      <Upload className="h-3 w-3" />
+                      <span className="text-[10px] font-bold uppercase tracking-wide">Upload</span>
                     </Link>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="text-xs">
-                    {balance.toLocaleString()} $RHOZE
+                    Drop a work, offering, or update
                   </TooltipContent>
                 </Tooltip>
 
@@ -191,40 +191,33 @@ const RoomsBottomNav = () => {
               </div>
             )}
 
-            {/* ── Rooms (right) ── */}
-            <div className="flex items-stretch gap-1 flex-1 min-w-0">
+            {/* ── Rooms (right) — compact icon-only pills with tooltip
+                labels so the bar stays small even with the HUD on. ── */}
+            <div className="flex items-center gap-1">
               {ROOMS.map(({ id, label, sub, Icon, to, matches }) => {
                 const active = isMatch(pathname, matches);
                 return (
-                  <NavLink
-                    key={id}
-                    to={to}
-                    aria-current={active ? "page" : undefined}
-                    className="flex-1 min-w-0"
-                  >
-                    <motion.div
-                      whileTap={{ scale: 0.95 }}
-                      className={cn(
-                        "flex flex-col items-center justify-center gap-0.5 rounded-xl py-2 px-2 transition-colors h-full",
-                        active
-                          ? "bg-foreground text-background"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
-                      <span className="text-[11px] font-display font-semibold leading-none tracking-wide uppercase">
-                        {label}
-                      </span>
-                      <span
-                        className={cn(
-                          "text-[9px] leading-none tracking-[0.18em] uppercase hidden sm:block",
-                          active ? "opacity-70" : "opacity-50",
-                        )}
-                      >
-                        {sub}
-                      </span>
-                    </motion.div>
-                  </NavLink>
+                  <Tooltip key={id}>
+                    <TooltipTrigger asChild>
+                      <NavLink to={to} aria-current={active ? "page" : undefined} aria-label={`${label} · ${sub}`}>
+                        <motion.div
+                          whileTap={{ scale: 0.92 }}
+                          className={cn(
+                            "h-9 w-9 flex items-center justify-center rounded-full transition-colors",
+                            active
+                              ? "bg-foreground text-background"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+                          )}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </motion.div>
+                      </NavLink>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs">
+                      <p className="font-bold">{label}</p>
+                      <p className="text-muted-foreground">{sub}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 );
               })}
             </div>

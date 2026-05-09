@@ -81,6 +81,21 @@ const CreatorPassCard = () => {
     enabled: !!user,
   });
 
+  // Tokens launched — live coin_launches the user is creator of. Replaces
+  // the in-card $RHOZE balance metric (balance still drives tier eligibility,
+  // but it no longer needs to be displayed front-and-center).
+  const { data: tokensLaunched } = useQuery({
+    queryKey: ["tokens-launched-pass", user?.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("coin_launches")
+        .select("id", { count: "exact", head: true })
+        .eq("creator_id", user!.id);
+      return count ?? 0;
+    },
+    enabled: !!user,
+  });
+
   // Events attended — count of issued/checked-in tickets the user holds.
   const { data: ticketsData } = useQuery({
     queryKey: ["pass-tickets", user?.id],
@@ -204,12 +219,12 @@ const CreatorPassCard = () => {
           <div className="grid grid-cols-4 gap-3">
             {([
               {
-                label: "Balance",
-                value: `${credits?.balance ?? 0}`,
+                label: "Tokens Launched",
+                value: `${tokensLaunched ?? 0}`,
                 icon: Coins,
-                isZero: Number(credits?.balance ?? 0) === 0,
-                hint: { text: "Earn $RHOZE →", to: "/credits?tab=how" },
-                to: null,
+                isZero: (tokensLaunched ?? 0) === 0,
+                hint: { text: "Launch a coin →", to: "/launchpad" },
+                to: "/launchpad",
               },
               {
                 label: "Streak",
@@ -221,10 +236,10 @@ const CreatorPassCard = () => {
               },
               {
                 label: "Events Attended",
-                value: `${ticketsData?.length ?? 0}`,
+                value: `${eventsAttended}`,
                 icon: Ticket,
-                isZero: (ticketsData?.length ?? 0) === 0,
-                hint: { text: "Attend 1 event →", to: "/events" },
+                isZero: false,
+                hint: { text: "", to: null as string | null },
                 to: "/credits?tab=tickets",
               },
               {
@@ -232,8 +247,8 @@ const CreatorPassCard = () => {
                 value: `${verifiedWorks ?? 0}`,
                 icon: Shield,
                 isZero: (verifiedWorks ?? 0) === 0,
-                hint: { text: "Register a work →", to: "/works" },
-                to: "/works",
+                hint: { text: "Register a work →", to: "/credits?tab=verified-ip" },
+                to: "/credits?tab=verified-ip",
               },
             ] as const).map((stat) => {
               const showHint = stat.isZero && stat.hint;
