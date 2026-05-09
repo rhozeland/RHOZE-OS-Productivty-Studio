@@ -108,7 +108,7 @@ const VerifiedIPHub = ({ userId }: { userId: string | null }) => {
       const file = new File([blob], item.title || "flow-drop", { type: blob.type });
       const hash = item.content_hash || (await computeContentHash(file));
 
-      const kind = inferWorkKind(file);
+      const kind = inferWorkKind(blob.type);
       const { data: profile } = await supabase
         .from("profiles")
         .select("verification_status")
