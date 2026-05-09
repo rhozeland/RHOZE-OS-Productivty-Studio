@@ -1,64 +1,69 @@
-## Section 2 — The Heart: Fan Investment & Content
 
-Three coordinated changes that reframe the economy as "shares in artists" and turn The Flow into a VIP-style unlock loop. Strictly UI/copy + a thin gating layer — no DB schema changes, no economic logic changes.
+# Splits v2 — Collaborators + Platform, locked at lock
 
----
+One model, applied everywhere. Two parties only:
 
-### 1. Language pivot (UI copy only)
+1. **Collaborators pool** — anyone working on the thing (artist, brand, second artist, producer, friend who brought the deal). Team configures % shares that must sum to 100. No "creator vs curator vs buyback" anymore.
+2. **Platform fee** — taken off the top, tier-based on the project lead:
+   - Spark / Bloom → 15%
+   - Glow → 10%
+   - Play → 7%
 
-A single source-of-truth helper `src/lib/economy-copy.ts` exporting:
-- `CREDITS_LABEL = "Platform Credits"` (was "$RHOZE Token" in user-facing copy)
-- `SHARES_LABEL = "Artist Shares"` / `SHARE_LABEL = "Share"` (was "Artist Coin")
-- `MARKET_GROWTH_LABEL = "Market Growth"` (used wherever we currently say "bonding curve", "market cap progress", "price impact", etc.)
-- Helpers: `formatShares(n)`, `formatCredits(n)`.
+**Lock behavior:** Splits + platform fee % are **frozen at project lock**. SHA-256 of the canonical table is anchored on Solana via memo. After lock, splits cannot be rewritten. Tier upgrades only help on *future* projects.
 
-Then sweep the high-traffic surfaces and replace strings:
-- `RhozeBalanceChip`, `RhozeInfoPopover`, `ClaimRhozeButton`, `PayWithRhozeButton` button labels
-- Creator Pass page (`/credits`) tabs + copy: "$RHOZE" → "Platform Credits"
-- Launchpad / Coin tab / `ProfileCoinTab` / `LaunchDetailPage` / `TradePanel` / `CreatorReadinessCard`: "Coin" → "Share", "bonding curve / market cap" → "Market Growth"
-- `MintAddressChip`, `VaultRoomPage` ("Artist coins" → "Artist Shares")
-- `CoinSwapPanel` / swap history: "Swap $RHOZE for Coin" → "Buy Shares with Platform Credits"
-
-Internal code identifiers, table names, RPC names, env vars, ticker symbols on chain, and the on-chain `$RHOZE` SPL token name stay unchanged. The wordmark `$RHOZE` is preserved in the brand wallet/withdrawal contexts where it refers to the literal Solana token (per memory rule).
-
-The `RhozeInfoPopover` gets a one-liner: *"Platform Credits are the in-app currency you spend on Artist Shares. They never leave the platform."*
-
-### 2. The Flow — blur + Invest & Unlock
-
-New component `src/components/flow/FlowUnlockGate.tsx` wraps the FlowCard media area and:
-- Reads the viewer's `coin_holdings` for that artist (cached via React Query, key includes viewer + artist user_id).
-- If viewer is signed-out OR holds 0 shares of the post author → render the media with `filter: blur(28px) saturate(0.6)` and a centered glass card:
-  - Title: *"Locked · Hold shares to unlock"*
-  - Subtitle: *"Invest in @artist to unlock their private feed"*
-  - Primary button: **Invest & Unlock** → opens a new `<InvestUnlockSheet />` (bottom sheet on mobile, dialog on desktop) prefilled with the artist's launch / share-purchase flow.
-- If viewer holds ≥ 1 share OR is the author → render normally (no blur). Owners pass through.
-- Likes/comments/swipe still work on locked cards (blurred preview is teaser, action bar visible) but tapping the card body opens the unlock sheet instead of the comment sheet.
-
-`InvestUnlockSheet` reuses the existing share-purchase RPC (`swap_rhoze_for_coin`) — buys 1 share by default with a slider for more, shows current Market Growth %, confirms with toast and invalidates the holdings query so the same card un-blurs in place.
-
-Loading state: render skeleton (no blur flicker) while holdings query is pending for signed-in users.
-
-### 3. Profile — primary CTA becomes Invest & Unlock
-
-In `ProfileDetailPage.tsx` (and the Support tab), promote a single primary CTA above Follow/Message/Book:
-- **Invest & Unlock** — opens the same `InvestUnlockSheet` for that artist.
-- Sub-line: *"Buy a share to unlock private posts, drops, and behind-the-scenes."*
-- If viewer already holds shares: button label flips to **Buy More Shares** and a green chip *"Unlocked · X shares"* appears next to it.
-- If artist hasn't launched a share yet: CTA shows **Notify me when shares launch** (disabled action, tracked via existing follow).
-- Existing Follow / Message / Book buttons demote to secondary (smaller, outline variant) below the primary CTA.
-
-The Support tab keeps `<ProfileCoinTab />` but the heading becomes *"Artist Shares"* and the explainer is rewritten in plain language (no "bonding curve").
+**Migration:** Existing configs are converted in place — old `creator_id` becomes a single collaborator at 100%. If a curator was accepted, they're added as a collaborator at the curator %; lead's % drops by that amount. Buyback % is folded into the lead. Nothing is deleted.
 
 ---
 
-### Out of scope
+## Implementation
 
-- No DB migrations. Holdings, ledger tables, RPC names, on-chain ticker stay as-is.
-- No changes to fee math, reward catalog, tier matrix.
-- Pay-with-$RHOZE checkout (BookingCheckoutModal, etc.) keeps its $RHOZE label because that surface is the literal on-chain token, not platform credits. Only the in-app credit balance + artist coin language is renamed.
-- Admin/dev-only surfaces (AdminPage internals, console logs) keep technical names.
+### 1. Database migration
+- New table `revenue_split_collaborators` (`id, config_id, user_id, pct, created_at`) with RLS so collaborators of the same config can read it; lead can write before lock.
+- Add `revenue_split_configs.locked_at TIMESTAMPTZ`, `locked_platform_fee_bps INT`, `splits_hash TEXT`.
+- Keep `revenue_split_configs.creator_id` as **lead** (rename in code, not in SQL — avoids breakage).
+- Data migration: for every existing active config, insert a row in `revenue_split_collaborators` for the creator at `creator_pct + buyback_pct`, and if `curator_id` is set, a row for them at `curator_pct`. Old % columns kept (nullable) for rollback safety; UI ignores them.
+- New SQL function `lock_split_config(config_id)` — sets `locked_at`, snapshots current `get_platform_fee_bps()` for the lead, computes splits hash, returns the row.
 
-### Files touched
+### 2. UI rebuild — `RevenueSplitConfig.tsx`
+- Replace 3 sliders + buyback wallet with a **collaborator list**:
+  - Each row: avatar + name + % stepper + remove
+  - "Add collaborator" → opens user search (reuses curator-invite picker UI)
+  - Live "must sum to 100%" validation
+  - Lead row pinned, can't be removed
+- Read-only **Platform fee** card below: "Your tier (Glow) → 10% platform fee. Hold more $RHOZE to drop it."
+- "Linked work" + splits fingerprint sections kept as-is.
+- Lock state: once `locked_at` is set, the whole panel becomes read-only with a "Locked at {date} · 0x{hash}" badge linking to Solscan.
 
-New: `src/lib/economy-copy.ts`, `src/components/flow/FlowUnlockGate.tsx`, `src/components/profile/InvestUnlockSheet.tsx`.
-Edited: `RhozeBalanceChip`, `RhozeInfoPopover`, `VaultRoomPage`, `CreditShopPage` (Creator Pass), `ProfileCoinTab`, `LaunchDetailPage`, `TradePanel`, `CoinSwapPanel`, `ProfileDetailPage`, `FlowCard` (wrap media in gate), `MintAddressChip`, `CreatorReadinessCard`.
+### 3. Curator → Collaborator reframe
+- `CuratorInviteSection` → `CollaboratorInviteSection`. Same DB rows, new copy ("Invite collaborator"). Accepting an invite inserts into `revenue_split_collaborators`.
+- `CuratorInvitesInbox` → `CollaboratorInvitesInbox`. Notifications updated.
+
+### 4. Edge function rewrite — `split-revenue/index.ts`
+On milestone approval:
+1. Load config + collaborators. **Require** `locked_at IS NOT NULL` (else error: "Splits must be locked before payout").
+2. Compute `platform_amount = floor(total * locked_platform_fee_bps / 10000)`.
+3. `pool = total - platform_amount`. For each collaborator: `award_rhoze(user_id, floor(pool * pct / 100))`. Rounding dust goes to lead.
+4. Memo includes `{ protocol: "rhozeland", type: "split_payout", config_id, splits_hash, platform_bps, total, platform_amount }`.
+5. Notifications fan out to every collaborator + (if applicable) on-chain buyback wallet logic removed entirely.
+
+### 5. Project lock flow
+- `ProjectLockButton` (or wherever lock currently happens) calls `lock_split_config` after collecting signatures. The platform fee at that moment becomes `locked_platform_fee_bps`. `anchor-roadmap` edge fn memos the splits hash.
+
+### 6. Copy + surface sweep
+- Kill the words **curator** and **buyback** in user-facing copy across:
+  - Landing page, /credits "How rewards work" tab, project workspace, marketplace, profile pricing, Spaces booking confirmation, all email templates.
+- Replace with **collaborator** + the 15/10/7 platform-fee line.
+- Update [Revenue Splits](mem://features/revenue-splits) and [Rhoze Economy](mem://features/rhoze-economy) memories. Add a "Splits v2" core line to index.
+
+### 7. What stays the same
+- `src/lib/platform-fee.ts` — already correct, no change.
+- Spaces bookings, event tickets, marketplace, paid project milestones — already use tier-based fee. They just stop being "the special case" now.
+- Splits fingerprint anchoring on Solana — same SHA-256 mechanism, just over the new shape.
+
+---
+
+## Out of scope for this pass
+- Bringing back the buyback pool as a separate SKU (could return later as an opt-in "tip the ecosystem" toggle, but not now).
+- On-chain SPL splits via Anchor program — still spec only, unchanged.
+
+After approval I'll run the DB migration first, wait for you to confirm, then do the code sweep in one pass.
