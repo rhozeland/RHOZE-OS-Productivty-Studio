@@ -795,7 +795,24 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
           <ProjectsInbox userId={user.id} />
         </TabsContent>
 
-        <TabsContent value="listings" className="mt-4">
+        <TabsContent value="listings" className="mt-4 space-y-4">
+          {!!allInquiries?.length && (
+            <details id="inquiries-section" className="surface-card p-4 group [&_summary::-webkit-details-marker]:hidden scroll-mt-24" open>
+              <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-foreground list-none">
+                <Inbox className="h-4 w-4" /> Inquiries
+                <span className="text-xs text-muted-foreground">({allInquiries.length})</span>
+                {pendingCount > 0 && (
+                  <span className="ml-1 h-5 px-2 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center">
+                    {pendingCount} pending
+                  </span>
+                )}
+                <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground transition-transform rotate-90 group-open:-rotate-90" />
+              </summary>
+              <div className="mt-3 space-y-3">
+                {allInquiries.map((i) => renderInquiry(i))}
+              </div>
+            </details>
+          )}
           <ListingsTab userId={user.id} />
         </TabsContent>
 
