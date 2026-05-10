@@ -137,9 +137,9 @@ const RoomsBottomNav = () => {
     <TooltipProvider delayDuration={150}>
       <motion.nav
         aria-label="Player HUD and rooms"
-        className="fixed bottom-0 z-40 pointer-events-none -translate-x-1/2"
+        className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none flex justify-center"
         style={{
-          left: `calc(50% + ${sidebarOffset})`,
+          paddingLeft: sidebarFullWidth,
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
         initial={{ y: 0, opacity: 1 }}
