@@ -1,9 +1,11 @@
+import { useCallback, useEffect, useRef } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { Sparkles, Store, Coins, Flame, Upload } from "lucide-react";
-import { motion } from "framer-motion";
+import { Sparkles, Store, Coins, Flame, Plus } from "lucide-react";
+import { motion, useAnimationControls } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCreatorXP } from "@/hooks/useCreatorXP";
+import { useSidebar } from "@/components/ui/sidebar";
 import {
   Tooltip,
   TooltipContent,
@@ -14,11 +16,13 @@ import {
 /**
  * RoomsBottomNav — merged player HUD + 3-room navigation.
  *
- * Left half: tier gem · title + XP bar · streak chip · $RHOZE chip
- * Right half: Scene (Social) · Market (Work) · Vault (Growth)
- *
- * Stats collapse progressively on smaller widths so the room icons
- * are always reachable on mobile.
+ * v8.10:
+ *  • Only renders on Discover (/discover, /scene, /flow, /stream). Inbox,
+ *    Creator Pass, and detail pages keep their own headers clean.
+ *  • Hides on scroll-down, reveals on scroll-up.
+ *  • Centered within the main content column (offset by half the
+ *    sidebar width on desktop) instead of the full viewport.
+ *  • Post button is now a single Plus icon (no label).
  */
 const ROOMS = [
   {
@@ -50,10 +54,73 @@ const ROOMS = [
 const isMatch = (pathname: string, prefixes: string[]) =>
   prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
 
+// Routes where the dock should appear at all. Per v8.10 we only surface
+// it on Discover-family surfaces; Conversations/Creator Pass/etc. skip it.
+const VISIBLE_PREFIXES = ["/discover", "/scene", "/flow", "/stream"];
+
+const SCROLL_HIDE_THRESHOLD = 12;
+
 const RoomsBottomNav = () => {
   const { pathname } = useLocation();
   const { user } = useAuth();
   const { data: xp } = useCreatorXP();
+  const { state, isMobile } = useSidebar();
+  const controls = useAnimationControls();
+  const lastScrollY = useRef(0);
+  const isHidden = useRef(false);
+  const ticking = useRef(false);
+
+  // Center the dock within the content column rather than the viewport.
+  const sidebarOffset = isMobile
+    ? "0px"
+    : state === "expanded"
+      ? "8rem" // half of 16rem sidebar width
+      : "1.5rem"; // half of 3rem icon-collapsed width
+
+  const handleScroll = useCallback(() => {
+    if (ticking.current) return;
+    ticking.current = true;
+    requestAnimationFrame(() => {
+      const y = window.scrollY;
+      const delta = y - lastScrollY.current;
+
+      if (delta > SCROLL_HIDE_THRESHOLD && !isHidden.current && y > 80) {
+        isHidden.current = true;
+        controls.start({
+          y: 96,
+          opacity: 0,
+          transition: { duration: 0.22, ease: "easeOut" },
+        });
+      } else if (delta < -SCROLL_HIDE_THRESHOLD && isHidden.current) {
+        isHidden.current = false;
+        controls.start({
+          y: 0,
+          opacity: 1,
+          transition: { type: "spring", stiffness: 320, damping: 28 },
+        });
+      }
+
+      lastScrollY.current = y;
+      ticking.current = false;
+    });
+  }, [controls]);
+
+  // Reset on route change so it never lands stuck-hidden.
+  useEffect(() => {
+    lastScrollY.current = window.scrollY;
+    isHidden.current = false;
+    controls.start({ y: 0, opacity: 1, transition: { duration: 0.2 } });
+  }, [pathname, controls]);
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
+  // Route gating
+  if (!VISIBLE_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p + "?"))) {
+    return null;
+  }
 
   const tierColor = xp?.titleColor ?? "210 60% 55%";
   const level = xp?.level ?? 1;
@@ -65,12 +132,17 @@ const RoomsBottomNav = () => {
 
   return (
     <TooltipProvider delayDuration={150}>
-      <nav
+      <motion.nav
         aria-label="Player HUD and rooms"
-        className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none"
-        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        className="fixed bottom-0 z-40 pointer-events-none -translate-x-1/2"
+        style={{
+          left: `calc(50% + ${sidebarOffset})`,
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        }}
+        initial={{ y: 0, opacity: 1 }}
+        animate={controls}
       >
-        <div className="mx-auto w-fit max-w-[calc(100vw-1.5rem)] px-3 pb-3 pointer-events-auto">
+        <div className="px-3 pb-3 pointer-events-auto">
           <div className="inline-flex items-stretch gap-1 rounded-full border border-border bg-card/95 backdrop-blur-xl shadow-lg shadow-foreground/10 p-1">
             {/* ── Player HUD (left) ── */}
             {user && (
@@ -169,21 +241,19 @@ const RoomsBottomNav = () => {
                   </Tooltip>
                 )}
 
-                {/* Upload shortcut — replaces the $RHOZE balance chip so the
-                    primary creation surface is one tap from anywhere. */}
+                {/* Post — icon-only round button. */}
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Link
                       to="/discover"
-                      className="flex items-center gap-1.5 px-3 h-9 rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors shadow-sm"
+                      className="flex items-center justify-center h-9 w-9 rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors shadow-sm"
                       aria-label="Post work"
                     >
-                      <Upload className="h-3.5 w-3.5" strokeWidth={2.5} />
-                      <span className="hidden sm:inline text-xs font-bold uppercase tracking-wide">Post</span>
+                      <Plus className="h-4 w-4" strokeWidth={2.5} />
                     </Link>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="text-xs">
-                    Drop a work, offering, or update
+                    Post — drop a work, offering, or update
                   </TooltipContent>
                 </Tooltip>
 
@@ -191,8 +261,7 @@ const RoomsBottomNav = () => {
               </div>
             )}
 
-            {/* ── Rooms (right) — compact icon-only pills with tooltip
-                labels so the bar stays small even with the HUD on. ── */}
+            {/* ── Rooms (right) — compact icon-only pills with tooltips. ── */}
             <div className="flex items-center gap-1">
               {ROOMS.map(({ id, label, sub, Icon, to, matches }) => {
                 const active = isMatch(pathname, matches);
@@ -223,7 +292,7 @@ const RoomsBottomNav = () => {
             </div>
           </div>
         </div>
-      </nav>
+      </motion.nav>
     </TooltipProvider>
   );
 };

@@ -244,7 +244,7 @@ const CreatorPassCard = () => {
                 icon: Coins,
                 isZero: (tokensLaunched ?? 0) === 0,
                 hint: { text: "Launch a coin →", to: "/launchpad" },
-                to: "/launchpad",
+                to: "/credits?tab=portfolio",
               },
               {
                 label: "Streak",
@@ -260,7 +260,7 @@ const CreatorPassCard = () => {
                 icon: Ticket,
                 isZero: false,
                 hint: { text: "", to: null as string | null },
-                to: "/credits?tab=tickets",
+                to: "/credits?tab=activity",
               },
               {
                 label: "Verified Works",

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
  */
 const VAULT_LINKS = [
   { to: "/credits", label: "Creator Pass", desc: "Tier · rewards · how it works", Icon: CreditCard },
-  { to: "/credits?tab=purchases", label: "Purchases", desc: "Tickets & receipts", Icon: ShoppingBag },
+  { to: "/credits?tab=activity", label: "Activity", desc: "Earns, spends & receipts", Icon: ShoppingBag },
   { to: "/swaps", label: "Swaps", desc: "Credits ↔ Artist Shares", Icon: Repeat },
   { to: "/settings", label: "Wallet", desc: "Payout details & history", Icon: Wallet },
 ];
