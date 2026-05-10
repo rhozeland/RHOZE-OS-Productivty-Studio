@@ -12,7 +12,7 @@ import {
   EyeOff, Loader2, Settings, Store, Star, ExternalLink, ShoppingBag,
   Sparkles, Image as ImageIcon, Play, Music, FileText, Award, Shield,
   Zap, Coins, Calendar as CalendarIcon, User as UserIcon, FolderKanban,
-  Heart, ArrowRight, Search,
+  Heart, ArrowRight, Search, Building2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
