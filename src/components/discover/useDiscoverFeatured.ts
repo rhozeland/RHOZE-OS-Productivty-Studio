@@ -22,6 +22,8 @@ export type FeaturedSlide =
       followers_count?: number;
       works_thumbs?: string[];
       coin?: { id: string; ticker: string; name: string | null; image_url: string | null } | null;
+      next_event?: { id: string; slug: string | null; title: string; starts_at: string } | null;
+      offerings_count?: number;
     }
   | {
       kind: "event";
