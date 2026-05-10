@@ -485,23 +485,32 @@ const BalanceCard = ({ balance, holdTier }: { balance: number; holdTier: TierId 
           <span className="text-[10px] uppercase tracking-[0.2em] font-body font-medium">$RHOZE Balance</span>
           <RhozeInfoPopover size={11} />
         </div>
+        {/* Balance — force en-US locale so 312.527 always reads as a
+            decimal, never a thousands separator. Whole numbers drop the
+            decimal entirely. */}
         <p className="font-display text-4xl md:text-5xl font-bold text-foreground tabular-nums leading-none mt-2">
-          {balance.toLocaleString()}
+          {balance.toLocaleString("en-US", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: Number.isInteger(balance) ? 0 : 3,
+          })}
         </p>
-        <p
-          className="text-[11px] text-muted-foreground font-body mt-1 tabular-nums"
-          title={
-            priceUsd > 0
-              ? `Live market: ${formatRhozeUsd(priceUsd)} per $RHOZE${market?.source ? ` · ${market.source}` : ""}`
-              : "Live market price unavailable"
-          }
-        >
-          {priceUsd > 0 ? (
-            <>≈ {formatRhozeUsd(usd)} <span className="opacity-60">at market</span></>
-          ) : (
-            <span className="opacity-70">Market price loading…</span>
-          )}
-        </p>
+        {/* Show the multiplication explicitly so the USD number is
+            self-checking: balance × per-token price = total. */}
+        {priceUsd > 0 ? (
+          <div className="mt-2 flex flex-col items-center gap-0.5 text-[11px] text-muted-foreground font-body tabular-nums">
+            <span className="text-foreground/90 font-medium">
+              ≈ {formatRhozeUsd(usd)} <span className="opacity-60 font-normal">total value</span>
+            </span>
+            <span className="opacity-70">
+              {formatRhozeUsd(priceUsd)} per $RHOZE
+              {market?.source ? <span className="opacity-60"> · {market.source}</span> : null}
+            </span>
+          </div>
+        ) : (
+          <p className="text-[11px] text-muted-foreground font-body mt-1 opacity-70">
+            Market price loading…
+          </p>
+        )}
       </div>
 
       {/* Progress bar to next tier */}
