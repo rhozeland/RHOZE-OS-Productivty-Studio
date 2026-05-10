@@ -92,7 +92,7 @@ const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; link
 const FlowModePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isAdmin } = useAdminCheck();
   const queryClient = useQueryClient();
   const [calibrated, setCalibrated] = useState(false);
@@ -884,28 +884,33 @@ const FlowModePage = () => {
   const currentItem = allItems.length > 0 ? allItems[currentIndex % allItems.length] : null;
 
   // Deep-link: when navigated with ?item=<flow_item_id>, jump the swipe
-  // cursor to that card as soon as the feed loads. We track the last
-  // applied targetId rather than a one-shot consumed flag so that
-  // navigating from Discover to a *different* item (while the FlowModePage
-  // instance is still mounted / HMR-preserved) re-applies the jump
-  // instead of leaving the user stuck on the previous card.
+  // cursor to that card once, then strip the param so subsequent swipes
+  // aren't snapped back to the deep-linked card on every index change.
+  // We key off the targetId (not currentIndex) so the effect only fires
+  // when the URL actually changes — preventing the "can't swipe left/right"
+  // bug where every advance got reset to the deep-linked item.
+  const appliedDeepLinkRef = useRef<string | null>(null);
   useEffect(() => {
     const targetId = searchParams.get("item");
     if (!targetId) return;
     if (allItems.length === 0) return;
-    // Always check whether the item at currentIndex still matches the target —
-    // allItems can reshuffle when the feed query refetches (scope/category
-    // changes), invalidating a previously-applied index.
-    const atCursor = allItems[currentIndex % allItems.length];
-    if (atCursor?.id === targetId) return;
+    if (appliedDeepLinkRef.current === targetId) return;
+
     const idx = allItems.findIndex((i: any) => i.id === targetId);
     if (idx >= 0) {
       setCurrentIndex(idx);
+      appliedDeepLinkRef.current = targetId;
+      // Strip ?item so further swipes aren't reverted by this effect.
+      const next = new URLSearchParams(searchParams);
+      next.delete("item");
+      setSearchParams(next, { replace: true });
     } else if (feedScope !== "all") {
+      // Item not in current scope — widen and let the effect re-run once
+      // the feed refetches with all categories.
       setFeedScope("all");
       setSelectedCategories(CATEGORIES);
     }
-  }, [allItems, searchParams, feedScope, currentIndex]);
+  }, [allItems, searchParams, feedScope, setSearchParams]);
 
   // Batched coin lookup keyed by uploader (creator_id). Coins are now
   // profile-bound, so the "$TICKER → speculate" pill on a Flow card means
