@@ -328,34 +328,7 @@ const DiscoverPage = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Filter dropdown — All / Events / Spaces / Works */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-2 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors"
-                >
-                  <ActiveIcon className="h-3.5 w-3.5" />
-                  {activeOption.label}
-                  <ChevronDown className="h-3.5 w-3.5 opacity-60" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
-                {VIEW_OPTIONS.map(({ value, label, icon: Icon }) => (
-                  <DropdownMenuItem
-                    key={value}
-                    onSelect={() => setView(value)}
-                    className="gap-2 text-xs"
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    <span className="flex-1">{label}</span>
-                    {view === value && <Check className="h-3.5 w-3.5 opacity-70" />}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Open Flow — replaces the old Tune-in heading; opens full Flow Mode */}
+            {/* Open Flow — opens full Flow Mode */}
             <button
               type="button"
               onClick={() => navigate("/flow")}
@@ -368,11 +341,7 @@ const DiscoverPage = () => {
           </div>
         </div>
 
-        {view === "creators" ? (
-          <CreatorsGrid />
-        ) : (
-          <ConversationsMosaic kind={activeOption.kind} category={normalizedCategory} />
-        )}
+        <ConversationsMosaic kind="all" category={normalizedCategory} />
       </section>
 
       {/* ─── Coins moving today ─────────────────────────────────────── */}
