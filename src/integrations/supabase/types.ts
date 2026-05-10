@@ -3028,6 +3028,71 @@ export type Database = {
           },
         ]
       }
+      referral_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          max_uses: number | null
+          note: string | null
+          reward_rhoze: number
+          updated_at: string
+          used_count: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          max_uses?: number | null
+          note?: string | null
+          reward_rhoze: number
+          updated_at?: string
+          used_count?: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          max_uses?: number | null
+          note?: string | null
+          reward_rhoze?: number
+          updated_at?: string
+          used_count?: number
+        }
+        Relationships: []
+      }
+      referral_redemptions: {
+        Row: {
+          code: string
+          id: string
+          redeemed_at: string
+          reward_rhoze: number
+          user_id: string
+        }
+        Insert: {
+          code: string
+          id?: string
+          redeemed_at?: string
+          reward_rhoze: number
+          user_id: string
+        }
+        Update: {
+          code?: string
+          id?: string
+          redeemed_at?: string
+          reward_rhoze?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_redemptions_code_fkey"
+            columns: ["code"]
+            isOneToOne: false
+            referencedRelation: "referral_codes"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       revenue_split_collaborators: {
         Row: {
           config_id: string
@@ -4863,6 +4928,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      redeem_referral_code: { Args: { _code: string }; Returns: Json }
       reject_pending_reward: {
         Args: { _admin_id: string; _note?: string; _reward_id: string }
         Returns: undefined
