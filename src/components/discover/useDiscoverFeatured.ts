@@ -319,11 +319,11 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
 
       // Active marketplace offerings per artist
       const offeringsCount = new Map<string, number>();
-      const { data: listingRows } = await supabase
+      const { data: listingRows } = await (supabase
         .from("marketplace_listings")
-        .select("user_id, status")
+        .select("user_id")
         .in("user_id", userIds)
-        .eq("status", "active");
+        .eq("status", "active") as any);
       (listingRows ?? []).forEach((row: any) => {
         offeringsCount.set(row.user_id, (offeringsCount.get(row.user_id) ?? 0) + 1);
       });
