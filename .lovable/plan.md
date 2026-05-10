@@ -1,99 +1,39 @@
-# Creator-First Refocus (v8.9)
+# 4 Step Visuals — Editorial 3D Objects
 
-**Thesis shift:** The creator is the atomic unit. Events, Spaces, and Offerings are *ways to back a creator you already care about* — not standalone destinations. Discovery still surfaces all of it, but framed around artists.
+Generate one premium 3D-rendered object per step as a transparent PNG, sized for slide use (1024×1024, square). The brand palette stays consistent: soft cream/off-white surfaces, hot-pink (#EC4899) accents, amber highlights, subtle chrome — matching the existing deck visuals. Each render is a single hero object floating on a fully transparent background (no card, no shadow plate, no text baked in).
 
-Soft simplification — Rooms structure (Scene / Market / Vault) stays. Creator Pass stays prominent. Events keeps a discovery role *inside* Discover.
+## The 4 visuals
 
----
+**01 — Get verified**
+A glossy ceramic-pink verification badge: rounded shield/seal with an embossed checkmark and a thin gold rim. Soft studio lighting, subtle subsurface glow. Conveys identity + trust.
 
-## 1. Discover (Scene Room) — lead with creators
+**02 — Upload creations**
+A levitating cream-white folder/document object with a faint pink hash pattern emerging from its edge into floating glyph particles, and a tiny chrome anchor pinning it. Conveys "hash & anchor IP."
 
-- **Featured carousel** (`FeaturedCarousel`) re-weighted: Artists become the primary card type. Events and Spaces still rotate in but tagged as *"by {creator}"* — the artist is the headline, the event/space is the supporting detail.
-- **Add "Trending Artists" lane back** as the first lane under the globe (component already exists: `TrendingArtistsLane`). It was removed in v7.5 — bring it back as the lead lane.
-- **Stream toggle** (All / Events / Flow): rename **Events → "Happening"**, keep the filter, but reframe copy as "events from artists you're discovering." No mechanical change, just framing.
-- **Mosaic** stays, but Offering / Space / Event cards get a more prominent *creator chip* at the top of each card so the artist reads first.
+**03 — Open economy**
+A small editorial 3D storefront/kiosk pavilion in cream + pink, with miniature floating tags (ticket, coin, key) orbiting it. Conveys multi-format selling (access, coins, tickets, services).
 
-## 2. Profile becomes the support hub
+**04 — Hold & earn**
+A stack of glossy pink coins with a single $RHOZE coin tilting on top, a soft amber bloom behind it, hinting upward growth. Conveys accumulation + tier progression.
 
-The Support tab already holds Follow/Message/Book + ProfileCoinTab. Extend it so a fan sees **every way to back this creator** in one place:
+## Style rules (applied to all 4)
 
-- **New section: "Upcoming events"** — events this creator is hosting or featured in (query `event_collaborators` + `events.host_id`).
-- **New section: "Spaces"** — studios/spaces this creator hosts (already partially done on space detail; invert it).
-- **Existing:** Offerings (services), Coin, Book session.
-- Order: Book → Tickets/Events → Offerings → Coin → Spaces. Most-direct support first.
+- Premium editorial 3D render (Octane / KeyShot vibe), matte-to-glossy mix
+- Palette: cream (#F8F4EE), hot pink (#EC4899), soft amber (#F5C76A), warm white highlights, charcoal micro-details
+- Single object centered, ~70% of frame, generous breathing room
+- Fully transparent background (PNG alpha) — no shadow plate, no card, no text
+- Consistent camera angle (~15° above, slight 3/4 turn) and lighting across all 4 so they read as a set
 
-This is the highest-leverage change — it's where the new thesis becomes real for fans.
+## Files
 
-## 3. Demote Events/Spaces standalone browse
+Saved as transparent PNGs in `src/assets/`:
+- `src/assets/deck-step-01-verified.png`
+- `src/assets/deck-step-02-upload.png`
+- `src/assets/deck-step-03-economy.png`
+- `src/assets/deck-step-04-hold-earn.png`
 
-- `/events` Luma-style explore page → keep mounted (deep links exist) but **remove from any nav surface**. Audit: side nav, top bar, ⌘K, landing page, dashboard CTAs, conversations right rail.
-- `/spaces`, `/studios` browse → same treatment. Detail routes (`/spaces/events/:id`, `/studios/:id`) stay fully live.
-- Conversations right rail (xl+) currently has Events/Spaces/Artists tabs → collapse to **Artists only**. Events and Spaces in that rail were redundant with Discover.
-- ⌘K palette: Artists results bumped to top; Events/Spaces still searchable but ranked below.
+Generated with the `premium` model (best fidelity for sculptural/3D + clean alpha cutouts), `transparent_background: true`, 1024×1024.
 
-## 4. Market Room — reframe as "Creator Services"
+## Delivery
 
-`MarketRoomPage` currently has 3 category tiles: Studio Booking, Gigs & Jobs, Services. Re-order and re-label so the creator-as-seller reads first:
-
-- **Services** (hire creators) → first tile, larger
-- **Studio Booking** → second
-- **Gigs & Jobs** → third
-
-Header copy: "Room 2 · The Market" → keep, but subtitle becomes "Hire creators · book their spaces · open calls."
-
-## 5. Landing page
-
-- Hero copy already says "Own a piece of the artists you love" — good.
-- Remove any Events/Spaces standalone CTAs from the landing one-pager. Single primary CTA → "Discover artists."
-- Keep tier ladder + how-it-works.
-
-## 6. Routes / redirects
-
-No route deletions — preserve every deep link. Add soft redirects:
-
-- `/events` (no params) → `/discover?view=events` (already exists as a deep-link alias)
-- `/spaces`, `/studios` (no params) → `/discover?kind=space` (already exists)
-
-Confirms what `Navigation v8` memory already documents — we just stop *promoting* these in nav.
-
----
-
-## Technical notes
-
-- **Files touched (presentation only):**
-  - `src/components/AppSidebar.tsx` — audit for any Events/Spaces top-level entries (should be none per v8.5, verify).
-  - `src/pages/DiscoverPage.tsx` — re-add `TrendingArtistsLane`, re-weight `FeaturedCarousel`.
-  - `src/components/discover/FeaturedCarousel.tsx` — bias toward artist cards (read existing logic, then adjust shuffle weights).
-  - `src/components/profile/*` Support tab — add Events + Spaces sections (new sub-components, query existing tables).
-  - `src/pages/MarketRoomPage.tsx` — reorder tiles, update copy.
-  - `src/pages/LandingPage.tsx` — remove Events/Spaces CTAs if present.
-  - `src/components/messages/*` right rail — drop Events/Spaces tabs, keep Artists.
-  - `src/pages/EventsListPanel.tsx`, `src/pages/SpacesPage.tsx`, `src/pages/StudiosPage.tsx` — leave mounted, remove nav references.
-  - `src/components/CommandPalette` (or equivalent) — re-rank Artists first.
-
-- **No DB / RLS / edge function changes.** Pure frontend reframe. Existing `event_collaborators`, `studios`, `events`, `marketplace_listings` tables already keyed to user_id.
-
-- **Memory updates after ship:**
-  - Update `mem://index.md` Core with Navigation v8.9 framing.
-  - Update `mem://arch/navigation-v8` → v8.9.
-  - Update `mem://features/profiles` to document Support tab Events + Spaces sections.
-
----
-
-## Out of scope (explicit)
-
-- Rooms structure (Scene / Market / Vault) — stays untouched.
-- Creator Pass / `/credits` — stays untouched, still in Personal nav.
-- $RHOZE economy, tier matrix, platform fee — no changes.
-- Flow Mode — no changes.
-- Any backend / migrations / edge fns.
-
-## Risks
-
-- **Deep links from emails / external posts** to `/events` and `/spaces` browse pages still work but feel less "first-class." Acceptable trade.
-- **SEO**: if `/events` was indexed, demoting it from nav reduces internal link equity. Low concern — these aren't primary acquisition pages.
-- **Profile Support tab gets long.** Mitigate with collapsible sections and only render sections that have content.
-
----
-
-Ship in one pass. Rollback = revert this changeset; no data migrations.
+After generation I'll QA each one (inspect for clean alpha edges, color consistency across the set, no baked-in shadows or text artifacts) and re-roll any that don't match. Then I'll list the 4 file paths so you can drop them straight into the deck in place of the current 01–04 cards. No code/UI changes in the app — these are deck assets only.
