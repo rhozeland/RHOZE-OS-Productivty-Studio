@@ -164,37 +164,9 @@ const DiscoverPage = () => {
   const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
   const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
 
-  // View toggle (all / events / spaces / works), persisted in ?view= param.
   const [searchParams, setSearchParams] = useSearchParams();
-  const rawView = searchParams.get("view");
-  const view: DiscoverView =
-    rawView === "works" || rawView === "creators" ? rawView : "all";
-  const setView = (v: DiscoverView) => {
-    if (v === "all") searchParams.delete("view");
-    else searchParams.set("view", v);
-    searchParams.delete("cat");
-    setSearchParams(searchParams, { replace: true });
-  };
-  const activeOption = VIEW_OPTIONS.find((o) => o.value === view) ?? VIEW_OPTIONS[0];
-  const ActiveIcon = activeOption.icon;
-
   const category = searchParams.get("cat");
   const normalizedCategory = category ? normalizeCategory(category) : null;
-  const setCategory = (c: string | null) => {
-    if (!c) searchParams.delete("cat");
-    else searchParams.set("cat", normalizeCategory(c));
-    setSearchParams(searchParams, { replace: true });
-  };
-  const categoryDefs = null as readonly StreamCategoryDef[] | null;
-
-  useEffect(() => {
-    if (view !== "all") {
-      requestAnimationFrame(() => {
-        document.getElementById("discover-stream")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-    }
-  }, [view]);
-
   // ─── Personal greeting (signed-in only) ─────────────────────────
   const { data: profile } = useQuery({
     queryKey: ["discover-greeting", user?.id],
