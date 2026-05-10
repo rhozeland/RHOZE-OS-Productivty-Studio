@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { Sparkles, Store, Coins, Flame, Plus } from "lucide-react";
+import PostMenuButton from "@/components/PostMenuButton";
 import { motion, useAnimationControls } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
