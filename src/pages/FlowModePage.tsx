@@ -867,9 +867,9 @@ const FlowModePage = () => {
           .select("user_id, display_name, avatar_url, username")
           .eq("user_id", (data as any).user_id)
           .maybeSingle();
-        return { ...data, profiles: prof ?? null };
+        return mergeDeepLinkProfile(data as any, prof ?? null);
       }
-      return { ...data, profiles: null };
+      return mergeDeepLinkProfile(data as any, null);
     },
   });
 
