@@ -146,6 +146,51 @@ const FeaturedCarousel = ({ slides }: FeaturedCarouselProps) => {
                 </span>
               </div>
             </div>
+
+            {/* Artist support strip — works thumbnails + coin + stats */}
+            {current.kind === "artist" && (
+              <div className="mt-4 flex items-end justify-between gap-3 flex-wrap">
+                {/* Recent works thumbnails */}
+                {current.works_thumbs && current.works_thumbs.length > 0 ? (
+                  <div className="flex items-center gap-1.5">
+                    {current.works_thumbs.slice(0, 3).map((url, i) => (
+                      <div
+                        key={i}
+                        className="h-12 w-12 rounded-lg border border-background/40 bg-background/30 backdrop-blur overflow-hidden shrink-0"
+                      >
+                        <img src={url} alt="" className="h-full w-full object-cover" />
+                      </div>
+                    ))}
+                    {(current.works_count ?? 0) > 3 && (
+                      <div className="h-12 px-2.5 rounded-lg border border-background/40 bg-background/40 backdrop-blur flex items-center justify-center text-[10px] font-semibold text-foreground">
+                        +{(current.works_count ?? 0) - 3}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 text-[11px] text-foreground/80">
+                    <span className="inline-flex items-center gap-1"><FileText className="h-3 w-3" /> {current.works_count ?? 0} works</span>
+                    <span className="inline-flex items-center gap-1"><Heart className="h-3 w-3" /> {current.followers_count ?? 0}</span>
+                  </div>
+                )}
+
+                {/* Investing signal — coin chip if launched */}
+                {current.coin ? (
+                  <div className="inline-flex items-center gap-2 rounded-full bg-foreground text-background px-3 py-1.5 text-[11px] font-semibold shadow-lg">
+                    {current.coin.image_url ? (
+                      <img src={current.coin.image_url} alt="" className="h-5 w-5 rounded-full object-cover" />
+                    ) : (
+                      <Coins className="h-3.5 w-3.5" />
+                    )}
+                    Invest in ${current.coin.ticker}
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur border border-border px-3 py-1 text-[11px] font-medium text-foreground">
+                    <Sparkles className="h-3 w-3" /> Hold $RHOZE to back
+                  </div>
+                )}
+              </div>
+            )}
           </Link>
         </motion.div>
       </AnimatePresence>
