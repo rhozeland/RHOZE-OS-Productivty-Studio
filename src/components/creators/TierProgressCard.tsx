@@ -8,7 +8,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, Calendar, Users, Trophy } from "lucide-react";
+import { Sparkles, Calendar, Users, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { TIERS, getHoldTier, type TierId } from "@/lib/tier-matrix";
@@ -24,14 +24,20 @@ interface EarnAction {
 }
 
 const EARN_ACTIONS: EarnAction[] = [
-  { label: "Post Work", reward: "+10 $RHOZE", action: "post", icon: Sparkles },
-  { label: "Attend Event", reward: "+25 $RHOZE", to: "/events", icon: Calendar },
-  { label: "Complete Collab", reward: "+50 $RHOZE", to: "/messages?tab=projects", icon: Users },
+  { label: "Post work", reward: "+10", action: "post", icon: Sparkles },
+  { label: "Attend event", reward: "+25", to: "/events", icon: Calendar },
+  { label: "Collab", reward: "+50", to: "/messages?tab=projects", icon: Users },
 ];
 
 const formatRhoze = (n: number) => {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}k`;
+  if (n >= 1_000_000) {
+    const m = n / 1_000_000;
+    return `${m >= 10 || n % 1_000_000 === 0 ? m.toFixed(0) : m.toFixed(1)}M`;
+  }
+  if (n >= 1_000) {
+    const k = n / 1_000;
+    return `${k >= 10 || n % 1_000 === 0 ? k.toFixed(0) : k.toFixed(1)}k`;
+  }
   return Math.round(n).toLocaleString();
 };
 
@@ -141,22 +147,19 @@ export const TierProgressCard = ({ className }: { className?: string }) => {
           {EARN_ACTIONS.map((action) => {
             const inner = (
               <>
-                <div className="flex items-center gap-2 min-w-0">
-                  <action.icon className="h-4 w-4 text-primary shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-foreground truncate">
-                      {action.label}
-                    </p>
-                    <p className="text-[10px] text-primary tabular-nums">
-                      {action.reward}
-                    </p>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <action.icon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  <span className="text-[11px] font-semibold text-primary tabular-nums">
+                    {action.reward}
+                  </span>
                 </div>
-                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
+                <p className="text-xs font-medium text-foreground mt-2 leading-tight">
+                  {action.label}
+                </p>
               </>
             );
             const className =
-              "group flex items-center justify-between gap-2 rounded-xl border border-border bg-card hover:border-foreground/30 hover:bg-muted/40 transition-all px-3 py-2.5 cursor-pointer w-full text-left";
+              "group flex flex-col rounded-xl border border-border bg-card hover:border-foreground/30 hover:bg-muted/40 transition-all px-3 py-2.5 cursor-pointer w-full text-left";
             if (action.action === "post") {
               return (
                 <PostMenuButton

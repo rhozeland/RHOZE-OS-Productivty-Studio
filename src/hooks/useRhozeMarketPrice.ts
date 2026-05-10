@@ -29,32 +29,59 @@ export const useRhozeMarketPrice = () => {
   return useQuery<RhozeMarketPrice>({
     queryKey: ["rhoze-market-price", RHOZE_MINT],
     queryFn: async () => {
+      // 1) Jupiter Lite price API — pump.fun-aware, returns a price even
+      //    before a token has migrated to Raydium. This is our primary
+      //    source. DexScreener often returns `pairs: null` for low-liquidity
+      //    pump.fun tokens, which left users staring at "Market price
+      //    loading…" forever.
+      try {
+        const res = await fetch(
+          `https://lite-api.jup.ag/price/v3?ids=${RHOZE_MINT}`
+        );
+        if (res.ok) {
+          const json = await res.json();
+          const entry = json?.[RHOZE_MINT];
+          const price = Number(entry?.usdPrice);
+          if (Number.isFinite(price) && price > 0) {
+            return {
+              priceUsd: price,
+              pairAddress: null,
+              source: entry?.launchpad ?? "Jupiter",
+            };
+          }
+        }
+      } catch {
+        // fall through to DexScreener
+      }
+
+      // 2) DexScreener fallback — used once $RHOZE has live trading pairs.
       try {
         const res = await fetch(
           `https://api.dexscreener.com/latest/dex/tokens/${RHOZE_MINT}`
         );
-        if (!res.ok) throw new Error("dexscreener fetch failed");
-        const json = await res.json();
-        const pairs: any[] = Array.isArray(json?.pairs) ? json.pairs : [];
-        // Prefer the pair with highest USD liquidity
-        const best = pairs
-          .filter((p) => p?.priceUsd && Number(p.priceUsd) > 0)
-          .sort(
-            (a, b) =>
-              (Number(b?.liquidity?.usd) || 0) -
-              (Number(a?.liquidity?.usd) || 0)
-          )[0];
-        if (!best) {
-          return { priceUsd: 0, pairAddress: null, source: null };
+        if (res.ok) {
+          const json = await res.json();
+          const pairs: any[] = Array.isArray(json?.pairs) ? json.pairs : [];
+          const best = pairs
+            .filter((p) => p?.priceUsd && Number(p.priceUsd) > 0)
+            .sort(
+              (a, b) =>
+                (Number(b?.liquidity?.usd) || 0) -
+                (Number(a?.liquidity?.usd) || 0)
+            )[0];
+          if (best) {
+            return {
+              priceUsd: Number(best.priceUsd),
+              pairAddress: best.pairAddress ?? null,
+              source: best.dexId ?? "DexScreener",
+            };
+          }
         }
-        return {
-          priceUsd: Number(best.priceUsd),
-          pairAddress: best.pairAddress ?? null,
-          source: best.dexId ?? null,
-        };
       } catch {
-        return { priceUsd: 0, pairAddress: null, source: null };
+        // fall through
       }
+
+      return { priceUsd: 0, pairAddress: null, source: null };
     },
     staleTime: 60_000, // refresh every minute
     refetchInterval: 60_000,
