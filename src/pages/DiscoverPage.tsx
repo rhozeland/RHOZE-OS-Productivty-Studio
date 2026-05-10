@@ -70,31 +70,13 @@ const normalizeCategory = (value?: string | null) =>
     .trim()
     .replace(/[\s_]+/g, "-");
 
-type DiscoverView = "all" | "creators" | "works";
-const VIEW_OPTIONS: { value: DiscoverView; label: string; icon: any; kind: MosaicKindFilter }[] = [
-  { value: "all", label: "All", icon: Sparkles, kind: "all" },
-  { value: "creators", label: "Creators", icon: Users, kind: "all" },
-  { value: "works", label: "Works", icon: FileText, kind: "drop" },
-];
-
 const EVENT_CATEGORY_DEFS = [
   { slug: "music", label: "Music", icon: Music2, accent: "hsl(var(--orange))" },
   { slug: "art", label: "Art", icon: Palette, accent: "hsl(var(--pink))" },
-  { slug: "talk", label: "Talk", icon: MessageSquare, accent: "hsl(var(--blue))" },
-  { slug: "workshop", label: "Workshop", icon: Briefcase, accent: "hsl(var(--warm))" },
-  { slug: "screening", label: "Screening", icon: Clapperboard, accent: "hsl(var(--foreground))" },
-  { slug: "exhibition", label: "Exhibition", icon: Sparkles, accent: "hsl(var(--teal))" },
-  { slug: "meetup", label: "Meetup", icon: Users, accent: "hsl(var(--accent))" },
-  { slug: "other", label: "Other", icon: Compass, accent: "hsl(var(--muted-foreground))" },
 ] as const;
 
 const SPACE_CATEGORY_DEFS = [
   { slug: "studio", label: "Studio", icon: Building2, accent: "hsl(var(--blue))" },
-  { slug: "gallery", label: "Gallery", icon: Palette, accent: "hsl(var(--pink))" },
-  { slug: "venue", label: "Venue", icon: CalendarDays, accent: "hsl(var(--orange))" },
-  { slug: "rehearsal", label: "Rehearsal", icon: Music2, accent: "hsl(var(--warm))" },
-  { slug: "co-working", label: "Co-working", icon: Briefcase, accent: "hsl(var(--teal))" },
-  { slug: "outdoor", label: "Outdoor", icon: MapPin, accent: "hsl(var(--foreground))" },
 ] as const;
 
 type StreamCategoryDef = (typeof EVENT_CATEGORY_DEFS)[number] | (typeof SPACE_CATEGORY_DEFS)[number];
