@@ -128,7 +128,7 @@ const AppLayout = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Rotating placeholder for the top-bar search trigger.
-  const SEARCH_PLACEHOLDERS = ["Search artists...", "Search events...", "Search spaces..."];
+  const SEARCH_PLACEHOLDERS = ["Search creators...", "Search events...", "Search spaces..."];
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   useEffect(() => {
     const id = setInterval(() => {
