@@ -154,10 +154,10 @@ const TrendingArtistsLane = ({ marketFilter = "All" }: TrendingArtistsLaneProps)
         <section className="space-y-4">
           <div>
             <h2 className="font-display text-xl text-foreground flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary" /> Trending artists
+              <TrendingUp className="h-4 w-4 text-primary" /> Trending creators
             </h2>
             <p className="text-xs text-muted-foreground mt-1">
-              No verified artists in <span className="font-medium">{marketFilter}</span> are trending right now. Try another region.
+              No verified creators in <span className="font-medium">{marketFilter}</span> are trending right now. Try another region.
             </p>
           </div>
         </section>
@@ -171,7 +171,7 @@ const TrendingArtistsLane = ({ marketFilter = "All" }: TrendingArtistsLaneProps)
       <div className="flex items-end justify-between">
         <div>
           <h2 className="font-display text-xl text-foreground flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-primary" /> Trending artists
+            <TrendingUp className="h-4 w-4 text-primary" /> Trending creators
           </h2>
           <p className="text-xs text-muted-foreground mt-1">
             Ranked by 24h $RHOZE volume + new holders. Swap to back the ones rising fastest.
@@ -193,7 +193,7 @@ const TrendingArtistsLane = ({ marketFilter = "All" }: TrendingArtistsLaneProps)
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <p className="text-sm font-medium text-foreground truncate">
-                    {profile.display_name ?? profile.username ?? "Artist"}
+                    {profile.display_name ?? profile.username ?? "Creator"}
                   </p>
                   <VerifiedArtistBadge status="verified" size="xs" showLabel={false} />
                   <RegionChip code={profile.region_code} />
