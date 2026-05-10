@@ -500,14 +500,22 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
                     ? "Tap to unlike"
                     : "Like"
               }
-              whileTap={{ scale: 0.85 }}
+              whileTap={prefersReducedMotion ? undefined : { scale: 0.85 }}
             >
               <motion.span
                 key={likePulse}
                 initial={{ scale: 1 }}
-                animate={{ scale: liked ? [1, 1.45, 0.92, 1.12, 1] : [1, 1.2, 1] }}
-                transition={{ duration: liked ? 0.55 : 0.3, ease: "easeOut" }}
-                className="inline-flex"
+                animate={
+                  prefersReducedMotion
+                    ? { scale: 1 }
+                    : { scale: liked ? [1, 1.45, 0.92, 1.12, 1] : [1, 1.2, 1] }
+                }
+                transition={
+                  prefersReducedMotion
+                    ? { duration: 0 }
+                    : { duration: liked ? 0.55 : 0.3, ease: "easeOut" }
+                }
+                className="inline-flex relative"
               >
                 <Heart
                   className={cn(
@@ -515,6 +523,22 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
                     liked && "fill-current drop-shadow-[0_0_6px_rgba(244,63,94,0.55)]",
                   )}
                 />
+                {/* Tiny floating "+1" confetti — only when transitioning into liked
+                    state, and never under reduced motion. Subtle by design. */}
+                <AnimatePresence>
+                  {liked && !prefersReducedMotion && (
+                    <motion.span
+                      key={`burst-${likePulse}`}
+                      initial={{ opacity: 0, y: 0, scale: 0.6 }}
+                      animate={{ opacity: [0, 1, 0], y: -18, scale: 1 }}
+                      transition={{ duration: 0.9, ease: "easeOut" }}
+                      className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-rose-500"
+                      aria-hidden="true"
+                    >
+                      ♥
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </motion.span>
               <span className="text-[11px] font-semibold tabular-nums">
                 {liked
