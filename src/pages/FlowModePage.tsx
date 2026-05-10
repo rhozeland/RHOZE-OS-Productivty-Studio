@@ -92,7 +92,7 @@ const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; link
 const FlowModePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isAdmin } = useAdminCheck();
   const queryClient = useQueryClient();
   const [calibrated, setCalibrated] = useState(false);
