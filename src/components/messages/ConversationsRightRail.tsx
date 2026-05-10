@@ -81,11 +81,11 @@ const ConversationsRightRail = () => {
         <h3 className="font-display text-sm font-bold tracking-tight">Discover</h3>
         <Link
           to={
-            tab === "events"
-              ? "/discover?view=events"
-              : tab === "spaces"
-                ? "/discover?kind=space"
-                : "/discover"
+            tab === "artists"
+              ? "/discover"
+              : tab === "events"
+                ? "/discover?view=events"
+                : "/discover?view=spaces"
           }
           className="text-[10px] text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5"
         >
