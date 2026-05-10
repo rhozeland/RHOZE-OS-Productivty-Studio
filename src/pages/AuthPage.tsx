@@ -43,6 +43,7 @@ const AuthPage = () => {
 
     try {
       if (isSignUp) {
+        stashReferralCode();
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
