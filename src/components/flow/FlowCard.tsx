@@ -452,6 +452,10 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
 
           <div className="ml-auto flex items-center gap-3">
             <motion.button
+              type="button"
+              aria-pressed={!!liked}
+              aria-label={liked ? "Unlike this post" : "Like this post"}
+              disabled={likeCooling}
               onClick={(e) => {
                 e.stopPropagation();
                 // 400ms cooldown — blocks rapid like/unlike toggling that
@@ -460,13 +464,26 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
                 if (now - lastLikeAt.current < 400) return;
                 lastLikeAt.current = now;
                 setLikePulse((n) => n + 1);
+                setLikeCooling(true);
+                window.setTimeout(() => setLikeCooling(false), 400);
                 onLike();
               }}
               className={cn(
-                "flex items-center gap-1.5 transition-colors",
-                liked ? "text-rose-500" : "text-muted-foreground hover:text-rose-500",
+                "flex items-center gap-1.5 rounded-full px-2 py-1 -mx-2 transition-all",
+                liked
+                  ? "text-rose-500 bg-rose-500/10"
+                  : "text-muted-foreground hover:text-rose-500 hover:bg-rose-500/5",
+                likeCooling && "opacity-70 cursor-not-allowed",
               )}
-              title={liked ? "Unlike" : "Like"}
+              title={
+                likeCooling
+                  ? liked
+                    ? "Liked — tap again in a moment to unlike"
+                    : "Saving like…"
+                  : liked
+                    ? "Tap to unlike"
+                    : "Like"
+              }
               whileTap={{ scale: 0.85 }}
             >
               <motion.span
@@ -476,9 +493,22 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
                 transition={{ duration: liked ? 0.55 : 0.3, ease: "easeOut" }}
                 className="inline-flex"
               >
-                <Heart className={cn("h-[18px] w-[18px]", liked && "fill-current drop-shadow-[0_0_6px_rgba(244,63,94,0.55)]")} />
+                <Heart
+                  className={cn(
+                    "h-[18px] w-[18px] transition-all",
+                    liked && "fill-current drop-shadow-[0_0_6px_rgba(244,63,94,0.55)]",
+                  )}
+                />
               </motion.span>
-              <span className="text-[11px] font-medium tabular-nums">{likeCount && likeCount > 0 ? likeCount : "Like"}</span>
+              <span className="text-[11px] font-semibold tabular-nums">
+                {liked
+                  ? likeCount && likeCount > 0
+                    ? `${likeCount} · Liked`
+                    : "Liked"
+                  : likeCount && likeCount > 0
+                    ? likeCount
+                    : "Like"}
+              </span>
             </motion.button>
             <button
               onClick={(e) => {
