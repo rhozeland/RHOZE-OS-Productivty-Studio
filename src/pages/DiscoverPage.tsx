@@ -334,9 +334,6 @@ const DiscoverPage = () => {
         {[
           { type: "link" as const, to: "/creators", label: "Creators", icon: Users },
           { type: "view" as const, view: "works" as DiscoverView, label: "Works", icon: FileText },
-          { type: "view" as const, view: "offerings" as DiscoverView, label: "Offerings", icon: ShoppingBag },
-          { type: "view" as const, view: "events" as DiscoverView, label: "Happening", icon: CalendarDays },
-          { type: "view" as const, view: "spaces" as DiscoverView, label: "Spaces", icon: MapPin },
         ].map((item) => {
           const Icon = item.icon;
           const className =
