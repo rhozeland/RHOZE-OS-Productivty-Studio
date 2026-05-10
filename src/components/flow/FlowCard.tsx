@@ -65,12 +65,14 @@ const CATEGORY_ICONS: Record<string, any> = {
   writing: PenTool,
 };
 
+// Stronger contrast than the previous /15 alpha tints so the genre badge
+// stays legible even when the card sits on a colored swipe background.
 const CATEGORY_COLORS: Record<string, string> = {
-  music: "bg-pink/15 text-pink",
-  design: "bg-teal/15 text-teal",
-  photo: "bg-warm/15 text-warm",
-  video: "bg-accent/15 text-accent",
-  writing: "bg-muted text-muted-foreground",
+  music: "bg-pink/90 text-white",
+  design: "bg-teal/90 text-white",
+  photo: "bg-warm/90 text-white",
+  video: "bg-accent/90 text-white",
+  writing: "bg-foreground/85 text-background",
 };
 
 interface FlowCardProps {
