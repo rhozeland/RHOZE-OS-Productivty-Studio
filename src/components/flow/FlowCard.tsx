@@ -523,14 +523,12 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
                   {((item as any).profiles?.display_name || "?").charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-[11px] text-muted-foreground group-hover:text-foreground transition-colors">
+              <span className="text-[11px] font-medium text-foreground/80 group-hover:text-foreground transition-colors">
                 {(item as any).profiles?.display_name || "Unknown"}
               </span>
             </button>
           ) : profilesLoading ? (
             // Skeleton placeholder while `profiles_public` is being fetched.
-            // Prevents a flash of "Unknown" / blank space before attribution
-            // resolves on the next render.
             <div
               className="flex items-center gap-2"
               aria-hidden="true"
@@ -539,10 +537,29 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
               <div className="h-5 w-5 rounded-full bg-muted animate-pulse" />
               <div className="h-3 w-20 rounded-full bg-muted animate-pulse" />
             </div>
+          ) : item.user_id ? (
+            // Profile genuinely missing (RLS hidden / deleted account, etc.).
+            // Still let users tap through to the profile page where the full
+            // resolver will surface whatever exists — better than rendering
+            // a permanently-empty row that looks like a layout bug.
+            <button
+              onClick={(e) => { e.stopPropagation(); navigate(`/profiles/${item.user_id}`); }}
+              className="flex items-center gap-2 group"
+              title="View creator"
+            >
+              <Avatar className="h-5 w-5">
+                <AvatarFallback className="text-[8px] bg-muted">
+                  {(item.creator_name || "?").charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-[11px] font-medium text-foreground/70 group-hover:text-foreground transition-colors">
+                {item.creator_name || "Unknown creator"}
+              </span>
+            </button>
           ) : null}
-          {item.creator_name && (
+          {item.creator_name && (item as any).profiles && (
             <span className="text-[11px] text-muted-foreground">
-              {(item as any).profiles ? "·" : ""} by <span className="font-medium text-foreground/80">{item.creator_name}</span>
+              · by <span className="font-medium text-foreground/80">{item.creator_name}</span>
             </span>
           )}
         </div>
@@ -553,7 +570,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             <h3 className="font-display font-bold text-foreground text-sm md:text-base leading-snug">{item.title}</h3>
             {item.description && (
               <p
-                className={`text-sm text-muted-foreground leading-relaxed mt-1 cursor-pointer ${expanded ? "" : "line-clamp-2"}`}
+                className={`text-[13px] text-foreground/75 leading-relaxed mt-1 cursor-pointer ${expanded ? "" : "line-clamp-2"}`}
                 onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
               >
                 {item.description}
