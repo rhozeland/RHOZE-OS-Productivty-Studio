@@ -5,8 +5,9 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   Flame, Coins, Shield, Download, BadgeCheck, Ticket,
-  FolderKanban, MessageSquare, Calendar, Check,
+  FolderKanban, MessageSquare, Calendar, Check, Info,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import ClaimRhozeButton from "@/components/ClaimRhozeButton";
 import { Input } from "@/components/ui/input";
 import Tilt3D from "@/components/ui/Tilt3D";
@@ -505,6 +506,39 @@ const BalanceCard = ({ balance, holdTier }: { balance: number; holdTier: TierId 
               {formatRhozeUsd(priceUsd)} per $RHOZE
               {market?.source ? <span className="opacity-60"> · {market.source}</span> : null}
             </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="mt-1 inline-flex items-center gap-1 rounded-full border border-border/60 px-2 py-0.5 text-[10px] font-body text-foreground/80 hover:bg-muted/50 transition-colors"
+                  aria-label="Verify market value math"
+                >
+                  <Info className="h-3 w-3" />
+                  Verify math
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-[260px] text-xs font-body tabular-nums">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="opacity-70">Balance</span>
+                    <span className="font-medium">
+                      {balance.toLocaleString("en-US", { maximumFractionDigits: 3 })} $RHOZE
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="opacity-70">× Price</span>
+                    <span className="font-medium">{formatRhozeUsd(priceUsd)}</span>
+                  </div>
+                  <div className="border-t border-border/50 pt-1 flex items-center justify-between gap-3">
+                    <span className="opacity-70">= Total</span>
+                    <span className="font-semibold">{formatRhozeUsd(usd)}</span>
+                  </div>
+                  <p className="pt-1 opacity-60 text-[10px] leading-relaxed">
+                    Live market price{market?.source ? ` via ${market.source}` : ""}. Refreshes every minute.
+                  </p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
           </div>
         ) : (
           <p className="text-[11px] text-muted-foreground font-body mt-1 opacity-70">
