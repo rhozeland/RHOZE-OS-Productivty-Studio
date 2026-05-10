@@ -562,8 +562,21 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                     const lastMsg = getLastMessage(profile.user_id);
                     const unread = getUnreadCount(profile.user_id);
                     const name = profile.display_name || "Creator";
+                    const richLabel = (c: string): string | null => {
+                      if (!c) return null;
+                      if (c.startsWith("[FILE:")) return "📎 Attachment";
+                      if (c.startsWith("[SMARTBOARD:")) return "🗂 Smartboard";
+                      if (c.startsWith("[PROFILE:")) return "👤 Creator card";
+                      if (c.startsWith("[LISTING:")) return "🛍 Listing";
+                      if (c.startsWith("[LINK:")) return "🔗 Link";
+                      if (c.startsWith("[EVENT:")) return "📅 Event";
+                      if (c.startsWith("[FLOW:") || c.startsWith('{"type":"flow_share"')) return "✨ Shared from Flow";
+                      if (c.startsWith("[STAFF_INVITE:")) return "👥 Staff invitation";
+                      return null;
+                    };
+                    const friendly = lastMsg ? (richLabel(lastMsg.content) ?? lastMsg.content) : "";
                     const rawPreview = lastMsg
-                      ? `${lastMsg.sender_id === user?.id ? "You: " : ""}${lastMsg.content}`
+                      ? `${lastMsg.sender_id === user?.id ? "You: " : ""}${friendly}`
                       : "";
                     const preview = rawPreview.length > 48 ? `${rawPreview.slice(0, 45).trimEnd()}...` : rawPreview;
                     return (
