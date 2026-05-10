@@ -376,13 +376,14 @@ const DiscoverPage = () => {
 
       <RegionPromptBanner />
 
-      {/* ─── Quick access shortcuts ───────────────────────────────── */}
+      {/* ─── Quick access shortcuts — creator-led ─────────────────── */}
       <nav aria-label="Quick access" className="flex flex-wrap items-center gap-2">
         {[
-          { type: "view" as const, view: "offerings" as DiscoverView, label: "Marketplace", icon: ShoppingBag },
-          { type: "view" as const, view: "events" as DiscoverView, label: "Events", icon: CalendarDays },
-          { type: "view" as const, view: "spaces" as DiscoverView, label: "Spaces", icon: MapPin },
           { type: "link" as const, to: "/creators", label: "Creators", icon: Users },
+          { type: "view" as const, view: "works" as DiscoverView, label: "Works", icon: FileText },
+          { type: "view" as const, view: "offerings" as DiscoverView, label: "Offerings", icon: ShoppingBag },
+          { type: "view" as const, view: "events" as DiscoverView, label: "Happening", icon: CalendarDays },
+          { type: "view" as const, view: "spaces" as DiscoverView, label: "Spaces", icon: MapPin },
         ].map((item) => {
           const Icon = item.icon;
           const className =
