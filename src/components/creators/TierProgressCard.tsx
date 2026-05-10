@@ -8,7 +8,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, Calendar, Users, Trophy } from "lucide-react";
+import { Sparkles, Calendar, Users, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { TIERS, getHoldTier, type TierId } from "@/lib/tier-matrix";
