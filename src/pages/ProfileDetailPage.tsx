@@ -182,6 +182,23 @@ const ProfileDetailPage = () => {
     },
     enabled: !!id,
   });
+
+  // Spaces this creator hosts — surfaced inside profile Support tab so a
+  // fan sees every way to back the artist (including booking their space).
+  const { data: hostedSpaces } = useQuery({
+    queryKey: ["profile-hosted-spaces", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("studios")
+        .select("id, name, cover_image_url, city, state, hourly_rate, currency")
+        .eq("owner_id", id!)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(3);
+      return data ?? [];
+    },
+    enabled: !!id,
+  });
   const { data: proofs } = useQuery({
     queryKey: ["contribution-proofs", id],
     queryFn: async () => {
