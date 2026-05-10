@@ -1,69 +1,99 @@
+# Creator-First Refocus (v8.9)
 
-# Splits v2 — Collaborators + Platform, locked at lock
+**Thesis shift:** The creator is the atomic unit. Events, Spaces, and Offerings are *ways to back a creator you already care about* — not standalone destinations. Discovery still surfaces all of it, but framed around artists.
 
-One model, applied everywhere. Two parties only:
-
-1. **Collaborators pool** — anyone working on the thing (artist, brand, second artist, producer, friend who brought the deal). Team configures % shares that must sum to 100. No "creator vs curator vs buyback" anymore.
-2. **Platform fee** — taken off the top, tier-based on the project lead:
-   - Spark / Bloom → 15%
-   - Glow → 10%
-   - Play → 7%
-
-**Lock behavior:** Splits + platform fee % are **frozen at project lock**. SHA-256 of the canonical table is anchored on Solana via memo. After lock, splits cannot be rewritten. Tier upgrades only help on *future* projects.
-
-**Migration:** Existing configs are converted in place — old `creator_id` becomes a single collaborator at 100%. If a curator was accepted, they're added as a collaborator at the curator %; lead's % drops by that amount. Buyback % is folded into the lead. Nothing is deleted.
+Soft simplification — Rooms structure (Scene / Market / Vault) stays. Creator Pass stays prominent. Events keeps a discovery role *inside* Discover.
 
 ---
 
-## Implementation
+## 1. Discover (Scene Room) — lead with creators
 
-### 1. Database migration
-- New table `revenue_split_collaborators` (`id, config_id, user_id, pct, created_at`) with RLS so collaborators of the same config can read it; lead can write before lock.
-- Add `revenue_split_configs.locked_at TIMESTAMPTZ`, `locked_platform_fee_bps INT`, `splits_hash TEXT`.
-- Keep `revenue_split_configs.creator_id` as **lead** (rename in code, not in SQL — avoids breakage).
-- Data migration: for every existing active config, insert a row in `revenue_split_collaborators` for the creator at `creator_pct + buyback_pct`, and if `curator_id` is set, a row for them at `curator_pct`. Old % columns kept (nullable) for rollback safety; UI ignores them.
-- New SQL function `lock_split_config(config_id)` — sets `locked_at`, snapshots current `get_platform_fee_bps()` for the lead, computes splits hash, returns the row.
+- **Featured carousel** (`FeaturedCarousel`) re-weighted: Artists become the primary card type. Events and Spaces still rotate in but tagged as *"by {creator}"* — the artist is the headline, the event/space is the supporting detail.
+- **Add "Trending Artists" lane back** as the first lane under the globe (component already exists: `TrendingArtistsLane`). It was removed in v7.5 — bring it back as the lead lane.
+- **Stream toggle** (All / Events / Flow): rename **Events → "Happening"**, keep the filter, but reframe copy as "events from artists you're discovering." No mechanical change, just framing.
+- **Mosaic** stays, but Offering / Space / Event cards get a more prominent *creator chip* at the top of each card so the artist reads first.
 
-### 2. UI rebuild — `RevenueSplitConfig.tsx`
-- Replace 3 sliders + buyback wallet with a **collaborator list**:
-  - Each row: avatar + name + % stepper + remove
-  - "Add collaborator" → opens user search (reuses curator-invite picker UI)
-  - Live "must sum to 100%" validation
-  - Lead row pinned, can't be removed
-- Read-only **Platform fee** card below: "Your tier (Glow) → 10% platform fee. Hold more $RHOZE to drop it."
-- "Linked work" + splits fingerprint sections kept as-is.
-- Lock state: once `locked_at` is set, the whole panel becomes read-only with a "Locked at {date} · 0x{hash}" badge linking to Solscan.
+## 2. Profile becomes the support hub
 
-### 3. Curator → Collaborator reframe
-- `CuratorInviteSection` → `CollaboratorInviteSection`. Same DB rows, new copy ("Invite collaborator"). Accepting an invite inserts into `revenue_split_collaborators`.
-- `CuratorInvitesInbox` → `CollaboratorInvitesInbox`. Notifications updated.
+The Support tab already holds Follow/Message/Book + ProfileCoinTab. Extend it so a fan sees **every way to back this creator** in one place:
 
-### 4. Edge function rewrite — `split-revenue/index.ts`
-On milestone approval:
-1. Load config + collaborators. **Require** `locked_at IS NOT NULL` (else error: "Splits must be locked before payout").
-2. Compute `platform_amount = floor(total * locked_platform_fee_bps / 10000)`.
-3. `pool = total - platform_amount`. For each collaborator: `award_rhoze(user_id, floor(pool * pct / 100))`. Rounding dust goes to lead.
-4. Memo includes `{ protocol: "rhozeland", type: "split_payout", config_id, splits_hash, platform_bps, total, platform_amount }`.
-5. Notifications fan out to every collaborator + (if applicable) on-chain buyback wallet logic removed entirely.
+- **New section: "Upcoming events"** — events this creator is hosting or featured in (query `event_collaborators` + `events.host_id`).
+- **New section: "Spaces"** — studios/spaces this creator hosts (already partially done on space detail; invert it).
+- **Existing:** Offerings (services), Coin, Book session.
+- Order: Book → Tickets/Events → Offerings → Coin → Spaces. Most-direct support first.
 
-### 5. Project lock flow
-- `ProjectLockButton` (or wherever lock currently happens) calls `lock_split_config` after collecting signatures. The platform fee at that moment becomes `locked_platform_fee_bps`. `anchor-roadmap` edge fn memos the splits hash.
+This is the highest-leverage change — it's where the new thesis becomes real for fans.
 
-### 6. Copy + surface sweep
-- Kill the words **curator** and **buyback** in user-facing copy across:
-  - Landing page, /credits "How rewards work" tab, project workspace, marketplace, profile pricing, Spaces booking confirmation, all email templates.
-- Replace with **collaborator** + the 15/10/7 platform-fee line.
-- Update [Revenue Splits](mem://features/revenue-splits) and [Rhoze Economy](mem://features/rhoze-economy) memories. Add a "Splits v2" core line to index.
+## 3. Demote Events/Spaces standalone browse
 
-### 7. What stays the same
-- `src/lib/platform-fee.ts` — already correct, no change.
-- Spaces bookings, event tickets, marketplace, paid project milestones — already use tier-based fee. They just stop being "the special case" now.
-- Splits fingerprint anchoring on Solana — same SHA-256 mechanism, just over the new shape.
+- `/events` Luma-style explore page → keep mounted (deep links exist) but **remove from any nav surface**. Audit: side nav, top bar, ⌘K, landing page, dashboard CTAs, conversations right rail.
+- `/spaces`, `/studios` browse → same treatment. Detail routes (`/spaces/events/:id`, `/studios/:id`) stay fully live.
+- Conversations right rail (xl+) currently has Events/Spaces/Artists tabs → collapse to **Artists only**. Events and Spaces in that rail were redundant with Discover.
+- ⌘K palette: Artists results bumped to top; Events/Spaces still searchable but ranked below.
+
+## 4. Market Room — reframe as "Creator Services"
+
+`MarketRoomPage` currently has 3 category tiles: Studio Booking, Gigs & Jobs, Services. Re-order and re-label so the creator-as-seller reads first:
+
+- **Services** (hire creators) → first tile, larger
+- **Studio Booking** → second
+- **Gigs & Jobs** → third
+
+Header copy: "Room 2 · The Market" → keep, but subtitle becomes "Hire creators · book their spaces · open calls."
+
+## 5. Landing page
+
+- Hero copy already says "Own a piece of the artists you love" — good.
+- Remove any Events/Spaces standalone CTAs from the landing one-pager. Single primary CTA → "Discover artists."
+- Keep tier ladder + how-it-works.
+
+## 6. Routes / redirects
+
+No route deletions — preserve every deep link. Add soft redirects:
+
+- `/events` (no params) → `/discover?view=events` (already exists as a deep-link alias)
+- `/spaces`, `/studios` (no params) → `/discover?kind=space` (already exists)
+
+Confirms what `Navigation v8` memory already documents — we just stop *promoting* these in nav.
 
 ---
 
-## Out of scope for this pass
-- Bringing back the buyback pool as a separate SKU (could return later as an opt-in "tip the ecosystem" toggle, but not now).
-- On-chain SPL splits via Anchor program — still spec only, unchanged.
+## Technical notes
 
-After approval I'll run the DB migration first, wait for you to confirm, then do the code sweep in one pass.
+- **Files touched (presentation only):**
+  - `src/components/AppSidebar.tsx` — audit for any Events/Spaces top-level entries (should be none per v8.5, verify).
+  - `src/pages/DiscoverPage.tsx` — re-add `TrendingArtistsLane`, re-weight `FeaturedCarousel`.
+  - `src/components/discover/FeaturedCarousel.tsx` — bias toward artist cards (read existing logic, then adjust shuffle weights).
+  - `src/components/profile/*` Support tab — add Events + Spaces sections (new sub-components, query existing tables).
+  - `src/pages/MarketRoomPage.tsx` — reorder tiles, update copy.
+  - `src/pages/LandingPage.tsx` — remove Events/Spaces CTAs if present.
+  - `src/components/messages/*` right rail — drop Events/Spaces tabs, keep Artists.
+  - `src/pages/EventsListPanel.tsx`, `src/pages/SpacesPage.tsx`, `src/pages/StudiosPage.tsx` — leave mounted, remove nav references.
+  - `src/components/CommandPalette` (or equivalent) — re-rank Artists first.
+
+- **No DB / RLS / edge function changes.** Pure frontend reframe. Existing `event_collaborators`, `studios`, `events`, `marketplace_listings` tables already keyed to user_id.
+
+- **Memory updates after ship:**
+  - Update `mem://index.md` Core with Navigation v8.9 framing.
+  - Update `mem://arch/navigation-v8` → v8.9.
+  - Update `mem://features/profiles` to document Support tab Events + Spaces sections.
+
+---
+
+## Out of scope (explicit)
+
+- Rooms structure (Scene / Market / Vault) — stays untouched.
+- Creator Pass / `/credits` — stays untouched, still in Personal nav.
+- $RHOZE economy, tier matrix, platform fee — no changes.
+- Flow Mode — no changes.
+- Any backend / migrations / edge fns.
+
+## Risks
+
+- **Deep links from emails / external posts** to `/events` and `/spaces` browse pages still work but feel less "first-class." Acceptable trade.
+- **SEO**: if `/events` was indexed, demoting it from nav reduces internal link equity. Low concern — these aren't primary acquisition pages.
+- **Profile Support tab gets long.** Mitigate with collapsible sections and only render sections that have content.
+
+---
+
+Ship in one pass. Rollback = revert this changeset; no data migrations.
