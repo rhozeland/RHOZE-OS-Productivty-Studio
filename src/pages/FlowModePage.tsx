@@ -1080,13 +1080,12 @@ const FlowModePage = () => {
 
     if (action === "profile") {
       // Up-swipe / avatar tap: open the creator peek sheet so the user can
-      // explore who made this work without leaving Flow.
-      if (!targetItem.user_id) return;
-      setPeekCreatorId(targetItem.user_id);
-      setPeekInitial({
-        display_name: targetItem.profiles?.display_name ?? targetItem.creator_name ?? null,
-        avatar_url: targetItem.profiles?.avatar_url ?? null,
-      });
+      // explore who made this work without leaving Flow. `resolvePeekTarget`
+      // guarantees we point at the *item's* creator, never the viewer.
+      const peek = resolvePeekTarget(targetItem);
+      if (!peek) return;
+      setPeekCreatorId(peek.creatorId);
+      setPeekInitial(peek.initial);
       setPeekOpen(true);
       return;
     }
