@@ -20,6 +20,8 @@ export type FeaturedSlide =
       verification_status?: string | null;
       works_count?: number;
       followers_count?: number;
+      works_thumbs?: string[];
+      coin?: { id: string; ticker: string; name: string | null; image_url: string | null } | null;
     }
   | {
       kind: "event";
