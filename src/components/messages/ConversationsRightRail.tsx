@@ -25,10 +25,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useEventsCta } from "@/hooks/useEventsCta";
 
-type Tab = "events" | "spaces" | "artists";
+type Tab = "artists" | "events" | "spaces";
 
 const ConversationsRightRail = () => {
-  const [tab, setTab] = useState<Tab>("events");
+  const [tab, setTab] = useState<Tab>("artists");
 
   const { data: events = [] } = useQuery({
     queryKey: ["right-rail-events"],
