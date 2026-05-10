@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Play, FileText, ExternalLink, ChevronDown, Music, Palette, Camera, Video, PenTool, Heart, MessageCircle, Send, Maximize2, X, Trash2, Coins, ArrowRight } from "lucide-react";
@@ -144,6 +144,10 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
   // and can't second-guess whether their tap landed. Mirrors the 400ms
   // server/throttle window in onLike() below.
   const [likeCooling, setLikeCooling] = useState(false);
+  // Respect the OS-level "Reduce Motion" preference. When true we collapse
+  // expressive scale/translate keyframes down to simple opacity changes so
+  // vestibular-sensitive users get the same affordances without the bounce.
+  const prefersReducedMotion = useReducedMotion();
   const canApplyForVerification =
     !!isOwner &&
     item.verification_status !== "verified" &&
@@ -177,7 +181,19 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
 
   return (
     <>
-      <div className="relative rounded-[32px] bg-card shadow-2xl shadow-foreground/10 overflow-hidden border border-border/30 select-none">
+      <motion.div
+        // Subtle card entrance — fades + lifts a touch on mount. Reduced
+        // motion users get an instant opacity-only fade so nothing slides.
+        initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.985 }}
+        animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+        transition={
+          prefersReducedMotion
+            ? { duration: 0.18, ease: "linear" }
+            : { duration: 0.45, ease: [0.22, 1, 0.36, 1] }
+        }
+        whileHover={prefersReducedMotion ? undefined : { y: -2 }}
+        className="relative rounded-[32px] bg-card shadow-2xl shadow-foreground/10 overflow-hidden border border-border/30 select-none"
+      >
         {/* Absolute-positioned category badge for corner placements.
             Rendered before the media so the badge sits above any
             embed/image. Inline placement is handled below in the
@@ -484,14 +500,22 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
                     ? "Tap to unlike"
                     : "Like"
               }
-              whileTap={{ scale: 0.85 }}
+              whileTap={prefersReducedMotion ? undefined : { scale: 0.85 }}
             >
               <motion.span
                 key={likePulse}
                 initial={{ scale: 1 }}
-                animate={{ scale: liked ? [1, 1.45, 0.92, 1.12, 1] : [1, 1.2, 1] }}
-                transition={{ duration: liked ? 0.55 : 0.3, ease: "easeOut" }}
-                className="inline-flex"
+                animate={
+                  prefersReducedMotion
+                    ? { scale: 1 }
+                    : { scale: liked ? [1, 1.45, 0.92, 1.12, 1] : [1, 1.2, 1] }
+                }
+                transition={
+                  prefersReducedMotion
+                    ? { duration: 0 }
+                    : { duration: liked ? 0.55 : 0.3, ease: "easeOut" }
+                }
+                className="inline-flex relative"
               >
                 <Heart
                   className={cn(
@@ -499,6 +523,22 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
                     liked && "fill-current drop-shadow-[0_0_6px_rgba(244,63,94,0.55)]",
                   )}
                 />
+                {/* Tiny floating "+1" confetti — only when transitioning into liked
+                    state, and never under reduced motion. Subtle by design. */}
+                <AnimatePresence>
+                  {liked && !prefersReducedMotion && (
+                    <motion.span
+                      key={`burst-${likePulse}`}
+                      initial={{ opacity: 0, y: 0, scale: 0.6 }}
+                      animate={{ opacity: [0, 1, 0], y: -18, scale: 1 }}
+                      transition={{ duration: 0.9, ease: "easeOut" }}
+                      className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-rose-500"
+                      aria-hidden="true"
+                    >
+                      ♥
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </motion.span>
               <span className="text-[11px] font-semibold tabular-nums">
                 {liked
@@ -620,7 +660,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             )}
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* ═══ VERIFY-IP DIALOG (owner only) ═══ */}
       {isOwner && (
