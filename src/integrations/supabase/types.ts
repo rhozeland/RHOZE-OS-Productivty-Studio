@@ -591,10 +591,12 @@ export type Database = {
           creator_fee_bps: number
           creator_fees_earned: number
           creator_id: string
+          creator_payout_rhoze: number
           description: string | null
           event_id: string | null
           graduated_at: string | null
           graduation_sol_target: number
+          holder_bonus_rhoze: number
           id: string
           image_url: string | null
           lp_lock_months: number
@@ -619,10 +621,12 @@ export type Database = {
           creator_fee_bps?: number
           creator_fees_earned?: number
           creator_id: string
+          creator_payout_rhoze?: number
           description?: string | null
           event_id?: string | null
           graduated_at?: string | null
           graduation_sol_target?: number
+          holder_bonus_rhoze?: number
           id?: string
           image_url?: string | null
           lp_lock_months?: number
@@ -647,10 +651,12 @@ export type Database = {
           creator_fee_bps?: number
           creator_fees_earned?: number
           creator_id?: string
+          creator_payout_rhoze?: number
           description?: string | null
           event_id?: string | null
           graduated_at?: string | null
           graduation_sol_target?: number
+          holder_bonus_rhoze?: number
           id?: string
           image_url?: string | null
           lp_lock_months?: number
@@ -4488,6 +4494,7 @@ export type Database = {
     }
     Functions: {
       _coin_drops_remaining: { Args: { _user: string }; Returns: number }
+      _graduate_launch_payout: { Args: { _launch_id: string }; Returns: Json }
       adjust_user_credits: {
         Args: {
           _amount: number
@@ -4915,15 +4922,27 @@ export type Database = {
         }
         Returns: string
       }
-      swap_rhoze_for_coin: {
-        Args: {
-          _amount: number
-          _launch_id: string
-          _min_out?: number
-          _side: string
-        }
-        Returns: Json
-      }
+      swap_rhoze_for_coin:
+        | {
+            Args: {
+              _amount: number
+              _launch_id: string
+              _min_out?: number
+              _side: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _amount: number
+              _creator_fee_bps?: number
+              _launch_id: string
+              _min_out?: number
+              _platform_fee_bps?: number
+              _side: string
+            }
+            Returns: Json
+          }
       tick_reward_streak: {
         Args: never
         Returns: {
