@@ -47,16 +47,19 @@ import { NAV_SHORTCUTS, formatChord, formatLeader } from "@/lib/nav-shortcuts";
 import { REGISTERED_ROUTE_PATHS } from "@/App";
 import { CelebrationProvider } from "@/components/hud/CelebrationProvider";
 
+// Creator-first ordering: Discover, Flow, Creators, Works/Offerings,
+// then Projects/Messages, then Events/Spaces (still searchable but
+// demoted — they're how you support a creator, not destinations).
 const PAGES: { name: string; path: string; icon: any; keywords?: string[] }[] = [
   { name: "Discover", path: "/discover", icon: Search, keywords: ["home", "feed", "stream", "explore"] },
   { name: "Flow Mode", path: "/flow", icon: Radio, keywords: ["swipe", "drops", "reels"] },
   { name: "Creators", path: "/creators", icon: User, keywords: ["artists", "people", "profiles"] },
-  { name: "Marketplace", path: "/marketplace", icon: ShoppingBag, keywords: ["offerings", "services", "shop", "listings"] },
-  { name: "Events", path: "/events?tab=events", icon: Calendar, keywords: ["shows", "tickets", "calendar"] },
-  { name: "Spaces", path: "/spaces?tab=spaces", icon: Building2, keywords: ["studios", "venues", "rooms"] },
+  { name: "Offerings", path: "/marketplace", icon: ShoppingBag, keywords: ["marketplace", "services", "shop", "listings"] },
   { name: "Projects", path: "/projects", icon: FolderKanban, keywords: ["work", "collabs"] },
   { name: "Messages", path: "/messages", icon: User, keywords: ["dms", "inbox", "conversations", "chat"] },
   { name: "Credits", path: "/credits", icon: Coins, keywords: ["rhoze", "pass", "tier", "rewards"] },
+  { name: "Events", path: "/discover?view=events", icon: Calendar, keywords: ["shows", "tickets", "calendar", "happening"] },
+  { name: "Spaces", path: "/discover?view=spaces", icon: Building2, keywords: ["studios", "venues", "rooms"] },
   { name: "Settings", path: "/settings", icon: SettingsIcon, keywords: ["account", "profile", "wallet"] },
 ];
 
