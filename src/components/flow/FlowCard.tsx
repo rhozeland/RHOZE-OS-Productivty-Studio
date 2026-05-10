@@ -166,7 +166,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
 
   return (
     <>
-      <div className="relative rounded-[32px] bg-card/50 backdrop-blur-2xl shadow-2xl shadow-foreground/5 overflow-hidden border border-border/15 select-none">
+      <div className="relative rounded-[32px] bg-card shadow-2xl shadow-foreground/10 overflow-hidden border border-border/30 select-none">
         {/* Absolute-positioned category badge for corner placements.
             Rendered before the media so the badge sits above any
             embed/image. Inline placement is handled below in the
