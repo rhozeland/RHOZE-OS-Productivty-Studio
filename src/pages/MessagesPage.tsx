@@ -480,17 +480,17 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
         <TabsList>
           <TabsTrigger value="messages" className="gap-1.5">
             <MessageSquare className="h-3.5 w-3.5" /> Messages
-            {pendingCount > 0 && (
-              <span className="ml-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
-                {pendingCount}
-              </span>
-            )}
           </TabsTrigger>
           <TabsTrigger value="projects" className="gap-1.5">
             <FolderKanban className="h-3.5 w-3.5" /> Projects
           </TabsTrigger>
           <TabsTrigger value="listings" className="gap-1.5">
             <Store className="h-3.5 w-3.5" /> Listings
+            {pendingCount > 0 && (
+              <span className="ml-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
+                {pendingCount}
+              </span>
+            )}
           </TabsTrigger>
           {activeTab === "groups" && (
             <TabsTrigger value="groups" className="gap-1.5">
