@@ -76,6 +76,7 @@ const AuthPage = () => {
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
+    stashReferralCode();
     try {
       const { error, redirected } = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
