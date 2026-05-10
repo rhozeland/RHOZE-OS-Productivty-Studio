@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
+const REFERRAL_STORAGE_KEY = "pending_referral_code";
+
 const AuthPage = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   // Email path is hidden by default — Google is dominant. User opens it via "Use email instead".
@@ -17,11 +19,23 @@ const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   // Where to send the user after a successful sign in (e.g. ?redirect=/studios/abc)
   const redirectTo = searchParams.get("redirect") || "/dashboard";
+
+  // Persist any entered referral code so it survives the OAuth redirect
+  // and is redeemed by AppLayout once the user is authenticated.
+  const stashReferralCode = () => {
+    const code = referralCode.trim().toUpperCase();
+    if (code) {
+      try {
+        localStorage.setItem(REFERRAL_STORAGE_KEY, code);
+      } catch {}
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
