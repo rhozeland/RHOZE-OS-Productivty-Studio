@@ -5,8 +5,9 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   Flame, Coins, Shield, Download, BadgeCheck, Ticket,
-  FolderKanban, MessageSquare, Calendar, Check,
+  FolderKanban, MessageSquare, Calendar, Check, Info,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import ClaimRhozeButton from "@/components/ClaimRhozeButton";
 import { Input } from "@/components/ui/input";
 import Tilt3D from "@/components/ui/Tilt3D";
