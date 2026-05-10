@@ -58,7 +58,7 @@ const FeaturedCarousel = ({ slides }: FeaturedCarouselProps) => {
     <div
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
-      className="relative h-[360px] rounded-3xl overflow-hidden border border-border/60 bg-card group"
+      className="relative h-[440px] rounded-3xl overflow-hidden border border-border/60 bg-card group"
     >
       {/* Crossfade (no `mode="wait"` so the next slide fades in over the
           previous one — eliminates the brief blank flash). */}
