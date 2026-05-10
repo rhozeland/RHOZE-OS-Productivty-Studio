@@ -636,7 +636,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             )}
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* ═══ VERIFY-IP DIALOG (owner only) ═══ */}
       {isOwner && (
