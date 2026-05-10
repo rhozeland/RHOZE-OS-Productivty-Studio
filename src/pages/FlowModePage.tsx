@@ -845,7 +845,20 @@ const FlowModePage = () => {
         .select("*")
         .eq("id", deepLinkId!)
         .maybeSingle();
-      return data;
+      if (!data) return null;
+      // Enrich with uploader attribution from `profiles_public` so the
+      // FlowCard renders the avatar + display name immediately on arrival
+      // (otherwise the poster row would stay stuck on the skeleton state
+      // forever for deep-linked items).
+      if ((data as any).user_id) {
+        const { data: prof } = await supabase
+          .from("profiles_public")
+          .select("user_id, display_name, avatar_url, username")
+          .eq("user_id", (data as any).user_id)
+          .maybeSingle();
+        return { ...data, profiles: prof ?? null };
+      }
+      return { ...data, profiles: null };
     },
   });
 
