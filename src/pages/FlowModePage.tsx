@@ -63,6 +63,7 @@ import FlowCommentSheet from "@/components/flow/FlowCommentSheet";
 import LinkPreviewCard from "@/components/flow/LinkPreviewCard";
 import { cn } from "@/lib/utils";
 import { loadFlowFeed } from "@/lib/flow-feed";
+import { resolvePeekTarget, mergeDeepLinkProfile, mergeDeepLinkIntoFeed } from "@/lib/flow-navigation";
 import { computeContentHash } from "@/lib/content-hash";
 import FlowCreatorPeek from "@/components/flow/FlowCreatorPeek";
 import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
