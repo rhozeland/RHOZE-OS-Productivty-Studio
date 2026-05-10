@@ -448,7 +448,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                 {hoveredRegion.flag} {hoveredRegion.label}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {hoveredRegion.count} {hoveredRegion.count === 1 ? "artist" : "artists"} · {hoveredRegion.market}
+                {hoveredRegion.count} {hoveredRegion.count === 1 ? "creator" : "creators"} · {hoveredRegion.market}
               </p>
             </div>
           )}
