@@ -144,6 +144,10 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
   // and can't second-guess whether their tap landed. Mirrors the 400ms
   // server/throttle window in onLike() below.
   const [likeCooling, setLikeCooling] = useState(false);
+  // Respect the OS-level "Reduce Motion" preference. When true we collapse
+  // expressive scale/translate keyframes down to simple opacity changes so
+  // vestibular-sensitive users get the same affordances without the bounce.
+  const prefersReducedMotion = useReducedMotion();
   const canApplyForVerification =
     !!isOwner &&
     item.verification_status !== "verified" &&
