@@ -265,37 +265,61 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
         followersCount.set(row.following_id, (followersCount.get(row.following_id) ?? 0) + 1);
       });
 
+      // Recent visual works for the strip on Featured (3 most recent images per artist)
+      const worksThumbs = new Map<string, string[]>();
+      (workRows ?? []).forEach((row: any) => {
+        if (
+          row.visibility === "public" &&
+          row.file_url &&
+          typeof row.mime_type === "string" &&
+          row.mime_type.startsWith("image/")
+        ) {
+          const arr = worksThumbs.get(row.user_id) ?? [];
+          if (arr.length < 3) {
+            arr.push(row.file_url);
+            worksThumbs.set(row.user_id, arr);
+          }
+        }
+      });
+
+      // Active artist coin (one per creator)
+      const coinByCreator = new Map<string, { id: string; ticker: string; name: string | null; image_url: string | null }>();
+      const { data: coinRows } = await supabase
+        .from("coin_launches")
+        .select("id, ticker, name, image_url, creator_id, status, updated_at")
+        .in("creator_id", userIds)
+        .in("status", ["active", "graduated"])
+        .order("updated_at", { ascending: false });
+      (coinRows ?? []).forEach((row: any) => {
+        if (!coinByCreator.has(row.creator_id)) {
+          coinByCreator.set(row.creator_id, {
+            id: row.id, ticker: row.ticker, name: row.name, image_url: row.image_url,
+          });
+        }
+      });
+
       const enriched = profiles.map((p) => {
         const works = Math.max(flowCount.get(p.user_id) ?? 0, worksCount.get(p.user_id) ?? 0);
         const followers = followersCount.get(p.user_id) ?? 0;
-        // Sanitize subtitle: prefer a meaningful headline; only fall back to
-        // bio if it's substantive (≥ 24 chars, not throwaway like "Hi").
         const headline = (p.headline ?? "").trim();
         const bio = (p.bio ?? "").trim();
         const subtitle =
-          headline.length >= 8
-            ? headline
-            : bio.length >= 24
-              ? bio
-              : null;
-        // Featured-worthiness: requires real signal (verified, or has works/
-        // followers, or a real bio). Throwaway profiles never spotlight.
+          headline.length >= 8 ? headline : bio.length >= 24 ? bio : null;
         const isFeaturable =
           (p.verification_status === "verified") ||
-          works >= 1 ||
-          followers >= 1 ||
-          !!subtitle;
+          works >= 1 || followers >= 1 || !!subtitle;
         return {
           ...p,
           banner_url: p.banner_url ?? bannerFallback.get(p.user_id) ?? null,
           works_count: works,
           followers_count: followers,
           subtitle,
+          works_thumbs: worksThumbs.get(p.user_id) ?? [],
+          coin: coinByCreator.get(p.user_id) ?? null,
           _score:
             (p.verification_status === "verified" ? 1000 : 0) +
-            works * 10 +
-            followers * 3 +
-            (subtitle ? 5 : 0),
+            works * 10 + followers * 3 + (subtitle ? 5 : 0) +
+            (coinByCreator.has(p.user_id) ? 50 : 0),
           _featurable: isFeaturable,
         };
       });
