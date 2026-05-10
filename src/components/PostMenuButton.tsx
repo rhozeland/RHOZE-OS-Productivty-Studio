@@ -195,11 +195,11 @@ const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
                 <OptionCard
                   Icon={Shield}
                   title="Post Work"
-                  description="Register a file as Verified IP — audio, image, video, text."
+                  description="Drop a file to Flow — image, audio, video, or writing. Verify it as IP later."
                   accent="from-emerald-500/20 to-emerald-500/5"
                   iconClass="text-emerald-500"
                   reward={10}
-                  onClick={() => closeAndNavigate("/settings#provenance")}
+                  onClick={() => closeAndNavigate("/flow?share=1")}
                 />
                 <OptionCard
                   Icon={ShoppingBag}
