@@ -70,12 +70,15 @@ const RoomsBottomNav = () => {
   const isHidden = useRef(false);
   const ticking = useRef(false);
 
-  // Center the dock within the content column rather than the viewport.
-  const sidebarOffset = isMobile
+  // Center the dock within the content column. Instead of doing math on
+  // `50% + half-sidebar` (which drifted when the sidebar width changed),
+  // we reserve the sidebar's full width as left padding on a full-width
+  // wrapper and let flexbox center the pill in the remaining space.
+  const sidebarFullWidth = isMobile
     ? "0px"
     : state === "expanded"
-      ? "8rem" // half of 16rem sidebar width
-      : "1.5rem"; // half of 3rem icon-collapsed width
+      ? "16rem" // full sidebar width
+      : "3rem"; // icon-collapsed sidebar width
 
   const handleScroll = useCallback(() => {
     if (ticking.current) return;
@@ -134,9 +137,9 @@ const RoomsBottomNav = () => {
     <TooltipProvider delayDuration={150}>
       <motion.nav
         aria-label="Player HUD and rooms"
-        className="fixed bottom-0 z-40 pointer-events-none -translate-x-1/2"
+        className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none flex justify-center"
         style={{
-          left: `calc(50% + ${sidebarOffset})`,
+          paddingLeft: sidebarFullWidth,
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
         initial={{ y: 0, opacity: 1 }}

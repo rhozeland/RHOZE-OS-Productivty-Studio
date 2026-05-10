@@ -128,7 +128,7 @@ const AppLayout = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Rotating placeholder for the top-bar search trigger.
-  const SEARCH_PLACEHOLDERS = ["Search artists...", "Search events...", "Search spaces..."];
+  const SEARCH_PLACEHOLDERS = ["Search creators...", "Search events...", "Search spaces..."];
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   useEffect(() => {
     const id = setInterval(() => {
@@ -154,6 +154,30 @@ const AppLayout = () => {
 
   // Only run reward streak for authenticated users
   useRewardStreak();
+
+  // Redeem a pending referral code stored at signup. Runs once per session
+  // after the user is authenticated.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const code = localStorage.getItem("pending_referral_code");
+        if (!code) return;
+        // Clear immediately to prevent double-attempts
+        localStorage.removeItem("pending_referral_code");
+        const { data, error } = await (supabase as any).rpc("redeem_referral_code", { _code: code });
+        if (cancelled) return;
+        if (error) return;
+        const result = data as { ok: boolean; reward?: number; error?: string };
+        if (result?.ok && result.reward) {
+          const { toast } = await import("sonner");
+          toast.success(`Welcome! +${result.reward.toLocaleString()} $RHOZE from code ${code}`);
+        }
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
 
   // Global navigation shortcuts (Alt+1..4 and "g d / p / c / f").
   // Active state in the dock / header / sidebar already syncs via

@@ -261,7 +261,7 @@ const DiscoverPage = () => {
               Discover
             </p>
             <h1 className="font-display text-4xl sm:text-5xl leading-[1.02] text-foreground tracking-tight max-w-2xl">
-              Real artists.{" "}
+              Real creators.{" "}
               <span
                 className="inline-block"
                 style={{
@@ -274,7 +274,7 @@ const DiscoverPage = () => {
               </span>
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-3 max-w-xl leading-relaxed">
-              Spin the globe to meet verified artists, step inside their spaces,
+              Spin the globe to meet verified creators, step inside their spaces,
               and catch what's happening tonight — anywhere in the world.
             </p>
           </div>
@@ -387,7 +387,7 @@ const DiscoverPage = () => {
             </Button>
           </Link>
           <p className="text-[11px] text-muted-foreground">
-            Free to start. Built for independent artists.{" "}
+            Free to start. Built for independent creators.{" "}
             <Link to="/rewards" className="underline-offset-2 hover:underline text-foreground/70">
               How rewards work →
             </Link>

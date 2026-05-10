@@ -448,7 +448,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                 {hoveredRegion.flag} {hoveredRegion.label}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {hoveredRegion.count} {hoveredRegion.count === 1 ? "artist" : "artists"} · {hoveredRegion.market}
+                {hoveredRegion.count} {hoveredRegion.count === 1 ? "creator" : "creators"} · {hoveredRegion.market}
               </p>
             </div>
           )}
@@ -713,7 +713,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                     <div className="flex items-center gap-2">
                       <p className="truncate text-sm font-medium text-foreground">{marker.title}</p>
                       <span className="shrink-0 rounded-full border border-border/40 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
-                        {marker.kind}
+                        {marker.kind === "artist" ? "creator" : marker.kind}
                       </span>
                     </div>
                     {marker.kind === "artist" ? (
@@ -725,7 +725,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                         if (roles.length === 0) {
                           return (
                             <p className="mt-1 line-clamp-1 text-[11px] leading-5 text-muted-foreground/80 italic">
-                              New artist
+                              New creator
                             </p>
                           );
                         }

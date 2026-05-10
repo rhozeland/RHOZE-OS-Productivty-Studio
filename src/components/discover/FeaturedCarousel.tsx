@@ -95,7 +95,7 @@ const FeaturedCarousel = ({ slides }: FeaturedCarouselProps) => {
           <Link to={current.href} className="relative h-full flex flex-col justify-end p-6 sm:p-8">
             <div className="flex items-center gap-2 mb-3">
               <Badge variant="outline" className="text-[10px] uppercase tracking-wider bg-background/60 backdrop-blur">
-                {current.kind === "artist" && <><Sparkles className="h-2.5 w-2.5 mr-1" /> Featured artist</>}
+                {current.kind === "artist" && <><Sparkles className="h-2.5 w-2.5 mr-1" /> Featured creator</>}
                 {current.kind === "event" && <><Calendar className="h-2.5 w-2.5 mr-1" /> Featured event</>}
                 {current.kind === "space" && <><Users className="h-2.5 w-2.5 mr-1" /> Featured space</>}
               </Badge>

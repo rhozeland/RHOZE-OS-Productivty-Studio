@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
+const REFERRAL_STORAGE_KEY = "pending_referral_code";
+
 const AuthPage = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   // Email path is hidden by default — Google is dominant. User opens it via "Use email instead".
@@ -17,11 +19,23 @@ const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   // Where to send the user after a successful sign in (e.g. ?redirect=/studios/abc)
   const redirectTo = searchParams.get("redirect") || "/dashboard";
+
+  // Persist any entered referral code so it survives the OAuth redirect
+  // and is redeemed by AppLayout once the user is authenticated.
+  const stashReferralCode = () => {
+    const code = referralCode.trim().toUpperCase();
+    if (code) {
+      try {
+        localStorage.setItem(REFERRAL_STORAGE_KEY, code);
+      } catch {}
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +43,7 @@ const AuthPage = () => {
 
     try {
       if (isSignUp) {
+        stashReferralCode();
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -61,6 +76,7 @@ const AuthPage = () => {
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
+    stashReferralCode();
     try {
       const { error, redirected } = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
@@ -188,6 +204,26 @@ const AuthPage = () => {
               {isSignUp ? "Free forever — takes 10 seconds" : "Sign in to continue"}
             </motion.p>
           </div>
+
+          {/* Referral code — signup only. Unlocks $RHOZE on first sign-in. */}
+          {isSignUp && (
+            <div className="mb-4 space-y-1.5">
+              <Label htmlFor="referral" className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3" /> Referral code <span className="text-muted-foreground/60 normal-case tracking-normal">(optional)</span>
+              </Label>
+              <Input
+                id="referral"
+                value={referralCode}
+                onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                placeholder="e.g. SHOPIFY"
+                maxLength={32}
+                className="h-11 rounded-xl bg-secondary/30 border-border/50 focus:bg-background transition-colors uppercase tracking-wider"
+              />
+              <p className="text-[11px] text-muted-foreground/80">
+                Got a code? Enter it now to earn $RHOZE on signup.
+              </p>
+            </div>
+          )}
 
           {/* Google sign-in — DOMINANT primary action */}
           <Button
