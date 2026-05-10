@@ -186,9 +186,7 @@ const DiscoverPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawView = searchParams.get("view");
   const view: DiscoverView =
-    rawView === "events" || rawView === "spaces" || rawView === "works" || rawView === "offerings" || rawView === "creators"
-      ? rawView
-      : "all";
+    rawView === "works" || rawView === "creators" ? rawView : "all";
   const setView = (v: DiscoverView) => {
     if (v === "all") searchParams.delete("view");
     else searchParams.set("view", v);
@@ -205,12 +203,7 @@ const DiscoverPage = () => {
     else searchParams.set("cat", normalizeCategory(c));
     setSearchParams(searchParams, { replace: true });
   };
-  const categoryDefs =
-    view === "events"
-      ? EVENT_CATEGORY_DEFS
-      : view === "spaces"
-        ? SPACE_CATEGORY_DEFS
-        : null;
+  const categoryDefs = null as readonly StreamCategoryDef[] | null;
 
   useEffect(() => {
     if (view !== "all") {
