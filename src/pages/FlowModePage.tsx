@@ -63,6 +63,7 @@ import FlowCommentSheet from "@/components/flow/FlowCommentSheet";
 import LinkPreviewCard from "@/components/flow/LinkPreviewCard";
 import { cn } from "@/lib/utils";
 import { loadFlowFeed } from "@/lib/flow-feed";
+import { resolvePeekTarget, mergeDeepLinkProfile, mergeDeepLinkIntoFeed } from "@/lib/flow-navigation";
 import { computeContentHash } from "@/lib/content-hash";
 import FlowCreatorPeek from "@/components/flow/FlowCreatorPeek";
 import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
@@ -866,18 +867,16 @@ const FlowModePage = () => {
           .select("user_id, display_name, avatar_url, username")
           .eq("user_id", (data as any).user_id)
           .maybeSingle();
-        return { ...data, profiles: prof ?? null };
+        return mergeDeepLinkProfile(data as any, prof ?? null);
       }
-      return { ...data, profiles: null };
+      return mergeDeepLinkProfile(data as any, null);
     },
   });
 
-  const allItems = useMemo(() => {
-    if (deepLinkItem && !baseItems.some((i: any) => i.id === (deepLinkItem as any).id)) {
-      return [deepLinkItem as any, ...baseItems];
-    }
-    return baseItems;
-  }, [baseItems, deepLinkItem]);
+  const allItems = useMemo(
+    () => mergeDeepLinkIntoFeed(deepLinkItem as any, baseItems as any[]),
+    [baseItems, deepLinkItem],
+  );
 
   // Engagement counts (likes + comments) and per-user liked set for visible items.
   const visibleIds = allItems.map((i: any) => i.id);
@@ -1081,13 +1080,12 @@ const FlowModePage = () => {
 
     if (action === "profile") {
       // Up-swipe / avatar tap: open the creator peek sheet so the user can
-      // explore who made this work without leaving Flow.
-      if (!targetItem.user_id) return;
-      setPeekCreatorId(targetItem.user_id);
-      setPeekInitial({
-        display_name: targetItem.profiles?.display_name ?? targetItem.creator_name ?? null,
-        avatar_url: targetItem.profiles?.avatar_url ?? null,
-      });
+      // explore who made this work without leaving Flow. `resolvePeekTarget`
+      // guarantees we point at the *item's* creator, never the viewer.
+      const peek = resolvePeekTarget(targetItem);
+      if (!peek) return;
+      setPeekCreatorId(peek.creatorId);
+      setPeekInitial(peek.initial);
       setPeekOpen(true);
       return;
     }
