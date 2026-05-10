@@ -250,46 +250,9 @@ const DiscoverPage = () => {
     },
   });
 
-  const { data: eventCategoryRows = [] } = useQuery({
-    queryKey: ["discover-event-category-counts"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("events")
-        .select("category")
-        .eq("status", "published")
-        .gte("starts_at", new Date().toISOString())
-        .limit(250);
-      if (error) throw error;
-      return data ?? [];
-    },
-    enabled: view === "events",
-    staleTime: 30_000,
-  });
-
-  const { data: spaceCategoryRows = [] } = useQuery({
-    queryKey: ["discover-space-category-counts"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("studios")
-        .select("category")
-        .eq("is_active", true)
-        .limit(250);
-      if (error) throw error;
-      return data ?? [];
-    },
-    enabled: view === "spaces",
-    staleTime: 30_000,
-  });
-
-  const categoryCounts = useMemo(() => {
-    const rows = view === "events" ? eventCategoryRows : view === "spaces" ? spaceCategoryRows : [];
-    return rows.reduce<Record<string, number>>((acc, row: { category?: string | null }) => {
-      const key = normalizeCategory(row.category);
-      if (!key) return acc;
-      acc[key] = (acc[key] ?? 0) + 1;
-      return acc;
-    }, {});
-  }, [eventCategoryRows, spaceCategoryRows, view]);
+  const eventCategoryRows: { category?: string | null }[] = [];
+  const spaceCategoryRows: { category?: string | null }[] = [];
+  const categoryCounts: Record<string, number> = {};
 
   return (
     <div className="max-w-6xl mx-auto pb-20 space-y-6">
