@@ -20,6 +20,12 @@ const AuthPage = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [referralCode, setReferralCode] = useState("");
+  // Referral input is HIDDEN by default. We only show it when:
+  //   • the URL carries ?ref=CODE (campaign link), or
+  //   • the user explicitly clicks "Have a referral code?".
+  // This stops random new accounts from farming the SHOPIFY/event codes —
+  // you have to know a code exists to redeem one.
+  const [showReferral, setShowReferral] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
