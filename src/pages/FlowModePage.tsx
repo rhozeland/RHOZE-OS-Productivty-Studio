@@ -164,6 +164,16 @@ const FlowModePage = () => {
   const [heartBurst, setHeartBurst] = useState<{ key: number; itemId: string } | null>(null);
   const [expandedCard, setExpandedCard] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  // Open the Share-to-Flow composer when navigated to with ?share=1
+  // (used by the dock "+" button and PostMenuButton's "Post Work" option).
+  useEffect(() => {
+    if (searchParams.get("share") === "1") {
+      setAddOpen(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete("share");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
   const [viewMode, setViewMode] = useState<"swipe" | "browse">("swipe");
   const [commentSheetOpen, setCommentSheetOpen] = useState(false);
   const [commentItem, setCommentItem] = useState<any>(null);
