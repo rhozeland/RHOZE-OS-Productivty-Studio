@@ -28,6 +28,7 @@ import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import StreamComposer from "@/components/stream/StreamComposer";
 import ConversationsMosaic, { type MosaicKindFilter } from "@/components/hub/ConversationsMosaic";
 import CreatorsGrid from "@/components/discover/CreatorsGrid";
+import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
 import DiscoverEventsGrid from "@/components/discover/DiscoverEventsGrid";
 import EventCategoryPills from "@/components/discover/EventCategoryPills";
 import {
@@ -72,11 +73,11 @@ const normalizeCategory = (value?: string | null) =>
 type DiscoverView = "all" | "events" | "spaces" | "works" | "offerings" | "creators";
 const VIEW_OPTIONS: { value: DiscoverView; label: string; icon: any; kind: MosaicKindFilter }[] = [
   { value: "all", label: "All", icon: Sparkles, kind: "all" },
-  { value: "events", label: "Events", icon: CalendarDays, kind: "event" },
-  { value: "spaces", label: "Spaces", icon: MapPin, kind: "space" },
-  { value: "offerings", label: "Marketplace", icon: ShoppingBag, kind: "offering" },
-  { value: "works", label: "Works", icon: FileText, kind: "drop" },
   { value: "creators", label: "Creators", icon: Users, kind: "all" },
+  { value: "works", label: "Works", icon: FileText, kind: "drop" },
+  { value: "offerings", label: "Offerings", icon: ShoppingBag, kind: "offering" },
+  { value: "events", label: "Happening", icon: CalendarDays, kind: "event" },
+  { value: "spaces", label: "Spaces", icon: MapPin, kind: "space" },
 ];
 
 const EVENT_CATEGORY_DEFS = [
@@ -375,13 +376,14 @@ const DiscoverPage = () => {
 
       <RegionPromptBanner />
 
-      {/* ─── Quick access shortcuts ───────────────────────────────── */}
+      {/* ─── Quick access shortcuts — creator-led ─────────────────── */}
       <nav aria-label="Quick access" className="flex flex-wrap items-center gap-2">
         {[
-          { type: "view" as const, view: "offerings" as DiscoverView, label: "Marketplace", icon: ShoppingBag },
-          { type: "view" as const, view: "events" as DiscoverView, label: "Events", icon: CalendarDays },
-          { type: "view" as const, view: "spaces" as DiscoverView, label: "Spaces", icon: MapPin },
           { type: "link" as const, to: "/creators", label: "Creators", icon: Users },
+          { type: "view" as const, view: "works" as DiscoverView, label: "Works", icon: FileText },
+          { type: "view" as const, view: "offerings" as DiscoverView, label: "Offerings", icon: ShoppingBag },
+          { type: "view" as const, view: "events" as DiscoverView, label: "Happening", icon: CalendarDays },
+          { type: "view" as const, view: "spaces" as DiscoverView, label: "Spaces", icon: MapPin },
         ].map((item) => {
           const Icon = item.icon;
           const className =
@@ -436,6 +438,9 @@ const DiscoverPage = () => {
 
       {/* ─── Creator Pass upgrade nudge ─────────────────────────────── */}
       <CreatorPassUpgradeCta />
+
+      {/* ─── Trending artists — lead lane (creator-first) ──────────── */}
+      <TrendingArtistsLane marketFilter={marketFilter} />
 
       {/* ─── The Stream ─────────────────────────────────────────────── */}
       <section id="discover-stream" className="space-y-4 scroll-mt-20">

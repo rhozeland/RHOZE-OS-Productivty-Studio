@@ -25,10 +25,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useEventsCta } from "@/hooks/useEventsCta";
 
-type Tab = "events" | "spaces" | "artists";
+type Tab = "artists" | "events" | "spaces";
 
 const ConversationsRightRail = () => {
-  const [tab, setTab] = useState<Tab>("events");
+  const [tab, setTab] = useState<Tab>("artists");
 
   const { data: events = [] } = useQuery({
     queryKey: ["right-rail-events"],
@@ -81,11 +81,11 @@ const ConversationsRightRail = () => {
         <h3 className="font-display text-sm font-bold tracking-tight">Discover</h3>
         <Link
           to={
-            tab === "events"
-              ? "/discover?view=events"
-              : tab === "spaces"
-                ? "/discover?kind=space"
-                : "/discover"
+            tab === "artists"
+              ? "/discover"
+              : tab === "events"
+                ? "/discover?view=events"
+                : "/discover?view=spaces"
           }
           className="text-[10px] text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5"
         >
@@ -96,9 +96,9 @@ const ConversationsRightRail = () => {
       <div className="px-3 pb-2 flex gap-1">
         {(
           [
-            { id: "events", label: "Events", icon: CalendarDays },
-            { id: "spaces", label: "Spaces", icon: Building2 },
             { id: "artists", label: "Artists", icon: Sparkles },
+            { id: "events", label: "Happening", icon: CalendarDays },
+            { id: "spaces", label: "Spaces", icon: Building2 },
           ] as const
         ).map((t) => {
           const Icon = t.icon;

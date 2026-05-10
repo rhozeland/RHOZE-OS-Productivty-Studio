@@ -12,7 +12,7 @@ import {
   EyeOff, Loader2, Settings, Store, Star, ExternalLink, ShoppingBag,
   Sparkles, Image as ImageIcon, Play, Music, FileText, Award, Shield,
   Zap, Coins, Calendar as CalendarIcon, User as UserIcon, FolderKanban,
-  Heart, ArrowRight, Search,
+  Heart, ArrowRight, Search, Building2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -177,6 +177,23 @@ const ProfileDetailPage = () => {
         .eq("status", "published")
         .gte("starts_at", new Date().toISOString())
         .order("starts_at", { ascending: true })
+        .limit(3);
+      return data ?? [];
+    },
+    enabled: !!id,
+  });
+
+  // Spaces this creator hosts — surfaced inside profile Support tab so a
+  // fan sees every way to back the artist (including booking their space).
+  const { data: hostedSpaces } = useQuery({
+    queryKey: ["profile-hosted-spaces", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("studios")
+        .select("id, name, cover_image_url, city, state, hourly_rate, currency")
+        .eq("owner_id", id!)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
         .limit(3);
       return data ?? [];
     },
@@ -802,6 +819,40 @@ const ProfileDetailPage = () => {
                         <p className="text-[11px] text-muted-foreground">
                           {format(new Date(e.starts_at), "MMM d · h:mm a")}
                           {e.is_online ? " · Online" : e.venue_name ? ` · ${e.venue_name}` : ""}
+                        </p>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Hosted spaces — book this creator's room */}
+            {hostedSpaces && hostedSpaces.length > 0 && (
+              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
+                <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
+                  <Building2 className="h-4 w-4 text-primary" /> Their spaces
+                </h3>
+                <div className="space-y-2">
+                  {hostedSpaces.map((s: any) => (
+                    <button
+                      key={s.id}
+                      onClick={() => navigate(`/studios/${s.id}`)}
+                      className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
+                    >
+                      {s.cover_image_url ? (
+                        <img src={s.cover_image_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
+                      ) : (
+                        <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
+                          <Building2 className="h-5 w-5 text-muted-foreground/40" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{s.name}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {[s.city, s.state].filter(Boolean).join(" · ") || "Space"}
+                          {s.hourly_rate ? ` · ${s.currency || "$"}${s.hourly_rate}/hr` : ""}
                         </p>
                       </div>
                       <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />

@@ -5,29 +5,30 @@ import MarketplacePage from "@/pages/MarketplacePage";
 /**
  * THE MARKET — Room 2 (Work / Utility).
  *
- * Three clear categories: Studio Booking · Gigs/Jobs · Services.
+ * Creator-led ordering: Services first (hire creators), then their Spaces,
+ * then Gigs/Jobs.
  */
 const CATEGORIES = [
   {
+    to: "/services",
+    label: "Hire Creators",
+    desc: "Book talent · creator services",
+    Icon: Users,
+    accent: "from-fuchsia-500/20 to-fuchsia-500/5",
+  },
+  {
     to: "/marketplace?kind=space",
-    label: "Studio Booking",
-    desc: "Book studios, venues & spaces",
+    label: "Book a Space",
+    desc: "Studios, venues & rooms hosted by creators",
     Icon: Building2,
     accent: "from-sky-500/20 to-sky-500/5",
   },
   {
     to: "/marketplace?kind=opportunity",
-    label: "Gigs & Jobs",
-    desc: "Open calls, briefs & opportunities",
+    label: "Open Calls",
+    desc: "Gigs, jobs & briefs",
     Icon: Briefcase,
     accent: "from-amber-500/20 to-amber-500/5",
-  },
-  {
-    to: "/services",
-    label: "Services",
-    desc: "Hire creators · book talent",
-    Icon: Users,
-    accent: "from-fuchsia-500/20 to-fuchsia-500/5",
   },
 ];
 
@@ -39,7 +40,7 @@ const MarketRoomPage = () => {
           Room 2 · The Market
         </span>
         <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          Work · Utility
+          Hire creators · book their spaces · open calls
         </span>
       </div>
 
