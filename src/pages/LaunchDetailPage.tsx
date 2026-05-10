@@ -60,6 +60,8 @@ type Launch = {
   created_at: string;
   mint_address: string | null;
   raydium_pool: string | null;
+  creator_payout_rhoze: number | null;
+  holder_bonus_rhoze: number | null;
 };
 
 type Trade = {
