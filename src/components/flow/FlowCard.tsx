@@ -140,6 +140,10 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
   const lastLikeAt = useRef(0);
   const lastShareAt = useRef(0);
   const [likePulse, setLikePulse] = useState(0);
+  // Visual cooldown after a tap so users immediately see the action registered
+  // and can't second-guess whether their tap landed. Mirrors the 400ms
+  // server/throttle window in onLike() below.
+  const [likeCooling, setLikeCooling] = useState(false);
   const canApplyForVerification =
     !!isOwner &&
     item.verification_status !== "verified" &&
