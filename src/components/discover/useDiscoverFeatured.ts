@@ -22,6 +22,8 @@ export type FeaturedSlide =
       followers_count?: number;
       works_thumbs?: string[];
       coin?: { id: string; ticker: string; name: string | null; image_url: string | null } | null;
+      next_event?: { id: string; slug: string | null; title: string; starts_at: string } | null;
+      offerings_count?: number;
     }
   | {
       kind: "event";
@@ -298,6 +300,35 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
         }
       });
 
+      // Next upcoming event hosted by the artist
+      const nextEventByHost = new Map<string, { id: string; slug: string | null; title: string; starts_at: string }>();
+      const { data: eventRows } = await supabase
+        .from("events")
+        .select("id, slug, title, starts_at, host_id, status")
+        .in("host_id", userIds)
+        .eq("status", "published")
+        .gte("starts_at", new Date().toISOString())
+        .order("starts_at", { ascending: true });
+      (eventRows ?? []).forEach((row: any) => {
+        if (!nextEventByHost.has(row.host_id)) {
+          nextEventByHost.set(row.host_id, {
+            id: row.id, slug: row.slug, title: row.title, starts_at: row.starts_at,
+          });
+        }
+      });
+
+      // Active marketplace offerings per artist
+      const offeringsCount = new Map<string, number>();
+      const listingRes: any = await (supabase as any)
+        .from("marketplace_listings")
+        .select("user_id")
+        .in("user_id", userIds)
+        .eq("status", "active");
+      const listingRows = listingRes?.data;
+      (listingRows ?? []).forEach((row: any) => {
+        offeringsCount.set(row.user_id, (offeringsCount.get(row.user_id) ?? 0) + 1);
+      });
+
       const enriched = profiles.map((p) => {
         const works = Math.max(flowCount.get(p.user_id) ?? 0, worksCount.get(p.user_id) ?? 0);
         const followers = followersCount.get(p.user_id) ?? 0;
@@ -305,6 +336,8 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
         const bio = (p.bio ?? "").trim();
         const subtitle =
           headline.length >= 8 ? headline : bio.length >= 24 ? bio : null;
+        const offerings = offeringsCount.get(p.user_id) ?? 0;
+        const nextEvent = nextEventByHost.get(p.user_id) ?? null;
         const isFeaturable =
           (p.verification_status === "verified") ||
           works >= 1 || followers >= 1 || !!subtitle;
@@ -316,10 +349,13 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
           subtitle,
           works_thumbs: worksThumbs.get(p.user_id) ?? [],
           coin: coinByCreator.get(p.user_id) ?? null,
+          next_event: nextEvent,
+          offerings_count: offerings,
           _score:
             (p.verification_status === "verified" ? 1000 : 0) +
             works * 10 + followers * 3 + (subtitle ? 5 : 0) +
-            (coinByCreator.has(p.user_id) ? 50 : 0),
+            (coinByCreator.has(p.user_id) ? 50 : 0) +
+            (nextEvent ? 30 : 0) + offerings * 5,
           _featurable: isFeaturable,
         };
       });

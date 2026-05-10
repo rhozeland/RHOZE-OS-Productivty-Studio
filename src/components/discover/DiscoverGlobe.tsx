@@ -633,6 +633,9 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                       verification_status={activeSpotlight.verification_status}
                       works_count={activeSpotlight.works_count}
                       followers_count={activeSpotlight.followers_count}
+                      coin={(activeSpotlight as any).coin ?? null}
+                      next_event={(activeSpotlight as any).next_event ?? null}
+                      offerings_count={(activeSpotlight as any).offerings_count ?? 0}
                     />
                   ) : activeSpotlight.kind === "event" ? (
                     <EventSpotlightCard
