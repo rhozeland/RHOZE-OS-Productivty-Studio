@@ -426,6 +426,8 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
       verification_status: artist.verification_status ?? null,
       works_count: artist.works_count ?? 0,
       followers_count: artist.followers_count ?? 0,
+      works_thumbs: (artist as any).works_thumbs ?? [],
+      coin: (artist as any).coin ?? null,
     }));
   }, [artists, marketFilter]);
 
