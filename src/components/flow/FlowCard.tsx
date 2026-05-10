@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Play, FileText, ExternalLink, ChevronDown, Music, Palette, Camera, Video, PenTool, Heart, MessageCircle, Send, Maximize2, X, Trash2, Coins, ArrowRight } from "lucide-react";
@@ -64,12 +65,14 @@ const CATEGORY_ICONS: Record<string, any> = {
   writing: PenTool,
 };
 
+// Stronger contrast than the previous /15 alpha tints so the genre badge
+// stays legible even when the card sits on a colored swipe background.
 const CATEGORY_COLORS: Record<string, string> = {
-  music: "bg-pink/15 text-pink",
-  design: "bg-teal/15 text-teal",
-  photo: "bg-warm/15 text-warm",
-  video: "bg-accent/15 text-accent",
-  writing: "bg-muted text-muted-foreground",
+  music: "bg-pink/90 text-white",
+  design: "bg-teal/90 text-white",
+  photo: "bg-warm/90 text-white",
+  video: "bg-accent/90 text-white",
+  writing: "bg-foreground/85 text-background",
 };
 
 interface FlowCardProps {
@@ -132,6 +135,11 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
   const navigate = useNavigate();
   const [imageEnlarged, setImageEnlarged] = useState(false);
   const [verifyOpen, setVerifyOpen] = useState(false);
+  // Per-card click cooldowns prevent like/unlike or send-spam mashing.
+  // Cheap client-side rate limit on top of the server-side reward cap.
+  const lastLikeAt = useRef(0);
+  const lastShareAt = useRef(0);
+  const [likePulse, setLikePulse] = useState(0);
   const canApplyForVerification =
     !!isOwner &&
     item.verification_status !== "verified" &&
@@ -165,7 +173,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
 
   return (
     <>
-      <div className="relative rounded-[32px] bg-card/50 backdrop-blur-2xl shadow-2xl shadow-foreground/5 overflow-hidden border border-border/15 select-none">
+      <div className="relative rounded-[32px] bg-card shadow-2xl shadow-foreground/10 overflow-hidden border border-border/30 select-none">
         {/* Absolute-positioned category badge for corner placements.
             Rendered before the media so the badge sits above any
             embed/image. Inline placement is handled below in the
@@ -439,23 +447,48 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
           )}
 
           <div className="ml-auto flex items-center gap-3">
-            <button
-              onClick={(e) => { e.stopPropagation(); onLike(); }}
+            <motion.button
+              onClick={(e) => {
+                e.stopPropagation();
+                // 400ms cooldown — blocks rapid like/unlike toggling that
+                // would hammer the DB and game the engagement rewards.
+                const now = Date.now();
+                if (now - lastLikeAt.current < 400) return;
+                lastLikeAt.current = now;
+                setLikePulse((n) => n + 1);
+                onLike();
+              }}
               className={cn(
-                "flex items-center gap-1.5 transition-colors group",
+                "flex items-center gap-1.5 transition-colors",
                 liked ? "text-rose-500" : "text-muted-foreground hover:text-rose-500",
               )}
               title={liked ? "Unlike" : "Like"}
+              whileTap={{ scale: 0.85 }}
             >
-              <Heart className={cn("h-[18px] w-[18px] group-hover:scale-110 transition-transform", liked && "fill-current")} />
+              <motion.span
+                key={likePulse}
+                initial={{ scale: 1 }}
+                animate={{ scale: liked ? [1, 1.45, 0.92, 1.12, 1] : [1, 1.2, 1] }}
+                transition={{ duration: liked ? 0.55 : 0.3, ease: "easeOut" }}
+                className="inline-flex"
+              >
+                <Heart className={cn("h-[18px] w-[18px]", liked && "fill-current drop-shadow-[0_0_6px_rgba(244,63,94,0.55)]")} />
+              </motion.span>
               <span className="text-[11px] font-medium tabular-nums">{likeCount && likeCount > 0 ? likeCount : "Like"}</span>
-            </button>
+            </motion.button>
             <button
-              onClick={(e) => { e.stopPropagation(); onShare(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                // 600ms cooldown so users can't spam the share dialog open.
+                const now = Date.now();
+                if (now - lastShareAt.current < 600) return;
+                lastShareAt.current = now;
+                onShare();
+              }}
               className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group"
               title="Send to someone"
             >
-              <Send className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
+              <Send className="h-[18px] w-[18px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               <span className="text-[11px] font-medium">Send</span>
             </button>
 
@@ -490,14 +523,12 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
                   {((item as any).profiles?.display_name || "?").charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-[11px] text-muted-foreground group-hover:text-foreground transition-colors">
+              <span className="text-[11px] font-medium text-foreground/80 group-hover:text-foreground transition-colors">
                 {(item as any).profiles?.display_name || "Unknown"}
               </span>
             </button>
           ) : profilesLoading ? (
             // Skeleton placeholder while `profiles_public` is being fetched.
-            // Prevents a flash of "Unknown" / blank space before attribution
-            // resolves on the next render.
             <div
               className="flex items-center gap-2"
               aria-hidden="true"
@@ -506,10 +537,29 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
               <div className="h-5 w-5 rounded-full bg-muted animate-pulse" />
               <div className="h-3 w-20 rounded-full bg-muted animate-pulse" />
             </div>
+          ) : item.user_id ? (
+            // Profile genuinely missing (RLS hidden / deleted account, etc.).
+            // Still let users tap through to the profile page where the full
+            // resolver will surface whatever exists — better than rendering
+            // a permanently-empty row that looks like a layout bug.
+            <button
+              onClick={(e) => { e.stopPropagation(); navigate(`/profiles/${item.user_id}`); }}
+              className="flex items-center gap-2 group"
+              title="View creator"
+            >
+              <Avatar className="h-5 w-5">
+                <AvatarFallback className="text-[8px] bg-muted">
+                  {(item.creator_name || "?").charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-[11px] font-medium text-foreground/70 group-hover:text-foreground transition-colors">
+                {item.creator_name || "Unknown creator"}
+              </span>
+            </button>
           ) : null}
-          {item.creator_name && (
+          {item.creator_name && (item as any).profiles && (
             <span className="text-[11px] text-muted-foreground">
-              {(item as any).profiles ? "·" : ""} by <span className="font-medium text-foreground/80">{item.creator_name}</span>
+              · by <span className="font-medium text-foreground/80">{item.creator_name}</span>
             </span>
           )}
         </div>
@@ -520,7 +570,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             <h3 className="font-display font-bold text-foreground text-sm md:text-base leading-snug">{item.title}</h3>
             {item.description && (
               <p
-                className={`text-sm text-muted-foreground leading-relaxed mt-1 cursor-pointer ${expanded ? "" : "line-clamp-2"}`}
+                className={`text-[13px] text-foreground/75 leading-relaxed mt-1 cursor-pointer ${expanded ? "" : "line-clamp-2"}`}
                 onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
               >
                 {item.description}
