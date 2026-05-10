@@ -261,10 +261,10 @@ const LaunchDetailPage = () => {
                 </div>
 
                 {/* Progress bar */}
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <div className="flex justify-between text-[10px] font-mono text-muted-foreground">
                     <span>
-                      {fmt(currentRaised)} / {fmt(targetRaised)} $RHOZE raised
+                      {fmt(currentRaised)} / {fmt(targetRaised)} $RHOZE backed
                     </span>
                     <span>{progress.toFixed(1)}% to graduation</span>
                   </div>
@@ -274,6 +274,32 @@ const LaunchDetailPage = () => {
                       style={{ width: `${progress}%` }}
                     />
                   </div>
+                  {launch.status === "graduated" && launch.creator_payout_rhoze ? (
+                    <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs space-y-1.5">
+                      <div className="flex items-center gap-1.5 font-semibold text-emerald-500">
+                        <GraduationCap className="h-3.5 w-3.5" /> Graduated
+                        {launch.graduated_at && (
+                          <span className="text-muted-foreground font-normal">
+                            · {new Date(launch.graduated_at).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 font-mono">
+                        <div>
+                          <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Paid to artist</div>
+                          <div>{fmt(Number(launch.creator_payout_rhoze))} $RHOZE</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Bonus to holders</div>
+                          <div>{fmt(Number(launch.holder_bonus_rhoze ?? 0))} $RHOZE</div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      When the bar fills, the artist gets paid <span className="text-foreground font-medium">60%</span> of the raise and holders split a <span className="text-foreground font-medium">25%</span> bonus pro-rata. The coin earns a Graduated badge.
+                    </p>
+                  )}
                 </div>
               </>
             );
