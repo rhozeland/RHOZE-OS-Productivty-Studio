@@ -245,16 +245,22 @@ const RoomsBottomNav = () => {
                   </Tooltip>
                 )}
 
-                {/* Post — icon-only round button. */}
+                {/* Post — icon-only round button. Opens the unified "What are you posting?" sheet. */}
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Link
-                      to="/discover"
-                      className="flex items-center justify-center h-9 w-9 rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors shadow-sm"
-                      aria-label="Post work"
-                    >
-                      <Plus className="h-4 w-4" strokeWidth={2.5} />
-                    </Link>
+                    <div>
+                      <PostMenuButton
+                        trigger={
+                          <button
+                            type="button"
+                            className="flex items-center justify-center h-9 w-9 rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors shadow-sm"
+                            aria-label="Post work"
+                          >
+                            <Plus className="h-4 w-4" strokeWidth={2.5} />
+                          </button>
+                        }
+                      />
+                    </div>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="text-xs">
                     Post — drop a work, offering, or update
