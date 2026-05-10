@@ -142,7 +142,7 @@ const FeaturedCarousel = ({ slides }: FeaturedCarouselProps) => {
                   </p>
                 )}
                 <span className="mt-3 inline-flex items-center text-xs font-medium text-foreground gap-1 group-hover:gap-2 transition-all">
-                  Open <ArrowRight className="h-3 w-3" />
+                  {current.kind === "artist" ? "Back them — book, tickets, coin, works" : "Open"} <ArrowRight className="h-3 w-3" />
                 </span>
               </div>
             </div>
