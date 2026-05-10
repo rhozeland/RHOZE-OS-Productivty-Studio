@@ -375,69 +375,33 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
   const event = useMemo(() => pickByMarket(events ?? [], marketFilter), [events, marketFilter]);
   const space = useMemo(() => pickByMarket(spaces ?? [], marketFilter), [spaces, marketFilter]);
 
+  // Creator-first: featured carousel rotates through the top artists only.
+  // Events/spaces stay surfaced via the globe + mosaic, but the spotlight
+  // leads with the people.
   const slides = useMemo<FeaturedSlide[]>(() => {
-    const next: FeaturedSlide[] = [];
+    const pool = (artists ?? []).filter((a) => {
+      if (marketFilter === "All") return true;
+      const code = a.region_code?.toUpperCase();
+      return code ? marketsByCode.get(code) === marketFilter : false;
+    });
+    const top = (pool.length ? pool : (artists ?? [])).slice(0, 5);
 
-    if (artist) {
-      next.push({
-        kind: "artist",
-        id: artist.user_id,
-        href: `/profiles/${artist.user_id}`,
-        title: artist.display_name || "Untitled artist",
-        subtitle: (artist as any).subtitle ?? null,
-        banner: artist.banner_url,
-        avatar: artist.avatar_url,
-        region_code: artist.region_code,
-        mediums: artist.mediums,
-        creator_roles: artist.creator_roles,
-        verification_status: artist.verification_status ?? null,
-        works_count: artist.works_count ?? 0,
-        followers_count: artist.followers_count ?? 0,
-      });
-    }
-
-    if (event) {
-      next.push({
-        kind: "event",
-        id: event.id,
-        href: `/spaces/events/${event.id}`,
-        title: event.title,
-        subtitle: event.description,
-        banner: event.cover_url_poster || event.cover_url,
-        starts_at: event.starts_at,
-        venue: event.venue_name,
-        is_online: event.is_online,
-        region_code: event.region_code,
-      });
-    }
-
-    if (space) {
-      next.push({
-        kind: "space",
-        id: space.id,
-        href: `/studios/${space.id}`,
-        title: space.name,
-        subtitle: space.short_description,
-        banner: space.cover_image_url,
-        location:
-          [space.city, space.state].filter(Boolean).join(", ") ||
-          space.location ||
-          space.country ||
-          null,
-        region_code: space.region_code,
-        category: space.category,
-        hourly_rate: space.hourly_rate,
-        currency: space.currency,
-        max_guests: space.max_guests,
-        amenities: space.amenities,
-        rating_avg: space.rating_avg,
-        review_count: space.review_count,
-        available_days: (space as any).available_days ?? 0,
-      });
-    }
-
-    return next;
-  }, [artist, event, space]);
+    return top.map((artist) => ({
+      kind: "artist" as const,
+      id: artist.user_id,
+      href: `/profiles/${artist.user_id}`,
+      title: artist.display_name || "Untitled artist",
+      subtitle: (artist as any).subtitle ?? null,
+      banner: artist.banner_url,
+      avatar: artist.avatar_url,
+      region_code: artist.region_code,
+      mediums: artist.mediums,
+      creator_roles: artist.creator_roles,
+      verification_status: artist.verification_status ?? null,
+      works_count: artist.works_count ?? 0,
+      followers_count: artist.followers_count ?? 0,
+    }));
+  }, [artists, marketFilter]);
 
   const spotlights = useMemo<FeaturedSpotlight[]>(() => {
     return slides

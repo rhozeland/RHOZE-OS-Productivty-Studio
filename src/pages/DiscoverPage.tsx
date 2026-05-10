@@ -70,14 +70,11 @@ const normalizeCategory = (value?: string | null) =>
     .trim()
     .replace(/[\s_]+/g, "-");
 
-type DiscoverView = "all" | "events" | "spaces" | "works" | "offerings" | "creators";
+type DiscoverView = "all" | "creators" | "works";
 const VIEW_OPTIONS: { value: DiscoverView; label: string; icon: any; kind: MosaicKindFilter }[] = [
   { value: "all", label: "All", icon: Sparkles, kind: "all" },
   { value: "creators", label: "Creators", icon: Users, kind: "all" },
   { value: "works", label: "Works", icon: FileText, kind: "drop" },
-  { value: "offerings", label: "Offerings", icon: ShoppingBag, kind: "offering" },
-  { value: "events", label: "Happening", icon: CalendarDays, kind: "event" },
-  { value: "spaces", label: "Spaces", icon: MapPin, kind: "space" },
 ];
 
 const EVENT_CATEGORY_DEFS = [
@@ -189,9 +186,7 @@ const DiscoverPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawView = searchParams.get("view");
   const view: DiscoverView =
-    rawView === "events" || rawView === "spaces" || rawView === "works" || rawView === "offerings" || rawView === "creators"
-      ? rawView
-      : "all";
+    rawView === "works" || rawView === "creators" ? rawView : "all";
   const setView = (v: DiscoverView) => {
     if (v === "all") searchParams.delete("view");
     else searchParams.set("view", v);
@@ -208,12 +203,7 @@ const DiscoverPage = () => {
     else searchParams.set("cat", normalizeCategory(c));
     setSearchParams(searchParams, { replace: true });
   };
-  const categoryDefs =
-    view === "events"
-      ? EVENT_CATEGORY_DEFS
-      : view === "spaces"
-        ? SPACE_CATEGORY_DEFS
-        : null;
+  const categoryDefs = null as readonly StreamCategoryDef[] | null;
 
   useEffect(() => {
     if (view !== "all") {
@@ -260,46 +250,9 @@ const DiscoverPage = () => {
     },
   });
 
-  const { data: eventCategoryRows = [] } = useQuery({
-    queryKey: ["discover-event-category-counts"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("events")
-        .select("category")
-        .eq("status", "published")
-        .gte("starts_at", new Date().toISOString())
-        .limit(250);
-      if (error) throw error;
-      return data ?? [];
-    },
-    enabled: view === "events",
-    staleTime: 30_000,
-  });
-
-  const { data: spaceCategoryRows = [] } = useQuery({
-    queryKey: ["discover-space-category-counts"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("studios")
-        .select("category")
-        .eq("is_active", true)
-        .limit(250);
-      if (error) throw error;
-      return data ?? [];
-    },
-    enabled: view === "spaces",
-    staleTime: 30_000,
-  });
-
-  const categoryCounts = useMemo(() => {
-    const rows = view === "events" ? eventCategoryRows : view === "spaces" ? spaceCategoryRows : [];
-    return rows.reduce<Record<string, number>>((acc, row: { category?: string | null }) => {
-      const key = normalizeCategory(row.category);
-      if (!key) return acc;
-      acc[key] = (acc[key] ?? 0) + 1;
-      return acc;
-    }, {});
-  }, [eventCategoryRows, spaceCategoryRows, view]);
+  const eventCategoryRows: { category?: string | null }[] = [];
+  const spaceCategoryRows: { category?: string | null }[] = [];
+  const categoryCounts: Record<string, number> = {};
 
   return (
     <div className="max-w-6xl mx-auto pb-20 space-y-6">
@@ -381,9 +334,6 @@ const DiscoverPage = () => {
         {[
           { type: "link" as const, to: "/creators", label: "Creators", icon: Users },
           { type: "view" as const, view: "works" as DiscoverView, label: "Works", icon: FileText },
-          { type: "view" as const, view: "offerings" as DiscoverView, label: "Offerings", icon: ShoppingBag },
-          { type: "view" as const, view: "events" as DiscoverView, label: "Happening", icon: CalendarDays },
-          { type: "view" as const, view: "spaces" as DiscoverView, label: "Spaces", icon: MapPin },
         ].map((item) => {
           const Icon = item.icon;
           const className =
@@ -495,33 +445,10 @@ const DiscoverPage = () => {
           </div>
         </div>
 
-        {view === "events" ? (
-          <>
-            <EventCategoryPills
-              defs={EVENT_CATEGORY_DEFS}
-              activeCategory={normalizedCategory}
-              counts={categoryCounts}
-              onSelect={setCategory}
-            />
-            <DiscoverEventsGrid category={normalizedCategory} />
-          </>
+        {view === "creators" ? (
+          <CreatorsGrid />
         ) : (
-          <>
-            {categoryDefs && (
-              <StreamCategorySection
-                defs={categoryDefs}
-                noun="space"
-                activeCategory={normalizedCategory}
-                counts={categoryCounts}
-                onSelect={setCategory}
-              />
-            )}
-            {view === "creators" ? (
-              <CreatorsGrid />
-            ) : (
-              <ConversationsMosaic kind={activeOption.kind} category={normalizedCategory} />
-            )}
-          </>
+          <ConversationsMosaic kind={activeOption.kind} category={normalizedCategory} />
         )}
       </section>
 
