@@ -135,6 +135,11 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
   const navigate = useNavigate();
   const [imageEnlarged, setImageEnlarged] = useState(false);
   const [verifyOpen, setVerifyOpen] = useState(false);
+  // Per-card click cooldowns prevent like/unlike or send-spam mashing.
+  // Cheap client-side rate limit on top of the server-side reward cap.
+  const lastLikeAt = useRef(0);
+  const lastShareAt = useRef(0);
+  const [likePulse, setLikePulse] = useState(0);
   const canApplyForVerification =
     !!isOwner &&
     item.verification_status !== "verified" &&
