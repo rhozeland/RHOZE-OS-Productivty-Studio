@@ -447,23 +447,48 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
           )}
 
           <div className="ml-auto flex items-center gap-3">
-            <button
-              onClick={(e) => { e.stopPropagation(); onLike(); }}
+            <motion.button
+              onClick={(e) => {
+                e.stopPropagation();
+                // 400ms cooldown — blocks rapid like/unlike toggling that
+                // would hammer the DB and game the engagement rewards.
+                const now = Date.now();
+                if (now - lastLikeAt.current < 400) return;
+                lastLikeAt.current = now;
+                setLikePulse((n) => n + 1);
+                onLike();
+              }}
               className={cn(
-                "flex items-center gap-1.5 transition-colors group",
+                "flex items-center gap-1.5 transition-colors",
                 liked ? "text-rose-500" : "text-muted-foreground hover:text-rose-500",
               )}
               title={liked ? "Unlike" : "Like"}
+              whileTap={{ scale: 0.85 }}
             >
-              <Heart className={cn("h-[18px] w-[18px] group-hover:scale-110 transition-transform", liked && "fill-current")} />
+              <motion.span
+                key={likePulse}
+                initial={{ scale: 1 }}
+                animate={{ scale: liked ? [1, 1.45, 0.92, 1.12, 1] : [1, 1.2, 1] }}
+                transition={{ duration: liked ? 0.55 : 0.3, ease: "easeOut" }}
+                className="inline-flex"
+              >
+                <Heart className={cn("h-[18px] w-[18px]", liked && "fill-current drop-shadow-[0_0_6px_rgba(244,63,94,0.55)]")} />
+              </motion.span>
               <span className="text-[11px] font-medium tabular-nums">{likeCount && likeCount > 0 ? likeCount : "Like"}</span>
-            </button>
+            </motion.button>
             <button
-              onClick={(e) => { e.stopPropagation(); onShare(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                // 600ms cooldown so users can't spam the share dialog open.
+                const now = Date.now();
+                if (now - lastShareAt.current < 600) return;
+                lastShareAt.current = now;
+                onShare();
+              }}
               className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group"
               title="Send to someone"
             >
-              <Send className="h-[18px] w-[18px] group-hover:scale-110 transition-transform" />
+              <Send className="h-[18px] w-[18px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               <span className="text-[11px] font-medium">Send</span>
             </button>
 
