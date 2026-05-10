@@ -258,7 +258,7 @@ const App = () => (
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/bookings" element={<CalendarPage />} />
                 <Route path="/credits" element={<CreditShopPage />} />
-                <Route path="/purchases" element={<Navigate to="/credits?tab=purchases" replace />} />
+                <Route path="/purchases" element={<Navigate to="/credits?tab=activity" replace />} />
                 {/* v8: rewards explainer folded back into Creator Pass
                     as a tab so back-nav lands you on Creator Pass instead
                     of Discover. /rewards stays as a deep-link redirect. */}

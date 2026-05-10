@@ -260,7 +260,7 @@ const CreatorPassCard = () => {
                 icon: Ticket,
                 isZero: false,
                 hint: { text: "", to: null as string | null },
-                to: "/credits?tab=tickets",
+                to: "/credits?tab=activity",
               },
               {
                 label: "Verified Works",
