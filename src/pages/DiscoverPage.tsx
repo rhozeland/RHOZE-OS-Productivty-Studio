@@ -439,6 +439,9 @@ const DiscoverPage = () => {
       {/* ─── Creator Pass upgrade nudge ─────────────────────────────── */}
       <CreatorPassUpgradeCta />
 
+      {/* ─── Trending artists — lead lane (creator-first) ──────────── */}
+      <TrendingArtistsLane marketFilter={marketFilter} />
+
       {/* ─── The Stream ─────────────────────────────────────────────── */}
       <section id="discover-stream" className="space-y-4 scroll-mt-20">
         <div className="flex items-end justify-between gap-3 flex-wrap">
