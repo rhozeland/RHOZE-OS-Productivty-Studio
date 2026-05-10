@@ -9,7 +9,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Calendar, MapPin, Sparkles, Users } from "lucide-react";
+import { ArrowRight, Calendar, MapPin, Sparkles, Users, Coins, Heart, FileText } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import RegionChip from "@/components/profile/RegionChip";
