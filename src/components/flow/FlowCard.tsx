@@ -181,7 +181,19 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
 
   return (
     <>
-      <div className="relative rounded-[32px] bg-card shadow-2xl shadow-foreground/10 overflow-hidden border border-border/30 select-none">
+      <motion.div
+        // Subtle card entrance — fades + lifts a touch on mount. Reduced
+        // motion users get an instant opacity-only fade so nothing slides.
+        initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.985 }}
+        animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+        transition={
+          prefersReducedMotion
+            ? { duration: 0.18, ease: "linear" }
+            : { duration: 0.45, ease: [0.22, 1, 0.36, 1] }
+        }
+        whileHover={prefersReducedMotion ? undefined : { y: -2 }}
+        className="relative rounded-[32px] bg-card shadow-2xl shadow-foreground/10 overflow-hidden border border-border/30 select-none"
+      >
         {/* Absolute-positioned category badge for corner placements.
             Rendered before the media so the badge sits above any
             embed/image. Inline placement is handled below in the
