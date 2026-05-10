@@ -873,12 +873,10 @@ const FlowModePage = () => {
     },
   });
 
-  const allItems = useMemo(() => {
-    if (deepLinkItem && !baseItems.some((i: any) => i.id === (deepLinkItem as any).id)) {
-      return [deepLinkItem as any, ...baseItems];
-    }
-    return baseItems;
-  }, [baseItems, deepLinkItem]);
+  const allItems = useMemo(
+    () => mergeDeepLinkIntoFeed(deepLinkItem as any, baseItems as any[]),
+    [baseItems, deepLinkItem],
+  );
 
   // Engagement counts (likes + comments) and per-user liked set for visible items.
   const visibleIds = allItems.map((i: any) => i.id);
