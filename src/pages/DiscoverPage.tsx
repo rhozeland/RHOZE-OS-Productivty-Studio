@@ -445,33 +445,10 @@ const DiscoverPage = () => {
           </div>
         </div>
 
-        {view === "events" ? (
-          <>
-            <EventCategoryPills
-              defs={EVENT_CATEGORY_DEFS}
-              activeCategory={normalizedCategory}
-              counts={categoryCounts}
-              onSelect={setCategory}
-            />
-            <DiscoverEventsGrid category={normalizedCategory} />
-          </>
+        {view === "creators" ? (
+          <CreatorsGrid />
         ) : (
-          <>
-            {categoryDefs && (
-              <StreamCategorySection
-                defs={categoryDefs}
-                noun="space"
-                activeCategory={normalizedCategory}
-                counts={categoryCounts}
-                onSelect={setCategory}
-              />
-            )}
-            {view === "creators" ? (
-              <CreatorsGrid />
-            ) : (
-              <ConversationsMosaic kind={activeOption.kind} category={normalizedCategory} />
-            )}
-          </>
+          <ConversationsMosaic kind={activeOption.kind} category={normalizedCategory} />
         )}
       </section>
 
