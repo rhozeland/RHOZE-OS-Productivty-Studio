@@ -205,6 +205,26 @@ const AuthPage = () => {
             </motion.p>
           </div>
 
+          {/* Referral code — signup only. Unlocks $RHOZE on first sign-in. */}
+          {isSignUp && (
+            <div className="mb-4 space-y-1.5">
+              <Label htmlFor="referral" className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3" /> Referral code <span className="text-muted-foreground/60 normal-case tracking-normal">(optional)</span>
+              </Label>
+              <Input
+                id="referral"
+                value={referralCode}
+                onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                placeholder="e.g. SHOPIFY"
+                maxLength={32}
+                className="h-11 rounded-xl bg-secondary/30 border-border/50 focus:bg-background transition-colors uppercase tracking-wider"
+              />
+              <p className="text-[11px] text-muted-foreground/80">
+                Got a code? Enter it now to earn $RHOZE on signup.
+              </p>
+            </div>
+          )}
+
           {/* Google sign-in — DOMINANT primary action */}
           <Button
             type="button"
