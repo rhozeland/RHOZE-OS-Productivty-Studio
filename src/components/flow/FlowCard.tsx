@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Play, FileText, ExternalLink, ChevronDown, Music, Palette, Camera, Video, PenTool, Heart, MessageCircle, Send, Maximize2, X, Trash2, Coins, ArrowRight } from "lucide-react";
