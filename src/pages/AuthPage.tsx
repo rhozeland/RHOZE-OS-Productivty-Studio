@@ -20,6 +20,12 @@ const AuthPage = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [referralCode, setReferralCode] = useState("");
+  // Referral input is HIDDEN by default. We only show it when:
+  //   • the URL carries ?ref=CODE (campaign link), or
+  //   • the user explicitly clicks "Have a referral code?".
+  // This stops random new accounts from farming the SHOPIFY/event codes —
+  // you have to know a code exists to redeem one.
+  const [showReferral, setShowReferral] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -36,6 +42,17 @@ const AuthPage = () => {
       } catch {}
     }
   };
+
+  // Auto-open the referral field if a campaign link delivered the user here
+  // with ?ref=CODE (e.g. shopify.com → rhozeland.app/auth?ref=SHOPIFY). The
+  // field stays hidden for organic signups so codes aren't broadcast.
+  const refFromUrl = searchParams.get("ref");
+  if (refFromUrl && !referralCode) {
+    // setState during render is safe because it's guarded; React bails out
+    // once values stabilise.
+    setReferralCode(refFromUrl.toUpperCase());
+    setShowReferral(true);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -205,23 +222,35 @@ const AuthPage = () => {
             </motion.p>
           </div>
 
-          {/* Referral code — signup only. Unlocks $RHOZE on first sign-in. */}
+          {/* Referral code — signup only, HIDDEN by default to prevent abuse.
+              Users only see this if they came in via ?ref=CODE or click the
+              toggle. Don't broadcast that codes exist. */}
           {isSignUp && (
-            <div className="mb-4 space-y-1.5">
-              <Label htmlFor="referral" className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="h-3 w-3" /> Referral code <span className="text-muted-foreground/60 normal-case tracking-normal">(optional)</span>
-              </Label>
-              <Input
-                id="referral"
-                value={referralCode}
-                onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                placeholder="e.g. SHOPIFY"
-                maxLength={32}
-                className="h-11 rounded-xl bg-secondary/30 border-border/50 focus:bg-background transition-colors uppercase tracking-wider"
-              />
-              <p className="text-[11px] text-muted-foreground/80">
-                Got a code? Enter it now to earn $RHOZE on signup.
-              </p>
+            <div className="mb-4">
+              {showReferral ? (
+                <div className="space-y-1.5">
+                  <Label htmlFor="referral" className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="h-3 w-3" /> Referral code
+                  </Label>
+                  <Input
+                    id="referral"
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                    placeholder="Enter your code"
+                    maxLength={32}
+                    autoFocus
+                    className="h-11 rounded-xl bg-secondary/30 border-border/50 focus:bg-background transition-colors uppercase tracking-wider"
+                  />
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowReferral(true)}
+                  className="text-[11px] text-muted-foreground/70 hover:text-foreground transition-colors"
+                >
+                  Have a referral code?
+                </button>
+              )}
             </div>
           )}
 

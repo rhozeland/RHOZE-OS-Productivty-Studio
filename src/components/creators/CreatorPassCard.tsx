@@ -13,6 +13,7 @@ import Tilt3D from "@/components/ui/Tilt3D";
 import { useState } from "react";
 import { format } from "date-fns";
 import { RhozeInfoPopover } from "@/components/RhozeInfoPopover";
+import { useRhozeMarketPrice, formatRhozeUsd } from "@/hooks/useRhozeMarketPrice";
 
 /**
  * Render a friendly preview for the dashboard "latest message" tile.
@@ -438,12 +439,16 @@ const CreatorPassCard = () => {
   );
 };
 
-/* ─── Balance card — top-priority headline, USD ≈, progress bar, perks ─── */
-const RHOZE_USD_RATE = 1 / 100; // 100 $RHOZE ≈ $1
-
+/* ─── Balance card — top-priority headline, USD ≈ (live market), progress, perks ─── */
 const BalanceCard = ({ balance, holdTier }: { balance: number; holdTier: TierId }) => {
   const [perksOpen, setPerksOpen] = useState(false);
-  const usd = balance * RHOZE_USD_RATE;
+  // Live on-chain market price — NOT the internal top-up rate. Users were
+  // confused because the old display showed 100k $RHOZE ≈ $1,000 (the rate
+  // we *sell* credits at), while the same tokens trade for fractions of a
+  // cent on Pump.fun. We now show the real-world value.
+  const { data: market } = useRhozeMarketPrice();
+  const priceUsd = market?.priceUsd ?? 0;
+  const usd = balance * priceUsd;
   const tierIdx = TIER_RANK[holdTier];
   const current = TIERS[tierIdx];
   const next = TIERS[tierIdx + 1] ?? null;
@@ -483,8 +488,19 @@ const BalanceCard = ({ balance, holdTier }: { balance: number; holdTier: TierId 
         <p className="font-display text-4xl md:text-5xl font-bold text-foreground tabular-nums leading-none mt-2">
           {balance.toLocaleString()}
         </p>
-        <p className="text-[11px] text-muted-foreground font-body mt-1 tabular-nums">
-          ≈ ${usd.toLocaleString(undefined, { maximumFractionDigits: 2 })} USD
+        <p
+          className="text-[11px] text-muted-foreground font-body mt-1 tabular-nums"
+          title={
+            priceUsd > 0
+              ? `Live market: ${formatRhozeUsd(priceUsd)} per $RHOZE${market?.source ? ` · ${market.source}` : ""}`
+              : "Live market price unavailable"
+          }
+        >
+          {priceUsd > 0 ? (
+            <>≈ {formatRhozeUsd(usd)} <span className="opacity-60">at market</span></>
+          ) : (
+            <span className="opacity-70">Market price loading…</span>
+          )}
         </p>
       </div>
 

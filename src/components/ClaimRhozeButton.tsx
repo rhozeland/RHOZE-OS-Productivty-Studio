@@ -251,8 +251,34 @@ const ClaimRhozeButton = ({
   };
 
   if (!connected) {
+    // Phantom mobile fix: the wallet-adapter modal can't open the Phantom
+    // app from a regular mobile browser (Safari/Chrome), and clicking
+    // "Phantom" inside the modal often just hangs or crashes. When we
+    // detect a mobile browser with no injected Phantom provider, we
+    // deep-link directly into Phantom's in-app browser, which loads
+    // Rhozeland *inside* Phantom — `window.solana` is then injected and
+    // the standard "Connect" flow works. Desktop is unchanged.
+    const handleConnect = () => {
+      try {
+        const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(ua);
+        const hasPhantom =
+          typeof window !== "undefined" && (window as any).solana?.isPhantom;
+        if (isMobile && !hasPhantom) {
+          // Build a Phantom universal link that opens this page inside the
+          // Phantom in-app browser. See https://docs.phantom.app/phantom-deeplinks/other-methods/browse
+          const here = `${window.location.origin}${window.location.pathname}${window.location.search}`;
+          const url = `https://phantom.app/ul/browse/${encodeURIComponent(here)}?ref=${encodeURIComponent(window.location.origin)}`;
+          window.location.href = url;
+          return;
+        }
+      } catch {
+        // fall through to the normal modal
+      }
+      setVisible(true);
+    };
     return (
-      <Button variant="outline" className={className} onClick={() => setVisible(true)}>
+      <Button variant="outline" className={className} onClick={handleConnect}>
         <Wallet className="mr-2 h-4 w-4" />
         Connect Wallet to Claim
       </Button>
