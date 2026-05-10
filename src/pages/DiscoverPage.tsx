@@ -70,31 +70,13 @@ const normalizeCategory = (value?: string | null) =>
     .trim()
     .replace(/[\s_]+/g, "-");
 
-type DiscoverView = "all" | "creators" | "works";
-const VIEW_OPTIONS: { value: DiscoverView; label: string; icon: any; kind: MosaicKindFilter }[] = [
-  { value: "all", label: "All", icon: Sparkles, kind: "all" },
-  { value: "creators", label: "Creators", icon: Users, kind: "all" },
-  { value: "works", label: "Works", icon: FileText, kind: "drop" },
-];
-
 const EVENT_CATEGORY_DEFS = [
   { slug: "music", label: "Music", icon: Music2, accent: "hsl(var(--orange))" },
   { slug: "art", label: "Art", icon: Palette, accent: "hsl(var(--pink))" },
-  { slug: "talk", label: "Talk", icon: MessageSquare, accent: "hsl(var(--blue))" },
-  { slug: "workshop", label: "Workshop", icon: Briefcase, accent: "hsl(var(--warm))" },
-  { slug: "screening", label: "Screening", icon: Clapperboard, accent: "hsl(var(--foreground))" },
-  { slug: "exhibition", label: "Exhibition", icon: Sparkles, accent: "hsl(var(--teal))" },
-  { slug: "meetup", label: "Meetup", icon: Users, accent: "hsl(var(--accent))" },
-  { slug: "other", label: "Other", icon: Compass, accent: "hsl(var(--muted-foreground))" },
 ] as const;
 
 const SPACE_CATEGORY_DEFS = [
   { slug: "studio", label: "Studio", icon: Building2, accent: "hsl(var(--blue))" },
-  { slug: "gallery", label: "Gallery", icon: Palette, accent: "hsl(var(--pink))" },
-  { slug: "venue", label: "Venue", icon: CalendarDays, accent: "hsl(var(--orange))" },
-  { slug: "rehearsal", label: "Rehearsal", icon: Music2, accent: "hsl(var(--warm))" },
-  { slug: "co-working", label: "Co-working", icon: Briefcase, accent: "hsl(var(--teal))" },
-  { slug: "outdoor", label: "Outdoor", icon: MapPin, accent: "hsl(var(--foreground))" },
 ] as const;
 
 type StreamCategoryDef = (typeof EVENT_CATEGORY_DEFS)[number] | (typeof SPACE_CATEGORY_DEFS)[number];
@@ -182,37 +164,9 @@ const DiscoverPage = () => {
   const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
   const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
 
-  // View toggle (all / events / spaces / works), persisted in ?view= param.
   const [searchParams, setSearchParams] = useSearchParams();
-  const rawView = searchParams.get("view");
-  const view: DiscoverView =
-    rawView === "works" || rawView === "creators" ? rawView : "all";
-  const setView = (v: DiscoverView) => {
-    if (v === "all") searchParams.delete("view");
-    else searchParams.set("view", v);
-    searchParams.delete("cat");
-    setSearchParams(searchParams, { replace: true });
-  };
-  const activeOption = VIEW_OPTIONS.find((o) => o.value === view) ?? VIEW_OPTIONS[0];
-  const ActiveIcon = activeOption.icon;
-
   const category = searchParams.get("cat");
   const normalizedCategory = category ? normalizeCategory(category) : null;
-  const setCategory = (c: string | null) => {
-    if (!c) searchParams.delete("cat");
-    else searchParams.set("cat", normalizeCategory(c));
-    setSearchParams(searchParams, { replace: true });
-  };
-  const categoryDefs = null as readonly StreamCategoryDef[] | null;
-
-  useEffect(() => {
-    if (view !== "all") {
-      requestAnimationFrame(() => {
-        document.getElementById("discover-stream")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-    }
-  }, [view]);
-
   // ─── Personal greeting (signed-in only) ─────────────────────────
   const { data: profile } = useQuery({
     queryKey: ["discover-greeting", user?.id],
@@ -374,34 +328,7 @@ const DiscoverPage = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Filter dropdown — All / Events / Spaces / Works */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-2 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors"
-                >
-                  <ActiveIcon className="h-3.5 w-3.5" />
-                  {activeOption.label}
-                  <ChevronDown className="h-3.5 w-3.5 opacity-60" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
-                {VIEW_OPTIONS.map(({ value, label, icon: Icon }) => (
-                  <DropdownMenuItem
-                    key={value}
-                    onSelect={() => setView(value)}
-                    className="gap-2 text-xs"
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    <span className="flex-1">{label}</span>
-                    {view === value && <Check className="h-3.5 w-3.5 opacity-70" />}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Open Flow — replaces the old Tune-in heading; opens full Flow Mode */}
+            {/* Open Flow — opens full Flow Mode */}
             <button
               type="button"
               onClick={() => navigate("/flow")}
@@ -414,11 +341,7 @@ const DiscoverPage = () => {
           </div>
         </div>
 
-        {view === "creators" ? (
-          <CreatorsGrid />
-        ) : (
-          <ConversationsMosaic kind={activeOption.kind} category={normalizedCategory} />
-        )}
+        <ConversationsMosaic kind="all" category={normalizedCategory} />
       </section>
 
       {/* ─── Coins moving today ─────────────────────────────────────── */}

@@ -724,10 +724,12 @@ const ProfileDetailPage = () => {
               )}
             </div>
 
-            {/* Listings inline — split into Offerings and Looking for */}
-            {hasSellerContent && (() => {
-              const offerings = sellerListings!.filter((l: any) => l.listing_type !== "project_request");
-              const requests  = sellerListings!.filter((l: any) => l.listing_type === "project_request");
+            {/* Compact "Support this artist" tabs — Offerings · Looking for · Shows · Spaces */}
+            {(() => {
+              const offerings = (sellerListings ?? []).filter((l: any) => l.listing_type !== "project_request");
+              const requests  = (sellerListings ?? []).filter((l: any) => l.listing_type === "project_request");
+              const shows     = upcomingEvents ?? [];
+              const spaces    = hostedSpaces ?? [];
 
               const renderListing = (listing: any) => {
                 const isRequest = listing.listing_type === "project_request";
@@ -749,16 +751,12 @@ const ProfileDetailPage = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       {listing.category && (
-                        <Badge variant="outline" className="text-[9px] capitalize mb-0.5">
-                          {listing.category}
-                        </Badge>
+                        <Badge variant="outline" className="text-[9px] capitalize mb-0.5">{listing.category}</Badge>
                       )}
                       <p className="text-sm font-medium text-foreground truncate">{listing.title}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         {listing.credits_price && (
-                          <span className="text-[10px] font-semibold text-primary">
-                            {listing.credits_price} $RHOZE
-                          </span>
+                          <span className="text-[10px] font-semibold text-primary">{listing.credits_price} $RHOZE</span>
                         )}
                         {listing.price && (
                           <span className="text-[10px] text-muted-foreground">${listing.price}</span>
@@ -770,97 +768,102 @@ const ProfileDetailPage = () => {
                 );
               };
 
+              const totalCount = offerings.length + requests.length + shows.length + spaces.length;
+              if (totalCount === 0) return null;
+
+              const tabs: { value: string; label: string; icon: any; count: number }[] = [];
+              if (offerings.length) tabs.push({ value: "offerings", label: "Offerings", icon: ShoppingBag, count: offerings.length });
+              if (requests.length)  tabs.push({ value: "looking",   label: "Looking for", icon: Search, count: requests.length });
+              if (shows.length)     tabs.push({ value: "shows",     label: "Shows", icon: CalendarIcon, count: shows.length });
+              if (spaces.length)    tabs.push({ value: "spaces",    label: "Spaces", icon: Building2, count: spaces.length });
+
               return (
-                <>
-                  {offerings.length > 0 && (
-                    <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
-                      <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2 mb-1">
-                        <ShoppingBag className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Offerings
-                      </h3>
-                      <p className="text-[11px] text-muted-foreground mb-3">Services and drops you can hire or buy.</p>
-                      <div className="space-y-2">{offerings.slice(0, 5).map(renderListing)}</div>
-                    </div>
-                  )}
-                  {requests.length > 0 && (
-                    <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
-                      <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2 mb-1">
-                        <Search className="h-4 w-4 text-amber-600 dark:text-amber-400" /> Looking for
-                      </h3>
-                      <p className="text-[11px] text-muted-foreground mb-3">Open requests — pitch to collaborate.</p>
-                      <div className="space-y-2">{requests.slice(0, 5).map(renderListing)}</div>
-                    </div>
-                  )}
-                </>
+                <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Heart className="h-4 w-4 text-primary" /> Ways to support
+                    </h3>
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{totalCount} total</span>
+                  </div>
+                  <Tabs defaultValue={tabs[0].value}>
+                    <TabsList className="w-full justify-start overflow-x-auto bg-muted/40 p-1 h-auto">
+                      {tabs.map(({ value, label, icon: Icon, count }) => (
+                        <TabsTrigger key={value} value={value} className="text-xs gap-1.5 data-[state=active]:bg-background">
+                          <Icon className="h-3 w-3" />
+                          {label}
+                          <span className="text-[9px] text-muted-foreground">{count}</span>
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+
+                    {offerings.length > 0 && (
+                      <TabsContent value="offerings" className="mt-3 space-y-2">
+                        {offerings.slice(0, 5).map(renderListing)}
+                      </TabsContent>
+                    )}
+                    {requests.length > 0 && (
+                      <TabsContent value="looking" className="mt-3 space-y-2">
+                        {requests.slice(0, 5).map(renderListing)}
+                      </TabsContent>
+                    )}
+                    {shows.length > 0 && (
+                      <TabsContent value="shows" className="mt-3 space-y-2">
+                        {shows.map((e: any) => (
+                          <button
+                            key={e.id}
+                            onClick={() => navigate(`/events/${e.slug || e.id}`)}
+                            className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
+                          >
+                            {e.cover_url ? (
+                              <img src={e.cover_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
+                            ) : (
+                              <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
+                                <CalendarIcon className="h-5 w-5 text-muted-foreground/40" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">{e.title}</p>
+                              <p className="text-[11px] text-muted-foreground">
+                                {format(new Date(e.starts_at), "MMM d · h:mm a")}
+                                {e.is_online ? " · Online" : e.venue_name ? ` · ${e.venue_name}` : ""}
+                              </p>
+                            </div>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                          </button>
+                        ))}
+                      </TabsContent>
+                    )}
+                    {spaces.length > 0 && (
+                      <TabsContent value="spaces" className="mt-3 space-y-2">
+                        {spaces.map((s: any) => (
+                          <button
+                            key={s.id}
+                            onClick={() => navigate(`/studios/${s.id}`)}
+                            className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
+                          >
+                            {s.cover_image_url ? (
+                              <img src={s.cover_image_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
+                            ) : (
+                              <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
+                                <Building2 className="h-5 w-5 text-muted-foreground/40" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">{s.name}</p>
+                              <p className="text-[11px] text-muted-foreground truncate">
+                                {[s.city, s.state].filter(Boolean).join(" · ") || "Space"}
+                                {s.hourly_rate ? ` · ${s.currency || "$"}${s.hourly_rate}/hr` : ""}
+                              </p>
+                            </div>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                          </button>
+                        ))}
+                      </TabsContent>
+                    )}
+                  </Tabs>
+                </div>
               );
             })()}
-
-            {/* Upcoming events */}
-            {upcomingEvents && upcomingEvents.length > 0 && (
-              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
-                <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
-                  <CalendarIcon className="h-4 w-4 text-primary" /> Show up
-                </h3>
-                <div className="space-y-2">
-                  {upcomingEvents.map((e: any) => (
-                    <button
-                      key={e.id}
-                      onClick={() => navigate(`/events/${e.slug || e.id}`)}
-                      className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
-                    >
-                      {e.cover_url ? (
-                        <img src={e.cover_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
-                      ) : (
-                        <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
-                          <CalendarIcon className="h-5 w-5 text-muted-foreground/40" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{e.title}</p>
-                        <p className="text-[11px] text-muted-foreground">
-                          {format(new Date(e.starts_at), "MMM d · h:mm a")}
-                          {e.is_online ? " · Online" : e.venue_name ? ` · ${e.venue_name}` : ""}
-                        </p>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Hosted spaces — book this creator's room */}
-            {hostedSpaces && hostedSpaces.length > 0 && (
-              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
-                <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
-                  <Building2 className="h-4 w-4 text-primary" /> Their spaces
-                </h3>
-                <div className="space-y-2">
-                  {hostedSpaces.map((s: any) => (
-                    <button
-                      key={s.id}
-                      onClick={() => navigate(`/studios/${s.id}`)}
-                      className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
-                    >
-                      {s.cover_image_url ? (
-                        <img src={s.cover_image_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
-                      ) : (
-                        <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
-                          <Building2 className="h-5 w-5 text-muted-foreground/40" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{s.name}</p>
-                        <p className="text-[11px] text-muted-foreground truncate">
-                          {[s.city, s.state].filter(Boolean).join(" · ") || "Space"}
-                          {s.hourly_rate ? ` · ${s.currency || "$"}${s.hourly_rate}/hr` : ""}
-                        </p>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Off-platform support */}
             {(p.portfolio_url || p.instagram_url || p.tiktok_url || p.twitter_url || p.youtube_url) && (
