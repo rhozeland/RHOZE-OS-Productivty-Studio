@@ -96,9 +96,9 @@ const ConversationsRightRail = () => {
       <div className="px-3 pb-2 flex gap-1">
         {(
           [
-            { id: "events", label: "Events", icon: CalendarDays },
-            { id: "spaces", label: "Spaces", icon: Building2 },
             { id: "artists", label: "Artists", icon: Sparkles },
+            { id: "events", label: "Happening", icon: CalendarDays },
+            { id: "spaces", label: "Spaces", icon: Building2 },
           ] as const
         ).map((t) => {
           const Icon = t.icon;
