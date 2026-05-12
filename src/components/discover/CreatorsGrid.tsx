@@ -28,7 +28,7 @@ import RegionChip from "@/components/profile/RegionChip";
 import ArchetypeChip from "@/components/profile/ArchetypeChip";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowRight, Pin, Users } from "lucide-react";
-import { ARCHETYPE_BY_ID, type Archetype } from "@/lib/archetypes";
+import { ARCHETYPE_BY_ID, archetypeBannerGradient, type Archetype } from "@/lib/archetypes";
 import { EmptyState } from "@/components/ui/empty-state";
 
 const QUALITY_THRESHOLD = 4;
