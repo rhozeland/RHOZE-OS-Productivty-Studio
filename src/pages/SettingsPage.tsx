@@ -16,6 +16,7 @@ import {
   ChevronRight, BadgeCheck, Instagram, Music2, Twitter, Youtube, Globe,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Link } from "react-router-dom";
 import { useArtistVerification } from "@/hooks/useArtistVerification";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
