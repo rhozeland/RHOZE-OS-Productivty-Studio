@@ -762,15 +762,15 @@ const ProfileDetailPage = () => {
           {/* Anything they've shared on Flow — uploads, links (YouTube/Spotify/SoundCloud),
               writing. Thumbnails are resolved by <FlowThumbnail/> so audio/link posts
               get a proper preview image instead of a generic icon. */}
-          <TabsContent value="works" className="mt-5">
+          <TabsContent value="drops" className="mt-5">
             {flowPosts && flowPosts.length > 0 ? (
               <div className="space-y-3">
                 <div>
                   <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary" /> Posts
+                    <Sparkles className="h-4 w-4 text-primary" /> Drops
                   </h2>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Everything they've shared on Flow — uploads, tracks, videos and links.
+                    Everything they've dropped — uploads, tracks, videos and links.
                   </p>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
