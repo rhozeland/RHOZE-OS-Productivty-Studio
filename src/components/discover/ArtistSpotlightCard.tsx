@@ -111,10 +111,21 @@ const ArtistSpotlightCard = ({
 
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
+  const goProfile = () => navigate(href);
+  const onCardKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      goProfile();
+    }
+  };
+
   return (
-    <Link
-      to={href}
-      className="group block overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75 transition-all hover:border-foreground/40 hover:shadow-[0_18px_48px_hsl(var(--background)/0.45)] focus:outline-none focus:ring-2 focus:ring-primary/40"
+    <div
+      role="link"
+      tabIndex={0}
+      onClick={goProfile}
+      onKeyDown={onCardKey}
+      className="group block overflow-hidden rounded-[1.5rem] border border-border/45 bg-card/75 transition-all hover:border-foreground/40 hover:shadow-[0_18px_48px_hsl(var(--background)/0.45)] focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-pointer"
       aria-label={`View ${title}'s profile`}
     >
       {/* Header strip — featured chip + region */}
