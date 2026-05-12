@@ -1034,10 +1034,9 @@ const SettingsPage = () => {
   const sectionRenderers: Record<SectionId, () => JSX.Element> = {
     profile: () => (
       <Tabs defaultValue="basics" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-md mb-5">
+        <TabsList className="grid w-full grid-cols-2 max-w-xs mb-5">
           <TabsTrigger value="basics" className="gap-1.5"><IdCard className="h-3.5 w-3.5" /> Basics</TabsTrigger>
           <TabsTrigger value="appearance" className="gap-1.5"><ImageIcon className="h-3.5 w-3.5" /> Appearance</TabsTrigger>
-          <TabsTrigger value="links" className="gap-1.5"><Link2 className="h-3.5 w-3.5" /> Links</TabsTrigger>
         </TabsList>
         <TabsContent value="basics" className="space-y-6 mt-0">
           {renderAvatar()}
@@ -1046,18 +1045,6 @@ const SettingsPage = () => {
         </TabsContent>
         <TabsContent value="appearance" className="mt-0">
           {renderBanner()}
-        </TabsContent>
-        <TabsContent value="links" className="mt-0">
-          <p className="text-xs text-muted-foreground mb-4">
-            Manage your social links from the Basics tab — they live alongside your bio so you can edit everything in one place.
-          </p>
-          <Link
-            to="#profile"
-            onClick={(e) => { e.preventDefault(); /* same hash, just hint */ }}
-            className="text-sm text-primary hover:underline"
-          >
-            ← Edit in Basics
-          </Link>
         </TabsContent>
       </Tabs>
     ),
