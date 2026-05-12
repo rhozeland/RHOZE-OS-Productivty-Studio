@@ -161,9 +161,25 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
   // fallback when the preset is "category" (the per-category default).
   const badgeColorClass = badgeColorClassFor(cardPrefs.badgeColor, catColor);
   const badgePlacementClass = badgePlacementClassFor(cardPrefs.badgePlacement);
-  const isImage = item.content_type === "image" || item.category === "photo" || item.category === "design";
-  const isAudio = item.content_type === "audio" || item.category === "music";
-  const isVideo = item.content_type === "video" || item.category === "video";
+  const youtubeId = item.link_url ? getYouTubeId(item.link_url) : null;
+  const spotifyEmbed = item.link_url ? getSpotifyEmbed(item.link_url) : null;
+  const isSoundCloud = item.link_url?.includes("soundcloud.com");
+  // A link to a known audio/video platform should always render its embed,
+  // regardless of how the uploader tagged the category (e.g. a SoundCloud
+  // track mistakenly filed under "design").
+  const hasMediaEmbed = !!(youtubeId || spotifyEmbed || isSoundCloud);
+  const isAudioPlatform = !!(spotifyEmbed || isSoundCloud) || (!!youtubeId && item.category === "music");
+
+  const isImage =
+    (item.content_type === "image" || item.category === "photo" || item.category === "design") &&
+    !!item.file_url &&
+    !hasMediaEmbed;
+  const isAudio =
+    item.content_type === "audio" || item.category === "music" || isAudioPlatform;
+  const isVideo =
+    item.content_type === "video" ||
+    item.category === "video" ||
+    (!!youtubeId && !isAudioPlatform);
   const isWriting = item.content_type === "text" || item.content_type === "link" || item.category === "writing";
 
   // The category badge node is identical regardless of placement; only its
@@ -175,9 +191,6 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
     </Badge>
   ) : null;
 
-  const youtubeId = item.link_url ? getYouTubeId(item.link_url) : null;
-  const spotifyEmbed = item.link_url ? getSpotifyEmbed(item.link_url) : null;
-  const isSoundCloud = item.link_url?.includes("soundcloud.com");
 
   return (
     <>
