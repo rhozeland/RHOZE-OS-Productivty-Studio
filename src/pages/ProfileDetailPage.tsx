@@ -565,62 +565,13 @@ const ProfileDetailPage = () => {
               </motion.div>
             )}
 
-            {/* ─── Drops catalog — every coin this creator has launched ─── */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 px-1">
-                <Coins className="h-4 w-4 text-primary" />
-                <h3 className="font-display text-sm font-semibold text-foreground">
-                  {isOwnProfile ? "Your drops" : `${p.display_name || p.username || "Artist"}'s drops`}
-                </h3>
-              </div>
-              <CreatorDropsCatalog creatorId={id!} isOwnProfile={isOwnProfile} />
-            </div>
-
-            {/* Lightweight follow/message row (booking is now inside the Back-them sheet) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              {!isOwnProfile && (
-                <button
-                  onClick={() => user ? followMutation.mutate() : navigate("/auth")}
-                  disabled={followMutation.isPending}
-                  className="group text-left rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-4 hover:border-foreground/30 transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        {isFollowing ? <UserCheck className="h-4 w-4 text-primary" /> : <UserPlus className="h-4 w-4 text-primary" />}
-                        <p className="text-sm font-semibold text-foreground">{isFollowing ? "Following" : "Follow"}</p>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">Free. You'll see their next move first.</p>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </button>
-              )}
-
-              {!isOwnProfile && (
-                <button
-                  onClick={() => user ? navigate(`/messages?to=${id}`) : navigate("/auth")}
-                  className="group text-left rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-4 hover:border-foreground/30 transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <MessageSquare className="h-4 w-4 text-primary" />
-                        <p className="text-sm font-semibold text-foreground">Send a message</p>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">Hire, collab, or just say hi.</p>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </button>
-              )}
-            </div>
-
-            {/* Ways to support — merch/offerings + open calls + shows + spaces in one place */}
+            {/* ─── Ways to support — drops + shop + shows + spaces + open calls in one place ─── */}
             {(() => {
-              const listings = sellerListings ?? [];
-              const shows    = upcomingEvents ?? [];
-              const spaces   = hostedSpaces ?? [];
+              const allListings = sellerListings ?? [];
+              const shop       = allListings.filter((l: any) => l.listing_type !== "project_request");
+              const openCalls  = allListings.filter((l: any) => l.listing_type === "project_request");
+              const shows      = upcomingEvents ?? [];
+              const spaces     = hostedSpaces ?? [];
 
               const renderListing = (listing: any) => {
                 const isRequest = listing.listing_type === "project_request";
@@ -641,9 +592,6 @@ const ProfileDetailPage = () => {
                       {isRequest ? <Search className="h-5 w-5" /> : <ShoppingBag className="h-5 w-5" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <Badge variant="outline" className="text-[9px] capitalize mb-0.5">
-                        {isRequest ? "Open call" : listing.category || "Offering"}
-                      </Badge>
                       <p className="text-sm font-medium text-foreground truncate">{listing.title}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         {listing.credits_price && (
@@ -659,19 +607,16 @@ const ProfileDetailPage = () => {
                 );
               };
 
-              const totalCount = listings.length + shows.length + spaces.length;
-              if (totalCount === 0) {
-                return isOwnProfile ? (
-                  <div className="rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
-                    Add an offering or post an event so people have something to back.
-                  </div>
-                ) : null;
-              }
+              const tabs: { value: string; label: string; icon: any; count: number | null }[] = [
+                // Drops always shown — the catalog handles its own empty state for the owner.
+                { value: "drops",     label: "Drops", icon: Coins,        count: null },
+              ];
+              if (shop.length)      tabs.push({ value: "shop",      label: "Shop",      icon: ShoppingBag, count: shop.length });
+              if (shows.length)     tabs.push({ value: "shows",     label: "Shows",     icon: CalendarIcon, count: shows.length });
+              if (spaces.length)    tabs.push({ value: "spaces",    label: "Spaces",    icon: Building2,    count: spaces.length });
+              if (openCalls.length) tabs.push({ value: "calls",     label: "Open calls",icon: Search,       count: openCalls.length });
 
-              const tabs: { value: string; label: string; icon: any; count: number }[] = [];
-              if (listings.length) tabs.push({ value: "offerings", label: "Offerings", icon: ShoppingBag, count: listings.length });
-              if (shows.length)    tabs.push({ value: "shows",     label: "Shows",     icon: CalendarIcon, count: shows.length });
-              if (spaces.length)   tabs.push({ value: "spaces",    label: "Spaces",    icon: Building2,    count: spaces.length });
+              const totalCount = shop.length + shows.length + spaces.length + openCalls.length;
 
               return (
                 <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
@@ -679,22 +624,28 @@ const ProfileDetailPage = () => {
                     <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
                       <Heart className="h-4 w-4 text-primary" /> Ways to support
                     </h3>
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{totalCount} total</span>
+                    {totalCount > 0 && (
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{totalCount} total</span>
+                    )}
                   </div>
-                  <Tabs defaultValue={tabs[0].value}>
+                  <Tabs defaultValue="drops">
                     <TabsList className="w-full justify-start overflow-x-auto bg-muted/40 p-1 h-auto">
                       {tabs.map(({ value, label, icon: Icon, count }) => (
                         <TabsTrigger key={value} value={value} className="text-xs gap-1.5 data-[state=active]:bg-background">
                           <Icon className="h-3 w-3" />
                           {label}
-                          <span className="text-[9px] text-muted-foreground">{count}</span>
+                          {count !== null && <span className="text-[9px] text-muted-foreground">{count}</span>}
                         </TabsTrigger>
                       ))}
                     </TabsList>
 
-                    {listings.length > 0 && (
-                      <TabsContent value="offerings" className="mt-3 space-y-2">
-                        {listings.slice(0, 6).map(renderListing)}
+                    <TabsContent value="drops" className="mt-3">
+                      <CreatorDropsCatalog creatorId={id!} isOwnProfile={isOwnProfile} />
+                    </TabsContent>
+
+                    {shop.length > 0 && (
+                      <TabsContent value="shop" className="mt-3 space-y-2">
+                        {shop.slice(0, 6).map(renderListing)}
                       </TabsContent>
                     )}
                     {shows.length > 0 && (
@@ -751,10 +702,107 @@ const ProfileDetailPage = () => {
                         ))}
                       </TabsContent>
                     )}
+                    {openCalls.length > 0 && (
+                      <TabsContent value="calls" className="mt-3 space-y-2">
+                        {openCalls.slice(0, 6).map(renderListing)}
+                      </TabsContent>
+                    )}
                   </Tabs>
                 </div>
               );
             })()}
+
+            {/* ─── On-Chain Reputation — collapsible "verify this creator" panel ─── */}
+            <Collapsible open={reputationOpen} onOpenChange={setReputationOpen}>
+              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden">
+                <CollapsibleTrigger asChild>
+                  <button className="w-full flex items-center justify-between gap-3 p-4 hover:bg-muted/30 transition-colors text-left">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <Award className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-display text-sm font-semibold text-foreground">
+                          Verify this creator
+                        </p>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          On-chain reputation, investor signal & proof of work.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {totalProofs > 0 && (
+                        <Badge variant="secondary" className="font-mono text-[10px]">
+                          {anchoredCount}/{totalProofs}
+                        </Badge>
+                      )}
+                      <ArrowRight className={cn("h-4 w-4 text-muted-foreground transition-transform", reputationOpen && "rotate-90")} />
+                    </div>
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="px-4 pb-4 space-y-4">
+                  {isOwnProfile && totalProofs > 0 && anchoredCount < totalProofs && (
+                    <div className="flex justify-end">
+                      <AnchorButton proofs={proofs!} />
+                    </div>
+                  )}
+                  <CreatorReadinessCard creatorId={id!} memberSince={p.created_at} />
+                  {totalProofs > 0 && (
+                    <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
+                      <div className="grid grid-cols-3 gap-3">
+                        {Object.entries(
+                          proofs!.reduce<Record<string, number>>((acc, pr) => {
+                            acc[pr.action_type] = (acc[pr.action_type] || 0) + 1;
+                            return acc;
+                          }, {})
+                        ).sort(([, a], [, b]) => b - a).slice(0, 3).map(([type, count]) => {
+                          const meta = PROOF_TYPE_META[type] ?? {
+                            label: type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+                            href: null as string | null,
+                          };
+                          const inner = (
+                            <>
+                              <p className="text-2xl font-bold text-foreground">{count}</p>
+                              <p className="text-xs text-muted-foreground">{meta.label}</p>
+                            </>
+                          );
+                          return meta.href ? (
+                            <Link key={type} to={meta.href} className="rounded-lg border border-border bg-card/50 p-3 text-center transition-colors hover:bg-muted/60">
+                              {inner}
+                            </Link>
+                          ) : (
+                            <div key={type} className="rounded-lg border border-border bg-card/50 p-3 text-center">
+                              {inner}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {anchoredCount > 0 && (
+                        <p className="text-xs text-muted-foreground text-center mt-3 flex items-center justify-center gap-1">
+                          <ExternalLink className="h-3 w-3" />
+                          Independently verifiable on the public ledger
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {reviewStats && reviewStats.count > 0 && (
+                    <div className="rounded-xl border border-border/50 bg-muted/20 p-4 flex items-center gap-4">
+                      <div className="text-center">
+                        <p className="text-3xl font-bold text-foreground">{reviewStats.avg}</p>
+                        <div className="flex items-center gap-0.5 mt-1 justify-center">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star key={s} className={cn("h-3.5 w-3.5", s <= Math.round(reviewStats.avg) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30")} />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {reviewStats.count} rating{reviewStats.count !== 1 ? "s" : ""} from clients & collaborators.
+                      </p>
+                    </div>
+                  )}
+                </CollapsibleContent>
+              </div>
+            </Collapsible>
           </TabsContent>
 
           {/* ─── Works (Posts) tab ─── */}
