@@ -27,7 +27,7 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
-          video_url: string
+          video_url: string | null
           wallet_address: string | null
         }
         Insert: {
@@ -42,7 +42,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id: string
-          video_url: string
+          video_url?: string | null
           wallet_address?: string | null
         }
         Update: {
@@ -57,7 +57,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
-          video_url?: string
+          video_url?: string | null
           wallet_address?: string | null
         }
         Relationships: []
