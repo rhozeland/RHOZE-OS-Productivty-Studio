@@ -289,14 +289,19 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
   const [totalCredits, setTotalCredits] = useState("");
 
   const rawTab = searchParams.get("tab");
-  // Events + Flow moved to Discover. Quietly redirect any deep-links.
+  // Events + Flow moved to Discover. Listings folded into Projects.
   useEffect(() => {
     if (rawTab === "events") navigate("/discover?view=events", { replace: true });
     else if (rawTab === "flow") navigate("/flow", { replace: true });
-  }, [rawTab, navigate]);
+    else if (rawTab === "listings") {
+      const next = new URLSearchParams(searchParams);
+      next.set("tab", "projects");
+      setSearchParams(next, { replace: true });
+    }
+  }, [rawTab, navigate, searchParams, setSearchParams]);
   const activeTab =
-    rawTab === "inquiries" || !rawTab || rawTab === "events" || rawTab === "flow"
-      ? "messages"
+    rawTab === "inquiries" || !rawTab || rawTab === "events" || rawTab === "flow" || rawTab === "listings"
+      ? rawTab === "listings" ? "projects" : "messages"
       : rawTab;
   const setActiveTab = (tab: string) => {
     if (tab === "messages") {
@@ -483,9 +488,6 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
           </TabsTrigger>
           <TabsTrigger value="projects" className="gap-1.5">
             <FolderKanban className="h-3.5 w-3.5" /> Projects
-          </TabsTrigger>
-          <TabsTrigger value="listings" className="gap-1.5">
-            <Store className="h-3.5 w-3.5" /> Listings
             {pendingCount > 0 && (
               <span className="ml-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
                 {pendingCount}
@@ -791,29 +793,45 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
           )}
         </TabsContent>
 
-        <TabsContent value="projects" className="mt-4">
-          <ProjectsInbox userId={user.id} />
-        </TabsContent>
+        <TabsContent value="projects" className="mt-4 space-y-6">
+          {/* Pipeline: live listings + the inquiries they generate.
+              Sits above active projects so the social → contract flow reads
+              top-down: someone inquires on a listing → convert to project. */}
+          <details
+            id="listings-pipeline"
+            className="surface-card p-4 group [&_summary::-webkit-details-marker]:hidden"
+            open={pendingCount > 0}
+          >
+            <summary className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-foreground list-none">
+              <Store className="h-4 w-4 text-primary" /> Listings & inquiries
+              {pendingCount > 0 && (
+                <span className="ml-1 h-5 px-2 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-medium">
+                  {pendingCount} pending
+                </span>
+              )}
+              <span className="ml-auto text-[11px] text-muted-foreground font-normal">
+                Inquiries convert into projects below.
+              </span>
+              <ArrowRight className="ml-2 h-4 w-4 text-muted-foreground transition-transform rotate-90 group-open:-rotate-90" />
+            </summary>
+            <div className="mt-4 space-y-4">
+              {!!allInquiries?.length && (
+                <div id="inquiries-section" className="space-y-3 scroll-mt-24">
+                  {allInquiries.map((i) => renderInquiry(i))}
+                </div>
+              )}
+              <ListingsTab userId={user.id} />
+            </div>
+          </details>
 
-        <TabsContent value="listings" className="mt-4 space-y-4">
-          {!!allInquiries?.length && (
-            <details id="inquiries-section" className="surface-card p-4 group [&_summary::-webkit-details-marker]:hidden scroll-mt-24" open>
-              <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-foreground list-none">
-                <Inbox className="h-4 w-4" /> Inquiries
-                <span className="text-xs text-muted-foreground">({allInquiries.length})</span>
-                {pendingCount > 0 && (
-                  <span className="ml-1 h-5 px-2 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center">
-                    {pendingCount} pending
-                  </span>
-                )}
-                <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground transition-transform rotate-90 group-open:-rotate-90" />
-              </summary>
-              <div className="mt-3 space-y-3">
-                {allInquiries.map((i) => renderInquiry(i))}
-              </div>
-            </details>
-          )}
-          <ListingsTab userId={user.id} />
+          {/* Active project threads — chat, roadmap, vault, splits. */}
+          <div>
+            <div className="flex items-center gap-2 mb-3 px-1">
+              <FolderKanban className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">Active projects</h2>
+            </div>
+            <ProjectsInbox userId={user.id} />
+          </div>
         </TabsContent>
 
         {/* Events + Flow live on Discover now (toggles on the mosaic). */}
