@@ -272,9 +272,43 @@ const DiscoverPage = () => {
     },
   });
 
-  const eventCategoryRows: { category?: string | null }[] = [];
-  const spaceCategoryRows: { category?: string | null }[] = [];
-  const categoryCounts: Record<string, number> = {};
+  // ─── Category counts (events + spaces) for the Luma-style tile picker ───
+  const { data: eventCategoryRows = [] } = useQuery({
+    queryKey: ["discover-event-cats"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("events")
+        .select("category")
+        .eq("status", "published")
+        .gte("starts_at", new Date().toISOString());
+      return (data ?? []) as { category: string | null }[];
+    },
+    enabled: streamTab === "event",
+    staleTime: 60_000,
+  });
+  const { data: spaceCategoryRows = [] } = useQuery({
+    queryKey: ["discover-space-cats"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("studios")
+        .select("category")
+        .eq("is_active", true);
+      return (data ?? []) as { category: string | null }[];
+    },
+    enabled: streamTab === "space",
+    staleTime: 60_000,
+  });
+
+  const categoryCounts = useMemo(() => {
+    const rows = streamTab === "event" ? eventCategoryRows : streamTab === "space" ? spaceCategoryRows : [];
+    const counts: Record<string, number> = {};
+    rows.forEach((r) => {
+      const slug = normalizeCategory(r.category);
+      if (!slug) return;
+      counts[slug] = (counts[slug] ?? 0) + 1;
+    });
+    return counts;
+  }, [streamTab, eventCategoryRows, spaceCategoryRows]);
 
   return (
     <div className="max-w-6xl mx-auto pb-20 space-y-6">
