@@ -957,58 +957,7 @@ const ProfileDetailPage = () => {
               </div>
             )}
           </TabsContent>
-
-          {/* ─── Building (Projects) tab ─── */}
-          <TabsContent value="building" className="mt-5">
-            {buildingProjects && buildingProjects.length > 0 ? (
-              <div className="space-y-3">
-                <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-                  <FolderKanban className="h-4 w-4 text-primary" /> Currently Building
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {buildingProjects.map((proj: any) => (
-                    <div
-                      key={proj.id}
-                      onClick={() => navigate(`/projects/${proj.id}`)}
-                      className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden cursor-pointer hover:shadow-md hover:border-primary/30 transition-all duration-200"
-                    >
-                      <div
-                        className="h-20 w-full"
-                        style={{ background: `linear-gradient(135deg, ${proj.cover_color || "#7c3aed"}, hsl(var(--accent)))` }}
-                      />
-                      <div className="p-4 space-y-2">
-                        <p className="text-sm font-semibold text-foreground truncate">{proj.title}</p>
-                        {proj.description && (
-                          <p className="text-xs text-muted-foreground line-clamp-2">{proj.description}</p>
-                        )}
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <Badge variant="outline" className="text-[9px] capitalize">{proj.status}</Badge>
-                          {(proj.categories ?? []).slice(0, 2).map((c: string) => (
-                            <Badge key={c} variant="secondary" className="text-[9px]">{c}</Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <EmptyState
-                icon={FolderKanban}
-                title={isOwnProfile ? "Nothing shared yet" : "Nothing public to share here yet"}
-                description={
-                  isOwnProfile
-                    ? "Projects you start or collaborate on will appear here."
-                    : `When ${p.display_name || p.username} shares a project, you'll see it here.`
-                }
-                cta={
-                  isOwnProfile
-                    ? { label: "Start a project", to: "/messages?tab=projects" }
-                    : undefined
-                }
-              />
-            )}
-          </TabsContent>
+          {/* Building tab removed in v9 — projects live in the owner's private dashboard. */}
 
         </Tabs>
 
