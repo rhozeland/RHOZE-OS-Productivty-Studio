@@ -83,11 +83,23 @@ const normalizeCategory = (value?: string | null) =>
 
 const EVENT_CATEGORY_DEFS = [
   { slug: "music", label: "Music", icon: Music2, accent: "hsl(var(--orange))" },
-  { slug: "art", label: "Art", icon: Palette, accent: "hsl(var(--pink))" },
+  { slug: "art", label: "Arts & Culture", icon: Palette, accent: "hsl(var(--pink))" },
+  { slug: "tech", label: "Tech", icon: Cpu, accent: "hsl(var(--amber))" },
+  { slug: "ai", label: "AI", icon: Brain, accent: "hsl(var(--rose))" },
+  { slug: "food", label: "Food & Drink", icon: UtensilsCrossed, accent: "hsl(var(--orange))" },
+  { slug: "wellness", label: "Wellness", icon: Sparkle, accent: "hsl(var(--mint))" },
+  { slug: "fitness", label: "Fitness", icon: Activity, accent: "hsl(var(--rose))" },
+  { slug: "climate", label: "Climate", icon: Leaf, accent: "hsl(var(--mint))" },
+  { slug: "crypto", label: "Crypto", icon: Bitcoin, accent: "hsl(var(--violet))" },
 ] as const;
 
 const SPACE_CATEGORY_DEFS = [
   { slug: "studio", label: "Studio", icon: Building2, accent: "hsl(var(--blue))" },
+  { slug: "music", label: "Music Studio", icon: Mic2, accent: "hsl(var(--orange))" },
+  { slug: "photo", label: "Photo", icon: Camera, accent: "hsl(var(--pink))" },
+  { slug: "gallery", label: "Gallery", icon: ImageIcon, accent: "hsl(var(--rose))" },
+  { slug: "coworking", label: "Coworking", icon: Users, accent: "hsl(var(--mint))" },
+  { slug: "venue", label: "Venue", icon: Building2, accent: "hsl(var(--violet))" },
 ] as const;
 
 type StreamCategoryDef = (typeof EVENT_CATEGORY_DEFS)[number] | (typeof SPACE_CATEGORY_DEFS)[number];
