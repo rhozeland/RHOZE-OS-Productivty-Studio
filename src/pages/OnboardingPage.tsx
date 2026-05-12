@@ -1,19 +1,22 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft, Sparkles, Palette, Globe, Users, CheckCircle2, MapPin, Flame, Heart } from "lucide-react";
+import { ArrowRight, ArrowLeft, Sparkles, Palette, Globe, Users, CheckCircle2, MapPin, Flame, Heart, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LogoCustomizer } from "@/components/onboarding/LogoCustomizer";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { REGIONS, MARKETS } from "@/lib/regions";
+import ArchetypePicker from "@/components/profile/ArchetypePicker";
+import type { Archetype } from "@/lib/archetypes";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
 const STEPS = [
   { id: "welcome", icon: Sparkles, title: "Welcome to Rhozeland" },
   { id: "logo", icon: Palette, title: "Create Your Toybox" },
   { id: "region", icon: MapPin, title: "Where are you based?" },
+  { id: "archetype", icon: Compass, title: "What kind of creator?" },
   { id: "tour", icon: Globe, title: "Quick Tour" },
   { id: "ready", icon: CheckCircle2, title: "You're All Set" },
 ];
@@ -40,6 +43,7 @@ const OnboardingPage = () => {
   const [step, setStep] = useState(0);
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const [regionCode, setRegionCode] = useState<string>("");
+  const [archetype, setArchetype] = useState<Archetype | null>(null);
   const [tourSlide, setTourSlide] = useState(0);
   const [saving, setSaving] = useState(false);
   const [showExportHint, setShowExportHint] = useState(false);
@@ -82,10 +86,13 @@ const OnboardingPage = () => {
         }
       }
 
-      if (regionCode) {
+      if (regionCode || archetype) {
         await supabase
           .from("profiles")
-          .update({ region_code: regionCode })
+          .update({
+            ...(regionCode ? { region_code: regionCode } : {}),
+            ...(archetype ? { archetype } : {}),
+          } as any)
           .eq("user_id", user.id);
       }
 
@@ -416,8 +423,42 @@ const OnboardingPage = () => {
             </motion.div>
           )}
 
-          {/* Step 3: Quick Tour */}
+          {/* Step 3: Archetype */}
           {step === 3 && (
+            <motion.div
+              key="archetype"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-8 sm:p-10">
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/5 border border-border/50 mb-3">
+                    <Compass className="h-5 w-5 text-foreground/70" />
+                  </div>
+                  <h2 className="font-display text-2xl font-bold text-foreground mb-1.5">
+                    What kind of creator are you?
+                  </h2>
+                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                    Everyone's a creator. Pick the branch that fits you best — you can switch any time.
+                  </p>
+                </div>
+                <ArchetypePicker value={archetype} onChange={setArchetype} />
+                <div className="flex justify-between mt-8">
+                  <Button variant="ghost" onClick={prev} className="rounded-xl gap-1.5">
+                    <ArrowLeft className="w-4 h-4" /> Back
+                  </Button>
+                  <Button onClick={next} disabled={!archetype} className="rounded-xl gap-1.5">
+                    Continue <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 4: Quick Tour */}
+          {step === 4 && (
             <motion.div
               key="tour"
               initial={{ opacity: 0, y: 30 }}
@@ -472,7 +513,7 @@ const OnboardingPage = () => {
           )}
 
           {/* Step 3: Ready */}
-          {step === 4 && (
+          {step === 5 && (
             <motion.div
               key="ready"
               initial={{ opacity: 0, y: 30 }}

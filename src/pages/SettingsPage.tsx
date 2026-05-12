@@ -32,6 +32,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { REGIONS } from "@/lib/regions";
 import { RolePicker, SkillPicker } from "@/components/profile/RolePicker";
+import ArchetypePicker from "@/components/profile/ArchetypePicker";
+import type { Archetype } from "@/lib/archetypes";
 
 /* ─── Section nav items ─── */
 const SECTIONS = [
@@ -99,6 +101,7 @@ const SettingsPage = () => {
   const [bio, setBio] = useState("");
   const [portfolioUrl, setPortfolioUrl] = useState("");
   const [creatorRoles, setCreatorRoles] = useState<string[]>([]);
+  const [archetype, setArchetype] = useState<Archetype | null>(null);
   const [skillsList, setSkillsList] = useState<string[]>([]);
   const [mediumsList, setMediumsList] = useState<string[]>([]);
   const [location, setLocation] = useState("");
@@ -165,6 +168,7 @@ const SettingsPage = () => {
       setBio(p.bio ?? "");
       setPortfolioUrl(p.portfolio_url ?? "");
       setCreatorRoles(Array.isArray(p.creator_roles) ? p.creator_roles : []);
+      setArchetype((p.archetype as Archetype | null) ?? null);
       setSkillsList(Array.isArray(p.skills) ? p.skills : []);
       setMediumsList(Array.isArray(p.mediums) ? p.mediums : []);
       setLocation(p.location ?? "");
@@ -238,12 +242,16 @@ const SettingsPage = () => {
       if (!creatorRoles || creatorRoles.length === 0) {
         throw new Error("Pick at least one role under \"What you are\" — fans use this to find you.");
       }
+      if (!archetype) {
+        throw new Error("Pick a creator type — Artist, Builder, or Influencer.");
+      }
       const { error } = await supabase.from("profiles").update({
         display_name: displayName,
         username: username.toLowerCase() || null,
         headline, bio,
         portfolio_url: portfolioUrl || null,
         creator_roles: creatorRoles,
+        archetype,
         skills: skillsList,
         mediums: mediumsList,
         location: location || null,
@@ -365,6 +373,13 @@ const SettingsPage = () => {
           </div>
           <p className="text-[10px] text-muted-foreground">3-20 characters, letters, numbers, underscores</p>
         </div>
+      </div>
+      <div className="space-y-2">
+        <Label>Creator type <span className="text-destructive">*</span></Label>
+        <p className="text-[11px] text-muted-foreground">
+          Required — everyone's a creator. Pick the branch that fits you best. You can switch any time.
+        </p>
+        <ArchetypePicker value={archetype} onChange={setArchetype} />
       </div>
       <div className="space-y-2">
         <Label>What you are <span className="text-destructive">*</span></Label>
