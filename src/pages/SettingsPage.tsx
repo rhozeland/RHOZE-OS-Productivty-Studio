@@ -951,8 +951,20 @@ const SettingsPage = () => {
       {/* Top: status of any pending verification requests (only shows when present) */}
       <MyVerificationRequests />
 
-      {/* Main: the personal vault — the everyday surface for this section */}
-      <WorksPage embedded />
+      {/* Verified IP vault — collapsed by default to keep this surface short.
+          Open to manage / hash / anchor your works. */}
+      <details className="group rounded-xl border border-border/60 bg-muted/20 overflow-hidden" open>
+        <summary className="cursor-pointer select-none px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/30 transition-colors flex items-center justify-between">
+          <span className="inline-flex items-center gap-2">
+            <BadgeCheck className="h-4 w-4 text-primary" />
+            Your Verified IP vault
+          </span>
+          <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90 text-muted-foreground" />
+        </summary>
+        <div className="px-4 pb-4 pt-2 border-t border-border/40">
+          <WorksPage embedded />
+        </div>
+      </details>
 
       {/* Developer tools — collapsed by default so the page stays focused.
           Only relevant for users who deploy their own Launchpad program. */}
