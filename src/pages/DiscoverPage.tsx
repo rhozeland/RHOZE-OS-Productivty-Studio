@@ -57,6 +57,18 @@ import {
   Clapperboard,
   Building2,
   ShoppingBag,
+  X,
+  Cpu,
+  UtensilsCrossed,
+  Brain,
+  Leaf,
+  Activity,
+  Sparkle,
+  Bitcoin,
+  Camera,
+  Mic2,
+  Image as ImageIcon,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
