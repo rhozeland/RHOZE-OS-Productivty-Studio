@@ -59,18 +59,24 @@ const ProfileDetailPage = () => {
   const { data: profileNote } = useUserNote(id);
   
 
-  // Tabs: Overview · Support · Works · Building.
-  // ?tab=coin (legacy) deep-links into Support where the artist token now lives.
-  const rawTab = searchParams.get("tab") || "overview";
-  const tabFromUrl = rawTab === "coin" ? "support" : rawTab;
+  // v9 tabs: Support (default) · Works · About.
+  // Legacy ?tab=coin, ?tab=building → support. ?tab=overview → about.
+  const rawTab = searchParams.get("tab") || "support";
+  const tabFromUrl =
+    rawTab === "coin" || rawTab === "building"
+      ? "support"
+      : rawTab === "overview"
+      ? "about"
+      : rawTab;
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [investOpen, setInvestOpen] = useState(false);
-  
+  const [supportOpen, setSupportOpen] = useState(false);
+
   const handleTabChange = (v: string) => {
     setActiveTab(v);
     const next = new URLSearchParams(searchParams);
-    if (v === "overview") next.delete("tab"); else next.set("tab", v);
+    if (v === "support") next.delete("tab"); else next.set("tab", v);
     setSearchParams(next, { replace: true });
   };
 
