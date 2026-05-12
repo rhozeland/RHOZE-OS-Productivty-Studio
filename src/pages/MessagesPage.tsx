@@ -194,7 +194,10 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
     if (inquiryHandled.current || !partnerProfiles) return;
     const toUserId = searchParams.get("to");
     const listingTitle = searchParams.get("listing");
+    const inquiryParam = searchParams.get("inquiry");
     if (!toUserId) return;
+
+    if (inquiryParam) setActiveInquiryId(inquiryParam);
 
     // Check if we have the profile already, if not fetch it
     let targetProfile = partnerProfiles.find((p) => p.user_id === toUserId);
