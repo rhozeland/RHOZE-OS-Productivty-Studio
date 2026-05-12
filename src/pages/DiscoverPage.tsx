@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import RegionPromptBanner from "@/components/discover/RegionPromptBanner";
 import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import StreamComposer from "@/components/stream/StreamComposer";
-// ConversationsMosaic + stream-tab filter retired in v9.3 (creators-only Featured section).
+import ConversationsMosaic from "@/components/hub/ConversationsMosaic";
 import CreatorsGrid from "@/components/discover/CreatorsGrid";
 import ArchetypeFilter from "@/components/discover/ArchetypeFilter";
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
@@ -169,9 +169,19 @@ const DiscoverPage = () => {
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // ─── Archetype filter (Artist · Builder · Influencer) ───────────
-  // Stream tabs (All / Events / Spaces) retired in v9.3 — the section is
-  // now exclusively "Featured creators", filtered by archetype.
+  // ─── Stream tabs (All / Creators / Events / Spaces) + archetype sub-filter ───
+  type StreamTab = "all" | "creators" | "event" | "space";
+  const initialTab = (searchParams.get("view") as StreamTab) || "all";
+  const [streamTab, setStreamTab] = useState<StreamTab>(
+    ["all", "creators", "event", "space"].includes(initialTab) ? initialTab : "all",
+  );
+  const handleStreamTab = (next: StreamTab) => {
+    setStreamTab(next);
+    const params = new URLSearchParams(searchParams);
+    params.set("view", next);
+    setSearchParams(params, { replace: true });
+  };
+
   const initialArchetype = (searchParams.get("archetype") as any) || "artist";
   const [archetype, setArchetype] = useState<import("@/lib/archetypes").Archetype>(
     ["artist", "builder", "influencer"].includes(initialArchetype) ? initialArchetype : "artist",
@@ -339,7 +349,7 @@ const DiscoverPage = () => {
               The Stream
             </p>
             <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
-              Featured creators.
+              Everything, all at once.
             </h2>
           </div>
 
@@ -356,10 +366,41 @@ const DiscoverPage = () => {
           </div>
         </div>
 
-        <div className="space-y-4">
-          <ArchetypeFilter value={archetype} onChange={handleArchetype} />
-          <CreatorsGrid archetype={archetype} />
+        {/* Stream tabs */}
+        <div className="flex flex-wrap items-center gap-2">
+          {([
+            { id: "all", label: "All" },
+            { id: "creators", label: "Creators" },
+            { id: "event", label: "Events" },
+            { id: "space", label: "Spaces" },
+          ] as { id: StreamTab; label: string }[]).map((t) => {
+            const active = streamTab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => handleStreamTab(t.id)}
+                className={cn(
+                  "rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors",
+                  active
+                    ? "bg-foreground text-background border-foreground"
+                    : "border-border bg-background/60 text-muted-foreground hover:text-foreground hover:border-foreground/30",
+                )}
+              >
+                {t.label}
+              </button>
+            );
+          })}
         </div>
+
+        {streamTab === "creators" ? (
+          <div className="space-y-4">
+            <ArchetypeFilter value={archetype} onChange={handleArchetype} />
+            <CreatorsGrid archetype={archetype} />
+          </div>
+        ) : (
+          <ConversationsMosaic kind={streamTab === "all" ? "all" : streamTab} />
+        )}
       </section>
 
       {/* ─── Coins moving today ─────────────────────────────────────── */}
