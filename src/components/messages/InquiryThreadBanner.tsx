@@ -35,11 +35,11 @@ const InquiryThreadBanner = ({ inquiryId, onDismiss }: Props) => {
         .maybeSingle();
       if (!inq) return null;
       const { data: listing } = await supabase
-        .from("creator_listings")
+        .from("marketplace_listings")
         .select("id, title")
         .eq("id", inq.listing_id)
         .maybeSingle();
-      return { inq, listing };
+      return { inq, listing: listing as { id: string; title: string } | null };
     },
   });
 
