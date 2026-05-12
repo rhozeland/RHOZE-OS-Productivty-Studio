@@ -37,6 +37,8 @@ import FollowingPickerDialog from "@/components/messages/FollowingPickerDialog";
 import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
 
 import ConversationsEventsBrowser from "@/components/messages/ConversationsEventsBrowser";
+import InboxKanban from "@/components/messages/InboxKanban";
+import { LayoutGrid, Rows } from "lucide-react";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pending", color: "bg-amber-500/15 text-amber-600", icon: Clock },
