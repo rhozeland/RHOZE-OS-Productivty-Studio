@@ -269,21 +269,6 @@ const StudioDetailPage = () => {
             </div>
           )}
 
-          {/* Space coin — only render when a coin is actually linked. */}
-          {spaceCoins && spaceCoins.length > 0 && (
-            <div>
-              <div className="mb-3">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">Space coin</p>
-                <h2 className="font-display text-lg font-semibold text-foreground">Backed by this drop.</h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {spaceCoins.map((c: any) => (
-                  <DropCoinCard key={c.id} coin={c} hideContext />
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Gallery */}
           {(() => {
             const photos = (studio.gallery_urls || []).filter((u: string) => !u.startsWith("[VIDEO]"));
