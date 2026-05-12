@@ -11,10 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import {
-  Moon, Sun, Upload, Eye, EyeOff, X, Camera, Lock, Bell,
+  Moon, Sun, Upload, X, Camera, Lock, Bell,
   Trash2, AlertTriangle, Download, User, Box, Wallet,
-  ChevronRight, BadgeCheck,
+  ChevronRight, BadgeCheck, Instagram, Music2, Twitter, Youtube, Globe,
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
 import { useArtistVerification } from "@/hooks/useArtistVerification";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
