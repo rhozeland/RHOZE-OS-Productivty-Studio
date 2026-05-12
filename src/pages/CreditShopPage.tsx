@@ -92,10 +92,6 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground">Creator Pass</h1>
-            <p className="text-muted-foreground inline-flex items-center gap-1.5">
-              Earned tiers — hold <span className="font-medium">$RHOZE</span>
-              <RhozeInfoPopover size={13} /> or show up. No subscriptions.
-            </p>
           </div>
           <div className="surface-card flex items-center gap-3 px-5 py-3">
             <Coins className="h-5 w-5 text-primary" />
@@ -112,9 +108,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
           <TabsTrigger value="pass" className="gap-1.5"><Award className="h-3.5 w-3.5" /> My Pass</TabsTrigger>
           <TabsTrigger value="portfolio" className="gap-1.5"><Briefcase className="h-3.5 w-3.5" /> Portfolio</TabsTrigger>
           <TabsTrigger value="works" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Verified IP</TabsTrigger>
-          <TabsTrigger value="activity" className="gap-1.5"><ActivityIcon className="h-3.5 w-3.5" /> Activity</TabsTrigger>
           <TabsTrigger value="topup" className="gap-1.5"><Wallet className="h-3.5 w-3.5" /> Top up</TabsTrigger>
-          <TabsTrigger value="how" className="gap-1.5"><HelpCircle className="h-3.5 w-3.5" /> How it works</TabsTrigger>
         </TabsList>
 
         {/* ═══════ My Pass — now also surfaces the full tier matrix ═══════ */}
