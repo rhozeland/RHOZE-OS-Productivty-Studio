@@ -185,6 +185,19 @@ const DiscoverPage = () => {
       document.getElementById("discover-stream")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   };
+  // ─── Archetype filter (Artist · Builder · Influencer) ───────────
+  // Only meaningful on the Creators feed — preserved as ?archetype= in URL.
+  const initialArchetype = (searchParams.get("archetype") as any) || "all";
+  const [archetype, setArchetype] = useState<import("@/lib/archetypes").Archetype | "all">(
+    ["artist", "builder", "influencer"].includes(initialArchetype) ? initialArchetype : "all",
+  );
+  const handleArchetype = (next: import("@/lib/archetypes").Archetype | "all") => {
+    setArchetype(next);
+    const params = new URLSearchParams(searchParams);
+    if (next === "all") params.delete("archetype");
+    else params.set("archetype", next);
+    setSearchParams(params, { replace: true });
+  };
   const mosaicKind: MosaicKindFilter =
     streamTab === "events" ? "event" : streamTab === "spaces" ? "space" : "all";
   // ─── Personal greeting (signed-in only) ─────────────────────────
