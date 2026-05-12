@@ -24,6 +24,7 @@ import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
 import InvestUnlockSheet from "@/components/profile/InvestUnlockSheet";
+import SupportCreatorSheet from "@/components/profile/SupportCreatorSheet";
 import CreatorDropsCatalog from "@/components/profile/CreatorDropsCatalog";
 import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -58,18 +59,24 @@ const ProfileDetailPage = () => {
   const { data: profileNote } = useUserNote(id);
   
 
-  // Tabs: Overview · Support · Works · Building.
-  // ?tab=coin (legacy) deep-links into Support where the artist token now lives.
-  const rawTab = searchParams.get("tab") || "overview";
-  const tabFromUrl = rawTab === "coin" ? "support" : rawTab;
+  // v9 tabs: Support (default) · Works · About.
+  // Legacy ?tab=coin, ?tab=building → support. ?tab=overview → about.
+  const rawTab = searchParams.get("tab") || "support";
+  const tabFromUrl =
+    rawTab === "coin" || rawTab === "building"
+      ? "support"
+      : rawTab === "overview"
+      ? "about"
+      : rawTab;
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [investOpen, setInvestOpen] = useState(false);
-  
+  const [supportOpen, setSupportOpen] = useState(false);
+
   const handleTabChange = (v: string) => {
     setActiveTab(v);
     const next = new URLSearchParams(searchParams);
-    if (v === "overview") next.delete("tab"); else next.set("tab", v);
+    if (v === "support") next.delete("tab"); else next.set("tab", v);
     setSearchParams(next, { replace: true });
   };
 
@@ -452,15 +459,14 @@ const ProfileDetailPage = () => {
 
         {/* ─── Tabbed sections ─── */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="w-full grid grid-cols-4 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
-            <TabsTrigger value="overview" className="text-xs gap-1.5"><UserIcon className="h-3 w-3" />Overview</TabsTrigger>
+          <TabsList className="w-full grid grid-cols-3 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
             <TabsTrigger value="support" className="text-xs gap-1.5"><Heart className="h-3 w-3" />Support</TabsTrigger>
             <TabsTrigger value="works" className="text-xs gap-1.5"><Sparkles className="h-3 w-3" />Works</TabsTrigger>
-            <TabsTrigger value="building" className="text-xs gap-1.5"><FolderKanban className="h-3 w-3" />Building</TabsTrigger>
+            <TabsTrigger value="about" className="text-xs gap-1.5"><UserIcon className="h-3 w-3" />About</TabsTrigger>
           </TabsList>
 
-          {/* ─── Overview tab ─── */}
-          <TabsContent value="overview" className="space-y-5 mt-5">
+          {/* ─── About tab (formerly Overview) ─── */}
+          <TabsContent value="about" className="space-y-5 mt-5">
         {/* ─── About + Details ─── */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -621,36 +627,45 @@ const ProfileDetailPage = () => {
 
           {/* ─── Support tab — back this artist (actions + token) ─── */}
           <TabsContent value="support" className="mt-5 space-y-4">
-            {/* Minimal header — explainer is now a popover, not a banner */}
-            <div className="flex items-center justify-between gap-3 px-1">
-              <div className="flex items-center gap-2 min-w-0">
-                <Heart className="h-4 w-4 text-primary shrink-0" />
-                <h2 className="font-display text-base font-semibold text-foreground truncate">
-                  Back {p.display_name || p.username || "this artist"}
-                </h2>
-              </div>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="text-[11px] text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline whitespace-nowrap">
-                    Why it matters
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-72 text-xs leading-relaxed">
-                  <p className="font-medium text-foreground mb-1">Every action is proof.</p>
-                  <p className="text-muted-foreground">
-                    Following, messaging, booking, or holding their token all
-                    show up as on-chain reputation. Pick whatever fits — there's
-                    no wrong way to back an artist.
-                  </p>
-                  <Link
-                    to="/credits?tab=how"
-                    className="mt-2 inline-block text-foreground/80 hover:underline"
+            {/* Primary CTA — opens the umbrella Support sheet with all backing paths */}
+            {!isOwnProfile && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35 }}
+                className="rounded-2xl bg-gradient-to-br from-primary/10 via-card/80 to-accent/5 border border-border/60 p-5 sm:p-6 backdrop-blur-sm"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="h-11 w-11 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                      <Heart className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="font-display text-lg font-semibold text-foreground truncate">
+                        Back {p.display_name || p.username || "this artist"}
+                      </h2>
+                      <p className="text-xs text-muted-foreground">
+                        Shares, shows, sessions, or a tip — all in one place.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => user ? setSupportOpen(true) : navigate("/auth")}
+                    size="lg"
+                    className="gap-1.5 shrink-0 w-full sm:w-auto"
                   >
-                    How rewards work →
-                  </Link>
-                </PopoverContent>
-              </Popover>
-            </div>
+                    <Sparkles className="h-4 w-4" />
+                    Back them
+                  </Button>
+                </div>
+                <Link
+                  to="/credits?tab=how"
+                  className="mt-3 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+                >
+                  How this works <ArrowRight className="h-3 w-3" />
+                </Link>
+              </motion.div>
+            )}
 
             {/* ─── Drops catalog — every coin this creator has launched ─── */}
             <div className="space-y-2">
@@ -663,29 +678,8 @@ const ProfileDetailPage = () => {
               <CreatorDropsCatalog creatorId={id!} isOwnProfile={isOwnProfile} />
             </div>
 
-            {/* Action grid — Book a session is full-width when present */}
+            {/* Lightweight follow/message row (booking is now inside the Back-them sheet) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              {profile.available && (
-                <button
-                  onClick={() => user ? setBookingOpen(true) : navigate("/auth")}
-                  className="sm:col-span-2 group text-left rounded-2xl bg-gradient-to-br from-primary/5 via-card/80 to-accent/5 backdrop-blur-sm border border-border/60 p-5 hover:border-foreground/30 transition-colors"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                        <CalendarIcon className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground">Book a session</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Pick a time and get on a call.
-                        </p>
-                      </div>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0" />
-                  </div>
-                </button>
-              )}
               {!isOwnProfile && (
                 <button
                   onClick={() => user ? followMutation.mutate() : navigate("/auth")}
@@ -963,68 +957,38 @@ const ProfileDetailPage = () => {
               </div>
             )}
           </TabsContent>
-
-          {/* ─── Building (Projects) tab ─── */}
-          <TabsContent value="building" className="mt-5">
-            {buildingProjects && buildingProjects.length > 0 ? (
-              <div className="space-y-3">
-                <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-                  <FolderKanban className="h-4 w-4 text-primary" /> Currently Building
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {buildingProjects.map((proj: any) => (
-                    <div
-                      key={proj.id}
-                      onClick={() => navigate(`/projects/${proj.id}`)}
-                      className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden cursor-pointer hover:shadow-md hover:border-primary/30 transition-all duration-200"
-                    >
-                      <div
-                        className="h-20 w-full"
-                        style={{ background: `linear-gradient(135deg, ${proj.cover_color || "#7c3aed"}, hsl(var(--accent)))` }}
-                      />
-                      <div className="p-4 space-y-2">
-                        <p className="text-sm font-semibold text-foreground truncate">{proj.title}</p>
-                        {proj.description && (
-                          <p className="text-xs text-muted-foreground line-clamp-2">{proj.description}</p>
-                        )}
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <Badge variant="outline" className="text-[9px] capitalize">{proj.status}</Badge>
-                          {(proj.categories ?? []).slice(0, 2).map((c: string) => (
-                            <Badge key={c} variant="secondary" className="text-[9px]">{c}</Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <EmptyState
-                icon={FolderKanban}
-                title={isOwnProfile ? "Nothing shared yet" : "Nothing public to share here yet"}
-                description={
-                  isOwnProfile
-                    ? "Projects you start or collaborate on will appear here."
-                    : `When ${p.display_name || p.username} shares a project, you'll see it here.`
-                }
-                cta={
-                  isOwnProfile
-                    ? { label: "Start a project", to: "/messages?tab=projects" }
-                    : undefined
-                }
-              />
-            )}
-          </TabsContent>
+          {/* Building tab removed in v9 — projects live in the owner's private dashboard. */}
 
         </Tabs>
 
-        {/* Invest & Unlock — primary CTA sheet (Section 2: The Heart) */}
+        {/* Invest & Unlock — Shares purchase sheet (Section 2: The Heart) */}
         {!isOwnProfile && id && (
           <InvestUnlockSheet
             open={investOpen}
             onOpenChange={setInvestOpen}
             artistId={id}
             artistName={p.display_name || p.username || null}
+          />
+        )}
+
+        {/* Umbrella "Back this creator" sheet — funnels into Shares / Show up / Work / DM */}
+        {!isOwnProfile && id && (
+          <SupportCreatorSheet
+            open={supportOpen}
+            onOpenChange={setSupportOpen}
+            artistName={p.display_name || p.username || "this artist"}
+            hasShares={true}
+            hasHappenings={(upcomingEvents?.length ?? 0) + (hostedSpaces?.length ?? 0) > 0}
+            hasOfferings={(sellerListings ?? []).some((l: any) => l.listing_type !== "project_request")}
+            isAvailableForBooking={!!profile?.available}
+            onBackCareer={() => setInvestOpen(true)}
+            onShowUp={() => {
+              const first = upcomingEvents?.[0];
+              if (first) navigate(`/events/${first.slug || first.id}`);
+              else if (hostedSpaces?.[0]) navigate(`/studios/${hostedSpaces[0].id}`);
+            }}
+            onWorkWithThem={() => setBookingOpen(true)}
+            onSendMessage={() => navigate(`/messages?to=${id}`)}
           />
         )}
 
