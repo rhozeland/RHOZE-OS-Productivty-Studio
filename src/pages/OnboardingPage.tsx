@@ -313,23 +313,32 @@ const OnboardingPage = () => {
                   </motion.p>
                 )}
 
-                <div className="flex justify-between mt-8">
+                <div className="flex items-center justify-between gap-3 mt-8">
                   <Button variant="ghost" onClick={prev} className="rounded-xl gap-1.5">
                     <ArrowLeft className="w-4 h-4" /> Back
                   </Button>
-                  <Button
-                    onClick={() => {
-                      if (!logoDataUrl) {
-                        setShowExportHint(true);
-                        setTimeout(() => setShowExportHint(false), 4000);
-                      }
-                      next();
-                    }}
-                    className="rounded-xl gap-1.5"
-                  >
-                    Continue
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
+                  <div className="flex flex-col items-end gap-1">
+                    {!logoDataUrl && (
+                      <p className="text-[11px] text-muted-foreground">
+                        Tap <span className="font-semibold text-foreground">Export</span> first to lock it in.
+                      </p>
+                    )}
+                    <Button
+                      onClick={() => {
+                        if (!logoDataUrl) {
+                          setShowExportHint(true);
+                          setTimeout(() => setShowExportHint(false), 4000);
+                          return;
+                        }
+                        next();
+                      }}
+                      disabled={!logoDataUrl}
+                      className="rounded-xl gap-1.5"
+                    >
+                      Continue
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Export hint lightbox */}
