@@ -43,8 +43,8 @@ interface Props {
   works_count?: number;
   followers_count?: number;
   coin?: { id: string; ticker: string; name: string | null; image_url: string | null } | null;
-  next_event?: { id: string; slug: string | null; title: string; starts_at: string } | null;
-  hosted_space?: { id: string; name: string } | null;
+  next_event?: { id: string; slug: string | null; title: string; starts_at: string; cover_url: string | null } | null;
+  hosted_space?: { id: string; name: string; cover_image_url: string | null } | null;
   offerings_count?: number;
 }
 
@@ -82,21 +82,8 @@ const ArtistSpotlightCard = ({
     .map((rid) => ROLE_BY_ID.get(rid))
     .filter(Boolean) as { label: string; emoji: string }[];
 
+  // Secondary signal chips (no event/space — those get their own visual tiles below)
   const signals: { key: string; icon: typeof Calendar; label: string }[] = [];
-  if (next_event) {
-    signals.push({
-      key: "event",
-      icon: Calendar,
-      label: `Event · ${format(new Date(next_event.starts_at), "MMM d")}`,
-    });
-  }
-  if (hosted_space) {
-    signals.push({
-      key: "space",
-      icon: MapPin,
-      label: `Hosts: ${hosted_space.name}`,
-    });
-  }
   if (coin) {
     signals.push({ key: "shares", icon: TrendingUp, label: "Shares live" });
   }
@@ -108,12 +95,19 @@ const ArtistSpotlightCard = ({
     });
   }
 
+  const eventHref = next_event
+    ? `/events/${next_event.slug ?? next_event.id}`
+    : null;
+  const spaceHref = hosted_space ? `/studios/${hosted_space.id}` : null;
+
   const handleBack = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     // Land on the profile Support tab — SupportCreatorSheet auto-opens via ?back=1
     navigate(`${href}?tab=support&back=1`);
   };
+
+  const stop = (e: React.MouseEvent) => e.stopPropagation();
 
   return (
     <Link
