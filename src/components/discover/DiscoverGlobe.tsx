@@ -635,6 +635,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                       followers_count={activeSpotlight.followers_count}
                       coin={(activeSpotlight as any).coin ?? null}
                       next_event={(activeSpotlight as any).next_event ?? null}
+                      hosted_space={(activeSpotlight as any).hosted_space ?? null}
                       offerings_count={(activeSpotlight as any).offerings_count ?? 0}
                     />
                   ) : activeSpotlight.kind === "event" ? (
