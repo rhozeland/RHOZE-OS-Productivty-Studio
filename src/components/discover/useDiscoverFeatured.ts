@@ -201,7 +201,7 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
     queryFn: async () => {
       const { data: profileRows } = await supabase
         .from("profiles")
-        .select("user_id, display_name, headline, bio, avatar_url, banner_url, region_code, mediums, creator_roles, verification_status")
+        .select("user_id, display_name, headline, bio, avatar_url, banner_url, region_code, mediums, creator_roles, archetype, verification_status")
         .eq("is_public", true)
         .not("avatar_url", "is", null)
         .order("updated_at", { ascending: false })
