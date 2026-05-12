@@ -23,6 +23,7 @@ export type FeaturedSlide =
       works_thumbs?: string[];
       coin?: { id: string; ticker: string; name: string | null; image_url: string | null } | null;
       next_event?: { id: string; slug: string | null; title: string; starts_at: string } | null;
+      hosted_space?: { id: string; name: string } | null;
       offerings_count?: number;
     }
   | {
@@ -317,6 +318,20 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
         }
       });
 
+      // One hosted space per artist (first active studio they own)
+      const hostedSpaceByOwner = new Map<string, { id: string; name: string }>();
+      const { data: spaceRows } = await supabase
+        .from("studios")
+        .select("id, name, owner_id, is_active")
+        .in("owner_id", userIds)
+        .eq("is_active", true)
+        .order("updated_at", { ascending: false });
+      (spaceRows ?? []).forEach((row: any) => {
+        if (!hostedSpaceByOwner.has(row.owner_id)) {
+          hostedSpaceByOwner.set(row.owner_id, { id: row.id, name: row.name });
+        }
+      });
+
       // Active marketplace offerings per artist
       const offeringsCount = new Map<string, number>();
       const listingRes: any = await (supabase as any)
@@ -350,6 +365,7 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
           works_thumbs: worksThumbs.get(p.user_id) ?? [],
           coin: coinByCreator.get(p.user_id) ?? null,
           next_event: nextEvent,
+          hosted_space: hostedSpaceByOwner.get(p.user_id) ?? null,
           offerings_count: offerings,
           _score:
             (p.verification_status === "verified" ? 1000 : 0) +
@@ -464,6 +480,9 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
       followers_count: artist.followers_count ?? 0,
       works_thumbs: (artist as any).works_thumbs ?? [],
       coin: (artist as any).coin ?? null,
+      next_event: (artist as any).next_event ?? null,
+      hosted_space: (artist as any).hosted_space ?? null,
+      offerings_count: (artist as any).offerings_count ?? 0,
     }));
   }, [artists, marketFilter]);
 
