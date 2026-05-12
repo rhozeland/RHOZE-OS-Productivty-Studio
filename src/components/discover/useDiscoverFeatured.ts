@@ -17,6 +17,7 @@ export type FeaturedSlide =
       region_code?: string | null;
       mediums?: string[] | null;
       creator_roles?: string[] | null;
+      archetype?: string | null;
       verification_status?: string | null;
       works_count?: number;
       followers_count?: number;
@@ -76,6 +77,7 @@ interface FeaturedArtistRow {
   region_code: string | null;
   mediums: string[] | null;
   creator_roles: string[] | null;
+  archetype?: string | null;
   verification_status?: string | null;
   works_count?: number;
   followers_count?: number;
@@ -199,7 +201,7 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
     queryFn: async () => {
       const { data: profileRows } = await supabase
         .from("profiles")
-        .select("user_id, display_name, headline, bio, avatar_url, banner_url, region_code, mediums, creator_roles, verification_status")
+        .select("user_id, display_name, headline, bio, avatar_url, banner_url, region_code, mediums, creator_roles, archetype, verification_status")
         .eq("is_public", true)
         .not("avatar_url", "is", null)
         .order("updated_at", { ascending: false })
@@ -481,6 +483,7 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
         region_code: artist.region_code,
         mediums: artist.mediums,
         creator_roles: artist.creator_roles,
+        archetype: (artist as any).archetype ?? null,
         verification_status: artist.verification_status ?? null,
         works_count: artist.works_count ?? 0,
         followers_count: artist.followers_count ?? 0,

@@ -23,6 +23,7 @@ import ArtistSpotlightCard from "./ArtistSpotlightCard";
 import EventSpotlightCard from "./EventSpotlightCard";
 import SpaceSpotlightCard from "./SpaceSpotlightCard";
 import { ROLE_BY_ID } from "@/lib/creator-roles";
+import { ARCHETYPE_BY_ID, type Archetype } from "@/lib/archetypes";
 
 const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
   KR: { lat: 37.55, lng: 126.99 },
@@ -713,9 +714,36 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <p className="truncate text-sm font-medium text-foreground">{marker.title}</p>
-                      <span className="shrink-0 rounded-full border border-border/40 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
-                        {marker.kind === "artist" ? "creator" : marker.kind}
-                      </span>
+                      {(() => {
+                        if (marker.kind !== "artist") {
+                          return (
+                            <span className="shrink-0 rounded-full border border-border/40 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
+                              {marker.kind}
+                            </span>
+                          );
+                        }
+                        const meta = ARCHETYPE_BY_ID.get(marker.archetype as Archetype);
+                        if (meta) {
+                          const Icon = meta.icon;
+                          return (
+                            <span
+                              className={cn(
+                                "shrink-0 inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em]",
+                                meta.chipClass,
+                              )}
+                              title={meta.tagline}
+                            >
+                              <Icon className="h-2.5 w-2.5" />
+                              {meta.label}
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="shrink-0 rounded-full border border-border/40 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
+                            creator
+                          </span>
+                        );
+                      })()}
                     </div>
                     {marker.kind === "artist" ? (
                       (() => {
