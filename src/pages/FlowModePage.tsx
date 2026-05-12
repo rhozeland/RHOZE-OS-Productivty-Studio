@@ -2249,13 +2249,31 @@ const FlowModePage = () => {
                 )}
 
                 {shareStep === "compose" ? (
-                  <Button
-                    type="submit"
-                    className="w-full rounded-full"
-                    disabled={!allValid || createFlowItem.isPending}
-                  >
-                    Review &amp; confirm
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="submit"
+                      className="flex-1 rounded-full"
+                      disabled={!allValid || createFlowItem.isPending}
+                    >
+                      Review &amp; confirm
+                    </Button>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-9 w-9 rounded-full text-primary"
+                          aria-label="Reward info"
+                        >
+                          <Sparkles className="h-4 w-4" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent side="top" align="end" className="w-60 text-xs">
+                        Earn <strong className="text-primary">+1 $RHOZE</strong> per share — adds to your XP and Creator Pass progress.
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 ) : (
                   <div className="flex gap-2">
                     <Button
