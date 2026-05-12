@@ -186,7 +186,7 @@ const DiscoverPage = () => {
     });
   };
   const mosaicKind: MosaicKindFilter =
-    streamTab === "events" ? "event" : streamTab === "space" as any ? "space" : streamTab === "spaces" ? "space" : "all";
+    streamTab === "events" ? "event" : streamTab === "spaces" ? "space" : "all";
   // ─── Personal greeting (signed-in only) ─────────────────────────
   const { data: profile } = useQuery({
     queryKey: ["discover-greeting", user?.id],
