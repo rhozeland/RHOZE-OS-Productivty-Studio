@@ -90,10 +90,10 @@ const OnboardingPage = () => {
       }
 
       toast.success("Welcome aboard! 🎉");
-      navigate("/dashboard", { replace: true });
+      navigate("/discover", { replace: true });
     } catch (err) {
       console.error(err);
-      navigate("/dashboard", { replace: true });
+      navigate("/discover", { replace: true });
     } finally {
       setSaving(false);
     }
@@ -124,7 +124,7 @@ const OnboardingPage = () => {
 
       {/* Skip button */}
       <button
-        onClick={() => navigate("/dashboard", { replace: true })}
+        onClick={() => navigate("/discover", { replace: true })}
         className="fixed top-6 right-6 z-20 text-xs text-muted-foreground hover:text-foreground transition-colors"
       >
         Skip for now
