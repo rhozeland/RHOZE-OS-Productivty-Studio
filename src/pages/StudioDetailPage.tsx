@@ -16,13 +16,10 @@ import {
   CheckCircle,
   Calendar,
   MessageSquare,
-  Coins,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import StudioBookingModal from "@/components/booking/StudioBookingModal";
 import QuickMessageDialog from "@/components/messages/QuickMessageDialog";
-import LaunchCoinDialog from "@/components/launchpad/LaunchCoinDialog";
-import DropCoinCard from "@/components/launchpad/DropCoinCard";
 
 const StudioDetailPage = () => {
   const { id } = useParams<{ id: string }>();
