@@ -63,17 +63,18 @@ interface ScoredProfile {
 
 const CreatorsGrid = ({
   search = "",
-  archetype,
+  archetype = null,
+  onArchetypeClick,
 }: {
   search?: string;
-  archetype: Archetype;
+  /** Optional archetype filter. `null` = show all creators. */
+  archetype?: Archetype | null;
+  /** When a chip on a tile is clicked, bubble it up so Discover can filter. */
+  onArchetypeClick?: (a: Archetype) => void;
 }) => {
   const { data, isLoading } = useQuery({
-    queryKey: ["discover-featured-creators", archetype],
+    queryKey: ["discover-featured-creators", archetype ?? "all"],
     queryFn: async (): Promise<ScoredProfile[]> => {
-      // Pull all profiles in this archetype that are public.
-      // Backward-compat: legacy profiles with NULL archetype are treated
-      // as "artist" so existing accounts still show on the default tab.
       let query = supabase
         .from("profiles")
         .select(
@@ -81,9 +82,12 @@ const CreatorsGrid = ({
         )
         .neq("is_public", false)
         .limit(200);
-      query = archetype === "artist"
-        ? query.or("archetype.eq.artist,archetype.is.null")
-        : query.eq("archetype", archetype);
+      if (archetype === "artist") {
+        // Backward-compat: profiles without archetype default to artist.
+        query = query.or("archetype.eq.artist,archetype.is.null");
+      } else if (archetype) {
+        query = query.eq("archetype", archetype);
+      }
       const { data: profiles, error } = await query;
       if (error) throw error;
       if (!profiles?.length) return [];
