@@ -17,9 +17,12 @@ const STEPS = [
   { id: "logo", icon: Palette, title: "Create Your Toybox" },
   { id: "region", icon: MapPin, title: "Where are you based?" },
   { id: "archetype", icon: Compass, title: "What kind of creator?" },
+  { id: "bio", icon: Heart, title: "Tell us about you" },
   { id: "tour", icon: Globe, title: "Quick Tour" },
   { id: "ready", icon: CheckCircle2, title: "You're All Set" },
 ];
+
+const BIO_MIN = 40;
 
 const TOUR_SLIDES = [
   {
