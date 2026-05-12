@@ -30,7 +30,7 @@ const AuthPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   // Where to send the user after a successful sign in (e.g. ?redirect=/studios/abc)
-  const redirectTo = searchParams.get("redirect") || "/dashboard";
+  const redirectTo = searchParams.get("redirect") || "/discover";
 
   // Persist any entered referral code so it survives the OAuth redirect
   // and is redeemed by AppLayout once the user is authenticated.
@@ -66,7 +66,9 @@ const AuthPage = () => {
           password,
           options: {
             data: { full_name: fullName },
-            emailRedirectTo: window.location.origin,
+            // Email-confirmed signups land on onboarding so they always
+            // see the tour, not the Discover page in mid-state.
+            emailRedirectTo: `${window.location.origin}/onboarding`,
           },
         });
         if (error) throw error;
