@@ -77,6 +77,7 @@ interface FeaturedArtistRow {
   region_code: string | null;
   mediums: string[] | null;
   creator_roles: string[] | null;
+  archetype?: string | null;
   verification_status?: string | null;
   works_count?: number;
   followers_count?: number;
