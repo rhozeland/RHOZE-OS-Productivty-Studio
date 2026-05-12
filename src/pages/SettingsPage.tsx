@@ -14,6 +14,7 @@ import {
   Moon, Sun, Upload, X, Camera, Lock, Bell,
   Trash2, AlertTriangle, Download, User, Box, Wallet,
   ChevronRight, BadgeCheck, Instagram, Music2, Twitter, Youtube, Globe,
+  Truck, IdCard, Image as ImageIcon, Link2,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
