@@ -20,8 +20,6 @@ import type { FeaturedSlide } from "./useDiscoverFeatured";
 import RegionChip from "@/components/profile/RegionChip";
 import { avatarGradientFor } from "@/lib/avatar-gradient";
 import ArtistSpotlightCard from "./ArtistSpotlightCard";
-import EventSpotlightCard from "./EventSpotlightCard";
-import SpaceSpotlightCard from "./SpaceSpotlightCard";
 import { ROLE_BY_ID } from "@/lib/creator-roles";
 import { ARCHETYPE_BY_ID, type Archetype } from "@/lib/archetypes";
 
@@ -621,55 +619,23 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                   exit={{ opacity: 0, y: -12 }}
                   transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  {activeSpotlight.kind === "artist" ? (
-                    <ArtistSpotlightCard
-                      id={activeSpotlight.id}
-                      href={activeSpotlight.href}
-                      title={activeSpotlight.title}
-                      subtitle={activeSpotlight.subtitle}
-                      avatar={activeSpotlight.avatar}
-                      region_code={activeSpotlight.region_code}
-                      creator_roles={activeSpotlight.creator_roles}
-                      mediums={activeSpotlight.mediums}
-                      verification_status={activeSpotlight.verification_status}
-                      works_count={activeSpotlight.works_count}
-                      followers_count={activeSpotlight.followers_count}
-                      coin={(activeSpotlight as any).coin ?? null}
-                      next_event={(activeSpotlight as any).next_event ?? null}
-                      hosted_space={(activeSpotlight as any).hosted_space ?? null}
-                      offerings_count={(activeSpotlight as any).offerings_count ?? 0}
-                    />
-                  ) : activeSpotlight.kind === "event" ? (
-                    <EventSpotlightCard
-                      id={activeSpotlight.id}
-                      href={activeSpotlight.href}
-                      title={activeSpotlight.title}
-                      subtitle={activeSpotlight.subtitle}
-                      banner={activeSpotlight.banner}
-                      starts_at={activeSpotlight.starts_at}
-                      venue={activeSpotlight.venue}
-                      is_online={activeSpotlight.is_online}
-                      region_code={activeSpotlight.region_code}
-                    />
-                  ) : (
-                    <SpaceSpotlightCard
-                      id={activeSpotlight.id}
-                      href={activeSpotlight.href}
-                      title={activeSpotlight.title}
-                      subtitle={activeSpotlight.subtitle}
-                      banner={activeSpotlight.banner}
-                      location={activeSpotlight.location}
-                      region_code={activeSpotlight.region_code}
-                      category={(activeSpotlight as any).category}
-                      hourly_rate={(activeSpotlight as any).hourly_rate}
-                      currency={(activeSpotlight as any).currency}
-                      max_guests={(activeSpotlight as any).max_guests}
-                      amenities={(activeSpotlight as any).amenities}
-                      rating_avg={(activeSpotlight as any).rating_avg}
-                      review_count={(activeSpotlight as any).review_count}
-                      available_days={(activeSpotlight as any).available_days}
-                    />
-                  )}
+                  <ArtistSpotlightCard
+                    id={activeSpotlight.id}
+                    href={activeSpotlight.href}
+                    title={activeSpotlight.title}
+                    subtitle={activeSpotlight.subtitle}
+                    avatar={activeSpotlight.avatar}
+                    region_code={activeSpotlight.region_code}
+                    creator_roles={activeSpotlight.creator_roles}
+                    mediums={activeSpotlight.mediums}
+                    verification_status={activeSpotlight.verification_status}
+                    works_count={activeSpotlight.works_count}
+                    followers_count={activeSpotlight.followers_count}
+                    coin={(activeSpotlight as any).coin ?? null}
+                    next_event={(activeSpotlight as any).next_event ?? null}
+                    hosted_space={(activeSpotlight as any).hosted_space ?? null}
+                    offerings_count={(activeSpotlight as any).offerings_count ?? 0}
+                  />
                 </motion.div>
               ) : (
                 <div className="rounded-[1.5rem] border border-dashed border-border/50 bg-card/35 p-6 text-sm text-muted-foreground">
@@ -714,36 +680,6 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <p className="truncate text-sm font-medium text-foreground">{marker.title}</p>
-                      {(() => {
-                        if (marker.kind !== "artist") {
-                          return (
-                            <span className="shrink-0 rounded-full border border-border/40 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
-                              {marker.kind}
-                            </span>
-                          );
-                        }
-                        const meta = ARCHETYPE_BY_ID.get(marker.archetype as Archetype);
-                        if (meta) {
-                          const Icon = meta.icon;
-                          return (
-                            <span
-                              className={cn(
-                                "shrink-0 inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em]",
-                                meta.chipClass,
-                              )}
-                              title={meta.tagline}
-                            >
-                              <Icon className="h-2.5 w-2.5" />
-                              {meta.label}
-                            </span>
-                          );
-                        }
-                        return (
-                          <span className="shrink-0 rounded-full border border-border/40 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
-                            creator
-                          </span>
-                        );
-                      })()}
                     </div>
                     {marker.kind === "artist" ? (
                       (() => {
