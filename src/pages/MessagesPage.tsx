@@ -37,6 +37,8 @@ import FollowingPickerDialog from "@/components/messages/FollowingPickerDialog";
 import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
 
 import ConversationsEventsBrowser from "@/components/messages/ConversationsEventsBrowser";
+import InboxKanban from "@/components/messages/InboxKanban";
+import { LayoutGrid, Rows } from "lucide-react";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pending", color: "bg-amber-500/15 text-amber-600", icon: Clock },
@@ -502,6 +504,62 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
         </TabsList>
 
         <TabsContent value="messages" className="mt-4 space-y-4">
+          {/* View toggle: Pipeline (kanban) vs Classic split-pane.
+              Default = pipeline so the inbox reads as project-management. */}
+          {(() => {
+            const view = searchParams.get("view") === "classic" ? "classic" : "pipeline";
+            const setView = (v: "pipeline" | "classic") => {
+              const next = new URLSearchParams(searchParams);
+              if (v === "pipeline") next.delete("view");
+              else next.set("view", "classic");
+              setSearchParams(next, { replace: true });
+            };
+            return (
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-muted-foreground">
+                  {view === "pipeline"
+                    ? "Threads grouped by status. Click a card to open."
+                    : "Classic two-pane chat view."}
+                </p>
+                <div className="inline-flex items-center rounded-full border border-border p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setView("pipeline")}
+                    className={cn(
+                      "h-7 px-3 rounded-full text-[11px] inline-flex items-center gap-1.5 transition-colors",
+                      view === "pipeline" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <LayoutGrid className="h-3 w-3" /> Pipeline
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setView("classic")}
+                    className={cn(
+                      "h-7 px-3 rounded-full text-[11px] inline-flex items-center gap-1.5 transition-colors",
+                      view === "classic" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <Rows className="h-3 w-3" /> Classic
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+
+          {searchParams.get("view") !== "classic" && !selectedUser && (
+            <InboxKanban
+              userId={user.id}
+              conversations={conversations}
+              partnerProfiles={partnerProfiles}
+              inquiries={allInquiries ?? undefined}
+              inquiryListingsMap={inquiryListingsMap as any}
+              inquiryProfilesMap={inquiryProfilesMap as any}
+              onOpenDM={(p) => setSelectedUser(p)}
+            />
+          )}
+
+          {(searchParams.get("view") === "classic" || selectedUser) && (
           <div className="surface-card flex h-[calc(100vh-22rem)] min-h-[480px] overflow-hidden">
             {/* Sidebar - Conversations only */}
             <div className={cn(
@@ -782,6 +840,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
               )}
             </div>
           </div>
+          )}
 
           {selectedUser && (
             <QuoteBuilder
