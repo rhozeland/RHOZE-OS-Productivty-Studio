@@ -61,13 +61,14 @@ const ProfileDetailPage = () => {
   const { data: profileNote } = useUserNote(id);
   
 
-  // v9.4 tabs: Support (default) · Works. About retired — bio + details inline in header.
-  // On-chain reputation lives inside Support behind a collapsible "Verify" toggle.
-  // Legacy ?tab=coin/building/about/overview → support.
+  // v9.5 tabs: Support (default) · Drops (formerly "Works").
+  // Legacy ?tab=coin/building/about/overview → support; ?tab=works → drops.
   const rawTab = searchParams.get("tab") || "support";
   const tabFromUrl =
     rawTab === "coin" || rawTab === "building" || rawTab === "about" || rawTab === "overview"
       ? "support"
+      : rawTab === "works"
+      ? "drops"
       : rawTab;
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -521,7 +522,7 @@ const ProfileDetailPage = () => {
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="w-full grid grid-cols-2 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
             <TabsTrigger value="support" className="text-xs gap-1.5"><Heart className="h-3 w-3" />Support</TabsTrigger>
-            <TabsTrigger value="works" className="text-xs gap-1.5"><Sparkles className="h-3 w-3" />Works</TabsTrigger>
+            <TabsTrigger value="drops" className="text-xs gap-1.5"><Sparkles className="h-3 w-3" />Drops</TabsTrigger>
           </TabsList>
 
           {/* ─── Support tab — back this artist (actions + token) ─── */}
@@ -566,58 +567,19 @@ const ProfileDetailPage = () => {
               </motion.div>
             )}
 
-            {/* ─── Ways to support — drops + shop + shows + spaces + open calls in one place ─── */}
+            {/* ─── Ways to support — launches + shows + spaces ─── */}
             {(() => {
-              const allListings = sellerListings ?? [];
-              const shop       = allListings.filter((l: any) => l.listing_type !== "project_request");
-              const openCalls  = allListings.filter((l: any) => l.listing_type === "project_request");
-              const shows      = upcomingEvents ?? [];
-              const spaces     = hostedSpaces ?? [];
-
-              const renderListing = (listing: any) => {
-                const isRequest = listing.listing_type === "project_request";
-                return (
-                  <button
-                    key={listing.id}
-                    onClick={() => navigate(`/creators/${listing.id}`)}
-                    className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
-                  >
-                    <div
-                      className={cn(
-                        "h-11 w-11 rounded-lg flex items-center justify-center shrink-0 border",
-                        isRequest
-                          ? "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400"
-                          : "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                      )}
-                    >
-                      {isRequest ? <Search className="h-5 w-5" /> : <ShoppingBag className="h-5 w-5" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{listing.title}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        {listing.credits_price && (
-                          <span className="text-[10px] font-semibold text-primary">{listing.credits_price} $RHOZE</span>
-                        )}
-                        {listing.price && (
-                          <span className="text-[10px] text-muted-foreground">${listing.price}</span>
-                        )}
-                      </div>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                );
-              };
+              const shows  = upcomingEvents ?? [];
+              const spaces = hostedSpaces ?? [];
 
               const tabs: { value: string; label: string; icon: any; count: number | null }[] = [
-                // Drops always shown — the catalog handles its own empty state for the owner.
-                { value: "drops",     label: "Drops", icon: Coins,        count: null },
+                // Launches always shown — the catalog handles its own empty state for the owner.
+                { value: "launches", label: "Launches", icon: Coins, count: null },
               ];
-              if (shop.length)      tabs.push({ value: "shop",      label: "Shop",      icon: ShoppingBag, count: shop.length });
-              if (shows.length)     tabs.push({ value: "shows",     label: "Shows",     icon: CalendarIcon, count: shows.length });
-              if (spaces.length)    tabs.push({ value: "spaces",    label: "Spaces",    icon: Building2,    count: spaces.length });
-              if (openCalls.length) tabs.push({ value: "calls",     label: "Open calls",icon: Search,       count: openCalls.length });
+              if (shows.length)  tabs.push({ value: "shows",  label: "Shows",  icon: CalendarIcon, count: shows.length });
+              if (spaces.length) tabs.push({ value: "spaces", label: "Spaces", icon: Building2,    count: spaces.length });
 
-              const totalCount = shop.length + shows.length + spaces.length + openCalls.length;
+              const totalCount = shows.length + spaces.length;
 
               return (
                 <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
@@ -629,7 +591,7 @@ const ProfileDetailPage = () => {
                       <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{totalCount} total</span>
                     )}
                   </div>
-                  <Tabs defaultValue="drops">
+                  <Tabs defaultValue="launches">
                     <TabsList className="w-full justify-start overflow-x-auto bg-muted/40 p-1 h-auto">
                       {tabs.map(({ value, label, icon: Icon, count }) => (
                         <TabsTrigger key={value} value={value} className="text-xs gap-1.5 data-[state=active]:bg-background">
@@ -640,15 +602,10 @@ const ProfileDetailPage = () => {
                       ))}
                     </TabsList>
 
-                    <TabsContent value="drops" className="mt-3">
+                    <TabsContent value="launches" className="mt-3">
                       <CreatorDropsCatalog creatorId={id!} isOwnProfile={isOwnProfile} />
                     </TabsContent>
 
-                    {shop.length > 0 && (
-                      <TabsContent value="shop" className="mt-3 space-y-2">
-                        {shop.slice(0, 6).map(renderListing)}
-                      </TabsContent>
-                    )}
                     {shows.length > 0 && (
                       <TabsContent value="shows" className="mt-3 space-y-2">
                         {shows.map((e: any) => (
@@ -701,11 +658,6 @@ const ProfileDetailPage = () => {
                             <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
                           </button>
                         ))}
-                      </TabsContent>
-                    )}
-                    {openCalls.length > 0 && (
-                      <TabsContent value="calls" className="mt-3 space-y-2">
-                        {openCalls.slice(0, 6).map(renderListing)}
                       </TabsContent>
                     )}
                   </Tabs>
@@ -810,15 +762,15 @@ const ProfileDetailPage = () => {
           {/* Anything they've shared on Flow — uploads, links (YouTube/Spotify/SoundCloud),
               writing. Thumbnails are resolved by <FlowThumbnail/> so audio/link posts
               get a proper preview image instead of a generic icon. */}
-          <TabsContent value="works" className="mt-5">
+          <TabsContent value="drops" className="mt-5">
             {flowPosts && flowPosts.length > 0 ? (
               <div className="space-y-3">
                 <div>
                   <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary" /> Posts
+                    <Sparkles className="h-4 w-4 text-primary" /> Drops
                   </h2>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Everything they've shared on Flow — uploads, tracks, videos and links.
+                    Everything they've dropped — uploads, tracks, videos and links.
                   </p>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -856,7 +808,7 @@ const ProfileDetailPage = () => {
               </div>
             ) : (
               <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-8 text-center text-sm text-muted-foreground">
-                No works posted yet.
+                No drops yet.
               </div>
             )}
           </TabsContent>
