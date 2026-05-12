@@ -576,8 +576,8 @@ const OnboardingPage = () => {
             </motion.div>
           )}
 
-          {/* Step 3: Ready */}
-          {step === 5 && (
+          {/* Step 6: Ready */}
+          {step === 6 && (
             <motion.div
               key="ready"
               initial={{ opacity: 0, y: 30 }}
