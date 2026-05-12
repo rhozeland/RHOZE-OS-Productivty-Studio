@@ -20,6 +20,7 @@ import {
   Sparkles,
   TrendingUp,
   Library,
+  type LucideIcon,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import RegionChip from "@/components/profile/RegionChip";
@@ -80,7 +81,7 @@ const ArtistSpotlightCard = ({
     .filter(Boolean) as { label: string; emoji: string }[];
 
   // Secondary signal chips (no event/space — those get their own visual tiles below)
-  const signals: { key: string; icon: typeof Calendar; label: string }[] = [];
+  const signals: { key: string; icon: LucideIcon; label: string }[] = [];
   if (coin) {
     signals.push({ key: "shares", icon: TrendingUp, label: "Shares live" });
   }
