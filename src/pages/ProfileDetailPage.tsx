@@ -729,13 +729,146 @@ const ProfileDetailPage = () => {
               )}
             </div>
 
-            {/* Compact "Support this artist" tabs — Offerings · Looking for · Shows · Spaces */}
+            {/* Ways to support — merch/offerings + open calls + shows + spaces in one place */}
             {(() => {
-              const offerings = (sellerListings ?? []).filter((l: any) => l.listing_type !== "project_request");
-              const requests  = (sellerListings ?? []).filter((l: any) => l.listing_type === "project_request");
-              const shows     = upcomingEvents ?? [];
-              const spaces    = hostedSpaces ?? [];
+              const listings = sellerListings ?? [];
+              const shows    = upcomingEvents ?? [];
+              const spaces   = hostedSpaces ?? [];
 
+              const renderListing = (listing: any) => {
+                const isRequest = listing.listing_type === "project_request";
+                return (
+                  <button
+                    key={listing.id}
+                    onClick={() => navigate(`/creators/${listing.id}`)}
+                    className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
+                  >
+                    <div
+                      className={cn(
+                        "h-11 w-11 rounded-lg flex items-center justify-center shrink-0 border",
+                        isRequest
+                          ? "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400"
+                          : "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                      )}
+                    >
+                      {isRequest ? <Search className="h-5 w-5" /> : <ShoppingBag className="h-5 w-5" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <Badge variant="outline" className="text-[9px] capitalize mb-0.5">
+                        {isRequest ? "Open call" : listing.category || "Offering"}
+                      </Badge>
+                      <p className="text-sm font-medium text-foreground truncate">{listing.title}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {listing.credits_price && (
+                          <span className="text-[10px] font-semibold text-primary">{listing.credits_price} $RHOZE</span>
+                        )}
+                        {listing.price && (
+                          <span className="text-[10px] text-muted-foreground">${listing.price}</span>
+                        )}
+                      </div>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                );
+              };
+
+              const totalCount = listings.length + shows.length + spaces.length;
+              if (totalCount === 0) {
+                return isOwnProfile ? (
+                  <div className="rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
+                    Add an offering or post an event so people have something to back.
+                  </div>
+                ) : null;
+              }
+
+              const tabs: { value: string; label: string; icon: any; count: number }[] = [];
+              if (listings.length) tabs.push({ value: "offerings", label: "Offerings", icon: ShoppingBag, count: listings.length });
+              if (shows.length)    tabs.push({ value: "shows",     label: "Shows",     icon: CalendarIcon, count: shows.length });
+              if (spaces.length)   tabs.push({ value: "spaces",    label: "Spaces",    icon: Building2,    count: spaces.length });
+
+              return (
+                <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Heart className="h-4 w-4 text-primary" /> Ways to support
+                    </h3>
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{totalCount} total</span>
+                  </div>
+                  <Tabs defaultValue={tabs[0].value}>
+                    <TabsList className="w-full justify-start overflow-x-auto bg-muted/40 p-1 h-auto">
+                      {tabs.map(({ value, label, icon: Icon, count }) => (
+                        <TabsTrigger key={value} value={value} className="text-xs gap-1.5 data-[state=active]:bg-background">
+                          <Icon className="h-3 w-3" />
+                          {label}
+                          <span className="text-[9px] text-muted-foreground">{count}</span>
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+
+                    {listings.length > 0 && (
+                      <TabsContent value="offerings" className="mt-3 space-y-2">
+                        {listings.slice(0, 6).map(renderListing)}
+                      </TabsContent>
+                    )}
+                    {shows.length > 0 && (
+                      <TabsContent value="shows" className="mt-3 space-y-2">
+                        {shows.map((e: any) => (
+                          <button
+                            key={e.id}
+                            onClick={() => navigate(`/events/${e.slug || e.id}`)}
+                            className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
+                          >
+                            {e.cover_url ? (
+                              <img src={e.cover_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
+                            ) : (
+                              <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
+                                <CalendarIcon className="h-5 w-5 text-muted-foreground/40" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">{e.title}</p>
+                              <p className="text-[11px] text-muted-foreground">
+                                {format(new Date(e.starts_at), "MMM d · h:mm a")}
+                                {e.is_online ? " · Online" : e.venue_name ? ` · ${e.venue_name}` : ""}
+                              </p>
+                            </div>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                          </button>
+                        ))}
+                      </TabsContent>
+                    )}
+                    {spaces.length > 0 && (
+                      <TabsContent value="spaces" className="mt-3 space-y-2">
+                        {spaces.map((s: any) => (
+                          <button
+                            key={s.id}
+                            onClick={() => navigate(`/studios/${s.id}`)}
+                            className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
+                          >
+                            {s.cover_image_url ? (
+                              <img src={s.cover_image_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
+                            ) : (
+                              <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
+                                <Building2 className="h-5 w-5 text-muted-foreground/40" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">{s.name}</p>
+                              <p className="text-[11px] text-muted-foreground truncate">
+                                {[s.city, s.state].filter(Boolean).join(" · ") || "Space"}
+                                {s.hourly_rate ? ` · ${s.currency || "$"}${s.hourly_rate}/hr` : ""}
+                              </p>
+                            </div>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                          </button>
+                        ))}
+                      </TabsContent>
+                    )}
+                  </Tabs>
+                </div>
+              );
+            })()}
+          </TabsContent>
               const renderListing = (listing: any) => {
                 const isRequest = listing.listing_type === "project_request";
                 return (
