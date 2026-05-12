@@ -55,8 +55,6 @@ import {
   MessageSquare,
   Briefcase,
   Clapperboard,
-  Users,
-  Compass,
   Building2,
   ShoppingBag,
 } from "lucide-react";
