@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft, Sparkles, Palette, Layout, Users, CheckCircle2, MapPin } from "lucide-react";
+import { ArrowRight, ArrowLeft, Sparkles, Palette, Globe, Users, CheckCircle2, MapPin, Flame, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LogoCustomizer } from "@/components/onboarding/LogoCustomizer";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,25 +14,25 @@ const STEPS = [
   { id: "welcome", icon: Sparkles, title: "Welcome to Rhozeland" },
   { id: "logo", icon: Palette, title: "Create Your Toybox" },
   { id: "region", icon: MapPin, title: "Where are you based?" },
-  { id: "tour", icon: Layout, title: "Quick Tour" },
+  { id: "tour", icon: Globe, title: "Quick Tour" },
   { id: "ready", icon: CheckCircle2, title: "You're All Set" },
 ];
 
 const TOUR_SLIDES = [
   {
-    icon: Layout,
-    title: "Your Dashboard",
-    desc: "Your creative command center. Track projects, bookings, and everything at a glance.",
+    icon: Globe,
+    title: "Discover",
+    desc: "Spin the globe to meet creators worldwide. Switch between Creators, Events, and Spaces — everything happening, in one feed.",
   },
   {
-    icon: Users,
-    title: "Creators Hub",
-    desc: "Find talent, post jobs, offer services — connect with the creative community.",
+    icon: Heart,
+    title: "Back a creator",
+    desc: "Every profile is a place to support an artist — buy their shares, book a session, show up to their event, or send a message.",
   },
   {
-    icon: Palette,
-    title: "Smartboards",
-    desc: "Visual collaboration boards for mood-setting, planning, and sharing ideas with your team.",
+    icon: Flame,
+    title: "Flow Mode",
+    desc: "Swipe through fresh works from real creators. Like, share, peek at profiles, and earn $RHOZE as you go.",
   },
 ];
 
@@ -90,10 +90,10 @@ const OnboardingPage = () => {
       }
 
       toast.success("Welcome aboard! 🎉");
-      navigate("/dashboard", { replace: true });
+      navigate("/discover", { replace: true });
     } catch (err) {
       console.error(err);
-      navigate("/dashboard", { replace: true });
+      navigate("/discover", { replace: true });
     } finally {
       setSaving(false);
     }
@@ -124,7 +124,7 @@ const OnboardingPage = () => {
 
       {/* Skip button */}
       <button
-        onClick={() => navigate("/dashboard", { replace: true })}
+        onClick={() => navigate("/discover", { replace: true })}
         className="fixed top-6 right-6 z-20 text-xs text-muted-foreground hover:text-foreground transition-colors"
       >
         Skip for now
