@@ -79,3 +79,25 @@ export const CREATOR_UMBRELLA = {
   plural: "Creators",
   icon: Users,
 };
+
+/**
+ * Deterministic archetype-tinted banner gradient.
+ *
+ * Used as the *default* banner whenever a creator hasn't picked a custom one,
+ * so even minimum-effort profiles look intentional instead of falling back to
+ * the generic gray. Seed (usually `user_id`) decides the secondary hue offset
+ * so two artists don't end up with identical banners.
+ */
+export function archetypeBannerGradient(
+  archetype: Archetype | null | undefined,
+  seed?: string | null,
+): string {
+  const token = archetype ? `archetype-${archetype}` : "primary";
+  // Cheap deterministic hash → 0..359
+  const s = seed ?? "";
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
+  const angle = 110 + (h % 70); // 110°–180°
+  const accentHue = (h + 40) % 360;
+  return `linear-gradient(${angle}deg, hsl(var(--${token}) / 0.85) 0%, hsl(var(--${token}) / 0.55) 35%, hsl(${accentHue} 70% 60% / 0.45) 75%, hsl(var(--card)) 100%)`;
+}
