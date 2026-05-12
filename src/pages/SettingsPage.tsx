@@ -242,6 +242,9 @@ const SettingsPage = () => {
       if (!creatorRoles || creatorRoles.length === 0) {
         throw new Error("Pick at least one role under \"What you are\" — fans use this to find you.");
       }
+      if (!archetype) {
+        throw new Error("Pick a creator type — Artist, Builder, or Influencer.");
+      }
       const { error } = await supabase.from("profiles").update({
         display_name: displayName,
         username: username.toLowerCase() || null,
