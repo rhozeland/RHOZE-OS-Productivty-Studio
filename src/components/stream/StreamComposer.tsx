@@ -104,7 +104,7 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
   };
 
   return (
-    <div className="rounded-3xl border border-border bg-card/80 backdrop-blur-sm p-4 sm:p-5 space-y-3">
+    <div id="discover-composer" className="rounded-3xl border border-border bg-card/80 backdrop-blur-sm p-4 sm:p-5 space-y-3 scroll-mt-20">
       {/* Type pills */}
       <div className="flex flex-wrap gap-1.5 items-center">
         {TYPES.map((t) => {
