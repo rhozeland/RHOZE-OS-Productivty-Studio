@@ -233,7 +233,22 @@ const CreatorsGrid = ({
                 {/* Top chips */}
                 <div className="absolute top-2.5 left-2.5 right-2.5 flex items-start justify-between gap-2 z-10">
                   <div className="flex items-center gap-1.5">
-                    <ArchetypeChip archetype={p.archetype} size="xs" />
+                    {p.archetype && onArchetypeClick ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onArchetypeClick(p.archetype as Archetype);
+                        }}
+                        className="rounded-full hover:scale-105 transition-transform"
+                        aria-label={`Filter by ${p.archetype}`}
+                      >
+                        <ArchetypeChip archetype={p.archetype} size="xs" />
+                      </button>
+                    ) : (
+                      <ArchetypeChip archetype={p.archetype} size="xs" />
+                    )}
                     {p.pinned && (
                       <span
                         className="inline-flex items-center gap-1 rounded-full bg-foreground/90 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-background backdrop-blur-md"
