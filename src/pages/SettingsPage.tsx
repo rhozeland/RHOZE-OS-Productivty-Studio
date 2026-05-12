@@ -371,11 +371,20 @@ const SettingsPage = () => {
   const initials = (displayName || username || "?").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 
   /* ─── Section renderers ─── */
+  const SOCIAL_FIELDS = [
+    { id: "ig", label: "Instagram", placeholder: "instagram.com/username", Icon: Instagram, value: instagramUrl, set: setInstagramUrl },
+    { id: "tt", label: "TikTok", placeholder: "tiktok.com/@username", Icon: Music2, value: tiktokUrl, set: setTiktokUrl },
+    { id: "tw", label: "X (Twitter)", placeholder: "x.com/username", Icon: Twitter, value: twitterUrl, set: setTwitterUrl },
+    { id: "yt", label: "YouTube", placeholder: "youtube.com/@channel", Icon: Youtube, value: youtubeUrl, set: setYoutubeUrl },
+    { id: "web", label: "Website", placeholder: "yourportfolio.com", Icon: Globe, value: portfolioUrl, set: setPortfolioUrl },
+  ];
+
   const renderProfile = () => (
-    <form onSubmit={(e) => { e.preventDefault(); updateProfile.mutate(); }} className="space-y-5">
+    <form onSubmit={(e) => { e.preventDefault(); updateProfile.mutate(); }} className="space-y-6">
+      {/* 1. Name + username — top of mind */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label>Display Name</Label>
+          <Label>Display Name <span className="text-destructive">*</span></Label>
           <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
         </div>
         <div className="space-y-2">
@@ -384,54 +393,46 @@ const SettingsPage = () => {
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
             <Input value={username} onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))} placeholder="your_username" className="pl-8" maxLength={20} />
           </div>
-          <p className="text-[10px] text-muted-foreground">3-20 characters, letters, numbers, underscores</p>
         </div>
       </div>
+
+      {/* 2. Creator type — directly under the name */}
       <div className="space-y-2">
         <Label>Creator type <span className="text-destructive">*</span></Label>
-        <p className="text-[11px] text-muted-foreground">
-          Required — everyone's a creator. Pick the branch that fits you best. You can switch any time.
-        </p>
         <ArchetypePicker value={archetype} onChange={setArchetype} />
       </div>
+
+      {/* 3. Categories — broad, simple */}
       <div className="space-y-2">
-        <Label>What you are <span className="text-destructive">*</span></Label>
-        <p className="text-[11px] text-muted-foreground">
-          Required — pick at least one. Fans use these to find you. You can pick a few if you wear multiple hats.
-        </p>
-        <div className="rounded-xl border border-border bg-card/40 p-3">
-          <RolePicker
-            selectedRoles={creatorRoles}
-            onChangeRoles={setCreatorRoles}
-            selectedSpecialties={mediumsList}
-            onChangeSpecialties={setMediumsList}
-          />
+        <Label>Categories <span className="text-destructive">*</span></Label>
+        <p className="text-[11px] text-muted-foreground">Pick the work you make. Up to 3.</p>
+        <div className="flex flex-wrap gap-2">
+          {CATEGORY_OPTIONS.map((c) => {
+            const selected = creatorRoles.includes(c.id);
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => {
+                  if (selected) setCreatorRoles(creatorRoles.filter((r) => r !== c.id));
+                  else if (creatorRoles.length < 3) setCreatorRoles([...creatorRoles, c.id]);
+                }}
+                className={cn(
+                  "px-3 py-1.5 rounded-full border text-sm font-medium transition-all",
+                  selected
+                    ? "bg-foreground text-background border-foreground"
+                    : "bg-card text-foreground border-border hover:border-foreground/40",
+                )}
+              >
+                <span className="mr-1.5">{c.emoji}</span>{c.label}
+              </button>
+            );
+          })}
         </div>
       </div>
-      <div className="space-y-2">
-        <Label>Slogan</Label>
-        <Input
-          value={headline}
-          onChange={(e) => setHeadline(e.target.value)}
-          placeholder="Your one-line ethos — e.g. Building worlds out of sound."
-          maxLength={120}
-        />
-        <p className="text-[10px] text-muted-foreground">{headline.length}/120</p>
-      </div>
-      <div className="space-y-2">
-        <Label>Bio (optional)</Label>
-        <Textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="A longer story — your background, what you're working on, who you collaborate with…" rows={3} />
-      </div>
-      <div className="space-y-2">
-        <Label>Skills</Label>
-        <p className="text-[11px] text-muted-foreground">
-          Tap the ones you bring to a project. Add a custom skill if it's not listed.
-        </p>
-        <div className="rounded-xl border border-border bg-card/40 p-3">
-          <SkillPicker value={skillsList} onChange={setSkillsList} />
-        </div>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+      {/* 4. Location + Region — compact, no caption */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Location</Label>
           <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City, State or Country" />
@@ -448,48 +449,41 @@ const SettingsPage = () => {
               <option key={r.code} value={r.code}>{r.flag} {r.label} ({r.code})</option>
             ))}
           </select>
-          <p className="text-[10px] text-muted-foreground">Helps fans discover you across markets (East ↔ West).</p>
-        </div>
-        <div className="space-y-2">
-          <Label>Portfolio URL</Label>
-          <Input value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} placeholder="https://yourportfolio.com" />
         </div>
       </div>
-      <Separator className="my-1" />
-      <div>
-        <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">Social Links</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Instagram</Label>
-            <Input value={instagramUrl} onChange={(e) => setInstagramUrl(e.target.value)} placeholder="https://instagram.com/username" />
-          </div>
-          <div className="space-y-2">
-            <Label>TikTok</Label>
-            <Input value={tiktokUrl} onChange={(e) => setTiktokUrl(e.target.value)} placeholder="https://tiktok.com/@username" />
-          </div>
-          <div className="space-y-2">
-            <Label>X (Twitter)</Label>
-            <Input value={twitterUrl} onChange={(e) => setTwitterUrl(e.target.value)} placeholder="https://x.com/username" />
-          </div>
-          <div className="space-y-2">
-            <Label>YouTube</Label>
-            <Input value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} placeholder="https://youtube.com/@channel" />
-          </div>
+
+      {/* 5. About — required */}
+      <div className="space-y-2">
+        <Label>About <span className="text-destructive">*</span></Label>
+        <Textarea
+          value={bio}
+          onChange={(e) => setBio(e.target.value)}
+          placeholder="A few sentences — your background, what you're working on, who you collaborate with…"
+          rows={4}
+          maxLength={500}
+        />
+        <p className="text-[10px] text-muted-foreground">{bio.length}/500 — at least 40 characters</p>
+      </div>
+
+      {/* 6. Social links — compact icon row, includes website */}
+      <div className="space-y-2">
+        <Label>Social links</Label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {SOCIAL_FIELDS.map((s) => (
+            <div key={s.id} className="relative">
+              <s.Icon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={s.value}
+                onChange={(e) => s.set(e.target.value)}
+                placeholder={s.placeholder}
+                aria-label={s.label}
+                className="pl-9 h-9 text-sm"
+              />
+            </div>
+          ))}
         </div>
       </div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
-        <div className="flex items-center gap-3">
-          <Switch checked={available} onCheckedChange={setAvailable} />
-          <Label>Available for collaboration</Label>
-        </div>
-        <div className="flex items-center gap-3">
-          <Switch checked={isPublic} onCheckedChange={setIsPublic} />
-          <div className="flex items-center gap-1.5">
-            {isPublic ? <Eye className="h-4 w-4 text-primary" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
-            <Label>{isPublic ? "Public Profile" : "Private Profile"}</Label>
-          </div>
-        </div>
-      </div>
+
       <Button type="submit" disabled={updateProfile.isPending}>
         {updateProfile.isPending ? "Saving..." : "Save Changes"}
       </Button>
