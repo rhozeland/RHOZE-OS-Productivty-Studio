@@ -729,12 +729,11 @@ const ProfileDetailPage = () => {
               )}
             </div>
 
-            {/* Compact "Support this artist" tabs — Offerings · Looking for · Shows · Spaces */}
+            {/* Ways to support — merch/offerings + open calls + shows + spaces in one place */}
             {(() => {
-              const offerings = (sellerListings ?? []).filter((l: any) => l.listing_type !== "project_request");
-              const requests  = (sellerListings ?? []).filter((l: any) => l.listing_type === "project_request");
-              const shows     = upcomingEvents ?? [];
-              const spaces    = hostedSpaces ?? [];
+              const listings = sellerListings ?? [];
+              const shows    = upcomingEvents ?? [];
+              const spaces   = hostedSpaces ?? [];
 
               const renderListing = (listing: any) => {
                 const isRequest = listing.listing_type === "project_request";
@@ -755,9 +754,9 @@ const ProfileDetailPage = () => {
                       {isRequest ? <Search className="h-5 w-5" /> : <ShoppingBag className="h-5 w-5" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      {listing.category && (
-                        <Badge variant="outline" className="text-[9px] capitalize mb-0.5">{listing.category}</Badge>
-                      )}
+                      <Badge variant="outline" className="text-[9px] capitalize mb-0.5">
+                        {isRequest ? "Open call" : listing.category || "Offering"}
+                      </Badge>
                       <p className="text-sm font-medium text-foreground truncate">{listing.title}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         {listing.credits_price && (
@@ -773,14 +772,19 @@ const ProfileDetailPage = () => {
                 );
               };
 
-              const totalCount = offerings.length + requests.length + shows.length + spaces.length;
-              if (totalCount === 0) return null;
+              const totalCount = listings.length + shows.length + spaces.length;
+              if (totalCount === 0) {
+                return isOwnProfile ? (
+                  <div className="rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
+                    Add an offering or post an event so people have something to back.
+                  </div>
+                ) : null;
+              }
 
               const tabs: { value: string; label: string; icon: any; count: number }[] = [];
-              if (offerings.length) tabs.push({ value: "offerings", label: "Offerings", icon: ShoppingBag, count: offerings.length });
-              if (requests.length)  tabs.push({ value: "looking",   label: "Looking for", icon: Search, count: requests.length });
-              if (shows.length)     tabs.push({ value: "shows",     label: "Shows", icon: CalendarIcon, count: shows.length });
-              if (spaces.length)    tabs.push({ value: "spaces",    label: "Spaces", icon: Building2, count: spaces.length });
+              if (listings.length) tabs.push({ value: "offerings", label: "Offerings", icon: ShoppingBag, count: listings.length });
+              if (shows.length)    tabs.push({ value: "shows",     label: "Shows",     icon: CalendarIcon, count: shows.length });
+              if (spaces.length)   tabs.push({ value: "spaces",    label: "Spaces",    icon: Building2,    count: spaces.length });
 
               return (
                 <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
@@ -801,14 +805,9 @@ const ProfileDetailPage = () => {
                       ))}
                     </TabsList>
 
-                    {offerings.length > 0 && (
+                    {listings.length > 0 && (
                       <TabsContent value="offerings" className="mt-3 space-y-2">
-                        {offerings.slice(0, 5).map(renderListing)}
-                      </TabsContent>
-                    )}
-                    {requests.length > 0 && (
-                      <TabsContent value="looking" className="mt-3 space-y-2">
-                        {requests.slice(0, 5).map(renderListing)}
+                        {listings.slice(0, 6).map(renderListing)}
                       </TabsContent>
                     )}
                     {shows.length > 0 && (
@@ -869,49 +868,6 @@ const ProfileDetailPage = () => {
                 </div>
               );
             })()}
-
-            {/* Off-platform support */}
-            {(p.portfolio_url || p.instagram_url || p.tiktok_url || p.twitter_url || p.youtube_url) && (
-              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
-                <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
-                  <Globe className="h-4 w-4 text-primary" /> Find them off-platform
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {p.portfolio_url && (
-                    <a href={p.portfolio_url} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-border bg-card/60 hover:border-foreground/30 transition-colors">
-                      <Globe className="h-3 w-3" /> Portfolio <ExternalLink className="h-3 w-3 opacity-50" />
-                    </a>
-                  )}
-                  {p.instagram_url && (
-                    <a href={p.instagram_url} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-border bg-card/60 hover:border-foreground/30 transition-colors">
-                      Instagram <ExternalLink className="h-3 w-3 opacity-50" />
-                    </a>
-                  )}
-                  {p.tiktok_url && (
-                    <a href={p.tiktok_url} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-border bg-card/60 hover:border-foreground/30 transition-colors">
-                      TikTok <ExternalLink className="h-3 w-3 opacity-50" />
-                    </a>
-                  )}
-                  {p.twitter_url && (
-                    <a href={p.twitter_url} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-border bg-card/60 hover:border-foreground/30 transition-colors">
-                      X <ExternalLink className="h-3 w-3 opacity-50" />
-                    </a>
-                  )}
-                  {p.youtube_url && (
-                    <a href={p.youtube_url} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-border bg-card/60 hover:border-foreground/30 transition-colors">
-                      YouTube <ExternalLink className="h-3 w-3 opacity-50" />
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Empty fallback if nothing surfaces */}
-            {isOwnProfile && !hasSellerContent && !upcomingEvents?.length && (
-              <div className="rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
-                Add an offering or post an event so people have something to back.
-              </div>
-            )}
           </TabsContent>
 
           {/* ─── Works (Posts) tab ─── */}
