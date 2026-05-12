@@ -567,58 +567,19 @@ const ProfileDetailPage = () => {
               </motion.div>
             )}
 
-            {/* ─── Ways to support — drops + shop + shows + spaces + open calls in one place ─── */}
+            {/* ─── Ways to support — launches + shows + spaces ─── */}
             {(() => {
-              const allListings = sellerListings ?? [];
-              const shop       = allListings.filter((l: any) => l.listing_type !== "project_request");
-              const openCalls  = allListings.filter((l: any) => l.listing_type === "project_request");
-              const shows      = upcomingEvents ?? [];
-              const spaces     = hostedSpaces ?? [];
-
-              const renderListing = (listing: any) => {
-                const isRequest = listing.listing_type === "project_request";
-                return (
-                  <button
-                    key={listing.id}
-                    onClick={() => navigate(`/creators/${listing.id}`)}
-                    className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
-                  >
-                    <div
-                      className={cn(
-                        "h-11 w-11 rounded-lg flex items-center justify-center shrink-0 border",
-                        isRequest
-                          ? "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400"
-                          : "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                      )}
-                    >
-                      {isRequest ? <Search className="h-5 w-5" /> : <ShoppingBag className="h-5 w-5" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{listing.title}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        {listing.credits_price && (
-                          <span className="text-[10px] font-semibold text-primary">{listing.credits_price} $RHOZE</span>
-                        )}
-                        {listing.price && (
-                          <span className="text-[10px] text-muted-foreground">${listing.price}</span>
-                        )}
-                      </div>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                );
-              };
+              const shows  = upcomingEvents ?? [];
+              const spaces = hostedSpaces ?? [];
 
               const tabs: { value: string; label: string; icon: any; count: number | null }[] = [
-                // Drops always shown — the catalog handles its own empty state for the owner.
-                { value: "drops",     label: "Drops", icon: Coins,        count: null },
+                // Launches always shown — the catalog handles its own empty state for the owner.
+                { value: "launches", label: "Launches", icon: Coins, count: null },
               ];
-              if (shop.length)      tabs.push({ value: "shop",      label: "Shop",      icon: ShoppingBag, count: shop.length });
-              if (shows.length)     tabs.push({ value: "shows",     label: "Shows",     icon: CalendarIcon, count: shows.length });
-              if (spaces.length)    tabs.push({ value: "spaces",    label: "Spaces",    icon: Building2,    count: spaces.length });
-              if (openCalls.length) tabs.push({ value: "calls",     label: "Open calls",icon: Search,       count: openCalls.length });
+              if (shows.length)  tabs.push({ value: "shows",  label: "Shows",  icon: CalendarIcon, count: shows.length });
+              if (spaces.length) tabs.push({ value: "spaces", label: "Spaces", icon: Building2,    count: spaces.length });
 
-              const totalCount = shop.length + shows.length + spaces.length + openCalls.length;
+              const totalCount = shows.length + spaces.length;
 
               return (
                 <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
@@ -630,7 +591,7 @@ const ProfileDetailPage = () => {
                       <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{totalCount} total</span>
                     )}
                   </div>
-                  <Tabs defaultValue="drops">
+                  <Tabs defaultValue="launches">
                     <TabsList className="w-full justify-start overflow-x-auto bg-muted/40 p-1 h-auto">
                       {tabs.map(({ value, label, icon: Icon, count }) => (
                         <TabsTrigger key={value} value={value} className="text-xs gap-1.5 data-[state=active]:bg-background">
@@ -641,15 +602,10 @@ const ProfileDetailPage = () => {
                       ))}
                     </TabsList>
 
-                    <TabsContent value="drops" className="mt-3">
+                    <TabsContent value="launches" className="mt-3">
                       <CreatorDropsCatalog creatorId={id!} isOwnProfile={isOwnProfile} />
                     </TabsContent>
 
-                    {shop.length > 0 && (
-                      <TabsContent value="shop" className="mt-3 space-y-2">
-                        {shop.slice(0, 6).map(renderListing)}
-                      </TabsContent>
-                    )}
                     {shows.length > 0 && (
                       <TabsContent value="shows" className="mt-3 space-y-2">
                         {shows.map((e: any) => (
@@ -702,11 +658,6 @@ const ProfileDetailPage = () => {
                             <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
                           </button>
                         ))}
-                      </TabsContent>
-                    )}
-                    {openCalls.length > 0 && (
-                      <TabsContent value="calls" className="mt-3 space-y-2">
-                        {openCalls.slice(0, 6).map(renderListing)}
                       </TabsContent>
                     )}
                   </Tabs>
