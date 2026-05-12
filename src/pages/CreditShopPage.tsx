@@ -27,7 +27,7 @@ import {
 import RewardsExplainerV2 from "@/components/credits/RewardsExplainerV2";
 import VerifiedIPHub from "@/components/credits/VerifiedIPHub";
 import BuyRhozeSection from "@/components/credits/BuyRhozeSection";
-import { RhozeInfoPopover } from "@/components/RhozeInfoPopover";
+
 import { format, formatDistanceToNow } from "date-fns";
 import { Link, useSearchParams } from "react-router-dom";
 import CreatorPassCard from "@/components/creators/CreatorPassCard";
