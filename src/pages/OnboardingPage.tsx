@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft, Sparkles, Palette, Globe, Users, CheckCircle2, MapPin, Flame, Heart } from "lucide-react";
+import { ArrowRight, ArrowLeft, Sparkles, Palette, Globe, Users, CheckCircle2, MapPin, Flame, Heart, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LogoCustomizer } from "@/components/onboarding/LogoCustomizer";
 import { useAuth } from "@/contexts/AuthContext";
