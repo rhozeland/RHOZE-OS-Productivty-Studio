@@ -23,6 +23,7 @@ import {
   CalendarDays,
   Building2,
   Shield,
+  Coins,
   Plus,
 } from "lucide-react";
 import NoteComposer from "@/components/notes/NoteComposer";
@@ -32,7 +33,8 @@ export type StreamPostType =
   | "offering"
   | "event"
   | "space"
-  | "work";
+  | "work"
+  | "launch";
 
 interface TypeMeta {
   key: StreamPostType;
@@ -44,17 +46,25 @@ interface TypeMeta {
   href?: string;
   /** CTA copy when this type is selected */
   cta: string;
+  /** Optional helper line shown when this type is active */
+  hint?: string;
 }
 
 const TYPES: TypeMeta[] = [
-  // "Update" no longer posts to Stream — it now opens the Notes composer
-  // (Instagram-style 60-word, 24h thought bubble shown on the user's avatar
-  // and to their buddies in DMs). The composer handles its own write path.
   { key: "text",     label: "Update",   icon: Flame,         inline: true,  cta: "Leave a note" },
   { key: "offering", label: "Offering", icon: Briefcase,     inline: false, href: "/marketplace?compose=service", cta: "Post Offering" },
   { key: "event",    label: "Event",    icon: CalendarDays,  inline: false, href: "/spaces/events/new",           cta: "Host Event" },
   { key: "space",    label: "Space",    icon: Building2,     inline: false, href: "/studios/apply",               cta: "List Space" },
-  { key: "work",     label: "Work",     icon: Shield,        inline: false, href: "/works",                       cta: "Anchor Work" },
+  { key: "work",     label: "Work",     icon: Shield,        inline: false, href: "/settings#verification",       cta: "Anchor Work" },
+  {
+    key: "launch",
+    label: "Launch",
+    icon: Coins,
+    inline: false,
+    href: "/settings#verification",
+    cta: "Launch a coin",
+    hint: "Pick a Verified IP work to launch a coin off — opens your Verified IP shelf.",
+  },
 ];
 
 interface Props {
