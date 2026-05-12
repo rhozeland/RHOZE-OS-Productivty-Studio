@@ -33,6 +33,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import CreatorPassCard from "@/components/creators/CreatorPassCard";
 import NextStepCard from "@/components/creators/NextStepCard";
 import TierMatrix from "@/components/creators/TierMatrix";
+import TierStripCompact from "@/components/creators/TierStripCompact";
 import TierProgressCard from "@/components/creators/TierProgressCard";
 import CoinPortfolio from "@/components/creators/CoinPortfolio";
 import { StreakCard } from "@/components/creators/StreakCard";
