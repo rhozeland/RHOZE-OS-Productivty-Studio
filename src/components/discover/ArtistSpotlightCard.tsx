@@ -18,6 +18,8 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowUpRight,
   Sparkles,
+  Calendar,
+  MapPin,
   TrendingUp,
   Library,
   type LucideIcon,
@@ -27,6 +29,7 @@ import RegionChip from "@/components/profile/RegionChip";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import { ROLE_BY_ID } from "@/lib/creator-roles";
 import { avatarGradientFor } from "@/lib/avatar-gradient";
+import { format } from "date-fns";
 
 interface Props {
   id: string;
