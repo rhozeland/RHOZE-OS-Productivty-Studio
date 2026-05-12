@@ -191,9 +191,6 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
     </Badge>
   ) : null;
 
-  const youtubeId = item.link_url ? getYouTubeId(item.link_url) : null;
-  const spotifyEmbed = item.link_url ? getSpotifyEmbed(item.link_url) : null;
-  const isSoundCloud = item.link_url?.includes("soundcloud.com");
 
   return (
     <>
