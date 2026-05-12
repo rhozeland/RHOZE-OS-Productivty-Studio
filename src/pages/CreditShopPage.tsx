@@ -123,13 +123,24 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
             <div className="flex items-center gap-2">
               <Star className="h-4 w-4 text-primary" />
               <h3 className="font-display text-base font-semibold text-foreground">All tiers</h3>
+              <span className="text-[10px] text-muted-foreground/70 ml-1">Hover for perks</span>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Hold $RHOZE to climb. Tier upgrades the moment your balance crosses a threshold — no subscriptions.
-            </p>
           </div>
-          <TierMatrix activeTier={currentTier as any} />
+          <TierStripCompact activeTier={currentTier as any} />
           <ActivityPreview userId={user.id} onSeeAll={() => setTab("activity")} />
+
+          {/* Subtle "How rewards work" footer — collapsible */}
+          <details className="group rounded-2xl border border-border/50 bg-card/40 mt-4">
+            <summary className="flex items-center gap-2 px-4 py-3 cursor-pointer list-none text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <HelpCircle className="h-3.5 w-3.5" />
+              <span>How rewards work</span>
+              <span className="ml-auto text-[10px] uppercase tracking-wider opacity-60 group-open:hidden">Open</span>
+              <span className="ml-auto text-[10px] uppercase tracking-wider opacity-60 hidden group-open:inline">Close</span>
+            </summary>
+            <div className="px-4 pb-5 pt-1">
+              <RewardsExplainerV2 />
+            </div>
+          </details>
         </TabsContent>
 
         {/* ═══════ Portfolio ═══════ */}
