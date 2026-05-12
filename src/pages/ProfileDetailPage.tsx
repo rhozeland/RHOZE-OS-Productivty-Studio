@@ -808,7 +808,7 @@ const ProfileDetailPage = () => {
               </div>
             ) : (
               <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-8 text-center text-sm text-muted-foreground">
-                No works posted yet.
+                No drops yet.
               </div>
             )}
           </TabsContent>
