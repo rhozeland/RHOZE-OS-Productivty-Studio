@@ -15,6 +15,7 @@
  * the exact clutter the creator-first refocus is fixing.
  */
 import { Link, useNavigate } from "react-router-dom";
+import { KeyboardEvent as ReactKeyboardEvent } from "react";
 import {
   ArrowUpRight,
   Sparkles,
