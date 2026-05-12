@@ -162,6 +162,10 @@ const DiscoverPage = () => {
   const navigate = useNavigate();
   const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
   const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
+  const creatorFeaturedSlides = useMemo(
+    () => featuredSlides.filter((slide) => slide.kind === "artist"),
+    [featuredSlides],
+  );
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -312,7 +316,7 @@ const DiscoverPage = () => {
           <DiscoverGlobe
             marketFilter={marketFilter}
             onSelectMarket={setMarketFilter}
-            featuredSlides={featuredSlides}
+            featuredSlides={creatorFeaturedSlides}
             height={400}
           />
         </Suspense>
