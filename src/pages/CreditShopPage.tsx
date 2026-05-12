@@ -63,7 +63,8 @@ const CreditShopPage = () => {
 
 const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<typeof useAuth>["user"]> }) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get("tab") || "pass";
+  const rawTab = searchParams.get("tab");
+  const activeTab = rawTab === "tiers" ? "pass" : (rawTab || "pass");
 
   const { data: userCredits } = useQuery({
     queryKey: ["user-credits", user?.id],
@@ -108,14 +109,14 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
       <Tabs value={activeTab} onValueChange={setTab}>
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="pass" className="gap-1.5"><Award className="h-3.5 w-3.5" /> My Pass</TabsTrigger>
-          <TabsTrigger value="tiers" className="gap-1.5"><Star className="h-3.5 w-3.5" /> Tiers</TabsTrigger>
           <TabsTrigger value="portfolio" className="gap-1.5"><Briefcase className="h-3.5 w-3.5" /> Portfolio</TabsTrigger>
           <TabsTrigger value="works" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Verified IP</TabsTrigger>
           <TabsTrigger value="activity" className="gap-1.5"><ActivityIcon className="h-3.5 w-3.5" /> Activity</TabsTrigger>
+          <TabsTrigger value="topup" className="gap-1.5"><Wallet className="h-3.5 w-3.5" /> Top up</TabsTrigger>
           <TabsTrigger value="how" className="gap-1.5"><HelpCircle className="h-3.5 w-3.5" /> How it works</TabsTrigger>
         </TabsList>
 
-        {/* ═══════ My Pass — condensed ═══════ */}
+        {/* ═══════ My Pass — now also surfaces the full tier matrix ═══════ */}
         <TabsContent value="pass" className="mt-4 space-y-4">
           <NextStepCard />
           <CreatorPassCard />
@@ -123,20 +124,17 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
             <TierProgressCard />
             <StreakCard />
           </div>
-          <ActivityPreview userId={user.id} onSeeAll={() => setTab("activity")} />
-        </TabsContent>
-
-        {/* ═══════ Tiers ═══════ */}
-        <TabsContent value="tiers" className="mt-4 space-y-4">
-          <div className="space-y-1.5">
-            <h2 className="font-display text-xl font-bold text-foreground">Tier eligibility</h2>
-            <p className="text-sm text-muted-foreground max-w-2xl">
-              Hold $RHOZE to climb. Tier upgrades the moment your balance crosses
-              a threshold — no subscriptions, no applications.
+          <div className="space-y-2 pt-2">
+            <div className="flex items-center gap-2">
+              <Star className="h-4 w-4 text-primary" />
+              <h3 className="font-display text-base font-semibold text-foreground">All tiers</h3>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Hold $RHOZE to climb. Tier upgrades the moment your balance crosses a threshold — no subscriptions.
             </p>
           </div>
-          <TierProgressCard />
           <TierMatrix activeTier={currentTier as any} />
+          <ActivityPreview userId={user.id} onSeeAll={() => setTab("activity")} />
         </TabsContent>
 
         {/* ═══════ Portfolio ═══════ */}
@@ -155,9 +153,19 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
           <VerifiedIPHub userId={user?.id ?? null} />
         </TabsContent>
 
-        {/* ═══════ Activity (was Purchases) — unified ledger ═══════ */}
+        {/* ═══════ Activity — pure ledger, no buy module ═══════ */}
         <TabsContent value="activity" className="mt-4 space-y-6">
           <ActivityFeed userId={user.id} />
+        </TabsContent>
+
+        {/* ═══════ Top up — buy/swap $RHOZE in its own surface ═══════ */}
+        <TabsContent value="topup" className="mt-4 space-y-6">
+          <div className="space-y-1.5">
+            <h2 className="font-display text-xl font-bold text-foreground">Top up $RHOZE</h2>
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              Buy $RHOZE with card or crypto to unlock tiers, back creators, and trade artist coins.
+            </p>
+          </div>
           <BuyRhozeSection />
         </TabsContent>
 
