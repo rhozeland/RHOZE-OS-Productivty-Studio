@@ -425,34 +425,57 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
               {listing?.title ?? "Listing"}
             </Link>
           </div>
-          <button
-            onClick={() => {
-              setActiveTab("messages");
-              navigate(`/messages?to=${otherUserId}`);
-            }}
-            className="shrink-0 h-9 w-9 rounded-full border border-border hover:border-foreground/40 flex items-center justify-center"
-            title="Open conversation"
-          >
-            <ArrowRight className="h-4 w-4" />
-          </button>
+          <Badge variant="outline" className="shrink-0 text-[10px]">
+            #{inquiry.id.slice(0, 6)}
+          </Badge>
         </div>
         <div className="bg-muted/50 rounded-lg p-3">
           <p className="text-sm text-foreground whitespace-pre-wrap">{inquiry.message}</p>
         </div>
-        {!isSender && inquiry.status === "pending" && (
-          <div className="flex gap-2 pt-1">
-            <Button size="sm" className="gap-1.5 rounded-full" onClick={() => {
-              setConvertDialog(inquiry);
-              setTotalCredits(listing?.credits_price?.toString() ?? "");
-            }}>
-              <FolderKanban className="h-3.5 w-3.5" /> Convert to Project
+
+        {/* Thread actions — every inquiry is its own dedicated thread.
+            "Open chat" carries the inquiry context into the DM banner;
+            "View project" appears once the inquiry has been converted. */}
+        <div className="flex flex-wrap gap-2 pt-1">
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 rounded-full"
+            onClick={() => {
+              setActiveTab("messages");
+              setActiveInquiryId(inquiry.id);
+              navigate(`/messages?to=${otherUserId}&inquiry=${inquiry.id}`);
+            }}
+          >
+            <MessageSquare className="h-3.5 w-3.5" /> Open chat
+          </Button>
+          {inquiry.project_id && (
+            <Button
+              asChild
+              size="sm"
+              variant="outline"
+              className="gap-1.5 rounded-full"
+            >
+              <Link to={`/projects/${inquiry.project_id}`}>
+                <FolderKanban className="h-3.5 w-3.5" /> View project
+              </Link>
             </Button>
-            <Button size="sm" variant="ghost" className="gap-1.5 rounded-full text-muted-foreground"
-              onClick={() => declineMutation.mutate(inquiry.id)} disabled={declineMutation.isPending}>
-              <XCircle className="h-3.5 w-3.5" /> Decline
-            </Button>
-          </div>
-        )}
+          )}
+          {!isSender && inquiry.status === "pending" && !inquiry.project_id && (
+            <>
+              <Button size="sm" className="gap-1.5 rounded-full" onClick={() => {
+                setConvertDialog(inquiry);
+                setTotalCredits(listing?.credits_price?.toString() ?? "");
+              }}>
+                <FolderKanban className="h-3.5 w-3.5" /> Convert to Project
+              </Button>
+              <Button size="sm" variant="ghost" className="gap-1.5 rounded-full text-muted-foreground"
+                onClick={() => declineMutation.mutate(inquiry.id)} disabled={declineMutation.isPending}>
+                <XCircle className="h-3.5 w-3.5" /> Decline
+              </Button>
+            </>
+          )}
+        </div>
       </div>
     );
   };
