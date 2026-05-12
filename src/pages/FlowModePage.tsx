@@ -2195,8 +2195,6 @@ const FlowModePage = () => {
 
                   </>
                 )}
-                {/* Reward nudge — tucked behind a tiny sparkle so it doesn't dominate */}
-                {shareStep === "compose" && false && (
 
                 {shareStep === "confirm" && (
                   <div className="rounded-xl border border-border bg-background/40 p-3 space-y-2">
