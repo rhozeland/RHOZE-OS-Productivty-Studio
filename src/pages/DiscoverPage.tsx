@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import RegionPromptBanner from "@/components/discover/RegionPromptBanner";
 import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import StreamComposer from "@/components/stream/StreamComposer";
-import ConversationsMosaic, { type MosaicKindFilter } from "@/components/hub/ConversationsMosaic";
+// ConversationsMosaic + stream-tab filter retired in v9.3 (creators-only Featured section).
 import CreatorsGrid from "@/components/discover/CreatorsGrid";
 import ArchetypeFilter from "@/components/discover/ArchetypeFilter";
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
