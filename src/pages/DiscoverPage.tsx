@@ -203,6 +203,10 @@ const DiscoverPage = () => {
     setStreamTab(next);
     const params = new URLSearchParams(searchParams);
     params.set("view", next);
+    // Clear category whenever the stream tab changes — categories are
+    // tab-scoped (event categories ≠ space categories).
+    params.delete("category");
+    setCategory(null);
     setSearchParams(params, { replace: true });
   };
 
