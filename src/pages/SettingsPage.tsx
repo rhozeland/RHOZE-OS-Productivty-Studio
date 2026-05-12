@@ -101,6 +101,7 @@ const SettingsPage = () => {
   const [bio, setBio] = useState("");
   const [portfolioUrl, setPortfolioUrl] = useState("");
   const [creatorRoles, setCreatorRoles] = useState<string[]>([]);
+  const [archetype, setArchetype] = useState<Archetype | null>(null);
   const [skillsList, setSkillsList] = useState<string[]>([]);
   const [mediumsList, setMediumsList] = useState<string[]>([]);
   const [location, setLocation] = useState("");
