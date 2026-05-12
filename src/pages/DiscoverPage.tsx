@@ -470,12 +470,35 @@ const DiscoverPage = () => {
         </div>
 
         {streamTab === "creators" ? (
+          <div className="space-y-3">
+            {archetype && (
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-muted-foreground">Filtered by</span>
+                <button
+                  type="button"
+                  onClick={() => handleArchetype(null)}
+                  className="inline-flex items-center gap-1 rounded-full border border-foreground/20 bg-foreground text-background px-2.5 py-1 font-semibold capitalize"
+                >
+                  {archetype}s <X className="h-3 w-3" />
+                </button>
+                <span className="text-muted-foreground">— tap a chip on a card to filter again</span>
+              </div>
+            )}
+            <CreatorsGrid archetype={archetype} onArchetypeClick={handleArchetype} />
+          </div>
+        ) : streamTab === "event" || streamTab === "space" ? (
           <div className="space-y-4">
-            <ArchetypeFilter value={archetype} onChange={handleArchetype} />
-            <CreatorsGrid archetype={archetype} />
+            <StreamCategorySection
+              defs={streamTab === "event" ? EVENT_CATEGORY_DEFS : SPACE_CATEGORY_DEFS}
+              noun={streamTab}
+              activeCategory={category}
+              counts={categoryCounts}
+              onSelect={handleCategory}
+            />
+            <ConversationsMosaic kind={streamTab} category={category} />
           </div>
         ) : (
-          <ConversationsMosaic kind={streamTab === "all" ? "all" : streamTab} />
+          <ConversationsMosaic kind="all" />
         )}
       </section>
 
