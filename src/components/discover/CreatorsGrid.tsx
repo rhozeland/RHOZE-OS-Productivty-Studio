@@ -196,7 +196,7 @@ const CreatorsGrid = ({
               ? p.creator_roles[0]
               : p.headline ?? null;
           const banner =
-            p.banner_gradient || archetypeBannerGradient(p.archetype, p.user_id);
+            p.banner_gradient || archetypeBannerGradient(p.archetype as Archetype | null, p.user_id);
 
           return (
             <motion.div
