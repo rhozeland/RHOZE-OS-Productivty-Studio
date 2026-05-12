@@ -731,6 +731,13 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                     </div>
                   </div>
 
+                  {activeInquiryId && (
+                    <InquiryThreadBanner
+                      inquiryId={activeInquiryId}
+                      onDismiss={() => setActiveInquiryId(null)}
+                    />
+                  )}
+
                   <ScrollArea className="flex-1 p-6">
                     <div className="space-y-4">
                       {messages?.map((msg) => {
