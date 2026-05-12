@@ -801,28 +801,56 @@ const SettingsPage = () => {
     </form>
   );
 
-  const renderNotifications = () => (
-    <div className="space-y-4">
-      <p className="text-xs text-muted-foreground mb-2">Choose which email notifications you'd like to receive</p>
-      {[
-        { label: "New Messages", desc: "When someone sends you a message", value: notifMessages, set: setNotifMessages },
-        { label: "Inquiries", desc: "When you receive a new inquiry on a listing", value: notifInquiries, set: setNotifInquiries },
-        { label: "Purchases", desc: "When someone buys your listing", value: notifPurchases, set: setNotifPurchases },
-        { label: "Reviews", desc: "When someone leaves a review", value: notifReviews, set: setNotifReviews },
-      ].map((item) => (
-        <div key={item.label} className="flex items-center justify-between">
+  const renderNotifications = () => {
+    const allOff = !notifMessages && !notifInquiries && !notifPurchases && !notifReviews;
+    const setAll = (on: boolean) => {
+      setNotifMessages(on); setNotifInquiries(on); setNotifPurchases(on); setNotifReviews(on);
+      // Persist immediately — no save button needed for toggles.
+      supabase.from("profiles").update({
+        email_notif_messages: on,
+        email_notif_inquiries: on,
+        email_notif_purchases: on,
+        email_notif_reviews: on,
+      } as any).eq("user_id", user!.id).then(() => {
+        queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+        toast.success(on ? "All emails on" : "All emails paused");
+      });
+    };
+    const persist = (patch: Record<string, boolean>) => {
+      supabase.from("profiles").update(patch as any).eq("user_id", user!.id).then(() => {
+        queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      });
+    };
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
           <div>
-            <p className="text-sm font-medium text-foreground">{item.label}</p>
-            <p className="text-xs text-muted-foreground">{item.desc}</p>
+            <p className="text-sm font-medium text-foreground">Pause all email</p>
+            <p className="text-xs text-muted-foreground">Master switch — flips every email off in one tap.</p>
           </div>
-          <Switch checked={item.value} onCheckedChange={item.set} />
+          <Switch checked={allOff} onCheckedChange={(checked) => setAll(!checked)} />
         </div>
-      ))}
-      <Button variant="outline" size="sm" onClick={() => updateNotifications.mutate()} disabled={updateNotifications.isPending}>
-        {updateNotifications.isPending ? "Saving..." : "Save Preferences"}
-      </Button>
-    </div>
-  );
+        {[
+          { label: "New Messages",  desc: "When someone sends you a message",            value: notifMessages,  set: setNotifMessages,  col: "email_notif_messages" },
+          { label: "Inquiries",     desc: "When you receive a new inquiry on a listing", value: notifInquiries, set: setNotifInquiries, col: "email_notif_inquiries" },
+          { label: "Purchases",     desc: "When someone buys your listing",              value: notifPurchases, set: setNotifPurchases, col: "email_notif_purchases" },
+          { label: "Reviews",       desc: "When someone leaves a review",                value: notifReviews,   set: setNotifReviews,   col: "email_notif_reviews" },
+        ].map((item) => (
+          <div key={item.label} className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-foreground">{item.label}</p>
+              <p className="text-xs text-muted-foreground">{item.desc}</p>
+            </div>
+            <Switch
+              checked={item.value}
+              onCheckedChange={(v) => { item.set(v); persist({ [item.col]: v }); }}
+            />
+          </div>
+        ))}
+        <p className="text-[11px] text-muted-foreground pt-1">Changes save automatically.</p>
+      </div>
+    );
+  };
 
   const renderSecurity = () => (
     <div className="space-y-8">
