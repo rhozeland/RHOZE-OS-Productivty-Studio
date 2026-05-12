@@ -32,6 +32,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { REGIONS } from "@/lib/regions";
 import { RolePicker, SkillPicker } from "@/components/profile/RolePicker";
+import ArchetypePicker from "@/components/profile/ArchetypePicker";
+import type { Archetype } from "@/lib/archetypes";
 
 /* ─── Section nav items ─── */
 const SECTIONS = [
