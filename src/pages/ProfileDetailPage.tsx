@@ -311,7 +311,7 @@ const ProfileDetailPage = () => {
   const p = profile as any;
   const initials = (p.display_name || p.username || "?").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
   const profileBg = p.profile_background;
-  const bannerGradient = p.banner_gradient || "linear-gradient(135deg, hsl(220,15%,40%), hsl(220,10%,55%), hsl(175,30%,65%))";
+  const bannerGradient = p.banner_gradient || archetypeBannerGradient(p.archetype, p.user_id);
   const bannerImageUrl = p.banner_url;
   const hasSellerContent = (sellerListings?.length ?? 0) > 0;
 
