@@ -187,16 +187,16 @@ const DiscoverPage = () => {
     });
   };
   // ─── Archetype filter (Artist · Builder · Influencer) ───────────
-  // Only meaningful on the Creators feed — preserved as ?archetype= in URL.
-  const initialArchetype = (searchParams.get("archetype") as any) || "all";
-  const [archetype, setArchetype] = useState<import("@/lib/archetypes").Archetype | "all">(
-    ["artist", "builder", "influencer"].includes(initialArchetype) ? initialArchetype : "all",
+  // The umbrella "All" pill was retired — the three branches *are* the filter.
+  // Default to Artist; URL still preserved as ?archetype=.
+  const initialArchetype = (searchParams.get("archetype") as any) || "artist";
+  const [archetype, setArchetype] = useState<import("@/lib/archetypes").Archetype>(
+    ["artist", "builder", "influencer"].includes(initialArchetype) ? initialArchetype : "artist",
   );
-  const handleArchetype = (next: import("@/lib/archetypes").Archetype | "all") => {
+  const handleArchetype = (next: import("@/lib/archetypes").Archetype) => {
     setArchetype(next);
     const params = new URLSearchParams(searchParams);
-    if (next === "all") params.delete("archetype");
-    else params.set("archetype", next);
+    params.set("archetype", next);
     setSearchParams(params, { replace: true });
   };
   const mosaicKind: MosaicKindFilter =
