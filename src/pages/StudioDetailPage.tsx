@@ -82,24 +82,6 @@ const StudioDetailPage = () => {
     enabled: !!id,
   });
 
-  // Coin drops attached to this space (any creator can drop a coin here in
-  // future; today we surface all coins where space_id matches OR — for back-
-  // compat with legacy data — the studio owner is the creator).
-  const { data: spaceCoins, refetch: refetchSpaceCoins } = useQuery({
-    queryKey: ["studio-detail-coins", id, studio?.owner_id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("coin_launches")
-        .select("id, name, ticker, image_url, status, mint_address, virtual_sol_reserves, virtual_token_reserves, total_supply, space_id")
-        .or(`space_id.eq.${id},and(space_id.is.null,creator_id.eq.${studio!.owner_id})`)
-        .neq("status", "cancelled")
-        .order("created_at", { ascending: false })
-        .limit(8);
-      return (data as any[]) ?? [];
-    },
-    enabled: !!studio?.owner_id && !!id,
-  });
-
   const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
   if (isLoading) {
