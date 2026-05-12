@@ -199,17 +199,6 @@ const DiscoverPage = () => {
   const [streamTab, setStreamTab] = useState<StreamTab>(
     ["all", "creators", "event", "space"].includes(initialTab) ? initialTab : "all",
   );
-  const handleStreamTab = (next: StreamTab) => {
-    setStreamTab(next);
-    const params = new URLSearchParams(searchParams);
-    params.set("view", next);
-    // Clear category whenever the stream tab changes — categories are
-    // tab-scoped (event categories ≠ space categories).
-    params.delete("category");
-    setCategory(null);
-    setSearchParams(params, { replace: true });
-  };
-
   // Optional archetype filter — applied only when user clicks an archetype
   // chip on a creator tile. Default null = show all creators across branches.
   const initialArchetype = searchParams.get("archetype");
@@ -236,6 +225,16 @@ const DiscoverPage = () => {
     const params = new URLSearchParams(searchParams);
     if (next) params.set("category", next);
     else params.delete("category");
+    setSearchParams(params, { replace: true });
+  };
+
+  const handleStreamTab = (next: StreamTab) => {
+    setStreamTab(next);
+    const params = new URLSearchParams(searchParams);
+    params.set("view", next);
+    // Categories are tab-scoped — clear when switching tabs.
+    params.delete("category");
+    setCategory(null);
     setSearchParams(params, { replace: true });
   };
 
