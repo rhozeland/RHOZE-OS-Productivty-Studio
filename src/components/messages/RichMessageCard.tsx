@@ -300,7 +300,7 @@ const RichMessageCard = ({ content, isMine, timestamp, formatTime, messageId, se
     const Wrapper: any = isExternal ? "a" : Link;
     const wrapperProps = isExternal
       ? { href, target: "_blank", rel: "noopener noreferrer" }
-      : { to: href };
+      : { to: href, state: { from: location.pathname + location.search + location.hash } };
 
     return (
       <Wrapper {...wrapperProps} className="block">
