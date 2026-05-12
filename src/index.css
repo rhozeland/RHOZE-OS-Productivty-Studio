@@ -99,6 +99,11 @@
     --orange: 30 80% 50%;
     --blue: 210 80% 55%;
 
+    /* Creator archetypes — slightly brighter on dark for legibility */
+    --archetype-artist: 330 85% 68%;
+    --archetype-builder: 230 90% 72%;
+    --archetype-influencer: 36 95% 62%;
+
     --gradient-hero: linear-gradient(135deg, hsl(280 50% 25%), hsl(320 50% 20%), hsl(30 50% 20%), hsl(175 40% 20%));
     --gradient-hero-accent: linear-gradient(135deg, hsl(280 50% 40%), hsl(320 50% 35%));
 
