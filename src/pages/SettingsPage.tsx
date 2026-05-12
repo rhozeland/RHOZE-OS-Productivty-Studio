@@ -587,18 +587,21 @@ const SettingsPage = () => {
   );
 
   const renderBanner = () => (
-    <div className="space-y-6">
-      {/* Banner */}
-      <div>
-        <h3 className="text-sm font-semibold text-foreground mb-3">Profile Banner</h3>
-        <p className="text-xs text-muted-foreground mb-3">Upload a custom banner image or choose a gradient. Recommended: 1200×400px.</p>
+    <Tabs defaultValue="banner" className="w-full">
+      <TabsList className="grid w-full grid-cols-2 max-w-xs">
+        <TabsTrigger value="banner">Profile Banner</TabsTrigger>
+        <TabsTrigger value="background">Page Background</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="banner" className="mt-4 space-y-4">
+        <p className="text-xs text-muted-foreground">Upload a custom banner image or choose a gradient. Recommended: 1200×400px.</p>
         <div
-          className="h-20 rounded-xl mb-4 border border-border overflow-hidden"
+          className="h-20 rounded-xl border border-border overflow-hidden"
           style={{ background: bannerGradient || "linear-gradient(135deg, hsl(var(--primary) / 0.3), hsl(var(--accent) / 0.2), hsl(var(--primary) / 0.1))" }}
         >
           {bannerImageUrl && <img src={bannerImageUrl} alt="Banner" className="w-full h-full object-cover" />}
         </div>
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" onClick={() => bannerFileRef.current?.click()} disabled={uploadingBanner}>
             <Upload className="mr-2 h-4 w-4" />
             {uploadingBanner ? "Uploading..." : "Upload Image"}
@@ -619,8 +622,8 @@ const SettingsPage = () => {
             e.target.value = "";
           }} />
         </div>
-        <Separator className="my-3" />
-        <p className="text-xs text-muted-foreground mb-3">Or pick a gradient (used when no image is set)</p>
+        <Separator />
+        <p className="text-xs text-muted-foreground">Or pick a gradient (used when no image is set)</p>
         <div className="grid grid-cols-5 gap-2">
           {BANNER_GRADIENTS.map((g) => (
             <button
@@ -645,7 +648,7 @@ const SettingsPage = () => {
           ))}
         </div>
         {bannerGradient && (
-          <Button variant="ghost" size="sm" className="mt-3 text-xs" onClick={async () => {
+          <Button variant="ghost" size="sm" className="text-xs" onClick={async () => {
             setBannerGradient("");
             await supabase.from("profiles").update({ banner_gradient: null } as any).eq("user_id", user!.id);
             queryClient.invalidateQueries({ queryKey: ["my-profile"] });
@@ -654,16 +657,12 @@ const SettingsPage = () => {
             <X className="mr-1 h-3 w-3" /> Reset to default
           </Button>
         )}
-      </div>
+      </TabsContent>
 
-      <Separator />
-
-      {/* Page Background */}
-      <div>
-        <h3 className="text-sm font-semibold text-foreground mb-3">Profile Page Background</h3>
-        <p className="text-xs text-muted-foreground mb-3">Set a full-page background for your public profile</p>
+      <TabsContent value="background" className="mt-4 space-y-4">
+        <p className="text-xs text-muted-foreground">Set a full-page background for your public profile</p>
         <div
-          className="h-16 rounded-xl mb-4 border border-border flex items-center justify-center"
+          className="h-16 rounded-xl border border-border flex items-center justify-center"
           style={{ background: profileBackground || "hsl(var(--background))" }}
         >
           <span className="text-[10px] text-muted-foreground/60 font-medium tracking-wide">Preview</span>
@@ -691,8 +690,8 @@ const SettingsPage = () => {
             </button>
           ))}
         </div>
-      </div>
-    </div>
+      </TabsContent>
+    </Tabs>
   );
 
   const renderWallet = () => (
