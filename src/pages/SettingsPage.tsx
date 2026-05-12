@@ -251,6 +251,7 @@ const SettingsPage = () => {
         headline, bio,
         portfolio_url: portfolioUrl || null,
         creator_roles: creatorRoles,
+        archetype,
         skills: skillsList,
         mediums: mediumsList,
         location: location || null,
