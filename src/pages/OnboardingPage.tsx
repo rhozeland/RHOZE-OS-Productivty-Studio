@@ -135,13 +135,8 @@ const OnboardingPage = () => {
         ))}
       </div>
 
-      {/* Skip button */}
-      <button
-        onClick={() => navigate("/discover", { replace: true })}
-        className="fixed top-6 right-6 z-20 text-xs text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Skip for now
-      </button>
+      {/* No skip — avatar, region, archetype, and bio are required so the
+          Discover grid doesn't fill up with blank default profiles. */}
 
       <div className="relative z-10 w-full max-w-lg mx-4">
         <AnimatePresence mode="wait">
