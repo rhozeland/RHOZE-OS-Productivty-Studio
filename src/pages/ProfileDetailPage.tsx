@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Globe, CheckCircle, UserPlus, UserCheck, MessageSquare, MapPin, Clock,
@@ -60,19 +61,19 @@ const ProfileDetailPage = () => {
   const { data: profileNote } = useUserNote(id);
   
 
-  // v9 tabs: Support (default) · Works · About.
-  // Legacy ?tab=coin, ?tab=building → support. ?tab=overview → about.
+  // v9.4 tabs: Support (default) · Works. About retired — bio + details inline in header.
+  // On-chain reputation lives inside Support behind a collapsible "Verify" toggle.
+  // Legacy ?tab=coin/building/about/overview → support.
   const rawTab = searchParams.get("tab") || "support";
   const tabFromUrl =
-    rawTab === "coin" || rawTab === "building"
+    rawTab === "coin" || rawTab === "building" || rawTab === "about" || rawTab === "overview"
       ? "support"
-      : rawTab === "overview"
-      ? "about"
       : rawTab;
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [investOpen, setInvestOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(searchParams.get("back") === "1");
+  const [reputationOpen, setReputationOpen] = useState(false);
 
   // Strip `?back=1` from the URL once we've consumed it so refreshes don't
   // re-open the sheet after the user closes it.
@@ -412,18 +413,65 @@ const ProfileDetailPage = () => {
                 {p.location && (
                   <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {p.location}</span>
                 )}
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" /> Joined {format(new Date(profile.created_at), "MMM yyyy")}
+                </span>
+                {hasSellerContent && (
+                  <span className="flex items-center gap-1">
+                    <Store className="h-3 w-3" /> Active seller
+                  </span>
+                )}
                 {totalProofs > 0 && (
                   <span className="flex items-center gap-1">
                     <Shield className="h-3 w-3 text-primary" />
                     {anchoredCount > 0 ? `${anchoredCount} verified earnings` : `${totalProofs} earnings`}
                   </span>
                 )}
-                {hasSellerContent && (
-                  <span className="flex items-center gap-1">
-                    <Sparkles className="h-3 w-3" /> {sellerListings?.length ?? 0} listings
-                  </span>
-                )}
               </div>
+
+              {/* Bio inline — moved out of About tab so it lives in the header */}
+              {profile.bio && (
+                <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-wrap pt-1">
+                  {profile.bio}
+                </p>
+              )}
+
+              {/* Compact details row — portfolio + socials, no separate card */}
+              {(profile.portfolio_url || p.instagram_url || p.tiktok_url || p.twitter_url || p.youtube_url) && (
+                <div className="flex items-center gap-2 flex-wrap pt-1">
+                  {profile.portfolio_url && (
+                    <a href={profile.portfolio_url} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline">
+                      <Globe className="h-3.5 w-3.5" /> Portfolio
+                      <ExternalLink className="h-3 w-3 opacity-60" />
+                    </a>
+                  )}
+                  {(p.instagram_url || p.tiktok_url || p.twitter_url || p.youtube_url) && profile.portfolio_url && (
+                    <span className="text-muted-foreground/40">·</span>
+                  )}
+                  <div className="flex items-center gap-1">
+                    {p.instagram_url && (
+                      <a href={p.instagram_url} target="_blank" rel="noopener" className="p-1.5 rounded-md hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors" title="Instagram">
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                      </a>
+                    )}
+                    {p.tiktok_url && (
+                      <a href={p.tiktok_url} target="_blank" rel="noopener" className="p-1.5 rounded-md hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors" title="TikTok">
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.8a8.23 8.23 0 004.77 1.52V6.85a4.86 4.86 0 01-1-.16z"/></svg>
+                      </a>
+                    )}
+                    {p.twitter_url && (
+                      <a href={p.twitter_url} target="_blank" rel="noopener" className="p-1.5 rounded-md hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors" title="X">
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                      </a>
+                    )}
+                    {p.youtube_url && (
+                      <a href={p.youtube_url} target="_blank" rel="noopener" className="p-1.5 rounded-md hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors" title="YouTube">
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Action buttons for visitors */}
@@ -471,171 +519,10 @@ const ProfileDetailPage = () => {
 
         {/* ─── Tabbed sections ─── */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="w-full grid grid-cols-3 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
+          <TabsList className="w-full grid grid-cols-2 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
             <TabsTrigger value="support" className="text-xs gap-1.5"><Heart className="h-3 w-3" />Support</TabsTrigger>
             <TabsTrigger value="works" className="text-xs gap-1.5"><Sparkles className="h-3 w-3" />Works</TabsTrigger>
-            <TabsTrigger value="about" className="text-xs gap-1.5"><UserIcon className="h-3 w-3" />About</TabsTrigger>
           </TabsList>
-
-          {/* ─── About tab (formerly Overview) ─── */}
-          <TabsContent value="about" className="space-y-5 mt-5">
-        {/* ─── About + Details ─── */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-2 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5 space-y-4">
-            <h2 className="font-display text-lg font-semibold text-foreground">About</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-              {profile.bio || "This creator hasn't added a bio yet."}
-            </p>
-            {profile.skills && profile.skills.length > 0 && (
-              <div>
-                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">Skills</h3>
-                <div className="flex flex-wrap gap-1.5">
-                  {profile.skills.map((skill: string) => <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>)}
-                </div>
-              </div>
-            )}
-            {p.mediums && p.mediums.length > 0 && (
-              <div>
-                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">Mediums</h3>
-                <div className="flex flex-wrap gap-1.5">
-                  {p.mediums.map((medium: string) => <Badge key={medium} variant="outline" className="text-xs">{medium}</Badge>)}
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5 space-y-3">
-            <h2 className="font-display text-lg font-semibold text-foreground">Details</h2>
-            {profile.portfolio_url && (
-              <a href={profile.portfolio_url} target="_blank" rel="noopener" className="flex items-center gap-2 text-sm text-primary hover:underline">
-                <Globe className="h-4 w-4" /> Portfolio <ExternalLink className="h-3 w-3 opacity-50" />
-              </a>
-            )}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Clock className="h-4 w-4" /> Joined {format(new Date(profile.created_at), "MMMM yyyy")}
-            </div>
-            {hasSellerContent && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground"><Store className="h-4 w-4" /> Active seller</div>
-            )}
-            {(p.instagram_url || p.tiktok_url || p.twitter_url || p.youtube_url) && (
-              <div className="pt-2 border-t border-border/50">
-                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">Socials</h3>
-                <div className="flex items-center gap-2">
-                  {p.instagram_url && (
-                    <a href={p.instagram_url} target="_blank" rel="noopener" className="p-2 rounded-lg hover:bg-muted/60 transition-colors text-muted-foreground hover:text-foreground" title="Instagram">
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
-                    </a>
-                  )}
-                  {p.tiktok_url && (
-                    <a href={p.tiktok_url} target="_blank" rel="noopener" className="p-2 rounded-lg hover:bg-muted/60 transition-colors text-muted-foreground hover:text-foreground" title="TikTok">
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.8a8.23 8.23 0 004.77 1.52V6.85a4.86 4.86 0 01-1-.16z"/></svg>
-                    </a>
-                  )}
-                  {p.twitter_url && (
-                    <a href={p.twitter_url} target="_blank" rel="noopener" className="p-2 rounded-lg hover:bg-muted/60 transition-colors text-muted-foreground hover:text-foreground" title="X">
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                    </a>
-                  )}
-                  {p.youtube_url && (
-                    <a href={p.youtube_url} target="_blank" rel="noopener" className="p-2 rounded-lg hover:bg-muted/60 transition-colors text-muted-foreground hover:text-foreground" title="YouTube">
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </motion.div>
-
-        {/* ─── On-Chain Reputation (Investor Signal + proofs) ─── */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.4 }}
-          className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Award className="h-5 w-5 text-primary" />
-              <h2 className="font-display text-base font-semibold text-foreground">On-Chain Reputation</h2>
-            </div>
-            {totalProofs > 0 && (
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="font-mono text-[10px]">
-                  {anchoredCount}/{totalProofs} verified
-                </Badge>
-                {isOwnProfile && anchoredCount < totalProofs && (
-                  <AnchorButton proofs={proofs!} />
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Investor signal — full readiness card (moved from Coin tab) */}
-          <CreatorReadinessCard creatorId={id!} memberSince={p.created_at} />
-
-          {totalProofs > 0 && (
-            <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
-              <div className="grid grid-cols-3 gap-3">
-                {Object.entries(
-                  proofs!.reduce<Record<string, number>>((acc, pr) => {
-                    acc[pr.action_type] = (acc[pr.action_type] || 0) + 1;
-                    return acc;
-                  }, {})
-                ).sort(([, a], [, b]) => b - a).slice(0, 3).map(([type, count]) => {
-                  const meta = PROOF_TYPE_META[type] ?? {
-                    label: type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-                    href: null as string | null,
-                  };
-                  const inner = (
-                    <>
-                      <p className="text-2xl font-bold text-foreground">{count}</p>
-                      <p className="text-xs text-muted-foreground">{meta.label}</p>
-                    </>
-                  );
-                  return meta.href ? (
-                    <Link
-                      key={type}
-                      to={meta.href}
-                      className="rounded-lg border border-border bg-muted/30 p-3 text-center transition-colors hover:bg-muted/60 hover:border-border/80"
-                    >
-                      {inner}
-                    </Link>
-                  ) : (
-                    <div key={type} className="rounded-lg border border-border bg-muted/30 p-3 text-center">
-                      {inner}
-                    </div>
-                  );
-                })}
-              </div>
-              {anchoredCount > 0 && (
-                <p className="text-xs text-muted-foreground text-center mt-3 flex items-center justify-center gap-1">
-                  <ExternalLink className="h-3 w-3" />
-                  Independently verifiable on the public ledger
-                </p>
-              )}
-            </div>
-          )}
-        </motion.div>
-
-        {/* Ratings inside Overview */}
-        {reviewStats && reviewStats.count > 0 && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.4 }}
-            className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
-            <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2 mb-3">
-              <Star className="h-4 w-4 text-amber-400" /> Ratings
-            </h2>
-            <div className="flex items-center gap-4">
-              <div className="text-center">
-                <p className="text-4xl font-bold text-foreground">{reviewStats.avg}</p>
-                <div className="flex items-center gap-0.5 mt-1">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <Star key={s} className={cn("h-4 w-4", s <= Math.round(reviewStats.avg) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30")} />
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">{reviewStats.count} rating{reviewStats.count !== 1 ? "s" : ""}</p>
-              </div>
-            </div>
-          </motion.div>
-        )}
-          </TabsContent>
 
           {/* ─── Support tab — back this artist (actions + token) ─── */}
           <TabsContent value="support" className="mt-5 space-y-4">
@@ -679,62 +566,13 @@ const ProfileDetailPage = () => {
               </motion.div>
             )}
 
-            {/* ─── Drops catalog — every coin this creator has launched ─── */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 px-1">
-                <Coins className="h-4 w-4 text-primary" />
-                <h3 className="font-display text-sm font-semibold text-foreground">
-                  {isOwnProfile ? "Your drops" : `${p.display_name || p.username || "Artist"}'s drops`}
-                </h3>
-              </div>
-              <CreatorDropsCatalog creatorId={id!} isOwnProfile={isOwnProfile} />
-            </div>
-
-            {/* Lightweight follow/message row (booking is now inside the Back-them sheet) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              {!isOwnProfile && (
-                <button
-                  onClick={() => user ? followMutation.mutate() : navigate("/auth")}
-                  disabled={followMutation.isPending}
-                  className="group text-left rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-4 hover:border-foreground/30 transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        {isFollowing ? <UserCheck className="h-4 w-4 text-primary" /> : <UserPlus className="h-4 w-4 text-primary" />}
-                        <p className="text-sm font-semibold text-foreground">{isFollowing ? "Following" : "Follow"}</p>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">Free. You'll see their next move first.</p>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </button>
-              )}
-
-              {!isOwnProfile && (
-                <button
-                  onClick={() => user ? navigate(`/messages?to=${id}`) : navigate("/auth")}
-                  className="group text-left rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-4 hover:border-foreground/30 transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <MessageSquare className="h-4 w-4 text-primary" />
-                        <p className="text-sm font-semibold text-foreground">Send a message</p>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">Hire, collab, or just say hi.</p>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </button>
-              )}
-            </div>
-
-            {/* Ways to support — merch/offerings + open calls + shows + spaces in one place */}
+            {/* ─── Ways to support — drops + shop + shows + spaces + open calls in one place ─── */}
             {(() => {
-              const listings = sellerListings ?? [];
-              const shows    = upcomingEvents ?? [];
-              const spaces   = hostedSpaces ?? [];
+              const allListings = sellerListings ?? [];
+              const shop       = allListings.filter((l: any) => l.listing_type !== "project_request");
+              const openCalls  = allListings.filter((l: any) => l.listing_type === "project_request");
+              const shows      = upcomingEvents ?? [];
+              const spaces     = hostedSpaces ?? [];
 
               const renderListing = (listing: any) => {
                 const isRequest = listing.listing_type === "project_request";
@@ -755,9 +593,6 @@ const ProfileDetailPage = () => {
                       {isRequest ? <Search className="h-5 w-5" /> : <ShoppingBag className="h-5 w-5" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <Badge variant="outline" className="text-[9px] capitalize mb-0.5">
-                        {isRequest ? "Open call" : listing.category || "Offering"}
-                      </Badge>
                       <p className="text-sm font-medium text-foreground truncate">{listing.title}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         {listing.credits_price && (
@@ -773,19 +608,16 @@ const ProfileDetailPage = () => {
                 );
               };
 
-              const totalCount = listings.length + shows.length + spaces.length;
-              if (totalCount === 0) {
-                return isOwnProfile ? (
-                  <div className="rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
-                    Add an offering or post an event so people have something to back.
-                  </div>
-                ) : null;
-              }
+              const tabs: { value: string; label: string; icon: any; count: number | null }[] = [
+                // Drops always shown — the catalog handles its own empty state for the owner.
+                { value: "drops",     label: "Drops", icon: Coins,        count: null },
+              ];
+              if (shop.length)      tabs.push({ value: "shop",      label: "Shop",      icon: ShoppingBag, count: shop.length });
+              if (shows.length)     tabs.push({ value: "shows",     label: "Shows",     icon: CalendarIcon, count: shows.length });
+              if (spaces.length)    tabs.push({ value: "spaces",    label: "Spaces",    icon: Building2,    count: spaces.length });
+              if (openCalls.length) tabs.push({ value: "calls",     label: "Open calls",icon: Search,       count: openCalls.length });
 
-              const tabs: { value: string; label: string; icon: any; count: number }[] = [];
-              if (listings.length) tabs.push({ value: "offerings", label: "Offerings", icon: ShoppingBag, count: listings.length });
-              if (shows.length)    tabs.push({ value: "shows",     label: "Shows",     icon: CalendarIcon, count: shows.length });
-              if (spaces.length)   tabs.push({ value: "spaces",    label: "Spaces",    icon: Building2,    count: spaces.length });
+              const totalCount = shop.length + shows.length + spaces.length + openCalls.length;
 
               return (
                 <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
@@ -793,22 +625,28 @@ const ProfileDetailPage = () => {
                     <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
                       <Heart className="h-4 w-4 text-primary" /> Ways to support
                     </h3>
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{totalCount} total</span>
+                    {totalCount > 0 && (
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{totalCount} total</span>
+                    )}
                   </div>
-                  <Tabs defaultValue={tabs[0].value}>
+                  <Tabs defaultValue="drops">
                     <TabsList className="w-full justify-start overflow-x-auto bg-muted/40 p-1 h-auto">
                       {tabs.map(({ value, label, icon: Icon, count }) => (
                         <TabsTrigger key={value} value={value} className="text-xs gap-1.5 data-[state=active]:bg-background">
                           <Icon className="h-3 w-3" />
                           {label}
-                          <span className="text-[9px] text-muted-foreground">{count}</span>
+                          {count !== null && <span className="text-[9px] text-muted-foreground">{count}</span>}
                         </TabsTrigger>
                       ))}
                     </TabsList>
 
-                    {listings.length > 0 && (
-                      <TabsContent value="offerings" className="mt-3 space-y-2">
-                        {listings.slice(0, 6).map(renderListing)}
+                    <TabsContent value="drops" className="mt-3">
+                      <CreatorDropsCatalog creatorId={id!} isOwnProfile={isOwnProfile} />
+                    </TabsContent>
+
+                    {shop.length > 0 && (
+                      <TabsContent value="shop" className="mt-3 space-y-2">
+                        {shop.slice(0, 6).map(renderListing)}
                       </TabsContent>
                     )}
                     {shows.length > 0 && (
@@ -865,10 +703,107 @@ const ProfileDetailPage = () => {
                         ))}
                       </TabsContent>
                     )}
+                    {openCalls.length > 0 && (
+                      <TabsContent value="calls" className="mt-3 space-y-2">
+                        {openCalls.slice(0, 6).map(renderListing)}
+                      </TabsContent>
+                    )}
                   </Tabs>
                 </div>
               );
             })()}
+
+            {/* ─── On-Chain Reputation — collapsible "verify this creator" panel ─── */}
+            <Collapsible open={reputationOpen} onOpenChange={setReputationOpen}>
+              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden">
+                <CollapsibleTrigger asChild>
+                  <button className="w-full flex items-center justify-between gap-3 p-4 hover:bg-muted/30 transition-colors text-left">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <Award className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-display text-sm font-semibold text-foreground">
+                          Verify this creator
+                        </p>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          On-chain reputation, investor signal & proof of work.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {totalProofs > 0 && (
+                        <Badge variant="secondary" className="font-mono text-[10px]">
+                          {anchoredCount}/{totalProofs}
+                        </Badge>
+                      )}
+                      <ArrowRight className={cn("h-4 w-4 text-muted-foreground transition-transform", reputationOpen && "rotate-90")} />
+                    </div>
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="px-4 pb-4 space-y-4">
+                  {isOwnProfile && totalProofs > 0 && anchoredCount < totalProofs && (
+                    <div className="flex justify-end">
+                      <AnchorButton proofs={proofs!} />
+                    </div>
+                  )}
+                  <CreatorReadinessCard creatorId={id!} memberSince={p.created_at} />
+                  {totalProofs > 0 && (
+                    <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
+                      <div className="grid grid-cols-3 gap-3">
+                        {Object.entries(
+                          proofs!.reduce<Record<string, number>>((acc, pr) => {
+                            acc[pr.action_type] = (acc[pr.action_type] || 0) + 1;
+                            return acc;
+                          }, {})
+                        ).sort(([, a], [, b]) => b - a).slice(0, 3).map(([type, count]) => {
+                          const meta = PROOF_TYPE_META[type] ?? {
+                            label: type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+                            href: null as string | null,
+                          };
+                          const inner = (
+                            <>
+                              <p className="text-2xl font-bold text-foreground">{count}</p>
+                              <p className="text-xs text-muted-foreground">{meta.label}</p>
+                            </>
+                          );
+                          return meta.href ? (
+                            <Link key={type} to={meta.href} className="rounded-lg border border-border bg-card/50 p-3 text-center transition-colors hover:bg-muted/60">
+                              {inner}
+                            </Link>
+                          ) : (
+                            <div key={type} className="rounded-lg border border-border bg-card/50 p-3 text-center">
+                              {inner}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {anchoredCount > 0 && (
+                        <p className="text-xs text-muted-foreground text-center mt-3 flex items-center justify-center gap-1">
+                          <ExternalLink className="h-3 w-3" />
+                          Independently verifiable on the public ledger
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {reviewStats && reviewStats.count > 0 && (
+                    <div className="rounded-xl border border-border/50 bg-muted/20 p-4 flex items-center gap-4">
+                      <div className="text-center">
+                        <p className="text-3xl font-bold text-foreground">{reviewStats.avg}</p>
+                        <div className="flex items-center gap-0.5 mt-1 justify-center">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star key={s} className={cn("h-3.5 w-3.5", s <= Math.round(reviewStats.avg) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30")} />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {reviewStats.count} rating{reviewStats.count !== 1 ? "s" : ""} from clients & collaborators.
+                      </p>
+                    </div>
+                  )}
+                </CollapsibleContent>
+              </div>
+            </Collapsible>
           </TabsContent>
 
           {/* ─── Works (Posts) tab ─── */}
