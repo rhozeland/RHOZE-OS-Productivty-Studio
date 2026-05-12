@@ -93,19 +93,11 @@ const CreatorDropsCatalog = ({ creatorId, isOwnProfile }: Props) => {
 
   return (
     <div className="space-y-3">
-      {isOwnProfile && isVerified && (
-        <div className="flex justify-end">
-          <Button size="sm" variant="outline" onClick={() => setOpen(true)} className="gap-2">
-            <Sparkles className="h-4 w-4" /> Launch another drop
-          </Button>
-        </div>
-      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {drops.map((c) => (
           <DropCoinCard key={c.id} coin={c as DropCoin} />
         ))}
       </div>
-      {isOwnProfile && isVerified && launchDialog}
     </div>
   );
 };
