@@ -375,6 +375,13 @@ const SettingsPage = () => {
         </div>
       </div>
       <div className="space-y-2">
+        <Label>Creator type <span className="text-destructive">*</span></Label>
+        <p className="text-[11px] text-muted-foreground">
+          Required — everyone's a creator. Pick the branch that fits you best. You can switch any time.
+        </p>
+        <ArchetypePicker value={archetype} onChange={setArchetype} />
+      </div>
+      <div className="space-y-2">
         <Label>What you are <span className="text-destructive">*</span></Label>
         <p className="text-[11px] text-muted-foreground">
           Required — pick at least one. Fans use these to find you. You can pick a few if you wear multiple hats.
