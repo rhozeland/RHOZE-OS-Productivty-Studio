@@ -1997,17 +1997,9 @@ const FlowModePage = () => {
                   );
                 })()}
 
-                {/* Per-file preview list — visible in BOTH compose and confirm steps */}
+                {/* Full-size media preview — image, video, or audio rendered as the actual content */}
                 {fileCount > 0 && (
                   <div className="space-y-2" role="list" aria-label="Files to share">
-                    <div className="flex items-center justify-between px-1">
-                      <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
-                        {fileCount} file{fileCount > 1 ? "s" : ""}
-                      </p>
-                      {shareStep === "compose" && filesErrored.length > 0 && (
-                        <span className="text-[11px] text-destructive">{filesErrored.length} failed</span>
-                      )}
-                    </div>
                     {pendingFiles.map((pf) => {
                       const isImg = pf.file.type.startsWith("image/");
                       const isVid = pf.file.type.startsWith("video/");
@@ -2018,78 +2010,60 @@ const FlowModePage = () => {
                           key={pf.id}
                           role="listitem"
                           className={cn(
-                            "rounded-xl border bg-background/40 p-2.5 flex gap-3 items-start transition-colors",
+                            "relative rounded-xl overflow-hidden border bg-background/40 group",
                             pf.status === "error" ? "border-destructive/40 bg-destructive/5" : "border-border",
                           )}
                         >
-                          {/* Thumbnail */}
-                          <div className="h-14 w-14 rounded-lg overflow-hidden shrink-0 bg-muted flex items-center justify-center">
-                            {isImg ? (
-                              <img src={pf.previewUrl} alt="" className="h-full w-full object-cover" />
-                            ) : isVid ? (
-                              <video src={pf.previewUrl} className="h-full w-full object-cover" muted playsInline />
-                            ) : isAud ? (
-                              <div className="text-muted-foreground text-[10px] font-medium">AUDIO</div>
-                            ) : (
-                              <div className="text-muted-foreground text-[10px] font-medium uppercase">
-                                {pf.file.name.split(".").pop()?.slice(0, 4) || "FILE"}
-                              </div>
+                          {isImg ? (
+                            <img src={pf.previewUrl} alt="" className="w-full max-h-[420px] object-contain bg-background" />
+                          ) : isVid ? (
+                            <video src={pf.previewUrl} className="w-full max-h-[420px] bg-background" controls playsInline />
+                          ) : isAud ? (
+                            <div className="px-4 py-5 bg-muted/30">
+                              <audio src={pf.previewUrl} controls className="w-full" />
+                            </div>
+                          ) : (
+                            <div className="aspect-video flex items-center justify-center bg-muted/40 text-muted-foreground text-xs font-medium uppercase">
+                              {pf.file.name.split(".").pop()?.slice(0, 6) || "FILE"}
+                            </div>
+                          )}
+
+                          {/* Floating remove button */}
+                          <div className="absolute top-2 right-2 flex items-center gap-1">
+                            {(pf.status === "error" || pf.status === "stalled") && (
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="secondary"
+                                className="h-7 w-7 rounded-full bg-background/80 backdrop-blur"
+                                aria-label="Retry"
+                                onClick={() => retryPendingFile(pf.id)}
+                              >
+                                <RotateCcw className="h-3.5 w-3.5" />
+                              </Button>
                             )}
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="secondary"
+                              className="h-7 w-7 rounded-full bg-background/80 backdrop-blur hover:bg-destructive hover:text-destructive-foreground"
+                              aria-label="Remove file"
+                              disabled={createFlowItem.isPending}
+                              onClick={() => removePendingFile(pf.id)}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
                           </div>
 
-                          {/* Meta + progress + actions */}
-                          <div className="flex-1 min-w-0 space-y-1.5">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium text-foreground truncate" title={pf.file.name}>{pf.file.name}</p>
-                                <p className="text-[11px] text-muted-foreground">
-                                  {(pf.file.size / 1024).toFixed(0)} KB
-                                  {pf.status === "done" && <span className="text-primary"> · Uploaded</span>}
-                                  {pf.status === "uploading" && <span> · Uploading {pf.progress}%</span>}
-                                  {pf.status === "stalled" && <span className="text-foreground/70"> · Stalled — retrying</span>}
-                                  {pf.status === "error" && <span className="text-destructive"> · Failed</span>}
-                                  {pf.status === "ready" && <span> · Ready</span>}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-1 shrink-0">
-                                {(pf.status === "error" || pf.status === "stalled") && (
-                                  <Button
-                                    type="button"
-                                    size="icon"
-                                    variant="ghost"
-                                    className="h-7 w-7"
-                                    aria-label={`Retry ${pf.file.name}`}
-                                    onClick={() => retryPendingFile(pf.id)}
-                                  >
-                                    <RotateCcw className="h-3.5 w-3.5" />
-                                  </Button>
-                                )}
-                                <Button
-                                  type="button"
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                  aria-label={`Remove ${pf.file.name}`}
-                                  disabled={createFlowItem.isPending}
-                                  onClick={() => removePendingFile(pf.id)}
-                                >
-                                  <X className="h-3.5 w-3.5" />
-                                </Button>
-                              </div>
-                            </div>
-                            {showProgress && (
+                          {/* Upload progress overlay */}
+                          {showProgress && (
+                            <div className="absolute inset-x-0 bottom-0 px-3 py-2 bg-gradient-to-t from-background/90 to-transparent">
                               <Progress value={pf.progress} className="h-1" />
-                            )}
-                            {pf.status === "stalled" && (
-                              <div className="flex items-center gap-1.5 text-[11px] text-foreground/70">
-                                <AlertTriangle className="h-3 w-3" />
-                                <span>No data has moved in 15s.</span>
-                              </div>
-                            )}
-                            {pf.status === "error" && pf.error && (
-                              <p className="text-[11px] text-destructive break-words" role="alert">{pf.error}</p>
-                            )}
-                          </div>
+                            </div>
+                          )}
+                          {pf.status === "error" && pf.error && (
+                            <p className="absolute inset-x-0 bottom-0 px-3 py-1.5 text-[11px] text-destructive-foreground bg-destructive/90" role="alert">{pf.error}</p>
+                          )}
                         </div>
                       );
                     })}
