@@ -58,6 +58,7 @@ const SECTIONS = [
   // Verified IP vault + Verified Artist identity merged into one "Verification" surface.
   // id stays "provenance" so existing /settings#provenance links keep working.
   { id: "provenance", label: "Verification", icon: BadgeCheck },
+  { id: "shipping", label: "Shipping", icon: Truck },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "security", label: "Security", icon: Lock },
   { id: "account", label: "Account", icon: AlertTriangle },
