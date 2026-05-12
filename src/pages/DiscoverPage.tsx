@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import RegionPromptBanner from "@/components/discover/RegionPromptBanner";
 import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import StreamComposer from "@/components/stream/StreamComposer";
-import ConversationsMosaic, { type MosaicKindFilter } from "@/components/hub/ConversationsMosaic";
+// ConversationsMosaic + stream-tab filter retired in v9.3 (creators-only Featured section).
 import CreatorsGrid from "@/components/discover/CreatorsGrid";
 import ArchetypeFilter from "@/components/discover/ArchetypeFilter";
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
@@ -55,8 +55,6 @@ import {
   MessageSquare,
   Briefcase,
   Clapperboard,
-  Users,
-  Compass,
   Building2,
   ShoppingBag,
 } from "lucide-react";
@@ -166,29 +164,10 @@ const DiscoverPage = () => {
   const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const category = searchParams.get("cat");
-  const normalizedCategory = category ? normalizeCategory(category) : null;
 
-  // ─── Stream view tabs (creators · events · spaces · all) ────────
-  type StreamTab = "all" | "creators" | "events" | "spaces";
-  const initialTab = (searchParams.get("tab") as StreamTab) || "all";
-  const [streamTab, setStreamTab] = useState<StreamTab>(
-    ["all", "creators", "events", "spaces"].includes(initialTab) ? initialTab : "all",
-  );
-  const handleStreamTab = (tab: StreamTab) => {
-    setStreamTab(tab);
-    const next = new URLSearchParams(searchParams);
-    if (tab === "all") next.delete("tab");
-    else next.set("tab", tab);
-    setSearchParams(next, { replace: true });
-    // Scroll the stream section into view so the change is felt.
-    requestAnimationFrame(() => {
-      document.getElementById("discover-stream")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  };
   // ─── Archetype filter (Artist · Builder · Influencer) ───────────
-  // The umbrella "All" pill was retired — the three branches *are* the filter.
-  // Default to Artist; URL still preserved as ?archetype=.
+  // Stream tabs (All / Events / Spaces) retired in v9.3 — the section is
+  // now exclusively "Featured creators", filtered by archetype.
   const initialArchetype = (searchParams.get("archetype") as any) || "artist";
   const [archetype, setArchetype] = useState<import("@/lib/archetypes").Archetype>(
     ["artist", "builder", "influencer"].includes(initialArchetype) ? initialArchetype : "artist",
@@ -199,8 +178,7 @@ const DiscoverPage = () => {
     params.set("archetype", next);
     setSearchParams(params, { replace: true });
   };
-  const mosaicKind: MosaicKindFilter =
-    streamTab === "events" ? "event" : streamTab === "spaces" ? "space" : "all";
+
   // ─── Personal greeting (signed-in only) ─────────────────────────
   const { data: profile } = useQuery({
     queryKey: ["discover-greeting", user?.id],
@@ -346,10 +324,8 @@ const DiscoverPage = () => {
       {/* ─── Creator Pass upgrade nudge ─────────────────────────────── */}
       <CreatorPassUpgradeCta />
 
-      {/* ─── Trending artists — only on All / Creators ────────────── */}
-      {(streamTab === "all" || streamTab === "creators") && (
-        <TrendingArtistsLane marketFilter={marketFilter} />
-      )}
+      {/* ─── Trending artists (self-gated by liquidity) ───────────── */}
+      <TrendingArtistsLane marketFilter={marketFilter} />
 
       {/* ─── The Stream ─────────────────────────────────────────────── */}
       <section id="discover-stream" className="space-y-4 scroll-mt-20">
@@ -359,13 +335,7 @@ const DiscoverPage = () => {
               The Stream
             </p>
             <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
-              {streamTab === "creators"
-                ? "Meet the creators."
-                : streamTab === "events"
-                ? "What's happening."
-                : streamTab === "spaces"
-                ? "Where it's going down."
-                : "Everything, all at once."}
+              Featured creators.
             </h2>
           </div>
 
@@ -382,43 +352,10 @@ const DiscoverPage = () => {
           </div>
         </div>
 
-        {/* Tab segmented control — switch the whole feed */}
-        <div className="inline-flex flex-wrap items-center gap-1 rounded-full border border-border/60 bg-card/60 p-1">
-          {([
-            { id: "all", label: "All", icon: Compass },
-            { id: "creators", label: "Creators", icon: Users },
-            { id: "events", label: "Events", icon: CalendarDays },
-            { id: "spaces", label: "Spaces", icon: Building2 },
-          ] as { id: StreamTab; label: string; icon: typeof Compass }[]).map((t) => {
-            const Icon = t.icon;
-            const active = streamTab === t.id;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => handleStreamTab(t.id)}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all",
-                  active
-                    ? "bg-foreground text-background shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {t.label}
-              </button>
-            );
-          })}
+        <div className="space-y-4">
+          <ArchetypeFilter value={archetype} onChange={handleArchetype} />
+          <CreatorsGrid archetype={archetype} />
         </div>
-
-        {streamTab === "creators" ? (
-          <div className="space-y-4">
-            <ArchetypeFilter value={archetype} onChange={handleArchetype} />
-            <CreatorsGrid archetype={archetype} />
-          </div>
-        ) : (
-          <ConversationsMosaic kind={mosaicKind} category={normalizedCategory} />
-        )}
       </section>
 
       {/* ─── Coins moving today ─────────────────────────────────────── */}
