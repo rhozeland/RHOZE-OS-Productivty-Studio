@@ -14,6 +14,7 @@ import {
   Moon, Sun, Upload, X, Camera, Lock, Bell,
   Trash2, AlertTriangle, Download, User, Box, Wallet,
   ChevronRight, BadgeCheck, Instagram, Music2, Twitter, Youtube, Globe,
+  Truck, IdCard, Image as ImageIcon,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -57,6 +58,7 @@ const SECTIONS = [
   // Verified IP vault + Verified Artist identity merged into one "Verification" surface.
   // id stays "provenance" so existing /settings#provenance links keep working.
   { id: "provenance", label: "Verification", icon: BadgeCheck },
+  { id: "shipping", label: "Shipping", icon: Truck },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "security", label: "Security", icon: Lock },
   { id: "account", label: "Account", icon: AlertTriangle },
@@ -799,28 +801,56 @@ const SettingsPage = () => {
     </form>
   );
 
-  const renderNotifications = () => (
-    <div className="space-y-4">
-      <p className="text-xs text-muted-foreground mb-2">Choose which email notifications you'd like to receive</p>
-      {[
-        { label: "New Messages", desc: "When someone sends you a message", value: notifMessages, set: setNotifMessages },
-        { label: "Inquiries", desc: "When you receive a new inquiry on a listing", value: notifInquiries, set: setNotifInquiries },
-        { label: "Purchases", desc: "When someone buys your listing", value: notifPurchases, set: setNotifPurchases },
-        { label: "Reviews", desc: "When someone leaves a review", value: notifReviews, set: setNotifReviews },
-      ].map((item) => (
-        <div key={item.label} className="flex items-center justify-between">
+  const renderNotifications = () => {
+    const allOff = !notifMessages && !notifInquiries && !notifPurchases && !notifReviews;
+    const setAll = (on: boolean) => {
+      setNotifMessages(on); setNotifInquiries(on); setNotifPurchases(on); setNotifReviews(on);
+      // Persist immediately — no save button needed for toggles.
+      supabase.from("profiles").update({
+        email_notif_messages: on,
+        email_notif_inquiries: on,
+        email_notif_purchases: on,
+        email_notif_reviews: on,
+      } as any).eq("user_id", user!.id).then(() => {
+        queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+        toast.success(on ? "All emails on" : "All emails paused");
+      });
+    };
+    const persist = (patch: Record<string, boolean>) => {
+      supabase.from("profiles").update(patch as any).eq("user_id", user!.id).then(() => {
+        queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      });
+    };
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
           <div>
-            <p className="text-sm font-medium text-foreground">{item.label}</p>
-            <p className="text-xs text-muted-foreground">{item.desc}</p>
+            <p className="text-sm font-medium text-foreground">Pause all email</p>
+            <p className="text-xs text-muted-foreground">Master switch — flips every email off in one tap.</p>
           </div>
-          <Switch checked={item.value} onCheckedChange={item.set} />
+          <Switch checked={allOff} onCheckedChange={(checked) => setAll(!checked)} />
         </div>
-      ))}
-      <Button variant="outline" size="sm" onClick={() => updateNotifications.mutate()} disabled={updateNotifications.isPending}>
-        {updateNotifications.isPending ? "Saving..." : "Save Preferences"}
-      </Button>
-    </div>
-  );
+        {[
+          { label: "New Messages",  desc: "When someone sends you a message",            value: notifMessages,  set: setNotifMessages,  col: "email_notif_messages" },
+          { label: "Inquiries",     desc: "When you receive a new inquiry on a listing", value: notifInquiries, set: setNotifInquiries, col: "email_notif_inquiries" },
+          { label: "Purchases",     desc: "When someone buys your listing",              value: notifPurchases, set: setNotifPurchases, col: "email_notif_purchases" },
+          { label: "Reviews",       desc: "When someone leaves a review",                value: notifReviews,   set: setNotifReviews,   col: "email_notif_reviews" },
+        ].map((item) => (
+          <div key={item.label} className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-foreground">{item.label}</p>
+              <p className="text-xs text-muted-foreground">{item.desc}</p>
+            </div>
+            <Switch
+              checked={item.value}
+              onCheckedChange={(v) => { item.set(v); persist({ [item.col]: v }); }}
+            />
+          </div>
+        ))}
+        <p className="text-[11px] text-muted-foreground pt-1">Changes save automatically.</p>
+      </div>
+    );
+  };
 
   const renderSecurity = () => (
     <div className="space-y-8">
@@ -921,8 +951,20 @@ const SettingsPage = () => {
       {/* Top: status of any pending verification requests (only shows when present) */}
       <MyVerificationRequests />
 
-      {/* Main: the personal vault — the everyday surface for this section */}
-      <WorksPage embedded />
+      {/* Verified IP vault — collapsed by default to keep this surface short.
+          Open to manage / hash / anchor your works. */}
+      <details className="group rounded-xl border border-border/60 bg-muted/20 overflow-hidden" open>
+        <summary className="cursor-pointer select-none px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/30 transition-colors flex items-center justify-between">
+          <span className="inline-flex items-center gap-2">
+            <BadgeCheck className="h-4 w-4 text-primary" />
+            Your Verified IP vault
+          </span>
+          <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90 text-muted-foreground" />
+        </summary>
+        <div className="px-4 pb-4 pt-2 border-t border-border/40">
+          <WorksPage embedded />
+        </div>
+      </details>
 
       {/* Developer tools — collapsed by default so the page stays focused.
           Only relevant for users who deploy their own Launchpad program. */}
@@ -991,13 +1033,20 @@ const SettingsPage = () => {
 
   const sectionRenderers: Record<SectionId, () => JSX.Element> = {
     profile: () => (
-      <div className="space-y-8">
-        {renderAvatar()}
-        <Separator />
-        {renderBanner()}
-        <Separator />
-        {renderProfile()}
-      </div>
+      <Tabs defaultValue="basics" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 max-w-xs mb-5">
+          <TabsTrigger value="basics" className="gap-1.5"><IdCard className="h-3.5 w-3.5" /> Basics</TabsTrigger>
+          <TabsTrigger value="appearance" className="gap-1.5"><ImageIcon className="h-3.5 w-3.5" /> Appearance</TabsTrigger>
+        </TabsList>
+        <TabsContent value="basics" className="space-y-6 mt-0">
+          {renderAvatar()}
+          <Separator />
+          {renderProfile()}
+        </TabsContent>
+        <TabsContent value="appearance" className="mt-0">
+          {renderBanner()}
+        </TabsContent>
+      </Tabs>
     ),
     wallet: renderWallet,
     provenance: () => (
@@ -1007,6 +1056,7 @@ const SettingsPage = () => {
         {renderProvenance()}
       </div>
     ),
+    shipping: renderShipping,
     notifications: renderNotifications,
     security: renderSecurity,
     account: renderAccount,
