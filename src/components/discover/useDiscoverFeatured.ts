@@ -22,8 +22,8 @@ export type FeaturedSlide =
       followers_count?: number;
       works_thumbs?: string[];
       coin?: { id: string; ticker: string; name: string | null; image_url: string | null } | null;
-      next_event?: { id: string; slug: string | null; title: string; starts_at: string } | null;
-      hosted_space?: { id: string; name: string } | null;
+      next_event?: { id: string; slug: string | null; title: string; starts_at: string; cover_url: string | null } | null;
+      hosted_space?: { id: string; name: string; cover_image_url: string | null } | null;
       offerings_count?: number;
     }
   | {
@@ -302,10 +302,10 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
       });
 
       // Next upcoming event hosted by the artist
-      const nextEventByHost = new Map<string, { id: string; slug: string | null; title: string; starts_at: string }>();
+      const nextEventByHost = new Map<string, { id: string; slug: string | null; title: string; starts_at: string; cover_url: string | null }>();
       const { data: eventRows } = await supabase
         .from("events")
-        .select("id, slug, title, starts_at, host_id, status")
+        .select("id, slug, title, starts_at, host_id, status, cover_url, cover_url_poster")
         .in("host_id", userIds)
         .eq("status", "published")
         .gte("starts_at", new Date().toISOString())
@@ -314,21 +314,22 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
         if (!nextEventByHost.has(row.host_id)) {
           nextEventByHost.set(row.host_id, {
             id: row.id, slug: row.slug, title: row.title, starts_at: row.starts_at,
+            cover_url: row.cover_url_poster ?? row.cover_url ?? null,
           });
         }
       });
 
       // One hosted space per artist (first active studio they own)
-      const hostedSpaceByOwner = new Map<string, { id: string; name: string }>();
+      const hostedSpaceByOwner = new Map<string, { id: string; name: string; cover_image_url: string | null }>();
       const { data: spaceRows } = await supabase
         .from("studios")
-        .select("id, name, owner_id, is_active")
+        .select("id, name, owner_id, is_active, cover_image_url")
         .in("owner_id", userIds)
         .eq("is_active", true)
         .order("updated_at", { ascending: false });
       (spaceRows ?? []).forEach((row: any) => {
         if (!hostedSpaceByOwner.has(row.owner_id)) {
-          hostedSpaceByOwner.set(row.owner_id, { id: row.id, name: row.name });
+          hostedSpaceByOwner.set(row.owner_id, { id: row.id, name: row.name, cover_image_url: row.cover_image_url ?? null });
         }
       });
 
