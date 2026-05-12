@@ -16,20 +16,16 @@ import {
   CheckCircle,
   Calendar,
   MessageSquare,
-  Coins,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import StudioBookingModal from "@/components/booking/StudioBookingModal";
 import QuickMessageDialog from "@/components/messages/QuickMessageDialog";
-import LaunchCoinDialog from "@/components/launchpad/LaunchCoinDialog";
-import DropCoinCard from "@/components/launchpad/DropCoinCard";
 
 const StudioDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [bookingOpen, setBookingOpen] = useState(false);
   const [dmOpen, setDmOpen] = useState(false);
-  const [launchCoinOpen, setLaunchCoinOpen] = useState(false);
 
   const { data: studio, isLoading } = useQuery({
     queryKey: ["studio", id],
@@ -84,24 +80,6 @@ const StudioDetailPage = () => {
       return data ?? [];
     },
     enabled: !!id,
-  });
-
-  // Coin drops attached to this space (any creator can drop a coin here in
-  // future; today we surface all coins where space_id matches OR — for back-
-  // compat with legacy data — the studio owner is the creator).
-  const { data: spaceCoins, refetch: refetchSpaceCoins } = useQuery({
-    queryKey: ["studio-detail-coins", id, studio?.owner_id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("coin_launches")
-        .select("id, name, ticker, image_url, status, mint_address, virtual_sol_reserves, virtual_token_reserves, total_supply, space_id")
-        .or(`space_id.eq.${id},and(space_id.is.null,creator_id.eq.${studio!.owner_id})`)
-        .neq("status", "cancelled")
-        .order("created_at", { ascending: false })
-        .limit(8);
-      return (data as any[]) ?? [];
-    },
-    enabled: !!studio?.owner_id && !!id,
   });
 
   const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -264,21 +242,6 @@ const StudioDetailPage = () => {
                       <p className="text-xs text-muted-foreground">{svc.duration_hours}h</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Space coin — only render when a coin is actually linked. */}
-          {spaceCoins && spaceCoins.length > 0 && (
-            <div>
-              <div className="mb-3">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">Space coin</p>
-                <h2 className="font-display text-lg font-semibold text-foreground">Backed by this drop.</h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {spaceCoins.map((c: any) => (
-                  <DropCoinCard key={c.id} coin={c} hideContext />
                 ))}
               </div>
             </div>

@@ -22,7 +22,7 @@ import {
   CheckCircle2,
   Clock,
   Wallet,
-  Coins,
+  
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,8 +31,6 @@ import { Button } from "@/components/ui/button";
 import EventCheckoutSheet from "@/components/events/EventCheckoutSheet";
 import EventInviteBanner from "@/components/events/EventInviteBanner";
 import EventMediaCarousel from "@/components/events/EventMediaCarousel";
-import LaunchCoinDialog from "@/components/launchpad/LaunchCoinDialog";
-import DropCoinCard from "@/components/launchpad/DropCoinCard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const EventDetailPage = () => {
@@ -41,7 +39,6 @@ const EventDetailPage = () => {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [checkoutTier, setCheckoutTier] = useState<any | null>(null);
-  const [launchCoinOpen, setLaunchCoinOpen] = useState(false);
 
   const { data: ev, isLoading } = useQuery({
     queryKey: ["event", id],
@@ -95,20 +92,6 @@ const EventDetailPage = () => {
         .maybeSingle();
       return !!data;
     },
-  });
-
-  const { data: eventCoins, refetch: refetchEventCoins } = useQuery({
-    queryKey: ["event-coins", id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("coin_launches")
-        .select("id, ticker, name, image_url, status, mint_address, virtual_sol_reserves, virtual_token_reserves, total_supply")
-        .eq("event_id", id!)
-        .neq("status", "cancelled")
-        .order("created_at", { ascending: false });
-      return (data as any[]) ?? [];
-    },
-    enabled: !!id,
   });
 
   const { data: hostProfile } = useQuery({
@@ -653,21 +636,6 @@ const EventDetailPage = () => {
               <p className="whitespace-pre-wrap text-sm leading-7 text-foreground/85">
                 {ev.description}
               </p>
-            </div>
-          )}
-
-          {/* Event coin — only render when a coin is actually linked. */}
-          {eventCoins && eventCoins.length > 0 && (
-            <div className="space-y-3 border-t border-border pt-5">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">Event coin</p>
-                <h2 className="font-display text-lg font-bold tracking-tight">Backed by this drop.</h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {eventCoins.map((c: any) => (
-                  <DropCoinCard key={c.id} coin={c} hideContext />
-                ))}
-              </div>
             </div>
           )}
 
