@@ -61,13 +61,14 @@ const ProfileDetailPage = () => {
   const { data: profileNote } = useUserNote(id);
   
 
-  // v9.4 tabs: Support (default) · Works. About retired — bio + details inline in header.
-  // On-chain reputation lives inside Support behind a collapsible "Verify" toggle.
-  // Legacy ?tab=coin/building/about/overview → support.
+  // v9.5 tabs: Support (default) · Drops (formerly "Works").
+  // Legacy ?tab=coin/building/about/overview → support; ?tab=works → drops.
   const rawTab = searchParams.get("tab") || "support";
   const tabFromUrl =
     rawTab === "coin" || rawTab === "building" || rawTab === "about" || rawTab === "overview"
       ? "support"
+      : rawTab === "works"
+      ? "drops"
       : rawTab;
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [bookingOpen, setBookingOpen] = useState(false);
