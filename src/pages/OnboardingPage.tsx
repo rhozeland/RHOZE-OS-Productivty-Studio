@@ -86,10 +86,13 @@ const OnboardingPage = () => {
         }
       }
 
-      if (regionCode) {
+      if (regionCode || archetype) {
         await supabase
           .from("profiles")
-          .update({ region_code: regionCode })
+          .update({
+            ...(regionCode ? { region_code: regionCode } : {}),
+            ...(archetype ? { archetype } : {}),
+          } as any)
           .eq("user_id", user.id);
       }
 
