@@ -1882,11 +1882,9 @@ const FlowModePage = () => {
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{shareStep === "confirm" ? "Confirm & publish" : "Share to Flow"}</DialogTitle>
-            <DialogDescription>
-              {shareStep === "confirm"
-                ? "Looks good? Publish to Flow and earn $RHOZE."
-                : "Drop something visual. Pick a vibe. Earn $RHOZE."}
-            </DialogDescription>
+            {shareStep === "confirm" && (
+              <DialogDescription>Looks good? Publish to Flow.</DialogDescription>
+            )}
           </DialogHeader>
           {(() => {
             // ---- Validation summary ----
