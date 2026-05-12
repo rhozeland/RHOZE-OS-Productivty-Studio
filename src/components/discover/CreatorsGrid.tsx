@@ -63,17 +63,18 @@ interface ScoredProfile {
 
 const CreatorsGrid = ({
   search = "",
-  archetype,
+  archetype = null,
+  onArchetypeClick,
 }: {
   search?: string;
-  archetype: Archetype;
+  /** Optional archetype filter. `null` = show all creators. */
+  archetype?: Archetype | null;
+  /** When a chip on a tile is clicked, bubble it up so Discover can filter. */
+  onArchetypeClick?: (a: Archetype) => void;
 }) => {
   const { data, isLoading } = useQuery({
-    queryKey: ["discover-featured-creators", archetype],
+    queryKey: ["discover-featured-creators", archetype ?? "all"],
     queryFn: async (): Promise<ScoredProfile[]> => {
-      // Pull all profiles in this archetype that are public.
-      // Backward-compat: legacy profiles with NULL archetype are treated
-      // as "artist" so existing accounts still show on the default tab.
       let query = supabase
         .from("profiles")
         .select(
@@ -81,9 +82,12 @@ const CreatorsGrid = ({
         )
         .neq("is_public", false)
         .limit(200);
-      query = archetype === "artist"
-        ? query.or("archetype.eq.artist,archetype.is.null")
-        : query.eq("archetype", archetype);
+      if (archetype === "artist") {
+        // Backward-compat: profiles without archetype default to artist.
+        query = query.or("archetype.eq.artist,archetype.is.null");
+      } else if (archetype) {
+        query = query.eq("archetype", archetype);
+      }
       const { data: profiles, error } = await query;
       if (error) throw error;
       if (!profiles?.length) return [];
@@ -149,7 +153,8 @@ const CreatorsGrid = ({
     staleTime: 60_000,
   });
 
-  const meta = ARCHETYPE_BY_ID.get(archetype);
+  const meta = archetype ? ARCHETYPE_BY_ID.get(archetype) : null;
+  const noun = meta?.plural.toLowerCase() ?? "creators";
   const term = search.trim().toLowerCase();
   const filtered = (data ?? []).filter((p) => {
     if (!term) return true;
@@ -177,15 +182,19 @@ const CreatorsGrid = ({
         icon={Users}
         title={
           term
-            ? `No ${meta?.plural.toLowerCase() ?? "creators"} match that search`
-            : `No ${meta?.plural.toLowerCase() ?? "creators"} featured yet`
+            ? `No ${noun} match that search`
+            : archetype
+              ? `No ${noun} featured here yet`
+              : "No creators featured yet"
         }
         description={
           term
             ? "Try a different word, or clear the search."
-            : `Featured ${meta?.plural.toLowerCase() ?? "creators"} need an avatar, a bio, and a few works first. Complete your profile to land on Discover.`
+            : archetype
+              ? `No one in this branch has been featured yet. Check back soon — or browse all creators.`
+              : `Featured creators need an avatar, a bio, and a few works first.`
         }
-        cta={!term ? { label: "Complete your profile", to: "/settings" } : undefined}
+        cta={!term && archetype ? { label: "Browse all creators", to: "/profiles" } : undefined}
         size="lg"
       />
     );
@@ -224,7 +233,22 @@ const CreatorsGrid = ({
                 {/* Top chips */}
                 <div className="absolute top-2.5 left-2.5 right-2.5 flex items-start justify-between gap-2 z-10">
                   <div className="flex items-center gap-1.5">
-                    <ArchetypeChip archetype={p.archetype} size="xs" />
+                    {p.archetype && onArchetypeClick ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onArchetypeClick(p.archetype as Archetype);
+                        }}
+                        className="rounded-full hover:scale-105 transition-transform"
+                        aria-label={`Filter by ${p.archetype}`}
+                      >
+                        <ArchetypeChip archetype={p.archetype} size="xs" />
+                      </button>
+                    ) : (
+                      <ArchetypeChip archetype={p.archetype} size="xs" />
+                    )}
                     {p.pinned && (
                       <span
                         className="inline-flex items-center gap-1 rounded-full bg-foreground/90 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-background backdrop-blur-md"
@@ -273,7 +297,7 @@ const CreatorsGrid = ({
           to="/profiles"
           className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
-          Browse all {meta?.plural.toLowerCase() ?? "creators"} <ArrowRight className="h-3 w-3" />
+          Browse all {noun} <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
     </div>

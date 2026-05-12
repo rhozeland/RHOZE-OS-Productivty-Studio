@@ -28,7 +28,7 @@ import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import StreamComposer from "@/components/stream/StreamComposer";
 import ConversationsMosaic from "@/components/hub/ConversationsMosaic";
 import CreatorsGrid from "@/components/discover/CreatorsGrid";
-import ArchetypeFilter from "@/components/discover/ArchetypeFilter";
+
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
 import DiscoverEventsGrid from "@/components/discover/DiscoverEventsGrid";
 import EventCategoryPills from "@/components/discover/EventCategoryPills";
@@ -57,6 +57,18 @@ import {
   Clapperboard,
   Building2,
   ShoppingBag,
+  X,
+  Cpu,
+  UtensilsCrossed,
+  Brain,
+  Leaf,
+  Activity,
+  Sparkle,
+  Bitcoin,
+  Camera,
+  Mic2,
+  Image as ImageIcon,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
@@ -71,11 +83,23 @@ const normalizeCategory = (value?: string | null) =>
 
 const EVENT_CATEGORY_DEFS = [
   { slug: "music", label: "Music", icon: Music2, accent: "hsl(var(--orange))" },
-  { slug: "art", label: "Art", icon: Palette, accent: "hsl(var(--pink))" },
+  { slug: "art", label: "Arts & Culture", icon: Palette, accent: "hsl(var(--pink))" },
+  { slug: "tech", label: "Tech", icon: Cpu, accent: "hsl(var(--amber))" },
+  { slug: "ai", label: "AI", icon: Brain, accent: "hsl(var(--rose))" },
+  { slug: "food", label: "Food & Drink", icon: UtensilsCrossed, accent: "hsl(var(--orange))" },
+  { slug: "wellness", label: "Wellness", icon: Sparkle, accent: "hsl(var(--mint))" },
+  { slug: "fitness", label: "Fitness", icon: Activity, accent: "hsl(var(--rose))" },
+  { slug: "climate", label: "Climate", icon: Leaf, accent: "hsl(var(--mint))" },
+  { slug: "crypto", label: "Crypto", icon: Bitcoin, accent: "hsl(var(--violet))" },
 ] as const;
 
 const SPACE_CATEGORY_DEFS = [
   { slug: "studio", label: "Studio", icon: Building2, accent: "hsl(var(--blue))" },
+  { slug: "music", label: "Music Studio", icon: Mic2, accent: "hsl(var(--orange))" },
+  { slug: "photo", label: "Photo", icon: Camera, accent: "hsl(var(--pink))" },
+  { slug: "gallery", label: "Gallery", icon: ImageIcon, accent: "hsl(var(--rose))" },
+  { slug: "coworking", label: "Coworking", icon: Users, accent: "hsl(var(--mint))" },
+  { slug: "venue", label: "Venue", icon: Building2, accent: "hsl(var(--violet))" },
 ] as const;
 
 type StreamCategoryDef = (typeof EVENT_CATEGORY_DEFS)[number] | (typeof SPACE_CATEGORY_DEFS)[number];
@@ -175,21 +199,42 @@ const DiscoverPage = () => {
   const [streamTab, setStreamTab] = useState<StreamTab>(
     ["all", "creators", "event", "space"].includes(initialTab) ? initialTab : "all",
   );
+  // Optional archetype filter — applied only when user clicks an archetype
+  // chip on a creator tile. Default null = show all creators across branches.
+  const initialArchetype = searchParams.get("archetype");
+  const validArchetype = (a: string | null): import("@/lib/archetypes").Archetype | null =>
+    a && ["artist", "builder", "influencer"].includes(a)
+      ? (a as import("@/lib/archetypes").Archetype)
+      : null;
+  const [archetype, setArchetype] = useState<import("@/lib/archetypes").Archetype | null>(
+    validArchetype(initialArchetype),
+  );
+  const handleArchetype = (next: import("@/lib/archetypes").Archetype | null) => {
+    setArchetype(next);
+    const params = new URLSearchParams(searchParams);
+    if (next) params.set("archetype", next);
+    else params.delete("archetype");
+    setSearchParams(params, { replace: true });
+  };
+
+  // Sub-category filter (only meaningful when streamTab === "event" | "space").
+  const initialCategory = searchParams.get("category");
+  const [category, setCategory] = useState<string | null>(initialCategory);
+  const handleCategory = (next: string | null) => {
+    setCategory(next);
+    const params = new URLSearchParams(searchParams);
+    if (next) params.set("category", next);
+    else params.delete("category");
+    setSearchParams(params, { replace: true });
+  };
+
   const handleStreamTab = (next: StreamTab) => {
     setStreamTab(next);
     const params = new URLSearchParams(searchParams);
     params.set("view", next);
-    setSearchParams(params, { replace: true });
-  };
-
-  const initialArchetype = (searchParams.get("archetype") as any) || "artist";
-  const [archetype, setArchetype] = useState<import("@/lib/archetypes").Archetype>(
-    ["artist", "builder", "influencer"].includes(initialArchetype) ? initialArchetype : "artist",
-  );
-  const handleArchetype = (next: import("@/lib/archetypes").Archetype) => {
-    setArchetype(next);
-    const params = new URLSearchParams(searchParams);
-    params.set("archetype", next);
+    // Categories are tab-scoped — clear when switching tabs.
+    params.delete("category");
+    setCategory(null);
     setSearchParams(params, { replace: true });
   };
 
@@ -230,9 +275,43 @@ const DiscoverPage = () => {
     },
   });
 
-  const eventCategoryRows: { category?: string | null }[] = [];
-  const spaceCategoryRows: { category?: string | null }[] = [];
-  const categoryCounts: Record<string, number> = {};
+  // ─── Category counts (events + spaces) for the Luma-style tile picker ───
+  const { data: eventCategoryRows = [] } = useQuery({
+    queryKey: ["discover-event-cats"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("events")
+        .select("category")
+        .eq("status", "published")
+        .gte("starts_at", new Date().toISOString());
+      return (data ?? []) as { category: string | null }[];
+    },
+    enabled: streamTab === "event",
+    staleTime: 60_000,
+  });
+  const { data: spaceCategoryRows = [] } = useQuery({
+    queryKey: ["discover-space-cats"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("studios")
+        .select("category")
+        .eq("is_active", true);
+      return (data ?? []) as { category: string | null }[];
+    },
+    enabled: streamTab === "space",
+    staleTime: 60_000,
+  });
+
+  const categoryCounts = useMemo(() => {
+    const rows = streamTab === "event" ? eventCategoryRows : streamTab === "space" ? spaceCategoryRows : [];
+    const counts: Record<string, number> = {};
+    rows.forEach((r) => {
+      const slug = normalizeCategory(r.category);
+      if (!slug) return;
+      counts[slug] = (counts[slug] ?? 0) + 1;
+    });
+    return counts;
+  }, [streamTab, eventCategoryRows, spaceCategoryRows]);
 
   return (
     <div className="max-w-6xl mx-auto pb-20 space-y-6">
@@ -394,12 +473,35 @@ const DiscoverPage = () => {
         </div>
 
         {streamTab === "creators" ? (
+          <div className="space-y-3">
+            {archetype && (
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-muted-foreground">Filtered by</span>
+                <button
+                  type="button"
+                  onClick={() => handleArchetype(null)}
+                  className="inline-flex items-center gap-1 rounded-full border border-foreground/20 bg-foreground text-background px-2.5 py-1 font-semibold capitalize"
+                >
+                  {archetype}s <X className="h-3 w-3" />
+                </button>
+                <span className="text-muted-foreground">— tap a chip on a card to filter again</span>
+              </div>
+            )}
+            <CreatorsGrid archetype={archetype} onArchetypeClick={handleArchetype} />
+          </div>
+        ) : streamTab === "event" || streamTab === "space" ? (
           <div className="space-y-4">
-            <ArchetypeFilter value={archetype} onChange={handleArchetype} />
-            <CreatorsGrid archetype={archetype} />
+            <StreamCategorySection
+              defs={streamTab === "event" ? EVENT_CATEGORY_DEFS : SPACE_CATEGORY_DEFS}
+              noun={streamTab}
+              activeCategory={category}
+              counts={categoryCounts}
+              onSelect={handleCategory}
+            />
+            <ConversationsMosaic kind={streamTab} category={category} />
           </div>
         ) : (
-          <ConversationsMosaic kind={streamTab === "all" ? "all" : streamTab} />
+          <ConversationsMosaic kind="all" />
         )}
       </section>
 
