@@ -153,7 +153,8 @@ const CreatorsGrid = ({
     staleTime: 60_000,
   });
 
-  const meta = ARCHETYPE_BY_ID.get(archetype);
+  const meta = archetype ? ARCHETYPE_BY_ID.get(archetype) : null;
+  const noun = meta?.plural.toLowerCase() ?? "creators";
   const term = search.trim().toLowerCase();
   const filtered = (data ?? []).filter((p) => {
     if (!term) return true;
@@ -181,15 +182,19 @@ const CreatorsGrid = ({
         icon={Users}
         title={
           term
-            ? `No ${meta?.plural.toLowerCase() ?? "creators"} match that search`
-            : `No ${meta?.plural.toLowerCase() ?? "creators"} featured yet`
+            ? `No ${noun} match that search`
+            : archetype
+              ? `No ${noun} featured here yet`
+              : "No creators featured yet"
         }
         description={
           term
             ? "Try a different word, or clear the search."
-            : `Featured ${meta?.plural.toLowerCase() ?? "creators"} need an avatar, a bio, and a few works first. Complete your profile to land on Discover.`
+            : archetype
+              ? `No one in this branch has been featured yet. Check back soon — or browse all creators.`
+              : `Featured creators need an avatar, a bio, and a few works first.`
         }
-        cta={!term ? { label: "Complete your profile", to: "/settings" } : undefined}
+        cta={!term && archetype ? { label: "Browse all creators", to: "/profiles" } : undefined}
         size="lg"
       />
     );
