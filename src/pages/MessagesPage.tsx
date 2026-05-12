@@ -840,6 +840,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
               )}
             </div>
           </div>
+          )}
 
           {selectedUser && (
             <QuoteBuilder
