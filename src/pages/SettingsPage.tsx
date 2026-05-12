@@ -168,6 +168,7 @@ const SettingsPage = () => {
       setBio(p.bio ?? "");
       setPortfolioUrl(p.portfolio_url ?? "");
       setCreatorRoles(Array.isArray(p.creator_roles) ? p.creator_roles : []);
+      setArchetype((p.archetype as Archetype | null) ?? null);
       setSkillsList(Array.isArray(p.skills) ? p.skills : []);
       setMediumsList(Array.isArray(p.mediums) ? p.mediums : []);
       setLocation(p.location ?? "");
