@@ -371,17 +371,27 @@ const SettingsPage = () => {
   const initials = (displayName || username || "?").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 
   /* ─── Section renderers ─── */
-  const SOCIAL_FIELDS = [
-    { id: "ig", label: "Instagram", placeholder: "instagram.com/username", Icon: Instagram, value: instagramUrl, set: setInstagramUrl },
-    { id: "tt", label: "TikTok", placeholder: "tiktok.com/@username", Icon: Music2, value: tiktokUrl, set: setTiktokUrl },
-    { id: "tw", label: "X (Twitter)", placeholder: "x.com/username", Icon: Twitter, value: twitterUrl, set: setTwitterUrl },
-    { id: "yt", label: "YouTube", placeholder: "youtube.com/@channel", Icon: Youtube, value: youtubeUrl, set: setYoutubeUrl },
-    { id: "web", label: "Website", placeholder: "yourportfolio.com", Icon: Globe, value: portfolioUrl, set: setPortfolioUrl },
+  /**
+   * Social platforms — handle-only entry. We store the full URL in the DB
+   * but the user only types their `@handle`; the prefix is appended.
+   * Website is the lone exception: free-form URL.
+   */
+  const SOCIAL_PLATFORMS = [
+    { id: "ig",  label: "Instagram",   prefix: "https://instagram.com/", Icon: Instagram, value: instagramUrl, set: setInstagramUrl },
+    { id: "tt",  label: "TikTok",      prefix: "https://tiktok.com/@",   Icon: Music2,    value: tiktokUrl,    set: setTiktokUrl },
+    { id: "tw",  label: "X / Twitter", prefix: "https://x.com/",         Icon: Twitter,   value: twitterUrl,   set: setTwitterUrl },
+    { id: "yt",  label: "YouTube",     prefix: "https://youtube.com/@",  Icon: Youtube,   value: youtubeUrl,   set: setYoutubeUrl },
   ];
+
+  const handleFromUrl = (url: string, prefix: string) => {
+    if (!url) return "";
+    const stripped = prefix.replace(/^https?:\/\//, "");
+    return url.replace(/^https?:\/\//, "").replace(stripped, "").replace(/^@/, "");
+  };
 
   const renderProfile = () => (
     <form onSubmit={(e) => { e.preventDefault(); updateProfile.mutate(); }} className="space-y-6">
-      {/* 1. Name + username — top of mind */}
+      {/* 1. Display name + Username */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Display Name <span className="text-destructive">*</span></Label>
@@ -396,42 +406,13 @@ const SettingsPage = () => {
         </div>
       </div>
 
-      {/* 2. Creator type — directly under the name */}
+      {/* 2. Creator type */}
       <div className="space-y-2">
         <Label>Creator type <span className="text-destructive">*</span></Label>
         <ArchetypePicker value={archetype} onChange={setArchetype} />
       </div>
 
-      {/* 3. Categories — broad, simple */}
-      <div className="space-y-2">
-        <Label>Categories <span className="text-destructive">*</span></Label>
-        <p className="text-[11px] text-muted-foreground">Pick the work you make. Up to 3.</p>
-        <div className="flex flex-wrap gap-2">
-          {CATEGORY_OPTIONS.map((c) => {
-            const selected = creatorRoles.includes(c.id);
-            return (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => {
-                  if (selected) setCreatorRoles(creatorRoles.filter((r) => r !== c.id));
-                  else if (creatorRoles.length < 3) setCreatorRoles([...creatorRoles, c.id]);
-                }}
-                className={cn(
-                  "px-3 py-1.5 rounded-full border text-sm font-medium transition-all",
-                  selected
-                    ? "bg-foreground text-background border-foreground"
-                    : "bg-card text-foreground border-border hover:border-foreground/40",
-                )}
-              >
-                <span className="mr-1.5">{c.emoji}</span>{c.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 4. Location + Region — compact, no caption */}
+      {/* 3. Location + Region */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Location</Label>
@@ -452,9 +433,9 @@ const SettingsPage = () => {
         </div>
       </div>
 
-      {/* 5. About — required */}
+      {/* 4. About You — required */}
       <div className="space-y-2">
-        <Label>About <span className="text-destructive">*</span></Label>
+        <Label>About You <span className="text-destructive">*</span></Label>
         <Textarea
           value={bio}
           onChange={(e) => setBio(e.target.value)}
@@ -465,22 +446,87 @@ const SettingsPage = () => {
         <p className="text-[10px] text-muted-foreground">{bio.length}/500 — at least 40 characters</p>
       </div>
 
-      {/* 6. Social links — compact icon row, includes website */}
+      {/* 5. Social links — icon row + popover for handle. Website = free URL. */}
       <div className="space-y-2">
         <Label>Social links</Label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {SOCIAL_FIELDS.map((s) => (
-            <div key={s.id} className="relative">
-              <s.Icon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <p className="text-[11px] text-muted-foreground">Click an icon and just drop your handle — we'll build the link.</p>
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          {SOCIAL_PLATFORMS.map((p) => {
+            const filled = !!p.value;
+            const handle = handleFromUrl(p.value, p.prefix);
+            return (
+              <Popover key={p.id}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    title={p.label}
+                    aria-label={p.label}
+                    className={cn(
+                      "relative inline-flex h-10 w-10 items-center justify-center rounded-full border transition-colors",
+                      filled
+                        ? "bg-foreground text-background border-foreground"
+                        : "bg-card text-muted-foreground border-border hover:border-foreground/40 hover:text-foreground",
+                    )}
+                  >
+                    <p.Icon className="h-4 w-4" />
+                    {filled && (
+                      <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-background" />
+                    )}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-72 p-3 space-y-2">
+                  <p className="text-xs font-semibold text-foreground">{p.label} handle</p>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
+                    <Input
+                      value={handle}
+                      onChange={(e) => {
+                        const h = e.target.value.replace(/^@/, "").replace(/\s/g, "");
+                        p.set(h ? `${p.prefix}${h}` : "");
+                      }}
+                      placeholder="your_handle"
+                      className="pl-8 h-9 text-sm"
+                      maxLength={50}
+                    />
+                  </div>
+                  {handle && (
+                    <p className="text-[10px] text-muted-foreground truncate">{p.prefix}{handle}</p>
+                  )}
+                </PopoverContent>
+              </Popover>
+            );
+          })}
+
+          {/* Website — full URL exception */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                title="Website / Portfolio"
+                aria-label="Website / Portfolio"
+                className={cn(
+                  "relative inline-flex h-10 w-10 items-center justify-center rounded-full border transition-colors",
+                  portfolioUrl
+                    ? "bg-foreground text-background border-foreground"
+                    : "bg-card text-muted-foreground border-border hover:border-foreground/40 hover:text-foreground",
+                )}
+              >
+                <Globe className="h-4 w-4" />
+                {portfolioUrl && (
+                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-background" />
+                )}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-72 p-3 space-y-2">
+              <p className="text-xs font-semibold text-foreground">Website / Portfolio</p>
               <Input
-                value={s.value}
-                onChange={(e) => s.set(e.target.value)}
-                placeholder={s.placeholder}
-                aria-label={s.label}
-                className="pl-9 h-9 text-sm"
+                value={portfolioUrl}
+                onChange={(e) => setPortfolioUrl(e.target.value)}
+                placeholder="https://yourportfolio.com"
+                className="h-9 text-sm"
               />
-            </div>
-          ))}
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
