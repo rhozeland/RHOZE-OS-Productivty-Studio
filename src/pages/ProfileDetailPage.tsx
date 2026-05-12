@@ -71,7 +71,18 @@ const ProfileDetailPage = () => {
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [investOpen, setInvestOpen] = useState(false);
-  const [supportOpen, setSupportOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(searchParams.get("back") === "1");
+
+  // Strip `?back=1` from the URL once we've consumed it so refreshes don't
+  // re-open the sheet after the user closes it.
+  useEffect(() => {
+    if (searchParams.get("back") === "1") {
+      const next = new URLSearchParams(searchParams);
+      next.delete("back");
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleTabChange = (v: string) => {
     setActiveTab(v);
