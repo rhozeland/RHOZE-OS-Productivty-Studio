@@ -252,9 +252,6 @@ const SettingsPage = () => {
 
   const updateProfile = useMutation({
     mutationFn: async () => {
-      if (!creatorRoles || creatorRoles.length === 0) {
-        throw new Error("Pick at least one category — Music, Video, Design, etc.");
-      }
       if (!archetype) {
         throw new Error("Pick a creator type — Artist, Builder, or Influencer.");
       }
