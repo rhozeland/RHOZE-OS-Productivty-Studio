@@ -163,6 +163,70 @@ const ArtistSpotlightCard = ({
           </p>
         )}
 
+        {/* Visual mini-tiles for happening / space — clickable through to detail */}
+        {(eventHref || spaceHref) && (
+          <div className="mt-5 grid grid-cols-2 gap-2">
+            {eventHref && next_event && (
+              <Link
+                to={eventHref}
+                onClick={stop}
+                className="group/tile relative flex h-20 overflow-hidden rounded-xl border border-border/55 bg-muted/40 transition-all hover:border-foreground/45 hover:shadow-[0_10px_28px_hsl(var(--background)/0.45)]"
+                aria-label={`View event ${next_event.title}`}
+              >
+                {next_event.cover_url ? (
+                  <img
+                    src={next_event.cover_url}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover/tile:scale-105"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="absolute inset-0" style={{ background: grad.background }} aria-hidden />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
+                <div className="relative z-10 mt-auto w-full px-2.5 pb-2 pt-1.5">
+                  <span className="block text-[9px] font-semibold uppercase tracking-[0.18em] text-white/80">
+                    <Calendar className="mr-1 inline h-2.5 w-2.5" />
+                    {format(new Date(next_event.starts_at), "MMM d")}
+                  </span>
+                  <span className="mt-0.5 line-clamp-1 text-[11px] font-medium text-white">
+                    {next_event.title}
+                  </span>
+                </div>
+              </Link>
+            )}
+            {spaceHref && hosted_space && (
+              <Link
+                to={spaceHref}
+                onClick={stop}
+                className="group/tile relative flex h-20 overflow-hidden rounded-xl border border-border/55 bg-muted/40 transition-all hover:border-foreground/45 hover:shadow-[0_10px_28px_hsl(var(--background)/0.45)]"
+                aria-label={`View space ${hosted_space.name}`}
+              >
+                {hosted_space.cover_image_url ? (
+                  <img
+                    src={hosted_space.cover_image_url}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover/tile:scale-105"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="absolute inset-0" style={{ background: grad.background }} aria-hidden />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
+                <div className="relative z-10 mt-auto w-full px-2.5 pb-2 pt-1.5">
+                  <span className="block text-[9px] font-semibold uppercase tracking-[0.18em] text-white/80">
+                    <MapPin className="mr-1 inline h-2.5 w-2.5" />
+                    Hosts
+                  </span>
+                  <span className="mt-0.5 line-clamp-1 text-[11px] font-medium text-white">
+                    {hosted_space.name}
+                  </span>
+                </div>
+              </Link>
+            )}
+          </div>
+        )}
+
         {/* Signal chips — only render what's real */}
         {signals.length > 0 && (
           <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
