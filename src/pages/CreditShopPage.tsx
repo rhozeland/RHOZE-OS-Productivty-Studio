@@ -27,12 +27,13 @@ import {
 import RewardsExplainerV2 from "@/components/credits/RewardsExplainerV2";
 import VerifiedIPHub from "@/components/credits/VerifiedIPHub";
 import BuyRhozeSection from "@/components/credits/BuyRhozeSection";
-import { RhozeInfoPopover } from "@/components/RhozeInfoPopover";
+
 import { format, formatDistanceToNow } from "date-fns";
 import { Link, useSearchParams } from "react-router-dom";
 import CreatorPassCard from "@/components/creators/CreatorPassCard";
 import NextStepCard from "@/components/creators/NextStepCard";
 import TierMatrix from "@/components/creators/TierMatrix";
+import TierStripCompact from "@/components/creators/TierStripCompact";
 import TierProgressCard from "@/components/creators/TierProgressCard";
 import CoinPortfolio from "@/components/creators/CoinPortfolio";
 import { StreakCard } from "@/components/creators/StreakCard";
@@ -91,10 +92,6 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground">Creator Pass</h1>
-            <p className="text-muted-foreground inline-flex items-center gap-1.5">
-              Earned tiers — hold <span className="font-medium">$RHOZE</span>
-              <RhozeInfoPopover size={13} /> or show up. No subscriptions.
-            </p>
           </div>
           <div className="surface-card flex items-center gap-3 px-5 py-3">
             <Coins className="h-5 w-5 text-primary" />
@@ -111,9 +108,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
           <TabsTrigger value="pass" className="gap-1.5"><Award className="h-3.5 w-3.5" /> My Pass</TabsTrigger>
           <TabsTrigger value="portfolio" className="gap-1.5"><Briefcase className="h-3.5 w-3.5" /> Portfolio</TabsTrigger>
           <TabsTrigger value="works" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Verified IP</TabsTrigger>
-          <TabsTrigger value="activity" className="gap-1.5"><ActivityIcon className="h-3.5 w-3.5" /> Activity</TabsTrigger>
           <TabsTrigger value="topup" className="gap-1.5"><Wallet className="h-3.5 w-3.5" /> Top up</TabsTrigger>
-          <TabsTrigger value="how" className="gap-1.5"><HelpCircle className="h-3.5 w-3.5" /> How it works</TabsTrigger>
         </TabsList>
 
         {/* ═══════ My Pass — now also surfaces the full tier matrix ═══════ */}
@@ -128,13 +123,24 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
             <div className="flex items-center gap-2">
               <Star className="h-4 w-4 text-primary" />
               <h3 className="font-display text-base font-semibold text-foreground">All tiers</h3>
+              <span className="text-[10px] text-muted-foreground/70 ml-1">Hover for perks</span>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Hold $RHOZE to climb. Tier upgrades the moment your balance crosses a threshold — no subscriptions.
-            </p>
           </div>
-          <TierMatrix activeTier={currentTier as any} />
+          <TierStripCompact activeTier={currentTier as any} />
           <ActivityPreview userId={user.id} onSeeAll={() => setTab("activity")} />
+
+          {/* Subtle "How rewards work" footer — collapsible */}
+          <details className="group rounded-2xl border border-border/50 bg-card/40 mt-4">
+            <summary className="flex items-center gap-2 px-4 py-3 cursor-pointer list-none text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <HelpCircle className="h-3.5 w-3.5" />
+              <span>How rewards work</span>
+              <span className="ml-auto text-[10px] uppercase tracking-wider opacity-60 group-open:hidden">Open</span>
+              <span className="ml-auto text-[10px] uppercase tracking-wider opacity-60 hidden group-open:inline">Close</span>
+            </summary>
+            <div className="px-4 pb-5 pt-1">
+              <RewardsExplainerV2 />
+            </div>
+          </details>
         </TabsContent>
 
         {/* ═══════ Portfolio ═══════ */}
