@@ -1,18 +1,16 @@
 /**
  * VerificationPage — `/settings/verification`.
  *
- * Manual identity verification flow for the v7 Verified Artist tier.
- * Submission requires: 30s selfie video, 2+ social links, contact email,
- * connected wallet (already enforced elsewhere), short artist bio.
+ * v9 simplified flow. No selfie video. Verified Artist is earned by:
+ *   1. Uploading creative work
+ *   2. Reaching ≥3 works approved as Verified IP by admins
+ *   3. Clicking "Submit for review" — admin one-click approves
  *
- * Status surfaces:
- *   - none      → empty form, encourages submission
- *   - pending   → "Under review" state, blocks resubmit
- *   - verified  → success card + link back to /settings
- *   - revoked   → reason + resubmit option
+ * Status surfaces unchanged: none / pending / verified / revoked.
  */
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,12 +18,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
 import { useArtistVerification } from "@/hooks/useArtistVerification";
-import { ArrowLeft, BadgeCheck, Check, Clock, Loader2, ShieldAlert, Upload, X } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Check, Clock, Loader2, ShieldAlert, Sparkles, Upload } from "lucide-react";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+
+const REQUIRED_VERIFIED_WORKS = 3;
 
 type LatestRequest = {
   status: "pending" | "approved" | "rejected";
@@ -37,7 +38,6 @@ type LatestRequest = {
 const submitSchema = z.object({
   contact_email: z.string().trim().email().max(255),
   bio: z.string().trim().min(20, "Tell us a bit about your work (min 20 chars)").max(500),
-  socials: z.array(z.string().trim().url("Each social link must be a valid URL")).max(10),
 });
 
 const VerificationPage = () => {
@@ -45,12 +45,28 @@ const VerificationPage = () => {
   const navigate = useNavigate();
   const { data: verif, refetch } = useArtistVerification(user?.id);
 
-  const [video, setVideo] = useState<File | null>(null);
   const [contactEmail, setContactEmail] = useState(user?.email ?? "");
   const [bio, setBio] = useState("");
-  const [socials, setSocials] = useState<string[]>([""]);
   const [submitting, setSubmitting] = useState(false);
   const [latest, setLatest] = useState<LatestRequest | null>(null);
+
+  // Count of works that have been admin-approved as Verified IP
+  const { data: verifiedWorksCount = 0, isLoading: countLoading } = useQuery({
+    queryKey: ["verified-works-count", user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      const { count } = await supabase
+        .from("works")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("is_unverified", false)
+        .not("anchored_at", "is", null);
+      return count ?? 0;
+    },
+    enabled: !!user,
+  });
+
+  const meetsThreshold = verifiedWorksCount >= REQUIRED_VERIFIED_WORKS;
 
   const loadLatest = async () => {
     if (!user) return;
@@ -69,25 +85,17 @@ const VerificationPage = () => {
     loadLatest();
   }, [user]);
 
-  const updateSocial = (i: number, v: string) =>
-    setSocials((prev) => prev.map((s, idx) => (idx === i ? v : s)));
-
-  const addSocial = () => setSocials((prev) => [...prev, ""]);
-  const removeSocial = (i: number) =>
-    setSocials((prev) => prev.filter((_, idx) => idx !== i));
-
   const handleSubmit = async () => {
     if (!user) return;
-    if (!video) {
-      toast({ title: "Selfie video required", description: "Upload a 10–30s video introducing yourself.", variant: "destructive" });
+    if (!meetsThreshold) {
+      toast({
+        title: "Not yet eligible",
+        description: `You need ${REQUIRED_VERIFIED_WORKS} works approved as Verified IP first.`,
+        variant: "destructive",
+      });
       return;
     }
-    if (video.size > 50 * 1024 * 1024) {
-      toast({ title: "Video too large", description: "Keep it under 50MB.", variant: "destructive" });
-      return;
-    }
-    const cleaned = socials.map((s) => s.trim()).filter(Boolean);
-    const parsed = submitSchema.safeParse({ contact_email: contactEmail, bio, socials: cleaned });
+    const parsed = submitSchema.safeParse({ contact_email: contactEmail, bio });
     if (!parsed.success) {
       toast({ title: "Check the form", description: parsed.error.issues[0]?.message ?? "Invalid input", variant: "destructive" });
       return;
@@ -95,27 +103,17 @@ const VerificationPage = () => {
 
     setSubmitting(true);
     try {
-      const ext = video.name.split(".").pop() || "mp4";
-      const path = `${user.id}/${Date.now()}.${ext}`;
-      const up = await supabase.storage.from("artist-verification").upload(path, video, {
-        contentType: video.type || "video/mp4",
-        upsert: false,
-      });
-      if (up.error) throw up.error;
-
       const { error: insertErr } = await supabase
         .from("artist_verification_requests")
         .insert({
           user_id: user.id,
-          video_url: up.data.path,
-          social_links: cleaned,
           contact_email: parsed.data.contact_email,
           bio: parsed.data.bio,
           status: "pending",
         });
       if (insertErr) throw insertErr;
 
-      toast({ title: "Submitted", description: "We'll review and notify you within a few days." });
+      toast({ title: "Submitted", description: "An admin will review and notify you shortly." });
       await Promise.all([refetch(), loadLatest()]);
     } catch (e: any) {
       toast({ title: "Submission failed", description: e.message ?? "Please try again", variant: "destructive" });
@@ -125,6 +123,7 @@ const VerificationPage = () => {
   };
 
   const status = verif?.status ?? "none";
+  const progressPct = Math.min(100, (verifiedWorksCount / REQUIRED_VERIFIED_WORKS) * 100);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-8">
@@ -135,8 +134,7 @@ const VerificationPage = () => {
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">Verified Artist</h1>
         <p className="text-sm text-muted-foreground">
-          Verification protects fans from impersonation and unlocks Verified IP, coin launches,
-          paid services, and paid Spaces.
+          Earned, not applied for. Get {REQUIRED_VERIFIED_WORKS} works approved as Verified IP and an admin signs you off — unlocks paid services, Shares, and coin launches.
         </p>
       </header>
 
@@ -155,7 +153,7 @@ const VerificationPage = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5" /> Under review</CardTitle>
-            <CardDescription>Our team is reviewing your submission. Most decisions take 1–3 days.</CardDescription>
+            <CardDescription>An admin is taking a look. Most decisions take a day or two.</CardDescription>
           </CardHeader>
         </Card>
       ) : (
@@ -166,50 +164,56 @@ const VerificationPage = () => {
                 <CardTitle className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
                   <ShieldAlert className="h-5 w-5" /> Verification revoked
                 </CardTitle>
-                <CardDescription>You can submit a new request below.</CardDescription>
+                <CardDescription>You can submit a new request once you have {REQUIRED_VERIFIED_WORKS} Verified IP works again.</CardDescription>
               </CardHeader>
             </Card>
           )}
 
-          <Card>
+          {/* ─── Eligibility gate ─── */}
+          <Card className={cn(meetsThreshold && "border-emerald-500/30 bg-emerald-500/5")}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Sparkles className="h-4 w-4 text-primary" />
+                Verified IP progress
+              </CardTitle>
+              <CardDescription>
+                {countLoading
+                  ? "Counting your approved works…"
+                  : meetsThreshold
+                  ? "You're eligible. Fill the form below to submit."
+                  : `You're at ${verifiedWorksCount} / ${REQUIRED_VERIFIED_WORKS}. Keep uploading and request Verified IP review on each work.`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Progress value={progressPct} className="h-2" />
+              <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                <span>{verifiedWorksCount} approved</span>
+                <span>{REQUIRED_VERIFIED_WORKS} required</span>
+              </div>
+              {!meetsThreshold && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => navigate("/dashboard?tab=works")}
+                >
+                  <Upload className="mr-1.5 h-3.5 w-3.5" /> Upload a work
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ─── Submit form (only enabled when threshold met) ─── */}
+          <Card className={cn(!meetsThreshold && "opacity-60")}>
             <CardHeader>
               <CardTitle>Submit your verification</CardTitle>
-              <CardDescription>All fields are required.</CardDescription>
+              <CardDescription>
+                {meetsThreshold
+                  ? "Quick check — an admin will confirm and flip the badge on."
+                  : `Form unlocks at ${REQUIRED_VERIFIED_WORKS} Verified IP works.`}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="video">Selfie video (10–30s)</Label>
-                <p className="text-xs text-muted-foreground">
-                  Show your face, say your name, your handle here, and the date.
-                </p>
-                <Input
-                  id="video"
-                  type="file"
-                  accept="video/*"
-                  onChange={(e) => setVideo(e.target.files?.[0] ?? null)}
-                />
-                {video && <p className="text-xs text-muted-foreground">{video.name} · {(video.size/1024/1024).toFixed(1)}MB</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label>Social link <span className="text-muted-foreground font-normal">(optional, helps us verify you faster)</span></Label>
-                {socials.map((s, i) => (
-                  <div key={i} className="flex gap-2">
-                    <Input
-                      placeholder="https://instagram.com/yourhandle"
-                      value={s}
-                      onChange={(e) => updateSocial(i, e.target.value)}
-                    />
-                    {socials.length > 1 && (
-                      <Button variant="ghost" size="icon" onClick={() => removeSocial(i)}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                <Button variant="outline" size="sm" onClick={addSocial}>+ Add another</Button>
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="email">Contact email</Label>
                 <Input
@@ -217,6 +221,7 @@ const VerificationPage = () => {
                   type="email"
                   value={contactEmail}
                   onChange={(e) => setContactEmail(e.target.value)}
+                  disabled={!meetsThreshold}
                 />
               </div>
 
@@ -229,20 +234,21 @@ const VerificationPage = () => {
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   placeholder="What you make, where you're based, anything that helps us recognize you."
+                  disabled={!meetsThreshold}
                 />
                 <p className="text-xs text-muted-foreground">{bio.length}/500</p>
               </div>
 
               <Button
                 onClick={handleSubmit}
-                disabled={submitting}
+                disabled={submitting || !meetsThreshold}
                 className="w-full"
                 size="lg"
               >
                 {submitting ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting…</>
                 ) : (
-                  <><Upload className="mr-2 h-4 w-4" /> Submit for review</>
+                  <><BadgeCheck className="mr-2 h-4 w-4" /> Submit for review</>
                 )}
               </Button>
             </CardContent>
@@ -265,7 +271,6 @@ function SubmissionTimeline({
   const submittedAt = new Date(latest.created_at);
   const decidedAt = latest.decided_at ? new Date(latest.decided_at) : null;
 
-  // Step states: "done" | "active" | "pending" | "rejected"
   const submittedState = "done" as const;
   const reviewState =
     decidedAt
@@ -281,34 +286,17 @@ function SubmissionTimeline({
         : ("pending" as const);
 
   const steps = [
-    {
-      key: "submitted",
-      label: "Submitted",
-      detail: `${formatDistanceToNow(submittedAt)} ago`,
-      state: submittedState,
-    },
+    { key: "submitted", label: "Submitted", detail: `${formatDistanceToNow(submittedAt)} ago`, state: submittedState },
     {
       key: "review",
       label: "In review",
-      detail:
-        reviewState === "active"
-          ? "Our team is taking a look"
-          : reviewState === "done"
-            ? "Reviewed"
-            : "Pending",
+      detail: reviewState === "active" ? "Our team is taking a look" : reviewState === "done" ? "Reviewed" : "Pending",
       state: reviewState,
     },
     {
       key: "decision",
-      label:
-        latest.status === "approved"
-          ? "Approved"
-          : latest.status === "rejected"
-            ? "Needs changes"
-            : "Decision",
-      detail: decidedAt
-        ? `${formatDistanceToNow(decidedAt)} ago`
-        : "Usually 1–3 days",
+      label: latest.status === "approved" ? "Approved" : latest.status === "rejected" ? "Needs changes" : "Decision",
+      detail: decidedAt ? `${formatDistanceToNow(decidedAt)} ago` : "Usually 1–2 days",
       state: decisionState,
     },
   ];
@@ -321,14 +309,7 @@ function SubmissionTimeline({
             <div key={step.key} className="flex-1 flex flex-col items-center text-center">
               <div className="flex items-center w-full">
                 {i > 0 && (
-                  <div
-                    className={cn(
-                      "h-px flex-1 -mr-1",
-                      steps[i - 1].state === "done"
-                        ? "bg-sky-500/60"
-                        : "bg-border",
-                    )}
-                  />
+                  <div className={cn("h-px flex-1 -mr-1", steps[i - 1].state === "done" ? "bg-sky-500/60" : "bg-border")} />
                 )}
                 <div
                   className={cn(
@@ -339,25 +320,13 @@ function SubmissionTimeline({
                     step.state === "pending" && "bg-muted border-border text-muted-foreground",
                   )}
                 >
-                  {step.state === "done" ? (
-                    <Check className="h-4 w-4" />
-                  ) : step.state === "active" ? (
-                    <Clock className="h-3.5 w-3.5" />
-                  ) : step.state === "rejected" ? (
-                    <ShieldAlert className="h-3.5 w-3.5" />
-                  ) : (
-                    <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                  )}
+                  {step.state === "done" ? <Check className="h-4 w-4" /> :
+                    step.state === "active" ? <Clock className="h-3.5 w-3.5" /> :
+                    step.state === "rejected" ? <ShieldAlert className="h-3.5 w-3.5" /> :
+                    <span className="h-1.5 w-1.5 rounded-full bg-current" />}
                 </div>
                 {i < steps.length - 1 && (
-                  <div
-                    className={cn(
-                      "h-px flex-1 -ml-1",
-                      step.state === "done"
-                        ? "bg-sky-500/60"
-                        : "bg-border",
-                    )}
-                  />
+                  <div className={cn("h-px flex-1 -ml-1", step.state === "done" ? "bg-sky-500/60" : "bg-border")} />
                 )}
               </div>
               <div className="mt-2 space-y-0.5">
