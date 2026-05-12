@@ -72,6 +72,7 @@ const ProfileDetailPage = () => {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [investOpen, setInvestOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(searchParams.get("back") === "1");
+  const [reputationOpen, setReputationOpen] = useState(false);
 
   // Strip `?back=1` from the URL once we've consumed it so refreshes don't
   // re-open the sheet after the user closes it.
