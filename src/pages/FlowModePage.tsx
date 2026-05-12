@@ -2193,13 +2193,10 @@ const FlowModePage = () => {
                       />
                     </div>
 
-                    {/* Reward nudge */}
-                    <div className="flex items-center gap-2 rounded-xl bg-primary/5 border border-primary/15 px-3 py-2 text-[11px] text-foreground/80">
-                      <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
-                      <span>Earn <strong className="text-primary">+1 $RHOZE</strong> per share · adds to your XP and Creator Pass progress.</span>
-                    </div>
                   </>
                 )}
+                {/* Reward nudge — tucked behind a tiny sparkle so it doesn't dominate */}
+                {shareStep === "compose" && false && (
 
                 {shareStep === "confirm" && (
                   <div className="rounded-xl border border-border bg-background/40 p-3 space-y-2">
