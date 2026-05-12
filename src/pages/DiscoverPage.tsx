@@ -167,6 +167,26 @@ const DiscoverPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const category = searchParams.get("cat");
   const normalizedCategory = category ? normalizeCategory(category) : null;
+
+  // ─── Stream view tabs (creators · events · spaces · all) ────────
+  type StreamTab = "all" | "creators" | "events" | "spaces";
+  const initialTab = (searchParams.get("tab") as StreamTab) || "all";
+  const [streamTab, setStreamTab] = useState<StreamTab>(
+    ["all", "creators", "events", "spaces"].includes(initialTab) ? initialTab : "all",
+  );
+  const handleStreamTab = (tab: StreamTab) => {
+    setStreamTab(tab);
+    const next = new URLSearchParams(searchParams);
+    if (tab === "all") next.delete("tab");
+    else next.set("tab", tab);
+    setSearchParams(next, { replace: true });
+    // Scroll the stream section into view so the change is felt.
+    requestAnimationFrame(() => {
+      document.getElementById("discover-stream")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+  const mosaicKind: MosaicKindFilter =
+    streamTab === "events" ? "event" : streamTab === "space" as any ? "space" : streamTab === "spaces" ? "space" : "all";
   // ─── Personal greeting (signed-in only) ─────────────────────────
   const { data: profile } = useQuery({
     queryKey: ["discover-greeting", user?.id],
