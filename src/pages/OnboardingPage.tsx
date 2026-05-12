@@ -8,12 +8,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { REGIONS, MARKETS } from "@/lib/regions";
+import ArchetypePicker from "@/components/profile/ArchetypePicker";
+import type { Archetype } from "@/lib/archetypes";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
 const STEPS = [
   { id: "welcome", icon: Sparkles, title: "Welcome to Rhozeland" },
   { id: "logo", icon: Palette, title: "Create Your Toybox" },
   { id: "region", icon: MapPin, title: "Where are you based?" },
+  { id: "archetype", icon: Compass, title: "What kind of creator?" },
   { id: "tour", icon: Globe, title: "Quick Tour" },
   { id: "ready", icon: CheckCircle2, title: "You're All Set" },
 ];
