@@ -346,10 +346,8 @@ const DiscoverPage = () => {
       {/* ─── Creator Pass upgrade nudge ─────────────────────────────── */}
       <CreatorPassUpgradeCta />
 
-      {/* ─── Trending artists — only on All / Creators ────────────── */}
-      {(streamTab === "all" || streamTab === "creators") && (
-        <TrendingArtistsLane marketFilter={marketFilter} />
-      )}
+      {/* ─── Trending artists (self-gated by liquidity) ───────────── */}
+      <TrendingArtistsLane marketFilter={marketFilter} />
 
       {/* ─── The Stream ─────────────────────────────────────────────── */}
       <section id="discover-stream" className="space-y-4 scroll-mt-20">
