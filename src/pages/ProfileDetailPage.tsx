@@ -459,15 +459,14 @@ const ProfileDetailPage = () => {
 
         {/* ─── Tabbed sections ─── */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="w-full grid grid-cols-4 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
-            <TabsTrigger value="overview" className="text-xs gap-1.5"><UserIcon className="h-3 w-3" />Overview</TabsTrigger>
+          <TabsList className="w-full grid grid-cols-3 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
             <TabsTrigger value="support" className="text-xs gap-1.5"><Heart className="h-3 w-3" />Support</TabsTrigger>
             <TabsTrigger value="works" className="text-xs gap-1.5"><Sparkles className="h-3 w-3" />Works</TabsTrigger>
-            <TabsTrigger value="building" className="text-xs gap-1.5"><FolderKanban className="h-3 w-3" />Building</TabsTrigger>
+            <TabsTrigger value="about" className="text-xs gap-1.5"><UserIcon className="h-3 w-3" />About</TabsTrigger>
           </TabsList>
 
-          {/* ─── Overview tab ─── */}
-          <TabsContent value="overview" className="space-y-5 mt-5">
+          {/* ─── About tab (formerly Overview) ─── */}
+          <TabsContent value="about" className="space-y-5 mt-5">
         {/* ─── About + Details ─── */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-4">
