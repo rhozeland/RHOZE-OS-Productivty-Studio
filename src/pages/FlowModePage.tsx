@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -94,6 +94,7 @@ const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; link
 const FlowModePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { isAdmin } = useAdminCheck();
   const queryClient = useQueryClient();
@@ -916,11 +917,12 @@ const FlowModePage = () => {
   useEffect(() => {
     const targetId = searchParams.get("item");
     if (!targetId) return;
+    if (flowItemsFetching) return;
     if (allItems.length === 0) return;
     if (appliedDeepLinkRef.current === targetId) return;
 
     const idx = allItems.findIndex((i: any) => i.id === targetId);
-    if (idx >= 0) {
+    if (idx >= 0 && (baseItems.some((i: any) => i.id === targetId) || !!deepLinkItem)) {
       setCurrentIndex(idx);
       appliedDeepLinkRef.current = targetId;
       // Strip ?item so further swipes aren't reverted by this effect.
@@ -933,7 +935,25 @@ const FlowModePage = () => {
       setFeedScope("all");
       setSelectedCategories(CATEGORIES);
     }
-  }, [allItems, searchParams, feedScope, setSearchParams]);
+  }, [allItems, baseItems, deepLinkItem, searchParams, feedScope, flowItemsFetching, setSearchParams]);
+
+  const handleExitFlow = useCallback(() => {
+    const fromState = (location.state as { from?: string } | null)?.from;
+    const currentPath = `${location.pathname}${location.search}${location.hash}`;
+
+    if (fromState && fromState !== currentPath) {
+      navigate(fromState);
+      return;
+    }
+
+    const historyIndex = typeof window !== "undefined" ? window.history.state?.idx : 0;
+    if (typeof historyIndex === "number" && historyIndex > 0) {
+      navigate(-1);
+      return;
+    }
+
+    navigate("/discover");
+  }, [location.hash, location.pathname, location.search, location.state, navigate]);
 
   // Batched coin lookup keyed by uploader (creator_id). Coins are now
   // profile-bound, so the "$TICKER → speculate" pill on a Flow card means
