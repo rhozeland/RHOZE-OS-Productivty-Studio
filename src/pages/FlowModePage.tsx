@@ -1906,7 +1906,6 @@ const FlowModePage = () => {
             const filesErrored = pendingFiles.filter((f) => f.status === "error");
             const noFileErrors = filesErrored.length === 0;
             const checks = [
-              { ok: !!trimmedTitle, label: "Title added" },
               { ok: hasMedia, label: fileCount > 1 ? `${fileCount} files attached` : "File or link attached" },
               { ok: noFileErrors, label: filesErrored.length > 0 ? `Resolve ${filesErrored.length} file error${filesErrored.length > 1 ? "s" : ""}` : "All files uploaded cleanly" },
               { ok: !linkProvided || linkValid, label: linkProvided ? "Link looks valid" : "Link looks valid (optional)" },
