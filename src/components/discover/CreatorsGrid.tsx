@@ -297,7 +297,7 @@ const CreatorsGrid = ({
           to="/profiles"
           className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
-          Browse all {meta?.plural.toLowerCase() ?? "creators"} <ArrowRight className="h-3 w-3" />
+          Browse all {noun} <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
     </div>
