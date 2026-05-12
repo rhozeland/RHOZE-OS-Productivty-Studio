@@ -806,6 +806,14 @@ const ProfileDetailPage = () => {
                   ))}
                 </div>
               </div>
+            ) : isOwnProfile ? (
+              <EmptyState
+                icon={Sparkles}
+                title="No drops yet"
+                description="Use the post button on Discover to drop a work, event, space, offering or coin launch — anything you make lands here."
+                cta={{ label: "Open the composer", to: "/discover#discover-composer" }}
+                size="lg"
+              />
             ) : (
               <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-8 text-center text-sm text-muted-foreground">
                 No drops yet.
