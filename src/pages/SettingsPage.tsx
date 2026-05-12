@@ -32,9 +32,21 @@ import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { REGIONS } from "@/lib/regions";
-import { RolePicker, SkillPicker } from "@/components/profile/RolePicker";
+import { RolePicker } from "@/components/profile/RolePicker";
 import ArchetypePicker from "@/components/profile/ArchetypePicker";
 import type { Archetype } from "@/lib/archetypes";
+
+/** Broad creator categories — replaces the granular role/specialty grid. */
+const CATEGORY_OPTIONS = [
+  { id: "music", label: "Music", emoji: "🎧" },
+  { id: "video", label: "Video", emoji: "🎬" },
+  { id: "photo", label: "Photo", emoji: "📷" },
+  { id: "design", label: "Design", emoji: "🎨" },
+  { id: "writing", label: "Writing", emoji: "✍️" },
+  { id: "development", label: "Development", emoji: "💻" },
+  { id: "fashion", label: "Fashion", emoji: "👗" },
+  { id: "performance", label: "Performance", emoji: "🎭" },
+];
 
 /* ─── Section nav items ─── */
 const SECTIONS = [
