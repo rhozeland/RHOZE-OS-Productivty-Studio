@@ -13,6 +13,8 @@ import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import RegionChip from "@/components/profile/RegionChip";
 import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, Users } from "lucide-react";
+import ArchetypeChip from "@/components/profile/ArchetypeChip";
+import type { Archetype } from "@/lib/archetypes";
 import { EmptyState } from "@/components/ui/empty-state";
 
 const initials = (name?: string | null) =>
@@ -24,14 +26,20 @@ const initials = (name?: string | null) =>
     .join("")
     .toUpperCase() || "·";
 
-const CreatorsGrid = ({ search = "" }: { search?: string }) => {
+const CreatorsGrid = ({
+  search = "",
+  archetype = "all",
+}: {
+  search?: string;
+  archetype?: Archetype | "all";
+}) => {
   const { data: profiles, isLoading } = useQuery({
     queryKey: ["discover-creators-grid"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
         .select(
-          "user_id, display_name, username, avatar_url, banner_gradient, headline, bio, region_code, verification_status, is_public, creator_roles",
+          "user_id, display_name, username, avatar_url, banner_gradient, headline, bio, region_code, verification_status, is_public, creator_roles, archetype",
         )
         .order("created_at", { ascending: false })
         .limit(48);
@@ -44,6 +52,7 @@ const CreatorsGrid = ({ search = "" }: { search?: string }) => {
   const term = search.trim().toLowerCase();
   const filtered = (profiles ?? []).filter((p: any) => {
     if (p.is_public === false) return false;
+    if (archetype !== "all" && p.archetype !== archetype) return false;
     if (!term) return true;
     return (
       p.display_name?.toLowerCase().includes(term) ||
@@ -105,11 +114,15 @@ const CreatorsGrid = ({ search = "" }: { search?: string }) => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
-              {/* Top chip */}
+              {/* Top chip — archetype if set, else generic Creator */}
               <div className="absolute top-2.5 left-2.5 right-2.5 flex items-start justify-between gap-2 z-10">
-                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider backdrop-blur-md bg-violet-500/20 text-violet-100">
-                  Creator
-                </span>
+                {p.archetype ? (
+                  <ArchetypeChip archetype={p.archetype} size="xs" />
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider backdrop-blur-md bg-white/15 text-white">
+                    Creator
+                  </span>
+                )}
                 {p.verification_status === "verified" && (
                   <VerifiedArtistBadge status="verified" size="xs" showLabel={false} />
                 )}

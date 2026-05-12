@@ -28,6 +28,7 @@ import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import StreamComposer from "@/components/stream/StreamComposer";
 import ConversationsMosaic, { type MosaicKindFilter } from "@/components/hub/ConversationsMosaic";
 import CreatorsGrid from "@/components/discover/CreatorsGrid";
+import ArchetypeFilter from "@/components/discover/ArchetypeFilter";
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
 import DiscoverEventsGrid from "@/components/discover/DiscoverEventsGrid";
 import EventCategoryPills from "@/components/discover/EventCategoryPills";
@@ -184,6 +185,19 @@ const DiscoverPage = () => {
     requestAnimationFrame(() => {
       document.getElementById("discover-stream")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
+  };
+  // ─── Archetype filter (Artist · Builder · Influencer) ───────────
+  // Only meaningful on the Creators feed — preserved as ?archetype= in URL.
+  const initialArchetype = (searchParams.get("archetype") as any) || "all";
+  const [archetype, setArchetype] = useState<import("@/lib/archetypes").Archetype | "all">(
+    ["artist", "builder", "influencer"].includes(initialArchetype) ? initialArchetype : "all",
+  );
+  const handleArchetype = (next: import("@/lib/archetypes").Archetype | "all") => {
+    setArchetype(next);
+    const params = new URLSearchParams(searchParams);
+    if (next === "all") params.delete("archetype");
+    else params.set("archetype", next);
+    setSearchParams(params, { replace: true });
   };
   const mosaicKind: MosaicKindFilter =
     streamTab === "events" ? "event" : streamTab === "spaces" ? "space" : "all";
@@ -398,7 +412,10 @@ const DiscoverPage = () => {
         </div>
 
         {streamTab === "creators" ? (
-          <CreatorsGrid />
+          <div className="space-y-4">
+            <ArchetypeFilter value={archetype} onChange={handleArchetype} />
+            <CreatorsGrid archetype={archetype} />
+          </div>
         ) : (
           <ConversationsMosaic kind={mosaicKind} category={normalizedCategory} />
         )}

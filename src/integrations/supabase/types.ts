@@ -2310,6 +2310,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          archetype: string | null
           available: boolean | null
           avatar_url: string | null
           ban_reason: string | null
@@ -2363,6 +2364,7 @@ export type Database = {
           youtube_url: string | null
         }
         Insert: {
+          archetype?: string | null
           available?: boolean | null
           avatar_url?: string | null
           ban_reason?: string | null
@@ -2416,6 +2418,7 @@ export type Database = {
           youtube_url?: string | null
         }
         Update: {
+          archetype?: string | null
           available?: boolean | null
           avatar_url?: string | null
           ban_reason?: string | null
