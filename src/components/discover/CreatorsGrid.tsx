@@ -196,8 +196,7 @@ const CreatorsGrid = ({
               ? p.creator_roles[0]
               : p.headline ?? null;
           const banner =
-            p.banner_gradient ||
-            `linear-gradient(135deg, hsl(var(--${meta?.token ?? "primary"}) / 0.55), hsl(var(--accent) / 0.3) 70%, hsl(var(--card)))`;
+            p.banner_gradient || archetypeBannerGradient(p.archetype, p.user_id);
 
           return (
             <motion.div
