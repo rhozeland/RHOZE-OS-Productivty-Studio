@@ -850,7 +850,8 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
               </span>
               <ArrowRight className="ml-2 h-4 w-4 text-muted-foreground transition-transform rotate-90 group-open:-rotate-90" />
             </summary>
-            <div className="mt-4 space-y-4">
+            <div className="mt-4 space-y-5">
+              <LiveInquiriesFeed userId={user.id} />
               {!!allInquiries?.length && (
                 <div id="inquiries-section" className="space-y-3 scroll-mt-24">
                   {allInquiries.map((i) => renderInquiry(i))}
