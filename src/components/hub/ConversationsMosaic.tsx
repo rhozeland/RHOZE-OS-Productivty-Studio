@@ -295,18 +295,47 @@ const ConversationsMosaic = ({
 
   if (tiles.length === 0) {
     const hasSearch = search.trim().length > 0;
+    const kindCta =
+      kind === "event"
+        ? { label: "Host an event", to: "/spaces/events/new" }
+        : kind === "space"
+          ? { label: "List your space", to: "/studios/apply" }
+          : kind === "drop"
+            ? { label: "Drop something", to: "/discover#discover-composer" }
+            : null;
+    const kindCopy =
+      kind === "event"
+        ? { title: "No upcoming events", body: "Be the first to host — Rhozeland surfaces your event here the moment it's published." }
+        : kind === "space"
+          ? { title: "No spaces listed yet", body: "Got a studio, gallery or venue? List it and creators will find it." }
+          : kind === "drop"
+            ? { title: "No drops yet", body: "Drop a work, link or note — anything you make lands here." }
+            : null;
+
     return (
       <div className="space-y-6">
         <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 p-5 flex items-start gap-3">
           <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-          <div>
+          <div className="flex-1">
             <p className="font-display text-sm font-semibold text-foreground">
-              {hasSearch ? "Nothing matches that search" : kind !== "all" ? "Nothing here yet" : "The Stream is quiet"}
+              {hasSearch
+                ? "Nothing matches that search"
+                : kindCopy?.title ?? (kind !== "all" ? "Nothing here yet" : "The Stream is quiet")}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {hasSearch ? "While you're here, check who's trending." : "While the stream fills up, here's who's trending."}
+              {hasSearch
+                ? "While you're here, check who's trending."
+                : kindCopy?.body ?? "While the stream fills up, here's who's trending."}
             </p>
           </div>
+          {!hasSearch && kindCta && (
+            <a
+              href={kindCta.to}
+              className="shrink-0 self-center inline-flex items-center gap-1 rounded-full bg-foreground px-3 py-1.5 text-[11px] font-semibold text-background hover:bg-foreground/90 transition-colors"
+            >
+              {kindCta.label} <ArrowRight className="h-3 w-3" />
+            </a>
+          )}
         </div>
         {/* Lazy import to avoid circular hub deps */}
         <FallbackTrendingArtists />
