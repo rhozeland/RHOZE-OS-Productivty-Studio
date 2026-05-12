@@ -1508,7 +1508,7 @@ const FlowModePage = () => {
             variant="ghost"
             size="icon"
             className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9"
-            onClick={() => navigate("/dashboard")}
+            onClick={handleExitFlow}
             aria-label="Exit Flow Mode"
             title="Exit Flow Mode"
           >
