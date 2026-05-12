@@ -17,9 +17,12 @@ const STEPS = [
   { id: "logo", icon: Palette, title: "Create Your Toybox" },
   { id: "region", icon: MapPin, title: "Where are you based?" },
   { id: "archetype", icon: Compass, title: "What kind of creator?" },
+  { id: "bio", icon: Heart, title: "Tell us about you" },
   { id: "tour", icon: Globe, title: "Quick Tour" },
   { id: "ready", icon: CheckCircle2, title: "You're All Set" },
 ];
+
+const BIO_MIN = 40;
 
 const TOUR_SLIDES = [
   {
@@ -44,6 +47,7 @@ const OnboardingPage = () => {
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const [regionCode, setRegionCode] = useState<string>("");
   const [archetype, setArchetype] = useState<Archetype | null>(null);
+  const [bio, setBio] = useState("");
   const [tourSlide, setTourSlide] = useState(0);
   const [saving, setSaving] = useState(false);
   const [showExportHint, setShowExportHint] = useState(false);
@@ -86,12 +90,14 @@ const OnboardingPage = () => {
         }
       }
 
-      if (regionCode || archetype) {
+      const trimmedBio = bio.trim();
+      if (regionCode || archetype || trimmedBio) {
         await supabase
           .from("profiles")
           .update({
             ...(regionCode ? { region_code: regionCode } : {}),
             ...(archetype ? { archetype } : {}),
+            ...(trimmedBio ? { bio: trimmedBio } : {}),
           } as any)
           .eq("user_id", user.id);
       }
@@ -129,13 +135,8 @@ const OnboardingPage = () => {
         ))}
       </div>
 
-      {/* Skip button */}
-      <button
-        onClick={() => navigate("/discover", { replace: true })}
-        className="fixed top-6 right-6 z-20 text-xs text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Skip for now
-      </button>
+      {/* No skip — avatar, region, archetype, and bio are required so the
+          Discover grid doesn't fill up with blank default profiles. */}
 
       <div className="relative z-10 w-full max-w-lg mx-4">
         <AnimatePresence mode="wait">
@@ -312,23 +313,32 @@ const OnboardingPage = () => {
                   </motion.p>
                 )}
 
-                <div className="flex justify-between mt-8">
+                <div className="flex items-center justify-between gap-3 mt-8">
                   <Button variant="ghost" onClick={prev} className="rounded-xl gap-1.5">
                     <ArrowLeft className="w-4 h-4" /> Back
                   </Button>
-                  <Button
-                    onClick={() => {
-                      if (!logoDataUrl) {
-                        setShowExportHint(true);
-                        setTimeout(() => setShowExportHint(false), 4000);
-                      }
-                      next();
-                    }}
-                    className="rounded-xl gap-1.5"
-                  >
-                    Continue
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
+                  <div className="flex flex-col items-end gap-1">
+                    {!logoDataUrl && (
+                      <p className="text-[11px] text-muted-foreground">
+                        Tap <span className="font-semibold text-foreground">Export</span> first to lock it in.
+                      </p>
+                    )}
+                    <Button
+                      onClick={() => {
+                        if (!logoDataUrl) {
+                          setShowExportHint(true);
+                          setTimeout(() => setShowExportHint(false), 4000);
+                          return;
+                        }
+                        next();
+                      }}
+                      disabled={!logoDataUrl}
+                      className="rounded-xl gap-1.5"
+                    >
+                      Continue
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Export hint lightbox */}
@@ -457,8 +467,62 @@ const OnboardingPage = () => {
             </motion.div>
           )}
 
-          {/* Step 4: Quick Tour */}
+          {/* Step 4: Bio */}
           {step === 4 && (
+            <motion.div
+              key="bio"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-8 sm:p-10">
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/5 border border-border/50 mb-3">
+                    <Heart className="h-5 w-5 text-foreground/70" />
+                  </div>
+                  <h2 className="font-display text-2xl font-bold text-foreground mb-1.5">
+                    Tell us about you
+                  </h2>
+                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                    A short bio so visitors know what you're about. At least {BIO_MIN} characters.
+                  </p>
+                </div>
+
+                <textarea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value.slice(0, 280))}
+                  placeholder="e.g. Toronto-based producer making warm, lo-fi soul. Open to collabs and live sessions."
+                  rows={5}
+                  className="w-full resize-none rounded-2xl border border-border bg-background/60 p-4 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-foreground/40 focus:outline-none focus:ring-0"
+                />
+                <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
+                  <span>
+                    {bio.trim().length < BIO_MIN
+                      ? `${BIO_MIN - bio.trim().length} more to go`
+                      : "Looks good ✓"}
+                  </span>
+                  <span>{bio.length}/280</span>
+                </div>
+
+                <div className="flex justify-between mt-8">
+                  <Button variant="ghost" onClick={prev} className="rounded-xl gap-1.5">
+                    <ArrowLeft className="w-4 h-4" /> Back
+                  </Button>
+                  <Button
+                    onClick={next}
+                    disabled={bio.trim().length < BIO_MIN}
+                    className="rounded-xl gap-1.5"
+                  >
+                    Continue <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 5: Quick Tour */}
+          {step === 5 && (
             <motion.div
               key="tour"
               initial={{ opacity: 0, y: 30 }}
@@ -512,8 +576,8 @@ const OnboardingPage = () => {
             </motion.div>
           )}
 
-          {/* Step 3: Ready */}
-          {step === 5 && (
+          {/* Step 6: Ready */}
+          {step === 6 && (
             <motion.div
               key="ready"
               initial={{ opacity: 0, y: 30 }}

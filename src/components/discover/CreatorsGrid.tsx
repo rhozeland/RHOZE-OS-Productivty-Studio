@@ -28,7 +28,7 @@ import RegionChip from "@/components/profile/RegionChip";
 import ArchetypeChip from "@/components/profile/ArchetypeChip";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowRight, Pin, Users } from "lucide-react";
-import { ARCHETYPE_BY_ID, type Archetype } from "@/lib/archetypes";
+import { ARCHETYPE_BY_ID, archetypeBannerGradient, type Archetype } from "@/lib/archetypes";
 import { EmptyState } from "@/components/ui/empty-state";
 
 const QUALITY_THRESHOLD = 4;
@@ -196,8 +196,7 @@ const CreatorsGrid = ({
               ? p.creator_roles[0]
               : p.headline ?? null;
           const banner =
-            p.banner_gradient ||
-            `linear-gradient(135deg, hsl(var(--${meta?.token ?? "primary"}) / 0.55), hsl(var(--accent) / 0.3) 70%, hsl(var(--card)))`;
+            p.banner_gradient || archetypeBannerGradient(p.archetype as Archetype | null, p.user_id);
 
           return (
             <motion.div
