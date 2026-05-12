@@ -272,7 +272,7 @@ const ArtistSpotlightCard = ({
           or tap card to view profile
         </span>
       </div>
-    </Link>
+    </div>
   );
 };
 
