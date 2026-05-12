@@ -47,6 +47,7 @@ const OnboardingPage = () => {
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const [regionCode, setRegionCode] = useState<string>("");
   const [archetype, setArchetype] = useState<Archetype | null>(null);
+  const [bio, setBio] = useState("");
   const [tourSlide, setTourSlide] = useState(0);
   const [saving, setSaving] = useState(false);
   const [showExportHint, setShowExportHint] = useState(false);
