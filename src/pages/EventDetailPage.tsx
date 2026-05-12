@@ -656,21 +656,6 @@ const EventDetailPage = () => {
             </div>
           )}
 
-          {/* Event coin — only render when a coin is actually linked. */}
-          {eventCoins && eventCoins.length > 0 && (
-            <div className="space-y-3 border-t border-border pt-5">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">Event coin</p>
-                <h2 className="font-display text-lg font-bold tracking-tight">Backed by this drop.</h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {eventCoins.map((c: any) => (
-                  <DropCoinCard key={c.id} coin={c} hideContext />
-                ))}
-              </div>
-            </div>
-          )}
-
         </div>
       </div>
 
