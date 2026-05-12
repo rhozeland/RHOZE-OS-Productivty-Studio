@@ -30,6 +30,7 @@ import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { ROLE_BY_ID } from "@/lib/creator-roles";
+import { archetypeBannerGradient } from "@/lib/archetypes";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import NoteBubble from "@/components/notes/NoteBubble";
 import { useUserNote } from "@/hooks/useNotes";
