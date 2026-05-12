@@ -2328,6 +2328,7 @@ export type Database = {
           email_notif_messages: boolean | null
           email_notif_purchases: boolean | null
           email_notif_reviews: boolean | null
+          featured_pin_until: string | null
           flow_feed_scope: string | null
           flow_preferred_categories: string[] | null
           headline: string | null
@@ -2382,6 +2383,7 @@ export type Database = {
           email_notif_messages?: boolean | null
           email_notif_purchases?: boolean | null
           email_notif_reviews?: boolean | null
+          featured_pin_until?: string | null
           flow_feed_scope?: string | null
           flow_preferred_categories?: string[] | null
           headline?: string | null
@@ -2436,6 +2438,7 @@ export type Database = {
           email_notif_messages?: boolean | null
           email_notif_purchases?: boolean | null
           email_notif_reviews?: boolean | null
+          featured_pin_until?: string | null
           flow_feed_scope?: string | null
           flow_preferred_categories?: string[] | null
           headline?: string | null

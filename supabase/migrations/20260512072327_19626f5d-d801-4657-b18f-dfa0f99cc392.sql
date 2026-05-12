@@ -1,0 +1,2 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS featured_pin_until TIMESTAMPTZ;
+CREATE INDEX IF NOT EXISTS idx_profiles_featured_pin_until ON public.profiles (featured_pin_until) WHERE featured_pin_until IS NOT NULL;

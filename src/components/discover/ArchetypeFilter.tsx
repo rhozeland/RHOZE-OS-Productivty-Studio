@@ -6,26 +6,24 @@
  * Profiles without an archetype set still appear under "All".
  */
 import { motion } from "framer-motion";
-import { Users } from "lucide-react";
-import { ARCHETYPES, type Archetype, CREATOR_UMBRELLA } from "@/lib/archetypes";
+import type { LucideIcon } from "lucide-react";
+import { ARCHETYPES, type Archetype } from "@/lib/archetypes";
 
 interface Props {
   value: Archetype | "all";
-  onChange: (next: Archetype | "all") => void;
+  onChange: (next: Archetype) => void;
   className?: string;
 }
 
 const ArchetypeFilter = ({ value, onChange, className }: Props) => {
-  const items: Array<{ id: Archetype | "all"; label: string; icon: typeof Users; tagline?: string; dotToken?: string }> = [
-    { id: "all", label: CREATOR_UMBRELLA.plural, icon: CREATOR_UMBRELLA.icon, tagline: "Everyone" },
-    ...ARCHETYPES.map((a) => ({
+  const items: Array<{ id: Archetype; label: string; icon: LucideIcon; tagline?: string; dotToken?: string }> =
+    ARCHETYPES.map((a) => ({
       id: a.id,
       label: a.plural,
       icon: a.icon,
       tagline: a.tagline,
       dotToken: a.token,
-    })),
-  ];
+    }));
 
   return (
     <div className={className}>
