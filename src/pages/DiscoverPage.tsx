@@ -412,7 +412,10 @@ const DiscoverPage = () => {
         </div>
 
         {streamTab === "creators" ? (
-          <CreatorsGrid />
+          <div className="space-y-4">
+            <ArchetypeFilter value={archetype} onChange={handleArchetype} />
+            <CreatorsGrid archetype={archetype} />
+          </div>
         ) : (
           <ConversationsMosaic kind={mosaicKind} category={normalizedCategory} />
         )}
