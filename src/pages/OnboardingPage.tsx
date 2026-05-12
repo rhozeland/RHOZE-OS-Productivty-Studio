@@ -90,12 +90,14 @@ const OnboardingPage = () => {
         }
       }
 
-      if (regionCode || archetype) {
+      const trimmedBio = bio.trim();
+      if (regionCode || archetype || trimmedBio) {
         await supabase
           .from("profiles")
           .update({
             ...(regionCode ? { region_code: regionCode } : {}),
             ...(archetype ? { archetype } : {}),
+            ...(trimmedBio ? { bio: trimmedBio } : {}),
           } as any)
           .eq("user_id", user.id);
       }
