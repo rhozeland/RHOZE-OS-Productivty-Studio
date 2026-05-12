@@ -166,29 +166,10 @@ const DiscoverPage = () => {
   const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const category = searchParams.get("cat");
-  const normalizedCategory = category ? normalizeCategory(category) : null;
 
-  // ─── Stream view tabs (creators · events · spaces · all) ────────
-  type StreamTab = "all" | "creators" | "events" | "spaces";
-  const initialTab = (searchParams.get("tab") as StreamTab) || "all";
-  const [streamTab, setStreamTab] = useState<StreamTab>(
-    ["all", "creators", "events", "spaces"].includes(initialTab) ? initialTab : "all",
-  );
-  const handleStreamTab = (tab: StreamTab) => {
-    setStreamTab(tab);
-    const next = new URLSearchParams(searchParams);
-    if (tab === "all") next.delete("tab");
-    else next.set("tab", tab);
-    setSearchParams(next, { replace: true });
-    // Scroll the stream section into view so the change is felt.
-    requestAnimationFrame(() => {
-      document.getElementById("discover-stream")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  };
   // ─── Archetype filter (Artist · Builder · Influencer) ───────────
-  // The umbrella "All" pill was retired — the three branches *are* the filter.
-  // Default to Artist; URL still preserved as ?archetype=.
+  // Stream tabs (All / Events / Spaces) retired in v9.3 — the section is
+  // now exclusively "Featured creators", filtered by archetype.
   const initialArchetype = (searchParams.get("archetype") as any) || "artist";
   const [archetype, setArchetype] = useState<import("@/lib/archetypes").Archetype>(
     ["artist", "builder", "influencer"].includes(initialArchetype) ? initialArchetype : "artist",
@@ -199,8 +180,7 @@ const DiscoverPage = () => {
     params.set("archetype", next);
     setSearchParams(params, { replace: true });
   };
-  const mosaicKind: MosaicKindFilter =
-    streamTab === "events" ? "event" : streamTab === "spaces" ? "space" : "all";
+
   // ─── Personal greeting (signed-in only) ─────────────────────────
   const { data: profile } = useQuery({
     queryKey: ["discover-greeting", user?.id],
