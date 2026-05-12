@@ -2105,16 +2105,10 @@ const FlowModePage = () => {
                       </div>
                     </div>
 
-                    <Input
-                      placeholder="Title"
+                    <Textarea
+                      placeholder="Say something (optional)"
                       value={newTitle}
                       onChange={(e) => setNewTitle(e.target.value)}
-                      className="rounded-xl"
-                    />
-                    <Textarea
-                      placeholder="Add a caption (optional)"
-                      value={newDesc}
-                      onChange={(e) => setNewDesc(e.target.value)}
                       rows={2}
                       className="rounded-xl resize-none"
                     />
