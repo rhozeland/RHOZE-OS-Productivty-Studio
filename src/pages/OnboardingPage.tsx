@@ -423,8 +423,42 @@ const OnboardingPage = () => {
             </motion.div>
           )}
 
-          {/* Step 3: Quick Tour */}
+          {/* Step 3: Archetype */}
           {step === 3 && (
+            <motion.div
+              key="archetype"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-8 sm:p-10">
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/5 border border-border/50 mb-3">
+                    <Compass className="h-5 w-5 text-foreground/70" />
+                  </div>
+                  <h2 className="font-display text-2xl font-bold text-foreground mb-1.5">
+                    What kind of creator are you?
+                  </h2>
+                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                    Everyone's a creator. Pick the branch that fits you best — you can switch any time.
+                  </p>
+                </div>
+                <ArchetypePicker value={archetype} onChange={setArchetype} />
+                <div className="flex justify-between mt-8">
+                  <Button variant="ghost" onClick={prev} className="rounded-xl gap-1.5">
+                    <ArrowLeft className="w-4 h-4" /> Back
+                  </Button>
+                  <Button onClick={next} disabled={!archetype} className="rounded-xl gap-1.5">
+                    Continue <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 4: Quick Tour */}
+          {step === 4 && (
             <motion.div
               key="tour"
               initial={{ opacity: 0, y: 30 }}
