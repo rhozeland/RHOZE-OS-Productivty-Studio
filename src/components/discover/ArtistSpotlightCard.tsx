@@ -96,12 +96,19 @@ const ArtistSpotlightCard = ({
     });
   }
 
+  const eventHref = next_event
+    ? `/events/${next_event.slug ?? next_event.id}`
+    : null;
+  const spaceHref = hosted_space ? `/studios/${hosted_space.id}` : null;
+
   const handleBack = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     // Land on the profile Support tab — SupportCreatorSheet auto-opens via ?back=1
     navigate(`${href}?tab=support&back=1`);
   };
+
+  const stop = (e: React.MouseEvent) => e.stopPropagation();
 
   return (
     <Link
