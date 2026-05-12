@@ -961,13 +961,34 @@ const ProfileDetailPage = () => {
 
         </Tabs>
 
-        {/* Invest & Unlock — primary CTA sheet (Section 2: The Heart) */}
+        {/* Invest & Unlock — Shares purchase sheet (Section 2: The Heart) */}
         {!isOwnProfile && id && (
           <InvestUnlockSheet
             open={investOpen}
             onOpenChange={setInvestOpen}
             artistId={id}
             artistName={p.display_name || p.username || null}
+          />
+        )}
+
+        {/* Umbrella "Back this creator" sheet — funnels into Shares / Show up / Work / DM */}
+        {!isOwnProfile && id && (
+          <SupportCreatorSheet
+            open={supportOpen}
+            onOpenChange={setSupportOpen}
+            artistName={p.display_name || p.username || "this artist"}
+            hasShares={true}
+            hasHappenings={(upcomingEvents?.length ?? 0) + (hostedSpaces?.length ?? 0) > 0}
+            hasOfferings={(sellerListings ?? []).some((l: any) => l.listing_type !== "project_request")}
+            isAvailableForBooking={!!profile?.available}
+            onBackCareer={() => setInvestOpen(true)}
+            onShowUp={() => {
+              const first = upcomingEvents?.[0];
+              if (first) navigate(`/events/${first.slug || first.id}`);
+              else if (hostedSpaces?.[0]) navigate(`/studios/${hostedSpaces[0].id}`);
+            }}
+            onWorkWithThem={() => setBookingOpen(true)}
+            onSendMessage={() => navigate(`/messages?to=${id}`)}
           />
         )}
 
