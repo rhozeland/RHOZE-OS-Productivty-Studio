@@ -31,7 +31,7 @@ import { ArrowRight, Pin, Users } from "lucide-react";
 import { ARCHETYPE_BY_ID, archetypeBannerGradient, type Archetype } from "@/lib/archetypes";
 import { EmptyState } from "@/components/ui/empty-state";
 
-const QUALITY_THRESHOLD = 4;
+const QUALITY_THRESHOLD = 3;
 const MAX_FEATURED = 12;
 
 const initials = (name?: string | null) =>
@@ -72,14 +72,19 @@ const CreatorsGrid = ({
     queryKey: ["discover-featured-creators", archetype],
     queryFn: async (): Promise<ScoredProfile[]> => {
       // Pull all profiles in this archetype that are public.
-      const { data: profiles, error } = await supabase
+      // Backward-compat: legacy profiles with NULL archetype are treated
+      // as "artist" so existing accounts still show on the default tab.
+      let query = supabase
         .from("profiles")
         .select(
           "user_id, display_name, username, avatar_url, banner_gradient, headline, bio, region_code, verification_status, is_public, creator_roles, archetype, featured_pin_until, created_at",
         )
-        .eq("archetype", archetype)
         .neq("is_public", false)
         .limit(200);
+      query = archetype === "artist"
+        ? query.or("archetype.eq.artist,archetype.is.null")
+        : query.eq("archetype", archetype);
+      const { data: profiles, error } = await query;
       if (error) throw error;
       if (!profiles?.length) return [];
 
