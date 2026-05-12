@@ -179,8 +179,9 @@ const RootEntry = () => {
       </div>
     );
   }
-  // Guests get the curated one-pager; signed-in users go to the full Discover stream.
-  return <Navigate to={user ? "/discover" : "/landing"} replace />;
+  // Everyone — guests + authed — lands on Discover. Guest mode handles
+  // gating inside the app (protected actions open the auth modal).
+  return <Navigate to="/discover" replace />;
 };
 
 const App = () => (
@@ -199,8 +200,8 @@ const App = () => (
               <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
               <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
 
-              {/* Legacy landing — redirect to dashboard */}
-              <Route path="/landing" element={<LandingPage />} />
+              {/* Legacy landing — kept mounted but no longer the front door. */}
+              <Route path="/landing" element={<Navigate to="/" replace />} />
 
               {/* Public infrastructure thesis page (S33R-aligned framing) */}
               <Route path="/infrastructure" element={<InfrastructurePage />} />
