@@ -142,7 +142,7 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
         <p className="text-xs text-muted-foreground hidden sm:block">
           {type === "text"
             ? "Leave a 60-word note — disappears in 24h, shows on your profile + DMs."
-            : `Opens the full ${meta.label.toLowerCase()} flow.`}
+            : meta.hint ?? `Opens the full ${meta.label.toLowerCase()} flow.`}
         </p>
         <div className="flex items-center gap-2 ml-auto">
           <Button
