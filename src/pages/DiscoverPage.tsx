@@ -182,14 +182,32 @@ const DiscoverPage = () => {
     setSearchParams(params, { replace: true });
   };
 
-  const initialArchetype = (searchParams.get("archetype") as any) || "artist";
-  const [archetype, setArchetype] = useState<import("@/lib/archetypes").Archetype>(
-    ["artist", "builder", "influencer"].includes(initialArchetype) ? initialArchetype : "artist",
+  // Optional archetype filter — applied only when user clicks an archetype
+  // chip on a creator tile. Default null = show all creators across branches.
+  const initialArchetype = searchParams.get("archetype");
+  const validArchetype = (a: string | null): import("@/lib/archetypes").Archetype | null =>
+    a && ["artist", "builder", "influencer"].includes(a)
+      ? (a as import("@/lib/archetypes").Archetype)
+      : null;
+  const [archetype, setArchetype] = useState<import("@/lib/archetypes").Archetype | null>(
+    validArchetype(initialArchetype),
   );
-  const handleArchetype = (next: import("@/lib/archetypes").Archetype) => {
+  const handleArchetype = (next: import("@/lib/archetypes").Archetype | null) => {
     setArchetype(next);
     const params = new URLSearchParams(searchParams);
-    params.set("archetype", next);
+    if (next) params.set("archetype", next);
+    else params.delete("archetype");
+    setSearchParams(params, { replace: true });
+  };
+
+  // Sub-category filter (only meaningful when streamTab === "event" | "space").
+  const initialCategory = searchParams.get("category");
+  const [category, setCategory] = useState<string | null>(initialCategory);
+  const handleCategory = (next: string | null) => {
+    setCategory(next);
+    const params = new URLSearchParams(searchParams);
+    if (next) params.set("category", next);
+    else params.delete("category");
     setSearchParams(params, { replace: true });
   };
 
