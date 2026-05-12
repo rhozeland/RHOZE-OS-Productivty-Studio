@@ -253,10 +253,13 @@ const SettingsPage = () => {
   const updateProfile = useMutation({
     mutationFn: async () => {
       if (!creatorRoles || creatorRoles.length === 0) {
-        throw new Error("Pick at least one role under \"What you are\" — fans use this to find you.");
+        throw new Error("Pick at least one category — Music, Video, Design, etc.");
       }
       if (!archetype) {
         throw new Error("Pick a creator type — Artist, Builder, or Influencer.");
+      }
+      if (!bio || bio.trim().length < 40) {
+        throw new Error("About needs at least 40 characters — give fans something to read.");
       }
       const { error } = await supabase.from("profiles").update({
         display_name: displayName,
