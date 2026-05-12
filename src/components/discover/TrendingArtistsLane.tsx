@@ -148,21 +148,13 @@ const TrendingArtistsLane = ({ marketFilter = "All" }: TrendingArtistsLaneProps)
     })
     .slice(0, 6);
 
-  if (!filtered.length) {
-    if (marketFilter !== "All") {
-      return (
-        <section className="space-y-4">
-          <div>
-            <h2 className="font-display text-xl text-foreground flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary" /> Trending creators
-            </h2>
-            <p className="text-xs text-muted-foreground mt-1">
-              No verified creators in <span className="font-medium">{marketFilter}</span> are trending right now. Try another region.
-            </p>
-          </div>
-        </section>
-      );
-    }
+  // Liquidity gate: don't render the lane until there's real activity.
+  // Surfacing "no 24h vol / 2 holders" coins makes the platform look dead.
+  // Threshold: at least 3 coins with non-trivial 24h $RHOZE volume.
+  const LIQUIDITY_MIN_COINS = 3;
+  const LIQUIDITY_MIN_VOLUME = 10; // $RHOZE per coin
+  const liveCount = filtered.filter((it: any) => (it.volume ?? 0) >= LIQUIDITY_MIN_VOLUME).length;
+  if (liveCount < LIQUIDITY_MIN_COINS) {
     return null;
   }
 
