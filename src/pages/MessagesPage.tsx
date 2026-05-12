@@ -36,6 +36,7 @@ import HubFlowWidget from "@/components/hub/HubFlowWidget";
 import FollowingPickerDialog from "@/components/messages/FollowingPickerDialog";
 import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
 import InquiryThreadBanner from "@/components/messages/InquiryThreadBanner";
+import LiveInquiriesFeed from "@/components/messages/LiveInquiriesFeed";
 
 import ConversationsEventsBrowser from "@/components/messages/ConversationsEventsBrowser";
 
