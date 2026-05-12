@@ -467,8 +467,62 @@ const OnboardingPage = () => {
             </motion.div>
           )}
 
-          {/* Step 4: Quick Tour */}
+          {/* Step 4: Bio */}
           {step === 4 && (
+            <motion.div
+              key="bio"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-8 sm:p-10">
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/5 border border-border/50 mb-3">
+                    <Heart className="h-5 w-5 text-foreground/70" />
+                  </div>
+                  <h2 className="font-display text-2xl font-bold text-foreground mb-1.5">
+                    Tell us about you
+                  </h2>
+                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                    A short bio so visitors know what you're about. At least {BIO_MIN} characters.
+                  </p>
+                </div>
+
+                <textarea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value.slice(0, 280))}
+                  placeholder="e.g. Toronto-based producer making warm, lo-fi soul. Open to collabs and live sessions."
+                  rows={5}
+                  className="w-full resize-none rounded-2xl border border-border bg-background/60 p-4 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-foreground/40 focus:outline-none focus:ring-0"
+                />
+                <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
+                  <span>
+                    {bio.trim().length < BIO_MIN
+                      ? `${BIO_MIN - bio.trim().length} more to go`
+                      : "Looks good ✓"}
+                  </span>
+                  <span>{bio.length}/280</span>
+                </div>
+
+                <div className="flex justify-between mt-8">
+                  <Button variant="ghost" onClick={prev} className="rounded-xl gap-1.5">
+                    <ArrowLeft className="w-4 h-4" /> Back
+                  </Button>
+                  <Button
+                    onClick={next}
+                    disabled={bio.trim().length < BIO_MIN}
+                    className="rounded-xl gap-1.5"
+                  >
+                    Continue <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 5: Quick Tour */}
+          {step === 5 && (
             <motion.div
               key="tour"
               initial={{ opacity: 0, y: 30 }}
