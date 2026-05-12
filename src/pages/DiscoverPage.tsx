@@ -167,6 +167,26 @@ const DiscoverPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const category = searchParams.get("cat");
   const normalizedCategory = category ? normalizeCategory(category) : null;
+
+  // ─── Stream view tabs (creators · events · spaces · all) ────────
+  type StreamTab = "all" | "creators" | "events" | "spaces";
+  const initialTab = (searchParams.get("tab") as StreamTab) || "all";
+  const [streamTab, setStreamTab] = useState<StreamTab>(
+    ["all", "creators", "events", "spaces"].includes(initialTab) ? initialTab : "all",
+  );
+  const handleStreamTab = (tab: StreamTab) => {
+    setStreamTab(tab);
+    const next = new URLSearchParams(searchParams);
+    if (tab === "all") next.delete("tab");
+    else next.set("tab", tab);
+    setSearchParams(next, { replace: true });
+    // Scroll the stream section into view so the change is felt.
+    requestAnimationFrame(() => {
+      document.getElementById("discover-stream")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+  const mosaicKind: MosaicKindFilter =
+    streamTab === "events" ? "event" : streamTab === "spaces" ? "space" : "all";
   // ─── Personal greeting (signed-in only) ─────────────────────────
   const { data: profile } = useQuery({
     queryKey: ["discover-greeting", user?.id],
@@ -312,8 +332,10 @@ const DiscoverPage = () => {
       {/* ─── Creator Pass upgrade nudge ─────────────────────────────── */}
       <CreatorPassUpgradeCta />
 
-      {/* ─── Trending artists — lead lane (creator-first) ──────────── */}
-      <TrendingArtistsLane marketFilter={marketFilter} />
+      {/* ─── Trending artists — only on All / Creators ────────────── */}
+      {(streamTab === "all" || streamTab === "creators") && (
+        <TrendingArtistsLane marketFilter={marketFilter} />
+      )}
 
       {/* ─── The Stream ─────────────────────────────────────────────── */}
       <section id="discover-stream" className="space-y-4 scroll-mt-20">
@@ -323,12 +345,17 @@ const DiscoverPage = () => {
               The Stream
             </p>
             <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
-              Everything, all at once.
+              {streamTab === "creators"
+                ? "Meet the creators."
+                : streamTab === "events"
+                ? "What's happening."
+                : streamTab === "spaces"
+                ? "Where it's going down."
+                : "Everything, all at once."}
             </h2>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Open Flow — opens full Flow Mode */}
             <button
               type="button"
               onClick={() => navigate("/flow")}
@@ -341,7 +368,40 @@ const DiscoverPage = () => {
           </div>
         </div>
 
-        <ConversationsMosaic kind="all" category={normalizedCategory} />
+        {/* Tab segmented control — switch the whole feed */}
+        <div className="inline-flex flex-wrap items-center gap-1 rounded-full border border-border/60 bg-card/60 p-1">
+          {([
+            { id: "all", label: "All", icon: Compass },
+            { id: "creators", label: "Creators", icon: Users },
+            { id: "events", label: "Events", icon: CalendarDays },
+            { id: "spaces", label: "Spaces", icon: Building2 },
+          ] as { id: StreamTab; label: string; icon: typeof Compass }[]).map((t) => {
+            const Icon = t.icon;
+            const active = streamTab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => handleStreamTab(t.id)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all",
+                  active
+                    ? "bg-foreground text-background shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {streamTab === "creators" ? (
+          <CreatorsGrid />
+        ) : (
+          <ConversationsMosaic kind={mosaicKind} category={normalizedCategory} />
+        )}
       </section>
 
       {/* ─── Coins moving today ─────────────────────────────────────── */}

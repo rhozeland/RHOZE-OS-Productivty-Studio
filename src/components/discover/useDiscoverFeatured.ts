@@ -453,38 +453,89 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
   const event = useMemo(() => pickByMarket(events ?? [], marketFilter), [events, marketFilter]);
   const space = useMemo(() => pickByMarket(spaces ?? [], marketFilter), [spaces, marketFilter]);
 
-  // Creator-first: featured carousel rotates through the top artists only.
-  // Events/spaces stay surfaced via the globe + mosaic, but the spotlight
-  // leads with the people.
+  // Creator-first BUT visual: rotate through top artists, events, and
+  // spaces so the globe carousel actually shows what's happening — real
+  // posters, real space photos — not only avatars. Order is interleaved
+  // (artist → event → space → artist…) so each refresh feels alive.
   const slides = useMemo<FeaturedSlide[]>(() => {
-    const pool = (artists ?? []).filter((a) => {
-      if (marketFilter === "All") return true;
-      const code = a.region_code?.toUpperCase();
-      return code ? marketsByCode.get(code) === marketFilter : false;
-    });
-    const top = (pool.length ? pool : (artists ?? [])).slice(0, 5);
+    const matchMarket = <T extends { region_code?: string | null }>(items: T[]) => {
+      if (marketFilter === "All") return items;
+      const filtered = items.filter((i) => {
+        const code = i.region_code?.toUpperCase();
+        return code ? marketsByCode.get(code) === marketFilter : false;
+      });
+      return filtered.length ? filtered : items;
+    };
 
-    return top.map((artist) => ({
-      kind: "artist" as const,
-      id: artist.user_id,
-      href: `/profiles/${artist.user_id}`,
-      title: artist.display_name || "Untitled artist",
-      subtitle: (artist as any).subtitle ?? null,
-      banner: artist.banner_url,
-      avatar: artist.avatar_url,
-      region_code: artist.region_code,
-      mediums: artist.mediums,
-      creator_roles: artist.creator_roles,
-      verification_status: artist.verification_status ?? null,
-      works_count: artist.works_count ?? 0,
-      followers_count: artist.followers_count ?? 0,
-      works_thumbs: (artist as any).works_thumbs ?? [],
-      coin: (artist as any).coin ?? null,
-      next_event: (artist as any).next_event ?? null,
-      hosted_space: (artist as any).hosted_space ?? null,
-      offerings_count: (artist as any).offerings_count ?? 0,
-    }));
-  }, [artists, marketFilter]);
+    const artistSlides: FeaturedSlide[] = matchMarket(artists ?? [])
+      .slice(0, 5)
+      .map((artist) => ({
+        kind: "artist" as const,
+        id: artist.user_id,
+        href: `/profiles/${artist.user_id}`,
+        title: artist.display_name || "Untitled artist",
+        subtitle: (artist as any).subtitle ?? null,
+        banner: artist.banner_url,
+        avatar: artist.avatar_url,
+        region_code: artist.region_code,
+        mediums: artist.mediums,
+        creator_roles: artist.creator_roles,
+        verification_status: artist.verification_status ?? null,
+        works_count: artist.works_count ?? 0,
+        followers_count: artist.followers_count ?? 0,
+        works_thumbs: (artist as any).works_thumbs ?? [],
+        coin: (artist as any).coin ?? null,
+        next_event: (artist as any).next_event ?? null,
+        hosted_space: (artist as any).hosted_space ?? null,
+        offerings_count: (artist as any).offerings_count ?? 0,
+      }));
+
+    const eventSlides: FeaturedSlide[] = matchMarket(events ?? [])
+      .slice(0, 4)
+      .map((event) => ({
+        kind: "event" as const,
+        id: event.id,
+        href: `/spaces/events/${event.id}`,
+        title: event.title,
+        subtitle: event.description ?? null,
+        banner: event.cover_url_poster ?? event.cover_url ?? null,
+        starts_at: event.starts_at,
+        venue: event.venue_name ?? extractRelation(event.space)?.location ?? null,
+        is_online: event.is_online ?? false,
+        region_code: event.region_code,
+      }));
+
+    const spaceSlides: FeaturedSlide[] = matchMarket(spaces ?? [])
+      .slice(0, 4)
+      .map((space) => ({
+        kind: "space" as const,
+        id: space.id,
+        href: `/studios/${space.id}`,
+        title: space.name,
+        subtitle: space.short_description ?? null,
+        banner: space.cover_image_url,
+        location: [space.city, space.country].filter(Boolean).join(", ") || space.location || null,
+        region_code: space.region_code,
+        category: space.category,
+        hourly_rate: space.hourly_rate,
+        currency: space.currency,
+        max_guests: space.max_guests,
+        amenities: space.amenities,
+        rating_avg: space.rating_avg,
+        review_count: space.review_count,
+        available_days: space.available_days,
+      }));
+
+    // Interleave: A E S A E S ... so the carousel feels mixed and visual.
+    const interleaved: FeaturedSlide[] = [];
+    const maxLen = Math.max(artistSlides.length, eventSlides.length, spaceSlides.length);
+    for (let i = 0; i < maxLen; i++) {
+      if (artistSlides[i]) interleaved.push(artistSlides[i]);
+      if (eventSlides[i]) interleaved.push(eventSlides[i]);
+      if (spaceSlides[i]) interleaved.push(spaceSlides[i]);
+    }
+    return interleaved;
+  }, [artists, events, spaces, marketFilter]);
 
   const spotlights = useMemo<FeaturedSpotlight[]>(() => {
     return slides
