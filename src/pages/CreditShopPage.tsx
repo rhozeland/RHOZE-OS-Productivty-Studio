@@ -36,7 +36,7 @@ import TierMatrix from "@/components/creators/TierMatrix";
 import TierStripCompact from "@/components/creators/TierStripCompact";
 import TierProgressCard from "@/components/creators/TierProgressCard";
 import CoinPortfolio from "@/components/creators/CoinPortfolio";
-import { StreakCard } from "@/components/creators/StreakCard";
+
 import { cn } from "@/lib/utils";
 
 const CAT_ICONS: Record<string, any> = {
