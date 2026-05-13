@@ -32,6 +32,7 @@ import EventCheckoutSheet from "@/components/events/EventCheckoutSheet";
 import EventInviteBanner from "@/components/events/EventInviteBanner";
 import EventMediaCarousel from "@/components/events/EventMediaCarousel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { EventNotFound } from "@/components/events/EventNotFound";
 
 const EventDetailPage = () => {
   const { id } = useParams<{ id: string }>();
