@@ -22,17 +22,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { formatDistanceToNow } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import RegionChip from "@/components/profile/RegionChip";
 import ArchetypeChip from "@/components/profile/ArchetypeChip";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, Pin, Users } from "lucide-react";
+import { ArrowRight, Pin, Users, Sparkles } from "lucide-react";
 import { ARCHETYPE_BY_ID, archetypeBannerGradient, type Archetype } from "@/lib/archetypes";
+import { iconForRole, labelForRole } from "@/lib/creator-roles";
 import { EmptyState } from "@/components/ui/empty-state";
 
 const QUALITY_THRESHOLD = 3;
-const MAX_FEATURED = 12;
+// v9.4: Featured Creators is now a tight, editorial 3-up — no more
+// 12-tile grid. The "Browse all" link below is the escape hatch.
+const MAX_FEATURED = 3;
 
 const initials = (name?: string | null) =>
   (name ?? "")
@@ -59,6 +63,8 @@ interface ScoredProfile {
   score: number;
   pinned: boolean;
   workCount: number;
+  /** Most recent work title + when, used to render the "live signal" line. */
+  latestWork: { title: string | null; created_at: string } | null;
 }
 
 const CreatorsGrid = ({
@@ -94,14 +100,20 @@ const CreatorsGrid = ({
 
       const ids = profiles.map((p: any) => p.user_id);
 
-      // Count works per creator (quality + activity signal).
+      // Count works per creator + grab the most recent title for the
+      // "live signal" line on each tile.
       const { data: works } = await supabase
         .from("works")
-        .select("user_id")
-        .in("user_id", ids);
+        .select("user_id, title, created_at")
+        .in("user_id", ids)
+        .order("created_at", { ascending: false });
       const workCount = new Map<string, number>();
+      const latestByUser = new Map<string, { title: string | null; created_at: string }>();
       (works ?? []).forEach((w: any) => {
         workCount.set(w.user_id, (workCount.get(w.user_id) ?? 0) + 1);
+        if (!latestByUser.has(w.user_id)) {
+          latestByUser.set(w.user_id, { title: w.title ?? null, created_at: w.created_at });
+        }
       });
 
       const now = Date.now();
@@ -136,6 +148,7 @@ const CreatorsGrid = ({
           score,
           pinned,
           workCount: wc,
+          latestWork: latestByUser.get(p.user_id) ?? null,
         };
       });
 
@@ -202,36 +215,51 @@ const CreatorsGrid = ({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+      {/* 3-up editorial grid — taller tiles let the live signal breathe. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map((p, i) => {
           const name = p.display_name ?? p.username ?? "Creator";
-          const role =
+          const primaryRoleId =
             Array.isArray(p.creator_roles) && p.creator_roles.length
               ? p.creator_roles[0]
-              : p.headline ?? null;
+              : null;
+          const RoleIcon = primaryRoleId ? iconForRole(primaryRoleId) : null;
+          const roleLabel = primaryRoleId ? labelForRole(primaryRoleId) : p.headline ?? null;
           const banner =
             p.banner_gradient || archetypeBannerGradient(p.archetype as Archetype | null, p.user_id);
+
+          // Live signal — what's this creator actually up to right now?
+          // Priority: latest work title → first line of bio → null.
+          let signal: string | null = null;
+          if (p.latestWork?.title) {
+            const ago = formatDistanceToNow(new Date(p.latestWork.created_at), {
+              addSuffix: false,
+            });
+            signal = `Just dropped: ${p.latestWork.title} · ${ago} ago`;
+          } else if (p.bio) {
+            signal = p.bio.split("\n")[0].slice(0, 90);
+          }
 
           return (
             <motion.div
               key={p.user_id}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: Math.min(i * 0.03, 0.24) }}
+              transition={{ delay: Math.min(i * 0.04, 0.24) }}
             >
               <Link
                 to={`/profiles/${p.user_id}`}
-                className="group relative block aspect-square overflow-hidden rounded-2xl border border-border bg-card transition-all hover:border-foreground/40 hover:shadow-lg"
+                className="group relative block aspect-[4/5] overflow-hidden rounded-2xl border border-border bg-card transition-all hover:border-foreground/40 hover:shadow-lg"
                 aria-label={`Open ${name}'s profile`}
               >
                 <div
                   className="absolute inset-0 transition-transform duration-700 group-hover:scale-105"
                   style={{ background: banner }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
                 {/* Top chips */}
-                <div className="absolute top-2.5 left-2.5 right-2.5 flex items-start justify-between gap-2 z-10">
+                <div className="absolute top-3 left-3 right-3 flex items-start justify-between gap-2 z-10">
                   <div className="flex items-center gap-1.5">
                     {p.archetype && onArchetypeClick ? (
                       <button
@@ -264,26 +292,37 @@ const CreatorsGrid = ({
                 </div>
 
                 {/* Avatar */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] z-10">
-                  <Avatar className="h-16 w-16 ring-2 ring-white/40 shadow-xl">
+                <div className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                  <Avatar className="h-20 w-20 ring-2 ring-white/40 shadow-xl">
                     <AvatarImage src={p.avatar_url ?? undefined} />
-                    <AvatarFallback className="text-base font-semibold">
+                    <AvatarFallback className="text-lg font-semibold">
                       {initials(name)}
                     </AvatarFallback>
                   </Avatar>
                 </div>
 
-                {/* Footer */}
-                <div className="absolute inset-x-0 bottom-0 p-3 text-white z-10">
-                  <p className="font-display font-semibold text-sm leading-tight line-clamp-1">
-                    {name}
-                  </p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    {role && (
-                      <p className="text-[11px] text-white/75 truncate flex-1">{role}</p>
-                    )}
+                {/* Footer — name · icon-led role · live signal */}
+                <div className="absolute inset-x-0 bottom-0 p-4 text-white z-10 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-display font-semibold text-base leading-tight line-clamp-1">
+                      {name}
+                    </p>
                     <RegionChip code={p.region_code} />
                   </div>
+                  {roleLabel && (
+                    <div className="flex items-center gap-1.5 text-[11px] text-white/75">
+                      {RoleIcon ? (
+                        <RoleIcon className="h-3 w-3 shrink-0" strokeWidth={1.75} />
+                      ) : null}
+                      <span className="truncate">{roleLabel}</span>
+                    </div>
+                  )}
+                  {signal && (
+                    <div className="flex items-start gap-1.5 text-[11px] text-white/85 pt-1 border-t border-white/15">
+                      <Sparkles className="h-3 w-3 shrink-0 mt-0.5 text-white/60" strokeWidth={1.75} />
+                      <span className="line-clamp-2 leading-snug">{signal}</span>
+                    </div>
+                  )}
                 </div>
               </Link>
             </motion.div>
