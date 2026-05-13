@@ -67,6 +67,12 @@ import SceneRoomPage from "@/pages/SceneRoomPage";
 import MarketRoomPage from "@/pages/MarketRoomPage";
 import VaultRoomPage from "@/pages/VaultRoomPage";
 import NotFound from "./pages/NotFound";
+import { useParams, Navigate as NavigateAlias } from "react-router-dom";
+
+const LegacyEventRedirect = ({ manage = false }: { manage?: boolean }) => {
+  const { id } = useParams();
+  return <NavigateAlias to={`/spaces/events/${id}${manage ? "/manage" : ""}`} replace />;
+};
 
 const queryClient = new QueryClient();
 
@@ -235,6 +241,9 @@ const App = () => (
                 <Route path="/hub" element={<Navigate to="/discover" replace />} />
                 <Route path="/spaces" element={<SpacesHubPage />} />
                 <Route path="/events" element={<SpacesHubPage />} />
+                <Route path="/events/new" element={<Navigate to="/spaces/events/new" replace />} />
+                <Route path="/events/:id" element={<LegacyEventRedirect />} />
+                <Route path="/events/:id/manage" element={<LegacyEventRedirect manage />} />
                 <Route path="/spaces/events/new" element={<ProtectedRoute><EventCreatePage /></ProtectedRoute>} />
                 <Route path="/spaces/events/:id" element={<EventDetailPage />} />
                 <Route path="/spaces/events/:id/manage" element={<ProtectedRoute><EventManagePage /></ProtectedRoute>} />
