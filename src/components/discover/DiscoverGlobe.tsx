@@ -646,7 +646,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
           </div>
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-1 items-stretch">
-            {allSpotlights.map((marker: any) => {
+            {allSpotlights.slice(0, 3).map((marker: any) => {
               const active = marker.key === activeSpotlight?.key;
               return (
                 <button
