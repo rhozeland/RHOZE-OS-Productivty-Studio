@@ -231,6 +231,8 @@ const LaunchCoinDialog = ({
         _launch_id: data as string,
         _side: "buy",
         _amount: initialBuyNum,
+        _platform_fee_bps: 100,
+        _creator_fee_bps: 200,
       });
       if (buyErr) {
         toast({
