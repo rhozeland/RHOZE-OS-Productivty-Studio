@@ -26,7 +26,7 @@ import {
 } from "recharts";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowDownLeft, ArrowUpRight, CandlestickChart, LineChart as LineChartIcon, Radio } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, CandlestickChart, Radio } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type Range = "1M" | "15M" | "1H" | "6H" | "1D" | "ALL";
@@ -138,6 +138,10 @@ type CandleRow = {
   high: number;
   low: number;
   close: number;
+  bodyBase: number;
+  bodySize: number;
+  wickBase: number;
+  wickSize: number;
   buyVolume: number;
   sellVolume: number;
   totalVolume: number;
@@ -190,6 +194,10 @@ function bucketTrades(trades: TickRow[], range: Range): CandleRow[] {
         high: trade.price,
         low: trade.price,
         close: trade.price,
+        bodyBase: trade.price,
+        bodySize: 0.000001,
+        wickBase: trade.price,
+        wickSize: 0.000001,
         buyVolume: trade.side === "buy" ? trade.volume : 0,
         sellVolume: trade.side === "sell" ? trade.volume : 0,
         totalVolume: trade.volume,
@@ -209,7 +217,15 @@ function bucketTrades(trades: TickRow[], range: Range): CandleRow[] {
     existing.dominantSide = existing.buyVolume >= existing.sellVolume ? "buy" : "sell";
   }
 
-  return Array.from(buckets.values()).sort((a, b) => a.t - b.t);
+  return Array.from(buckets.values())
+    .map((candle) => {
+      candle.bodyBase = Math.min(candle.open, candle.close);
+      candle.bodySize = Math.max(Math.abs(candle.close - candle.open), 0.000001);
+      candle.wickBase = candle.low;
+      candle.wickSize = Math.max(candle.high - candle.low, 0.000001);
+      return candle;
+    })
+    .sort((a, b) => a.t - b.t);
 }
 
 const PriceChartCard = ({ launchId, ticker }: Props) => {
@@ -515,7 +531,8 @@ const PriceChartCard = ({ launchId, ticker }: Props) => {
                 </Bar>
                 {chartSeries.length ? (
                   <>
-                    <Bar yAxisId="price" dataKey="high" maxBarSize={6} radius={[999, 999, 999, 999]}>
+                    <Bar yAxisId="price" dataKey="wickBase" stackId="wick" fillOpacity={0} />
+                    <Bar yAxisId="price" dataKey="wickSize" stackId="wick" maxBarSize={6} radius={[999, 999, 999, 999]}>
                       {chartSeries.map((entry) => (
                         <Cell
                           key={`wick-${entry.t}`}
@@ -523,8 +540,8 @@ const PriceChartCard = ({ launchId, ticker }: Props) => {
                         />
                       ))}
                     </Bar>
-                    <Bar yAxisId="price" dataKey="open" stackId="candle" fillOpacity={0} />
-                    <Bar yAxisId="price" dataKey="close" stackId="candle" minPointSize={3} maxBarSize={16} radius={[3, 3, 3, 3]}>
+                    <Bar yAxisId="price" dataKey="bodyBase" stackId="candle" fillOpacity={0} />
+                    <Bar yAxisId="price" dataKey="bodySize" stackId="candle" minPointSize={3} maxBarSize={16} radius={[3, 3, 3, 3]}>
                       {chartSeries.map((entry) => (
                         <Cell
                           key={`body-${entry.t}`}
