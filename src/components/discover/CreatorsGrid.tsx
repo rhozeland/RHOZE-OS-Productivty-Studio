@@ -215,36 +215,51 @@ const CreatorsGrid = ({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+      {/* 3-up editorial grid — taller tiles let the live signal breathe. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map((p, i) => {
           const name = p.display_name ?? p.username ?? "Creator";
-          const role =
+          const primaryRoleId =
             Array.isArray(p.creator_roles) && p.creator_roles.length
               ? p.creator_roles[0]
-              : p.headline ?? null;
+              : null;
+          const RoleIcon = primaryRoleId ? iconForRole(primaryRoleId) : null;
+          const roleLabel = primaryRoleId ? labelForRole(primaryRoleId) : p.headline ?? null;
           const banner =
             p.banner_gradient || archetypeBannerGradient(p.archetype as Archetype | null, p.user_id);
+
+          // Live signal — what's this creator actually up to right now?
+          // Priority: latest work title → first line of bio → null.
+          let signal: string | null = null;
+          if (p.latestWork?.title) {
+            const ago = formatDistanceToNow(new Date(p.latestWork.created_at), {
+              addSuffix: false,
+            });
+            signal = `Just dropped: ${p.latestWork.title} · ${ago} ago`;
+          } else if (p.bio) {
+            signal = p.bio.split("\n")[0].slice(0, 90);
+          }
 
           return (
             <motion.div
               key={p.user_id}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: Math.min(i * 0.03, 0.24) }}
+              transition={{ delay: Math.min(i * 0.04, 0.24) }}
             >
               <Link
                 to={`/profiles/${p.user_id}`}
-                className="group relative block aspect-square overflow-hidden rounded-2xl border border-border bg-card transition-all hover:border-foreground/40 hover:shadow-lg"
+                className="group relative block aspect-[4/5] overflow-hidden rounded-2xl border border-border bg-card transition-all hover:border-foreground/40 hover:shadow-lg"
                 aria-label={`Open ${name}'s profile`}
               >
                 <div
                   className="absolute inset-0 transition-transform duration-700 group-hover:scale-105"
                   style={{ background: banner }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
                 {/* Top chips */}
-                <div className="absolute top-2.5 left-2.5 right-2.5 flex items-start justify-between gap-2 z-10">
+                <div className="absolute top-3 left-3 right-3 flex items-start justify-between gap-2 z-10">
                   <div className="flex items-center gap-1.5">
                     {p.archetype && onArchetypeClick ? (
                       <button
@@ -277,26 +292,37 @@ const CreatorsGrid = ({
                 </div>
 
                 {/* Avatar */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] z-10">
-                  <Avatar className="h-16 w-16 ring-2 ring-white/40 shadow-xl">
+                <div className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                  <Avatar className="h-20 w-20 ring-2 ring-white/40 shadow-xl">
                     <AvatarImage src={p.avatar_url ?? undefined} />
-                    <AvatarFallback className="text-base font-semibold">
+                    <AvatarFallback className="text-lg font-semibold">
                       {initials(name)}
                     </AvatarFallback>
                   </Avatar>
                 </div>
 
-                {/* Footer */}
-                <div className="absolute inset-x-0 bottom-0 p-3 text-white z-10">
-                  <p className="font-display font-semibold text-sm leading-tight line-clamp-1">
-                    {name}
-                  </p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    {role && (
-                      <p className="text-[11px] text-white/75 truncate flex-1">{role}</p>
-                    )}
+                {/* Footer — name · icon-led role · live signal */}
+                <div className="absolute inset-x-0 bottom-0 p-4 text-white z-10 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-display font-semibold text-base leading-tight line-clamp-1">
+                      {name}
+                    </p>
                     <RegionChip code={p.region_code} />
                   </div>
+                  {roleLabel && (
+                    <div className="flex items-center gap-1.5 text-[11px] text-white/75">
+                      {RoleIcon ? (
+                        <RoleIcon className="h-3 w-3 shrink-0" strokeWidth={1.75} />
+                      ) : null}
+                      <span className="truncate">{roleLabel}</span>
+                    </div>
+                  )}
+                  {signal && (
+                    <div className="flex items-start gap-1.5 text-[11px] text-white/85 pt-1 border-t border-white/15">
+                      <Sparkles className="h-3 w-3 shrink-0 mt-0.5 text-white/60" strokeWidth={1.75} />
+                      <span className="line-clamp-2 leading-snug">{signal}</span>
+                    </div>
+                  )}
                 </div>
               </Link>
             </motion.div>
