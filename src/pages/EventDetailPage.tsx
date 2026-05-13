@@ -32,6 +32,7 @@ import EventCheckoutSheet from "@/components/events/EventCheckoutSheet";
 import EventInviteBanner from "@/components/events/EventInviteBanner";
 import EventMediaCarousel from "@/components/events/EventMediaCarousel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { EventNotFound } from "@/components/events/EventNotFound";
 
 const EventDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -40,7 +41,7 @@ const EventDetailPage = () => {
   const qc = useQueryClient();
   const [checkoutTier, setCheckoutTier] = useState<any | null>(null);
 
-  const { data: ev, isLoading } = useQuery({
+  const { data: ev, isLoading, error: evError } = useQuery({
     queryKey: ["event", id],
     queryFn: async () => {
       const { data, error } = await supabase.from("events").select("*").eq("id", id!).single();
@@ -48,6 +49,7 @@ const EventDetailPage = () => {
       return data;
     },
     enabled: !!id,
+    retry: false,
   });
 
   const { data: tiers } = useQuery({
@@ -171,16 +173,16 @@ const EventDetailPage = () => {
     );
   }
 
-  if (!ev) {
+  if (!ev || evError) {
     return (
-      <div className="max-w-xl mx-auto py-20 text-center">
-        <h1 className="font-display text-2xl font-bold mb-2">Event not found</h1>
-        <Link to="/discover?view=events">
-          <Button variant="outline" className="rounded-full">
-            <ArrowLeft className="h-4 w-4 mr-1.5" /> Back to Events
-          </Button>
-        </Link>
-      </div>
+      <EventNotFound
+        badId={id}
+        message={
+          evError
+            ? "We couldn't load this event. It may have been removed or the link is invalid."
+            : "This event may have been removed, or the link is invalid."
+        }
+      />
     );
   }
 

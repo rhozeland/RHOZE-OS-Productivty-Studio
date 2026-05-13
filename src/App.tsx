@@ -68,9 +68,24 @@ import MarketRoomPage from "@/pages/MarketRoomPage";
 import VaultRoomPage from "@/pages/VaultRoomPage";
 import NotFound from "./pages/NotFound";
 import { useParams, Navigate as NavigateAlias } from "react-router-dom";
+import { EventNotFound } from "@/components/events/EventNotFound";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const LegacyEventRedirect = ({ manage = false }: { manage?: boolean }) => {
   const { id } = useParams();
+  // Bail out early if the URL param isn't a valid UUID — otherwise we'd
+  // redirect into /spaces/events/:id and trigger a doomed Supabase
+  // lookup. Show a friendly not-found state instead.
+  if (!id || !UUID_RE.test(id)) {
+    return (
+      <EventNotFound
+        title="Invalid event link"
+        message="That URL doesn't point to a real event ID."
+        badId={id}
+      />
+    );
+  }
   return <NavigateAlias to={`/spaces/events/${id}${manage ? "/manage" : ""}`} replace />;
 };
 
