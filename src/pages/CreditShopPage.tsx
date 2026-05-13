@@ -115,10 +115,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
         <TabsContent value="pass" className="mt-4 space-y-4">
           <NextStepCard />
           <CreatorPassCard />
-          <div className="grid gap-4 md:grid-cols-2">
-            <TierProgressCard />
-            <StreakCard />
-          </div>
+          <TierProgressCard />
           <div className="space-y-2 pt-2">
             <div className="flex items-center gap-2">
               <Star className="h-4 w-4 text-primary" />
