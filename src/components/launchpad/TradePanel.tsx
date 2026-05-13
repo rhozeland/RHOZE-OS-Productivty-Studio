@@ -40,6 +40,8 @@ interface Props {
   status: string;
   virtualSol: number;     // reused as virtual $RHOZE reserves on the curve
   virtualToken: number;
+  creatorFeeBps: number;
+  platformFeeBps: number;
   onTraded: () => void;
 }
 
@@ -70,7 +72,16 @@ const PercentRow = ({ onPick }: { onPick: (pct: number) => void }) => (
   </div>
 );
 
-const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTraded }: Props) => {
+const TradePanel = ({
+  launchId,
+  ticker,
+  status,
+  virtualSol,
+  virtualToken,
+  creatorFeeBps,
+  platformFeeBps,
+  onTraded,
+}: Props) => {
   const { user } = useAuth();
   const [side, setSide] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("");
@@ -105,7 +116,7 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
 
   // Live quote (preview only — server is source of truth)
   // Curve units are abstract and treated 1:1 with $RHOZE.
-  const TOTAL_FEE_BPS = 300; // 3% (creator + platform combined, mirrors server default)
+  const TOTAL_FEE_BPS = creatorFeeBps + platformFeeBps;
   const quote = useMemo(() => {
     if (!num || num <= 0 || status !== "live") return null;
     const k = virtualSol * virtualToken;
@@ -164,6 +175,8 @@ const TradePanel = ({ launchId, ticker, status, virtualSol, virtualToken, onTrad
       _side: side,
       _amount: num,
       _min_out: minOut,
+      _platform_fee_bps: platformFeeBps,
+      _creator_fee_bps: creatorFeeBps,
     });
     setBusy(false);
     if (error) {
