@@ -40,7 +40,7 @@ const EventDetailPage = () => {
   const qc = useQueryClient();
   const [checkoutTier, setCheckoutTier] = useState<any | null>(null);
 
-  const { data: ev, isLoading } = useQuery({
+  const { data: ev, isLoading, error: evError } = useQuery({
     queryKey: ["event", id],
     queryFn: async () => {
       const { data, error } = await supabase.from("events").select("*").eq("id", id!).single();
@@ -48,6 +48,7 @@ const EventDetailPage = () => {
       return data;
     },
     enabled: !!id,
+    retry: false,
   });
 
   const { data: tiers } = useQuery({
