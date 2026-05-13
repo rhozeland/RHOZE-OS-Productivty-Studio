@@ -67,6 +67,12 @@ import SceneRoomPage from "@/pages/SceneRoomPage";
 import MarketRoomPage from "@/pages/MarketRoomPage";
 import VaultRoomPage from "@/pages/VaultRoomPage";
 import NotFound from "./pages/NotFound";
+import { useParams, Navigate as NavigateAlias } from "react-router-dom";
+
+const LegacyEventRedirect = ({ manage = false }: { manage?: boolean }) => {
+  const { id } = useParams();
+  return <NavigateAlias to={`/spaces/events/${id}${manage ? "/manage" : ""}`} replace />;
+};
 
 const queryClient = new QueryClient();
 
