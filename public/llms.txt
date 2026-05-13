@@ -1,0 +1,25 @@
+# Rhozeland
+
+> A discovery and support network for independent artists. Find creators you care about, support them in any way that fits, and earn on-chain rewards for showing up early.
+
+Rhozeland is a creator-first platform where artists, builders, and influencers get discovered, build a following, and unlock support from fans through events, spaces, services, and on-chain rewards powered by $RHOZE.
+
+## Pages
+
+- [Home](/): Landing page introducing Rhozeland and how it works.
+- [Discover](/discover): Browse featured creators, events, and spaces by archetype (Artist, Builder, Influencer).
+- [Profiles](/profiles): Directory of creators on Rhozeland.
+- [Flow](/flow): Swipeable feed of creator works.
+- [Events](/events): Browse upcoming events hosted by creators.
+- [Spaces](/spaces): Bookable studios and venues from verified hosts.
+- [Marketplace](/marketplace): Services and offerings from creators.
+- [Creator Pass](/credits): Earn $RHOZE, view tier, top up, and learn how rewards work.
+- [Conversations](/messages): Direct messages, project threads, and listing inquiries.
+- [Sign in](/auth): Sign up or log in to Rhozeland.
+
+## Optional
+
+- [Onboarding](/onboarding): New-creator setup flow (logo, region, archetype, bio).
+- [Settings](/settings): Profile, wallet, verification, notifications, and account settings.
+- [Verification](/settings/verification): Apply to become a Verified Artist.
+- [Swap History](/swap-history): History of $RHOZE ↔ creator coin swaps.
