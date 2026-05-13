@@ -492,23 +492,6 @@ const PriceChartCard = ({ launchId, ticker }: Props) => {
           </p>
         )}
 
-        <div className="grid grid-cols-2 gap-2 text-[11px] md:grid-cols-4">
-          <TapeStat label="Buys" value={`${buyTrades.length}`} detail={`${buyVolume.toFixed(2)} $RHOZE`} side="buy" />
-          <TapeStat label="Sells" value={`${sellTrades.length}`} detail={`${sellVolume.toFixed(2)} $RHOZE`} side="sell" />
-          <TapeStat
-            label="Selected"
-            value={activeCandle ? fmtPrice(activeCandle.close) : "0"}
-            detail={activeCandle ? `${activeCandle.tradeCount} trade${activeCandle.tradeCount === 1 ? "" : "s"}` : "Awaiting trade"}
-            side={activeCandle?.dominantSide ?? "buy"}
-          />
-          <TapeStat
-            label="Range"
-            value={RANGE_LABELS[range].replace("Last ", "")}
-            detail={lastTradeAt ? fmtAgo(now - lastTradeAt) : "No trades yet"}
-            side={trendUp ? "buy" : "sell"}
-          />
-        </div>
-
         <div
           ref={chartWrapRef}
           className="relative rounded-lg bg-background/40 p-2"
@@ -516,12 +499,12 @@ const PriceChartCard = ({ launchId, ticker }: Props) => {
           onMouseLeave={() => setHoveredIndex(null)}
         >
           {isLoading ? (
-            <div className="h-[320px] w-full animate-pulse rounded-md bg-muted/30" />
+            <div className="h-[360px] w-full animate-pulse rounded-md bg-muted/30" />
           ) : !displayCandles.length ? (
             <EmptyChart message="Chart will appear after the first trade." />
           ) : (
             <>
-              <svg viewBox={`0 0 ${chart.viewBox.width} ${chart.viewBox.height}`} className="h-[320px] w-full" role="img" aria-label={`Price chart for ${ticker}`}>
+              <svg viewBox={`0 0 ${chart.viewBox.width} ${chart.viewBox.height}`} className="h-[360px] w-full" role="img" aria-label={`Price chart for ${ticker}`}>
                 <defs>
                   <linearGradient id="launch-price-fill" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor={trendUp ? CHART_UP : CHART_DOWN} stopOpacity="0.18" />
@@ -635,67 +618,25 @@ const PriceChartCard = ({ launchId, ticker }: Props) => {
                   </div>
                 </div>
               )}
+
+              <div className="absolute bottom-3 left-3 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
+                <span className="rounded-full border border-border/60 bg-background/80 px-2 py-1 font-mono">
+                  {buyTrades.length} buys · {buyVolume.toFixed(2)} $RHOZE
+                </span>
+                <span className="rounded-full border border-border/60 bg-background/80 px-2 py-1 font-mono">
+                  {sellTrades.length} sells · {sellVolume.toFixed(2)} $RHOZE
+                </span>
+              </div>
             </>
           )}
         </div>
-
-        {recentPrints.length > 0 && (
-          <div className="space-y-2">
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Recent prints</div>
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-              {recentPrints.map((trade) => (
-                <div key={trade.id} className="rounded-md border border-border/60 bg-muted/20 px-3 py-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span
-                      className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide"
-                      style={{ color: trade.side === "buy" ? CHART_UP : CHART_DOWN }}
-                    >
-                      {trade.side === "buy" ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownLeft className="h-3 w-3" />}
-                      {trade.side}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">{new Date(trade.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-                  </div>
-                  <div className="mt-1 font-mono text-sm">{fmtPrice(trade.price)}</div>
-                  <div className="text-[10px] text-muted-foreground">{trade.volume.toFixed(2)} $RHOZE</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
 };
 
-const TapeStat = ({
-  label,
-  value,
-  detail,
-  side,
-}: {
-  label: string;
-  value: string;
-  detail: string;
-  side: TradeSide;
-}) => {
-  const Icon = side === "buy" ? ArrowUpRight : ArrowDownLeft;
-
-  return (
-    <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-2">
-      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-        <Icon className="h-3 w-3" />
-        {label}
-      </div>
-      <div className="mt-1 flex items-end justify-between gap-2">
-        <span className="font-mono text-sm font-semibold">{value}</span>
-        <span className="text-right text-[10px] text-muted-foreground">{detail}</span>
-      </div>
-    </div>
-  );
-};
-
 const EmptyChart = ({ message }: { message: string }) => (
-  <div className="flex h-[320px] w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border/50 bg-muted/10">
+  <div className="flex h-[360px] w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border/50 bg-muted/10">
     <CandlestickChart className="h-6 w-6 text-muted-foreground/40" />
     <p className="text-xs text-muted-foreground">{message}</p>
   </div>
