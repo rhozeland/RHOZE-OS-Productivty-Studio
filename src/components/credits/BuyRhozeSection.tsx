@@ -1,27 +1,32 @@
 /**
- * BuyRhozeSection — replaces the Jupiter swap widget with two clear paths:
+ * BuyRhozeSection — two clear paths to load up:
  *
  *  1. Pump.fun deeplink (on-chain, requires a Solana wallet).
- *  2. Card top-up via Square (fiat → in-app $RHOZE balance).
- *     Conversion: 100 $RHOZE = $1 USD. Packages: $5 / $25 / $100 / $500 + custom.
+ *  2. Card top-up via Square — user buys a USD amount of $RHOZE; the
+ *     actual token amount they receive is estimated from the live market
+ *     price (Jupiter / DexScreener) instead of a fixed 100:1 conversion.
  *
- * The card flow calls the `topup-rhoze` edge function which charges the
- * user's tokenized card and atomically credits balance + ledger.
+ * v9.4: removed the "$1 = 100 $RHOZE" framing and the fixed RHOZE amounts
+ * on each tier card. Pricing tracks the real market — anything extra
+ * (airdrops, bonuses) is handled manually by admin for now.
+ *
+ * The card flow still calls `topup-rhoze` which charges the user's
+ * tokenized card and credits balance + ledger.
  */
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Coins, ExternalLink, CreditCard, Sparkles, Check } from "lucide-react";
+import { Coins, ExternalLink, CreditCard, Sparkles, Check, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
+import { useRhozeMarketPrice, formatRhozeUsd } from "@/hooks/useRhozeMarketPrice";
 
 const RHOZE_CA = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
 const PUMP_FUN_URL = `https://pump.fun/coin/${RHOZE_CA}`;
-const RHOZE_PER_USD = 100;
 
 const PRESETS = [
   { usd: 5,   label: "Starter",   blurb: "Try it out" },
@@ -30,14 +35,27 @@ const PRESETS = [
   { usd: 500, label: "Whale",     blurb: "Top of the ladder" },
 ];
 
+/** Format a $RHOZE estimate with sensible precision. */
+const formatRhozeAmount = (n: number): string => {
+  if (!Number.isFinite(n) || n <= 0) return "—";
+  if (n >= 1000) return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  if (n >= 1) return n.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  return n.toFixed(2);
+};
+
 const BuyRhozeSection = () => {
   const qc = useQueryClient();
   const [selected, setSelected] = useState<number>(25);
   const [customMode, setCustomMode] = useState(false);
   const [customUsd, setCustomUsd] = useState("");
 
+  const { data: market } = useRhozeMarketPrice();
+  const priceUsd = market?.priceUsd ?? 0;
+  const haveMarket = priceUsd > 0;
+
   const usdAmount = customMode ? Math.max(1, Math.min(5000, Number(customUsd) || 0)) : selected;
-  const credits = usdAmount * RHOZE_PER_USD;
+  /** Estimated $RHOZE the user would receive at the current market price. */
+  const estRhoze = haveMarket ? usdAmount / priceUsd : 0;
 
   const handleTokenize = async (token: string) => {
     if (!usdAmount || usdAmount < 1) {
@@ -55,7 +73,7 @@ const BuyRhozeSection = () => {
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || "Payment failed");
 
-      toast.success(`+${data.credits} $RHOZE added`, {
+      toast.success(`+${data.credits.toLocaleString()} $RHOZE added`, {
         description: `Charged $${usdAmount.toFixed(2)} to your card.`,
       });
       qc.invalidateQueries({ queryKey: ["user-credits"] });
@@ -81,7 +99,8 @@ const BuyRhozeSection = () => {
         </h3>
         <p className="text-sm text-muted-foreground mt-2 max-w-2xl leading-relaxed">
           Trade on Pump.fun if you've got a Solana wallet, or buy with a card —
-          credits land in your in-app balance instantly. <span className="text-foreground font-medium">$1 = {RHOZE_PER_USD} $RHOZE</span>.
+          credits land in your in-app balance instantly. The amount of $RHOZE you
+          receive tracks the live market price.
         </p>
       </motion.div>
 
@@ -93,20 +112,33 @@ const BuyRhozeSection = () => {
           transition={{ delay: 0.05 }}
           className="rounded-2xl border border-border bg-card p-5 space-y-4"
         >
-          <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-              <CreditCard className="h-4 w-4 text-primary" />
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                <CreditCard className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="font-display font-semibold text-foreground">Buy with card</p>
+                <p className="text-xs text-muted-foreground">Powered by Square · USD</p>
+              </div>
             </div>
-            <div>
-              <p className="font-display font-semibold text-foreground">Buy with card</p>
-              <p className="text-xs text-muted-foreground">Powered by Square · USD</p>
-            </div>
+            {haveMarket && (
+              <div className="text-right">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                  Market
+                </p>
+                <p className="text-xs text-foreground font-mono">
+                  {formatRhozeUsd(priceUsd)} <span className="text-muted-foreground">/ $RHOZE</span>
+                </p>
+              </div>
+            )}
           </div>
 
-          {/* Preset packages */}
+          {/* Preset packages — USD-first; live $RHOZE estimate underneath. */}
           <div className="grid grid-cols-2 gap-2">
             {PRESETS.map((p) => {
               const active = !customMode && selected === p.usd;
+              const presetEst = haveMarket ? p.usd / priceUsd : 0;
               return (
                 <button
                   key={p.usd}
@@ -131,10 +163,16 @@ const BuyRhozeSection = () => {
                   <p className="font-display text-lg font-bold text-foreground mt-0.5">
                     ${p.usd}
                   </p>
-                  <p className="text-[11px] text-primary font-medium mt-0.5">
-                    {(p.usd * RHOZE_PER_USD).toLocaleString()} $RHOZE
-                  </p>
                   <p className="text-[10px] text-muted-foreground mt-0.5">{p.blurb}</p>
+                  {haveMarket ? (
+                    <p className="text-[10px] text-primary/80 font-medium mt-1.5">
+                      ≈ {formatRhozeAmount(presetEst)} $RHOZE
+                    </p>
+                  ) : (
+                    <p className="text-[10px] text-muted-foreground/60 mt-1.5">
+                      market price loading…
+                    </p>
+                  )}
                 </button>
               );
             })}
@@ -156,22 +194,26 @@ const BuyRhozeSection = () => {
                 onChange={(e) => { setCustomMode(true); setCustomUsd(e.target.value); }}
                 className="h-8 text-sm"
               />
-              {customMode && customUsd && (
-                <span className="text-xs text-primary font-medium whitespace-nowrap">
-                  = {(Number(customUsd) * RHOZE_PER_USD).toLocaleString()} $RHOZE
-                </span>
-              )}
             </div>
             <p className="text-[10px] text-muted-foreground mt-1">$1 – $5,000 per transaction.</p>
           </div>
 
-          {/* Order summary + card form */}
-          <div className="rounded-xl bg-muted/40 p-3 flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">You'll receive</span>
-            <span className="font-display font-bold text-foreground inline-flex items-center gap-1">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              {credits.toLocaleString()} $RHOZE
-            </span>
+          {/* Order summary — live market estimate, not a fixed promise. */}
+          <div className="rounded-xl bg-muted/40 p-3 space-y-1.5">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">You'll receive</span>
+              <span className="font-display font-bold text-foreground inline-flex items-center gap-1">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                {haveMarket ? `≈ ${formatRhozeAmount(estRhoze)} $RHOZE` : "—"}
+              </span>
+            </div>
+            <p className="text-[10px] text-muted-foreground inline-flex items-start gap-1 leading-snug">
+              <Info className="h-3 w-3 shrink-0 mt-0.5" />
+              Estimate at the current market price
+              {haveMarket ? ` (${formatRhozeUsd(priceUsd)}/token)` : ""}. The
+              exact amount credited may move slightly with market price at
+              the moment of purchase.
+            </p>
           </div>
 
           {usdAmount >= 1 ? (
