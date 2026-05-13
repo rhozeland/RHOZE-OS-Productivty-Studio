@@ -4994,27 +4994,17 @@ export type Database = {
         }
         Returns: string
       }
-      swap_rhoze_for_coin:
-        | {
-            Args: {
-              _amount: number
-              _launch_id: string
-              _min_out?: number
-              _side: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              _amount: number
-              _creator_fee_bps?: number
-              _launch_id: string
-              _min_out?: number
-              _platform_fee_bps?: number
-              _side: string
-            }
-            Returns: Json
-          }
+      swap_rhoze_for_coin: {
+        Args: {
+          _amount: number
+          _creator_fee_bps?: number
+          _launch_id: string
+          _min_out?: number
+          _platform_fee_bps?: number
+          _side: string
+        }
+        Returns: Json
+      }
       tick_reward_streak: {
         Args: never
         Returns: {
