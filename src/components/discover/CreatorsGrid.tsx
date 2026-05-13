@@ -22,17 +22,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { formatDistanceToNow } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import RegionChip from "@/components/profile/RegionChip";
 import ArchetypeChip from "@/components/profile/ArchetypeChip";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, Pin, Users } from "lucide-react";
+import { ArrowRight, Pin, Users, Sparkles } from "lucide-react";
 import { ARCHETYPE_BY_ID, archetypeBannerGradient, type Archetype } from "@/lib/archetypes";
+import { iconForRole, labelForRole } from "@/lib/creator-roles";
 import { EmptyState } from "@/components/ui/empty-state";
 
 const QUALITY_THRESHOLD = 3;
-const MAX_FEATURED = 12;
+// v9.4: Featured Creators is now a tight, editorial 3-up — no more
+// 12-tile grid. The "Browse all" link below is the escape hatch.
+const MAX_FEATURED = 3;
 
 const initials = (name?: string | null) =>
   (name ?? "")
