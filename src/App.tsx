@@ -235,6 +235,9 @@ const App = () => (
                 <Route path="/hub" element={<Navigate to="/discover" replace />} />
                 <Route path="/spaces" element={<SpacesHubPage />} />
                 <Route path="/events" element={<SpacesHubPage />} />
+                <Route path="/events/new" element={<Navigate to="/spaces/events/new" replace />} />
+                <Route path="/events/:id" element={<LegacyEventRedirect />} />
+                <Route path="/events/:id/manage" element={<LegacyEventRedirect manage />} />
                 <Route path="/spaces/events/new" element={<ProtectedRoute><EventCreatePage /></ProtectedRoute>} />
                 <Route path="/spaces/events/:id" element={<EventDetailPage />} />
                 <Route path="/spaces/events/:id/manage" element={<ProtectedRoute><EventManagePage /></ProtectedRoute>} />
