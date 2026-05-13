@@ -433,6 +433,8 @@ const LaunchDetailPage = () => {
             status={launch.status}
             virtualSol={Number(launch.virtual_sol_reserves)}
             virtualToken={Number(launch.virtual_token_reserves)}
+            creatorFeeBps={Number(launch.creator_fee_bps)}
+            platformFeeBps={Number(launch.platform_fee_bps)}
             onTraded={load}
           />
           {isLaunchpadOnChainEnabled() && (

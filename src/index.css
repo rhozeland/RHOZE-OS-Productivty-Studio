@@ -45,6 +45,10 @@
     --teal: 175 60% 55%;
     --orange: 30 90% 55%;
     --blue: 210 100% 55%;
+    --chart-up: 152 72% 34%;
+    --chart-down: 0 72% 54%;
+    --chart-grid: 0 0% 84%;
+    --chart-volume: 0 0% 62%;
 
     /* Creator archetypes — branches under the "creator" umbrella */
     --archetype-artist: 330 78% 56%;     /* rose / magenta — makes the work */
@@ -98,6 +102,10 @@
     --teal: 175 60% 50%;
     --orange: 30 80% 50%;
     --blue: 210 80% 55%;
+    --chart-up: 152 68% 48%;
+    --chart-down: 0 78% 62%;
+    --chart-grid: 0 0% 18%;
+    --chart-volume: 0 0% 34%;
 
     /* Creator archetypes — slightly brighter on dark for legibility */
     --archetype-artist: 330 85% 68%;

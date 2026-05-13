@@ -56,7 +56,7 @@ const InvestUnlockSheet = ({ open, onOpenChange, artistId, artistName }: Props) 
     queryFn: async () => {
       const { data } = await supabase
         .from("coin_launches")
-        .select("id, ticker, name, status, virtual_sol_reserves, virtual_token_reserves, real_sol_reserves, graduation_sol_target")
+        .select("id, ticker, name, status, virtual_sol_reserves, virtual_token_reserves, real_sol_reserves, graduation_sol_target, creator_fee_bps, platform_fee_bps")
         .eq("creator_id", artistId)
         .neq("status", "cancelled")
         .order("work_id", { ascending: true, nullsFirst: true })
@@ -112,7 +112,8 @@ const InvestUnlockSheet = ({ open, onOpenChange, artistId, artistName }: Props) 
   const estShares = (() => {
     if (!launch || safeSpend <= 0) return 0;
     const k = Number(launch.virtual_sol_reserves) * Number(launch.virtual_token_reserves);
-    const fee = (safeSpend * 300) / 10000; // 3%
+    const totalFeeBps = Number(launch.creator_fee_bps ?? 200) + Number(launch.platform_fee_bps ?? 100);
+    const fee = (safeSpend * totalFeeBps) / 10000;
     const net = safeSpend - fee;
     const newSol = Number(launch.virtual_sol_reserves) + net;
     const newTok = k / newSol;
@@ -138,6 +139,8 @@ const InvestUnlockSheet = ({ open, onOpenChange, artistId, artistName }: Props) 
       _side: "buy",
       _amount: safeSpend,
       _min_out: 0,
+      _platform_fee_bps: Number(launch.platform_fee_bps ?? 100),
+      _creator_fee_bps: Number(launch.creator_fee_bps ?? 200),
     });
     setBusy(false);
     if (error) {
