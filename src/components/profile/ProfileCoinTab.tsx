@@ -152,6 +152,8 @@ const ProfileCoinTab = ({ creatorId, isOwnProfile, defaultName, defaultImage, me
             status={coin.status}
             virtualSol={Number(coin.virtual_sol_reserves)}
             virtualToken={Number(coin.virtual_token_reserves)}
+            creatorFeeBps={Number(coin.creator_fee_bps ?? 200)}
+            platformFeeBps={Number(coin.platform_fee_bps ?? 100)}
             onTraded={() => refetch()}
           />
         </div>
