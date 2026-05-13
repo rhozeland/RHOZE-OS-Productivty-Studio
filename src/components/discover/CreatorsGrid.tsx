@@ -100,14 +100,20 @@ const CreatorsGrid = ({
 
       const ids = profiles.map((p: any) => p.user_id);
 
-      // Count works per creator (quality + activity signal).
+      // Count works per creator + grab the most recent title for the
+      // "live signal" line on each tile.
       const { data: works } = await supabase
         .from("works")
-        .select("user_id")
-        .in("user_id", ids);
+        .select("user_id, title, created_at")
+        .in("user_id", ids)
+        .order("created_at", { ascending: false });
       const workCount = new Map<string, number>();
+      const latestByUser = new Map<string, { title: string | null; created_at: string }>();
       (works ?? []).forEach((w: any) => {
         workCount.set(w.user_id, (workCount.get(w.user_id) ?? 0) + 1);
+        if (!latestByUser.has(w.user_id)) {
+          latestByUser.set(w.user_id, { title: w.title ?? null, created_at: w.created_at });
+        }
       });
 
       const now = Date.now();
@@ -142,6 +148,7 @@ const CreatorsGrid = ({
           score,
           pinned,
           workCount: wc,
+          latestWork: latestByUser.get(p.user_id) ?? null,
         };
       });
 
