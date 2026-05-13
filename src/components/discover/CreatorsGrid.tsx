@@ -63,6 +63,8 @@ interface ScoredProfile {
   score: number;
   pinned: boolean;
   workCount: number;
+  /** Most recent work title + when, used to render the "live signal" line. */
+  latestWork: { title: string | null; created_at: string } | null;
 }
 
 const CreatorsGrid = ({
