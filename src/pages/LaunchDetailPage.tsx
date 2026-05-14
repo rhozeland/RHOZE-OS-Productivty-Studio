@@ -15,16 +15,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import {
   Coins,
   GraduationCap,
-  Lock,
   ExternalLink,
   ArrowLeft,
   Copy,
   Activity,
   Users,
   Info,
+  ChevronDown,
+  ChevronUp,
+  TrendingUp,
+  TrendingDown,
 } from "lucide-react";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import TradePanel from "@/components/launchpad/TradePanel";
