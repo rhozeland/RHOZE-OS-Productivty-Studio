@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Eye, Heart, MessageCircle, TrendingUp, Clock, Sparkles, Play } from "lucide-react";
 
 const getYouTubeId = (url?: string | null) => {
@@ -17,6 +17,13 @@ const getYouTubeId = (url?: string | null) => {
 
 const FlowFeed = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const openFlowItem = (itemId: string) => {
+    navigate(`/flow?item=${itemId}`, {
+      state: { from: `${location.pathname}${location.search}${location.hash}` },
+    });
+  };
 
   const { data: flowItems, isLoading } = useQuery({
     queryKey: ["flow-feed-hub"],
@@ -97,7 +104,7 @@ const FlowFeed = () => {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.04 }}
-            onClick={() => navigate("/flow")}
+            onClick={() => openFlowItem(item.id)}
             className="group relative rounded-xl bg-card border border-border overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
           >
             {/* Cover / media */}

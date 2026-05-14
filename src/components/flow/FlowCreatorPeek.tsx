@@ -16,7 +16,7 @@
  * mobile-style drawer with a drag handle so the next UP-swipe is a natural
  * gesture continuation.
  */
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,6 +49,7 @@ const CAT_ICON: Record<string, any> = {
 
 const FlowCreatorPeek = ({ open, onOpenChange, creatorId, initial }: Props) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { data: profile } = useQuery({
     queryKey: ["flow-peek-profile", creatorId],
@@ -185,7 +186,9 @@ const FlowCreatorPeek = ({ open, onOpenChange, creatorId, initial }: Props) => {
                           type="button"
                           onClick={() => {
                             onOpenChange(false);
-                            navigate(`/flow?item=${w.id}`);
+                            navigate(`/flow?item=${w.id}`, {
+                              state: { from: `${location.pathname}${location.search}${location.hash}` },
+                            });
                           }}
                           className={cn(
                             "relative aspect-square rounded-xl overflow-hidden bg-muted/40 border border-border/30 group",
