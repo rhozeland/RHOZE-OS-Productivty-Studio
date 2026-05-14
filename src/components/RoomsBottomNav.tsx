@@ -122,8 +122,8 @@ const RoomsBottomNav = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  // Route gating
-  if (!VISIBLE_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p + "?"))) {
+  // Hide on auth/onboarding/landing/flow; show everywhere else.
+  if (HIDDEN_EXACT.has(pathname) || pathname.startsWith("/flow")) {
     return null;
   }
 
