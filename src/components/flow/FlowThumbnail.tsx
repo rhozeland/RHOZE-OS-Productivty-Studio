@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Disc3, Palette, Camera, Video, PenLine, Sparkles, AudioLines, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getDirectThumbnail, needsRemoteThumbnail } from "@/lib/link-thumbnail";
+import { cn } from "@/lib/utils";
 
 interface Props {
   fileUrl?: string | null;
@@ -124,7 +125,10 @@ export const FlowThumbnail = ({
 
   return (
     <div
-      className={`relative w-full h-full overflow-hidden flex flex-col justify-end p-4 ${className}`}
+      className={cn(
+        "relative w-full h-full overflow-hidden flex flex-col justify-end p-4",
+        className,
+      )}
       style={{
         backgroundImage:
           `radial-gradient(ellipse at 80% 0%, ${v.glyph}40, transparent 50%),` +

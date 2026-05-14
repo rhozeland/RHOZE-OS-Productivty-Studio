@@ -431,17 +431,15 @@ const MosaicTileCard = ({
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
       ) : tile.kind === "drop" && (tile.fileUrl || tile.linkUrl || tile.category) ? (
-        <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-105">
-          <FlowThumbnail
-            fileUrl={tile.fileUrl}
-            linkUrl={tile.linkUrl}
-            title={tile.title}
-            description={tile.description}
-            category={tile.category}
-            hideCaption
-            className="h-full w-full object-cover"
-          />
-        </div>
+        <FlowThumbnail
+          fileUrl={tile.fileUrl}
+          linkUrl={tile.linkUrl}
+          title={tile.title}
+          description={tile.description}
+          category={tile.category}
+          hideCaption
+          className="absolute inset-0 transition-transform duration-700 group-hover:scale-105"
+        />
       ) : isIconHero ? (
         // Category-driven hero: subtle dual-radial wash + huge soft icon
         // floating off-axis. Reads as designed, not empty.
