@@ -11,8 +11,7 @@ import WelcomeModal from "@/components/onboarding/WelcomeModal";
 import RoomsBottomNav from "@/components/RoomsBottomNav";
 // FlowLauncher (floating FAB) retired — Flow is now reachable via the Hub view toggle + HubFlowWidget.
 // DockBar retired in v7 (post phase-2) — navigation happens via the left side nav + global ⌘K search.
-import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Settings as SettingsIcon, LogOut, Coins, ChevronDown, Sun, Moon } from "lucide-react";
-import { useTheme } from "@/contexts/ThemeContext";
+import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Settings as SettingsIcon, LogOut, Coins, ChevronDown } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -122,7 +121,7 @@ const AppLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -347,9 +346,9 @@ const AppLayout = () => {
               </nav>
             </div>
 
-            {/* Search trigger — flame/Flow launcher retired (Flow now lives via Hub view toggle + HubFlowWidget). */}
-            <div className="hidden md:flex flex-1 max-w-lg justify-center">
-              <div className="relative w-full max-w-md">
+            {/* Search trigger — compact, left-aligned next to sidebar trigger. */}
+            <div className="hidden md:flex flex-1 justify-start">
+              <div className="relative w-full max-w-xs">
                 <button
                   onClick={() => setSearchOpen(true)}
                   className="w-full h-9 rounded-full bg-card border border-border text-sm font-body text-muted-foreground text-left hover:bg-muted/50 transition-colors flex items-center pr-3 pl-4"
@@ -373,15 +372,6 @@ const AppLayout = () => {
                 aria-label="Search"
               >
                 <Search className="h-4 w-4 text-muted-foreground" />
-              </button>
-
-              {/* Theme toggle */}
-              <button
-                onClick={toggleTheme}
-                className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-                aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              >
-                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </button>
 
               {user && <PostMenuButton />}
