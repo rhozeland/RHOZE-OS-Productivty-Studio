@@ -193,25 +193,29 @@ export const FlowThumbnail = ({
         strokeWidth={1.5}
       />
 
-      {/* Bottom gradient scrim for legibility */}
-      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/55 via-black/15 to-transparent pointer-events-none" />
+      {!hideCaption && (
+        <>
+          {/* Bottom gradient scrim for legibility */}
+          <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/55 via-black/15 to-transparent pointer-events-none" />
 
-      <div className="relative z-10 text-left">
-        <p
-          className="inline-block text-[9px] font-bold uppercase tracking-[0.22em] mb-1.5 px-2 py-0.5 rounded-full backdrop-blur-sm"
-          style={{ color: v.glyph, background: "rgba(0,0,0,0.35)" }}
-        >
-          {v.label}
-        </p>
-        <p className="font-display font-bold text-white leading-tight line-clamp-3 text-sm drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
-          {title}
-        </p>
-        {description && (
-          <p className="text-[10px] text-white/75 line-clamp-2 mt-1.5 font-body drop-shadow">
-            {description}
-          </p>
-        )}
-      </div>
+          <div className="relative z-10 text-left">
+            <p
+              className="inline-block text-[9px] font-bold uppercase tracking-[0.22em] mb-1.5 px-2 py-0.5 rounded-full backdrop-blur-sm"
+              style={{ color: v.glyph, background: "rgba(0,0,0,0.35)" }}
+            >
+              {v.label}
+            </p>
+            <p className="font-display font-bold text-white leading-tight line-clamp-3 text-sm drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
+              {title}
+            </p>
+            {description && (
+              <p className="text-[10px] text-white/75 line-clamp-2 mt-1.5 font-body drop-shadow">
+                {description}
+              </p>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };
