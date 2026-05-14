@@ -162,8 +162,21 @@ const LaunchDetailPage = () => {
       .eq("launch_id", l.id);
     setHolderCount(count ?? null);
 
+    // My holding (RLS lets the user read their own row)
+    if (user?.id) {
+      const { data: mine } = await supabase
+        .from("coin_holdings")
+        .select("balance, sol_invested")
+        .eq("launch_id", l.id)
+        .eq("trader_id", user.id)
+        .maybeSingle();
+      setMyHolding(mine ? { balance: Number(mine.balance), sol_invested: Number(mine.sol_invested) } : null);
+    } else {
+      setMyHolding(null);
+    }
+
     setLoading(false);
-  }, [slugOrId]);
+  }, [slugOrId, user?.id]);
 
   useEffect(() => {
     load();
