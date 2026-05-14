@@ -55,9 +55,10 @@ const ROOMS = [
 const isMatch = (pathname: string, prefixes: string[]) =>
   prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
 
-// Routes where the dock should appear at all. Per v8.10 we only surface
-// it on Discover-family surfaces; Conversations/Creator Pass/etc. skip it.
-const VISIBLE_PREFIXES = ["/discover", "/scene", "/flow", "/stream"];
+// Routes where the dock should be hidden (auth/onboarding/landing/fullscreen).
+// Everywhere else, the HUD dock is always visible.
+const HIDDEN_PREFIXES = ["/auth", "/onboarding", "/", "/landing", "/flow"];
+const HIDDEN_EXACT = new Set(["/", "/auth", "/onboarding", "/landing"]);
 
 const SCROLL_HIDE_THRESHOLD = 12;
 
