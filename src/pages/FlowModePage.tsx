@@ -926,8 +926,9 @@ const FlowModePage = () => {
   //     deep link as applied, and strip ?item so subsequent swipes are
   //     not reverted.
   const appliedDeepLinkRef = useRef<string | null>(null);
+  const pendingDeepLinkId = searchParams.get("item");
   useEffect(() => {
-    const targetId = searchParams.get("item");
+    const targetId = pendingDeepLinkId;
     if (!targetId) return;
     if (appliedDeepLinkRef.current === targetId) return;
     if (allItems.length === 0) return;
@@ -956,7 +957,7 @@ const FlowModePage = () => {
       next.delete("item");
       setSearchParams(next, { replace: true });
     }
-  }, [allItems, baseItems, deepLinkItem, searchParams, feedScope, flowItemsFetching, setSearchParams]);
+  }, [allItems, baseItems, deepLinkItem, pendingDeepLinkId, searchParams, feedScope, flowItemsFetching, setSearchParams]);
 
   const handleExitFlow = useCallback(() => {
     const fromState = (location.state as { from?: string } | null)?.from;
@@ -1054,7 +1055,9 @@ const FlowModePage = () => {
       // Swipe view: restore the saved card index when toggling back to a
       // previously-visited scope; brand-new scopes start at card #0.
       const shouldRestoreSwipe = swipeScopeVisitedRef.current[scope];
-      setCurrentIndex(shouldRestoreSwipe ? swipeIndexByScopeRef.current[scope] : 0);
+      if (!pendingDeepLinkId) {
+        setCurrentIndex(shouldRestoreSwipe ? swipeIndexByScopeRef.current[scope] : 0);
+      }
       setExpandedCard(false);
       // Cancel any half-completed swipe animation.
       x.set(0);
