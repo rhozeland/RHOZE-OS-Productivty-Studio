@@ -37,6 +37,9 @@ import NoteBubble from "@/components/notes/NoteBubble";
 import { useUserNote } from "@/hooks/useNotes";
 
 import { EmptyState } from "@/components/ui/empty-state";
+import PostMenuButton from "@/components/PostMenuButton";
+import { Plus } from "lucide-react";
+
 
 // Human-readable labels + destinations for on-chain reputation tiles.
 // Tiles are clickable when href is set; otherwise rendered as static cards.
@@ -356,7 +359,18 @@ const ProfileDetailPage = () => {
           <div className="h-36 sm:h-44 relative" style={{ background: bannerGradient }}>
             {bannerImageUrl && <img src={bannerImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />}
             {isOwnProfile && (
-              <div className="absolute top-3 right-3">
+              <div className="absolute top-3 right-3 flex items-center gap-2">
+                <PostMenuButton
+                  trigger={
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="gap-1.5 bg-card/80 backdrop-blur-sm hover:bg-card/95 shadow-md text-xs"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Post
+                    </Button>
+                  }
+                />
                 <Button variant="secondary" size="sm" onClick={() => navigate("/settings")}
                   className="gap-1.5 bg-card/80 backdrop-blur-sm hover:bg-card/95 shadow-md text-xs">
                   <Settings className="h-3.5 w-3.5" /> Edit Profile
