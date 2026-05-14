@@ -428,12 +428,13 @@ const MosaicTileCard = ({
           loading="lazy"
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
-      ) : tile.kind === "drop" && (tile.fileUrl || tile.linkUrl) ? (
+      ) : tile.kind === "drop" && (tile.fileUrl || tile.linkUrl || tile.category) ? (
         <FlowThumbnail
           fileUrl={tile.fileUrl}
           linkUrl={tile.linkUrl}
           title={tile.title}
           description={tile.description}
+          category={tile.category}
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
       ) : isIconHero ? (
