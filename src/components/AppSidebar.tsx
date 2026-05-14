@@ -40,7 +40,7 @@ const pillarItems = [
 const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { isAdmin } = useAdminCheck();
   const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
