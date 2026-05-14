@@ -40,6 +40,7 @@ import { Button } from "@/components/ui/button";
 import { deriveLaunchPda, isLaunchpadOnChainEnabled, LAUNCHPAD_NETWORK } from "@/lib/launchpad-onchain";
 import MintAddressChip from "@/components/launchpad/MintAddressChip";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 type Launch = {
   id: string;
