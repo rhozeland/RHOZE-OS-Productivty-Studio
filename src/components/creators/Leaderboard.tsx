@@ -3,10 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Coins, Zap, Flame, Award, UserPlus } from "lucide-react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const Leaderboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const openFlowItem = (itemId: string) => {
+    navigate(`/flow?item=${itemId}`, {
+      state: { from: `${location.pathname}${location.search}${location.hash}` },
+    });
+  };
 
   /* Top Earners — most $RHOZE reward transactions */
   const { data: topEarners } = useQuery({
@@ -153,7 +160,7 @@ const Leaderboard = () => {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  onClick={() => navigate("/flow")}
+                  onClick={() => openFlowItem(item.flow_item_id)}
                   className="flex items-center gap-3 p-3 rounded-xl bg-muted/40 hover:bg-muted/70 cursor-pointer transition-colors"
                 >
                   <span className="font-display font-bold text-muted-foreground text-lg w-6 text-center shrink-0">{i + 1}</span>
