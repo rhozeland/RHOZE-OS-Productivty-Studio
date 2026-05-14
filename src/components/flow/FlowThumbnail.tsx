@@ -93,6 +93,7 @@ export const FlowThumbnail = ({
   hideCaption = false,
 }: Props) => {
   const [imageFailed, setImageFailed] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const fileLooksLikeImage = !!fileUrl && IMAGE_EXT.test(fileUrl);
   const direct = fileLooksLikeImage ? fileUrl : getDirectThumbnail(linkUrl);
   const shouldFetch = !direct && needsRemoteThumbnail(linkUrl);
@@ -115,21 +116,11 @@ export const FlowThumbnail = ({
 
   useEffect(() => {
     setImageFailed(false);
+    setImageLoaded(false);
   }, [src]);
 
-  if (src && !imageFailed) {
-    return (
-      <img
-        src={src}
-        alt={title}
-        className={className}
-        loading="lazy"
-        onError={() => setImageFailed(true)}
-      />
-    );
-  }
-
   const v = pickVisual(category, fileUrl, linkUrl);
+  const showImage = !!src && !imageFailed;
 
   return (
     <div
@@ -141,10 +132,21 @@ export const FlowThumbnail = ({
           `linear-gradient(135deg, ${v.from} 0%, ${v.via} 55%, ${v.to} 100%)`,
       }}
     >
+      {showImage && (
+        <img
+          src={src}
+          alt={title}
+          loading="lazy"
+          onLoad={() => setImageLoaded(true)}
+          onError={() => setImageFailed(true)}
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+        />
+      )}
+
       {/* Decorative pattern layer */}
       {v.pattern === "waves" && (
         <svg
-          className="absolute inset-0 w-full h-full opacity-25 mix-blend-screen pointer-events-none"
+          className={`absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-300 ${imageLoaded ? "opacity-0" : "opacity-25 mix-blend-screen"}`}
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
           aria-hidden
@@ -168,7 +170,7 @@ export const FlowThumbnail = ({
       )}
       {v.pattern === "dots" && (
         <div
-          className="absolute inset-0 opacity-20 mix-blend-screen pointer-events-none"
+          className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${imageLoaded ? "opacity-0" : "opacity-20 mix-blend-screen"}`}
           style={{
             backgroundImage: `radial-gradient(${v.glyph} 1px, transparent 1.5px)`,
             backgroundSize: "14px 14px",
@@ -178,7 +180,7 @@ export const FlowThumbnail = ({
       )}
       {v.pattern === "grid" && (
         <div
-          className="absolute inset-0 opacity-15 mix-blend-screen pointer-events-none"
+          className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${imageLoaded ? "opacity-0" : "opacity-15 mix-blend-screen"}`}
           style={{
             backgroundImage:
               `linear-gradient(${v.glyph}66 1px, transparent 1px),` +
@@ -193,14 +195,14 @@ export const FlowThumbnail = ({
       <v.Icon
         aria-hidden
         className="absolute -right-6 -top-6 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110 mix-blend-overlay"
-        style={{ color: v.glyph, opacity: 0.7, width: "10rem", height: "10rem" }}
+        style={{ color: v.glyph, opacity: imageLoaded ? 0.2 : 0.7, width: "10rem", height: "10rem" }}
         strokeWidth={1.5}
       />
 
       {!hideCaption && (
         <>
           {/* Bottom gradient scrim for legibility */}
-          <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/55 via-black/15 to-transparent pointer-events-none" />
+          <div className={`absolute inset-x-0 bottom-0 h-2/3 pointer-events-none transition-opacity duration-300 ${imageLoaded ? "bg-gradient-to-t from-black/70 via-black/25 to-transparent opacity-100" : "bg-gradient-to-t from-black/55 via-black/15 to-transparent opacity-100"}`} />
 
           <div className="relative z-10 text-left">
             <p
