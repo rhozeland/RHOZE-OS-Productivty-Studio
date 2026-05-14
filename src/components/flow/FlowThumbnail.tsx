@@ -125,7 +125,10 @@ export const FlowThumbnail = ({
 
   return (
     <div
-      className={`relative w-full h-full overflow-hidden flex flex-col justify-end p-4 ${className}`}
+      className={cn(
+        "relative w-full h-full overflow-hidden flex flex-col justify-end p-4",
+        className,
+      )}
       style={{
         backgroundImage:
           `radial-gradient(ellipse at 80% 0%, ${v.glyph}40, transparent 50%),` +
