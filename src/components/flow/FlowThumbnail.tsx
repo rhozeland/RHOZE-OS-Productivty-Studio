@@ -11,6 +11,9 @@ interface Props {
   /** Optional content category — drives the icon-hero fallback color/icon. */
   category?: string | null;
   className?: string;
+  /** When true, hide the built-in label/title/description footer.
+   *  Use when the parent tile already renders its own caption (e.g. mosaic). */
+  hideCaption?: boolean;
 }
 
 const AUDIO_EXT = /\.(mp3|wav|flac|aac|m4a|ogg|opus|aiff)(\?|$)/i;
@@ -86,6 +89,7 @@ export const FlowThumbnail = ({
   description,
   category,
   className = "",
+  hideCaption = false,
 }: Props) => {
   const fileLooksLikeImage = !!fileUrl && IMAGE_EXT.test(fileUrl);
   const direct = fileLooksLikeImage ? fileUrl : getDirectThumbnail(linkUrl);
@@ -189,25 +193,29 @@ export const FlowThumbnail = ({
         strokeWidth={1.5}
       />
 
-      {/* Bottom gradient scrim for legibility */}
-      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/55 via-black/15 to-transparent pointer-events-none" />
+      {!hideCaption && (
+        <>
+          {/* Bottom gradient scrim for legibility */}
+          <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/55 via-black/15 to-transparent pointer-events-none" />
 
-      <div className="relative z-10 text-left">
-        <p
-          className="inline-block text-[9px] font-bold uppercase tracking-[0.22em] mb-1.5 px-2 py-0.5 rounded-full backdrop-blur-sm"
-          style={{ color: v.glyph, background: "rgba(0,0,0,0.35)" }}
-        >
-          {v.label}
-        </p>
-        <p className="font-display font-bold text-white leading-tight line-clamp-3 text-sm drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
-          {title}
-        </p>
-        {description && (
-          <p className="text-[10px] text-white/75 line-clamp-2 mt-1.5 font-body drop-shadow">
-            {description}
-          </p>
-        )}
-      </div>
+          <div className="relative z-10 text-left">
+            <p
+              className="inline-block text-[9px] font-bold uppercase tracking-[0.22em] mb-1.5 px-2 py-0.5 rounded-full backdrop-blur-sm"
+              style={{ color: v.glyph, background: "rgba(0,0,0,0.35)" }}
+            >
+              {v.label}
+            </p>
+            <p className="font-display font-bold text-white leading-tight line-clamp-3 text-sm drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
+              {title}
+            </p>
+            {description && (
+              <p className="text-[10px] text-white/75 line-clamp-2 mt-1.5 font-body drop-shadow">
+                {description}
+              </p>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };
