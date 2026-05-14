@@ -828,7 +828,7 @@ const ProfileDetailPage = () => {
                   icon={Sparkles}
                   title="No posts yet"
                   description="Use the post button on Discover to drop a work — it'll show up here."
-                  cta={{ label: "Open the composer", to: "/discover#discover-composer" }}
+                  cta={{ label: "Open the composer", to: "/discover#discover-composer", prominent: true }}
                   size="sm"
                 />
               ) : (
