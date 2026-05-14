@@ -13,6 +13,7 @@ export interface EmptyStateProps {
     to?: string;
     onClick?: () => void;
     external?: boolean;
+    prominent?: boolean;
   };
   secondary?: {
     label: string;
