@@ -89,6 +89,7 @@ export const FlowThumbnail = ({
   description,
   category,
   className = "",
+  hideCaption = false,
 }: Props) => {
   const fileLooksLikeImage = !!fileUrl && IMAGE_EXT.test(fileUrl);
   const direct = fileLooksLikeImage ? fileUrl : getDirectThumbnail(linkUrl);
