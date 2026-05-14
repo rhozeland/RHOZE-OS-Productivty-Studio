@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { Sparkles, Store, Coins, Flame, Plus } from "lucide-react";
-import PostMenuButton from "@/components/PostMenuButton";
+import { Sparkles, Store, Coins } from "lucide-react";
 import { motion, useAnimationControls } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCreatorXP } from "@/hooks/useCreatorXP";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
   Tooltip,
