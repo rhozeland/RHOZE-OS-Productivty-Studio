@@ -363,9 +363,8 @@ const ProfileDetailPage = () => {
                 <PostMenuButton
                   trigger={
                     <Button
-                      variant="secondary"
                       size="sm"
-                      className="gap-1.5 bg-card/80 backdrop-blur-sm hover:bg-card/95 shadow-md text-xs"
+                      className="gap-1.5 bg-gradient-to-r from-primary via-fuchsia-500 to-amber-400 text-primary-foreground hover:opacity-90 shadow-lg shadow-fuchsia-500/20 text-xs font-semibold"
                     >
                       <Plus className="h-3.5 w-3.5" /> Post
                     </Button>
