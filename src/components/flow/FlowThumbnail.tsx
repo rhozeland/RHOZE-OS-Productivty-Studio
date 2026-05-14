@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Music, Palette, Camera, Video, PenLine, Sparkles, Headphones, type LucideIcon } from "lucide-react";
+import { Disc3, Palette, Camera, Video, PenLine, Sparkles, AudioLines, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getDirectThumbnail, needsRemoteThumbnail } from "@/lib/link-thumbnail";
 
@@ -22,26 +22,32 @@ const VIDEO_HOSTS = /(youtube\.com|youtu\.be|vimeo\.com|tiktok\.com|loom\.com)/i
 
 interface HeroVisual {
   Icon: LucideIcon;
-  /** Solid HSL accent (used for icon + radial wash). */
-  accent: string;
-  /** Soft secondary HSL hue for the background gradient. */
-  accentSoft: string;
+  /** Bold gradient stops (full-bleed, saturated). */
+  from: string;
+  via: string;
+  to: string;
+  /** Tint for the giant background glyph. */
+  glyph: string;
   label: string;
+  /** Optional decorative pattern hint. */
+  pattern?: "waves" | "dots" | "grid";
 }
 
 const CATEGORY_VISUAL: Record<string, HeroVisual> = {
-  music:   { Icon: Music,    accent: "hsl(280 75% 60%)", accentSoft: "hsl(330 80% 65%)", label: "Music" },
-  audio:   { Icon: Headphones, accent: "hsl(280 75% 60%)", accentSoft: "hsl(210 80% 60%)", label: "Audio" },
-  design:  { Icon: Palette,  accent: "hsl(160 65% 50%)", accentSoft: "hsl(190 70% 55%)", label: "Design" },
-  photo:   { Icon: Camera,   accent: "hsl(35 92% 58%)",  accentSoft: "hsl(15 85% 60%)",  label: "Photo" },
-  video:   { Icon: Video,    accent: "hsl(340 80% 60%)", accentSoft: "hsl(15 80% 60%)",  label: "Video" },
-  writing: { Icon: PenLine,  accent: "hsl(210 70% 58%)", accentSoft: "hsl(170 60% 55%)", label: "Writing" },
+  music:   { Icon: Disc3,       from: "hsl(280 90% 22%)", via: "hsl(320 95% 45%)", to: "hsl(15 100% 58%)",  glyph: "hsl(50 100% 75%)", label: "Music", pattern: "waves" },
+  audio:   { Icon: AudioLines,  from: "hsl(265 90% 25%)", via: "hsl(295 90% 50%)", to: "hsl(195 100% 55%)", glyph: "hsl(180 100% 80%)", label: "Audio", pattern: "waves" },
+  design:  { Icon: Palette,     from: "hsl(165 85% 25%)", via: "hsl(180 90% 45%)", to: "hsl(140 90% 55%)",  glyph: "hsl(60 100% 80%)",  label: "Design", pattern: "grid" },
+  photo:   { Icon: Camera,      from: "hsl(15 90% 35%)",  via: "hsl(35 95% 55%)",  to: "hsl(50 100% 65%)",  glyph: "hsl(0 0% 100%)",    label: "Photo", pattern: "dots" },
+  video:   { Icon: Video,       from: "hsl(340 90% 30%)", via: "hsl(355 90% 55%)", to: "hsl(25 95% 60%)",   glyph: "hsl(45 100% 75%)",  label: "Video", pattern: "dots" },
+  writing: { Icon: PenLine,     from: "hsl(220 80% 25%)", via: "hsl(200 85% 45%)", to: "hsl(170 80% 55%)",  glyph: "hsl(60 80% 85%)",   label: "Writing", pattern: "grid" },
 };
 
 const FALLBACK_VISUAL: HeroVisual = {
   Icon: Sparkles,
-  accent: "hsl(var(--primary))",
-  accentSoft: "hsl(var(--accent))",
+  from: "hsl(260 80% 25%)",
+  via: "hsl(300 85% 50%)",
+  to: "hsl(340 90% 60%)",
+  glyph: "hsl(50 100% 80%)",
   label: "Drop",
 };
 
@@ -69,13 +75,9 @@ const pickVisual = (
 /**
  * Renders the best available thumbnail for a flow item:
  * 1. Real image (fileUrl is an image, or YouTube/og:image fetched).
- * 2. Category- or media-aware icon hero (audio gets a music wash + headphones,
- *    design gets a palette wash, video gets a camera-roll wash, etc.).
- *
- * Audio/video file URLs are NEVER rendered inside `<img>` (that produced the
- * blank gray tiles in the Stream + profile Drops grid). Same for non-YouTube
- * links — we render an editorial hero with title overlay so every tile reads
- * as designed, not "missing image".
+ * 2. Category-aware editorial hero — bold saturated gradient, oversized
+ *    glyph icon, optional pattern (waveform for audio, dots for photo/video,
+ *    grid for design/writing). NO washed-out gray fallbacks anymore.
  */
 export const FlowThumbnail = ({
   fileUrl,
@@ -85,9 +87,6 @@ export const FlowThumbnail = ({
   category,
   className = "",
 }: Props) => {
-  // Only treat fileUrl as a renderable image if its extension actually says so.
-  // Everything else (audio, video, raw, design files) falls through to the
-  // category hero instead of a broken <img> tag.
   const fileLooksLikeImage = !!fileUrl && IMAGE_EXT.test(fileUrl);
   const direct = fileLooksLikeImage ? fileUrl : getDirectThumbnail(linkUrl);
   const shouldFetch = !direct && needsRemoteThumbnail(linkUrl);
@@ -102,7 +101,7 @@ export const FlowThumbnail = ({
       return data as { image?: string | null };
     },
     enabled: shouldFetch && !!linkUrl,
-    staleTime: 1000 * 60 * 60 * 24, // 24h
+    staleTime: 1000 * 60 * 60 * 24,
     retry: false,
   });
 
@@ -122,39 +121,89 @@ export const FlowThumbnail = ({
     );
   }
 
-  // No image available — render a colorful, kind-aware hero. Big soft icon
-  // floats off-axis behind the title so audio/video/design tiles all read
-  // as intentional editorial cards.
   const v = pickVisual(category, fileUrl, linkUrl);
 
   return (
     <div
       className={`relative w-full h-full overflow-hidden flex flex-col justify-end p-4 ${className}`}
       style={{
-        background:
-          `radial-gradient(circle at 20% 15%, ${v.accent}33, transparent 55%),` +
-          `radial-gradient(circle at 85% 90%, ${v.accentSoft}33, transparent 55%),` +
-          `linear-gradient(135deg, hsl(var(--card)), hsl(var(--muted)))`,
+        backgroundImage:
+          `radial-gradient(ellipse at 80% 0%, ${v.glyph}40, transparent 50%),` +
+          `radial-gradient(ellipse at 0% 100%, ${v.from} 0%, transparent 60%),` +
+          `linear-gradient(135deg, ${v.from} 0%, ${v.via} 55%, ${v.to} 100%)`,
       }}
     >
+      {/* Decorative pattern layer */}
+      {v.pattern === "waves" && (
+        <svg
+          className="absolute inset-0 w-full h-full opacity-25 mix-blend-screen pointer-events-none"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          aria-hidden
+        >
+          {Array.from({ length: 14 }).map((_, i) => {
+            const x = 6 + i * 6.5;
+            const h = 18 + ((i * 37) % 55);
+            return (
+              <rect
+                key={i}
+                x={x}
+                y={50 - h / 2}
+                width={3}
+                height={h}
+                rx={1.5}
+                fill={v.glyph}
+              />
+            );
+          })}
+        </svg>
+      )}
+      {v.pattern === "dots" && (
+        <div
+          className="absolute inset-0 opacity-20 mix-blend-screen pointer-events-none"
+          style={{
+            backgroundImage: `radial-gradient(${v.glyph} 1px, transparent 1.5px)`,
+            backgroundSize: "14px 14px",
+          }}
+          aria-hidden
+        />
+      )}
+      {v.pattern === "grid" && (
+        <div
+          className="absolute inset-0 opacity-15 mix-blend-screen pointer-events-none"
+          style={{
+            backgroundImage:
+              `linear-gradient(${v.glyph}66 1px, transparent 1px),` +
+              `linear-gradient(90deg, ${v.glyph}66 1px, transparent 1px)`,
+            backgroundSize: "22px 22px",
+          }}
+          aria-hidden
+        />
+      )}
+
+      {/* Oversized glyph */}
       <v.Icon
         aria-hidden
-        className="absolute -right-4 -bottom-6 transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-110"
-        style={{ color: v.accent, opacity: 0.32, width: "8rem", height: "8rem" }}
-        strokeWidth={1.25}
+        className="absolute -right-6 -top-6 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110 mix-blend-overlay"
+        style={{ color: v.glyph, opacity: 0.7, width: "10rem", height: "10rem" }}
+        strokeWidth={1.5}
       />
+
+      {/* Bottom gradient scrim for legibility */}
+      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/55 via-black/15 to-transparent pointer-events-none" />
+
       <div className="relative z-10 text-left">
         <p
-          className="text-[9px] font-semibold uppercase tracking-[0.18em] mb-1.5"
-          style={{ color: v.accent }}
+          className="inline-block text-[9px] font-bold uppercase tracking-[0.22em] mb-1.5 px-2 py-0.5 rounded-full backdrop-blur-sm"
+          style={{ color: v.glyph, background: "rgba(0,0,0,0.35)" }}
         >
           {v.label}
         </p>
-        <p className="font-display font-bold text-foreground/90 leading-tight line-clamp-3 text-sm">
+        <p className="font-display font-bold text-white leading-tight line-clamp-3 text-sm drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
           {title}
         </p>
         {description && (
-          <p className="text-[10px] text-muted-foreground/80 line-clamp-2 mt-1.5 font-body">
+          <p className="text-[10px] text-white/75 line-clamp-2 mt-1.5 font-body drop-shadow">
             {description}
           </p>
         )}
