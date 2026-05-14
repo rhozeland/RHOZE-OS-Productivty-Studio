@@ -387,7 +387,20 @@ const LaunchDetailPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* LEFT: chart + tabs */}
         <div className="lg:col-span-2 space-y-4">
-          <PriceChartCard launchId={launch.id} ticker={launch.ticker} />
+          {/* Chart is collapsed by default — most users only care about
+              market cap + P&L. Click to expand for the bonding-curve chart. */}
+          <button
+            type="button"
+            onClick={() => setShowChart((v) => !v)}
+            className="w-full flex items-center justify-between gap-2 rounded-md border border-border/60 bg-card/40 backdrop-blur px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+          >
+            <span className="flex items-center gap-1.5">
+              <Activity className="h-3.5 w-3.5" />
+              {showChart ? "Hide price chart" : "Show price chart"}
+            </span>
+            {showChart ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          </button>
+          {showChart && <PriceChartCard launchId={launch.id} ticker={launch.ticker} />}
 
           <Card className="bg-card/40 backdrop-blur">
             <CardContent className="p-3">
