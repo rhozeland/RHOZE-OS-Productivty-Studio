@@ -40,6 +40,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import PostMenuButton from "@/components/PostMenuButton";
 import { Plus } from "lucide-react";
 
+
 // Human-readable labels + destinations for on-chain reputation tiles.
 // Tiles are clickable when href is set; otherwise rendered as static cards.
 const PROOF_TYPE_META: Record<string, { label: string; href: string | null }> = {
