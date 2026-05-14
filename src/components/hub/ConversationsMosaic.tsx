@@ -392,7 +392,8 @@ const MosaicTileCard = ({
   onClick: () => void;
 }) => {
   const { Icon, label, tint, chipBg } = KIND_META[tile.kind];
-  const hasImage = !!(tile.cover || tile.fileUrl || tile.linkUrl);
+  const hasImage = !!tile.cover;
+  const hasDropVisual = tile.kind === "drop" && !!(tile.fileUrl || tile.linkUrl || tile.category);
   const isLarge = sizeClass.includes("row-span-2") || sizeClass.includes("col-span-2");
   // Offerings without a cover image lean on a bold category icon + theme
   // color so they stop reading as "empty white space". The big icon does
@@ -463,8 +464,8 @@ const MosaicTileCard = ({
         <div className={`absolute inset-0 bg-gradient-to-br ${tint} transition-transform duration-700 group-hover:scale-110`} />
       )}
 
-      {/* Gradient overlay for legibility on imagery */}
-      {hasImage && (
+      {/* Gradient overlay for legibility on true cover imagery only */}
+      {hasImage && !hasDropVisual && (
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
       )}
 
@@ -491,12 +492,12 @@ const MosaicTileCard = ({
       </div>
 
       {/* Content footer */}
-      <div className={`absolute inset-x-0 bottom-0 p-3 ${hasImage ? "text-white" : "text-foreground"} z-10`}>
+      <div className={`absolute inset-x-0 bottom-0 p-3 ${hasImage || hasDropVisual ? "text-white" : "text-foreground"} z-10`}>
         {/* Category eyebrow — colored for offerings so the craft is obvious at a glance */}
         {tile.meta && (
           <p
             className={`text-[10px] uppercase tracking-wider mb-1 font-semibold ${
-              hasImage ? "text-white/80" : isIconHero ? "" : "text-muted-foreground"
+                hasImage || hasDropVisual ? "text-white/80" : isIconHero ? "" : "text-muted-foreground"
             }`}
             style={isIconHero ? { color: catVisual.accent } : undefined}
           >
@@ -504,12 +505,12 @@ const MosaicTileCard = ({
           </p>
         )}
         <p
-          className={`font-display font-semibold leading-tight ${isLarge ? "text-base sm:text-lg" : "text-sm"} ${hasImage ? "text-white" : "text-foreground"} line-clamp-2`}
+          className={`font-display font-semibold leading-tight ${isLarge ? "text-base sm:text-lg" : "text-sm"} ${hasImage || hasDropVisual ? "text-white" : "text-foreground"} line-clamp-2`}
         >
           {tile.title}
         </p>
         {tile.subtitle && (
-          <p className={`text-[11px] mt-0.5 truncate ${hasImage ? "text-white/75" : "text-muted-foreground"} flex items-center gap-1`}>
+          <p className={`text-[11px] mt-0.5 truncate ${hasImage || hasDropVisual ? "text-white/75" : "text-muted-foreground"} flex items-center gap-1`}>
             {tile.kind === "event" && tile.subtitle === "Online" ? <Globe2 className="h-3 w-3 shrink-0" /> : null}
             {tile.kind === "event" && tile.subtitle !== "Online" ? <MapPin className="h-3 w-3 shrink-0" /> : null}
             {tile.kind === "space" ? <MapPin className="h-3 w-3 shrink-0" /> : null}
@@ -525,7 +526,7 @@ const MosaicTileCard = ({
         )}
         {(isLarge || isIconHero) && (
           <span
-            className={`inline-flex items-center gap-1 text-[11px] font-semibold mt-2 opacity-80 group-hover:opacity-100 group-hover:gap-1.5 transition-all ${hasImage ? "text-white" : "text-foreground"}`}
+              className={`inline-flex items-center gap-1 text-[11px] font-semibold mt-2 opacity-80 group-hover:opacity-100 group-hover:gap-1.5 transition-all ${hasImage || hasDropVisual ? "text-white" : "text-foreground"}`}
           >
             Open <ArrowRight className="h-3 w-3" />
           </span>

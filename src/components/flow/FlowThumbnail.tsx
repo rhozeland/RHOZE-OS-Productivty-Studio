@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Disc3, Palette, Camera, Video, PenLine, Sparkles, AudioLines, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -91,6 +92,7 @@ export const FlowThumbnail = ({
   className = "",
   hideCaption = false,
 }: Props) => {
+  const [imageFailed, setImageFailed] = useState(false);
   const fileLooksLikeImage = !!fileUrl && IMAGE_EXT.test(fileUrl);
   const direct = fileLooksLikeImage ? fileUrl : getDirectThumbnail(linkUrl);
   const shouldFetch = !direct && needsRemoteThumbnail(linkUrl);
@@ -111,16 +113,18 @@ export const FlowThumbnail = ({
 
   const src = direct || meta?.image || null;
 
-  if (src) {
+  useEffect(() => {
+    setImageFailed(false);
+  }, [src]);
+
+  if (src && !imageFailed) {
     return (
       <img
         src={src}
         alt={title}
         className={className}
         loading="lazy"
-        onError={(e) => {
-          (e.target as HTMLImageElement).style.display = "none";
-        }}
+        onError={() => setImageFailed(true)}
       />
     );
   }
