@@ -125,7 +125,23 @@ const ProfileDetailPage = () => {
     queryFn: async () => {
       const { data } = await supabase.from("marketplace_listings")
         .select("id, title, category, listing_type, price, currency, credits_price, cover_url, image_url, tags")
-        .eq("user_id", id!).eq("is_active", true).order("created_at", { ascending: false }).limit(8);
+        .eq("user_id", id!).eq("is_active", true).order("created_at", { ascending: false }).limit(12);
+      return data ?? [];
+    },
+    enabled: !!id,
+  });
+
+  // All public events this user hosts (past + upcoming) — surfaced in Drops tab.
+  const { data: allHostedEvents } = useQuery({
+    queryKey: ["profile-all-hosted-events", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("events")
+        .select("id, slug, title, cover_url, starts_at, venue_name, is_online, status")
+        .eq("host_id", id!)
+        .eq("status", "published")
+        .order("starts_at", { ascending: false })
+        .limit(12);
       return data ?? [];
     },
     enabled: !!id,
