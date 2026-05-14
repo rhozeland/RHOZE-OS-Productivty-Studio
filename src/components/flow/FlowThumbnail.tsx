@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Disc3, Palette, Camera, Video, PenLine, Sparkles, AudioLines, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getDirectThumbnail, needsRemoteThumbnail } from "@/lib/link-thumbnail";
+import { cn } from "@/lib/utils";
 
 interface Props {
   fileUrl?: string | null;
