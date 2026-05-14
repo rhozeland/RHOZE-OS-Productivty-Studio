@@ -184,6 +184,7 @@ const getGreeting = () => {
 const DiscoverPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
   const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
   const creatorFeaturedSlides = useMemo(
