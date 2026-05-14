@@ -19,22 +19,21 @@ import { useAuthGate } from "@/components/AuthGateDialog";
 import { Button } from "@/components/ui/button";
 import {
   Flame,
-  Briefcase,
   CalendarDays,
   Building2,
   Shield,
-  Coins,
+  TrendingUp,
   Plus,
 } from "lucide-react";
 import NoteComposer from "@/components/notes/NoteComposer";
+import { useToast } from "@/hooks/use-toast";
 
 export type StreamPostType =
   | "text"
-  | "offering"
   | "event"
   | "space"
   | "work"
-  | "launch";
+  | "prediction";
 
 interface TypeMeta {
   key: StreamPostType;
@@ -48,23 +47,19 @@ interface TypeMeta {
   cta: string;
   /** Optional helper line shown when this type is active */
   hint?: string;
+  /** Soft-coming-soon — shows a toast instead of navigating. */
+  comingSoon?: boolean;
 }
 
 const TYPES: TypeMeta[] = [
-  { key: "text",     label: "Update",   icon: Flame,         inline: true,  cta: "Leave a note" },
-  { key: "offering", label: "Offering", icon: Briefcase,     inline: false, href: "/marketplace?compose=service", cta: "Post Offering" },
-  { key: "event",    label: "Event",    icon: CalendarDays,  inline: false, href: "/spaces/events/new",           cta: "Host Event" },
-  { key: "space",    label: "Space",    icon: Building2,     inline: false, href: "/studios/apply",               cta: "List Space" },
-  { key: "work",     label: "Work",     icon: Shield,        inline: false, href: "/settings#verification",       cta: "Anchor Work" },
-  {
-    key: "launch",
-    label: "Launch",
-    icon: Coins,
-    inline: false,
-    href: "/settings#verification",
-    cta: "Launch a coin",
-    hint: "Pick a Verified IP work to launch a coin off — opens your Verified IP shelf.",
-  },
+  { key: "text",       label: "Update",     icon: Flame,        inline: true,  cta: "Leave a note" },
+  { key: "work",       label: "Work",       icon: Shield,       inline: false, href: "/settings#verification",       cta: "Anchor Work",
+    hint: "Upload a finished piece — gets content-hashed and shown on your profile." },
+  { key: "event",      label: "Event",      icon: CalendarDays, inline: false, href: "/spaces/events/new",           cta: "Host Event" },
+  { key: "space",      label: "Space",      icon: Building2,    inline: false, href: "/studios/apply",               cta: "List Space" },
+  { key: "prediction", label: "Prediction", icon: TrendingUp,   inline: false, cta: "New market",
+    hint: "Create a YES/NO market on a creator's next move. Coming soon.",
+    comingSoon: true },
 ];
 
 interface Props {
@@ -78,6 +73,7 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
   const { user } = useAuth();
   const { requireAuth } = useAuthGate();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [type, setType] = useState<StreamPostType>(defaultType);
@@ -88,16 +84,20 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
   // Re-sync default when lane changes (HubPage drives this).
   useEffect(() => setType(defaultType), [defaultType]);
 
-  const meta = TYPES.find((t) => t.key === type)!;
+  const meta = TYPES.find((t) => t.key === type) ?? TYPES[0];
   const Icon = meta.icon;
-
-  // Update no longer writes to flow_items — it opens the Notes composer.
-  // Kept the mutation shell removed; createDrop is unused now.
 
   const handlePrimary = () => {
     if (!requireAuth("Sign up to leave a note.")) return;
     if (type === "text") {
       setNoteOpen(true);
+      return;
+    }
+    if (meta.comingSoon) {
+      toast({
+        title: "Prediction Markets — coming soon",
+        description: "We're wiring up YES/NO markets on creator milestones. Stay tuned.",
+      });
       return;
     }
     if (meta.href) navigate(meta.href);

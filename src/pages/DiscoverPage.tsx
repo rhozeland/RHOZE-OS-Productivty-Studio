@@ -16,7 +16,7 @@
  * fresh feed now — drops, works, offerings, events, spaces all in one).
  */
 import { Suspense, lazy, useState, useEffect, useMemo } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -184,6 +184,7 @@ const getGreeting = () => {
 const DiscoverPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
   const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
   const creatorFeaturedSlides = useMemo(
@@ -435,7 +436,7 @@ const DiscoverPage = () => {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => navigate("/flow")}
+              onClick={() => navigate("/flow", { state: { from: `${location.pathname}${location.search}` } })}
               className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-xs font-semibold text-background hover:bg-foreground/90 transition-colors"
             >
               <Flame className="h-3.5 w-3.5" />
