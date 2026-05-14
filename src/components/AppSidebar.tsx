@@ -1,18 +1,18 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
-  Settings,
   LogIn,
-  LogOut,
+  UserPlus,
   CreditCard,
   MessageSquare,
-  UserPlus,
   Compass,
-  User as UserIcon,
   ShieldCheck,
+  Flame,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useCreatorXP } from "@/hooks/useCreatorXP";
 import { resolveNavLink } from "@/hooks/useNavLink";
 import {
   Sidebar,
@@ -40,10 +40,11 @@ const pillarItems = [
 const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { isAdmin } = useAdminCheck();
   const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
+  const { data: xp } = useCreatorXP();
 
   const handleNavClick = () => {
     if (isMobile) setOpenMobile(false);
@@ -105,6 +106,14 @@ const AppSidebar = () => {
     </SidebarGroup>
   );
 
+  const tierColor = xp?.titleColor ?? "210 60% 55%";
+  const level = xp?.level ?? 1;
+  const title = xp?.title ?? "Newcomer";
+  const progressPct = xp?.progressPct ?? 0;
+  const totalXP = xp?.totalXP ?? 0;
+  const nextLevelXP = xp?.nextLevelXP ?? 20;
+  const streak = xp?.streak ?? 0;
+
   return (
     <Sidebar collapsible="icon" className="border-r-0">
       <Link to="/discover" className={cn(
@@ -129,66 +138,92 @@ const AppSidebar = () => {
       </SidebarContent>
 
       <SidebarFooter className="px-0 pb-3 mt-auto">
-        {user ? (
+        {/* ── Player HUD (bottom of sidebar) ── */}
+        {user && (
           <div className="px-2 border-t border-sidebar-border pt-3">
-            <SidebarMenu className="space-y-0.5">
-              <SidebarMenuItem className={cn(collapsed && "flex justify-center")}>
-                <SidebarMenuButton
-                  asChild
-                  tooltip={collapsed ? "Profile" : undefined}
-                  className={cn(collapsed && "mx-auto")}
-                >
-                  <Link
-                    to="/profile"
-                    onClick={handleNavClick}
-                    className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-all duration-250",
-                      collapsed && "justify-center px-2",
-                    )}
-                  >
-                    <UserIcon className="h-[18px] w-[18px] shrink-0" />
-                    {!collapsed && <span>Profile</span>}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem className={cn(collapsed && "flex justify-center")}>
-                <SidebarMenuButton
-                  asChild
-                  tooltip={collapsed ? "Settings" : undefined}
-                  className={cn(collapsed && "mx-auto")}
-                >
-                  <Link
-                    to="/settings"
-                    onClick={handleNavClick}
-                    className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-all duration-250",
-                      collapsed && "justify-center px-2",
-                    )}
-                  >
-                    <Settings className="h-[18px] w-[18px] shrink-0" />
-                    {!collapsed && <span>Settings</span>}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem className={cn(collapsed && "flex justify-center")}>
-                <SidebarMenuButton
-                  tooltip={collapsed ? "Sign Out" : undefined}
-                  onClick={async () => {
-                    await signOut();
-                    navigate("/");
+            <Link
+              to="/credits"
+              onClick={handleNavClick}
+              className={cn(
+                "flex items-center gap-2 rounded-xl px-2 py-2 hover:bg-muted/40 transition-colors",
+                collapsed && "justify-center px-1"
+              )}
+            >
+              {/* Gem orb */}
+              <div
+                className="relative h-8 w-8 rounded-full overflow-hidden shrink-0"
+                style={{
+                  background: `radial-gradient(circle at 35% 30%, hsl(${tierColor} / 0.95), hsl(${tierColor} / 0.5) 55%, hsl(${tierColor} / 0.15) 90%)`,
+                  boxShadow: `0 0 10px hsl(${tierColor} / 0.5), inset 0 -2px 4px hsl(${tierColor} / 0.4), inset 0 2px 3px rgba(255,255,255,0.4)`,
+                }}
+              >
+                <motion.div
+                  aria-hidden="true"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 opacity-50"
+                  style={{
+                    background:
+                      "conic-gradient(from 0deg, transparent, rgba(255,255,255,0.4), transparent 40%)",
                   }}
-                  className={cn(
-                    "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-250",
-                    collapsed && "justify-center px-2 mx-auto",
-                  )}
-                >
-                  <LogOut className="h-[18px] w-[18px] shrink-0" />
-                  {!collapsed && <span>Sign Out</span>}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span
+                    className="text-[10px] font-bold text-white"
+                    style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
+                  >
+                    {level}
+                  </span>
+                </div>
+              </div>
+
+              {!collapsed && (
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/80 truncate">
+                      {title}
+                    </span>
+                    <span className="text-[9px] font-medium text-muted-foreground tabular-nums">
+                      {totalXP}/{nextLevelXP}
+                    </span>
+                  </div>
+                  <div
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={nextLevelXP}
+                    aria-valuenow={totalXP}
+                    className="relative h-1.5 w-full rounded-full bg-muted overflow-hidden mt-1"
+                  >
+                    <motion.div
+                      key={progressPct}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progressPct}%` }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                      className="h-full rounded-full"
+                      style={{
+                        background: `linear-gradient(90deg, hsl(${tierColor}), hsl(${tierColor} / 0.6))`,
+                        boxShadow: `0 0 6px hsl(${tierColor} / 0.5)`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Streak chip — only in expanded mode */}
+              {!collapsed && streak > 0 && (
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[hsl(var(--orange)/0.12)] border border-[hsl(var(--orange)/0.3)] shrink-0">
+                  <Flame className="h-3 w-3" style={{ color: "hsl(var(--orange))" }} />
+                  <span className="text-[10px] font-bold tabular-nums" style={{ color: "hsl(var(--orange))" }}>
+                    {streak}d
+                  </span>
+                </div>
+              )}
+            </Link>
           </div>
-        ) : (
+        )}
+
+        {/* Guest auth links */}
+        {!user && (
           <div className="px-2 border-t border-sidebar-border pt-3 space-y-1">
             <SidebarMenu className="space-y-0.5">
               <SidebarMenuItem>
