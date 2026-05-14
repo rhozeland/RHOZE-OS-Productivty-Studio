@@ -13,7 +13,7 @@
  * with its own calibration, upload, and idle-hint flow.
  */
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Flame, Sparkles, ArrowRight, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { loadFlowFeed } from "@/lib/flow-feed";
@@ -22,6 +22,13 @@ import FlowThumbnail from "@/components/flow/FlowThumbnail";
 
 const HubFlowWidget = ({ expanded = false, hideHeading = false }: { expanded?: boolean; hideHeading?: boolean }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const openFlow = (itemId?: string) => {
+    navigate(itemId ? `/flow?item=${itemId}` : "/flow", {
+      state: { from: `${location.pathname}${location.search}${location.hash}` },
+    });
+  };
 
   const { data: items, isLoading } = useQuery({
     queryKey: ["hub-flow-widget", expanded ? "expanded" : "compact"],
@@ -58,7 +65,7 @@ const HubFlowWidget = ({ expanded = false, hideHeading = false }: { expanded?: b
         <Button
           size="sm"
           variant="default"
-          onClick={() => navigate("/flow")}
+          onClick={() => openFlow()}
           className="rounded-full gap-1.5 shrink-0"
         >
           <Sparkles className="h-3.5 w-3.5" />
@@ -88,7 +95,7 @@ const HubFlowWidget = ({ expanded = false, hideHeading = false }: { expanded?: b
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => navigate("/flow")}
+                  onClick={() => openFlow(item.id)}
                   className="group relative aspect-[3/4] rounded-2xl overflow-hidden border border-border bg-muted text-left transition-transform hover:-translate-y-0.5"
                 >
                   <FlowThumbnail
