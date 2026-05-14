@@ -2,12 +2,10 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LogIn,
-  LogOut,
+  UserPlus,
   CreditCard,
   MessageSquare,
-  UserPlus,
   Compass,
-  User as UserIcon,
   ShieldCheck,
   Flame,
 } from "lucide-react";
