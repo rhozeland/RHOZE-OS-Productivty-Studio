@@ -224,29 +224,8 @@ const AppSidebar = () => {
           </div>
         )}
 
-        {/* Sign Out — minimal, bottom of sidebar */}
-        {user ? (
-          <div className="px-2 pt-2">
-            <SidebarMenu className="space-y-0.5">
-              <SidebarMenuItem className={cn(collapsed && "flex justify-center")}>
-                <SidebarMenuButton
-                  tooltip={collapsed ? "Sign Out" : undefined}
-                  onClick={async () => {
-                    await signOut();
-                    navigate("/");
-                  }}
-                  className={cn(
-                    "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-250",
-                    collapsed && "justify-center px-2 mx-auto",
-                  )}
-                >
-                  <LogOut className="h-[18px] w-[18px] shrink-0" />
-                  {!collapsed && <span>Sign Out</span>}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </div>
-        ) : (
+        {/* Guest auth links */}
+        {!user && (
           <div className="px-2 border-t border-sidebar-border pt-3 space-y-1">
             <SidebarMenu className="space-y-0.5">
               <SidebarMenuItem>
