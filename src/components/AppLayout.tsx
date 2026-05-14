@@ -384,6 +384,7 @@ const AppLayout = () => {
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </button>
 
+              {user && <PostMenuButton />}
               {user && <NotificationBell />}
               {user && <RhozeBalanceChip />}
 
