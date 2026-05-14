@@ -91,6 +91,8 @@ const LaunchDetailPage = () => {
   const [vol24h, setVol24h] = useState<number>(0);
   const [holderCount, setHolderCount] = useState<number | null>(null);
   const [workSig, setWorkSig] = useState<string | null>(null);
+  const [myHolding, setMyHolding] = useState<{ balance: number; sol_invested: number } | null>(null);
+  const [showChart, setShowChart] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
