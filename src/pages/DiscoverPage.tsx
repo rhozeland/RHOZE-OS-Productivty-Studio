@@ -16,7 +16,7 @@
  * fresh feed now — drops, works, offerings, events, spaces all in one).
  */
 import { Suspense, lazy, useState, useEffect, useMemo } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
