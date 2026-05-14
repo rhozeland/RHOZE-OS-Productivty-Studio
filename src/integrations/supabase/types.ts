@@ -2308,6 +2308,113 @@ export type Database = {
         }
         Relationships: []
       }
+      prediction_markets: {
+        Row: {
+          closes_at: string
+          created_at: string
+          created_by: string
+          creator_id: string
+          creator_optout: boolean
+          description: string | null
+          id: string
+          no_pool: number
+          outcome: boolean | null
+          question: string
+          resolved_at: string | null
+          resolved_by: string | null
+          resolves_at: string
+          status: string
+          subject_id: string | null
+          subject_type: string
+          target_metric: string | null
+          target_value: number | null
+          updated_at: string
+          yes_pool: number
+        }
+        Insert: {
+          closes_at: string
+          created_at?: string
+          created_by: string
+          creator_id: string
+          creator_optout?: boolean
+          description?: string | null
+          id?: string
+          no_pool?: number
+          outcome?: boolean | null
+          question: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolves_at: string
+          status?: string
+          subject_id?: string | null
+          subject_type: string
+          target_metric?: string | null
+          target_value?: number | null
+          updated_at?: string
+          yes_pool?: number
+        }
+        Update: {
+          closes_at?: string
+          created_at?: string
+          created_by?: string
+          creator_id?: string
+          creator_optout?: boolean
+          description?: string | null
+          id?: string
+          no_pool?: number
+          outcome?: boolean | null
+          question?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolves_at?: string
+          status?: string
+          subject_id?: string | null
+          subject_type?: string
+          target_metric?: string | null
+          target_value?: number | null
+          updated_at?: string
+          yes_pool?: number
+        }
+        Relationships: []
+      }
+      prediction_positions: {
+        Row: {
+          created_at: string
+          id: string
+          market_id: string
+          payout: number | null
+          side: boolean
+          stake: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          market_id: string
+          payout?: number | null
+          side: boolean
+          stake: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          market_id?: string
+          payout?: number | null
+          side?: boolean
+          stake?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prediction_positions_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "prediction_markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           archetype: string | null

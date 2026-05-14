@@ -15,16 +15,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import {
   Coins,
   GraduationCap,
-  Lock,
   ExternalLink,
   ArrowLeft,
   Copy,
   Activity,
   Users,
   Info,
+  ChevronDown,
+  ChevronUp,
+  TrendingUp,
+  TrendingDown,
 } from "lucide-react";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import TradePanel from "@/components/launchpad/TradePanel";
@@ -36,6 +40,7 @@ import { Button } from "@/components/ui/button";
 import { deriveLaunchPda, isLaunchpadOnChainEnabled, LAUNCHPAD_NETWORK } from "@/lib/launchpad-onchain";
 import MintAddressChip from "@/components/launchpad/MintAddressChip";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 type Launch = {
   id: string;
@@ -87,6 +92,8 @@ const LaunchDetailPage = () => {
   const [vol24h, setVol24h] = useState<number>(0);
   const [holderCount, setHolderCount] = useState<number | null>(null);
   const [workSig, setWorkSig] = useState<string | null>(null);
+  const [myHolding, setMyHolding] = useState<{ balance: number; sol_invested: number } | null>(null);
+  const [showChart, setShowChart] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -156,8 +163,21 @@ const LaunchDetailPage = () => {
       .eq("launch_id", l.id);
     setHolderCount(count ?? null);
 
+    // My holding (RLS lets the user read their own row)
+    if (user?.id) {
+      const { data: mine } = await supabase
+        .from("coin_holdings")
+        .select("balance, sol_invested")
+        .eq("launch_id", l.id)
+        .eq("trader_id", user.id)
+        .maybeSingle();
+      setMyHolding(mine ? { balance: Number(mine.balance), sol_invested: Number(mine.sol_invested) } : null);
+    } else {
+      setMyHolding(null);
+    }
+
     setLoading(false);
-  }, [slugOrId]);
+  }, [slugOrId, user?.id]);
 
   useEffect(() => {
     load();
@@ -230,16 +250,14 @@ const LaunchDetailPage = () => {
             </div>
           </div>
 
-          {/* Quick stats — prices are shown in $RHOZE. Reserve/graduation values
-              are already stored in the same simulated in-app units, so they
-              must never be multiplied by an extra conversion factor. */}
+          {/* Hero stats — Market Cap leads, P&L next, Holders, then Price (small).
+              All values in $RHOZE. The price chart, LP-lock, and graduation
+              progress are intentionally hidden — they're collapsed below or
+              gated behind the on-chain flag. */}
           {(() => {
             const RHOZE_PER_SOL = 100;
             const priceRhoze = price * RHOZE_PER_SOL;
             const mcapRhoze = marketCap * RHOZE_PER_SOL;
-            const vol24Rhoze = vol24h * RHOZE_PER_SOL;
-            const targetRaised = Number(launch.graduation_sol_target);
-            const currentRaised = Number(launch.real_sol_reserves);
             const fmt = (n: number) =>
               n >= 1000 ? n.toLocaleString(undefined, { maximumFractionDigits: 0 }) : n.toFixed(2);
             const fmtTiny = (n: number) => {
@@ -247,63 +265,110 @@ const LaunchDetailPage = () => {
               if (n >= 0.0001) return n.toFixed(6);
               return n.toPrecision(3);
             };
+            // P&L = current value − cost basis (in $RHOZE)
+            const myValueRhoze = myHolding ? myHolding.balance * price * RHOZE_PER_SOL : 0;
+            const myCostRhoze = myHolding ? myHolding.sol_invested * RHOZE_PER_SOL : 0;
+            const pnlRhoze = myValueRhoze - myCostRhoze;
+            const pnlPct = myCostRhoze > 0 ? (pnlRhoze / myCostRhoze) * 100 : 0;
+            const hasPosition = !!myHolding && myHolding.balance > 0;
+            const pnlPositive = pnlRhoze >= 0;
+
             return (
-              <>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                  <Stat label="Price" value={`${fmtTiny(priceRhoze)} $RHOZE`} />
-                  <Stat label="Market cap" value={`${fmt(mcapRhoze)} $RHOZE`} />
-                  <Stat label="24h volume" value={`${fmt(vol24Rhoze)} $RHOZE`} />
-                  <Stat
-                    label="Holders"
-                    value={holderCount === null ? "—" : holderCount.toLocaleString()}
-                  />
-                  <Stat label="LP lock" value={`${launch.lp_lock_months}mo`} icon={<Lock className="h-3 w-3" />} />
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {/* Market cap — primary stat */}
+                <div className="md:col-span-2 rounded-lg bg-gradient-to-br from-emerald-500/10 to-fuchsia-500/10 border border-border/50 p-3">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                    Market cap
+                  </div>
+                  <div className="text-2xl md:text-3xl font-mono font-bold mt-0.5">
+                    {fmt(mcapRhoze)} <span className="text-sm text-muted-foreground">$RHOZE</span>
+                  </div>
                 </div>
 
-                {/* Progress bar */}
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[10px] font-mono text-muted-foreground">
-                    <span>
-                      {fmt(currentRaised)} / {fmt(targetRaised)} $RHOZE backed
-                    </span>
-                    <span>{progress.toFixed(1)}% to graduation</span>
+                {/* Your P&L */}
+                <div className="rounded-lg bg-muted/30 p-3">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                    Your P&L
                   </div>
-                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                  {hasPosition ? (
                     <div
-                      className="h-full bg-gradient-to-r from-emerald-500 to-fuchsia-500 transition-all"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                  {launch.status === "graduated" && launch.creator_payout_rhoze ? (
-                    <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs space-y-1.5">
-                      <div className="flex items-center gap-1.5 font-semibold text-emerald-500">
-                        <GraduationCap className="h-3.5 w-3.5" /> Graduated
-                        {launch.graduated_at && (
-                          <span className="text-muted-foreground font-normal">
-                            · {new Date(launch.graduated_at).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 font-mono">
-                        <div>
-                          <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Paid to artist</div>
-                          <div>{fmt(Number(launch.creator_payout_rhoze))} $RHOZE</div>
-                        </div>
-                        <div>
-                          <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Bonus to holders</div>
-                          <div>{fmt(Number(launch.holder_bonus_rhoze ?? 0))} $RHOZE</div>
-                        </div>
-                      </div>
+                      className={cn(
+                        "text-base font-mono font-semibold mt-0.5 flex items-center gap-1",
+                        pnlPositive ? "text-emerald-500" : "text-rose-500",
+                      )}
+                    >
+                      {pnlPositive ? (
+                        <TrendingUp className="h-3.5 w-3.5" />
+                      ) : (
+                        <TrendingDown className="h-3.5 w-3.5" />
+                      )}
+                      {pnlPositive ? "+" : ""}
+                      {fmt(Math.abs(pnlRhoze))}
+                      <span className="text-[10px] text-muted-foreground ml-1">
+                        ({pnlPositive ? "+" : ""}
+                        {pnlPct.toFixed(1)}%)
+                      </span>
                     </div>
                   ) : (
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      When the bar fills, the artist gets paid <span className="text-foreground font-medium">60%</span> of the raise and holders split a <span className="text-foreground font-medium">25%</span> bonus pro-rata. The coin earns a Graduated badge.
-                    </p>
+                    <div className="text-sm text-muted-foreground mt-1">No position</div>
                   )}
                 </div>
-              </>
+
+                {/* Holders + Price (small, with tooltip) */}
+                <div className="rounded-lg bg-muted/30 p-3">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                    Holders
+                  </div>
+                  <div className="text-base font-mono font-semibold mt-0.5">
+                    {holderCount === null ? "—" : holderCount.toLocaleString()}
+                  </div>
+                </div>
+
+                <TooltipProvider delayDuration={150}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="rounded-lg bg-muted/30 p-3 cursor-help">
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground flex items-center gap-1">
+                          Price <Info className="h-2.5 w-2.5 opacity-60" />
+                        </div>
+                        <div className="text-base font-mono font-semibold mt-0.5">
+                          {fmtTiny(priceRhoze)}
+                          <span className="text-[10px] text-muted-foreground ml-1">$RHOZE</span>
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-[220px] text-xs">
+                      Price per token from the simulated bonding curve. Market cap = price × total supply.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             );
           })()}
+
+          {/* Graduated payout summary — only shown if it actually graduated */}
+          {launch.status === "graduated" && launch.creator_payout_rhoze ? (
+            <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs space-y-1.5">
+              <div className="flex items-center gap-1.5 font-semibold text-emerald-500">
+                <GraduationCap className="h-3.5 w-3.5" /> Graduated
+                {launch.graduated_at && (
+                  <span className="text-muted-foreground font-normal">
+                    · {new Date(launch.graduated_at).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2 font-mono">
+                <div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Paid to artist</div>
+                  <div>{Number(launch.creator_payout_rhoze).toLocaleString(undefined, { maximumFractionDigits: 0 })} $RHOZE</div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Bonus to holders</div>
+                  <div>{Number(launch.holder_bonus_rhoze ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })} $RHOZE</div>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           {isCreator && (
             <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs">
@@ -322,7 +387,20 @@ const LaunchDetailPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* LEFT: chart + tabs */}
         <div className="lg:col-span-2 space-y-4">
-          <PriceChartCard launchId={launch.id} ticker={launch.ticker} />
+          {/* Chart is collapsed by default — most users only care about
+              market cap + P&L. Click to expand for the bonding-curve chart. */}
+          <button
+            type="button"
+            onClick={() => setShowChart((v) => !v)}
+            className="w-full flex items-center justify-between gap-2 rounded-md border border-border/60 bg-card/40 backdrop-blur px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+          >
+            <span className="flex items-center gap-1.5">
+              <Activity className="h-3.5 w-3.5" />
+              {showChart ? "Hide price chart" : "Show price chart"}
+            </span>
+            {showChart ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          </button>
+          {showChart && <PriceChartCard launchId={launch.id} ticker={launch.ticker} />}
 
           <Card className="bg-card/40 backdrop-blur">
             <CardContent className="p-3">
