@@ -922,6 +922,7 @@ const FlowModePage = () => {
     if (appliedDeepLinkRef.current === targetId) return;
 
     const idx = allItems.findIndex((i: any) => i.id === targetId);
+    console.log("[flow-deeplink]", { targetId, idx, allItemsLen: allItems.length, baseHas: baseItems.some((i: any) => i.id === targetId), deepLinkItem: !!deepLinkItem });
     if (idx >= 0 && (baseItems.some((i: any) => i.id === targetId) || !!deepLinkItem)) {
       setCurrentIndex(idx);
       appliedDeepLinkRef.current = targetId;
