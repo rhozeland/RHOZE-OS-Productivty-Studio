@@ -11,6 +11,9 @@ interface Props {
   /** Optional content category — drives the icon-hero fallback color/icon. */
   category?: string | null;
   className?: string;
+  /** When true, hide the built-in label/title/description footer.
+   *  Use when the parent tile already renders its own caption (e.g. mosaic). */
+  hideCaption?: boolean;
 }
 
 const AUDIO_EXT = /\.(mp3|wav|flac|aac|m4a|ogg|opus|aiff)(\?|$)/i;
