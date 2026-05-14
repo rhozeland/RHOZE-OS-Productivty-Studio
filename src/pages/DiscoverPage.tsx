@@ -435,7 +435,7 @@ const DiscoverPage = () => {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => navigate("/flow")}
+              onClick={() => navigate("/flow", { state: { from: `${location.pathname}${location.search}` } })}
               className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-xs font-semibold text-background hover:bg-foreground/90 transition-colors"
             >
               <Flame className="h-3.5 w-3.5" />
