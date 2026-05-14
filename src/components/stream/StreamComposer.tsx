@@ -73,6 +73,7 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
   const { user } = useAuth();
   const { requireAuth } = useAuthGate();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [type, setType] = useState<StreamPostType>(defaultType);
@@ -83,16 +84,20 @@ const StreamComposer = ({ defaultType = "text", defaultCategory }: Props) => {
   // Re-sync default when lane changes (HubPage drives this).
   useEffect(() => setType(defaultType), [defaultType]);
 
-  const meta = TYPES.find((t) => t.key === type)!;
+  const meta = TYPES.find((t) => t.key === type) ?? TYPES[0];
   const Icon = meta.icon;
-
-  // Update no longer writes to flow_items — it opens the Notes composer.
-  // Kept the mutation shell removed; createDrop is unused now.
 
   const handlePrimary = () => {
     if (!requireAuth("Sign up to leave a note.")) return;
     if (type === "text") {
       setNoteOpen(true);
+      return;
+    }
+    if (meta.comingSoon) {
+      toast({
+        title: "Prediction Markets — coming soon",
+        description: "We're wiring up YES/NO markets on creator milestones. Stay tuned.",
+      });
       return;
     }
     if (meta.href) navigate(meta.href);
