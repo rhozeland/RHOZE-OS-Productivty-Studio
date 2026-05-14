@@ -37,6 +37,8 @@ import NoteBubble from "@/components/notes/NoteBubble";
 import { useUserNote } from "@/hooks/useNotes";
 
 import { EmptyState } from "@/components/ui/empty-state";
+import PostMenuButton from "@/components/PostMenuButton";
+import { Plus } from "lucide-react";
 
 // Human-readable labels + destinations for on-chain reputation tiles.
 // Tiles are clickable when href is set; otherwise rendered as static cards.
