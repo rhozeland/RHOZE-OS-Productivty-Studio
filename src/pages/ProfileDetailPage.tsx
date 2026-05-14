@@ -125,7 +125,23 @@ const ProfileDetailPage = () => {
     queryFn: async () => {
       const { data } = await supabase.from("marketplace_listings")
         .select("id, title, category, listing_type, price, currency, credits_price, cover_url, image_url, tags")
-        .eq("user_id", id!).eq("is_active", true).order("created_at", { ascending: false }).limit(8);
+        .eq("user_id", id!).eq("is_active", true).order("created_at", { ascending: false }).limit(12);
+      return data ?? [];
+    },
+    enabled: !!id,
+  });
+
+  // All public events this user hosts (past + upcoming) — surfaced in Drops tab.
+  const { data: allHostedEvents } = useQuery({
+    queryKey: ["profile-all-hosted-events", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("events")
+        .select("id, slug, title, cover_url, starts_at, venue_name, is_online, status")
+        .eq("host_id", id!)
+        .eq("status", "published")
+        .order("starts_at", { ascending: false })
+        .limit(12);
       return data ?? [];
     },
     enabled: !!id,
@@ -762,17 +778,18 @@ const ProfileDetailPage = () => {
           {/* Anything they've shared on Flow — uploads, links (YouTube/Spotify/SoundCloud),
               writing. Thumbnails are resolved by <FlowThumbnail/> so audio/link posts
               get a proper preview image instead of a generic icon. */}
-          <TabsContent value="drops" className="mt-5">
-            {flowPosts && flowPosts.length > 0 ? (
-              <div className="space-y-3">
-                <div>
-                  <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary" /> Drops
-                  </h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Everything they've dropped — uploads, tracks, videos and links.
-                  </p>
-                </div>
+          <TabsContent value="drops" className="mt-5 space-y-6">
+            {/* Posts / drops grid */}
+            <section className="space-y-3">
+              <div>
+                <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" /> Posts
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Uploads, tracks, videos and links shared on Flow.
+                </p>
+              </div>
+              {flowPosts && flowPosts.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {flowPosts.map((post: any) => (
                     <div key={post.id} onClick={() => navigate(`/flow?item=${post.id}`, { state: { from: location.pathname + location.search + location.hash } })}
@@ -806,20 +823,168 @@ const ProfileDetailPage = () => {
                     </div>
                   ))}
                 </div>
-              </div>
-            ) : isOwnProfile ? (
-              <EmptyState
-                icon={Sparkles}
-                title="No drops yet"
-                description="Use the post button on Discover to drop a work, event, space, offering or coin launch — anything you make lands here."
-                cta={{ label: "Open the composer", to: "/discover#discover-composer" }}
-                size="lg"
-              />
-            ) : (
-              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-8 text-center text-sm text-muted-foreground">
-                No drops yet.
-              </div>
+              ) : isOwnProfile ? (
+                <EmptyState
+                  icon={Sparkles}
+                  title="No posts yet"
+                  description="Use the post button on Discover to drop a work — it'll show up here."
+                  cta={{ label: "Open the composer", to: "/discover#discover-composer" }}
+                  size="sm"
+                />
+              ) : (
+                <p className="text-xs text-muted-foreground italic">No posts yet.</p>
+              )}
+            </section>
+
+            {/* Projects */}
+            {(buildingProjects?.length ?? 0) > 0 && (
+              <section className="space-y-3">
+                <div>
+                  <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
+                    <FolderKanban className="h-4 w-4 text-primary" /> Projects
+                  </h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Things they're building — solo or with collaborators.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {buildingProjects!.map((proj: any) => (
+                    <button
+                      key={proj.id}
+                      onClick={() => navigate(`/projects/${proj.id}`)}
+                      className="group text-left rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all"
+                    >
+                      <div
+                        className="h-20 w-full"
+                        style={{ background: proj.cover_color || "linear-gradient(135deg, hsl(var(--primary)/0.2), hsl(var(--accent)/0.15))" }}
+                      />
+                      <div className="p-3">
+                        <p className="text-sm font-semibold text-foreground truncate">{proj.title}</p>
+                        {proj.description && (
+                          <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{proj.description}</p>
+                        )}
+                        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                          {proj.status && (
+                            <Badge variant="outline" className="text-[9px] capitalize">{proj.status}</Badge>
+                          )}
+                          {Array.isArray(proj.categories) && proj.categories.slice(0, 2).map((c: string) => (
+                            <Badge key={c} variant="secondary" className="text-[9px]">{c}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </section>
             )}
+
+            {/* Listings — services / marketplace items */}
+            {(sellerListings?.length ?? 0) > 0 && (
+              <section className="space-y-3">
+                <div>
+                  <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
+                    <ShoppingBag className="h-4 w-4 text-primary" /> Listings
+                  </h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Services & products available to book or buy.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {sellerListings!.map((l: any) => {
+                    const cover = l.cover_url || l.image_url;
+                    const priceLabel = l.credits_price
+                      ? `${l.credits_price} $RHOZE`
+                      : l.price
+                      ? `${l.currency || "$"}${l.price}`
+                      : null;
+                    return (
+                      <button
+                        key={l.id}
+                        onClick={() => navigate(`/marketplace/${l.id}`)}
+                        className="group text-left rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all"
+                      >
+                        <div className="relative aspect-square bg-muted overflow-hidden">
+                          {cover ? (
+                            <img src={cover} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
+                              <ShoppingBag className="h-6 w-6 text-muted-foreground/40" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-2.5">
+                          <p className="text-xs font-medium text-foreground truncate">{l.title}</p>
+                          <div className="flex items-center justify-between mt-1 gap-1">
+                            {l.category && (
+                              <Badge variant="outline" className="text-[8px] capitalize truncate">{l.category}</Badge>
+                            )}
+                            {priceLabel && (
+                              <span className="text-[10px] font-semibold text-foreground tabular-nums shrink-0">{priceLabel}</span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {/* Events — past + upcoming */}
+            {(allHostedEvents?.length ?? 0) > 0 && (
+              <section className="space-y-3">
+                <div>
+                  <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
+                    <CalendarIcon className="h-4 w-4 text-primary" /> Events
+                  </h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Shows they've hosted — past and upcoming.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {allHostedEvents!.map((e: any) => {
+                    const isPast = new Date(e.starts_at) < new Date();
+                    return (
+                      <button
+                        key={e.id}
+                        onClick={() => navigate(`/events/${e.slug || e.id}`)}
+                        className="group text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
+                      >
+                        {e.cover_url ? (
+                          <img src={e.cover_url} alt="" className="h-14 w-14 rounded-lg object-cover shrink-0" />
+                        ) : (
+                          <div className="h-14 w-14 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
+                            <CalendarIcon className="h-5 w-5 text-muted-foreground/40" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-medium text-foreground truncate">{e.title}</p>
+                            {isPast && <Badge variant="outline" className="text-[8px] shrink-0">Past</Badge>}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground truncate">
+                            {format(new Date(e.starts_at), "MMM d, yyyy · h:mm a")}
+                            {e.is_online ? " · Online" : e.venue_name ? ` · ${e.venue_name}` : ""}
+                          </p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {/* Empty-state catch-all if absolutely nothing exists */}
+            {!flowPosts?.length &&
+              !buildingProjects?.length &&
+              !sellerListings?.length &&
+              !allHostedEvents?.length &&
+              !isOwnProfile && (
+                <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-8 text-center text-sm text-muted-foreground">
+                  Nothing to show yet.
+                </div>
+              )}
           </TabsContent>
           {/* Building tab removed in v9 — projects live in the owner's private dashboard. */}
 
