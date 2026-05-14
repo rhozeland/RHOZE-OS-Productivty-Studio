@@ -394,6 +394,7 @@ const MosaicTileCard = ({
   const { Icon, label, tint, chipBg } = KIND_META[tile.kind];
   const hasImage = !!tile.cover;
   const hasDropVisual = tile.kind === "drop" && !!(tile.fileUrl || tile.linkUrl || tile.category);
+  const isDropVisual = tile.kind === "drop" && hasDropVisual;
   const isLarge = sizeClass.includes("row-span-2") || sizeClass.includes("col-span-2");
   // Offerings without a cover image lean on a bold category icon + theme
   // color so they stop reading as "empty white space". The big icon does
@@ -469,8 +470,8 @@ const MosaicTileCard = ({
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
       )}
 
-      {/* Hover scrim */}
-      <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/5 transition-colors duration-300 pointer-events-none" />
+       {/* Hover scrim */}
+       <div className={`absolute inset-0 transition-colors duration-300 pointer-events-none ${isDropVisual ? "bg-black/10 group-hover:bg-black/20" : "bg-foreground/0 group-hover:bg-foreground/5"}`} />
 
       {/* Top chip row */}
       <div className="absolute top-2.5 left-2.5 right-2.5 flex items-start justify-between gap-2 z-10">
@@ -492,7 +493,7 @@ const MosaicTileCard = ({
       </div>
 
       {/* Content footer */}
-      <div className={`absolute inset-x-0 bottom-0 p-3 ${hasImage || hasDropVisual ? "text-white" : "text-foreground"} z-10`}>
+      <div className={`absolute inset-x-0 bottom-0 p-3 ${hasImage || hasDropVisual ? "text-white" : "text-foreground"} z-10 ${isDropVisual ? "bg-gradient-to-t from-black/70 via-black/30 to-transparent" : ""}`}>
         {/* Category eyebrow — colored for offerings so the craft is obvious at a glance */}
         {tile.meta && (
           <p
