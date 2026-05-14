@@ -913,27 +913,48 @@ const FlowModePage = () => {
   // We key off the targetId (not currentIndex) so the effect only fires
   // when the URL actually changes — preventing the "can't swipe left/right"
   // bug where every advance got reset to the deep-linked item.
+  // Deep-link resolution is two-phase:
+  //   Phase 1 (prepend): the deep-linked item arrives via the standalone
+  //     fetch and is prepended to allItems while the main feed is still
+  //     loading. We pin currentIndex to that prepended copy so the user
+  //     immediately sees the card they clicked — but we DO NOT strip
+  //     ?item yet, because the prepended copy disappears once the real
+  //     feed loads (mergeDeepLinkIntoFeed dedupes by id), and naively
+  //     leaving currentIndex at 0 would land them on the wrong card.
+  //   Phase 2 (settled): once the item is present in the real baseItems
+  //     feed, we re-resolve the index against the live list, mark the
+  //     deep link as applied, and strip ?item so subsequent swipes are
+  //     not reverted.
   const appliedDeepLinkRef = useRef<string | null>(null);
   useEffect(() => {
     const targetId = searchParams.get("item");
     if (!targetId) return;
-    if (flowItemsFetching) return;
-    if (allItems.length === 0) return;
     if (appliedDeepLinkRef.current === targetId) return;
+    if (allItems.length === 0) return;
 
     const idx = allItems.findIndex((i: any) => i.id === targetId);
-    if (idx >= 0 && (baseItems.some((i: any) => i.id === targetId) || !!deepLinkItem)) {
-      setCurrentIndex(idx);
+    if (idx < 0) {
+      // Item not in current scope — widen so the next refetch surfaces it.
+      if (!flowItemsFetching && !deepLinkItem && feedScope !== "all") {
+        setFeedScope("all");
+        setSelectedCategories(CATEGORIES);
+      }
+      return;
+    }
+
+    // Always re-pin so the user stays on the right card as the feed
+    // hydrates and re-orders around the prepended deep-link copy.
+    setCurrentIndex((cur) => (cur === idx ? cur : idx));
+
+    // Only finalize (mark applied + strip ?item) once the item is part
+    // of the real feed — otherwise mergeDeepLinkIntoFeed will drop the
+    // prepended copy on the next render and our index will point at the
+    // wrong card with no ?item left to recover from.
+    if (!flowItemsFetching && baseItems.some((i: any) => i.id === targetId)) {
       appliedDeepLinkRef.current = targetId;
-      // Strip ?item so further swipes aren't reverted by this effect.
       const next = new URLSearchParams(searchParams);
       next.delete("item");
       setSearchParams(next, { replace: true });
-    } else if (feedScope !== "all") {
-      // Item not in current scope — widen and let the effect re-run once
-      // the feed refetches with all categories.
-      setFeedScope("all");
-      setSelectedCategories(CATEGORIES);
     }
   }, [allItems, baseItems, deepLinkItem, searchParams, feedScope, flowItemsFetching, setSearchParams]);
 
