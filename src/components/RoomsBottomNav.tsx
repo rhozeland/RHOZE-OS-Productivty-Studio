@@ -63,7 +63,6 @@ const SCROLL_HIDE_THRESHOLD = 12;
 const RoomsBottomNav = () => {
   const { pathname } = useLocation();
   const { user } = useAuth();
-  const { data: xp } = useCreatorXP();
   const { state, isMobile } = useSidebar();
   const controls = useAnimationControls();
   const lastScrollY = useRef(0);
