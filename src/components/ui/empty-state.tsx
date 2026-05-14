@@ -13,6 +13,7 @@ export interface EmptyStateProps {
     to?: string;
     onClick?: () => void;
     external?: boolean;
+    prominent?: boolean;
   };
   secondary?: {
     label: string;
@@ -59,12 +60,17 @@ export function EmptyState({
     }
   }
 
+  const isProminent = !!cta?.prominent;
   const ctaContent = cta && (
-    <span className="inline-flex items-center gap-1.5">
+    <span className="inline-flex items-center gap-2">
       {cta.label}
-      <ArrowRight className="h-3.5 w-3.5" />
+      <ArrowRight className={cn(isProminent ? "h-4 w-4" : "h-3.5 w-3.5")} />
     </span>
   );
+  const ctaBtnClass = isProminent
+    ? "h-11 px-6 text-sm font-semibold rounded-full bg-gradient-to-r from-primary via-fuchsia-500 to-amber-400 text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:scale-[1.03] transition-all"
+    : "";
+  const ctaSize = isProminent ? "default" : "sm";
 
   return (
     <div
@@ -96,18 +102,18 @@ export function EmptyState({
           {cta &&
             (cta.to ? (
               cta.external ? (
-                <Button asChild size="sm" variant="default">
+                <Button asChild size={ctaSize} variant="default" className={ctaBtnClass}>
                   <a href={cta.to} target="_blank" rel="noreferrer">
                     {ctaContent}
                   </a>
                 </Button>
               ) : (
-                <Button asChild size="sm" variant="default">
+                <Button asChild size={ctaSize} variant="default" className={ctaBtnClass}>
                   <Link to={cta.to}>{ctaContent}</Link>
                 </Button>
               )
             ) : (
-              <Button size="sm" variant="default" onClick={cta.onClick}>
+              <Button size={ctaSize} variant="default" onClick={cta.onClick} className={ctaBtnClass}>
                 {ctaContent}
               </Button>
             ))}
