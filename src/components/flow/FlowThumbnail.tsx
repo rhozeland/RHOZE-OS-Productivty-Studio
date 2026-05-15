@@ -141,8 +141,8 @@ export const FlowThumbnail = ({
   }, [src]);
 
   const v = pickVisual(category, fileUrl, linkUrl);
-  const isAudioVisual = isAudioCategory || isUploadedAudio || isHostedAudio;
-  const showImage = !!src && !imageFailed && (!useDesignedArtwork || fileLooksLikeImage);
+  const isAudioVisual = isAudioContext;
+  const showImage = !!src && !imageFailed;
 
   return (
     <div
