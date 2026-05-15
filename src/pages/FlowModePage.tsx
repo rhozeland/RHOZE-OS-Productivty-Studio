@@ -2088,21 +2088,14 @@ const FlowModePage = () => {
                   </div>
                 )}
 
-                {/* Link/text live preview (only when no files attached, to keep the dialog scannable). */}
-                {fileCount === 0 && (() => {
+                {/* Link/text live preview only after something exists to preview. */}
+                {shareStep !== "pick" && fileCount === 0 && (() => {
                   const trimmedLink = newLink.trim();
                   const linkLooksImage = /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(trimmedLink);
                   const ytMatch = trimmedLink.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
                   const vimeoMatch = trimmedLink.match(/vimeo\.com\/(\d+)/);
 
-                  if (!trimmedLink) {
-                    return (
-                      <div className="aspect-video rounded-xl border-2 border-dashed border-border/60 bg-muted/30 flex flex-col items-center justify-center text-muted-foreground">
-                        <Upload className="h-7 w-7 mb-1.5 opacity-40" />
-                        <p className="text-xs font-body">Preview will appear here</p>
-                      </div>
-                    );
-                  }
+                  if (!trimmedLink) return null;
                   return (
                     <div className="relative rounded-xl overflow-hidden border border-border bg-muted/30">
                       {linkLooksImage && (
@@ -2212,106 +2205,193 @@ const FlowModePage = () => {
 
                 {shareStep === "pick" && (
                   <>
-                    {/* Visual icon picker — replaces the boring dropdown */}
-                    <div>
-                      <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-2 px-0.5">
-                        Pick a vibe
-                      </p>
-                      <div className="grid grid-cols-5 gap-1.5">
-                        {CATEGORIES.map((cat) => {
-                          const meta = CATEGORY_ICONS[cat];
-                          const Icon = meta.Icon;
-                          const active = newCategory === cat;
-                          return (
-                            <button
-                              key={cat}
-                              type="button"
-                              onClick={() => { setNewCategory(cat); resetPendingFiles(); }}
-                              aria-pressed={active}
-                              aria-label={meta.label}
-                              className={cn(
-                                "group flex flex-col items-center justify-center gap-1 rounded-xl py-2.5 transition-all",
-                                "border bg-gradient-to-br",
-                                active
-                                  ? `border-primary/60 ${meta.tint} shadow-sm scale-[1.02]`
-                                  : "border-border bg-muted/30 hover:bg-muted/60 text-muted-foreground"
-                              )}
-                            >
-                              <Icon className={cn("h-5 w-5 transition-transform group-hover:scale-110", active ? "" : "")} strokeWidth={active ? 2.25 : 1.75} />
-                              <span className="text-[10px] font-medium capitalize">{meta.label}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
+                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(300px,0.95fr)] lg:items-start">
+                      <div className="space-y-4">
+                        {/* Visual icon picker — replaces the boring dropdown */}
+                        <div>
+                          <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-2 px-0.5">
+                            Pick a vibe
+                          </p>
+                          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
+                            {CATEGORIES.map((cat) => {
+                              const meta = CATEGORY_ICONS[cat];
+                              const Icon = meta.Icon;
+                              const active = newCategory === cat;
+                              return (
+                                <button
+                                  key={cat}
+                                  type="button"
+                                  onClick={() => { setNewCategory(cat); resetPendingFiles(); }}
+                                  aria-pressed={active}
+                                  aria-label={meta.label}
+                                  className={cn(
+                                    "group flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl px-3 py-3 transition-all",
+                                    "border bg-gradient-to-br text-center",
+                                    active
+                                      ? `border-primary/60 ${meta.tint} shadow-sm scale-[1.02]`
+                                      : "border-border bg-muted/30 hover:bg-muted/60 text-muted-foreground"
+                                  )}
+                                >
+                                  <Icon className="h-5 w-5 transition-transform group-hover:scale-110" strokeWidth={active ? 2.25 : 1.75} />
+                                  <span className="text-[11px] font-medium capitalize">{meta.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
 
-                    <div>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        multiple
-                        accept={CATEGORY_UPLOAD_HINTS[newCategory]?.accept || "*/*"}
-                        className="hidden"
-                        onChange={(e) => { addPendingFiles(e.target.files); e.target.value = ""; }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        onDragEnter={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          dragCounterRef.current += 1;
-                          if (e.dataTransfer.types.includes("Files")) setIsDragging(true);
-                        }}
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          e.dataTransfer.dropEffect = "copy";
-                        }}
-                        onDragLeave={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          dragCounterRef.current -= 1;
-                          if (dragCounterRef.current <= 0) {
-                            dragCounterRef.current = 0;
-                            setIsDragging(false);
-                          }
-                        }}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          dragCounterRef.current = 0;
-                          setIsDragging(false);
-                          addPendingFiles(e.dataTransfer.files);
-                        }}
-                        aria-label="Upload files or drop here"
-                        className={cn(
-                          "w-full border-2 border-dashed rounded-xl p-4 text-center transition-all",
-                          isDragging
-                            ? "border-primary bg-primary/5 scale-[1.01]"
-                            : fileError
-                            ? "border-destructive/60 hover:border-destructive"
-                            : "border-border hover:border-primary/30"
-                        )}
-                      >
-                        {isDragging ? (
-                          <>
-                            <Upload className="h-5 w-5 text-primary mx-auto mb-1 animate-pulse" />
-                            <p className="text-sm text-primary font-medium">Drop files to upload</p>
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
-                            <p className="text-sm text-muted-foreground">
-                              {fileCount > 0 ? "Add more files" : (CATEGORY_UPLOAD_HINTS[newCategory]?.hint || "Upload files")}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground/70 mt-1">Click or drag &amp; drop · multiple allowed</p>
-                          </>
-                        )}
-                      </button>
-                      {fileError && (
-                        <p className="text-xs text-destructive mt-1.5 px-1" role="alert">{fileError}</p>
-                      )}
+                        <div>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            accept={CATEGORY_UPLOAD_HINTS[newCategory]?.accept || "*/*"}
+                            className="hidden"
+                            onChange={(e) => { addPendingFiles(e.target.files); e.target.value = ""; }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            onDragEnter={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              dragCounterRef.current += 1;
+                              if (e.dataTransfer.types.includes("Files")) setIsDragging(true);
+                            }}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              e.dataTransfer.dropEffect = "copy";
+                            }}
+                            onDragLeave={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              dragCounterRef.current -= 1;
+                              if (dragCounterRef.current <= 0) {
+                                dragCounterRef.current = 0;
+                                setIsDragging(false);
+                              }
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              dragCounterRef.current = 0;
+                              setIsDragging(false);
+                              addPendingFiles(e.dataTransfer.files);
+                            }}
+                            aria-label="Upload files or drop here"
+                            className={cn(
+                              "w-full border-2 border-dashed rounded-2xl p-6 text-center transition-all",
+                              isDragging
+                                ? "border-primary bg-primary/5 scale-[1.01]"
+                                : fileError
+                                ? "border-destructive/60 hover:border-destructive"
+                                : "border-border hover:border-primary/30"
+                            )}
+                          >
+                            {isDragging ? (
+                              <>
+                                <Upload className="h-6 w-6 text-primary mx-auto mb-2 animate-pulse" />
+                                <p className="text-sm text-primary font-medium">Drop files to upload</p>
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
+                                <p className="text-sm text-foreground font-medium">
+                                  {fileCount > 0 ? "Add more files" : (CATEGORY_UPLOAD_HINTS[newCategory]?.hint || "Upload files")}
+                                </p>
+                                <p className="text-[11px] text-muted-foreground/70 mt-1">Click or drag &amp; drop · multiple allowed</p>
+                              </>
+                            )}
+                          </button>
+                          {fileError && (
+                            <p className="text-xs text-destructive mt-1.5 px-1" role="alert">{fileError}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="rounded-2xl border border-border bg-muted/20 p-3">
+                          <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-2">
+                            {fileCount > 0 ? "Preview" : "What happens next"}
+                          </p>
+                          {fileCount > 0 ? (
+                            <div className="space-y-2" role="list" aria-label="Files to share">
+                              {pendingFiles.map((pf) => {
+                                const isImg = pf.file.type.startsWith("image/");
+                                const isVid = pf.file.type.startsWith("video/");
+                                const isAud = pf.file.type.startsWith("audio/");
+                                const showProgress = pf.status === "uploading" || pf.status === "stalled" || (pf.status === "done" && pf.progress > 0 && pf.progress < 100);
+                                return (
+                                  <div
+                                    key={pf.id}
+                                    role="listitem"
+                                    className={cn(
+                                      "relative rounded-xl overflow-hidden border bg-background/40 group",
+                                      pf.status === "error" ? "border-destructive/40 bg-destructive/5" : "border-border",
+                                    )}
+                                  >
+                                    {isImg ? (
+                                      <img src={pf.previewUrl} alt="" className="w-full max-h-[260px] object-contain bg-background" />
+                                    ) : isVid ? (
+                                      <video src={pf.previewUrl} className="w-full max-h-[260px] bg-background" controls playsInline />
+                                    ) : isAud ? (
+                                      <div className="px-4 py-5 bg-muted/30">
+                                        <audio src={pf.previewUrl} controls className="w-full" />
+                                      </div>
+                                    ) : (
+                                      <div className="aspect-video flex items-center justify-center bg-muted/40 text-muted-foreground text-xs font-medium uppercase">
+                                        {pf.file.name.split(".").pop()?.slice(0, 6) || "FILE"}
+                                      </div>
+                                    )}
+
+                                    <div className="absolute top-2 right-2 flex items-center gap-1">
+                                      {(pf.status === "error" || pf.status === "stalled") && (
+                                        <Button
+                                          type="button"
+                                          size="icon"
+                                          variant="secondary"
+                                          className="h-7 w-7 rounded-full bg-background/80 backdrop-blur"
+                                          aria-label="Retry"
+                                          onClick={() => retryPendingFile(pf.id)}
+                                        >
+                                          <RotateCcw className="h-3.5 w-3.5" />
+                                        </Button>
+                                      )}
+                                      <Button
+                                        type="button"
+                                        size="icon"
+                                        variant="secondary"
+                                        className="h-7 w-7 rounded-full bg-background/80 backdrop-blur hover:bg-destructive hover:text-destructive-foreground"
+                                        aria-label="Remove file"
+                                        disabled={createFlowItem.isPending}
+                                        onClick={() => removePendingFile(pf.id)}
+                                      >
+                                        <X className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </div>
+
+                                    {showProgress && (
+                                      <div className="absolute inset-x-0 bottom-0 px-3 py-2 bg-gradient-to-t from-background/90 to-transparent">
+                                        <Progress value={pf.progress} className="h-1" />
+                                      </div>
+                                    )}
+                                    {pf.status === "error" && pf.error && (
+                                      <p className="absolute inset-x-0 bottom-0 px-3 py-1.5 text-[11px] text-destructive-foreground bg-destructive/90" role="alert">{pf.error}</p>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="rounded-xl border border-dashed border-border/70 bg-background/60 px-4 py-8 text-center text-muted-foreground">
+                              <Upload className="mx-auto mb-2 h-6 w-6 opacity-50" />
+                              <p className="text-sm font-medium text-foreground">Pick a vibe, then upload</p>
+                              <p className="mt-1 text-xs">Your preview shows up here right after you add something.</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </>
                 )}
