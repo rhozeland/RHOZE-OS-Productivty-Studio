@@ -39,8 +39,10 @@ interface HeroVisual {
 }
 
 const CATEGORY_VISUAL: Record<string, HeroVisual> = {
-  music:   { Icon: Music2,      from: "hsl(342 88% 62%)", via: "hsl(327 95% 74%)", to: "hsl(22 96% 82%)",     glyph: "hsl(0 0% 100%)", label: "Music", pattern: "waves" },
-  audio:   { Icon: AudioLines,  from: "hsl(342 88% 62%)", via: "hsl(327 95% 74%)", to: "hsl(22 96% 82%)",     glyph: "hsl(0 0% 100%)", label: "Audio", pattern: "waves" },
+  // High-contrast "album cover" palette: deep plum → hot magenta → tangerine.
+  // Reads instantly as music even at 120px tile size.
+  music:   { Icon: Music2,      from: "hsl(282 70% 14%)", via: "hsl(330 90% 48%)", to: "hsl(18 100% 58%)",   glyph: "hsl(48 100% 88%)", label: "Music", pattern: "waves" },
+  audio:   { Icon: AudioLines,  from: "hsl(282 70% 14%)", via: "hsl(330 90% 48%)", to: "hsl(18 100% 58%)",   glyph: "hsl(48 100% 88%)", label: "Audio", pattern: "waves" },
   design:  { Icon: Palette,     from: "hsl(165 85% 25%)", via: "hsl(180 90% 45%)", to: "hsl(140 90% 55%)",  glyph: "hsl(60 100% 80%)",  label: "Design", pattern: "grid" },
   photo:   { Icon: Camera,      from: "hsl(15 90% 35%)",  via: "hsl(35 95% 55%)",  to: "hsl(50 100% 65%)",  glyph: "hsl(0 0% 100%)",    label: "Photo", pattern: "dots" },
   video:   { Icon: Video,       from: "hsl(340 90% 30%)", via: "hsl(355 90% 55%)", to: "hsl(25 95% 60%)",   glyph: "hsl(45 100% 75%)",  label: "Video", pattern: "dots" },
