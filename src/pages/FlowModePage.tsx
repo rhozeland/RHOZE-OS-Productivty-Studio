@@ -1992,12 +1992,12 @@ const FlowModePage = () => {
             <DialogHeader className="space-y-1">
               <DialogTitle className="text-lg">
                 {shareStep === "pick" && "Share to Flow"}
-                {shareStep === "caption" && "Add a caption"}
+                {shareStep === "caption" && "Title & caption"}
                 {shareStep === "confirm" && "Review & publish"}
               </DialogTitle>
               <DialogDescription className="text-xs">
                 {shareStep === "pick" && "Pick a vibe and drop your work."}
-                {shareStep === "caption" && "Your caption shows as the first comment."}
+                {shareStep === "caption" && "Name your post. Your caption posts as the first comment."}
                 {shareStep === "confirm" && "One last look before it hits the feed."}
               </DialogDescription>
             </DialogHeader>
