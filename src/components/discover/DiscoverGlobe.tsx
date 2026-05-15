@@ -6,22 +6,11 @@
  * space spotlights orbit as part of the same surface.
  */
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowUpRight, Calendar, ImageIcon, MapPin, Users } from "lucide-react";
-import { format } from "date-fns";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { supabase } from "@/integrations/supabase/client";
-import { MARKETS, REGIONS, type RegionMarket } from "@/lib/regions";
+import { REGIONS, type RegionMarket } from "@/lib/regions";
 import { cn } from "@/lib/utils";
-import { MARKET_COLORS } from "./market-colors";
 import type { FeaturedSlide } from "./useDiscoverFeatured";
-import RegionChip from "@/components/profile/RegionChip";
-import { avatarGradientFor } from "@/lib/avatar-gradient";
 import ArtistSpotlightCard from "./ArtistSpotlightCard";
-import { ROLE_BY_ID } from "@/lib/creator-roles";
-import { ARCHETYPE_BY_ID, type Archetype } from "@/lib/archetypes";
 
 const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
   KR: { lat: 37.55, lng: 126.99 },
