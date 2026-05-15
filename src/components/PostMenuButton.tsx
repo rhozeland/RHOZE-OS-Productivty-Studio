@@ -14,64 +14,70 @@
  *      Each opens CreateListingDialog skipping its own picker step.
  *   3. Post an Event   → /spaces/events/new
  */
-import { useState, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, type ReactNode } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Plus,
+  Flame,
   Shield,
-  ShoppingBag,
   CalendarDays,
-  ArrowRight,
+  Building2,
+  CalendarDays,
   Briefcase,
-  Search,
-  Users,
-  ChevronLeft,
 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { useAuthGate } from "@/components/AuthGateDialog";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
-import RhozeRewardBadge from "@/components/RhozeRewardBadge";
+import NoteComposer from "@/components/notes/NoteComposer";
 import { cn } from "@/lib/utils";
 
-type ListingKind = "service" | "project_request" | "collaboration";
-
-const LISTING_SUB_OPTIONS: {
-  key: ListingKind;
+type PostIntent = {
+  key: "note" | "work" | "listing" | "event" | "space";
   title: string;
   description: string;
-  Icon: typeof Briefcase;
-  accent: string;
-  iconClass: string;
-}[] = [
+  cta: string;
+  Icon: typeof Flame;
+};
+
+const POST_OPTIONS: PostIntent[] = [
   {
-    key: "service",
-    title: "Offering a Service",
-    description: "I can do this for you.",
+    key: "note",
+    title: "Update",
+    description: "A short note for your profile and messages.",
+    cta: "Leave a note",
+    Icon: Flame,
+  },
+  {
+    key: "work",
+    title: "Work",
+    description: "Post music, visuals, video, or writing to Flow.",
+    cta: "Post work",
+    Icon: Shield,
+  },
+  {
+    key: "listing",
+    title: "Listing",
+    description: "Offer a service, ask for help, or find collaborators.",
+    cta: "Create listing",
     Icon: Briefcase,
-    accent: "from-sky-500/20 to-sky-500/5",
-    iconClass: "text-sky-500",
   },
   {
-    key: "project_request",
-    title: "Looking for Help",
-    description: "I need someone to do this.",
-    Icon: Search,
-    accent: "from-amber-500/20 to-amber-500/5",
-    iconClass: "text-amber-500",
+    key: "event",
+    title: "Event",
+    description: "Create a live show, meetup, workshop, or screening.",
+    cta: "Create event",
+    Icon: CalendarDays,
   },
   {
-    key: "collaboration",
-    title: "Seeking Collaborators",
-    description: "Let's work on this together.",
-    Icon: Users,
-    accent: "from-violet-500/20 to-violet-500/5",
-    iconClass: "text-violet-500",
+    key: "space",
+    title: "Space",
+    description: "List a studio, venue, or creative space.",
+    cta: "List space",
+    Icon: Building2,
   },
 ];
 
@@ -80,72 +86,64 @@ interface PostMenuButtonProps {
   trigger?: ReactNode;
 }
 
-const OptionCard = ({
-  Icon,
-  title,
-  description,
-  accent,
-  iconClass,
-  reward,
-  onClick,
-}: {
-  Icon: typeof Briefcase;
-  title: string;
-  description: string;
-  accent: string;
-  iconClass: string;
-  reward?: number;
-  onClick: () => void;
-}) => (
-  <button
-    onClick={onClick}
-    className={cn(
-      "group relative w-full text-left rounded-2xl border border-border bg-gradient-to-br p-4 hover:border-foreground/40 hover:shadow-md transition-all",
-      accent,
-    )}
-  >
-    <div className="flex items-center gap-3">
-      <div className="h-10 w-10 rounded-xl bg-background/80 backdrop-blur-sm flex items-center justify-center shrink-0">
-        <Icon className={cn("h-5 w-5", iconClass)} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <p className="font-display font-semibold text-sm text-foreground">{title}</p>
-          {reward !== undefined && <RhozeRewardBadge amount={reward} />}
-        </div>
-        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{description}</p>
-      </div>
-      <ArrowRight className="h-4 w-4 text-muted-foreground opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-    </div>
-  </button>
-);
-
 const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { requireAuth } = useAuthGate();
   const [open, setOpen] = useState(false);
-  const [showListingSubOptions, setShowListingSubOptions] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(false);
   const [createListingOpen, setCreateListingOpen] = useState(false);
-  const [listingType, setListingType] = useState<ListingKind>("service");
+  const [selected, setSelected] = useState<PostIntent["key"]>("note");
 
   const handleOpen = () => {
     if (!requireAuth("post")) return;
-    setShowListingSubOptions(false);
     setOpen(true);
   };
 
+  useEffect(() => {
+    if (searchParams.get("post") !== "1") return;
+
+    if (requireAuth("post")) {
+      setSelected("note");
+      setOpen(true);
+    }
+
+    const next = new URLSearchParams(searchParams);
+    next.delete("post");
+    setSearchParams(next, { replace: true });
+  }, [requireAuth, searchParams, setSearchParams]);
+
   const closeAndNavigate = (to: string) => {
     setOpen(false);
-    setShowListingSubOptions(false);
     navigate(to);
   };
 
-  const closeAndOpenListing = (kind: ListingKind) => {
-    setListingType(kind);
-    setOpen(false);
-    setShowListingSubOptions(false);
-    // Defer open so the first dialog finishes closing cleanly.
-    requestAnimationFrame(() => setCreateListingOpen(true));
+  const selectedOption = POST_OPTIONS.find((option) => option.key === selected) ?? POST_OPTIONS[0];
+
+  const handleContinue = () => {
+    if (selected === "note") {
+      setOpen(false);
+      requestAnimationFrame(() => setNoteOpen(true));
+      return;
+    }
+
+    if (selected === "work") {
+      closeAndNavigate("/flow?share=1");
+      return;
+    }
+
+    if (selected === "listing") {
+      setOpen(false);
+      requestAnimationFrame(() => setCreateListingOpen(true));
+      return;
+    }
+
+    if (selected === "event") {
+      closeAndNavigate("/spaces/events/new");
+      return;
+    }
+
+    closeAndNavigate("/studios/apply");
   };
 
   return (
@@ -167,80 +165,57 @@ const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="font-display text-xl flex items-center gap-2">
-              {showListingSubOptions && (
-                <button
-                  type="button"
-                  onClick={() => setShowListingSubOptions(false)}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label="Back"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-              )}
-              {showListingSubOptions ? "What kind of listing?" : "What are you posting?"}
-            </DialogTitle>
-            <DialogDescription>
-              {showListingSubOptions
-                ? "Pick the listing format that fits."
-                : "Pick a format. We'll take you to the right flow."}
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-4xl overflow-hidden border border-border/80 bg-card/95 p-0 backdrop-blur-xl">
+          <div className="space-y-6 p-5 sm:p-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {POST_OPTIONS.map((option) => {
+                    const active = selected === option.key;
+                    const Icon = option.Icon;
 
-          <div className="space-y-2 mt-2">
-            {!showListingSubOptions ? (
-              <>
-                <OptionCard
-                  Icon={Shield}
-                  title="Post Work"
-                  description="Drop a file to Flow — image, audio, video, or writing. Verify it as IP later."
-                  accent="from-emerald-500/20 to-emerald-500/5"
-                  iconClass="text-emerald-500"
-                  reward={10}
-                  onClick={() => closeAndNavigate("/flow?share=1")}
-                />
-                <OptionCard
-                  Icon={ShoppingBag}
-                  title="Post a Listing"
-                  description="Sell a service, ask for help, or find collaborators."
-                  accent="from-sky-500/20 to-sky-500/5"
-                  iconClass="text-sky-500"
-                  reward={5}
-                  onClick={() => setShowListingSubOptions(true)}
-                />
-                <OptionCard
-                  Icon={CalendarDays}
-                  title="Post an Event"
-                  description="Host a show, workshop, screening, or meetup."
-                  accent="from-pink-500/20 to-pink-500/5"
-                  iconClass="text-pink-500"
-                  reward={25}
-                  onClick={() => closeAndNavigate("/spaces/events/new")}
-                />
-              </>
-            ) : (
-              LISTING_SUB_OPTIONS.map((opt) => (
-                <OptionCard
-                  key={opt.key}
-                  Icon={opt.Icon}
-                  title={opt.title}
-                  description={opt.description}
-                  accent={opt.accent}
-                  iconClass={opt.iconClass}
-                  onClick={() => closeAndOpenListing(opt.key)}
-                />
-              ))
-            )}
+                    return (
+                      <button
+                        key={option.key}
+                        type="button"
+                        onClick={() => setSelected(option.key)}
+                        className={cn(
+                          "inline-flex items-center gap-2 rounded-full border px-4 py-3 text-sm font-medium transition-all",
+                          active
+                            ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                            : "border-border bg-secondary/55 text-muted-foreground hover:border-foreground/20 hover:bg-secondary hover:text-foreground",
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span>{option.title}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <p className="text-sm text-muted-foreground max-w-2xl">
+                  {selectedOption.description}
+                </p>
+              </div>
+
+              <Button
+                type="button"
+                onClick={handleContinue}
+                className="rounded-full px-6 py-6 text-base font-semibold"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                {selectedOption.cta}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
 
+      <NoteComposer open={noteOpen} onOpenChange={setNoteOpen} />
+
       <CreateListingDialog
         open={createListingOpen}
         onOpenChange={setCreateListingOpen}
-        prefill={{ listing_type: listingType }}
       />
     </>
   );
