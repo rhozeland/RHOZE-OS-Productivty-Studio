@@ -1555,7 +1555,6 @@ const FlowModePage = () => {
               </div>
             </SheetContent>
           </Sheet>
-                {shareStep === "confirm" && (
           {/* Compose entry — guests get an inline "Sign up to post" popover
               instead of the upload sheet. SignUpToPostPrompt is a no-op for
               authenticated users so the original onClick fires unchanged. */}
