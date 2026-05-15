@@ -1985,7 +1985,7 @@ const FlowModePage = () => {
 
       {/* Add content dialog */}
       <Dialog open={addOpen} onOpenChange={(open) => { if (!open) { cancelUpload(); resetPendingFiles(); setShareStep("pick"); setShowLinkField(false); setCelebrating(false); } setAddOpen(open); }}>
-        <DialogContent className="w-[calc(100vw-1rem)] max-w-[640px] max-h-[90vh] overflow-hidden p-0 gap-0 flex flex-col">
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-[640px] max-h-[90vh] overflow-hidden p-0 gap-0 !flex flex-col">
           <div className="flex min-h-0 flex-1 flex-col bg-background">
           {/* Sticky header with stepper */}
           <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-5 pt-5 pb-3">
