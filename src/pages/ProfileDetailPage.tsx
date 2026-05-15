@@ -551,7 +551,7 @@ const ProfileDetailPage = () => {
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="w-full grid grid-cols-2 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
             <TabsTrigger value="support" className="text-xs gap-1.5"><Heart className="h-3 w-3" />Support</TabsTrigger>
-            <TabsTrigger value="drops" className="text-xs gap-1.5"><Sparkles className="h-3 w-3" />Drops</TabsTrigger>
+            <TabsTrigger value="drops" className="text-xs gap-1.5"><ImageIcon className="h-3 w-3" />Posts</TabsTrigger>
           </TabsList>
 
           {/* ─── Support tab — back this artist (actions + token) ─── */}
