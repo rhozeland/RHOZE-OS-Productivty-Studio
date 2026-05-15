@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Settings2, Plus, X, Heart, Send, ShieldCheck } from "lucide-react";
+import { Plus, Heart, Send, ShieldCheck, MessageCircle, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -115,7 +115,7 @@ const CompactFlowFeed = () => {
   };
 
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/80 p-4 sm:p-5">
+    <section className="relative overflow-hidden rounded-[1.5rem] border border-border/70 bg-card/80 p-3 sm:p-4">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-90"
@@ -127,7 +127,7 @@ const CompactFlowFeed = () => {
         }}
       />
 
-      <div className="relative space-y-4">
+      <div className="relative space-y-3">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2">
             <div className="inline-flex items-center gap-0.5 rounded-full border border-border/50 bg-card/85 p-1 shadow-sm">
@@ -156,40 +156,18 @@ const CompactFlowFeed = () => {
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="h-11 w-11 rounded-full border-border/50 bg-card/85 shadow-sm"
-              onClick={() => navigate("/settings")}
-              aria-label="Open Flow settings"
-            >
-              <Settings2 className="h-4 w-4" />
-            </Button>
-
             {user && (
               <Button
                 type="button"
                 variant="outline"
                 size="icon"
-                className="h-11 w-11 rounded-full border-border/50 bg-card/85 shadow-sm"
+                className="h-10 w-10 rounded-full border-border/50 bg-card/85 shadow-sm"
                 onClick={() => navigate("/flow?share=1", { state: { from: `${location.pathname}${location.search}${location.hash}` } })}
                 aria-label="Post to Flow"
               >
-                <Plus className="h-5 w-5" />
+                <Plus className="h-4.5 w-4.5" />
               </Button>
             )}
-
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="h-11 w-11 rounded-full border-border/50 bg-card/85 shadow-sm"
-              onClick={() => openFlow()}
-              aria-label="Close compact preview and open full Flow"
-            >
-              <X className="h-5 w-5" />
-            </Button>
           </div>
         </div>
 
@@ -202,15 +180,15 @@ const CompactFlowFeed = () => {
           />
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_252px] xl:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px] xl:grid-cols-[minmax(0,1fr)_240px]">
           <motion.button
             type="button"
             onClick={() => openFlow(activeItem?.id)}
             whileHover={{ y: -2 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
-            className="group relative overflow-hidden rounded-[2rem] border border-border/60 bg-card text-left shadow-[0_20px_60px_-30px_hsl(var(--foreground)/0.28)]"
+            className="group relative overflow-hidden rounded-[1.5rem] border border-border/60 bg-card text-left shadow-[0_20px_60px_-30px_hsl(var(--foreground)/0.28)]"
           >
-            <div className="relative aspect-[4/5] sm:aspect-[11/13] lg:aspect-[4/5] overflow-hidden">
+            <div className="relative aspect-[7/8] sm:aspect-[9/10] lg:aspect-[7/8] overflow-hidden">
               {activeItem ? (
                 <FlowThumbnail
                   fileUrl={activeItem.file_url}
@@ -225,9 +203,9 @@ const CompactFlowFeed = () => {
                 <div className="absolute inset-0 animate-pulse bg-muted" />
               )}
 
-              <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-card via-card/82 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
-                <div className="flex flex-wrap items-center gap-2 pb-3">
+              <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-card via-card/82 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 p-3.5 sm:p-4">
+                <div className="flex flex-wrap items-center gap-2 pb-2.5">
                   {activeItem?.category && (
                     <span className="rounded-full bg-warm/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-warm-foreground">
                       {activeItem.category}
@@ -244,29 +222,52 @@ const CompactFlowFeed = () => {
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between gap-3 text-muted-foreground">
-                  <div className="ml-auto flex items-center gap-4 text-sm">
-                    <span className="inline-flex items-center gap-1.5">
-                      <Heart className="h-5 w-5" /> Like
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <Send className="h-5 w-5" /> Send
-                    </span>
-                  </div>
+                <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); openFlow(activeItem?.id); }}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/85 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-card"
+                  >
+                    <Heart className="h-3.5 w-3.5" /> Like
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); openFlow(activeItem?.id); }}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/85 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-card"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" /> Comment
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); openFlow(activeItem?.id); }}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/85 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-card"
+                  >
+                    <Send className="h-3.5 w-3.5" /> Send
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (activeItem?.user_id) navigate(`/profiles/${activeItem.user_id}`);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                  >
+                    Open <ArrowRight className="h-3.5 w-3.5" />
+                  </button>
                 </div>
 
-                <div className="mt-5 flex items-center gap-3">
-                  <Avatar className="h-11 w-11 border border-border/50 bg-card/90">
+                <div className="mt-3.5 flex items-center gap-3">
+                  <Avatar className="h-10 w-10 border border-border/50 bg-card/90">
                     <AvatarImage src={activeItem?.profiles?.avatar_url ?? undefined} alt={activeItem?.profiles?.display_name ?? "Creator"} />
                     <AvatarFallback className="text-xs font-semibold text-foreground">
                       {initials(activeItem?.profiles?.display_name ?? null)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <p className="text-base font-medium text-foreground truncate">
+                    <p className="text-sm font-medium text-foreground truncate">
                       {activeItem?.profiles?.display_name ?? activeItem?.profiles?.username ?? "Creator"}
                     </p>
-                    <h3 className="font-display text-2xl sm:text-[2rem] leading-[1.02] text-foreground line-clamp-2">
+                    <h3 className="font-display text-xl sm:text-[1.7rem] leading-[1.04] text-foreground line-clamp-2">
                       {activeItem?.title ?? (isFetching ? "Loading…" : "No flow items yet")}
                     </h3>
                   </div>
@@ -282,8 +283,8 @@ const CompactFlowFeed = () => {
                 type="button"
                 onClick={() => openFlow(item.id)}
                 className={cn(
-                  "group relative overflow-hidden rounded-[1.5rem] border border-border/55 bg-card text-left shadow-[0_18px_45px_-30px_hsl(var(--foreground)/0.3)] transition-transform hover:-translate-y-0.5",
-                  index === 0 ? "h-[220px]" : "h-[168px]",
+                  "group relative overflow-hidden rounded-[1.25rem] border border-border/55 bg-card text-left shadow-[0_18px_45px_-30px_hsl(var(--foreground)/0.3)] transition-transform hover:-translate-y-0.5",
+                  index === 0 ? "h-[190px]" : "h-[142px]",
                 )}
               >
                 <FlowThumbnail
@@ -300,7 +301,7 @@ const CompactFlowFeed = () => {
                   <p className="mb-2 inline-flex rounded-full bg-card/85 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-warm-foreground backdrop-blur-sm">
                     {item.category}
                   </p>
-                  <p className="font-display text-lg leading-tight text-foreground line-clamp-2">
+                   <p className="font-display text-base leading-tight text-foreground line-clamp-2">
                     {item.title}
                   </p>
                 </div>
