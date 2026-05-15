@@ -161,16 +161,8 @@ export const FlowThumbnail = ({
         />
       )}
 
-      {isAudioVisual && !showImage && (
-        <div
-          className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${imageLoaded ? "opacity-0" : "opacity-100"}`}
-          style={{
-            background:
-              "linear-gradient(180deg, hsl(var(--background) / 0.02) 0%, hsl(var(--background) / 0.04) 22%, hsl(var(--pink) / 0.18) 48%, hsl(var(--foreground) / 0.32) 74%, hsl(var(--foreground) / 0.84) 100%)",
-          }}
-          aria-hidden
-        />
-      )}
+      {/* (Audio scrim removed — vinyl block below provides its own contrast.) */}
+
 
       {/* Decorative pattern layer */}
       {v.pattern === "waves" && (
