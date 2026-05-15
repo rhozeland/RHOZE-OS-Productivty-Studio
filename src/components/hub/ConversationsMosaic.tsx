@@ -474,10 +474,12 @@ const MosaicTileCard = ({
       {/* Top chip row */}
       <div className="absolute top-2.5 left-2.5 right-2.5 flex items-start justify-between gap-2 z-10">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider backdrop-blur-md ${chipBg}`}>
-            <Icon className="h-2.5 w-2.5" />
-            {tile.variant ?? label}
-          </span>
+          {tile.kind !== "drop" && (
+            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider backdrop-blur-md ${chipBg}`}>
+              <Icon className="h-2.5 w-2.5" />
+              {tile.variant ?? label}
+            </span>
+          )}
           {/* Verified IP shield on drops — replaces the standalone "Works" lane */}
           {tile.kind === "drop" && tile.verifiedSignature && (
             <VerifiedIPBadge signature={tile.verifiedSignature} size="xs" />
@@ -522,13 +524,6 @@ const MosaicTileCard = ({
           <p className={`text-xs mt-1 line-clamp-2 leading-relaxed ${isIconHero ? "text-foreground/70" : "text-muted-foreground"}`}>
             {tile.description}
           </p>
-        )}
-        {(isLarge || isIconHero) && (
-          <span
-              className={`inline-flex items-center gap-1 text-[11px] font-semibold mt-2 opacity-80 group-hover:opacity-100 group-hover:gap-1.5 transition-all ${hasImage || hasDropVisual ? "text-white" : "text-foreground"}`}
-          >
-            Open <ArrowRight className="h-3 w-3" />
-          </span>
         )}
       </div>
     </motion.button>

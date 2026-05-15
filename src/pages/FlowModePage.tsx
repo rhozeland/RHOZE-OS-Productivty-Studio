@@ -177,7 +177,13 @@ const FlowModePage = () => {
       setSearchParams(next, { replace: true });
     }
   }, [searchParams, setSearchParams]);
-  const [viewMode, setViewMode] = useState<"swipe" | "browse">("swipe");
+  const [viewMode, setViewMode] = useState<"swipe" | "browse">(
+    searchParams.get("view") === "browse" ? "browse" : "swipe",
+  );
+  useEffect(() => {
+    const nextView = searchParams.get("view") === "browse" ? "browse" : "swipe";
+    setViewMode((current) => (current === nextView ? current : nextView));
+  }, [searchParams]);
   const [commentSheetOpen, setCommentSheetOpen] = useState(false);
   const [commentItem, setCommentItem] = useState<any>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);

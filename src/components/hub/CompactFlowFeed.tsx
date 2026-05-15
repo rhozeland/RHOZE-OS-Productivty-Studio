@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Plus, Heart, Send, ShieldCheck, MessageCircle } from "lucide-react";
+import { Plus, Heart, Send, ShieldCheck, MessageCircle, Expand, ArrowLeftRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FlowScopeToggle, type FlowScope } from "@/components/flow/FlowScopeToggle";
+import type { FlowScope } from "@/components/flow/FlowScopeToggle";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import { loadFlowFeed, type FlowItemWithProfile } from "@/lib/flow-feed";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,7 @@ const CompactFlowFeed = () => {
   const [preferredCategories, setPreferredCategories] = useState<string[]>(CATEGORIES);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(CATEGORIES);
   const [ready, setReady] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,14 +89,6 @@ const CompactFlowFeed = () => {
     };
   }, [calibrationKey, user?.id]);
 
-  const setScope = (scope: FlowScope) => {
-    if (scope === feedScope) return;
-    setFeedScope(scope);
-    const nextSelected = scope === "all" ? CATEGORIES : preferredCategories.length > 0 ? preferredCategories : CATEGORIES;
-    setSelectedCategories(nextSelected);
-    localStorage.setItem(`flow-scope-${calibrationKey}`, scope);
-  };
-
   const { data: items = [], isFetching } = useQuery({
     queryKey: ["compact-flow-feed", feedScope, selectedCategories],
     queryFn: () => loadFlowFeed(supabase, selectedCategories),
@@ -105,11 +98,25 @@ const CompactFlowFeed = () => {
   });
 
   const topItems = useMemo(() => items.slice(0, 8), [items]);
-  const activeItem = topItems[0] as FlowItemWithProfile | undefined;
-  const sideItems = topItems.slice(1, 4);
+  useEffect(() => {
+    if (topItems.length <= 1) {
+      setPreviewIndex(0);
+      return;
+    }
+    const timer = window.setInterval(() => {
+      setPreviewIndex((current) => (current + 1) % topItems.length);
+    }, 4200);
+    return () => window.clearInterval(timer);
+  }, [topItems]);
 
-  const openFlow = (itemId?: string) => {
-    navigate(itemId ? `/flow?item=${itemId}` : "/flow", {
+  const activeItem = topItems[previewIndex % Math.max(topItems.length, 1)] as FlowItemWithProfile | undefined;
+  const sideItems = topItems.filter((item) => item.id !== activeItem?.id).slice(0, 3);
+
+  const openFlow = (itemId?: string, mode: "swipe" | "browse" = "swipe") => {
+    const query = new URLSearchParams();
+    if (itemId) query.set("item", itemId);
+    if (mode === "browse") query.set("view", "browse");
+    navigate(query.toString() ? `/flow?${query.toString()}` : "/flow", {
       state: { from: `${location.pathname}${location.search}${location.hash}` },
     });
   };
@@ -130,29 +137,14 @@ const CompactFlowFeed = () => {
       <div className="relative space-y-3">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2">
-            <div className="inline-flex items-center gap-0.5 rounded-full border border-border/50 bg-card/85 p-1 shadow-sm">
-              <button
-                type="button"
-                onClick={() => openFlow(activeItem?.id)}
-                className="rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground"
-              >
-                Swipe
-              </button>
-              <button
-                type="button"
-                onClick={() => openFlow()}
-                className="rounded-full px-4 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Browse
-              </button>
-            </div>
-
-            <FlowScopeToggle
-              scope={feedScope}
-              onScopeChange={setScope}
-              visible={preferredCategories.length > 0 && preferredCategories.length < CATEGORIES.length}
-              className="!hidden min-[520px]:!flex bg-card/85 border-border/50 shadow-sm"
-            />
+            <button
+              type="button"
+              onClick={() => openFlow(activeItem?.id)}
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-border/50 bg-card/85 px-4 text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-card"
+            >
+              <Expand className="h-4 w-4" />
+              Expand
+            </button>
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
@@ -171,24 +163,35 @@ const CompactFlowFeed = () => {
           </div>
         </div>
 
-        <div className="min-[520px]:hidden">
-          <FlowScopeToggle
-            scope={feedScope}
-            onScopeChange={setScope}
-            visible={preferredCategories.length > 0 && preferredCategories.length < CATEGORIES.length}
-            className="!flex w-fit bg-card/85 border-border/50 shadow-sm"
-          />
+        <div className="flex items-center justify-between gap-3 min-[520px]:justify-start">
+          <div className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-card/85 px-3 py-2 text-xs font-medium text-muted-foreground shadow-sm">
+            <ArrowLeftRight className="h-3.5 w-3.5" />
+            Auto-previewing posts
+          </div>
+          <button
+            type="button"
+            onClick={() => openFlow(undefined, "browse")}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-card/85 px-3 py-2 text-xs font-medium text-muted-foreground shadow-sm transition-colors hover:text-foreground"
+          >
+            <ArrowLeftRight className="h-3.5 w-3.5" />
+            Browse all
+          </button>
         </div>
 
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px] xl:grid-cols-[minmax(0,1fr)_240px]">
           <motion.button
             type="button"
             onClick={() => openFlow(activeItem?.id)}
-            whileHover={{ y: -2 }}
-            transition={{ duration: 0.18, ease: "easeOut" }}
+            animate={{ y: [0, -3, 0], scale: [1, 0.992, 1] }}
+            whileHover={{ y: -4, scale: 1.01 }}
+            transition={{ duration: 5.6, repeat: Infinity, ease: "easeInOut" }}
             className="group relative overflow-hidden rounded-[1.5rem] border border-border/60 bg-card text-left shadow-[0_20px_60px_-30px_hsl(var(--foreground)/0.28)]"
           >
-            <div className="relative aspect-[7/8] sm:aspect-[9/10] lg:aspect-[7/8] overflow-hidden">
+            <div className="relative mx-auto w-[92%] pt-4 sm:w-[94%] sm:pt-5">
+              <div className="absolute inset-x-[7%] top-5 h-full rounded-[1.4rem] border border-border/40 bg-card/35 blur-sm" aria-hidden />
+              <div className="absolute inset-x-[12%] top-8 h-full rounded-[1.4rem] border border-border/30 bg-card/20" aria-hidden />
+            </div>
+            <div className="relative mx-auto w-[92%] overflow-hidden rounded-[1.5rem] border border-border/40 aspect-[6/7] sm:w-[94%] sm:aspect-[8/9]">
               {activeItem ? (
                 <FlowThumbnail
                   fileUrl={activeItem.file_url}
@@ -204,6 +207,8 @@ const CompactFlowFeed = () => {
               )}
 
               <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-card via-card/82 to-transparent" />
+              <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-card/28 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-card/28 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <div className="absolute inset-x-0 bottom-0 p-3.5 sm:p-4">
                 <div className="flex flex-wrap items-center gap-2 pb-2.5">
                   {activeItem?.category && (
@@ -261,6 +266,11 @@ const CompactFlowFeed = () => {
                       {activeItem?.title ?? (isFetching ? "Loading…" : "No flow items yet")}
                     </h3>
                   </div>
+                </div>
+              </div>
+              <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                <div className="rounded-full border border-border/60 bg-card/82 p-2 text-muted-foreground shadow-sm backdrop-blur-sm">
+                  <ArrowLeftRight className="h-4 w-4" />
                 </div>
               </div>
             </div>
