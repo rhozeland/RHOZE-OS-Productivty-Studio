@@ -412,72 +412,36 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         )}
         </FlowUnlockGate>
 
-        {/* ═══ Category badge (inline variant) + ACTION BAR ═══
-            Inline render keeps the legacy layout with the badge to the
-            left of the action buttons. Corner placements skip this and
-            render the badge as an absolute overlay (see below the
-            outer card div). */}
+        {/* ═══ ACTION BAR ═══
+            Minimal: category as icon (text on hover), owner-only Verify icon
+            (when eligible), and the like/send cluster. Provenance is now
+            communicated by the watermark stamped on the artwork itself, so
+            no chip lives here. The $TICKER speculate pill was removed —
+            users get to coins via the creator's profile. */}
         <div className="px-5 pt-4 pb-2 flex items-center gap-2 flex-wrap">
           {showCategoryChip && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+            <span
+              className="group/cat inline-flex items-center gap-1 rounded-full text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors cursor-default"
+              title={item.category}
+            >
               <CatIcon className="h-3.5 w-3.5" />
-              <span className="capitalize">{item.category}</span>
+              <span className="capitalize max-w-0 overflow-hidden whitespace-nowrap opacity-0 group-hover/cat:max-w-[80px] group-hover/cat:opacity-100 transition-all duration-200">
+                {item.category}
+              </span>
             </span>
-          )}
-          {/* Verified-IP status — fingerprint, pending review, or anchored.
-              Sits next to the category so the provenance signal travels with
-              every card without competing with the action bar. */}
-          {/* Provenance: clickable when we have a work_id so viewers can dig
-              into the IP page. Falls back to a static chip otherwise. */}
-          {item.work_id ? (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); navigate(`/works/${item.work_id}`); }}
-              className="inline-flex items-center gap-1 rounded-full transition-opacity hover:opacity-80"
-              title="See the IP this work is anchored to"
-            >
-              <FlowProvenanceChip
-                status={item.verification_status}
-                contentHash={item.content_hash}
-                solanaSignature={item.solana_signature}
-                isOwner={isOwner}
-              />
-            </button>
-          ) : (
-            <FlowProvenanceChip
-              status={item.verification_status}
-              contentHash={item.content_hash}
-              solanaSignature={item.solana_signature}
-              isOwner={isOwner}
-            />
-          )}
-
-          {/* Speculate pill — only when the uploader has launched a profile
-              coin. Tapping it jumps straight to that creator's profile Coin
-              tab where the bonding-curve chart + trade panel live. We
-              deliberately do NOT auto-launch coins on upload; creators opt
-              in from their own profile page. */}
-          {coin && item.user_id && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); navigate(`/profiles/${item.user_id}?tab=coin`); }}
-              className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-500/15 transition-colors"
-              title="Speculate on this creator — view their bonding curve"
-            >
-              <Coins className="h-3 w-3" />
-              <span>${coin.ticker}</span>
-              <ArrowRight className="h-3 w-3" />
-            </button>
           )}
 
           {canApplyForVerification && (
             <button
               onClick={(e) => { e.stopPropagation(); setVerifyOpen(true); }}
-              className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
+              className="group/verify inline-flex items-center gap-1 rounded-full text-emerald-600 dark:text-emerald-400 hover:opacity-80 transition-opacity"
               title="Apply for the Verified IP badge"
+              aria-label="Verify this work"
             >
-              <ShieldCheck className="h-3 w-3" />
-              Verify
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span className="text-[10px] font-medium max-w-0 overflow-hidden whitespace-nowrap opacity-0 group-hover/verify:max-w-[60px] group-hover/verify:opacity-100 transition-all duration-200">
+                Verify
+              </span>
             </button>
           )}
 
