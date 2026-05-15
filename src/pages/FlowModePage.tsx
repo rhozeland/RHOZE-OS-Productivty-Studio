@@ -2478,8 +2478,12 @@ const FlowModePage = () => {
                     <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Post details</p>
                     <div className="space-y-1.5 text-sm">
                       <div className="flex items-baseline gap-2">
+                        <span className="text-muted-foreground text-xs w-20 shrink-0">Title</span>
+                        <span className="text-foreground font-medium break-words">{newTitle.trim() || <span className="text-muted-foreground italic">— (untitled)</span>}</span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
                         <span className="text-muted-foreground text-xs w-20 shrink-0">Caption</span>
-                        <span className="text-foreground font-medium break-words">{newTitle.trim() || <span className="text-muted-foreground italic">— (no comment)</span>}</span>
+                        <span className="text-foreground break-words">{newDesc.trim() || <span className="text-muted-foreground italic">— (no comment)</span>}</span>
                       </div>
                       {newCreatorName.trim() && (
                         <div className="flex items-baseline gap-2">
@@ -2491,12 +2495,6 @@ const FlowModePage = () => {
                         <span className="text-muted-foreground text-xs w-20 shrink-0">Category</span>
                         <span className="text-foreground capitalize">{newCategory}</span>
                       </div>
-                      {newDesc.trim() && (
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-muted-foreground text-xs w-20 shrink-0">Description</span>
-                          <span className="text-foreground break-words">{newDesc.trim()}</span>
-                        </div>
-                      )}
                       {fileCount > 0 && (
                         <div className="flex items-baseline gap-2">
                           <span className="text-muted-foreground text-xs w-20 shrink-0">Files</span>
