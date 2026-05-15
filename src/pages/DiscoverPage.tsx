@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import RegionPromptBanner from "@/components/discover/RegionPromptBanner";
 import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import ConversationsMosaic from "@/components/hub/ConversationsMosaic";
-import HubFlowWidget from "@/components/hub/HubFlowWidget";
+import CompactFlowFeed from "@/components/hub/CompactFlowFeed";
 import PostMenuButton from "@/components/PostMenuButton";
 import CreatorsGrid from "@/components/discover/CreatorsGrid";
 
@@ -431,30 +431,19 @@ const DiscoverPage = () => {
             </h2>
           </div>
 
-          <div className="flex items-center gap-2">
-            {user && (
-              <PostMenuButton
-                trigger={
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground hover:border-foreground/20 hover:bg-secondary transition-colors"
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    Post
-                  </button>
-                }
-              />
-            )}
-            <button
-              type="button"
-              onClick={() => navigate("/flow", { state: { from: `${location.pathname}${location.search}` } })}
-              className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-xs font-semibold text-background hover:bg-foreground/90 transition-colors"
-            >
-              <Flame className="h-3.5 w-3.5" />
-              Open Flow
-              <ArrowRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
+          {user && (
+            <PostMenuButton
+              trigger={
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground hover:border-foreground/20 hover:bg-secondary transition-colors"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Post
+                </button>
+              }
+            />
+          )}
         </div>
 
         {/* Stream tabs */}
@@ -514,7 +503,7 @@ const DiscoverPage = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            <HubFlowWidget hideHeading />
+            <CompactFlowFeed />
             <ConversationsMosaic kind="all" />
           </div>
         )}
