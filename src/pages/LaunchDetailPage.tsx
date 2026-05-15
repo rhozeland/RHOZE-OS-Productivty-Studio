@@ -37,7 +37,7 @@ import TradePanel from "@/components/launchpad/TradePanel";
 import LaunchpadModeBanner from "@/components/launchpad/LaunchpadModeBanner";
 import OnChainBalancesCard from "@/components/launchpad/OnChainBalancesCard";
 import PriceChartCard from "@/components/launchpad/PriceChartCard";
-import BackingMomentumChart from "@/components/launchpad/BackingMomentumChart";
+import GraduationProgressBar from "@/components/launchpad/GraduationProgressBar";
 import HoldersList from "@/components/launchpad/HoldersList";
 import { Button } from "@/components/ui/button";
 import { deriveLaunchPda, isLaunchpadOnChainEnabled, LAUNCHPAD_NETWORK } from "@/lib/launchpad-onchain";
