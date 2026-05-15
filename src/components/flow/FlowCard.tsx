@@ -195,6 +195,23 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
           artistId={item.user_id}
           artistName={(item as any).profiles?.display_name ?? item.creator_name ?? null}
         >
+        {/* Verified-IP watermark — when an asset is anchored on Solana,
+            we stamp a translucent fingerprint onto the artwork itself. The
+            mark IS the verification signal; no chip / "Verified" text needed
+            in the action bar below. mix-blend-overlay keeps it legible on
+            both bright and dark imagery. */}
+        {item.verification_status === "verified" && (
+          <div
+            className="pointer-events-none absolute right-3 top-3 z-10"
+            title="Verified IP — fingerprinted & anchored on Solana"
+            aria-label="Verified IP"
+          >
+            <Fingerprint
+              className="h-9 w-9 text-white/85 mix-blend-overlay drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]"
+              strokeWidth={1.5}
+            />
+          </div>
+        )}
         {/* ═══ PHOTO / DESIGN — Full image with click to enlarge ═══ */}
         {isImage && item.file_url && (
           <div className="relative group">
