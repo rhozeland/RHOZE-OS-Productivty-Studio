@@ -15,7 +15,7 @@
  *    opportunities lead with the brief, works show the verified badge.
  *  - Staggered framer-motion entrance + subtle hover lift for tactility.
  */
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -35,6 +35,8 @@ import {
   Video,
   PenTool,
   Theater,
+  Play,
+  Pause,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
