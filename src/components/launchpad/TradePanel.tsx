@@ -91,6 +91,26 @@ const TradePanel = ({
   const [slippagePct, setSlippagePct] = useState<number>(1); // 1% default
   const [phase, setPhase] = useState<TxPhase>({ kind: "idle" });
 
+  // Trader-view preference (shared with LaunchDetailPage). Fan view shows
+  // Back / Withdraw labels; trader view keeps Buy / Sell.
+  const [traderView, setTraderView] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("rhoze-trader-view") === "1";
+  });
+  useEffect(() => {
+    const handler = () => {
+      setTraderView(window.localStorage.getItem("rhoze-trader-view") === "1");
+    };
+    window.addEventListener("storage", handler);
+    const interval = window.setInterval(handler, 1000);
+    return () => {
+      window.removeEventListener("storage", handler);
+      window.clearInterval(interval);
+    };
+  }, []);
+  const buyLabel = traderView ? "Buy" : "Back";
+  const sellLabel = traderView ? "Sell" : "Withdraw";
+
   const onChainEnabled = isLaunchpadOnChainEnabled();
 
   // Load holdings + $RHOZE balance
