@@ -2030,19 +2030,24 @@ const FlowModePage = () => {
             ];
             const allValid = checks.every((c) => c.ok);
             const canPublish = allValid && !createFlowItem.isPending;
+            const captionLen = newTitle.length;
+            const captionWithinLimit = captionLen <= CAPTION_LIMIT;
+            // Step gating: pick needs media + no errors; caption only checks caption length.
+            const pickValid = hasMedia && noFileErrors && !filesUploading;
+            const captionValid = captionWithinLimit;
+
+            const goNext = () => {
+              if (shareStep === "pick" && pickValid) setShareStep("caption");
+              else if (shareStep === "caption" && captionValid) setShareStep("confirm");
+              else if (shareStep === "confirm" && canPublish) createFlowItem.mutate();
+            };
 
             return (
               <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (shareStep === "compose") {
-                    if (allValid) setShareStep("confirm");
-                    return;
-                  }
-                  if (canPublish) createFlowItem.mutate();
-                }}
+                onSubmit={(e) => { e.preventDefault(); goNext(); }}
                 className="space-y-4"
               >
+
                 {shareStep === "confirm" && (
                   <div className="rounded-xl border border-border bg-muted/30 p-3 space-y-3">
                     <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Pre-publish checks</p>
