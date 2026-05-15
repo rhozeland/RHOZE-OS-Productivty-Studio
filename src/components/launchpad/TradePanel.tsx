@@ -370,14 +370,16 @@ const TradePanel = ({
 
       <Tabs value={side} onValueChange={(v) => { setSide(v as "buy" | "sell"); setAmount(""); }}>
         <TabsList className="grid grid-cols-2 w-full">
-          <TabsTrigger value="buy">Buy</TabsTrigger>
-          <TabsTrigger value="sell">Sell</TabsTrigger>
+          <TabsTrigger value="buy">{buyLabel}</TabsTrigger>
+          <TabsTrigger value="sell">{sellLabel}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="buy" className="space-y-3 pt-3">
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="text-xs text-muted-foreground">$RHOZE to spend</label>
+              <label className="text-xs text-muted-foreground">
+                {traderView ? "$RHOZE to spend" : "$RHOZE to back with"}
+              </label>
               <span className="text-[10px] text-muted-foreground font-mono">
                 {rhozeBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} avail
               </span>
@@ -398,13 +400,19 @@ const TradePanel = ({
           </div>
           <div className="flex justify-center"><ArrowDown className="h-4 w-4 text-muted-foreground" /></div>
           <div className="rounded-md bg-muted/40 p-3 text-sm font-mono text-center min-h-[2.5rem] flex items-center justify-center">
-            {quote ? quote.receiveLabel : <span className="text-muted-foreground text-xs">Receive ${ticker}</span>}
+            {quote ? quote.receiveLabel : (
+              <span className="text-muted-foreground text-xs">
+                {traderView ? `Receive $${ticker}` : `You'll get a stake in $${ticker}`}
+              </span>
+            )}
           </div>
         </TabsContent>
 
         <TabsContent value="sell" className="space-y-3 pt-3">
           <div className="flex justify-between items-center">
-            <label className="text-xs text-muted-foreground">${ticker} to sell</label>
+            <label className="text-xs text-muted-foreground">
+              {traderView ? `$${ticker} to sell` : `Stake to withdraw (in $${ticker} units)`}
+            </label>
             <span className="text-[10px] text-muted-foreground font-mono">
               {holdings.toLocaleString(undefined, { maximumFractionDigits: 2 })} held
             </span>
