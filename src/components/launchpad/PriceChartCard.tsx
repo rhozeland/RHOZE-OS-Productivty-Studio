@@ -348,11 +348,14 @@ const PriceChartCard = ({ launchId, ticker }: Props) => {
     const highs = displayCandles.map((candle) => candle.high);
     const lows = displayCandles.map((candle) => candle.low);
     const volumes = displayCandles.map((candle) => candle.totalVolume);
-    const maxPrice = Math.max(...highs, 1);
-    const minPrice = Math.min(...lows, maxPrice);
-    const spread = Math.max(maxPrice - minPrice, maxPrice * 0.06, 0.000001);
-    const paddedMin = Math.max(0, minPrice - spread * 0.14);
-    const paddedMax = maxPrice + spread * 0.14;
+    // Auto-zoom to actual price range — pump.fun / dexscreener style. Never floor
+    // max to 1 (prices are sub-cent), never floor min to 0 (would squash all candles
+    // to the bottom). Pad the range so the line breathes inside the panel.
+    const rawMax = highs.length ? Math.max(...highs) : 0;
+    const rawMin = lows.length ? Math.min(...lows) : 0;
+    const spread = Math.max(rawMax - rawMin, rawMax * 0.08, rawMax * 1e-6 || 1e-9);
+    const paddedMin = Math.max(0, rawMin - spread * 0.18);
+    const paddedMax = rawMax + spread * 0.18;
     const maxVolume = Math.max(...volumes, 1);
 
     const toY = (value: number) => {

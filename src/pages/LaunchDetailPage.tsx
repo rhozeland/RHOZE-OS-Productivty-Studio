@@ -37,7 +37,7 @@ import TradePanel from "@/components/launchpad/TradePanel";
 import LaunchpadModeBanner from "@/components/launchpad/LaunchpadModeBanner";
 import OnChainBalancesCard from "@/components/launchpad/OnChainBalancesCard";
 import PriceChartCard from "@/components/launchpad/PriceChartCard";
-import BackingMomentumChart from "@/components/launchpad/BackingMomentumChart";
+import GraduationProgressBar from "@/components/launchpad/GraduationProgressBar";
 import HoldersList from "@/components/launchpad/HoldersList";
 import { Button } from "@/components/ui/button";
 import { deriveLaunchPda, isLaunchpadOnChainEnabled, LAUNCHPAD_NETWORK } from "@/lib/launchpad-onchain";
@@ -99,7 +99,6 @@ const LaunchDetailPage = () => {
   const [workSig, setWorkSig] = useState<string | null>(null);
   const [myHolding, setMyHolding] = useState<{ balance: number; sol_invested: number } | null>(null);
   const [showChart, setShowChart] = useState(false);
-  const [chartMode, setChartMode] = useState<"momentum" | "price">("momentum");
   const [traderView, setTraderView] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(TRADER_VIEW_KEY) === "1";
@@ -411,6 +410,18 @@ const LaunchDetailPage = () => {
             );
           })()}
 
+          {/* Inline graduation progress + backing momentum sparkline.
+              Replaces the bulky standalone BackingMomentumChart — same data,
+              one slim strip wired to the graduation goal. */}
+          {launch.status !== "cancelled" && (
+            <GraduationProgressBar
+              launchId={launch.id}
+              raisedRhoze={Number(launch.real_sol_reserves) * 100}
+              targetRhoze={Number(launch.graduation_sol_target) * 100}
+              status={launch.status}
+            />
+          )}
+
           {/* Graduated payout summary */}
           {launch.status === "graduated" && launch.creator_payout_rhoze ? (
             <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs space-y-1.5">
@@ -452,59 +463,21 @@ const LaunchDetailPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* LEFT: chart + tabs */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Chart toggle: collapsed by default. Inside, fans see backing
-              momentum (cumulative raised); traders can flip to price chart. */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowChart((v) => !v)}
-              className="flex-1 flex items-center justify-between gap-2 rounded-md border border-border/60 bg-card/40 backdrop-blur px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
-            >
-              <span className="flex items-center gap-1.5">
-                {chartMode === "momentum" ? (
-                  <Sparkles className="h-3.5 w-3.5" />
-                ) : (
-                  <Activity className="h-3.5 w-3.5" />
-                )}
-                {showChart
-                  ? `Hide ${chartMode === "momentum" ? "backing momentum" : "price chart"}`
-                  : `Show ${chartMode === "momentum" ? "backing momentum" : "price chart"}`}
-              </span>
-              {showChart ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-            </button>
-            {showChart && (
-              <div className="inline-flex rounded-md border border-border/60 bg-muted/30 p-0.5 text-[10px]">
-                <button
-                  type="button"
-                  onClick={() => setChartMode("momentum")}
-                  className={cn(
-                    "px-2 py-1 rounded transition-colors flex items-center gap-1",
-                    chartMode === "momentum"
-                      ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                  title="Cumulative $RHOZE backed over time"
-                >
-                  <Sparkles className="h-3 w-3" /> Momentum
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setChartMode("price")}
-                  className={cn(
-                    "px-2 py-1 rounded transition-colors flex items-center gap-1",
-                    chartMode === "price"
-                      ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                  title="Price per unit on the bonding curve"
-                >
-                  <CandlestickChart className="h-3 w-3" /> Price
-                </button>
-              </div>
-            )}
-          </div>
-          {showChart && chartMode === "momentum" && <BackingMomentumChart launchId={launch.id} />}
-          {showChart && chartMode === "price" && <PriceChartCard launchId={launch.id} ticker={launch.ticker} />}
+          {/* Chart toggle: collapsed by default. Backing momentum lives inline
+              in the header progress bar — this section is purely the price
+              chart for power users. */}
+          <button
+            type="button"
+            onClick={() => setShowChart((v) => !v)}
+            className="w-full flex items-center justify-between gap-2 rounded-md border border-border/60 bg-card/40 backdrop-blur px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+          >
+            <span className="flex items-center gap-1.5">
+              <CandlestickChart className="h-3.5 w-3.5" />
+              {showChart ? "Hide price chart" : "Show price chart"}
+            </span>
+            {showChart ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          </button>
+          {showChart && <PriceChartCard launchId={launch.id} ticker={launch.ticker} />}
 
           <Card className="bg-card/40 backdrop-blur">
             <CardContent className="p-3">
