@@ -412,10 +412,14 @@ const MosaicTileCard = ({
       }
     : undefined;
 
-  // Hover-to-play preview for drops with a direct audio file_url.
-  // Hosted audio (Spotify, SoundCloud) can't be previewed inline, so they
-  // only show artwork — clicking still opens Flow Mode.
+  // A drop is "music" if it has a direct audio file, an audio host link,
+  // or is categorized as music/audio. We always surface a play button for
+  // these — direct audio plays inline; hosted/linked audio routes into
+  // Flow Mode where full playback lives.
+  const catKey = (tile.category ?? "").toLowerCase().trim();
   const isPlayableAudio = tile.kind === "drop" && !!tile.fileUrl && /\.(mp3|wav|flac|aac|m4a|ogg|opus)(\?|$)/i.test(tile.fileUrl);
+  const isHostedAudio = tile.kind === "drop" && !!tile.linkUrl && /(spotify\.com|soundcloud\.com|music\.apple\.com|bandcamp\.com|tidal\.com|audius\.co|lnkfi\.re|linkfire\.com|songwhip\.com|distrokid\.com|orcd\.co)/i.test(tile.linkUrl);
+  const isMusicDrop = tile.kind === "drop" && (isPlayableAudio || isHostedAudio || catKey === "music" || catKey === "audio");
   const hrefItemId = tile.kind === "drop" ? tile.href.match(/[?&]item=([^&]+)/)?.[1] ?? null : null;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
