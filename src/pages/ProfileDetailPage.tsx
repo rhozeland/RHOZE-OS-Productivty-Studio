@@ -551,7 +551,7 @@ const ProfileDetailPage = () => {
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="w-full grid grid-cols-2 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
             <TabsTrigger value="support" className="text-xs gap-1.5"><Heart className="h-3 w-3" />Support</TabsTrigger>
-            <TabsTrigger value="drops" className="text-xs gap-1.5"><Sparkles className="h-3 w-3" />Drops</TabsTrigger>
+            <TabsTrigger value="drops" className="text-xs gap-1.5"><ImageIcon className="h-3 w-3" />Posts</TabsTrigger>
           </TabsList>
 
           {/* ─── Support tab — back this artist (actions + token) ─── */}
@@ -596,19 +596,20 @@ const ProfileDetailPage = () => {
               </motion.div>
             )}
 
-            {/* ─── Ways to support — launches + shows + spaces ─── */}
+            {/* ─── Ways to support — launches + listings + events + spaces (+ inline Verify) ─── */}
             {(() => {
-              const shows  = upcomingEvents ?? [];
-              const spaces = hostedSpaces ?? [];
+              const events    = allHostedEvents ?? [];
+              const spaces    = hostedSpaces ?? [];
+              const listings  = sellerListings ?? [];
 
               const tabs: { value: string; label: string; icon: any; count: number | null }[] = [
-                // Launches always shown — the catalog handles its own empty state for the owner.
                 { value: "launches", label: "Launches", icon: Coins, count: null },
               ];
-              if (shows.length)  tabs.push({ value: "shows",  label: "Shows",  icon: CalendarIcon, count: shows.length });
-              if (spaces.length) tabs.push({ value: "spaces", label: "Spaces", icon: Building2,    count: spaces.length });
+              if (listings.length) tabs.push({ value: "listings", label: "Listings", icon: ShoppingBag, count: listings.length });
+              if (events.length)   tabs.push({ value: "events",   label: "Events",   icon: CalendarIcon, count: events.length });
+              if (spaces.length)   tabs.push({ value: "spaces",   label: "Spaces",   icon: Building2,    count: spaces.length });
 
-              const totalCount = shows.length + spaces.length;
+              const totalCount = listings.length + events.length + spaces.length;
 
               return (
                 <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
@@ -635,33 +636,78 @@ const ProfileDetailPage = () => {
                       <CreatorDropsCatalog creatorId={id!} isOwnProfile={isOwnProfile} />
                     </TabsContent>
 
-                    {shows.length > 0 && (
-                      <TabsContent value="shows" className="mt-3 space-y-2">
-                        {shows.map((e: any) => (
-                          <button
-                            key={e.id}
-                            onClick={() => navigate(`/events/${e.slug || e.id}`)}
-                            className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
-                          >
-                            {e.cover_url ? (
-                              <img src={e.cover_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
-                            ) : (
-                              <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
-                                <CalendarIcon className="h-5 w-5 text-muted-foreground/40" />
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-foreground truncate">{e.title}</p>
-                              <p className="text-[11px] text-muted-foreground">
-                                {format(new Date(e.starts_at), "MMM d · h:mm a")}
-                                {e.is_online ? " · Online" : e.venue_name ? ` · ${e.venue_name}` : ""}
-                              </p>
-                            </div>
-                            <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                          </button>
-                        ))}
+                    {listings.length > 0 && (
+                      <TabsContent value="listings" className="mt-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {listings.map((l: any) => {
+                            const cover = l.cover_url || l.image_url;
+                            const priceLabel = l.credits_price
+                              ? `${l.credits_price} $RHOZE`
+                              : l.price
+                              ? `${l.currency || "$"}${l.price}`
+                              : null;
+                            return (
+                              <button
+                                key={l.id}
+                                onClick={() => navigate(`/marketplace/${l.id}`)}
+                                className="group text-left rounded-xl bg-card/60 border border-border/60 overflow-hidden hover:border-foreground/30 transition-colors"
+                              >
+                                <div className="relative aspect-square bg-muted overflow-hidden">
+                                  {cover ? (
+                                    <img src={cover} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                  ) : (
+                                    <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
+                                      <ShoppingBag className="h-6 w-6 text-muted-foreground/40" />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="p-2.5">
+                                  <p className="text-xs font-medium text-foreground truncate">{l.title}</p>
+                                  {priceLabel && (
+                                    <p className="text-[10px] font-semibold text-foreground tabular-nums mt-0.5">{priceLabel}</p>
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
                       </TabsContent>
                     )}
+
+                    {events.length > 0 && (
+                      <TabsContent value="events" className="mt-3 space-y-2">
+                        {events.map((e: any) => {
+                          const isPast = new Date(e.starts_at) < new Date();
+                          return (
+                            <button
+                              key={e.id}
+                              onClick={() => navigate(`/events/${e.slug || e.id}`)}
+                              className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
+                            >
+                              {e.cover_url ? (
+                                <img src={e.cover_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
+                              ) : (
+                                <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
+                                  <CalendarIcon className="h-5 w-5 text-muted-foreground/40" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-sm font-medium text-foreground truncate">{e.title}</p>
+                                  {isPast && <Badge variant="outline" className="text-[8px] shrink-0">Past</Badge>}
+                                </div>
+                                <p className="text-[11px] text-muted-foreground truncate">
+                                  {format(new Date(e.starts_at), "MMM d · h:mm a")}
+                                  {e.is_online ? " · Online" : e.venue_name ? ` · ${e.venue_name}` : ""}
+                                </p>
+                              </div>
+                              <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                            </button>
+                          );
+                        })}
+                      </TabsContent>
+                    )}
+
                     {spaces.length > 0 && (
                       <TabsContent value="spaces" className="mt-3 space-y-2">
                         {spaces.map((s: any) => (
@@ -690,314 +736,166 @@ const ProfileDetailPage = () => {
                       </TabsContent>
                     )}
                   </Tabs>
+
+                  {/* ─── Inline: Verify this creator (collapsible footer) ─── */}
+                  <Collapsible open={reputationOpen} onOpenChange={setReputationOpen}>
+                    <div className="mt-5 pt-4 border-t border-border/50">
+                      <CollapsibleTrigger asChild>
+                        <button className="w-full flex items-center justify-between gap-3 text-left">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <Award className="h-4 w-4 text-primary shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-foreground">Verify this creator</p>
+                              <p className="text-[11px] text-muted-foreground truncate">
+                                On-chain reputation, investor signal & proof of work.
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {totalProofs > 0 && (
+                              <Badge variant="secondary" className="font-mono text-[10px]">
+                                {anchoredCount}/{totalProofs}
+                              </Badge>
+                            )}
+                            <ArrowRight className={cn("h-4 w-4 text-muted-foreground transition-transform", reputationOpen && "rotate-90")} />
+                          </div>
+                        </button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-4 space-y-4">
+                        {isOwnProfile && totalProofs > 0 && anchoredCount < totalProofs && (
+                          <div className="flex justify-end">
+                            <AnchorButton proofs={proofs!} />
+                          </div>
+                        )}
+                        <CreatorReadinessCard creatorId={id!} memberSince={p.created_at} />
+                        {totalProofs > 0 && (
+                          <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
+                            <div className="grid grid-cols-3 gap-3">
+                              {Object.entries(
+                                proofs!.reduce<Record<string, number>>((acc, pr) => {
+                                  acc[pr.action_type] = (acc[pr.action_type] || 0) + 1;
+                                  return acc;
+                                }, {})
+                              ).sort(([, a], [, b]) => b - a).slice(0, 3).map(([type, count]) => {
+                                const meta = PROOF_TYPE_META[type] ?? {
+                                  label: type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+                                  href: null as string | null,
+                                };
+                                const inner = (
+                                  <>
+                                    <p className="text-2xl font-bold text-foreground">{count}</p>
+                                    <p className="text-xs text-muted-foreground">{meta.label}</p>
+                                  </>
+                                );
+                                return meta.href ? (
+                                  <Link key={type} to={meta.href} className="rounded-lg border border-border bg-card/50 p-3 text-center transition-colors hover:bg-muted/60">
+                                    {inner}
+                                  </Link>
+                                ) : (
+                                  <div key={type} className="rounded-lg border border-border bg-card/50 p-3 text-center">
+                                    {inner}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            {anchoredCount > 0 && (
+                              <p className="text-xs text-muted-foreground text-center mt-3 flex items-center justify-center gap-1">
+                                <ExternalLink className="h-3 w-3" />
+                                Independently verifiable on the public ledger
+                              </p>
+                            )}
+                          </div>
+                        )}
+                        {reviewStats && reviewStats.count > 0 && (
+                          <div className="rounded-xl border border-border/50 bg-muted/20 p-4 flex items-center gap-4">
+                            <div className="text-center">
+                              <p className="text-3xl font-bold text-foreground">{reviewStats.avg}</p>
+                              <div className="flex items-center gap-0.5 mt-1 justify-center">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star key={s} className={cn("h-3.5 w-3.5", s <= Math.round(reviewStats.avg) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30")} />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {reviewStats.count} rating{reviewStats.count !== 1 ? "s" : ""} from clients & collaborators.
+                            </p>
+                          </div>
+                        )}
+                      </CollapsibleContent>
+                    </div>
+                  </Collapsible>
                 </div>
               );
             })()}
-
-            {/* ─── On-Chain Reputation — collapsible "verify this creator" panel ─── */}
-            <Collapsible open={reputationOpen} onOpenChange={setReputationOpen}>
-              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden">
-                <CollapsibleTrigger asChild>
-                  <button className="w-full flex items-center justify-between gap-3 p-4 hover:bg-muted/30 transition-colors text-left">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                        <Award className="h-4 w-4 text-primary" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-display text-sm font-semibold text-foreground">
-                          Verify this creator
-                        </p>
-                        <p className="text-[11px] text-muted-foreground truncate">
-                          On-chain reputation, investor signal & proof of work.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {totalProofs > 0 && (
-                        <Badge variant="secondary" className="font-mono text-[10px]">
-                          {anchoredCount}/{totalProofs}
-                        </Badge>
-                      )}
-                      <ArrowRight className={cn("h-4 w-4 text-muted-foreground transition-transform", reputationOpen && "rotate-90")} />
-                    </div>
-                  </button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="px-4 pb-4 space-y-4">
-                  {isOwnProfile && totalProofs > 0 && anchoredCount < totalProofs && (
-                    <div className="flex justify-end">
-                      <AnchorButton proofs={proofs!} />
-                    </div>
-                  )}
-                  <CreatorReadinessCard creatorId={id!} memberSince={p.created_at} />
-                  {totalProofs > 0 && (
-                    <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
-                      <div className="grid grid-cols-3 gap-3">
-                        {Object.entries(
-                          proofs!.reduce<Record<string, number>>((acc, pr) => {
-                            acc[pr.action_type] = (acc[pr.action_type] || 0) + 1;
-                            return acc;
-                          }, {})
-                        ).sort(([, a], [, b]) => b - a).slice(0, 3).map(([type, count]) => {
-                          const meta = PROOF_TYPE_META[type] ?? {
-                            label: type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-                            href: null as string | null,
-                          };
-                          const inner = (
-                            <>
-                              <p className="text-2xl font-bold text-foreground">{count}</p>
-                              <p className="text-xs text-muted-foreground">{meta.label}</p>
-                            </>
-                          );
-                          return meta.href ? (
-                            <Link key={type} to={meta.href} className="rounded-lg border border-border bg-card/50 p-3 text-center transition-colors hover:bg-muted/60">
-                              {inner}
-                            </Link>
-                          ) : (
-                            <div key={type} className="rounded-lg border border-border bg-card/50 p-3 text-center">
-                              {inner}
-                            </div>
-                          );
-                        })}
-                      </div>
-                      {anchoredCount > 0 && (
-                        <p className="text-xs text-muted-foreground text-center mt-3 flex items-center justify-center gap-1">
-                          <ExternalLink className="h-3 w-3" />
-                          Independently verifiable on the public ledger
-                        </p>
-                      )}
-                    </div>
-                  )}
-                  {reviewStats && reviewStats.count > 0 && (
-                    <div className="rounded-xl border border-border/50 bg-muted/20 p-4 flex items-center gap-4">
-                      <div className="text-center">
-                        <p className="text-3xl font-bold text-foreground">{reviewStats.avg}</p>
-                        <div className="flex items-center gap-0.5 mt-1 justify-center">
-                          {[1, 2, 3, 4, 5].map((s) => (
-                            <Star key={s} className={cn("h-3.5 w-3.5", s <= Math.round(reviewStats.avg) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30")} />
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {reviewStats.count} rating{reviewStats.count !== 1 ? "s" : ""} from clients & collaborators.
-                      </p>
-                    </div>
-                  )}
-                </CollapsibleContent>
-              </div>
-            </Collapsible>
           </TabsContent>
 
-          {/* ─── Works (Posts) tab ─── */}
-          {/* Anything they've shared on Flow — uploads, links (YouTube/Spotify/SoundCloud),
-              writing. Thumbnails are resolved by <FlowThumbnail/> so audio/link posts
-              get a proper preview image instead of a generic icon. */}
-          <TabsContent value="drops" className="mt-5 space-y-6">
-            {/* Posts / drops grid */}
-            <section className="space-y-3">
-              <div>
-                <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" /> Posts
-                </h2>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Uploads, tracks, videos and links shared on Flow.
-                </p>
-              </div>
-              {flowPosts && flowPosts.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {flowPosts.map((post: any) => (
-                    <div key={post.id} onClick={() => navigate(`/flow?item=${post.id}`, { state: { from: location.pathname + location.search + location.hash } })}
-                      className="group rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer">
-                      <div className="relative aspect-square overflow-hidden bg-muted">
-                        <FlowThumbnail
-                          fileUrl={post.file_url}
-                          linkUrl={post.link_url}
-                          title={post.title}
-                          description={post.description}
-                          category={post.category}
-                          className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        {post.solana_signature && (
-                          <div className="absolute top-1.5 right-1.5">
-                            <VerifiedIPBadge
-                              signature={post.solana_signature}
-                              size="xs"
-                              showLabel={false}
-                              className="shadow-sm"
-                            />
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-2.5">
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-xs font-medium text-foreground truncate flex-1">{post.title}</p>
-                        </div>
-                        <Badge variant="outline" className="text-[8px] mt-1 capitalize">{post.category}</Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : isOwnProfile ? (
-                <EmptyState
-                  icon={Sparkles}
-                  title="No posts yet"
-                  description="Use the post button on Discover to drop a work — it'll show up here."
-                  cta={{ label: "Open post", to: "/discover?post=1", prominent: true }}
-                  size="sm"
-                />
-              ) : (
-                <p className="text-xs text-muted-foreground italic">No posts yet.</p>
-              )}
-            </section>
-
-            {/* Projects */}
-            {(buildingProjects?.length ?? 0) > 0 && (
-              <section className="space-y-3">
-                <div>
-                  <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-                    <FolderKanban className="h-4 w-4 text-primary" /> Projects
-                  </h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Things they're building — solo or with collaborators.
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {buildingProjects!.map((proj: any) => (
+          {/* ─── Posts tab — TikTok/Instagram-style grid of everything they've shared on Flow.
+              No titles, no labels — just the work. A small category glyph in the corner
+              hints at the medium (music / video / image / link / writing). */}
+          <TabsContent value="drops" className="mt-5 space-y-3">
+            <div>
+              <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
+                <ImageIcon className="h-4 w-4 text-primary" /> Posts
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Uploads, tracks, videos and links shared on Flow.
+              </p>
+            </div>
+            {flowPosts && flowPosts.length > 0 ? (
+              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-1 sm:gap-1.5">
+                {flowPosts.map((post: any) => {
+                  const cat = (post.category || "").toLowerCase();
+                  const CatIcon =
+                    cat.includes("music") || cat.includes("audio") ? Music
+                    : cat.includes("video") ? Play
+                    : cat.includes("write") || cat.includes("text") ? FileText
+                    : cat.includes("link") ? ExternalLink
+                    : ImageIcon;
+                  return (
                     <button
-                      key={proj.id}
-                      onClick={() => navigate(`/projects/${proj.id}`)}
-                      className="group text-left rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all"
+                      key={post.id}
+                      onClick={() => navigate(`/flow?item=${post.id}`, { state: { from: location.pathname + location.search + location.hash } })}
+                      className="group relative aspect-square overflow-hidden bg-muted rounded-md hover:opacity-90 transition-opacity"
+                      aria-label={post.title || "Open post"}
                     >
-                      <div
-                        className="h-20 w-full"
-                        style={{ background: proj.cover_color || "linear-gradient(135deg, hsl(var(--primary)/0.2), hsl(var(--accent)/0.15))" }}
+                      <FlowThumbnail
+                        fileUrl={post.file_url}
+                        linkUrl={post.link_url}
+                        title={post.title}
+                        description={post.description}
+                        category={post.category}
+                        hideCaption
+                        className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                      <div className="p-3">
-                        <p className="text-sm font-semibold text-foreground truncate">{proj.title}</p>
-                        {proj.description && (
-                          <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{proj.description}</p>
-                        )}
-                        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                          {proj.status && (
-                            <Badge variant="outline" className="text-[9px] capitalize">{proj.status}</Badge>
-                          )}
-                          {Array.isArray(proj.categories) && proj.categories.slice(0, 2).map((c: string) => (
-                            <Badge key={c} variant="secondary" className="text-[9px]">{c}</Badge>
-                          ))}
-                        </div>
+                      {/* Tiny medium glyph — top-left */}
+                      <div className="absolute top-1.5 left-1.5 h-6 w-6 rounded-full bg-black/55 backdrop-blur-sm flex items-center justify-center">
+                        <CatIcon className="h-3 w-3 text-white" />
                       </div>
+                      {post.solana_signature && (
+                        <div className="absolute top-1.5 right-1.5">
+                          <VerifiedIPBadge
+                            signature={post.solana_signature}
+                            size="xs"
+                            showLabel={false}
+                            className="shadow-sm"
+                          />
+                        </div>
+                      )}
                     </button>
-                  ))}
-                </div>
-              </section>
+                  );
+                })}
+              </div>
+            ) : isOwnProfile ? (
+              <EmptyState
+                icon={Sparkles}
+                title="No posts yet"
+                description="Use the post button on Discover to drop a work — it'll show up here."
+                cta={{ label: "Open post", to: "/discover?post=1", prominent: true }}
+                size="sm"
+              />
+            ) : (
+              <p className="text-xs text-muted-foreground italic">No posts yet.</p>
             )}
-
-            {/* Listings — services / marketplace items */}
-            {(sellerListings?.length ?? 0) > 0 && (
-              <section className="space-y-3">
-                <div>
-                  <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-                    <ShoppingBag className="h-4 w-4 text-primary" /> Listings
-                  </h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Services & products available to book or buy.
-                  </p>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {sellerListings!.map((l: any) => {
-                    const cover = l.cover_url || l.image_url;
-                    const priceLabel = l.credits_price
-                      ? `${l.credits_price} $RHOZE`
-                      : l.price
-                      ? `${l.currency || "$"}${l.price}`
-                      : null;
-                    return (
-                      <button
-                        key={l.id}
-                        onClick={() => navigate(`/marketplace/${l.id}`)}
-                        className="group text-left rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all"
-                      >
-                        <div className="relative aspect-square bg-muted overflow-hidden">
-                          {cover ? (
-                            <img src={cover} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                          ) : (
-                            <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
-                              <ShoppingBag className="h-6 w-6 text-muted-foreground/40" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="p-2.5">
-                          <p className="text-xs font-medium text-foreground truncate">{l.title}</p>
-                          <div className="flex items-center justify-between mt-1 gap-1">
-                            {l.category && (
-                              <Badge variant="outline" className="text-[8px] capitalize truncate">{l.category}</Badge>
-                            )}
-                            {priceLabel && (
-                              <span className="text-[10px] font-semibold text-foreground tabular-nums shrink-0">{priceLabel}</span>
-                            )}
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-
-            {/* Events — past + upcoming */}
-            {(allHostedEvents?.length ?? 0) > 0 && (
-              <section className="space-y-3">
-                <div>
-                  <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-                    <CalendarIcon className="h-4 w-4 text-primary" /> Events
-                  </h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Shows they've hosted — past and upcoming.
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {allHostedEvents!.map((e: any) => {
-                    const isPast = new Date(e.starts_at) < new Date();
-                    return (
-                      <button
-                        key={e.id}
-                        onClick={() => navigate(`/events/${e.slug || e.id}`)}
-                        className="group text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
-                      >
-                        {e.cover_url ? (
-                          <img src={e.cover_url} alt="" className="h-14 w-14 rounded-lg object-cover shrink-0" />
-                        ) : (
-                          <div className="h-14 w-14 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
-                            <CalendarIcon className="h-5 w-5 text-muted-foreground/40" />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-sm font-medium text-foreground truncate">{e.title}</p>
-                            {isPast && <Badge variant="outline" className="text-[8px] shrink-0">Past</Badge>}
-                          </div>
-                          <p className="text-[11px] text-muted-foreground truncate">
-                            {format(new Date(e.starts_at), "MMM d, yyyy · h:mm a")}
-                            {e.is_online ? " · Online" : e.venue_name ? ` · ${e.venue_name}` : ""}
-                          </p>
-                        </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-
-            {/* Empty-state catch-all if absolutely nothing exists */}
-            {!flowPosts?.length &&
-              !buildingProjects?.length &&
-              !sellerListings?.length &&
-              !allHostedEvents?.length &&
-              !isOwnProfile && (
-                <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-8 text-center text-sm text-muted-foreground">
-                  Nothing to show yet.
-                </div>
-              )}
           </TabsContent>
           {/* Building tab removed in v9 — projects live in the owner's private dashboard. */}
 
