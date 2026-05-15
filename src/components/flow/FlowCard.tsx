@@ -182,14 +182,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
     (!!youtubeId && !isAudioPlatform);
   const isWriting = item.content_type === "text" || item.content_type === "link" || item.category === "writing";
 
-  // The category badge node is identical regardless of placement; only its
-  // wrapper changes (absolute over the media vs inline with the action bar).
-  const categoryBadge = cardPrefs.badgeVisible ? (
-    <Badge className={cn(badgeColorClass, "border-0 rounded-full text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 inline-flex items-center gap-1")}>
-      <CatIcon className="h-3 w-3" />
-      {item.category}
-    </Badge>
-  ) : null;
+  const showCategoryChip = cardPrefs.badgeVisible && cardPrefs.badgePlacement === "inline";
 
 
   return (
@@ -207,14 +200,6 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         whileHover={prefersReducedMotion ? undefined : { y: -2 }}
         className="relative rounded-[32px] bg-card shadow-2xl shadow-foreground/10 overflow-hidden border border-border/30 select-none"
       >
-        {/* Absolute-positioned category badge for corner placements.
-            Rendered before the media so the badge sits above any
-            embed/image. Inline placement is handled below in the
-            action-bar row. */}
-        {cardPrefs.badgePlacement !== "inline" && categoryBadge && (
-          <div className={badgePlacementClass}>{categoryBadge}</div>
-        )}
-
         <FlowUnlockGate
           artistId={item.user_id}
           artistName={(item as any).profiles?.display_name ?? item.creator_name ?? null}
@@ -222,11 +207,11 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         {/* ═══ PHOTO / DESIGN — Full image with click to enlarge ═══ */}
         {isImage && item.file_url && (
           <div className="relative group">
-            <div className="overflow-hidden bg-muted/20 flex items-center justify-center">
+            <div className="aspect-[4/5] overflow-hidden bg-muted/20 flex items-center justify-center">
               <img
                 src={item.file_url}
                 alt={item.title}
-                className="w-full max-h-[70vh] object-contain"
+                className="h-full w-full object-cover"
                 draggable={false}
                 onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
               />
@@ -289,14 +274,19 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
 
             {item.file_url && !spotifyEmbed && !isSoundCloud && !youtubeId && (
               <div className="relative">
-                <div className="overflow-hidden bg-gradient-to-br from-pink/20 via-accent/10 to-muted flex items-center justify-center min-h-[200px]">
-                  <div className="text-center">
-                    <div className="h-24 w-24 mx-auto rounded-3xl bg-card/40 backdrop-blur-md flex items-center justify-center mb-4 shadow-2xl border border-border/20">
-                      <Music className="h-12 w-12 text-foreground/50" />
-                    </div>
-                    <h3 className="font-display text-lg font-bold text-foreground px-6">{item.title}</h3>
-                  </div>
+              <div className="aspect-[4/5] overflow-hidden">
+                <div className="h-full w-full">
+                  <FlowThumbnail
+                    fileUrl={item.file_url}
+                    linkUrl={item.link_url}
+                    title={item.title}
+                    description={item.description}
+                    category={item.category}
+                    className="h-full w-full p-0"
+                    hideCaption
+                  />
                 </div>
+              </div>
                 <div className="border-t border-border" onClick={(e) => e.stopPropagation()}>
                   <AudioPreview src={item.file_url} title={item.title} />
                 </div>
@@ -304,16 +294,15 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             )}
 
             {!item.file_url && !spotifyEmbed && !isSoundCloud && !youtubeId && (
-              <div className="min-h-[280px] bg-gradient-to-br from-pink/15 via-accent/10 to-muted flex items-center justify-center">
-                <div className="text-center p-6">
-                  <div className="h-20 w-20 mx-auto rounded-2xl bg-card/40 backdrop-blur-md flex items-center justify-center mb-4 shadow-xl border border-border/20">
-                    <Music className="h-10 w-10 text-foreground/40" />
-                  </div>
-                  <h2 className="font-display text-xl font-bold text-foreground leading-tight mb-2">{item.title}</h2>
-                  {item.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
-                  )}
-                </div>
+              <div className="aspect-[4/5] overflow-hidden">
+                <FlowThumbnail
+                  linkUrl={item.link_url}
+                  title={item.title}
+                  description={item.description}
+                  category={item.category}
+                  className="h-full w-full p-0"
+                  hideCaption
+                />
               </div>
             )}
           </div>
@@ -370,8 +359,8 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
               </div>
             ) : item.file_url ? (
               <div className="relative group">
-              <div className="overflow-hidden bg-muted/20 flex items-center justify-center">
-                      <img src={item.file_url} alt={item.title} className="w-full max-h-[60vh] object-contain" draggable={false}
+              <div className="aspect-[4/5] overflow-hidden bg-muted/20 flex items-center justify-center">
+                      <img src={item.file_url} alt={item.title} className="h-full w-full object-cover" draggable={false}
                         onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 </div>
                 <button
@@ -421,7 +410,12 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             render the badge as an absolute overlay (see below the
             outer card div). */}
         <div className="px-5 pt-4 pb-2 flex items-center gap-2 flex-wrap">
-          {cardPrefs.badgePlacement === "inline" && categoryBadge}
+          {showCategoryChip && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+              <CatIcon className="h-3.5 w-3.5" />
+              <span className="capitalize">{item.category}</span>
+            </span>
+          )}
           {/* Verified-IP status — fingerprint, pending review, or anchored.
               Sits next to the category so the provenance signal travels with
               every card without competing with the action bar. */}
