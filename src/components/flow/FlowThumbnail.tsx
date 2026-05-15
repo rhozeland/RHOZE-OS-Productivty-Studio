@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Disc3, Palette, Camera, Video, PenLine, Sparkles, AudioLines, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -113,7 +113,17 @@ export const FlowThumbnail = ({
     retry: false,
   });
 
-  const src = direct || meta?.image || null;
+  const src = useMemo(() => {
+    const candidates = [direct, meta?.image, meta?.favicon].filter(Boolean) as string[];
+    const seen = new Set<string>();
+    for (const candidate of candidates) {
+      if (seen.has(candidate)) continue;
+      seen.add(candidate);
+      if (/favicon\.ico($|\?)/i.test(candidate)) continue;
+      return candidate;
+    }
+    return null;
+  }, [direct, meta?.image, meta?.favicon]);
 
   useEffect(() => {
     setImageFailed(false);
@@ -121,6 +131,7 @@ export const FlowThumbnail = ({
   }, [src]);
 
   const v = pickVisual(category, fileUrl, linkUrl);
+  const isAudioVisual = ((category ?? "").toLowerCase().trim() === "music" || (category ?? "").toLowerCase().trim() === "audio");
   const showImage = !!src && !imageFailed;
 
   return (
@@ -144,6 +155,17 @@ export const FlowThumbnail = ({
           onLoad={() => setImageLoaded(true)}
           onError={() => setImageFailed(true)}
           className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+        />
+      )}
+
+      {isAudioVisual && !showImage && (
+        <div
+          className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${imageLoaded ? "opacity-0" : "opacity-100"}`}
+          style={{
+            background:
+              "linear-gradient(180deg, hsl(var(--background) / 0.02) 0%, hsl(var(--background) / 0.04) 36%, hsl(var(--foreground) / 0.52) 76%, hsl(var(--foreground) / 0.86) 100%)",
+          }}
+          aria-hidden
         />
       )}
 
