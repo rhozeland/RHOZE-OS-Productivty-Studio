@@ -97,9 +97,14 @@ export const FlowThumbnail = ({
 }: Props) => {
   const [imageFailed, setImageFailed] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const normalizedCategory = (category ?? "").toLowerCase().trim();
+  const isAudioCategory = normalizedCategory === "music" || normalizedCategory === "audio";
   const fileLooksLikeImage = !!fileUrl && IMAGE_EXT.test(fileUrl);
-  const direct = fileLooksLikeImage ? fileUrl : getDirectThumbnail(linkUrl);
-  const shouldFetch = !direct && needsRemoteThumbnail(linkUrl);
+  const isUploadedAudio = !!fileUrl && AUDIO_EXT.test(fileUrl);
+  const isHostedAudio = !!linkUrl && AUDIO_HOSTS.test(linkUrl);
+  const useDesignedArtwork = !fileLooksLikeImage && (isAudioCategory || isUploadedAudio || isHostedAudio);
+  const direct = fileLooksLikeImage ? fileUrl : useDesignedArtwork ? null : getDirectThumbnail(linkUrl);
+  const shouldFetch = !direct && !useDesignedArtwork && needsRemoteThumbnail(linkUrl);
 
   const { data: meta } = useQuery({
     queryKey: ["link-meta", linkUrl],
@@ -133,9 +138,8 @@ export const FlowThumbnail = ({
   }, [src]);
 
   const v = pickVisual(category, fileUrl, linkUrl);
-  const normalizedCategory = (category ?? "").toLowerCase().trim();
-  const isAudioVisual = normalizedCategory === "music" || normalizedCategory === "audio";
-  const showImage = !!src && !imageFailed;
+  const isAudioVisual = isAudioCategory || isUploadedAudio || isHostedAudio;
+  const showImage = !!src && !imageFailed && (!useDesignedArtwork || fileLooksLikeImage);
 
   return (
     <div
@@ -225,10 +229,17 @@ export const FlowThumbnail = ({
                 "radial-gradient(ellipse at 25% 20%, hsl(48 100% 70% / 0.22), transparent 55%), radial-gradient(ellipse at 80% 90%, hsl(0 0% 0% / 0.55), transparent 60%)",
             }}
           />
-          {/* Centered vinyl/disc — full-bleed, high contrast */}
+          <div
+            className="absolute inset-[8%] rounded-[1.5rem] border border-white/10 shadow-[0_30px_60px_-30px_rgba(0,0,0,0.7)]"
+            style={{
+              background:
+                "linear-gradient(155deg, hsl(42 42% 91% / 0.95) 0%, hsl(40 34% 84% / 0.88) 24%, hsl(0 0% 10% / 0.18) 58%, hsl(0 0% 4% / 0.6) 100%)",
+            }}
+          />
+          {/* Centered vinyl/disc — framed like a cover, high contrast */}
           <div className="absolute inset-0 grid place-items-center">
             <div
-              className="relative aspect-square w-[78%] rounded-full shadow-[0_30px_80px_-20px_rgba(0,0,0,0.65)]"
+              className="relative aspect-square w-[72%] rounded-full shadow-[0_30px_80px_-20px_rgba(0,0,0,0.65)]"
               style={{
                 background:
                   "repeating-radial-gradient(circle at 50% 50%, hsl(0 0% 0% / 0.92) 0 6px, hsl(0 0% 0% / 0.78) 6px 7px), radial-gradient(circle at 35% 30%, hsl(0 0% 100% / 0.18), transparent 55%)",
