@@ -511,24 +511,35 @@ const MosaicTileCard = ({
        {/* Hover scrim */}
        <div className={`absolute inset-0 transition-colors duration-300 pointer-events-none ${isDropVisual ? "bg-black/10 group-hover:bg-black/20" : "bg-foreground/0 group-hover:bg-foreground/5"}`} />
 
-      {/* Hover-to-play preview button for direct audio drops */}
-      {isPlayableAudio && (
+      {/* Play button — shown for ALL music drops. Direct audio plays inline;
+          hosted/linked audio routes into Flow Mode (full playback there). */}
+      {isMusicDrop && (
         <>
-          <audio
-            ref={audioRef}
-            src={tile.fileUrl ?? undefined}
-            preload="none"
-            onEnded={() => setPlaying(false)}
-            onPause={() => setPlaying(false)}
-          />
+          {isPlayableAudio && (
+            <audio
+              ref={audioRef}
+              src={tile.fileUrl ?? undefined}
+              preload="none"
+              onEnded={() => setPlaying(false)}
+              onPause={() => setPlaying(false)}
+            />
+          )}
           <button
             type="button"
-            onClick={togglePlay}
-            aria-label={playing ? "Pause preview" : "Play preview"}
+            onClick={(e) => {
+              if (isPlayableAudio) {
+                togglePlay(e);
+              } else {
+                e.stopPropagation();
+                onClick();
+              }
+            }}
+            aria-label={playing ? "Pause preview" : "Play"}
             className={cn(
               "absolute z-20 grid place-items-center rounded-full bg-white/95 text-black shadow-xl backdrop-blur transition-all duration-200 hover:scale-110",
               isLarge ? "h-14 w-14 right-3 bottom-3" : "h-10 w-10 right-2 bottom-2",
-              playing ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+              // Always visible (not hover-gated) per request
+              "opacity-100",
             )}
           >
             {playing ? (
@@ -549,6 +560,19 @@ const MosaicTileCard = ({
               {tile.variant ?? label}
             </span>
           )}
+          {/* Drop category as an icon-only chip (no text label) */}
+          {tile.kind === "drop" && tile.category && (() => {
+            const CatIcon = getCategoryVisual(tile.category).Icon;
+            return (
+              <span
+                className="inline-grid place-items-center h-6 w-6 rounded-full bg-black/55 text-white backdrop-blur-md ring-1 ring-white/15"
+                aria-label={tile.category}
+                title={tile.category}
+              >
+                <CatIcon className="h-3 w-3" />
+              </span>
+            );
+          })()}
           {/* Verified IP shield on drops — replaces the standalone "Works" lane */}
           {tile.kind === "drop" && tile.verifiedSignature && (
             <VerifiedIPBadge signature={tile.verifiedSignature} size="xs" />
@@ -561,10 +585,21 @@ const MosaicTileCard = ({
         )}
       </div>
 
-      {/* Content footer */}
-      <div className={`absolute inset-x-0 bottom-0 p-3 ${hasImage || hasDropVisual ? "text-white" : "text-foreground"} z-10 ${isDropVisual ? "bg-gradient-to-t from-black/70 via-black/30 to-transparent" : ""}`}>
-        {/* Category eyebrow — colored for offerings so the craft is obvious at a glance */}
-        {tile.meta && (
+      {/* Content footer — for DROPS, hidden by default and revealed on hover.
+          Events/Spaces still show their title + meta upfront (location/date
+          context matters there). */}
+      <div
+        className={cn(
+          "absolute inset-x-0 bottom-0 p-3 z-10",
+          hasImage || hasDropVisual ? "text-white" : "text-foreground",
+          isDropVisual ? "bg-gradient-to-t from-black/75 via-black/30 to-transparent" : "",
+          tile.kind === "drop"
+            ? "opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200"
+            : "",
+        )}
+      >
+        {/* Eyebrow — only for non-drops (drops use the icon chip instead) */}
+        {tile.kind !== "drop" && tile.meta && (
           <p
             className={`text-[10px] uppercase tracking-wider mb-1 font-semibold ${
                 hasImage || hasDropVisual ? "text-white/80" : isIconHero ? "" : "text-muted-foreground"
@@ -587,9 +622,7 @@ const MosaicTileCard = ({
             {tile.subtitle}
           </p>
         )}
-        {/* Short description — now also shown on icon-hero offering tiles
-            (not just large ones) so they're never just an icon + title. */}
-        {!tile.subtitle && tile.description && (isLarge || isIconHero) && !hasImage && (
+        {!tile.subtitle && tile.description && (isLarge || isIconHero) && !hasImage && tile.kind !== "drop" && (
           <p className={`text-xs mt-1 line-clamp-2 leading-relaxed ${isIconHero ? "text-foreground/70" : "text-muted-foreground"}`}>
             {tile.description}
           </p>
