@@ -2192,7 +2192,7 @@ const FlowModePage = () => {
                   </div>
                 )}
 
-                {shareStep === "compose" && (
+                {shareStep === "pick" && (
                   <>
                     {/* Visual icon picker — replaces the boring dropdown */}
                     <div>
@@ -2226,14 +2226,6 @@ const FlowModePage = () => {
                         })}
                       </div>
                     </div>
-
-                    <Textarea
-                      placeholder="Say something (optional)"
-                      value={newTitle}
-                      onChange={(e) => setNewTitle(e.target.value)}
-                      rows={2}
-                      className="rounded-xl resize-none"
-                    />
 
                     <div>
                       <input
@@ -2303,22 +2295,67 @@ const FlowModePage = () => {
                         <p className="text-xs text-destructive mt-1.5 px-1" role="alert">{fileError}</p>
                       )}
                     </div>
-
-                    {/* Optional link — collapsed behind a tiny toggle so it doesn't clutter the form */}
-                    <div className="relative">
-                      <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
-                      <Input
-                        placeholder="Paste a link (optional)"
-                        value={newLink}
-                        onChange={(e) => setNewLink(e.target.value)}
-                        className="rounded-xl pl-9 text-sm"
-                      />
-                    </div>
-
                   </>
                 )}
 
-                {shareStep === "confirm" && (
+                {shareStep === "caption" && (
+                  <div className="space-y-3">
+                    {/* Comment-bubble caption — this becomes the first comment on the post */}
+                    <div className="relative rounded-2xl rounded-tl-sm border border-primary/30 bg-primary/5 p-3.5 shadow-sm">
+                      <div className="absolute -top-2 left-3 px-1.5 py-0.5 rounded-md bg-background border border-primary/30 text-[10px] uppercase tracking-wider text-primary font-medium">
+                        Your first comment
+                      </div>
+                      <Textarea
+                        autoFocus
+                        placeholder="Say something about it… a vibe, a story, a credit."
+                        value={newTitle}
+                        onChange={(e) => setNewTitle(e.target.value.slice(0, CAPTION_LIMIT))}
+                        rows={4}
+                        maxLength={CAPTION_LIMIT}
+                        className="border-0 bg-transparent p-0 resize-none focus-visible:ring-0 text-sm shadow-none"
+                      />
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-[10px] text-muted-foreground">Optional · shows as a comment bubble in Flow</span>
+                        <span className={cn(
+                          "text-[10px] tabular-nums",
+                          captionLen > CAPTION_LIMIT - 30 ? "text-amber-500" : "text-muted-foreground"
+                        )}>{captionLen}/{CAPTION_LIMIT}</span>
+                      </div>
+                    </div>
+
+                    {/* Optional link toggle — hidden behind a chip so it stays minimal */}
+                    {!showLinkField ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowLinkField(true)}
+                        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors px-2.5 py-1.5 rounded-full border border-dashed border-border hover:border-primary/40"
+                      >
+                        <LinkIcon className="h-3 w-3" />
+                        Add a link
+                      </button>
+                    ) : (
+                      <div className="relative">
+                        <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
+                        <Input
+                          autoFocus
+                          placeholder="https://…"
+                          value={newLink}
+                          onChange={(e) => setNewLink(e.target.value)}
+                          className="rounded-xl pl-9 pr-9 text-sm"
+                        />
+                        <button
+                          type="button"
+                          aria-label="Remove link"
+                          onClick={() => { setNewLink(""); setShowLinkField(false); }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                   <div className="rounded-xl border border-border bg-background/40 p-3 space-y-2">
                     <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Post details</p>
                     <div className="space-y-1.5 text-sm">
