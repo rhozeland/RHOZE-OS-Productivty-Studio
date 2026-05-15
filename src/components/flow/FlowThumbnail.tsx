@@ -258,14 +258,15 @@ export const FlowThumbnail = ({
         </div>
       )}
 
-      {/* Oversized glyph */}
-      <v.Icon
-        aria-hidden
-        className="absolute -right-6 -top-6 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110 mix-blend-overlay"
-        style={{ color: v.glyph, opacity: imageLoaded ? 0.16 : isAudioVisual ? 0.22 : 0.78, width: "10rem", height: "10rem" }}
-        strokeWidth={1.5}
-      />
-
+      {/* Oversized glyph — hidden for audio (vinyl is the hero) */}
+      {!isAudioVisual && (
+        <v.Icon
+          aria-hidden
+          className="absolute -right-6 -top-6 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110 mix-blend-overlay"
+          style={{ color: v.glyph, opacity: imageLoaded ? 0.16 : 0.78, width: "10rem", height: "10rem" }}
+          strokeWidth={1.5}
+        />
+      )}
       {!hideCaption && (
         <>
           {/* Bottom gradient scrim for legibility */}
