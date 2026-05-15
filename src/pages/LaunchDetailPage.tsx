@@ -410,6 +410,18 @@ const LaunchDetailPage = () => {
             );
           })()}
 
+          {/* Inline graduation progress + backing momentum sparkline.
+              Replaces the bulky standalone BackingMomentumChart — same data,
+              one slim strip wired to the graduation goal. */}
+          {launch.status !== "cancelled" && (
+            <GraduationProgressBar
+              launchId={launch.id}
+              raisedRhoze={Number(launch.real_sol_reserves) * 100}
+              targetRhoze={Number(launch.graduation_sol_target) * 100}
+              status={launch.status}
+            />
+          )}
+
           {/* Graduated payout summary */}
           {launch.status === "graduated" && launch.creator_payout_rhoze ? (
             <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs space-y-1.5">
