@@ -100,6 +100,7 @@ const FreshWorksGrid = () => {
                     linkUrl={w.link_url}
                     title={w.title || "Untitled"}
                     description={w.description}
+                    category={w.category}
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 )}
