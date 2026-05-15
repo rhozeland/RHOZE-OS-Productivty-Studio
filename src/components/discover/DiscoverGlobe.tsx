@@ -334,7 +334,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
     spotlightMarkers[0] ??
     (allSpotlights[0] as any) ??
     null;
-  const hoveredRegion = points.find((point) => point.code === hoveredCode) ?? null;
+  
 
   const latitudePaths = useMemo(
     () => [-52, -24, 0, 24, 52].map((latitude) => buildLatitudePath(latitude, rotation)).filter(Boolean),
