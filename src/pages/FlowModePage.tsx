@@ -98,6 +98,7 @@ const FlowModePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { isAdmin } = useAdminCheck();
   const queryClient = useQueryClient();
+  const routedFlowItemId = (location.state as { flowItemId?: string | null } | null)?.flowItemId ?? null;
   const [calibrated, setCalibrated] = useState(false);
   const [showIdleHints, setShowIdleHints] = useState(false);
   const [showTutorialOverlay, setShowTutorialOverlay] = useState(false);
@@ -180,6 +181,13 @@ const FlowModePage = () => {
   const [viewMode, setViewMode] = useState<"swipe" | "browse">(
     searchParams.get("view") === "browse" ? "browse" : "swipe",
   );
+  useEffect(() => {
+    const routedItemId = (location.state as { flowItemId?: string | null } | null)?.flowItemId;
+    if (!routedItemId || searchParams.get("item")) return;
+    const next = new URLSearchParams(searchParams);
+    next.set("item", routedItemId);
+    setSearchParams(next, { replace: true });
+  }, [location.state, searchParams, setSearchParams]);
   useEffect(() => {
     const nextView = searchParams.get("view") === "browse" ? "browse" : "swipe";
     setViewMode((current) => (current === nextView ? current : nextView));
@@ -436,7 +444,7 @@ const FlowModePage = () => {
     // a Discover tile (or shared link) expecting to land on a specific card.
     // Skip the calibration gate entirely so the swipe deck is interactive on
     // arrival; preferences fall back to "all" categories.
-    if (searchParams.get("item")) {
+    if (searchParams.get("item") || routedFlowItemId) {
       setPreferredCategories(CATEGORIES);
       setSelectedCategories(CATEGORIES);
       setFeedScope("all");
@@ -494,7 +502,7 @@ const FlowModePage = () => {
       cancelled = true;
       if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
     };
-  }, [user, calibrationKey, persistFlowPrefs]);
+  }, [user, calibrationKey, persistFlowPrefs, routedFlowItemId]);
 
   const {
     data: flowItems,
@@ -853,7 +861,7 @@ const FlowModePage = () => {
   // Deep-link fallback: when ?item=<id> points to an item that's outside the
   // current feed (different category, hidden by RLS, etc.), fetch it directly
   // and prepend it so the user lands on the card they actually clicked.
-  const deepLinkId = searchParams.get("item");
+  const deepLinkId = searchParams.get("item") ?? routedFlowItemId;
   const inFeed = deepLinkId ? baseItems.some((i: any) => i.id === deepLinkId) : true;
   const { data: deepLinkItem } = useQuery({
     queryKey: ["flow-deep-link-item", deepLinkId],
@@ -932,7 +940,7 @@ const FlowModePage = () => {
   //     deep link as applied, and strip ?item so subsequent swipes are
   //     not reverted.
   const appliedDeepLinkRef = useRef<string | null>(null);
-  const pendingDeepLinkId = searchParams.get("item");
+  const pendingDeepLinkId = searchParams.get("item") ?? routedFlowItemId;
   useEffect(() => {
     const targetId = pendingDeepLinkId;
     if (!targetId) return;

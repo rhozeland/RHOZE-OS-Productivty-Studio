@@ -24,6 +24,7 @@ const IMAGE_EXT = /\.(jpe?g|png|gif|webp|avif|bmp|svg|tiff?)(\?|$)/i;
 
 const AUDIO_HOSTS = /(spotify\.com|soundcloud\.com|music\.apple\.com|bandcamp\.com|tidal\.com|audius\.co|lnkfi\.re|linkfire\.com|songwhip\.com|distrokid\.com|orcd\.co)/i;
 const VIDEO_HOSTS = /(youtube\.com|youtu\.be|vimeo\.com|tiktok\.com|loom\.com)/i;
+const AUDIO_AGGREGATOR_HOSTS = /(lnkfi\.re|linkfire\.com|songwhip\.com|distrokid\.com|orcd\.co)/i;
 
 interface HeroVisual {
   Icon: LucideIcon;
@@ -103,11 +104,13 @@ export const FlowThumbnail = ({
   const isUploadedAudio = !!fileUrl && AUDIO_EXT.test(fileUrl);
   const isHostedAudio = !!linkUrl && AUDIO_HOSTS.test(linkUrl);
   const isAudioContext = isAudioCategory || isUploadedAudio || isHostedAudio;
+  const isAggregatorAudioLink = !!linkUrl && AUDIO_AGGREGATOR_HOSTS.test(linkUrl);
+  const shouldUseVinylFallback = isUploadedAudio && (!linkUrl || isAggregatorAudioLink);
   // Always try to surface real artwork first (Spotify/SoundCloud og:image,
   // YouTube thumbnail, og:image on link-shared posts). Only fall back to
   // the designed vinyl artwork when no image can be resolved.
-  const direct = fileLooksLikeImage ? fileUrl : getDirectThumbnail(linkUrl);
-  const shouldFetch = !direct && needsRemoteThumbnail(linkUrl);
+  const direct = shouldUseVinylFallback ? null : fileLooksLikeImage ? fileUrl : getDirectThumbnail(linkUrl);
+  const shouldFetch = !shouldUseVinylFallback && !direct && needsRemoteThumbnail(linkUrl);
 
   const { data: meta } = useQuery({
     queryKey: ["link-meta", linkUrl],
@@ -130,10 +133,11 @@ export const FlowThumbnail = ({
       if (seen.has(candidate)) continue;
       seen.add(candidate);
       if (/favicon\.ico($|\?)/i.test(candidate)) continue;
+      if (shouldUseVinylFallback) continue;
       return candidate;
     }
     return null;
-  }, [direct, meta?.image, meta?.favicon]);
+  }, [direct, meta?.image, meta?.favicon, shouldUseVinylFallback]);
 
   useEffect(() => {
     setImageFailed(false);
@@ -164,7 +168,11 @@ export const FlowThumbnail = ({
           loading="lazy"
           onLoad={() => setImageLoaded(true)}
           onError={() => setImageFailed(true)}
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+          className={cn(
+            "absolute inset-0 h-full w-full object-cover transition-[opacity,transform] duration-300",
+            imageLoaded ? "opacity-100 scale-[1.08]" : "opacity-0 scale-100",
+            isAudioContext ? "object-center" : undefined,
+          )}
         />
       )}
 
