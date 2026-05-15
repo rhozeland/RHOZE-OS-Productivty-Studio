@@ -7,10 +7,6 @@ import AudioPreview from "@/components/marketplace/AudioPreview";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useFlowCardPrefs } from "@/hooks/useFlowCardPrefs";
-import {
-  badgeColorClassFor,
-  badgePlacementClassFor,
-} from "@/lib/flow-card-prefs";
 import FlowProvenanceChip from "@/components/flow/FlowProvenanceChip";
 import VerifyWorkDialog from "@/components/works/VerifyWorkDialog";
 import FlowUnlockGate from "@/components/flow/FlowUnlockGate";
