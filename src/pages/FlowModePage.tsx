@@ -2473,6 +2473,7 @@ const FlowModePage = () => {
             );
           })()}
           </div>
+          </div>
 
           {/* Celebration overlay — fires when the post lands on the feed */}
           <AnimatePresence>
