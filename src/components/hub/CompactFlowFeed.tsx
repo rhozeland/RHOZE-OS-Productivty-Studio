@@ -244,16 +244,6 @@ const CompactFlowFeed = () => {
                   >
                     <Send className="h-3.5 w-3.5" /> Send
                   </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (activeItem?.user_id) navigate(`/profiles/${activeItem.user_id}`);
-                    }}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90"
-                  >
-                    Open <ArrowRight className="h-3.5 w-3.5" />
-                  </button>
                 </div>
 
                 <div className="mt-3.5 flex items-center gap-3">
