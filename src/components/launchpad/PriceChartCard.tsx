@@ -70,8 +70,8 @@ const RANGE_BUCKET_MS: Record<Range, number> = {
 const CHART_UP = "hsl(var(--chart-up))";
 const CHART_DOWN = "hsl(var(--chart-down))";
 const CHART_GRID = "hsl(var(--chart-grid))";
-const CHART_UP_SOFT = "hsl(var(--chart-up) / 0.14)";
-const CHART_DOWN_SOFT = "hsl(var(--chart-down) / 0.14)";
+const CHART_UP_SOFT = "hsl(var(--chart-up) / 0.45)";
+const CHART_DOWN_SOFT = "hsl(var(--chart-down) / 0.45)";
 const RHOZE_PER_SOL = 100;
 
 const toRhoze = (sol: number) => sol * RHOZE_PER_SOL;
