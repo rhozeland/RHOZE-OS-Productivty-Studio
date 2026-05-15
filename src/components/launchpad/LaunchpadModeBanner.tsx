@@ -1,10 +1,13 @@
 /**
  * LaunchpadModeBanner — surfaces whether trades are simulated (Step 4a) or
  * routed through the on-chain Anchor program (Step 4b, once deployed).
+ *
+ * Copy is written for fans, not traders: "Demo mode" instead of "Simulation
+ * mode," no jargon about Anchor programs in the default banner.
  */
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Beaker, Radio } from "lucide-react";
+import { FlaskConical, Radio } from "lucide-react";
 import { isLaunchpadOnChainEnabled, LAUNCHPAD_NETWORK } from "@/lib/launchpad-onchain";
 import { subscribeIdl } from "@/lib/launchpad-idl-store";
 
@@ -15,20 +18,25 @@ const LaunchpadModeBanner = () => {
 
   if (!onChain) {
     return (
-      <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 flex items-center gap-2 text-xs">
-        <Beaker className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-        <span className="text-amber-200/90">
-          <span className="font-semibold">Simulation mode.</span> The bonding curve runs server-side — no real SOL is moved. The Anchor program ships in 4b.
-        </span>
+      <div className="rounded-lg border-2 border-amber-600/40 dark:border-amber-400/40 bg-amber-50 dark:bg-amber-950/40 px-3 py-2.5 flex items-start gap-2.5 text-xs">
+        <FlaskConical className="h-4 w-4 text-amber-700 dark:text-amber-300 shrink-0 mt-0.5" />
+        <div className="space-y-0.5">
+          <div className="font-semibold text-amber-900 dark:text-amber-100">
+            Demo mode — no real money is moving yet
+          </div>
+          <div className="text-amber-800/90 dark:text-amber-200/85 leading-relaxed">
+            We're testing how backing creators works before going live on Solana.
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 flex items-center gap-2 text-xs">
-      <Radio className="h-3.5 w-3.5 text-emerald-500 shrink-0 animate-pulse" />
-      <span className="text-emerald-200/90">
-        <span className="font-semibold">Live on Solana {LAUNCHPAD_NETWORK}.</span> Trades settle on-chain via the Rhozeland Launchpad program.
+    <div className="rounded-lg border-2 border-emerald-600/40 dark:border-emerald-400/40 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-2.5 flex items-center gap-2 text-xs">
+      <Radio className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-300 shrink-0 animate-pulse" />
+      <span className="text-emerald-900 dark:text-emerald-100">
+        <span className="font-semibold">Live on Solana {LAUNCHPAD_NETWORK}.</span> Backings settle on-chain.
       </span>
       <Badge variant="outline" className="ml-auto text-[10px] uppercase">{LAUNCHPAD_NETWORK}</Badge>
     </div>

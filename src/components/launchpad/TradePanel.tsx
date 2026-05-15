@@ -91,6 +91,26 @@ const TradePanel = ({
   const [slippagePct, setSlippagePct] = useState<number>(1); // 1% default
   const [phase, setPhase] = useState<TxPhase>({ kind: "idle" });
 
+  // Trader-view preference (shared with LaunchDetailPage). Fan view shows
+  // Back / Withdraw labels; trader view keeps Buy / Sell.
+  const [traderView, setTraderView] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("rhoze-trader-view") === "1";
+  });
+  useEffect(() => {
+    const handler = () => {
+      setTraderView(window.localStorage.getItem("rhoze-trader-view") === "1");
+    };
+    window.addEventListener("storage", handler);
+    const interval = window.setInterval(handler, 1000);
+    return () => {
+      window.removeEventListener("storage", handler);
+      window.clearInterval(interval);
+    };
+  }, []);
+  const buyLabel = traderView ? "Buy" : "Back";
+  const sellLabel = traderView ? "Sell" : "Withdraw";
+
   const onChainEnabled = isLaunchpadOnChainEnabled();
 
   // Load holdings + $RHOZE balance
@@ -350,14 +370,16 @@ const TradePanel = ({
 
       <Tabs value={side} onValueChange={(v) => { setSide(v as "buy" | "sell"); setAmount(""); }}>
         <TabsList className="grid grid-cols-2 w-full">
-          <TabsTrigger value="buy">Buy</TabsTrigger>
-          <TabsTrigger value="sell">Sell</TabsTrigger>
+          <TabsTrigger value="buy">{buyLabel}</TabsTrigger>
+          <TabsTrigger value="sell">{sellLabel}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="buy" className="space-y-3 pt-3">
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="text-xs text-muted-foreground">$RHOZE to spend</label>
+              <label className="text-xs text-muted-foreground">
+                {traderView ? "$RHOZE to spend" : "$RHOZE to back with"}
+              </label>
               <span className="text-[10px] text-muted-foreground font-mono">
                 {rhozeBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} avail
               </span>
@@ -378,13 +400,19 @@ const TradePanel = ({
           </div>
           <div className="flex justify-center"><ArrowDown className="h-4 w-4 text-muted-foreground" /></div>
           <div className="rounded-md bg-muted/40 p-3 text-sm font-mono text-center min-h-[2.5rem] flex items-center justify-center">
-            {quote ? quote.receiveLabel : <span className="text-muted-foreground text-xs">Receive ${ticker}</span>}
+            {quote ? quote.receiveLabel : (
+              <span className="text-muted-foreground text-xs">
+                {traderView ? `Receive $${ticker}` : `You'll get a stake in $${ticker}`}
+              </span>
+            )}
           </div>
         </TabsContent>
 
         <TabsContent value="sell" className="space-y-3 pt-3">
           <div className="flex justify-between items-center">
-            <label className="text-xs text-muted-foreground">${ticker} to sell</label>
+            <label className="text-xs text-muted-foreground">
+              {traderView ? `$${ticker} to sell` : `Stake to withdraw (in $${ticker} units)`}
+            </label>
             <span className="text-[10px] text-muted-foreground font-mono">
               {holdings.toLocaleString(undefined, { maximumFractionDigits: 2 })} held
             </span>
@@ -458,7 +486,9 @@ const TradePanel = ({
 
       <Button onClick={submit} disabled={busy} className="w-full">
         {busy && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}
-        {side === "buy" ? `Swap $RHOZE → $${ticker}` : `Swap $${ticker} → $RHOZE`}
+        {traderView
+          ? (side === "buy" ? `Swap $RHOZE → $${ticker}` : `Swap $${ticker} → $RHOZE`)
+          : (side === "buy" ? `Back with $RHOZE` : `Withdraw stake`)}
       </Button>
 
       {/* On-chain transaction lifecycle — only renders in 4b mode */}
