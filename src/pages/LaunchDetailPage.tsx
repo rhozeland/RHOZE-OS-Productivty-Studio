@@ -250,7 +250,12 @@ const LaunchDetailPage = () => {
             )}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl md:text-2xl font-bold font-mono">${launch.ticker}</h1>
+                <h1 className="text-xl md:text-2xl font-bold">
+                  {launch.name}
+                  <span className="text-sm md:text-base text-muted-foreground font-mono ml-2 align-middle">
+                    · ${launch.ticker}
+                  </span>
+                </h1>
                 {launch.status === "graduated" && (
                   <Badge variant="secondary" className="gap-1">
                     <GraduationCap className="h-3 w-3" /> Graduated
@@ -260,14 +265,24 @@ const LaunchDetailPage = () => {
                 <VerifiedIPBadge signature={workSig} size="xs" />
                 {launch.mint_address && <MintAddressChip address={launch.mint_address} size="xs" />}
               </div>
-              <p className="text-sm text-muted-foreground truncate">{launch.name}</p>
+              <p className="text-sm text-muted-foreground truncate">
+                {traderView ? "Bonding-curve drop · backed in $RHOZE" : "A drop you can back · denominated in $RHOZE"}
+              </p>
             </div>
+
+            {/* Trader view toggle — fans see Kickstarter labels, traders flip back to market data */}
+            <button
+              type="button"
+              onClick={() => setTraderView((v) => !v)}
+              className="shrink-0 text-[10px] uppercase tracking-wide rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 hover:border-foreground/40 hover:text-foreground transition-colors text-muted-foreground"
+              title={traderView ? "Switch to fan view (recommended)" : "Switch to trader view"}
+            >
+              {traderView ? "Trader view" : "Fan view"}
+            </button>
           </div>
 
-          {/* Hero stats — Market Cap leads, P&L next, Holders, then Price (small).
-              All values in $RHOZE. The price chart, LP-lock, and graduation
-              progress are intentionally hidden — they're collapsed below or
-              gated behind the on-chain flag. */}
+          {/* Hero stats — Kickstarter-style by default. Trader view flips to
+              market cap / P&L / price labels for power users. */}
           {(() => {
             const RHOZE_PER_SOL = 100;
             const priceRhoze = price * RHOZE_PER_SOL;
@@ -279,7 +294,6 @@ const LaunchDetailPage = () => {
               if (n >= 0.0001) return n.toFixed(6);
               return n.toPrecision(3);
             };
-            // P&L = current value − cost basis (in $RHOZE)
             const myValueRhoze = myHolding ? myHolding.balance * price * RHOZE_PER_SOL : 0;
             const myCostRhoze = myHolding ? myHolding.sol_invested * RHOZE_PER_SOL : 0;
             const pnlRhoze = myValueRhoze - myCostRhoze;
@@ -287,84 +301,121 @@ const LaunchDetailPage = () => {
             const hasPosition = !!myHolding && myHolding.balance > 0;
             const pnlPositive = pnlRhoze >= 0;
 
+            // Fan-view labels
+            const primaryLabel = traderView ? "Market cap" : "Total raised";
+            const primaryValue = fmt(mcapRhoze);
+            const positionLabel = traderView ? "Your P&L" : "Your support value";
+            const peopleLabel = traderView ? "Holders" : "Backers";
+            const priceLabel = traderView ? "Price" : "Per-unit (small)";
+
             return (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {/* Market cap — primary stat */}
+                {/* Primary stat — Total raised / Market cap */}
                 <div className="md:col-span-2 rounded-lg bg-gradient-to-br from-emerald-500/10 to-fuchsia-500/10 border border-border/50 p-3">
-                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                    Market cap
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground flex items-center gap-1">
+                    {!traderView && <Sparkles className="h-2.5 w-2.5" />}
+                    {primaryLabel}
                   </div>
                   <div className="text-2xl md:text-3xl font-mono font-bold mt-0.5">
-                    {fmt(mcapRhoze)} <span className="text-sm text-muted-foreground">$RHOZE</span>
+                    {primaryValue} <span className="text-sm text-muted-foreground">$RHOZE</span>
                   </div>
-                </div>
-
-                {/* Your P&L */}
-                <div className="rounded-lg bg-muted/30 p-3">
-                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                    Your P&L
-                  </div>
-                  {hasPosition ? (
-                    <div
-                      className={cn(
-                        "text-base font-mono font-semibold mt-0.5 flex items-center gap-1",
-                        pnlPositive ? "text-emerald-500" : "text-rose-500",
-                      )}
-                    >
-                      {pnlPositive ? (
-                        <TrendingUp className="h-3.5 w-3.5" />
-                      ) : (
-                        <TrendingDown className="h-3.5 w-3.5" />
-                      )}
-                      {pnlPositive ? "+" : ""}
-                      {fmt(Math.abs(pnlRhoze))}
-                      <span className="text-[10px] text-muted-foreground ml-1">
-                        ({pnlPositive ? "+" : ""}
-                        {pnlPct.toFixed(1)}%)
-                      </span>
+                  {!traderView && (
+                    <div className="text-[10px] text-muted-foreground mt-1 leading-relaxed">
+                      Pooled support from fans backing this drop
                     </div>
-                  ) : (
-                    <div className="text-sm text-muted-foreground mt-1">No position</div>
                   )}
                 </div>
 
-                {/* Holders + Price (small, with tooltip) */}
+                {/* Position — Support value (no red, no %) in fan view; full P&L in trader view */}
                 <div className="rounded-lg bg-muted/30 p-3">
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                    Holders
+                    {positionLabel}
+                  </div>
+                  {hasPosition ? (
+                    traderView ? (
+                      <div
+                        className={cn(
+                          "text-base font-mono font-semibold mt-0.5 flex items-center gap-1",
+                          pnlPositive ? "text-emerald-500" : "text-rose-500",
+                        )}
+                      >
+                        {pnlPositive ? (
+                          <TrendingUp className="h-3.5 w-3.5" />
+                        ) : (
+                          <TrendingDown className="h-3.5 w-3.5" />
+                        )}
+                        {pnlPositive ? "+" : ""}
+                        {fmt(Math.abs(pnlRhoze))}
+                        <span className="text-[10px] text-muted-foreground ml-1">
+                          ({pnlPositive ? "+" : ""}
+                          {pnlPct.toFixed(1)}%)
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="text-base font-mono font-semibold mt-0.5">
+                          {fmt(myValueRhoze)}{" "}
+                          <span className="text-[10px] text-muted-foreground">$RHOZE</span>
+                        </div>
+                        <div className="text-[10px] text-muted-foreground mt-0.5">
+                          You backed {fmt(myCostRhoze)} $RHOZE
+                        </div>
+                      </>
+                    )
+                  ) : (
+                    <div className="text-sm text-muted-foreground mt-1">Not backing yet</div>
+                  )}
+                </div>
+
+                {/* Backers / Holders */}
+                <div className="rounded-lg bg-muted/30 p-3">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {peopleLabel}
                   </div>
                   <div className="text-base font-mono font-semibold mt-0.5">
                     {holderCount === null ? "—" : holderCount.toLocaleString()}
                   </div>
                 </div>
 
-                <TooltipProvider delayDuration={150}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="rounded-lg bg-muted/30 p-3 cursor-help">
-                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground flex items-center gap-1">
-                          Price <Info className="h-2.5 w-2.5 opacity-60" />
+                {/* Price — only meaningful in trader view; collapsed in fan view */}
+                {traderView ? (
+                  <TooltipProvider delayDuration={150}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="rounded-lg bg-muted/30 p-3 cursor-help">
+                          <div className="text-[10px] uppercase tracking-wide text-muted-foreground flex items-center gap-1">
+                            Price <Info className="h-2.5 w-2.5 opacity-60" />
+                          </div>
+                          <div className="text-base font-mono font-semibold mt-0.5">
+                            {fmtTiny(priceRhoze)}
+                            <span className="text-[10px] text-muted-foreground ml-1">$RHOZE</span>
+                          </div>
                         </div>
-                        <div className="text-base font-mono font-semibold mt-0.5">
-                          {fmtTiny(priceRhoze)}
-                          <span className="text-[10px] text-muted-foreground ml-1">$RHOZE</span>
-                        </div>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-[220px] text-xs">
-                      Price per token from the simulated bonding curve. Market cap = price × total supply.
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-[220px] text-xs">
+                        Price per token from the bonding curve. Market cap = price × total supply.
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  <div className="rounded-lg bg-muted/30 p-3">
+                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      Status
+                    </div>
+                    <div className="text-base font-mono font-semibold mt-0.5 capitalize">
+                      {launch.status}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })()}
 
-          {/* Graduated payout summary — only shown if it actually graduated */}
+          {/* Graduated payout summary */}
           {launch.status === "graduated" && launch.creator_payout_rhoze ? (
             <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs space-y-1.5">
               <div className="flex items-center gap-1.5 font-semibold text-emerald-500">
-                <GraduationCap className="h-3.5 w-3.5" /> Graduated
+                <GraduationCap className="h-3.5 w-3.5" /> Goal reached
                 {launch.graduated_at && (
                   <span className="text-muted-foreground font-normal">
                     · {new Date(launch.graduated_at).toLocaleDateString()}
@@ -373,11 +424,11 @@ const LaunchDetailPage = () => {
               </div>
               <div className="grid grid-cols-2 gap-2 font-mono">
                 <div>
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Paid to artist</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Paid to creator</div>
                   <div>{Number(launch.creator_payout_rhoze).toLocaleString(undefined, { maximumFractionDigits: 0 })} $RHOZE</div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Bonus to holders</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Bonus to backers</div>
                   <div>{Number(launch.holder_bonus_rhoze ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })} $RHOZE</div>
                 </div>
               </div>
@@ -390,7 +441,7 @@ const LaunchDetailPage = () => {
               <span className="font-mono">{(Number(launch.creator_fees_earned) * 100).toFixed(2)} $RHOZE</span>
               <span className="text-muted-foreground">
                 {" "}
-                · {launch.creator_fee_bps / 100}% of every trade
+                · {launch.creator_fee_bps / 100}% of every backing & withdrawal
               </span>
             </div>
           )}
@@ -401,20 +452,59 @@ const LaunchDetailPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* LEFT: chart + tabs */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Chart is collapsed by default — most users only care about
-              market cap + P&L. Click to expand for the bonding-curve chart. */}
-          <button
-            type="button"
-            onClick={() => setShowChart((v) => !v)}
-            className="w-full flex items-center justify-between gap-2 rounded-md border border-border/60 bg-card/40 backdrop-blur px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
-          >
-            <span className="flex items-center gap-1.5">
-              <Activity className="h-3.5 w-3.5" />
-              {showChart ? "Hide price chart" : "Show price chart"}
-            </span>
-            {showChart ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-          </button>
-          {showChart && <PriceChartCard launchId={launch.id} ticker={launch.ticker} />}
+          {/* Chart toggle: collapsed by default. Inside, fans see backing
+              momentum (cumulative raised); traders can flip to price chart. */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowChart((v) => !v)}
+              className="flex-1 flex items-center justify-between gap-2 rounded-md border border-border/60 bg-card/40 backdrop-blur px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+            >
+              <span className="flex items-center gap-1.5">
+                {chartMode === "momentum" ? (
+                  <Sparkles className="h-3.5 w-3.5" />
+                ) : (
+                  <Activity className="h-3.5 w-3.5" />
+                )}
+                {showChart
+                  ? `Hide ${chartMode === "momentum" ? "backing momentum" : "price chart"}`
+                  : `Show ${chartMode === "momentum" ? "backing momentum" : "price chart"}`}
+              </span>
+              {showChart ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            </button>
+            {showChart && (
+              <div className="inline-flex rounded-md border border-border/60 bg-muted/30 p-0.5 text-[10px]">
+                <button
+                  type="button"
+                  onClick={() => setChartMode("momentum")}
+                  className={cn(
+                    "px-2 py-1 rounded transition-colors flex items-center gap-1",
+                    chartMode === "momentum"
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                  title="Cumulative $RHOZE backed over time"
+                >
+                  <Sparkles className="h-3 w-3" /> Momentum
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChartMode("price")}
+                  className={cn(
+                    "px-2 py-1 rounded transition-colors flex items-center gap-1",
+                    chartMode === "price"
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                  title="Price per unit on the bonding curve"
+                >
+                  <CandlestickChart className="h-3 w-3" /> Price
+                </button>
+              </div>
+            )}
+          </div>
+          {showChart && chartMode === "momentum" && <BackingMomentumChart launchId={launch.id} />}
+          {showChart && chartMode === "price" && <PriceChartCard launchId={launch.id} ticker={launch.ticker} />}
 
           <Card className="bg-card/40 backdrop-blur">
             <CardContent className="p-3">
