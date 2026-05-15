@@ -25,8 +25,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import RegionPromptBanner from "@/components/discover/RegionPromptBanner";
 import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
-import StreamComposer from "@/components/stream/StreamComposer";
 import ConversationsMosaic from "@/components/hub/ConversationsMosaic";
+import HubFlowWidget from "@/components/hub/HubFlowWidget";
+import PostMenuButton from "@/components/PostMenuButton";
 import CreatorsGrid from "@/components/discover/CreatorsGrid";
 
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
@@ -412,28 +413,38 @@ const DiscoverPage = () => {
         </Suspense>
       </motion.section>
 
-      {/* ─── Quick-drop composer ───────────────────────────────────── */}
-      {user && <StreamComposer defaultType="text" />}
-
       {/* ─── Creator Pass upgrade nudge ─────────────────────────────── */}
       <CreatorPassUpgradeCta />
 
       {/* ─── Trending artists (self-gated by liquidity) ───────────── */}
       <TrendingArtistsLane marketFilter={marketFilter} />
 
-      {/* ─── The Stream ─────────────────────────────────────────────── */}
+      {/* ─── Feed ───────────────────────────────────────────────────── */}
       <section id="discover-stream" className="space-y-4 scroll-mt-20">
         <div className="flex items-end justify-between gap-3 flex-wrap">
           <div>
             <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-1">
-              The Stream
+              Feed
             </p>
             <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
-              Everything, all at once.
+              Feed
             </h2>
           </div>
 
           <div className="flex items-center gap-2">
+            {user && (
+              <PostMenuButton
+                trigger={
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground hover:border-foreground/20 hover:bg-secondary transition-colors"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Post
+                  </button>
+                }
+              />
+            )}
             <button
               type="button"
               onClick={() => navigate("/flow", { state: { from: `${location.pathname}${location.search}` } })}
@@ -502,7 +513,10 @@ const DiscoverPage = () => {
             <ConversationsMosaic kind={streamTab} category={category} />
           </div>
         ) : (
-          <ConversationsMosaic kind="all" />
+          <div className="space-y-4">
+            <HubFlowWidget hideHeading />
+            <ConversationsMosaic kind="all" />
+          </div>
         )}
       </section>
 
