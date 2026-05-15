@@ -132,7 +132,7 @@ const FlowFeed = () => {
                 return (
                   <div className="aspect-[16/10] overflow-hidden bg-muted relative">
                     <img
-                      src={`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`}
+                      src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
                       alt={item.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
