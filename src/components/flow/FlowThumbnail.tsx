@@ -106,7 +106,7 @@ export const FlowThumbnail = ({
         body: { url: linkUrl },
       });
       if (error) throw error;
-      return data as { image?: string | null };
+      return data as { image?: string | null; favicon?: string | null };
     },
     enabled: shouldFetch && !!linkUrl,
     staleTime: 1000 * 60 * 60 * 24,
