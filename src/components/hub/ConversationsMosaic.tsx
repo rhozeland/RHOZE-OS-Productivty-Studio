@@ -272,10 +272,7 @@ const ConversationsMosaic = ({
     return filtered.slice(0, 24);
   }, [allTiles, kind, category]);
 
-  // When filtered to a single kind, drop the bento "hero/wide/tall" pattern
-  // (which creates large empty cells when there are only a handful of items)
-  // and render a tight uniform grid instead.
-  const isFiltered = kind !== "all";
+
 
   if (isLoading) {
     // Skeleton: same masonry container with varied heights so it previews shape.
