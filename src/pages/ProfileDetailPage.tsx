@@ -596,19 +596,20 @@ const ProfileDetailPage = () => {
               </motion.div>
             )}
 
-            {/* ─── Ways to support — launches + shows + spaces ─── */}
+            {/* ─── Ways to support — launches + listings + events + spaces (+ inline Verify) ─── */}
             {(() => {
-              const shows  = upcomingEvents ?? [];
-              const spaces = hostedSpaces ?? [];
+              const events    = allHostedEvents ?? [];
+              const spaces    = hostedSpaces ?? [];
+              const listings  = sellerListings ?? [];
 
               const tabs: { value: string; label: string; icon: any; count: number | null }[] = [
-                // Launches always shown — the catalog handles its own empty state for the owner.
                 { value: "launches", label: "Launches", icon: Coins, count: null },
               ];
-              if (shows.length)  tabs.push({ value: "shows",  label: "Shows",  icon: CalendarIcon, count: shows.length });
-              if (spaces.length) tabs.push({ value: "spaces", label: "Spaces", icon: Building2,    count: spaces.length });
+              if (listings.length) tabs.push({ value: "listings", label: "Listings", icon: ShoppingBag, count: listings.length });
+              if (events.length)   tabs.push({ value: "events",   label: "Events",   icon: CalendarIcon, count: events.length });
+              if (spaces.length)   tabs.push({ value: "spaces",   label: "Spaces",   icon: Building2,    count: spaces.length });
 
-              const totalCount = shows.length + spaces.length;
+              const totalCount = listings.length + events.length + spaces.length;
 
               return (
                 <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
@@ -635,33 +636,78 @@ const ProfileDetailPage = () => {
                       <CreatorDropsCatalog creatorId={id!} isOwnProfile={isOwnProfile} />
                     </TabsContent>
 
-                    {shows.length > 0 && (
-                      <TabsContent value="shows" className="mt-3 space-y-2">
-                        {shows.map((e: any) => (
-                          <button
-                            key={e.id}
-                            onClick={() => navigate(`/events/${e.slug || e.id}`)}
-                            className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
-                          >
-                            {e.cover_url ? (
-                              <img src={e.cover_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
-                            ) : (
-                              <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
-                                <CalendarIcon className="h-5 w-5 text-muted-foreground/40" />
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-foreground truncate">{e.title}</p>
-                              <p className="text-[11px] text-muted-foreground">
-                                {format(new Date(e.starts_at), "MMM d · h:mm a")}
-                                {e.is_online ? " · Online" : e.venue_name ? ` · ${e.venue_name}` : ""}
-                              </p>
-                            </div>
-                            <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                          </button>
-                        ))}
+                    {listings.length > 0 && (
+                      <TabsContent value="listings" className="mt-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {listings.map((l: any) => {
+                            const cover = l.cover_url || l.image_url;
+                            const priceLabel = l.credits_price
+                              ? `${l.credits_price} $RHOZE`
+                              : l.price
+                              ? `${l.currency || "$"}${l.price}`
+                              : null;
+                            return (
+                              <button
+                                key={l.id}
+                                onClick={() => navigate(`/marketplace/${l.id}`)}
+                                className="group text-left rounded-xl bg-card/60 border border-border/60 overflow-hidden hover:border-foreground/30 transition-colors"
+                              >
+                                <div className="relative aspect-square bg-muted overflow-hidden">
+                                  {cover ? (
+                                    <img src={cover} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                  ) : (
+                                    <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
+                                      <ShoppingBag className="h-6 w-6 text-muted-foreground/40" />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="p-2.5">
+                                  <p className="text-xs font-medium text-foreground truncate">{l.title}</p>
+                                  {priceLabel && (
+                                    <p className="text-[10px] font-semibold text-foreground tabular-nums mt-0.5">{priceLabel}</p>
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
                       </TabsContent>
                     )}
+
+                    {events.length > 0 && (
+                      <TabsContent value="events" className="mt-3 space-y-2">
+                        {events.map((e: any) => {
+                          const isPast = new Date(e.starts_at) < new Date();
+                          return (
+                            <button
+                              key={e.id}
+                              onClick={() => navigate(`/events/${e.slug || e.id}`)}
+                              className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
+                            >
+                              {e.cover_url ? (
+                                <img src={e.cover_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
+                              ) : (
+                                <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
+                                  <CalendarIcon className="h-5 w-5 text-muted-foreground/40" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-sm font-medium text-foreground truncate">{e.title}</p>
+                                  {isPast && <Badge variant="outline" className="text-[8px] shrink-0">Past</Badge>}
+                                </div>
+                                <p className="text-[11px] text-muted-foreground truncate">
+                                  {format(new Date(e.starts_at), "MMM d · h:mm a")}
+                                  {e.is_online ? " · Online" : e.venue_name ? ` · ${e.venue_name}` : ""}
+                                </p>
+                              </div>
+                              <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                            </button>
+                          );
+                        })}
+                      </TabsContent>
+                    )}
+
                     {spaces.length > 0 && (
                       <TabsContent value="spaces" className="mt-3 space-y-2">
                         {spaces.map((s: any) => (
@@ -690,101 +736,97 @@ const ProfileDetailPage = () => {
                       </TabsContent>
                     )}
                   </Tabs>
+
+                  {/* ─── Inline: Verify this creator (collapsible footer) ─── */}
+                  <Collapsible open={reputationOpen} onOpenChange={setReputationOpen}>
+                    <div className="mt-5 pt-4 border-t border-border/50">
+                      <CollapsibleTrigger asChild>
+                        <button className="w-full flex items-center justify-between gap-3 text-left">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <Award className="h-4 w-4 text-primary shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-foreground">Verify this creator</p>
+                              <p className="text-[11px] text-muted-foreground truncate">
+                                On-chain reputation, investor signal & proof of work.
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {totalProofs > 0 && (
+                              <Badge variant="secondary" className="font-mono text-[10px]">
+                                {anchoredCount}/{totalProofs}
+                              </Badge>
+                            )}
+                            <ArrowRight className={cn("h-4 w-4 text-muted-foreground transition-transform", reputationOpen && "rotate-90")} />
+                          </div>
+                        </button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-4 space-y-4">
+                        {isOwnProfile && totalProofs > 0 && anchoredCount < totalProofs && (
+                          <div className="flex justify-end">
+                            <AnchorButton proofs={proofs!} />
+                          </div>
+                        )}
+                        <CreatorReadinessCard creatorId={id!} memberSince={p.created_at} />
+                        {totalProofs > 0 && (
+                          <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
+                            <div className="grid grid-cols-3 gap-3">
+                              {Object.entries(
+                                proofs!.reduce<Record<string, number>>((acc, pr) => {
+                                  acc[pr.action_type] = (acc[pr.action_type] || 0) + 1;
+                                  return acc;
+                                }, {})
+                              ).sort(([, a], [, b]) => b - a).slice(0, 3).map(([type, count]) => {
+                                const meta = PROOF_TYPE_META[type] ?? {
+                                  label: type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+                                  href: null as string | null,
+                                };
+                                const inner = (
+                                  <>
+                                    <p className="text-2xl font-bold text-foreground">{count}</p>
+                                    <p className="text-xs text-muted-foreground">{meta.label}</p>
+                                  </>
+                                );
+                                return meta.href ? (
+                                  <Link key={type} to={meta.href} className="rounded-lg border border-border bg-card/50 p-3 text-center transition-colors hover:bg-muted/60">
+                                    {inner}
+                                  </Link>
+                                ) : (
+                                  <div key={type} className="rounded-lg border border-border bg-card/50 p-3 text-center">
+                                    {inner}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            {anchoredCount > 0 && (
+                              <p className="text-xs text-muted-foreground text-center mt-3 flex items-center justify-center gap-1">
+                                <ExternalLink className="h-3 w-3" />
+                                Independently verifiable on the public ledger
+                              </p>
+                            )}
+                          </div>
+                        )}
+                        {reviewStats && reviewStats.count > 0 && (
+                          <div className="rounded-xl border border-border/50 bg-muted/20 p-4 flex items-center gap-4">
+                            <div className="text-center">
+                              <p className="text-3xl font-bold text-foreground">{reviewStats.avg}</p>
+                              <div className="flex items-center gap-0.5 mt-1 justify-center">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star key={s} className={cn("h-3.5 w-3.5", s <= Math.round(reviewStats.avg) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30")} />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {reviewStats.count} rating{reviewStats.count !== 1 ? "s" : ""} from clients & collaborators.
+                            </p>
+                          </div>
+                        )}
+                      </CollapsibleContent>
+                    </div>
+                  </Collapsible>
                 </div>
               );
             })()}
-
-            {/* ─── On-Chain Reputation — collapsible "verify this creator" panel ─── */}
-            <Collapsible open={reputationOpen} onOpenChange={setReputationOpen}>
-              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 overflow-hidden">
-                <CollapsibleTrigger asChild>
-                  <button className="w-full flex items-center justify-between gap-3 p-4 hover:bg-muted/30 transition-colors text-left">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                        <Award className="h-4 w-4 text-primary" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-display text-sm font-semibold text-foreground">
-                          Verify this creator
-                        </p>
-                        <p className="text-[11px] text-muted-foreground truncate">
-                          On-chain reputation, investor signal & proof of work.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {totalProofs > 0 && (
-                        <Badge variant="secondary" className="font-mono text-[10px]">
-                          {anchoredCount}/{totalProofs}
-                        </Badge>
-                      )}
-                      <ArrowRight className={cn("h-4 w-4 text-muted-foreground transition-transform", reputationOpen && "rotate-90")} />
-                    </div>
-                  </button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="px-4 pb-4 space-y-4">
-                  {isOwnProfile && totalProofs > 0 && anchoredCount < totalProofs && (
-                    <div className="flex justify-end">
-                      <AnchorButton proofs={proofs!} />
-                    </div>
-                  )}
-                  <CreatorReadinessCard creatorId={id!} memberSince={p.created_at} />
-                  {totalProofs > 0 && (
-                    <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
-                      <div className="grid grid-cols-3 gap-3">
-                        {Object.entries(
-                          proofs!.reduce<Record<string, number>>((acc, pr) => {
-                            acc[pr.action_type] = (acc[pr.action_type] || 0) + 1;
-                            return acc;
-                          }, {})
-                        ).sort(([, a], [, b]) => b - a).slice(0, 3).map(([type, count]) => {
-                          const meta = PROOF_TYPE_META[type] ?? {
-                            label: type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-                            href: null as string | null,
-                          };
-                          const inner = (
-                            <>
-                              <p className="text-2xl font-bold text-foreground">{count}</p>
-                              <p className="text-xs text-muted-foreground">{meta.label}</p>
-                            </>
-                          );
-                          return meta.href ? (
-                            <Link key={type} to={meta.href} className="rounded-lg border border-border bg-card/50 p-3 text-center transition-colors hover:bg-muted/60">
-                              {inner}
-                            </Link>
-                          ) : (
-                            <div key={type} className="rounded-lg border border-border bg-card/50 p-3 text-center">
-                              {inner}
-                            </div>
-                          );
-                        })}
-                      </div>
-                      {anchoredCount > 0 && (
-                        <p className="text-xs text-muted-foreground text-center mt-3 flex items-center justify-center gap-1">
-                          <ExternalLink className="h-3 w-3" />
-                          Independently verifiable on the public ledger
-                        </p>
-                      )}
-                    </div>
-                  )}
-                  {reviewStats && reviewStats.count > 0 && (
-                    <div className="rounded-xl border border-border/50 bg-muted/20 p-4 flex items-center gap-4">
-                      <div className="text-center">
-                        <p className="text-3xl font-bold text-foreground">{reviewStats.avg}</p>
-                        <div className="flex items-center gap-0.5 mt-1 justify-center">
-                          {[1, 2, 3, 4, 5].map((s) => (
-                            <Star key={s} className={cn("h-3.5 w-3.5", s <= Math.round(reviewStats.avg) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30")} />
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {reviewStats.count} rating{reviewStats.count !== 1 ? "s" : ""} from clients & collaborators.
-                      </p>
-                    </div>
-                  )}
-                </CollapsibleContent>
-              </div>
-            </Collapsible>
           </TabsContent>
 
           {/* ─── Works (Posts) tab ─── */}
