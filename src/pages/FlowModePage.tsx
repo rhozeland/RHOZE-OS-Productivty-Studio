@@ -98,7 +98,10 @@ const FlowModePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { isAdmin } = useAdminCheck();
   const queryClient = useQueryClient();
-  const routedFlowItemId = (location.state as { flowItemId?: string | null } | null)?.flowItemId ?? null;
+  const routedFlowItemId =
+    location.pathname === "/flow"
+      ? (location.state as { flowItemId?: string | null } | null)?.flowItemId ?? null
+      : null;
   const [calibrated, setCalibrated] = useState(false);
   const [showIdleHints, setShowIdleHints] = useState(false);
   const [showTutorialOverlay, setShowTutorialOverlay] = useState(false);
@@ -188,6 +191,12 @@ const FlowModePage = () => {
     next.set("item", routedItemId);
     setSearchParams(next, { replace: true });
   }, [location.state, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    const routedItemId = (location.state as { flowItemId?: string | null } | null)?.flowItemId;
+    if (!routedItemId || location.pathname !== "/flow") return;
+    navigate(location.pathname + location.search + location.hash, { replace: true, state: null });
+  }, [location.hash, location.pathname, location.search, location.state, navigate]);
   useEffect(() => {
     const nextView = searchParams.get("view") === "browse" ? "browse" : "swipe";
     setViewMode((current) => (current === nextView ? current : nextView));
