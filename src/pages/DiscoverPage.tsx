@@ -16,7 +16,7 @@
  * fresh feed now — drops, works, offerings, events, spaces all in one).
  */
 import { Suspense, lazy, useState, useEffect, useMemo } from "react";
-import { Link, useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,7 +46,6 @@ import {
   Loader2,
   Sparkles,
   CalendarDays,
-  Flame,
   MapPin,
   FileText,
   ChevronDown,
@@ -184,8 +183,6 @@ const getGreeting = () => {
 
 const DiscoverPage = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
   const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
   const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
   const creatorFeaturedSlides = useMemo(
