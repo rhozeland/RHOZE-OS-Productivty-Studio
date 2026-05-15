@@ -39,8 +39,10 @@ interface HeroVisual {
 }
 
 const CATEGORY_VISUAL: Record<string, HeroVisual> = {
-  music:   { Icon: Music2,      from: "hsl(342 88% 62%)", via: "hsl(327 95% 74%)", to: "hsl(22 96% 82%)",     glyph: "hsl(0 0% 100%)", label: "Music", pattern: "waves" },
-  audio:   { Icon: AudioLines,  from: "hsl(342 88% 62%)", via: "hsl(327 95% 74%)", to: "hsl(22 96% 82%)",     glyph: "hsl(0 0% 100%)", label: "Audio", pattern: "waves" },
+  // High-contrast "album cover" palette: deep plum → hot magenta → tangerine.
+  // Reads instantly as music even at 120px tile size.
+  music:   { Icon: Music2,      from: "hsl(282 70% 14%)", via: "hsl(330 90% 48%)", to: "hsl(18 100% 58%)",   glyph: "hsl(48 100% 88%)", label: "Music", pattern: "waves" },
+  audio:   { Icon: AudioLines,  from: "hsl(282 70% 14%)", via: "hsl(330 90% 48%)", to: "hsl(18 100% 58%)",   glyph: "hsl(48 100% 88%)", label: "Audio", pattern: "waves" },
   design:  { Icon: Palette,     from: "hsl(165 85% 25%)", via: "hsl(180 90% 45%)", to: "hsl(140 90% 55%)",  glyph: "hsl(60 100% 80%)",  label: "Design", pattern: "grid" },
   photo:   { Icon: Camera,      from: "hsl(15 90% 35%)",  via: "hsl(35 95% 55%)",  to: "hsl(50 100% 65%)",  glyph: "hsl(0 0% 100%)",    label: "Photo", pattern: "dots" },
   video:   { Icon: Video,       from: "hsl(340 90% 30%)", via: "hsl(355 90% 55%)", to: "hsl(25 95% 60%)",   glyph: "hsl(45 100% 75%)",  label: "Video", pattern: "dots" },
@@ -159,19 +161,11 @@ export const FlowThumbnail = ({
         />
       )}
 
-      {isAudioVisual && !showImage && (
-        <div
-          className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${imageLoaded ? "opacity-0" : "opacity-100"}`}
-          style={{
-            background:
-              "linear-gradient(180deg, hsl(var(--background) / 0.02) 0%, hsl(var(--background) / 0.04) 22%, hsl(var(--pink) / 0.18) 48%, hsl(var(--foreground) / 0.32) 74%, hsl(var(--foreground) / 0.84) 100%)",
-          }}
-          aria-hidden
-        />
-      )}
+      {/* (Audio scrim removed — vinyl block below provides its own contrast.) */}
+
 
       {/* Decorative pattern layer */}
-      {v.pattern === "waves" && (
+      {v.pattern === "waves" && !isAudioVisual && (
         <svg
           className={`absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-300 ${imageLoaded ? "opacity-0" : "opacity-25 mix-blend-screen"}`}
           viewBox="0 0 100 100"
@@ -219,22 +213,60 @@ export const FlowThumbnail = ({
       )}
 
       {isAudioVisual && !showImage && (
-        <div className="absolute inset-x-[8%] bottom-[14%] top-[16%] pointer-events-none" aria-hidden>
-          <div className="relative h-full w-full rounded-[2.25rem] border border-white/25 bg-white/10 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.35)] backdrop-blur-[2px]">
-            <div className="absolute inset-[12%] rounded-[2rem] border border-white/10 bg-black/10" />
-            <div className="absolute inset-y-[18%] left-1/2 w-[32%] -translate-x-1/2 rounded-full border-[10px] border-white/35" />
+        <div
+          className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${imageLoaded ? "opacity-0" : "opacity-100"}`}
+          aria-hidden
+        >
+          {/* Bold dark wash so the disc + glyph pop */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse at 25% 20%, hsl(48 100% 70% / 0.22), transparent 55%), radial-gradient(ellipse at 80% 90%, hsl(0 0% 0% / 0.55), transparent 60%)",
+            }}
+          />
+          {/* Centered vinyl/disc — full-bleed, high contrast */}
+          <div className="absolute inset-0 grid place-items-center">
+            <div
+              className="relative aspect-square w-[78%] rounded-full shadow-[0_30px_80px_-20px_rgba(0,0,0,0.65)]"
+              style={{
+                background:
+                  "repeating-radial-gradient(circle at 50% 50%, hsl(0 0% 0% / 0.92) 0 6px, hsl(0 0% 0% / 0.78) 6px 7px), radial-gradient(circle at 35% 30%, hsl(0 0% 100% / 0.18), transparent 55%)",
+              }}
+            >
+              {/* Center label */}
+              <div
+                className="absolute inset-[34%] rounded-full flex items-center justify-center"
+                style={{
+                  background:
+                    "radial-gradient(circle at 30% 30%, hsl(48 100% 75%), hsl(18 100% 58%) 60%, hsl(330 90% 48%))",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.4) inset",
+                }}
+              >
+                <div className="h-[18%] w-[18%] rounded-full bg-black/80" />
+              </div>
+              {/* Specular sheen */}
+              <div
+                className="absolute inset-0 rounded-full pointer-events-none"
+                style={{
+                  background:
+                    "linear-gradient(135deg, hsl(0 0% 100% / 0.18) 0%, transparent 35%, transparent 65%, hsl(0 0% 100% / 0.08) 100%)",
+                }}
+              />
+            </div>
           </div>
         </div>
       )}
 
-      {/* Oversized glyph */}
-      <v.Icon
-        aria-hidden
-        className="absolute -right-6 -top-6 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110 mix-blend-overlay"
-        style={{ color: v.glyph, opacity: imageLoaded ? 0.16 : isAudioVisual ? 0.22 : 0.78, width: "10rem", height: "10rem" }}
-        strokeWidth={1.5}
-      />
-
+      {/* Oversized glyph — hidden for audio (vinyl is the hero) */}
+      {!isAudioVisual && (
+        <v.Icon
+          aria-hidden
+          className="absolute -right-6 -top-6 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110 mix-blend-overlay"
+          style={{ color: v.glyph, opacity: imageLoaded ? 0.16 : 0.78, width: "10rem", height: "10rem" }}
+          strokeWidth={1.5}
+        />
+      )}
       {!hideCaption && (
         <>
           {/* Bottom gradient scrim for legibility */}
