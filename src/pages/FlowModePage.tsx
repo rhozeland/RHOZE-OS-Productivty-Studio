@@ -181,6 +181,13 @@ const FlowModePage = () => {
     searchParams.get("view") === "browse" ? "browse" : "swipe",
   );
   useEffect(() => {
+    const routedItemId = (location.state as { flowItemId?: string | null } | null)?.flowItemId;
+    if (!routedItemId || searchParams.get("item")) return;
+    const next = new URLSearchParams(searchParams);
+    next.set("item", routedItemId);
+    setSearchParams(next, { replace: true });
+  }, [location.state, searchParams, setSearchParams]);
+  useEffect(() => {
     const nextView = searchParams.get("view") === "browse" ? "browse" : "swipe";
     setViewMode((current) => (current === nextView ? current : nextView));
   }, [searchParams]);

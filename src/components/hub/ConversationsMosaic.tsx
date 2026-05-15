@@ -354,7 +354,7 @@ const ConversationsMosaic = ({
             tile={tile}
             sizeClass="aspect-square"
             index={i}
-            onClick={() => navigate(tile.href)}
+            onClick={() => navigate(tile.href, { state: { flowItemId: tile.kind === "drop" ? tile.id.replace(/^drop-/, "") : null } })}
           />
         ))}
       </div>
@@ -366,7 +366,13 @@ const ConversationsMosaic = ({
       {tiles.map((tile, i) => {
         const size = SIZE_PATTERN[i % SIZE_PATTERN.length];
         return (
-          <MosaicTileCard key={tile.id} tile={tile} sizeClass={size} index={i} onClick={() => navigate(tile.href)} />
+          <MosaicTileCard
+            key={tile.id}
+            tile={tile}
+            sizeClass={size}
+            index={i}
+            onClick={() => navigate(tile.href, { state: { flowItemId: tile.kind === "drop" ? tile.id.replace(/^drop-/, "") : null } })}
+          />
         );
       })}
     </div>
@@ -410,6 +416,7 @@ const MosaicTileCard = ({
   // Hosted audio (Spotify, SoundCloud) can't be previewed inline, so they
   // only show artwork — clicking still opens Flow Mode.
   const isPlayableAudio = tile.kind === "drop" && !!tile.fileUrl && /\.(mp3|wav|flac|aac|m4a|ogg|opus)(\?|$)/i.test(tile.fileUrl);
+  const hrefItemId = tile.kind === "drop" ? tile.href.match(/[?&]item=([^&]+)/)?.[1] ?? null : null;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
 
@@ -436,7 +443,13 @@ const MosaicTileCard = ({
   const tileButton = (
     <motion.button
       type="button"
-      onClick={onClick}
+      onClick={() => {
+        if (hrefItemId) {
+          onClick();
+          return;
+        }
+        onClick();
+      }}
       initial={{ opacity: 0, y: 14, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ delay: Math.min(index * 0.025, 0.35), type: "spring", stiffness: 220, damping: 24 }}
@@ -461,7 +474,7 @@ const MosaicTileCard = ({
           description={tile.description}
           category={tile.category}
           hideCaption
-          className="absolute inset-0 transition-transform duration-700 group-hover:scale-105"
+            className="absolute inset-0 transition-transform duration-700 group-hover:scale-105 [&_img]:scale-[1.1]"
         />
       ) : isIconHero ? (
         // Category-driven hero: subtle dual-radial wash + huge soft icon
