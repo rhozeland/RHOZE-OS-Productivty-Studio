@@ -474,7 +474,8 @@ const MosaicTileCard = ({
       transition={{ delay: Math.min(index * 0.025, 0.35), type: "spring", stiffness: 220, damping: 24 }}
       whileHover={{ y: -3 }}
       whileTap={{ scale: 0.98 }}
-      className={`${sizeClass} group relative w-full h-full overflow-hidden rounded-2xl border border-border bg-card text-left transition-all duration-300 hover:border-foreground/40 hover:shadow-lg cursor-pointer`}
+      style={{ aspectRatio }}
+      className="mb-3 break-inside-avoid block w-full group relative overflow-hidden rounded-2xl border border-border bg-card text-left transition-all duration-300 hover:border-foreground/40 hover:shadow-lg cursor-pointer"
       aria-label={`${label}: ${tile.title}. Click to open.`}
     >
       {/* Background — image, gradient tint, or category-tinted icon hero */}
