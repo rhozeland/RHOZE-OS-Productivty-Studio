@@ -486,7 +486,9 @@ const TradePanel = ({
 
       <Button onClick={submit} disabled={busy} className="w-full">
         {busy && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}
-        {side === "buy" ? `Swap $RHOZE → $${ticker}` : `Swap $${ticker} → $RHOZE`}
+        {traderView
+          ? (side === "buy" ? `Swap $RHOZE → $${ticker}` : `Swap $${ticker} → $RHOZE`)
+          : (side === "buy" ? `Back with $RHOZE` : `Withdraw stake`)}
       </Button>
 
       {/* On-chain transaction lifecycle — only renders in 4b mode */}
