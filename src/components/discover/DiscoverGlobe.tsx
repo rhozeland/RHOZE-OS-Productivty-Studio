@@ -291,54 +291,6 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
     return () => window.clearInterval(interval);
   }, [isDragging, activeSpotlightKey, featuredSlides]);
 
-  const { data: counts } = useQuery({
-    queryKey: ["discover-region-counts"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("region_code")
-        .eq("is_public", true)
-        .not("region_code", "is", null);
-
-      const map = new Map<string, number>();
-      (data ?? []).forEach((row: { region_code?: string | null }) => {
-        const code = row.region_code?.toUpperCase() ?? "";
-        if (!REGION_COORDS[code]) return;
-        map.set(code, (map.get(code) ?? 0) + 1);
-      });
-      return map;
-    },
-    staleTime: 60_000,
-  });
-
-  const points = useMemo(() => {
-    return REGIONS.filter((region) => REGION_COORDS[region.code])
-      .map((region) => {
-        const count = counts?.get(region.code) ?? 0;
-        const projected = projectPoint(REGION_COORDS[region.code].lat, REGION_COORDS[region.code].lng, rotation);
-        const dim = marketFilter !== "All" && region.market !== marketFilter;
-        const selected = marketFilter !== "All" && region.market === marketFilter;
-        const hovered = hoveredCode === region.code;
-        const visibility = Math.max(0.16, ((projected.depth + 1) / 2) * (dim ? 0.36 : 1));
-        const scale = 0.72 + Math.max(0, projected.depth) * 0.55;
-
-        return {
-          ...region,
-          count,
-          ...projected,
-          dim,
-          hovered,
-          selected,
-          scale,
-          visibility,
-          size: (3.4 + Math.min(10, count * 1.05)) * scale,
-          ring: (10 + Math.min(18, count * 1.4)) * scale,
-          color: dim ? "hsl(var(--foreground) / 0.18)" : MARKET_COLORS[region.market],
-        };
-      })
-      .sort((a, b) => a.depth - b.depth);
-  }, [counts, hoveredCode, marketFilter, rotation]);
-
   const spotlightMarkers = useMemo<SpotlightMarker[]>(() => {
     return featuredSlides
       .map((slide) => {
