@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Disc3, Palette, Camera, Video, PenLine, Sparkles, AudioLines, Music2, type LucideIcon } from "lucide-react";
+import { Palette, Camera, Video, PenLine, Sparkles, AudioLines, Music2, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getDirectThumbnail, needsRemoteThumbnail } from "@/lib/link-thumbnail";
 import { cn } from "@/lib/utils";
@@ -39,8 +39,8 @@ interface HeroVisual {
 }
 
 const CATEGORY_VISUAL: Record<string, HeroVisual> = {
-  music:   { Icon: Music2,      from: "hsl(0 0% 96%)", via: "hsl(210 14% 90%)", to: "hsl(0 0% 8%)",      glyph: "hsl(48 88% 76%)", label: "Music", pattern: "waves" },
-  audio:   { Icon: AudioLines,  from: "hsl(0 0% 95%)", via: "hsl(220 12% 88%)", to: "hsl(0 0% 10%)",      glyph: "hsl(48 88% 76%)", label: "Audio", pattern: "waves" },
+  music:   { Icon: Music2,      from: "hsl(342 88% 62%)", via: "hsl(327 95% 74%)", to: "hsl(22 96% 82%)",     glyph: "hsl(0 0% 100%)", label: "Music", pattern: "waves" },
+  audio:   { Icon: AudioLines,  from: "hsl(342 88% 62%)", via: "hsl(327 95% 74%)", to: "hsl(22 96% 82%)",     glyph: "hsl(0 0% 100%)", label: "Audio", pattern: "waves" },
   design:  { Icon: Palette,     from: "hsl(165 85% 25%)", via: "hsl(180 90% 45%)", to: "hsl(140 90% 55%)",  glyph: "hsl(60 100% 80%)",  label: "Design", pattern: "grid" },
   photo:   { Icon: Camera,      from: "hsl(15 90% 35%)",  via: "hsl(35 95% 55%)",  to: "hsl(50 100% 65%)",  glyph: "hsl(0 0% 100%)",    label: "Photo", pattern: "dots" },
   video:   { Icon: Video,       from: "hsl(340 90% 30%)", via: "hsl(355 90% 55%)", to: "hsl(25 95% 60%)",   glyph: "hsl(45 100% 75%)",  label: "Video", pattern: "dots" },
@@ -131,7 +131,8 @@ export const FlowThumbnail = ({
   }, [src]);
 
   const v = pickVisual(category, fileUrl, linkUrl);
-  const isAudioVisual = ((category ?? "").toLowerCase().trim() === "music" || (category ?? "").toLowerCase().trim() === "audio");
+  const normalizedCategory = (category ?? "").toLowerCase().trim();
+  const isAudioVisual = normalizedCategory === "music" || normalizedCategory === "audio";
   const showImage = !!src && !imageFailed;
 
   return (
@@ -163,7 +164,7 @@ export const FlowThumbnail = ({
           className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${imageLoaded ? "opacity-0" : "opacity-100"}`}
           style={{
             background:
-              "linear-gradient(180deg, hsl(var(--background) / 0.02) 0%, hsl(var(--background) / 0.06) 34%, hsl(var(--foreground) / 0.26) 68%, hsl(var(--foreground) / 0.9) 100%)",
+              "linear-gradient(180deg, hsl(var(--background) / 0.02) 0%, hsl(var(--background) / 0.04) 22%, hsl(var(--pink) / 0.18) 48%, hsl(var(--foreground) / 0.32) 74%, hsl(var(--foreground) / 0.84) 100%)",
           }}
           aria-hidden
         />
@@ -217,11 +218,20 @@ export const FlowThumbnail = ({
         />
       )}
 
+      {isAudioVisual && !showImage && (
+        <div className="absolute inset-x-[8%] bottom-[14%] top-[16%] pointer-events-none" aria-hidden>
+          <div className="relative h-full w-full rounded-[2.25rem] border border-white/25 bg-white/10 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.35)] backdrop-blur-[2px]">
+            <div className="absolute inset-[12%] rounded-[2rem] border border-white/10 bg-black/10" />
+            <div className="absolute inset-y-[18%] left-1/2 w-[32%] -translate-x-1/2 rounded-full border-[10px] border-white/35" />
+          </div>
+        </div>
+      )}
+
       {/* Oversized glyph */}
       <v.Icon
         aria-hidden
         className="absolute -right-6 -top-6 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110 mix-blend-overlay"
-        style={{ color: v.glyph, opacity: imageLoaded ? 0.16 : 0.78, width: "10rem", height: "10rem" }}
+        style={{ color: v.glyph, opacity: imageLoaded ? 0.16 : isAudioVisual ? 0.22 : 0.78, width: "10rem", height: "10rem" }}
         strokeWidth={1.5}
       />
 
