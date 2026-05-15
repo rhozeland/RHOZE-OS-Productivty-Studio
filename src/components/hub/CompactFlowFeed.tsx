@@ -32,6 +32,7 @@ const CompactFlowFeed = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>(CATEGORIES);
   const [ready, setReady] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(0);
+  const [previewModeHover, setPreviewModeHover] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -136,7 +137,7 @@ const CompactFlowFeed = () => {
 
       <div className="relative space-y-3">
         <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               type="button"
               onClick={() => openFlow(activeItem?.id)}
@@ -144,6 +145,19 @@ const CompactFlowFeed = () => {
             >
               <Expand className="h-4 w-4" />
               Expand
+            </button>
+            <button
+              type="button"
+              onMouseEnter={() => setPreviewModeHover(true)}
+              onMouseLeave={() => setPreviewModeHover(false)}
+              onFocus={() => setPreviewModeHover(true)}
+              onBlur={() => setPreviewModeHover(false)}
+              onClick={() => openFlow(undefined, previewModeHover ? "browse" : "swipe")}
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-border/50 bg-card/85 px-4 text-sm font-medium text-muted-foreground shadow-sm transition-colors hover:bg-card hover:text-foreground"
+              aria-label={previewModeHover ? "Browse all posts" : "Auto-previewing posts"}
+            >
+              <ArrowLeftRight className="h-4 w-4" />
+              {previewModeHover ? "Browse all" : "Auto-previewing posts"}
             </button>
           </div>
 
@@ -163,35 +177,26 @@ const CompactFlowFeed = () => {
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3 min-[520px]:justify-start">
-          <div className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-card/85 px-3 py-2 text-xs font-medium text-muted-foreground shadow-sm">
-            <ArrowLeftRight className="h-3.5 w-3.5" />
-            Auto-previewing posts
-          </div>
-          <button
-            type="button"
-            onClick={() => openFlow(undefined, "browse")}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-card/85 px-3 py-2 text-xs font-medium text-muted-foreground shadow-sm transition-colors hover:text-foreground"
-          >
-            <ArrowLeftRight className="h-3.5 w-3.5" />
-            Browse all
-          </button>
-        </div>
-
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px] xl:grid-cols-[minmax(0,1fr)_240px]">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px] xl:grid-cols-[minmax(0,1fr)_220px]">
           <motion.button
             type="button"
             onClick={() => openFlow(activeItem?.id)}
             animate={{ y: [0, -3, 0], scale: [1, 0.992, 1] }}
             whileHover={{ y: -4, scale: 1.01 }}
             transition={{ duration: 5.6, repeat: Infinity, ease: "easeInOut" }}
-            className="group relative overflow-hidden rounded-[1.5rem] border border-border/60 bg-card text-left shadow-[0_20px_60px_-30px_hsl(var(--foreground)/0.28)]"
+            className="group relative overflow-hidden rounded-[1.5rem] border border-border/60 bg-card/95 p-3 text-left shadow-[0_20px_60px_-30px_hsl(var(--foreground)/0.28)]"
           >
-            <div className="relative mx-auto w-[92%] pt-4 sm:w-[94%] sm:pt-5">
-              <div className="absolute inset-x-[7%] top-5 h-full rounded-[1.4rem] border border-border/40 bg-card/35 blur-sm" aria-hidden />
-              <div className="absolute inset-x-[12%] top-8 h-full rounded-[1.4rem] border border-border/30 bg-card/20" aria-hidden />
+            <div className="pointer-events-none absolute inset-0 opacity-90" aria-hidden>
+              <div
+                className="absolute inset-0 rounded-[1.5rem]"
+                style={{
+                  background:
+                    "radial-gradient(circle at 18% 18%, hsl(var(--pink) / 0.26), transparent 24%), radial-gradient(circle at 80% 14%, hsl(var(--warm) / 0.18), transparent 20%), linear-gradient(160deg, hsl(var(--pink) / 0.14), transparent 34%, hsl(var(--warm) / 0.08) 100%)",
+                }}
+              />
+              <div className="absolute inset-x-[10%] top-4 h-[92%] rounded-[1.35rem] border border-border/35 bg-card/18 blur-md" />
             </div>
-            <div className="relative mx-auto w-[92%] overflow-hidden rounded-[1.5rem] border border-border/40 aspect-[6/7] sm:w-[94%] sm:aspect-[8/9]">
+            <div className="relative mx-auto w-[86%] overflow-hidden rounded-[1.35rem] border border-border/40 aspect-[5/6] sm:w-[82%]">
               {activeItem ? (
                 <FlowThumbnail
                   fileUrl={activeItem.file_url}
@@ -206,10 +211,10 @@ const CompactFlowFeed = () => {
                 <div className="absolute inset-0 animate-pulse bg-muted" />
               )}
 
-              <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-card via-card/82 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-card via-card/80 to-transparent" />
               <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-card/28 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-card/28 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-              <div className="absolute inset-x-0 bottom-0 p-3.5 sm:p-4">
+              <div className="absolute inset-x-0 bottom-0 p-3 sm:p-3.5">
                 <div className="flex flex-wrap items-center gap-2 pb-2.5">
                   {activeItem?.category && (
                     <span className="rounded-full bg-warm/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-warm-foreground">
@@ -251,8 +256,8 @@ const CompactFlowFeed = () => {
                   </button>
                 </div>
 
-                <div className="mt-3.5 flex items-center gap-3">
-                  <Avatar className="h-10 w-10 border border-border/50 bg-card/90">
+                <div className="mt-3 flex items-center gap-3">
+                  <Avatar className="h-9 w-9 border border-border/50 bg-card/90">
                     <AvatarImage src={activeItem?.profiles?.avatar_url ?? undefined} alt={activeItem?.profiles?.display_name ?? "Creator"} />
                     <AvatarFallback className="text-xs font-semibold text-foreground">
                       {initials(activeItem?.profiles?.display_name ?? null)}
@@ -262,7 +267,7 @@ const CompactFlowFeed = () => {
                     <p className="text-sm font-medium text-foreground truncate">
                       {activeItem?.profiles?.display_name ?? activeItem?.profiles?.username ?? "Creator"}
                     </p>
-                    <h3 className="font-display text-xl sm:text-[1.7rem] leading-[1.04] text-foreground line-clamp-2">
+                      <h3 className="font-display text-[1.55rem] sm:text-[1.62rem] leading-[1.02] text-foreground line-clamp-2">
                       {activeItem?.title ?? (isFetching ? "Loading…" : "No flow items yet")}
                     </h3>
                   </div>
@@ -284,7 +289,7 @@ const CompactFlowFeed = () => {
                 onClick={() => openFlow(item.id)}
                 className={cn(
                   "group relative overflow-hidden rounded-[1.25rem] border border-border/55 bg-card text-left shadow-[0_18px_45px_-30px_hsl(var(--foreground)/0.3)] transition-transform hover:-translate-y-0.5",
-                  index === 0 ? "h-[190px]" : "h-[142px]",
+                  index === 0 ? "h-[176px]" : "h-[132px]",
                 )}
               >
                 <FlowThumbnail
