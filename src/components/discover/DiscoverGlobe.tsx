@@ -275,17 +275,32 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
     return () => window.clearInterval(interval);
   }, [featuredSlides, isDragging]);
 
-  // Idle auto-spin only — never snap back to the active spotlight, that
-  // fights the user's drag and feels broken. Spin pauses while dragging.
+  // Auto-spin to the active spotlight artist's longitude, so the globe
+  // visually "lands on" whoever is being featured right now. Drag pauses
+  // the lerp; releasing it resumes following the active marker.
   useEffect(() => {
     if (isDragging) return;
-
+    const active = featuredSlides
+      .map((s) => {
+        const c = s.region_code?.toUpperCase();
+        return c && REGION_COORDS[c] ? { key: `${s.kind}-${s.id}`, lng: REGION_COORDS[c].lng } : null;
+      })
+      .find((m) => m && m.key === activeSpotlightKey);
+    const targetLng = active?.lng;
     const interval = window.setInterval(() => {
-      setRotation((current) => normalizeRotation(current + 0.18));
+      setRotation((current) => {
+        if (typeof targetLng !== "number") {
+          return normalizeRotation(current + 0.18);
+        }
+        const target = -targetLng;
+        const delta = shortestAngle(current, target);
+        if (Math.abs(delta) < 0.25) return current;
+        return normalizeRotation(current + delta * 0.06);
+      });
     }, 40);
 
     return () => window.clearInterval(interval);
-  }, [isDragging]);
+  }, [isDragging, activeSpotlightKey, featuredSlides]);
 
   const { data: counts } = useQuery({
     queryKey: ["discover-region-counts"],
