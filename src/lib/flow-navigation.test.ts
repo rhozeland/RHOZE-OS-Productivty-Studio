@@ -17,6 +17,7 @@ import {
   resolvePeekTarget,
   mergeDeepLinkProfile,
   mergeDeepLinkIntoFeed,
+  resolveDeepLinkSelection,
   type FlowItemLike,
 } from "./flow-navigation";
 
@@ -138,5 +139,49 @@ describe("mergeDeepLinkIntoFeed", () => {
     const feed = [item({ id: "a" })];
     expect(mergeDeepLinkIntoFeed(null, feed)).toBe(feed);
     expect(mergeDeepLinkIntoFeed(undefined, feed)).toBe(feed);
+  });
+});
+
+describe("resolveDeepLinkSelection", () => {
+  it("pins to the target item when it is already in the base feed", () => {
+    const base = [item({ id: "a" }), item({ id: "b" }), item({ id: "c" })];
+    expect(
+      resolveDeepLinkSelection("b", base, base, {
+        flowItemsFetching: false,
+        hasFallbackItem: false,
+      }),
+    ).toEqual({ index: 1, shouldFinalize: true });
+  });
+
+  it("finalizes fallback deep-links once the feed is done loading", () => {
+    const fallback = item({ id: "deep" });
+    const all = [fallback, item({ id: "a" })];
+    const base = [item({ id: "a" })];
+    expect(
+      resolveDeepLinkSelection("deep", all, base, {
+        flowItemsFetching: false,
+        hasFallbackItem: true,
+      }),
+    ).toEqual({ index: 0, shouldFinalize: true });
+  });
+
+  it("waits to finalize while the feed is still loading", () => {
+    const all = [item({ id: "deep" }), item({ id: "a" })];
+    const base = [item({ id: "a" })];
+    expect(
+      resolveDeepLinkSelection("deep", all, base, {
+        flowItemsFetching: true,
+        hasFallbackItem: true,
+      }),
+    ).toEqual({ index: 0, shouldFinalize: false });
+  });
+
+  it("returns null when the target is missing", () => {
+    expect(
+      resolveDeepLinkSelection("missing", [item({ id: "a" })], [item({ id: "a" })], {
+        flowItemsFetching: false,
+        hasFallbackItem: false,
+      }),
+    ).toBeNull();
   });
 });
