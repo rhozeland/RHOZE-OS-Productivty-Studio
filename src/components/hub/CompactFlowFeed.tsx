@@ -89,14 +89,6 @@ const CompactFlowFeed = () => {
     };
   }, [calibrationKey, user?.id]);
 
-  const setScope = (scope: FlowScope) => {
-    if (scope === feedScope) return;
-    setFeedScope(scope);
-    const nextSelected = scope === "all" ? CATEGORIES : preferredCategories.length > 0 ? preferredCategories : CATEGORIES;
-    setSelectedCategories(nextSelected);
-    localStorage.setItem(`flow-scope-${calibrationKey}`, scope);
-  };
-
   const { data: items = [], isFetching } = useQuery({
     queryKey: ["compact-flow-feed", feedScope, selectedCategories],
     queryFn: () => loadFlowFeed(supabase, selectedCategories),
