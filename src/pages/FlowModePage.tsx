@@ -964,33 +964,38 @@ const FlowModePage = () => {
   //     deep link as applied, and strip ?item so subsequent swipes are
   //     not reverted.
   const appliedDeepLinkRef = useRef<string | null>(null);
+  const lockedDeepLinkItemRef = useRef<string | null>(null);
   const suppressSwipeRestoreRef = useRef(false);
   const pendingDeepLinkId = searchParams.get("item") ?? routedFlowItemId;
   useEffect(() => {
-    const targetId = pendingDeepLinkId;
+    const targetId = pendingDeepLinkId ?? lockedDeepLinkItemRef.current;
     if (!targetId) return;
     if (allItems.length === 0) return;
 
     const selection = resolveDeepLinkSelection(targetId, allItems as any[], baseItems as any[], {
       flowItemsFetching,
-      hasFallbackItem: !!deepLinkItem,
+      hasFallbackItem: !!deepLinkItem || lockedDeepLinkItemRef.current === targetId,
     });
 
     if (!selection) {
       // Item not in current scope — widen so the next refetch surfaces it.
-      if (!flowItemsFetching && !deepLinkItem && feedScope !== "all") {
+      if (pendingDeepLinkId && !flowItemsFetching && !deepLinkItem && feedScope !== "all") {
         setFeedScope("all");
         setSelectedCategories(CATEGORIES);
       }
       return;
     }
 
-    if (appliedDeepLinkRef.current === targetId && selection.shouldFinalize) return;
+    lockedDeepLinkItemRef.current = targetId;
+    const normalizedIndex = ((currentIndex % allItems.length) + allItems.length) % allItems.length;
+    const visibleItemId = allItems[normalizedIndex]?.id ?? null;
 
     // Always re-pin so the user stays on the right card as the feed
     // hydrates and re-orders around the prepended deep-link copy.
     suppressSwipeRestoreRef.current = true;
-    setCurrentIndex((cur) => (cur === selection.index ? cur : selection.index));
+    if (visibleItemId !== targetId) {
+      setCurrentIndex((cur) => (cur === selection.index ? cur : selection.index));
+    }
 
     if (!selection.shouldFinalize) return;
 
@@ -1006,10 +1011,10 @@ const FlowModePage = () => {
       next.delete("item");
       setSearchParams(next, { replace: true });
     }
-  }, [allItems, baseItems, deepLinkItem, pendingDeepLinkId, searchParams, feedScope, flowItemsFetching, setSearchParams]);
+  }, [allItems, baseItems, currentIndex, deepLinkItem, pendingDeepLinkId, searchParams, feedScope, flowItemsFetching, setSearchParams]);
 
   useEffect(() => {
-    if (pendingDeepLinkId) return;
+    if (pendingDeepLinkId || lockedDeepLinkItemRef.current) return;
     appliedDeepLinkRef.current = null;
     suppressSwipeRestoreRef.current = false;
   }, [pendingDeepLinkId]);
@@ -1155,6 +1160,9 @@ const FlowModePage = () => {
   const advancingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const advanceCard = useCallback(() => {
+    lockedDeepLinkItemRef.current = null;
+    appliedDeepLinkRef.current = null;
+    suppressSwipeRestoreRef.current = false;
     setIsAdvancing(true);
     if (advancingTimerRef.current) clearTimeout(advancingTimerRef.current);
     advancingTimerRef.current = setTimeout(() => {
