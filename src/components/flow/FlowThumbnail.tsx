@@ -221,10 +221,47 @@ export const FlowThumbnail = ({
       )}
 
       {isAudioVisual && !showImage && (
-        <div className="absolute inset-x-[8%] bottom-[14%] top-[16%] pointer-events-none" aria-hidden>
-          <div className="relative h-full w-full rounded-[2.25rem] border border-white/25 bg-white/10 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.35)] backdrop-blur-[2px]">
-            <div className="absolute inset-[12%] rounded-[2rem] border border-white/10 bg-black/10" />
-            <div className="absolute inset-y-[18%] left-1/2 w-[32%] -translate-x-1/2 rounded-full border-[10px] border-white/35" />
+        <div
+          className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${imageLoaded ? "opacity-0" : "opacity-100"}`}
+          aria-hidden
+        >
+          {/* Bold dark wash so the disc + glyph pop */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse at 25% 20%, hsl(48 100% 70% / 0.22), transparent 55%), radial-gradient(ellipse at 80% 90%, hsl(0 0% 0% / 0.55), transparent 60%)",
+            }}
+          />
+          {/* Centered vinyl/disc — full-bleed, high contrast */}
+          <div className="absolute inset-0 grid place-items-center">
+            <div
+              className="relative aspect-square w-[78%] rounded-full shadow-[0_30px_80px_-20px_rgba(0,0,0,0.65)]"
+              style={{
+                background:
+                  "repeating-radial-gradient(circle at 50% 50%, hsl(0 0% 0% / 0.92) 0 6px, hsl(0 0% 0% / 0.78) 6px 7px), radial-gradient(circle at 35% 30%, hsl(0 0% 100% / 0.18), transparent 55%)",
+              }}
+            >
+              {/* Center label */}
+              <div
+                className="absolute inset-[34%] rounded-full flex items-center justify-center"
+                style={{
+                  background:
+                    "radial-gradient(circle at 30% 30%, hsl(48 100% 75%), hsl(18 100% 58%) 60%, hsl(330 90% 48%))",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.4) inset",
+                }}
+              >
+                <div className="h-[18%] w-[18%] rounded-full bg-black/80" />
+              </div>
+              {/* Specular sheen */}
+              <div
+                className="absolute inset-0 rounded-full pointer-events-none"
+                style={{
+                  background:
+                    "linear-gradient(135deg, hsl(0 0% 100% / 0.18) 0%, transparent 35%, transparent 65%, hsl(0 0% 100% / 0.08) 100%)",
+                }}
+              />
+            </div>
           </div>
         </div>
       )}
