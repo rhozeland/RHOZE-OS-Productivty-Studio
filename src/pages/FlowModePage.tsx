@@ -2493,6 +2493,44 @@ const FlowModePage = () => {
                   </div>
                 )}
 
+                {/* Pre-publish checks — collapsed by default. Surfaces a warning chip when something fails. */}
+                {shareStep === "confirm" && (
+                  <details className="group rounded-xl border border-border bg-muted/20 [&_summary::-webkit-details-marker]:hidden" open={!allValid}>
+                    <summary className="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer list-none rounded-xl hover:bg-muted/40 transition-colors">
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className={cn(
+                          "h-4 w-4 rounded-full flex items-center justify-center shrink-0",
+                          allValid ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                        )}>
+                          {allValid ? <Check className="h-2.5 w-2.5" strokeWidth={3} /> : <X className="h-2.5 w-2.5" strokeWidth={3} />}
+                        </span>
+                        <span className="font-medium text-foreground">
+                          {allValid ? "Ready to publish" : "Needs your attention"}
+                        </span>
+                        <span className="text-muted-foreground">· {checks.filter((c) => c.ok).length}/{checks.length} checks</span>
+                      </div>
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground group-open:hidden">Show</span>
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground hidden group-open:inline">Hide</span>
+                    </summary>
+                    <div className="px-3 pb-3 pt-1 space-y-1.5">
+                      {checks.map((c) => (
+                        <div key={c.label} className="flex items-center gap-2 text-sm">
+                          <span className={cn(
+                            "h-4 w-4 rounded-full flex items-center justify-center shrink-0",
+                            c.ok ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                          )}>
+                            {c.ok ? <Check className="h-2.5 w-2.5" strokeWidth={3} /> : <X className="h-2.5 w-2.5" strokeWidth={3} />}
+                          </span>
+                          <span className={c.ok ? "text-foreground" : "text-muted-foreground"}>{c.label}</span>
+                        </div>
+                      ))}
+                      {!allValid && (
+                        <p className="text-[11px] text-muted-foreground pt-1">Go back to fix the items above before publishing.</p>
+                      )}
+                    </div>
+                  </details>
+                )}
+
                 {/* Aggregate publish progress (visible during the publish loop) */}
                 {publishingIndex && (
                   <div className="rounded-xl border border-border bg-muted/40 p-3" role="status" aria-live="polite">
