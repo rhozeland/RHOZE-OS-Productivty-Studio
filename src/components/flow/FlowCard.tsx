@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Play, FileText, ExternalLink, ChevronDown, Music, Palette, Camera, Video, PenTool, Heart, MessageCircle, Send, Maximize2, X, Trash2, Coins, ArrowRight } from "lucide-react";
 import AudioPreview from "@/components/marketplace/AudioPreview";
@@ -15,6 +14,7 @@ import {
 import FlowProvenanceChip from "@/components/flow/FlowProvenanceChip";
 import VerifyWorkDialog from "@/components/works/VerifyWorkDialog";
 import FlowUnlockGate from "@/components/flow/FlowUnlockGate";
+import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import { ShieldCheck } from "lucide-react";
 
 /* ─── Platform detection ─── */
@@ -156,11 +156,6 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
   const cardPrefs = useFlowCardPrefs();
   const platform = detectPlatform(item.link_url);
   const CatIcon = CATEGORY_ICONS[item.category] || Palette;
-  const catColor = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.writing;
-  // Resolve user-customized badge appearance. `catColor` becomes the
-  // fallback when the preset is "category" (the per-category default).
-  const badgeColorClass = badgeColorClassFor(cardPrefs.badgeColor, catColor);
-  const badgePlacementClass = badgePlacementClassFor(cardPrefs.badgePlacement);
   const youtubeId = item.link_url ? getYouTubeId(item.link_url) : null;
   const spotifyEmbed = item.link_url ? getSpotifyEmbed(item.link_url) : null;
   const isSoundCloud = item.link_url?.includes("soundcloud.com");
