@@ -44,8 +44,8 @@ const AuthPage = () => {
   };
 
   // Auto-open the referral field if a campaign link delivered the user here
-  // with ?ref=CODE (e.g. shopify.com → rhozeland.app/auth?ref=SHOPIFY). The
-  // field stays hidden for organic signups so codes aren't broadcast.
+  // with ?ref=CODE. The field stays hidden for organic signups so codes aren't
+  // broadcast.
   const refFromUrl = searchParams.get("ref");
   if (refFromUrl && !referralCode) {
     // setState during render is safe because it's guarded; React bails out
