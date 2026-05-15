@@ -1967,14 +1967,42 @@ const FlowModePage = () => {
       />
 
       {/* Add content dialog */}
-      <Dialog open={addOpen} onOpenChange={(open) => { if (!open) { cancelUpload(); resetPendingFiles(); setShareStep("compose"); } setAddOpen(open); }}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{shareStep === "confirm" ? "Confirm & publish" : "Share to Flow"}</DialogTitle>
-            {shareStep === "confirm" && (
-              <DialogDescription>Looks good? Publish to Flow.</DialogDescription>
-            )}
-          </DialogHeader>
+      <Dialog open={addOpen} onOpenChange={(open) => { if (!open) { cancelUpload(); resetPendingFiles(); setShareStep("pick"); setShowLinkField(false); setCelebrating(false); } setAddOpen(open); }}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0">
+          {/* Sticky header with stepper */}
+          <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-5 pt-5 pb-3">
+            <DialogHeader className="space-y-1">
+              <DialogTitle className="text-lg">
+                {shareStep === "pick" && "Share to Flow"}
+                {shareStep === "caption" && "Add a caption"}
+                {shareStep === "confirm" && "Review & publish"}
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                {shareStep === "pick" && "Pick a vibe and drop your work."}
+                {shareStep === "caption" && "Your caption shows as the first comment."}
+                {shareStep === "confirm" && "One last look before it hits the feed."}
+              </DialogDescription>
+            </DialogHeader>
+            {/* 3-dot stepper */}
+            <div className="flex items-center gap-1.5 mt-3" role="tablist" aria-label="Share progress">
+              {(["pick", "caption", "confirm"] as const).map((s, i) => {
+                const idx = ["pick", "caption", "confirm"].indexOf(shareStep);
+                const active = i === idx;
+                const done = i < idx;
+                return (
+                  <span
+                    key={s}
+                    className={cn(
+                      "h-1 rounded-full transition-all",
+                      active ? "w-8 bg-primary" : done ? "w-4 bg-primary/60" : "w-4 bg-muted"
+                    )}
+                  />
+                );
+              })}
+            </div>
+          </div>
+          <div className="px-5 pb-5 pt-4">
+
           {(() => {
             // ---- Validation summary ----
             const trimmedTitle = newTitle.trim();
