@@ -545,7 +545,7 @@ const PriceChartCard = ({ launchId, ticker }: Props) => {
                         x={x - chart.bodyWidth / 2}
                         y={volumeTop}
                         width={chart.bodyWidth}
-                        height={Math.max(chart.volumeBottom - volumeTop, 2)}
+                        height={Math.max(chart.volumeBottom - volumeTop, 6)}
                         rx="2"
                         fill={candle.dominantSide === "buy" ? CHART_UP_SOFT : CHART_DOWN_SOFT}
                       />
