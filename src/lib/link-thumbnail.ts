@@ -19,5 +19,5 @@ export function getDirectThumbnail(url?: string | null): string | null {
 export function needsRemoteThumbnail(url?: string | null): boolean {
   if (!url) return false;
   if (getDirectThumbnail(url)) return false;
-  return /spotify\.com|soundcloud\.com|vimeo\.com|bandcamp\.com|apple\.com\/music/.test(url);
+  return /spotify\.com|soundcloud\.com|vimeo\.com|bandcamp\.com|apple\.com\/music|audius\.co|lnkfi\.re|linkfire\.com|songwhip\.com|distrokid\.com|orcd\.co/.test(url);
 }
