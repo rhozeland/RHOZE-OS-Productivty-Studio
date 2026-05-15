@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FlowScopeToggle, type FlowScope } from "@/components/flow/FlowScopeToggle";
+import type { FlowScope } from "@/components/flow/FlowScopeToggle";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import { loadFlowFeed, type FlowItemWithProfile } from "@/lib/flow-feed";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,7 @@ const CompactFlowFeed = () => {
   const [preferredCategories, setPreferredCategories] = useState<string[]>(CATEGORIES);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(CATEGORIES);
   const [ready, setReady] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -105,8 +106,19 @@ const CompactFlowFeed = () => {
   });
 
   const topItems = useMemo(() => items.slice(0, 8), [items]);
-  const activeItem = topItems[0] as FlowItemWithProfile | undefined;
-  const sideItems = topItems.slice(1, 4);
+  useEffect(() => {
+    if (topItems.length <= 1) {
+      setPreviewIndex(0);
+      return;
+    }
+    const timer = window.setInterval(() => {
+      setPreviewIndex((current) => (current + 1) % topItems.length);
+    }, 4200);
+    return () => window.clearInterval(timer);
+  }, [topItems]);
+
+  const activeItem = topItems[previewIndex % Math.max(topItems.length, 1)] as FlowItemWithProfile | undefined;
+  const sideItems = topItems.filter((item) => item.id !== activeItem?.id).slice(0, 3);
 
   const openFlow = (itemId?: string, mode: "swipe" | "browse" = "swipe") => {
     const query = new URLSearchParams();
@@ -160,12 +172,10 @@ const CompactFlowFeed = () => {
         </div>
 
         <div className="flex items-center justify-between gap-3 min-[520px]:justify-start">
-          <FlowScopeToggle
-            scope={feedScope}
-            onScopeChange={setScope}
-            visible={preferredCategories.length > 0 && preferredCategories.length < CATEGORIES.length}
-            className="!flex w-fit bg-card/85 border-border/50 shadow-sm"
-          />
+          <div className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-card/85 px-3 py-2 text-xs font-medium text-muted-foreground shadow-sm">
+            <ArrowLeftRight className="h-3.5 w-3.5" />
+            Auto-previewing posts
+          </div>
           <button
             type="button"
             onClick={() => openFlow(undefined, "browse")}
