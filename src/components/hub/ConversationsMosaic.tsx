@@ -272,23 +272,18 @@ const ConversationsMosaic = ({
     return filtered.slice(0, 24);
   }, [allTiles, kind, category]);
 
-  // When filtered to a single kind, drop the bento "hero/wide/tall" pattern
-  // (which creates large empty cells when there are only a handful of items)
-  // and render a tight uniform grid instead.
-  const isFiltered = kind !== "all";
+
 
   if (isLoading) {
+    // Skeleton: same masonry container with varied heights so it previews shape.
+    const skeletonRatios = [1, 1.4, 0.75, 1, 1.6, 0.8, 1.1, 0.9];
     return (
-      <div className={isFiltered
-        ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
-        : "grid grid-cols-2 md:grid-cols-4 auto-rows-[150px] gap-3 grid-flow-dense"}>
-        {Array.from({ length: 8 }).map((_, i) => (
+      <div className="columns-2 md:columns-3 lg:columns-4 gap-3 [column-fill:_balance]">
+        {skeletonRatios.map((r, i) => (
           <div
             key={i}
-            className={cn(
-              "rounded-2xl bg-muted animate-pulse",
-              isFiltered ? "aspect-square" : SIZE_PATTERN[i % SIZE_PATTERN.length],
-            )}
+            className="mb-3 break-inside-avoid rounded-2xl bg-muted animate-pulse w-full"
+            style={{ aspectRatio: r }}
           />
         ))}
       </div>
@@ -345,36 +340,19 @@ const ConversationsMosaic = ({
     );
   }
 
-  if (isFiltered) {
-    return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-        {tiles.map((tile, i) => (
-          <MosaicTileCard
-            key={tile.id}
-            tile={tile}
-            sizeClass="aspect-square"
-            index={i}
-            onClick={() => navigate(tile.href, { state: { flowItemId: tile.kind === "drop" ? tile.id.replace(/^drop-/, "") : null } })}
-          />
-        ))}
-      </div>
-    );
-  }
-
+  // Unified content-aware mosaic — CSS multi-column masonry where each tile
+  // sizes to its natural aspect ratio. Images dictate height; placeholder
+  // tiles (music, events, spaces) fall back to sensible kind-based ratios.
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[150px] gap-3 grid-flow-dense">
-      {tiles.map((tile, i) => {
-        const size = SIZE_PATTERN[i % SIZE_PATTERN.length];
-        return (
-          <MosaicTileCard
-            key={tile.id}
-            tile={tile}
-            sizeClass={size}
-            index={i}
-            onClick={() => navigate(tile.href, { state: { flowItemId: tile.kind === "drop" ? tile.id.replace(/^drop-/, "") : null } })}
-          />
-        );
-      })}
+    <div className="columns-2 md:columns-3 lg:columns-4 gap-3 [column-fill:_balance]">
+      {tiles.map((tile, i) => (
+        <MosaicTileCard
+          key={tile.id}
+          tile={tile}
+          index={i}
+          onClick={() => navigate(tile.href, { state: { flowItemId: tile.kind === "drop" ? tile.id.replace(/^drop-/, "") : null } })}
+        />
+      ))}
     </div>
   );
 };
@@ -390,12 +368,10 @@ const ConversationsMosaic = ({
 //
 const MosaicTileCard = ({
   tile,
-  sizeClass,
   index,
   onClick,
 }: {
   tile: MosaicTile;
-  sizeClass: string;
   index: number;
   onClick: () => void;
 }) => {
@@ -403,7 +379,6 @@ const MosaicTileCard = ({
   const hasImage = !!tile.cover;
   const hasDropVisual = tile.kind === "drop" && !!(tile.fileUrl || tile.linkUrl || tile.category);
   const isDropVisual = tile.kind === "drop" && hasDropVisual;
-  const isLarge = sizeClass.includes("row-span-2") || sizeClass.includes("col-span-2");
   const isIconHero = !hasImage && tile.kind === "offering";
   const catVisual = getCategoryVisual(tile.category);
   const accentStyle = isIconHero
@@ -412,14 +387,51 @@ const MosaicTileCard = ({
       }
     : undefined;
 
-  // A drop is "music" if it has a direct audio file, an audio host link,
-  // or is categorized as music/audio. We always surface a play button for
-  // these — direct audio plays inline; hosted/linked audio routes into
-  // Flow Mode where full playback lives.
+  // ─── Content-aware aspect ratio ───────────────────────────────────
+  // Default ratio per tile kind/category — overridden by the actual media
+  // dimensions once the image/video loads. This is what makes the mosaic
+  // "fit" content shape instead of forcing a uniform grid.
   const catKey = (tile.category ?? "").toLowerCase().trim();
   const isPlayableAudio = tile.kind === "drop" && !!tile.fileUrl && /\.(mp3|wav|flac|aac|m4a|ogg|opus)(\?|$)/i.test(tile.fileUrl);
   const isHostedAudio = tile.kind === "drop" && !!tile.linkUrl && /(spotify\.com|soundcloud\.com|music\.apple\.com|bandcamp\.com|tidal\.com|audius\.co|lnkfi\.re|linkfire\.com|songwhip\.com|distrokid\.com|orcd\.co)/i.test(tile.linkUrl);
   const isMusicDrop = tile.kind === "drop" && (isPlayableAudio || isHostedAudio || catKey === "music" || catKey === "audio");
+  const isVideoDrop = tile.kind === "drop" && (catKey === "video" || /\.(mp4|mov|webm|m4v)(\?|$)/i.test(tile.fileUrl ?? ""));
+
+  const defaultRatio =
+    tile.kind === "event" ? 4 / 3
+    : tile.kind === "space" ? 16 / 10
+    : isMusicDrop ? 1
+    : isVideoDrop ? 16 / 9
+    : tile.kind === "offering" ? 4 / 3
+    : 1;
+  const [aspectRatio, setAspectRatio] = useState<number>(defaultRatio);
+  // Big-tile heuristic — tuned to the natural ratio so wide/tall content gets
+  // the larger play button + heading treatment regardless of column position.
+  const isLarge = aspectRatio >= 1.4 || aspectRatio <= 0.7;
+
+  // Detect natural ratio for any tile that has a real raster image.
+  const probeUrl = tile.cover ?? (
+    tile.kind === "drop" && tile.fileUrl && /\.(png|jpe?g|gif|webp|avif)(\?|$)/i.test(tile.fileUrl)
+      ? tile.fileUrl
+      : null
+  );
+  useEffect(() => {
+    if (!probeUrl) return;
+    let cancelled = false;
+    const img = new Image();
+    img.onload = () => {
+      if (cancelled) return;
+      if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+        // Clamp to a sensible range so a single ultra-tall/wide tile can't
+        // blow the column out of proportion.
+        const r = img.naturalWidth / img.naturalHeight;
+        setAspectRatio(Math.max(0.55, Math.min(2.2, r)));
+      }
+    };
+    img.src = probeUrl;
+    return () => { cancelled = true; };
+  }, [probeUrl]);
+
   const hrefItemId = tile.kind === "drop" ? tile.href.match(/[?&]item=([^&]+)/)?.[1] ?? null : null;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -459,7 +471,8 @@ const MosaicTileCard = ({
       transition={{ delay: Math.min(index * 0.025, 0.35), type: "spring", stiffness: 220, damping: 24 }}
       whileHover={{ y: -3 }}
       whileTap={{ scale: 0.98 }}
-      className={`${sizeClass} group relative w-full h-full overflow-hidden rounded-2xl border border-border bg-card text-left transition-all duration-300 hover:border-foreground/40 hover:shadow-lg cursor-pointer`}
+      style={{ aspectRatio }}
+      className="mb-3 break-inside-avoid block w-full group relative overflow-hidden rounded-2xl border border-border bg-card text-left transition-all duration-300 hover:border-foreground/40 hover:shadow-lg cursor-pointer"
       aria-label={`${label}: ${tile.title}. Click to open.`}
     >
       {/* Background — image, gradient tint, or category-tinted icon hero */}
