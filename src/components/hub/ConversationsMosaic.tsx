@@ -371,12 +371,10 @@ const ConversationsMosaic = ({
 //
 const MosaicTileCard = ({
   tile,
-  sizeClass,
   index,
   onClick,
 }: {
   tile: MosaicTile;
-  sizeClass: string;
   index: number;
   onClick: () => void;
 }) => {
@@ -384,7 +382,6 @@ const MosaicTileCard = ({
   const hasImage = !!tile.cover;
   const hasDropVisual = tile.kind === "drop" && !!(tile.fileUrl || tile.linkUrl || tile.category);
   const isDropVisual = tile.kind === "drop" && hasDropVisual;
-  const isLarge = sizeClass.includes("row-span-2") || sizeClass.includes("col-span-2");
   const isIconHero = !hasImage && tile.kind === "offering";
   const catVisual = getCategoryVisual(tile.category);
   const accentStyle = isIconHero
@@ -393,14 +390,51 @@ const MosaicTileCard = ({
       }
     : undefined;
 
-  // A drop is "music" if it has a direct audio file, an audio host link,
-  // or is categorized as music/audio. We always surface a play button for
-  // these — direct audio plays inline; hosted/linked audio routes into
-  // Flow Mode where full playback lives.
+  // ─── Content-aware aspect ratio ───────────────────────────────────
+  // Default ratio per tile kind/category — overridden by the actual media
+  // dimensions once the image/video loads. This is what makes the mosaic
+  // "fit" content shape instead of forcing a uniform grid.
   const catKey = (tile.category ?? "").toLowerCase().trim();
   const isPlayableAudio = tile.kind === "drop" && !!tile.fileUrl && /\.(mp3|wav|flac|aac|m4a|ogg|opus)(\?|$)/i.test(tile.fileUrl);
   const isHostedAudio = tile.kind === "drop" && !!tile.linkUrl && /(spotify\.com|soundcloud\.com|music\.apple\.com|bandcamp\.com|tidal\.com|audius\.co|lnkfi\.re|linkfire\.com|songwhip\.com|distrokid\.com|orcd\.co)/i.test(tile.linkUrl);
   const isMusicDrop = tile.kind === "drop" && (isPlayableAudio || isHostedAudio || catKey === "music" || catKey === "audio");
+  const isVideoDrop = tile.kind === "drop" && (catKey === "video" || /\.(mp4|mov|webm|m4v)(\?|$)/i.test(tile.fileUrl ?? ""));
+
+  const defaultRatio =
+    tile.kind === "event" ? 4 / 3
+    : tile.kind === "space" ? 16 / 10
+    : isMusicDrop ? 1
+    : isVideoDrop ? 16 / 9
+    : tile.kind === "offering" ? 4 / 3
+    : 1;
+  const [aspectRatio, setAspectRatio] = useState<number>(defaultRatio);
+  // Big-tile heuristic — tuned to the natural ratio so wide/tall content gets
+  // the larger play button + heading treatment regardless of column position.
+  const isLarge = aspectRatio >= 1.4 || aspectRatio <= 0.7;
+
+  // Detect natural ratio for any tile that has a real raster image.
+  const probeUrl = tile.cover ?? (
+    tile.kind === "drop" && tile.fileUrl && /\.(png|jpe?g|gif|webp|avif)(\?|$)/i.test(tile.fileUrl)
+      ? tile.fileUrl
+      : null
+  );
+  useEffect(() => {
+    if (!probeUrl) return;
+    let cancelled = false;
+    const img = new Image();
+    img.onload = () => {
+      if (cancelled) return;
+      if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+        // Clamp to a sensible range so a single ultra-tall/wide tile can't
+        // blow the column out of proportion.
+        const r = img.naturalWidth / img.naturalHeight;
+        setAspectRatio(Math.max(0.55, Math.min(2.2, r)));
+      }
+    };
+    img.src = probeUrl;
+    return () => { cancelled = true; };
+  }, [probeUrl]);
+
   const hrefItemId = tile.kind === "drop" ? tile.href.match(/[?&]item=([^&]+)/)?.[1] ?? null : null;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
