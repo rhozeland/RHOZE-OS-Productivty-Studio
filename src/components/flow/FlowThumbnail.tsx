@@ -165,7 +165,7 @@ export const FlowThumbnail = ({
 
 
       {/* Decorative pattern layer */}
-      {v.pattern === "waves" && (
+      {v.pattern === "waves" && !isAudioVisual && (
         <svg
           className={`absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-300 ${imageLoaded ? "opacity-0" : "opacity-25 mix-blend-screen"}`}
           viewBox="0 0 100 100"
