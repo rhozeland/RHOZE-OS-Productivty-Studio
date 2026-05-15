@@ -103,6 +103,7 @@ const HubFlowWidget = ({ expanded = false, hideHeading = false }: { expanded?: b
                     linkUrl={item.link_url}
                     title={item.title ?? "Untitled"}
                     description={item.description as string | null}
+                    category={item.category as string | null}
                     className="absolute inset-0 h-full w-full object-cover"
                   />
                   <div className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-black/80 via-black/30 to-transparent">
