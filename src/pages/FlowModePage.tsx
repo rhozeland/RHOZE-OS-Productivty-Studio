@@ -821,13 +821,6 @@ const FlowModePage = () => {
     onSuccess: async (inserted) => {
       queryClient.invalidateQueries({ queryKey: ["flow-items"] });
       const count = pendingFiles.length;
-      setAddOpen(false);
-      setNewTitle("");
-      setNewDesc("");
-      setNewLink("");
-      setNewCreatorName("");
-      setShareStep("compose");
-      resetPendingFiles();
 
       // Reward: 1 $RHOZE per share (capped at 5/day server-side).
       let earned = 0;
@@ -845,8 +838,22 @@ const FlowModePage = () => {
         // Reward is best-effort; never block the share UX.
       }
 
+      // Celebrate inside the dialog before closing — gives the post a moment.
+      setCelebrating(true);
       const base = count > 1 ? `Shared ${count} items to Flow!` : "Shared to Flow!";
       toast.success(earned > 0 ? `${base} +${earned} $RHOZE` : base);
+
+      window.setTimeout(() => {
+        setAddOpen(false);
+        setNewTitle("");
+        setNewDesc("");
+        setNewLink("");
+        setNewCreatorName("");
+        setShowLinkField(false);
+        setShareStep("pick");
+        setCelebrating(false);
+        resetPendingFiles();
+      }, 1700);
     },
     onError: (e: any) => {
       setPublishingIndex(null);
