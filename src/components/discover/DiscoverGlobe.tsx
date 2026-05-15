@@ -390,14 +390,14 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
         }}
       />
 
-      <div className="relative flex flex-col gap-3 p-3 sm:p-4 sm:gap-4">
+      <div className="relative grid gap-3 p-3 sm:p-4 sm:gap-4 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px] lg:items-stretch">
         {/* ── Globe ─────────────────────────────────────────────── */}
         <div className="relative overflow-hidden rounded-[1.5rem] border border-border/50 bg-background/45 backdrop-blur-xl">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_46%,hsl(var(--background)/0)_0%,hsl(var(--primary)/0.12)_32%,transparent_54%),radial-gradient(circle_at_50%_86%,hsl(var(--accent)/0.18),transparent_30%)]" />
 
-          <div className="relative flex min-h-[280px] items-center justify-center px-2 py-2 sm:px-3 lg:min-h-[340px]">
+          <div className="relative flex min-h-[280px] items-center justify-center px-2 py-2 sm:px-3 lg:min-h-[420px]">
             <div
-              className="relative aspect-square w-full max-w-[480px] touch-none select-none"
+              className="relative aspect-square w-full max-w-[440px] touch-none select-none"
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
@@ -487,68 +487,82 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
             </div>
           </div>
 
+          {/* Connector line from pin → spotlight card (desktop only) */}
+          {activeSpotlight && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute right-0 top-1/2 hidden h-px w-8 -translate-y-1/2 translate-x-full lg:block"
+              style={{
+                background: `linear-gradient(to right, ${(activeSpotlight as any).color ?? "hsl(var(--primary))"} 0%, transparent 100%)`,
+              }}
+            />
+          )}
+
+          {/* Dot pager moved into globe panel footer */}
+          {allSpotlights.length > 1 && (
+            <div className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-border/55 bg-background/82 px-2.5 py-1 backdrop-blur-md">
+              {allSpotlights.map((m: any) => {
+                const active = m.key === activeSpotlight?.key;
+                return (
+                  <button
+                    key={m.key}
+                    type="button"
+                    onClick={() => setActiveSpotlightKey(m.key)}
+                    aria-label={`Show ${m.title}`}
+                    className={cn(
+                      "h-1.5 rounded-full transition-all",
+                      active ? "w-5 bg-foreground" : "w-1.5 bg-foreground/25 hover:bg-foreground/45",
+                    )}
+                  />
+                );
+              })}
+            </div>
+          )}
+
           {isDragging && (
-            <div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-full border border-border/55 bg-background/82 px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-muted-foreground backdrop-blur-md">
+            <div className="absolute top-3 left-1/2 z-20 -translate-x-1/2 rounded-full border border-border/55 bg-background/82 px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-muted-foreground backdrop-blur-md">
               Spin
             </div>
           )}
         </div>
 
         {/* ── Featured artist (synced to globe pin) ───────────── */}
-        <AnimatePresence mode="wait">
-          {activeSpotlight ? (
-            <motion.div
-              key={activeSpotlight.key}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <ArtistSpotlightCard
-                id={activeSpotlight.id}
-                href={activeSpotlight.href}
-                title={activeSpotlight.title}
-                subtitle={activeSpotlight.subtitle}
-                avatar={activeSpotlight.avatar}
-                region_code={activeSpotlight.region_code}
-                creator_roles={activeSpotlight.creator_roles}
-                mediums={activeSpotlight.mediums}
-                verification_status={activeSpotlight.verification_status}
-                works_count={activeSpotlight.works_count}
-                followers_count={activeSpotlight.followers_count}
-                coin={(activeSpotlight as any).coin ?? null}
-                next_event={(activeSpotlight as any).next_event ?? null}
-                hosted_space={(activeSpotlight as any).hosted_space ?? null}
-                offerings_count={(activeSpotlight as any).offerings_count ?? 0}
-              />
-            </motion.div>
-          ) : (
-            <div className="rounded-[1.5rem] border border-dashed border-border/50 bg-card/35 p-6 text-sm text-muted-foreground">
-              Featured orbit is warming up.
-            </div>
-          )}
-        </AnimatePresence>
-
-        {/* Tiny dot pager — tap to jump to a creator (no big card grid) */}
-        {allSpotlights.length > 1 && (
-          <div className="flex items-center justify-center gap-1.5">
-            {allSpotlights.map((m: any) => {
-              const active = m.key === activeSpotlight?.key;
-              return (
-                <button
-                  key={m.key}
-                  type="button"
-                  onClick={() => setActiveSpotlightKey(m.key)}
-                  aria-label={`Show ${m.title}`}
-                  className={cn(
-                    "h-1.5 rounded-full transition-all",
-                    active ? "w-6 bg-foreground" : "w-1.5 bg-foreground/25 hover:bg-foreground/45",
-                  )}
+        <div className="relative flex min-h-0 lg:items-center">
+          <AnimatePresence mode="wait">
+            {activeSpotlight ? (
+              <motion.div
+                key={activeSpotlight.key}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                className="w-full"
+              >
+                <ArtistSpotlightCard
+                  id={activeSpotlight.id}
+                  href={activeSpotlight.href}
+                  title={activeSpotlight.title}
+                  subtitle={activeSpotlight.subtitle}
+                  avatar={activeSpotlight.avatar}
+                  region_code={activeSpotlight.region_code}
+                  creator_roles={activeSpotlight.creator_roles}
+                  mediums={activeSpotlight.mediums}
+                  verification_status={activeSpotlight.verification_status}
+                  works_count={activeSpotlight.works_count}
+                  followers_count={activeSpotlight.followers_count}
+                  coin={(activeSpotlight as any).coin ?? null}
+                  next_event={(activeSpotlight as any).next_event ?? null}
+                  hosted_space={(activeSpotlight as any).hosted_space ?? null}
+                  offerings_count={(activeSpotlight as any).offerings_count ?? 0}
                 />
-              );
-            })}
-          </div>
-        )}
+              </motion.div>
+            ) : (
+              <div className="w-full rounded-[1.5rem] border border-dashed border-border/50 bg-card/35 p-6 text-sm text-muted-foreground">
+                Featured orbit is warming up.
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
