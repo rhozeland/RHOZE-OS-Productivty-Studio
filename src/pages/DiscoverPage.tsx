@@ -420,9 +420,6 @@ const DiscoverPage = () => {
       <section id="discover-stream" className="space-y-4 scroll-mt-20">
         <div className="flex items-end justify-between gap-3 flex-wrap">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-1">
-              Feed
-            </p>
             <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
               Feed
             </h2>
