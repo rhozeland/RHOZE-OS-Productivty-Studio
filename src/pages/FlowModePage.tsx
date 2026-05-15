@@ -2130,8 +2130,8 @@ const FlowModePage = () => {
                   );
                 })()}
 
-                {/* Full-size media preview — image, video, or audio rendered as the actual content */}
-                {fileCount > 0 && (
+                {/* Full-size media preview — used for later steps; step one has its own preview panel. */}
+                {shareStep !== "pick" && fileCount > 0 && (
                   <div className="space-y-2" role="list" aria-label="Files to share">
                     {pendingFiles.map((pf) => {
                       const isImg = pf.file.type.startsWith("image/");
@@ -2527,7 +2527,8 @@ const FlowModePage = () => {
                   const back =
                     shareStep === "caption" ? "pick" : shareStep === "confirm" ? "caption" : null;
                   return (
-                    <div className="flex items-center gap-2">
+                    <div className="sticky bottom-0 -mx-5 mt-6 border-t border-border bg-background/95 px-5 pb-1 pt-4 backdrop-blur">
+                      <div className="flex items-center gap-2">
                       {back && (
                         <Button
                           type="button"
@@ -2565,6 +2566,7 @@ const FlowModePage = () => {
                           </PopoverContent>
                         </Popover>
                       )}
+                      </div>
                     </div>
                   );
                 })()}
