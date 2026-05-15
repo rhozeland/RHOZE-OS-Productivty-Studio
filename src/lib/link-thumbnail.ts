@@ -10,7 +10,10 @@ export function getDirectThumbnail(url?: string | null): string | null {
   const yt = url.match(
     /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([A-Za-z0-9_-]{11})/,
   );
-  if (yt?.[1]) return `https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg`;
+  // NOTE: `hqdefault.jpg` is 480x360 and bakes in black letterbox bars on
+  // 16:9 videos. `mqdefault.jpg` (320x180) is true 16:9, no bars — looks
+  // correct in any aspect-ratio tile when paired with object-cover.
+  if (yt?.[1]) return `https://img.youtube.com/vi/${yt[1]}/mqdefault.jpg`;
   // Vimeo, Spotify, SoundCloud need an oEmbed/og:image lookup — handled by
   // the `fetch-link-metadata` edge function. Return null here.
   return null;
