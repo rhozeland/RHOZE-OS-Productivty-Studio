@@ -248,7 +248,10 @@ const FlowModePage = () => {
   const hardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastProgressAtRef = useRef<number>(0);
   const [newCreatorName, setNewCreatorName] = useState("");
-  const [shareStep, setShareStep] = useState<"compose" | "confirm">("compose");
+  const [shareStep, setShareStep] = useState<"pick" | "caption" | "confirm">("pick");
+  const [showLinkField, setShowLinkField] = useState(false);
+  const [celebrating, setCelebrating] = useState(false);
+  const CAPTION_LIMIT = 240;
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(() => {
     const saved = localStorage.getItem("flow-sound-enabled");
@@ -818,13 +821,6 @@ const FlowModePage = () => {
     onSuccess: async (inserted) => {
       queryClient.invalidateQueries({ queryKey: ["flow-items"] });
       const count = pendingFiles.length;
-      setAddOpen(false);
-      setNewTitle("");
-      setNewDesc("");
-      setNewLink("");
-      setNewCreatorName("");
-      setShareStep("compose");
-      resetPendingFiles();
 
       // Reward: 1 $RHOZE per share (capped at 5/day server-side).
       let earned = 0;
@@ -842,8 +838,22 @@ const FlowModePage = () => {
         // Reward is best-effort; never block the share UX.
       }
 
+      // Celebrate inside the dialog before closing — gives the post a moment.
+      setCelebrating(true);
       const base = count > 1 ? `Shared ${count} items to Flow!` : "Shared to Flow!";
       toast.success(earned > 0 ? `${base} +${earned} $RHOZE` : base);
+
+      window.setTimeout(() => {
+        setAddOpen(false);
+        setNewTitle("");
+        setNewDesc("");
+        setNewLink("");
+        setNewCreatorName("");
+        setShowLinkField(false);
+        setShareStep("pick");
+        setCelebrating(false);
+        resetPendingFiles();
+      }, 1700);
     },
     onError: (e: any) => {
       setPublishingIndex(null);
@@ -1545,8 +1555,6 @@ const FlowModePage = () => {
               </div>
             </SheetContent>
           </Sheet>
-
-
           {/* Compose entry — guests get an inline "Sign up to post" popover
               instead of the upload sheet. SignUpToPostPrompt is a no-op for
               authenticated users so the original onClick fires unchanged. */}
@@ -1957,14 +1965,43 @@ const FlowModePage = () => {
       />
 
       {/* Add content dialog */}
-      <Dialog open={addOpen} onOpenChange={(open) => { if (!open) { cancelUpload(); resetPendingFiles(); setShareStep("compose"); } setAddOpen(open); }}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{shareStep === "confirm" ? "Confirm & publish" : "Share to Flow"}</DialogTitle>
-            {shareStep === "confirm" && (
-              <DialogDescription>Looks good? Publish to Flow.</DialogDescription>
-            )}
-          </DialogHeader>
+      <Dialog open={addOpen} onOpenChange={(open) => { if (!open) { cancelUpload(); resetPendingFiles(); setShareStep("pick"); setShowLinkField(false); setCelebrating(false); } setAddOpen(open); }}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-hidden p-0 relative">
+          <div className="max-h-[90vh] overflow-y-auto">
+          {/* Sticky header with stepper */}
+          <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-5 pt-5 pb-3">
+            <DialogHeader className="space-y-1">
+              <DialogTitle className="text-lg">
+                {shareStep === "pick" && "Share to Flow"}
+                {shareStep === "caption" && "Add a caption"}
+                {shareStep === "confirm" && "Review & publish"}
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                {shareStep === "pick" && "Pick a vibe and drop your work."}
+                {shareStep === "caption" && "Your caption shows as the first comment."}
+                {shareStep === "confirm" && "One last look before it hits the feed."}
+              </DialogDescription>
+            </DialogHeader>
+            {/* 3-dot stepper */}
+            <div className="flex items-center gap-1.5 mt-3" role="tablist" aria-label="Share progress">
+              {(["pick", "caption", "confirm"] as const).map((s, i) => {
+                const idx = ["pick", "caption", "confirm"].indexOf(shareStep);
+                const active = i === idx;
+                const done = i < idx;
+                return (
+                  <span
+                    key={s}
+                    className={cn(
+                      "h-1 rounded-full transition-all",
+                      active ? "w-8 bg-primary" : done ? "w-4 bg-primary/60" : "w-4 bg-muted"
+                    )}
+                  />
+                );
+              })}
+            </div>
+          </div>
+          <div className="px-5 pb-5 pt-4">
+
           {(() => {
             // ---- Validation summary ----
             const trimmedTitle = newTitle.trim();
@@ -1992,19 +2029,24 @@ const FlowModePage = () => {
             ];
             const allValid = checks.every((c) => c.ok);
             const canPublish = allValid && !createFlowItem.isPending;
+            const captionLen = newTitle.length;
+            const captionWithinLimit = captionLen <= CAPTION_LIMIT;
+            // Step gating: pick needs media + no errors; caption only checks caption length.
+            const pickValid = hasMedia && noFileErrors && !filesUploading;
+            const captionValid = captionWithinLimit;
+
+            const goNext = () => {
+              if (shareStep === "pick" && pickValid) setShareStep("caption");
+              else if (shareStep === "caption" && captionValid) setShareStep("confirm");
+              else if (shareStep === "confirm" && canPublish) createFlowItem.mutate();
+            };
 
             return (
               <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (shareStep === "compose") {
-                    if (allValid) setShareStep("confirm");
-                    return;
-                  }
-                  if (canPublish) createFlowItem.mutate();
-                }}
+                onSubmit={(e) => { e.preventDefault(); goNext(); }}
                 className="space-y-4"
               >
+
                 {shareStep === "confirm" && (
                   <div className="rounded-xl border border-border bg-muted/30 p-3 space-y-3">
                     <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Pre-publish checks</p>
@@ -2149,7 +2191,7 @@ const FlowModePage = () => {
                   </div>
                 )}
 
-                {shareStep === "compose" && (
+                {shareStep === "pick" && (
                   <>
                     {/* Visual icon picker — replaces the boring dropdown */}
                     <div>
@@ -2183,14 +2225,6 @@ const FlowModePage = () => {
                         })}
                       </div>
                     </div>
-
-                    <Textarea
-                      placeholder="Say something (optional)"
-                      value={newTitle}
-                      onChange={(e) => setNewTitle(e.target.value)}
-                      rows={2}
-                      className="rounded-xl resize-none"
-                    />
 
                     <div>
                       <input
@@ -2260,19 +2294,65 @@ const FlowModePage = () => {
                         <p className="text-xs text-destructive mt-1.5 px-1" role="alert">{fileError}</p>
                       )}
                     </div>
+                  </>
+                )}
 
-                    {/* Optional link — collapsed behind a tiny toggle so it doesn't clutter the form */}
-                    <div className="relative">
-                      <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
-                      <Input
-                        placeholder="Paste a link (optional)"
-                        value={newLink}
-                        onChange={(e) => setNewLink(e.target.value)}
-                        className="rounded-xl pl-9 text-sm"
+                {shareStep === "caption" && (
+                  <div className="space-y-3">
+                    {/* Comment-bubble caption — this becomes the first comment on the post */}
+                    <div className="relative rounded-2xl rounded-tl-sm border border-primary/30 bg-primary/5 p-3.5 shadow-sm">
+                      <div className="absolute -top-2 left-3 px-1.5 py-0.5 rounded-md bg-background border border-primary/30 text-[10px] uppercase tracking-wider text-primary font-medium">
+                        Your first comment
+                      </div>
+                      <Textarea
+                        autoFocus
+                        placeholder="Say something about it… a vibe, a story, a credit."
+                        value={newTitle}
+                        onChange={(e) => setNewTitle(e.target.value.slice(0, CAPTION_LIMIT))}
+                        rows={4}
+                        maxLength={CAPTION_LIMIT}
+                        className="border-0 bg-transparent p-0 resize-none focus-visible:ring-0 text-sm shadow-none"
                       />
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-[10px] text-muted-foreground">Optional · shows as a comment bubble in Flow</span>
+                        <span className={cn(
+                          "text-[10px] tabular-nums",
+                          captionLen > CAPTION_LIMIT - 30 ? "text-amber-500" : "text-muted-foreground"
+                        )}>{captionLen}/{CAPTION_LIMIT}</span>
+                      </div>
                     </div>
 
-                  </>
+                    {/* Optional link toggle — hidden behind a chip so it stays minimal */}
+                    {!showLinkField ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowLinkField(true)}
+                        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors px-2.5 py-1.5 rounded-full border border-dashed border-border hover:border-primary/40"
+                      >
+                        <LinkIcon className="h-3 w-3" />
+                        Add a link
+                      </button>
+                    ) : (
+                      <div className="relative">
+                        <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
+                        <Input
+                          autoFocus
+                          placeholder="https://…"
+                          value={newLink}
+                          onChange={(e) => setNewLink(e.target.value)}
+                          className="rounded-xl pl-9 pr-9 text-sm"
+                        />
+                        <button
+                          type="button"
+                          aria-label="Remove link"
+                          onClick={() => { setNewLink(""); setShowLinkField(false); }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {shareStep === "confirm" && (
@@ -2280,8 +2360,8 @@ const FlowModePage = () => {
                     <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Post details</p>
                     <div className="space-y-1.5 text-sm">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-muted-foreground text-xs w-20 shrink-0">Title</span>
-                        <span className="text-foreground font-medium break-words">{newTitle.trim() || <span className="text-muted-foreground italic">—</span>}</span>
+                        <span className="text-muted-foreground text-xs w-20 shrink-0">Caption</span>
+                        <span className="text-foreground font-medium break-words">{newTitle.trim() || <span className="text-muted-foreground italic">— (no comment)</span>}</span>
                       </div>
                       {newCreatorName.trim() && (
                         <div className="flex items-baseline gap-2">
@@ -2327,62 +2407,130 @@ const FlowModePage = () => {
                   </div>
                 )}
 
-                {shareStep === "compose" ? (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="submit"
-                      className="flex-1 rounded-full"
-                      disabled={!allValid || createFlowItem.isPending}
-                    >
-                      Review &amp; confirm
-                    </Button>
-                    <Popover>
-                      <PopoverTrigger asChild>
+                {(() => {
+                  const stepDisabled =
+                    (shareStep === "pick" && !pickValid) ||
+                    (shareStep === "caption" && !captionValid) ||
+                    (shareStep === "confirm" && !canPublish) ||
+                    createFlowItem.isPending;
+                  const primaryLabel =
+                    shareStep === "pick"
+                      ? "Next"
+                      : shareStep === "caption"
+                      ? "Review"
+                      : createFlowItem.isPending
+                      ? (publishingIndex
+                          ? `Publishing ${publishingIndex.current}/${publishingIndex.total}…`
+                          : "Publishing…")
+                      : fileCount > 1
+                      ? `Publish ${fileCount} items`
+                      : "Publish to Flow";
+                  const back =
+                    shareStep === "caption" ? "pick" : shareStep === "confirm" ? "caption" : null;
+                  return (
+                    <div className="flex items-center gap-2">
+                      {back && (
                         <Button
                           type="button"
-                          size="icon"
-                          variant="ghost"
-                          className="h-9 w-9 rounded-full text-primary"
-                          aria-label="Reward info"
+                          variant="outline"
+                          className="rounded-full"
+                          disabled={createFlowItem.isPending}
+                          onClick={() => setShareStep(back)}
                         >
-                          <Sparkles className="h-4 w-4" />
+                          Back
                         </Button>
-                      </PopoverTrigger>
-                      <PopoverContent side="top" align="end" className="w-60 text-xs">
-                        Earn <strong className="text-primary">+1 $RHOZE</strong> per share — adds to your XP and Creator Pass progress.
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="rounded-full"
-                      disabled={createFlowItem.isPending}
-                      onClick={() => setShareStep("compose")}
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      type="submit"
-                      className="flex-1 rounded-full"
-                      disabled={!canPublish}
-                      aria-disabled={!canPublish}
-                    >
-                      {createFlowItem.isPending
-                        ? (publishingIndex
-                            ? `Publishing ${publishingIndex.current}/${publishingIndex.total}…`
-                            : "Publishing…")
-                        : fileCount > 1
-                        ? `Publish ${fileCount} items`
-                        : "Publish to Flow"}
-                    </Button>
-                  </div>
-                )}
+                      )}
+                      <Button
+                        type="submit"
+                        className="flex-1 rounded-full"
+                        disabled={stepDisabled}
+                        aria-disabled={stepDisabled}
+                      >
+                        {primaryLabel}
+                      </Button>
+                      {shareStep === "pick" && (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="h-9 w-9 rounded-full text-primary"
+                              aria-label="Reward info"
+                            >
+                              <Sparkles className="h-4 w-4" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent side="top" align="end" className="w-60 text-xs">
+                            Earn <strong className="text-primary">+1 $RHOZE</strong> per share — adds to your XP and Creator Pass progress.
+                          </PopoverContent>
+                        </Popover>
+                      )}
+                    </div>
+                  );
+                })()}
               </form>
             );
           })()}
+          </div>
+          </div>
+
+          {/* Celebration overlay — fires when the post lands on the feed */}
+          <AnimatePresence>
+            {celebrating && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/95 backdrop-blur rounded-lg overflow-hidden"
+              >
+                {/* Confetti dots */}
+                {Array.from({ length: 18 }).map((_, i) => {
+                  const angle = (i / 18) * Math.PI * 2;
+                  const dist = 120 + (i % 3) * 30;
+                  const colors = ["bg-primary", "bg-amber-400", "bg-rose-400", "bg-emerald-400", "bg-sky-400"];
+                  return (
+                    <motion.span
+                      key={i}
+                      initial={{ x: 0, y: 0, opacity: 0, scale: 0.5 }}
+                      animate={{
+                        x: Math.cos(angle) * dist,
+                        y: Math.sin(angle) * dist,
+                        opacity: [0, 1, 0],
+                        scale: [0.5, 1.2, 0.8],
+                      }}
+                      transition={{ duration: 1.4, ease: "easeOut", delay: i * 0.015 }}
+                      className={cn("absolute h-2 w-2 rounded-full", colors[i % colors.length])}
+                    />
+                  );
+                })}
+                <motion.div
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 220, damping: 14 }}
+                  className="relative h-20 w-20 rounded-full bg-gradient-to-br from-primary to-rose-500 flex items-center justify-center shadow-xl shadow-primary/30"
+                >
+                  <Sparkles className="h-9 w-9 text-white" />
+                </motion.div>
+                <motion.p
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 }}
+                  className="mt-4 text-base font-display font-semibold text-foreground"
+                >
+                  It's on the Flow!
+                </motion.p>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-xs text-muted-foreground mt-1"
+                >
+                  Everyone can see it now · +1 $RHOZE earned
+                </motion.p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </DialogContent>
       </Dialog>
 
