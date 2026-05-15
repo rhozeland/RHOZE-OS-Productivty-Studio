@@ -37,6 +37,11 @@ export type PeekTarget = {
   };
 };
 
+export type DeepLinkSelection = {
+  index: number;
+  shouldFinalize: boolean;
+};
+
 /**
  * Given a Flow item, resolve the creator-peek target.
  *
@@ -81,4 +86,34 @@ export function mergeDeepLinkIntoFeed<T extends FlowItemLike>(
   if (!deepLinkItem) return baseItems;
   if (baseItems.some((i) => i.id === deepLinkItem.id)) return baseItems;
   return [deepLinkItem, ...baseItems];
+}
+
+/**
+ * Resolve where a deep-linked item currently lives in the swipe deck.
+ *
+ * `shouldFinalize` flips to true only once the feed has settled enough that
+ * Flow can safely clear the `?item=` param without losing the clicked item:
+ *   - the target is present in the real feed, or
+ *   - the target only exists via the fallback deep-link fetch and the feed is
+ *     otherwise done loading.
+ */
+export function resolveDeepLinkSelection<T extends FlowItemLike>(
+  targetId: string,
+  allItems: T[],
+  baseItems: T[],
+  options: {
+    flowItemsFetching: boolean;
+    hasFallbackItem: boolean;
+  },
+): DeepLinkSelection | null {
+  const index = allItems.findIndex((item) => item.id === targetId);
+  if (index < 0) return null;
+
+  const inBaseFeed = baseItems.some((item) => item.id === targetId);
+
+  return {
+    index,
+    shouldFinalize:
+      !options.flowItemsFetching && (inBaseFeed || options.hasFallbackItem),
+  };
 }

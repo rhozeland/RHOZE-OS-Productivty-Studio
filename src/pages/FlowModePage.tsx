@@ -64,7 +64,12 @@ import FlowCommentSheet from "@/components/flow/FlowCommentSheet";
 import LinkPreviewCard from "@/components/flow/LinkPreviewCard";
 import { cn } from "@/lib/utils";
 import { loadFlowFeed } from "@/lib/flow-feed";
-import { resolvePeekTarget, mergeDeepLinkProfile, mergeDeepLinkIntoFeed } from "@/lib/flow-navigation";
+import {
+  resolvePeekTarget,
+  mergeDeepLinkProfile,
+  mergeDeepLinkIntoFeed,
+  resolveDeepLinkSelection,
+} from "@/lib/flow-navigation";
 import { computeContentHash } from "@/lib/content-hash";
 import FlowCreatorPeek from "@/components/flow/FlowCreatorPeek";
 import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
@@ -959,46 +964,57 @@ const FlowModePage = () => {
   //     deep link as applied, and strip ?item so subsequent swipes are
   //     not reverted.
   const appliedDeepLinkRef = useRef<string | null>(null);
+  const lockedDeepLinkItemRef = useRef<string | null>(null);
   const suppressSwipeRestoreRef = useRef(false);
   const pendingDeepLinkId = searchParams.get("item") ?? routedFlowItemId;
   useEffect(() => {
-    const targetId = pendingDeepLinkId;
+    const targetId = pendingDeepLinkId ?? lockedDeepLinkItemRef.current;
     if (!targetId) return;
-    if (appliedDeepLinkRef.current === targetId) return;
     if (allItems.length === 0) return;
 
-    const idx = allItems.findIndex((i: any) => i.id === targetId);
-    if (idx < 0) {
+    const selection = resolveDeepLinkSelection(targetId, allItems as any[], baseItems as any[], {
+      flowItemsFetching,
+      hasFallbackItem: !!deepLinkItem || lockedDeepLinkItemRef.current === targetId,
+    });
+
+    if (!selection) {
       // Item not in current scope — widen so the next refetch surfaces it.
-      if (!flowItemsFetching && !deepLinkItem && feedScope !== "all") {
+      if (pendingDeepLinkId && !flowItemsFetching && !deepLinkItem && feedScope !== "all") {
         setFeedScope("all");
         setSelectedCategories(CATEGORIES);
       }
       return;
     }
 
+    lockedDeepLinkItemRef.current = targetId;
+    const normalizedIndex = ((currentIndex % allItems.length) + allItems.length) % allItems.length;
+    const visibleItemId = allItems[normalizedIndex]?.id ?? null;
+
     // Always re-pin so the user stays on the right card as the feed
     // hydrates and re-orders around the prepended deep-link copy.
     suppressSwipeRestoreRef.current = true;
-    setCurrentIndex((cur) => (cur === idx ? cur : idx));
+    if (visibleItemId !== targetId) {
+      setCurrentIndex((cur) => (cur === selection.index ? cur : selection.index));
+    }
 
-    // Mark the deep link as applied as soon as we've pinned the cursor once.
-    // This prevents out-of-scope deep links (which only exist via the
-    // prepended fallback item) from re-snapping the deck back to the same
-    // card on every render and effectively killing left/right navigation.
+    if (!selection.shouldFinalize) return;
+
+    // Mark the deep link as applied only once the target is stable enough
+    // to survive URL cleanup; this avoids stale clicks getting "stuck" as
+    // the permanent first card when a fallback copy hydrates before the real feed.
     appliedDeepLinkRef.current = targetId;
 
     // Once the item is present in the real feed, clean the URL so future
     // refreshes don't carry a stale `?item=` param.
-    if (!flowItemsFetching && baseItems.some((i: any) => i.id === targetId)) {
+    if (searchParams.get("item")) {
       const next = new URLSearchParams(searchParams);
       next.delete("item");
       setSearchParams(next, { replace: true });
     }
-  }, [allItems, baseItems, deepLinkItem, pendingDeepLinkId, searchParams, feedScope, flowItemsFetching, setSearchParams]);
+  }, [allItems, baseItems, currentIndex, deepLinkItem, pendingDeepLinkId, searchParams, feedScope, flowItemsFetching, setSearchParams]);
 
   useEffect(() => {
-    if (pendingDeepLinkId) return;
+    if (pendingDeepLinkId || lockedDeepLinkItemRef.current) return;
     appliedDeepLinkRef.current = null;
     suppressSwipeRestoreRef.current = false;
   }, [pendingDeepLinkId]);
@@ -1144,6 +1160,9 @@ const FlowModePage = () => {
   const advancingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const advanceCard = useCallback(() => {
+    lockedDeepLinkItemRef.current = null;
+    appliedDeepLinkRef.current = null;
+    suppressSwipeRestoreRef.current = false;
     setIsAdvancing(true);
     if (advancingTimerRef.current) clearTimeout(advancingTimerRef.current);
     advancingTimerRef.current = setTimeout(() => {
