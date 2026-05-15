@@ -398,19 +398,40 @@ const MosaicTileCard = ({
   const hasDropVisual = tile.kind === "drop" && !!(tile.fileUrl || tile.linkUrl || tile.category);
   const isDropVisual = tile.kind === "drop" && hasDropVisual;
   const isLarge = sizeClass.includes("row-span-2") || sizeClass.includes("col-span-2");
-  // Offerings without a cover image lean on a bold category icon + theme
-  // color so they stop reading as "empty white space". The big icon does
-  // the visual lifting; copy fills in the rest.
   const isIconHero = !hasImage && tile.kind === "offering";
   const catVisual = getCategoryVisual(tile.category);
-  // The category accent overrides the kind tint for offerings — gives
-  // each craft (Music / Design / Photo / etc.) a distinct color identity
-  // even when no media is attached.
   const accentStyle = isIconHero
     ? {
         background: `radial-gradient(circle at 30% 20%, ${catVisual.accent}22, transparent 60%), radial-gradient(circle at 80% 90%, ${catVisual.accent}1a, transparent 55%)`,
       }
     : undefined;
+
+  // Hover-to-play preview for drops with a direct audio file_url.
+  // Hosted audio (Spotify, SoundCloud) can't be previewed inline, so they
+  // only show artwork — clicking still opens Flow Mode.
+  const isPlayableAudio = tile.kind === "drop" && !!tile.fileUrl && /\.(mp3|wav|flac|aac|m4a|ogg|opus)(\?|$)/i.test(tile.fileUrl);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      audioRef.current?.pause();
+    };
+  }, []);
+
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const a = audioRef.current;
+    if (!a) return;
+    if (playing) {
+      a.pause();
+      setPlaying(false);
+    } else {
+      a.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+    }
+  };
+
 
   const tileButton = (
     <motion.button
