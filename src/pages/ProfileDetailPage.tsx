@@ -637,40 +637,34 @@ const ProfileDetailPage = () => {
                     </TabsContent>
 
                     {listings.length > 0 && (
-                      <TabsContent value="listings" className="mt-3">
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                          {listings.map((l: any) => {
-                            const cover = l.cover_url || l.image_url;
-                            const priceLabel = l.credits_price
-                              ? `${l.credits_price} $RHOZE`
-                              : l.price
-                              ? `${l.currency || "$"}${l.price}`
-                              : null;
-                            return (
-                              <button
-                                key={l.id}
-                                onClick={() => navigate(`/marketplace/${l.id}`)}
-                                className="group text-left rounded-xl bg-card/60 border border-border/60 overflow-hidden hover:border-foreground/30 transition-colors"
-                              >
-                                <div className="relative aspect-square bg-muted overflow-hidden">
-                                  {cover ? (
-                                    <img src={cover} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                                  ) : (
-                                    <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
-                                      <ShoppingBag className="h-6 w-6 text-muted-foreground/40" />
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="p-2.5">
-                                  <p className="text-xs font-medium text-foreground truncate">{l.title}</p>
-                                  {priceLabel && (
-                                    <p className="text-[10px] font-semibold text-foreground tabular-nums mt-0.5">{priceLabel}</p>
-                                  )}
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
+                      <TabsContent value="listings" className="mt-3 space-y-2">
+                        {listings.map((l: any) => {
+                          const priceLabel = l.credits_price
+                            ? `${l.credits_price} $RHOZE`
+                            : l.price
+                            ? `${l.currency || "$"}${l.price}`
+                            : null;
+                          const typeLabel = l.listing_type === "project_request" ? "Open call" : "Offering";
+                          return (
+                            <button
+                              key={l.id}
+                              onClick={() => navigate(`/marketplace/${l.id}`)}
+                              className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
+                            >
+                              <div className="h-10 w-10 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
+                                <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-foreground truncate">{l.title}</p>
+                                <p className="text-[11px] text-muted-foreground truncate">
+                                  {typeLabel}
+                                  {priceLabel ? ` · ${priceLabel}` : ""}
+                                </p>
+                              </div>
+                              <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                            </button>
+                          );
+                        })}
                       </TabsContent>
                     )}
 
