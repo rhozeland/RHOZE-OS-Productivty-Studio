@@ -6,22 +6,11 @@
  * space spotlights orbit as part of the same surface.
  */
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowUpRight, Calendar, ImageIcon, MapPin, Users } from "lucide-react";
-import { format } from "date-fns";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { supabase } from "@/integrations/supabase/client";
-import { MARKETS, REGIONS, type RegionMarket } from "@/lib/regions";
+import { REGIONS, type RegionMarket } from "@/lib/regions";
 import { cn } from "@/lib/utils";
-import { MARKET_COLORS } from "./market-colors";
 import type { FeaturedSlide } from "./useDiscoverFeatured";
-import RegionChip from "@/components/profile/RegionChip";
-import { avatarGradientFor } from "@/lib/avatar-gradient";
 import ArtistSpotlightCard from "./ArtistSpotlightCard";
-import { ROLE_BY_ID } from "@/lib/creator-roles";
-import { ARCHETYPE_BY_ID, type Archetype } from "@/lib/archetypes";
 
 const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
   KR: { lat: 37.55, lng: 126.99 },
@@ -275,65 +264,32 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
     return () => window.clearInterval(interval);
   }, [featuredSlides, isDragging]);
 
-  // Idle auto-spin only — never snap back to the active spotlight, that
-  // fights the user's drag and feels broken. Spin pauses while dragging.
+  // Auto-spin to the active spotlight artist's longitude, so the globe
+  // visually "lands on" whoever is being featured right now. Drag pauses
+  // the lerp; releasing it resumes following the active marker.
   useEffect(() => {
     if (isDragging) return;
-
+    const active = featuredSlides
+      .map((s) => {
+        const c = s.region_code?.toUpperCase();
+        return c && REGION_COORDS[c] ? { key: `${s.kind}-${s.id}`, lng: REGION_COORDS[c].lng } : null;
+      })
+      .find((m) => m && m.key === activeSpotlightKey);
+    const targetLng = active?.lng;
     const interval = window.setInterval(() => {
-      setRotation((current) => normalizeRotation(current + 0.18));
+      setRotation((current) => {
+        if (typeof targetLng !== "number") {
+          return normalizeRotation(current + 0.18);
+        }
+        const target = -targetLng;
+        const delta = shortestAngle(current, target);
+        if (Math.abs(delta) < 0.25) return current;
+        return normalizeRotation(current + delta * 0.06);
+      });
     }, 40);
 
     return () => window.clearInterval(interval);
-  }, [isDragging]);
-
-  const { data: counts } = useQuery({
-    queryKey: ["discover-region-counts"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("region_code")
-        .eq("is_public", true)
-        .not("region_code", "is", null);
-
-      const map = new Map<string, number>();
-      (data ?? []).forEach((row: { region_code?: string | null }) => {
-        const code = row.region_code?.toUpperCase() ?? "";
-        if (!REGION_COORDS[code]) return;
-        map.set(code, (map.get(code) ?? 0) + 1);
-      });
-      return map;
-    },
-    staleTime: 60_000,
-  });
-
-  const points = useMemo(() => {
-    return REGIONS.filter((region) => REGION_COORDS[region.code])
-      .map((region) => {
-        const count = counts?.get(region.code) ?? 0;
-        const projected = projectPoint(REGION_COORDS[region.code].lat, REGION_COORDS[region.code].lng, rotation);
-        const dim = marketFilter !== "All" && region.market !== marketFilter;
-        const selected = marketFilter !== "All" && region.market === marketFilter;
-        const hovered = hoveredCode === region.code;
-        const visibility = Math.max(0.16, ((projected.depth + 1) / 2) * (dim ? 0.36 : 1));
-        const scale = 0.72 + Math.max(0, projected.depth) * 0.55;
-
-        return {
-          ...region,
-          count,
-          ...projected,
-          dim,
-          hovered,
-          selected,
-          scale,
-          visibility,
-          size: (3.4 + Math.min(10, count * 1.05)) * scale,
-          ring: (10 + Math.min(18, count * 1.4)) * scale,
-          color: dim ? "hsl(var(--foreground) / 0.18)" : MARKET_COLORS[region.market],
-        };
-      })
-      .sort((a, b) => a.depth - b.depth);
-  }, [counts, hoveredCode, marketFilter, rotation]);
+  }, [isDragging, activeSpotlightKey, featuredSlides]);
 
   const spotlightMarkers = useMemo<SpotlightMarker[]>(() => {
     return featuredSlides
@@ -378,7 +334,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
     spotlightMarkers[0] ??
     (allSpotlights[0] as any) ??
     null;
-  const hoveredRegion = points.find((point) => point.code === hoveredCode) ?? null;
+  
 
   const latitudePaths = useMemo(
     () => [-52, -24, 0, 24, 52].map((latitude) => buildLatitudePath(latitude, rotation)).filter(Boolean),
@@ -420,7 +376,6 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
   return (
     <div
       className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-card/55"
-      style={{ minHeight: height }}
       onMouseLeave={() => setHoveredCode(null)}
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_18%,hsl(var(--accent)/0.16),transparent_28%),radial-gradient(circle_at_72%_22%,hsl(var(--primary)/0.22),transparent_26%),radial-gradient(circle_at_52%_82%,hsl(var(--foreground)/0.06),transparent_30%)]" />
@@ -435,26 +390,14 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
         }}
       />
 
-      <div className="relative grid gap-4 p-4 sm:p-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(300px,0.92fr)] lg:p-6">
-        <div className="relative overflow-hidden rounded-[1.7rem] border border-border/50 bg-background/45 backdrop-blur-xl">
+      <div className="relative flex flex-col gap-3 p-3 sm:p-4 sm:gap-4">
+        {/* ── Globe ─────────────────────────────────────────────── */}
+        <div className="relative overflow-hidden rounded-[1.5rem] border border-border/50 bg-background/45 backdrop-blur-xl">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_46%,hsl(var(--background)/0)_0%,hsl(var(--primary)/0.12)_32%,transparent_54%),radial-gradient(circle_at_50%_86%,hsl(var(--accent)/0.18),transparent_30%)]" />
 
-          {/* spin hint pill removed — globe affords drag visually */}
-
-          {hoveredRegion && (
-            <div className="absolute right-4 top-4 z-20 max-w-[14rem] rounded-[1.3rem] border border-border/50 bg-background/80 px-3 py-2.5 shadow-lg backdrop-blur-md">
-              <p className="text-sm font-medium text-foreground">
-                {hoveredRegion.flag} {hoveredRegion.label}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {hoveredRegion.count} {hoveredRegion.count === 1 ? "creator" : "creators"} · {hoveredRegion.market}
-              </p>
-            </div>
-          )}
-
-          <div className="relative flex min-h-[300px] items-center justify-center px-3 py-2 sm:px-4 lg:min-h-[380px]">
+          <div className="relative flex min-h-[280px] items-center justify-center px-2 py-2 sm:px-3 lg:min-h-[340px]">
             <div
-              className="relative aspect-square w-full max-w-[560px] touch-none select-none"
+              className="relative aspect-square w-full max-w-[480px] touch-none select-none"
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
@@ -508,217 +451,104 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                   <circle cx={cx} cy={cy} r={radius} fill="url(#discover-globe-shadow)" />
                   <circle cx={cx} cy={cy} r={radius} fill="url(#discover-globe-highlight)" />
                 </g>
-
-
-                {points.map((point) => {
-                  const front = point.depth > 0;
-                  return (
-                    <g key={point.code} opacity={point.visibility}>
-                      <motion.circle
-                        cx={point.x}
-                        cy={point.y}
-                        r={Math.max(1.5, point.ring / 7.5)}
-                        fill={point.color}
-                        animate={{ scale: front ? [0.86, 1.22, 0.9] : [0.94, 1.08, 0.96], opacity: front ? [0.12, 0.3, 0.14] : [0.04, 0.1, 0.05] }}
-                        transition={{ duration: 3 + point.count * 0.08, repeat: Infinity, ease: "easeInOut" }}
-                        style={{ transformOrigin: `${point.x}px ${point.y}px` }}
-                      />
-                      <circle
-                        cx={point.x}
-                        cy={point.y}
-                        r={Math.max(1.5, point.size / 4.8)}
-                        fill={point.color}
-                        stroke={point.selected || point.hovered ? "hsl(0 0% 100% / 0.95)" : "hsl(0 0% 100% / 0.7)"}
-                        strokeWidth={point.selected || point.hovered ? 0.7 : 0.45}
-                        style={{ cursor: "pointer" }}
-                        onPointerDown={(event) => event.stopPropagation()}
-                        onMouseEnter={() => setHoveredCode(point.code)}
-                        onFocus={() => setHoveredCode(point.code)}
-                        onClick={() => onSelectMarket(point.market)}
-                      />
-                    </g>
-                  );
-                })}
               </svg>
 
-              <div className="absolute inset-[8%]">
-                {spotlightMarkers.map((marker) => {
-                  const active = marker.key === activeSpotlight?.key;
-                  const front = marker.depth > -0.12;
-                  const left = `${marker.x}%`;
-                  const top = `${marker.y}%`;
-
-                  return (
-                    <button
-                      key={marker.key}
-                      type="button"
-                      className="absolute -translate-x-1/2 -translate-y-1/2"
-                      style={{ left, top, opacity: front ? 1 : 0.4, zIndex: active ? 30 : marker.depth > 0 ? 20 : 10 }}
-                      onPointerDown={(event) => event.stopPropagation()}
-                      onClick={() => setActiveSpotlightKey(marker.key)}
-                    >
-                      <motion.span
-                        className="relative flex items-center gap-1.5 rounded-full border px-2 py-1 shadow-lg backdrop-blur-xl"
-                        animate={{ scale: active ? [1, 1.05, 1] : 1, y: active ? [0, -1.5, 0] : 0 }}
-                        transition={{ duration: 2.2, repeat: active ? Infinity : 0, ease: "easeInOut" }}
-                        style={{
-                          backgroundColor: active ? "hsl(var(--background) / 0.94)" : "hsl(var(--background) / 0.8)",
-                          borderColor: active ? marker.color : "hsl(var(--border) / 0.65)",
-                        }}
+              {/* Only the active featured artist's marker — no other dots. */}
+              <div className="absolute inset-[8%] pointer-events-none">
+                {spotlightMarkers
+                  .filter((m) => m.key === activeSpotlight?.key)
+                  .map((marker) => {
+                    const front = marker.depth > -0.12;
+                    return (
+                      <div
+                        key={marker.key}
+                        className="absolute -translate-x-1/2 -translate-y-1/2"
+                        style={{ left: `${marker.x}%`, top: `${marker.y}%`, opacity: front ? 1 : 0.35, zIndex: 30 }}
                       >
-                        <span className="absolute inset-0 rounded-full blur-md opacity-50" style={{ backgroundColor: marker.color }} />
-                        <span className="relative h-2.5 w-2.5 rounded-full" style={{ backgroundColor: marker.color }} />
-                        <span className="relative max-w-[5.7rem] truncate text-[10px] font-medium text-foreground">
-                          {marker.title}
-                        </span>
-                      </motion.span>
-                    </button>
-                  );
-                })}
+                        <motion.span
+                          className="relative flex items-center gap-1.5 rounded-full border px-2.5 py-1 shadow-lg backdrop-blur-xl"
+                          animate={{ scale: [1, 1.06, 1], y: [0, -2, 0] }}
+                          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                          style={{
+                            backgroundColor: "hsl(var(--background) / 0.94)",
+                            borderColor: marker.color,
+                          }}
+                        >
+                          <span className="absolute inset-0 rounded-full blur-md opacity-60" style={{ backgroundColor: marker.color }} />
+                          <span className="relative h-2.5 w-2.5 rounded-full" style={{ backgroundColor: marker.color }} />
+                          <span className="relative max-w-[7rem] truncate text-[11px] font-semibold text-foreground">
+                            {marker.title}
+                          </span>
+                        </motion.span>
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           </div>
 
-          <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-wrap justify-center gap-2">
-            {MARKETS.map((market) => {
-              const active = marketFilter === market.id;
-              return (
-                <button
-                  key={market.id}
-                  type="button"
-                  onClick={() => onSelectMarket(market.id)}
-                  className={cn(
-                    "rounded-full border px-3 py-1.5 text-[11px] font-medium backdrop-blur transition-colors",
-                    active
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border/45 bg-background/68 text-foreground hover:bg-background/84",
-                  )}
-                >
-                  {market.label}
-                </button>
-              );
-            })}
-          </div>
-
           {isDragging && (
-            <div className="absolute bottom-16 left-1/2 z-20 -translate-x-1/2 rounded-full border border-border/55 bg-background/82 px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-muted-foreground backdrop-blur-md">
-              Spin mode
+            <div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-full border border-border/55 bg-background/82 px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-muted-foreground backdrop-blur-md">
+              Spin
             </div>
           )}
         </div>
 
-        <div className="flex flex-col gap-3 lg:gap-4">
-          <div className="rounded-[1.7rem] border border-border/50 bg-background/58 p-4 backdrop-blur-xl sm:p-5">
+        {/* ── Featured artist (synced to globe pin) ───────────── */}
+        <AnimatePresence mode="wait">
+          {activeSpotlight ? (
+            <motion.div
+              key={activeSpotlight.key}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <ArtistSpotlightCard
+                id={activeSpotlight.id}
+                href={activeSpotlight.href}
+                title={activeSpotlight.title}
+                subtitle={activeSpotlight.subtitle}
+                avatar={activeSpotlight.avatar}
+                region_code={activeSpotlight.region_code}
+                creator_roles={activeSpotlight.creator_roles}
+                mediums={activeSpotlight.mediums}
+                verification_status={activeSpotlight.verification_status}
+                works_count={activeSpotlight.works_count}
+                followers_count={activeSpotlight.followers_count}
+                coin={(activeSpotlight as any).coin ?? null}
+                next_event={(activeSpotlight as any).next_event ?? null}
+                hosted_space={(activeSpotlight as any).hosted_space ?? null}
+                offerings_count={(activeSpotlight as any).offerings_count ?? 0}
+              />
+            </motion.div>
+          ) : (
+            <div className="rounded-[1.5rem] border border-dashed border-border/50 bg-card/35 p-6 text-sm text-muted-foreground">
+              Featured orbit is warming up.
+            </div>
+          )}
+        </AnimatePresence>
 
-            <AnimatePresence mode="wait">
-              {activeSpotlight ? (
-                <motion.div
-                  key={activeSpotlight.key}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <ArtistSpotlightCard
-                    id={activeSpotlight.id}
-                    href={activeSpotlight.href}
-                    title={activeSpotlight.title}
-                    subtitle={activeSpotlight.subtitle}
-                    avatar={activeSpotlight.avatar}
-                    region_code={activeSpotlight.region_code}
-                    creator_roles={activeSpotlight.creator_roles}
-                    mediums={activeSpotlight.mediums}
-                    verification_status={activeSpotlight.verification_status}
-                    works_count={activeSpotlight.works_count}
-                    followers_count={activeSpotlight.followers_count}
-                    coin={(activeSpotlight as any).coin ?? null}
-                    next_event={(activeSpotlight as any).next_event ?? null}
-                    hosted_space={(activeSpotlight as any).hosted_space ?? null}
-                    offerings_count={(activeSpotlight as any).offerings_count ?? 0}
-                  />
-                </motion.div>
-              ) : (
-                <div className="rounded-[1.5rem] border border-dashed border-border/50 bg-card/35 p-6 text-sm text-muted-foreground">
-                  Featured orbit is warming up.
-                </div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-1 items-stretch">
-            {allSpotlights.slice(0, 3).map((marker: any) => {
-              const active = marker.key === activeSpotlight?.key;
+        {/* Tiny dot pager — tap to jump to a creator (no big card grid) */}
+        {allSpotlights.length > 1 && (
+          <div className="flex items-center justify-center gap-1.5">
+            {allSpotlights.map((m: any) => {
+              const active = m.key === activeSpotlight?.key;
               return (
                 <button
-                  key={marker.key}
+                  key={m.key}
                   type="button"
-                  onClick={() => setActiveSpotlightKey(marker.key)}
+                  onClick={() => setActiveSpotlightKey(m.key)}
+                  aria-label={`Show ${m.title}`}
                   className={cn(
-                    // min-h keeps every card the exact same height regardless
-                    // of subtitle length so the strip reads as a clean grid.
-                    "group flex h-full min-h-[5.25rem] w-full items-center gap-3 rounded-[1.35rem] border p-2.5 text-left backdrop-blur-xl transition-all",
-                    active
-                      ? "border-foreground/20 bg-background/78 shadow-[0_12px_32px_hsl(var(--background)/0.16)]"
-                      : "border-border/45 bg-background/56 hover:bg-background/72",
+                    "h-1.5 rounded-full transition-all",
+                    active ? "w-6 bg-foreground" : "w-1.5 bg-foreground/25 hover:bg-foreground/45",
                   )}
-                >
-                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[1rem] border border-border/45 bg-muted/70">
-                    {marker.kind === "artist" ? (
-                      <div className="flex h-full w-full items-center justify-center bg-card">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={marker.avatar ?? undefined} />
-                          <AvatarFallback>{initials(marker.title)}</AvatarFallback>
-                        </Avatar>
-                      </div>
-                    ) : marker.banner ? (
-                      <img src={marker.banner} alt={marker.title} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="h-full w-full bg-[linear-gradient(135deg,hsl(var(--primary)/0.2),hsl(var(--accent)/0.16),hsl(var(--background)))]" />
-                    )}
-                    <span className="absolute left-1.5 top-1.5 h-2.5 w-2.5 rounded-full ring-2 ring-background" style={{ backgroundColor: marker.color }} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-medium text-foreground">{marker.title}</p>
-                    </div>
-                    {marker.kind === "artist" ? (
-                      (() => {
-                        const roles = ((marker.creator_roles ?? []) as string[])
-                          .map((rid) => ROLE_BY_ID.get(rid))
-                          .filter(Boolean)
-                          .slice(0, 2) as { label: string; emoji: string }[];
-                        if (roles.length === 0) {
-                          return (
-                            <p className="mt-1 line-clamp-1 text-[11px] leading-5 text-muted-foreground/80 italic">
-                              New creator
-                            </p>
-                          );
-                        }
-                        return (
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {roles.map((r) => (
-                              <span
-                                key={r.label}
-                                className="inline-flex items-center gap-1 rounded-full border border-border/45 bg-background/70 px-1.5 py-0.5 text-[10px] font-medium text-foreground/85"
-                              >
-                                <span aria-hidden>{r.emoji}</span>
-                                <span className="truncate max-w-[90px]">{r.label}</span>
-                              </span>
-                            ))}
-                          </div>
-                        );
-                      })()
-                    ) : (
-                      <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                        {marker.subtitle || "Open the orbit to see more."}
-                      </p>
-                    )}
-                  </div>
-                </button>
+                />
               );
             })}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
