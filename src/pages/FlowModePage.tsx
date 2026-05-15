@@ -2406,62 +2406,129 @@ const FlowModePage = () => {
                   </div>
                 )}
 
-                {shareStep === "compose" ? (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="submit"
-                      className="flex-1 rounded-full"
-                      disabled={!allValid || createFlowItem.isPending}
-                    >
-                      Review &amp; confirm
-                    </Button>
-                    <Popover>
-                      <PopoverTrigger asChild>
+                {(() => {
+                  const stepDisabled =
+                    (shareStep === "pick" && !pickValid) ||
+                    (shareStep === "caption" && !captionValid) ||
+                    (shareStep === "confirm" && !canPublish) ||
+                    createFlowItem.isPending;
+                  const primaryLabel =
+                    shareStep === "pick"
+                      ? "Next"
+                      : shareStep === "caption"
+                      ? "Review"
+                      : createFlowItem.isPending
+                      ? (publishingIndex
+                          ? `Publishing ${publishingIndex.current}/${publishingIndex.total}…`
+                          : "Publishing…")
+                      : fileCount > 1
+                      ? `Publish ${fileCount} items`
+                      : "Publish to Flow";
+                  const back =
+                    shareStep === "caption" ? "pick" : shareStep === "confirm" ? "caption" : null;
+                  return (
+                    <div className="flex items-center gap-2">
+                      {back && (
                         <Button
                           type="button"
-                          size="icon"
-                          variant="ghost"
-                          className="h-9 w-9 rounded-full text-primary"
-                          aria-label="Reward info"
+                          variant="outline"
+                          className="rounded-full"
+                          disabled={createFlowItem.isPending}
+                          onClick={() => setShareStep(back)}
                         >
-                          <Sparkles className="h-4 w-4" />
+                          Back
                         </Button>
-                      </PopoverTrigger>
-                      <PopoverContent side="top" align="end" className="w-60 text-xs">
-                        Earn <strong className="text-primary">+1 $RHOZE</strong> per share — adds to your XP and Creator Pass progress.
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="rounded-full"
-                      disabled={createFlowItem.isPending}
-                      onClick={() => setShareStep("compose")}
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      type="submit"
-                      className="flex-1 rounded-full"
-                      disabled={!canPublish}
-                      aria-disabled={!canPublish}
-                    >
-                      {createFlowItem.isPending
-                        ? (publishingIndex
-                            ? `Publishing ${publishingIndex.current}/${publishingIndex.total}…`
-                            : "Publishing…")
-                        : fileCount > 1
-                        ? `Publish ${fileCount} items`
-                        : "Publish to Flow"}
-                    </Button>
-                  </div>
-                )}
+                      )}
+                      <Button
+                        type="submit"
+                        className="flex-1 rounded-full"
+                        disabled={stepDisabled}
+                        aria-disabled={stepDisabled}
+                      >
+                        {primaryLabel}
+                      </Button>
+                      {shareStep === "pick" && (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="h-9 w-9 rounded-full text-primary"
+                              aria-label="Reward info"
+                            >
+                              <Sparkles className="h-4 w-4" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent side="top" align="end" className="w-60 text-xs">
+                            Earn <strong className="text-primary">+1 $RHOZE</strong> per share — adds to your XP and Creator Pass progress.
+                          </PopoverContent>
+                        </Popover>
+                      )}
+                    </div>
+                  );
+                })()}
               </form>
             );
           })()}
+          </div>
+
+          {/* Celebration overlay — fires when the post lands on the feed */}
+          <AnimatePresence>
+            {celebrating && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/95 backdrop-blur rounded-lg overflow-hidden"
+              >
+                {/* Confetti dots */}
+                {Array.from({ length: 18 }).map((_, i) => {
+                  const angle = (i / 18) * Math.PI * 2;
+                  const dist = 120 + (i % 3) * 30;
+                  const colors = ["bg-primary", "bg-amber-400", "bg-rose-400", "bg-emerald-400", "bg-sky-400"];
+                  return (
+                    <motion.span
+                      key={i}
+                      initial={{ x: 0, y: 0, opacity: 0, scale: 0.5 }}
+                      animate={{
+                        x: Math.cos(angle) * dist,
+                        y: Math.sin(angle) * dist,
+                        opacity: [0, 1, 0],
+                        scale: [0.5, 1.2, 0.8],
+                      }}
+                      transition={{ duration: 1.4, ease: "easeOut", delay: i * 0.015 }}
+                      className={cn("absolute h-2 w-2 rounded-full", colors[i % colors.length])}
+                    />
+                  );
+                })}
+                <motion.div
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 220, damping: 14 }}
+                  className="relative h-20 w-20 rounded-full bg-gradient-to-br from-primary to-rose-500 flex items-center justify-center shadow-xl shadow-primary/30"
+                >
+                  <Sparkles className="h-9 w-9 text-white" />
+                </motion.div>
+                <motion.p
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 }}
+                  className="mt-4 text-base font-display font-semibold text-foreground"
+                >
+                  It's on the Flow!
+                </motion.p>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-xs text-muted-foreground mt-1"
+                >
+                  Everyone can see it now · +1 $RHOZE earned
+                </motion.p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </DialogContent>
       </Dialog>
 
