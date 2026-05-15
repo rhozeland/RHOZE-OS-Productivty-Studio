@@ -22,7 +22,6 @@ import {
   Shield,
   CalendarDays,
   Building2,
-  CalendarDays,
   Briefcase,
 } from "lucide-react";
 import {
