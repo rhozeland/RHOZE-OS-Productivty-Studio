@@ -102,9 +102,12 @@ export const FlowThumbnail = ({
   const fileLooksLikeImage = !!fileUrl && IMAGE_EXT.test(fileUrl);
   const isUploadedAudio = !!fileUrl && AUDIO_EXT.test(fileUrl);
   const isHostedAudio = !!linkUrl && AUDIO_HOSTS.test(linkUrl);
-  const useDesignedArtwork = !fileLooksLikeImage && (isAudioCategory || isUploadedAudio || isHostedAudio);
-  const direct = fileLooksLikeImage ? fileUrl : useDesignedArtwork ? null : getDirectThumbnail(linkUrl);
-  const shouldFetch = !direct && !useDesignedArtwork && needsRemoteThumbnail(linkUrl);
+  const isAudioContext = isAudioCategory || isUploadedAudio || isHostedAudio;
+  // Always try to surface real artwork first (Spotify/SoundCloud og:image,
+  // YouTube thumbnail, og:image on link-shared posts). Only fall back to
+  // the designed vinyl artwork when no image can be resolved.
+  const direct = fileLooksLikeImage ? fileUrl : getDirectThumbnail(linkUrl);
+  const shouldFetch = !direct && needsRemoteThumbnail(linkUrl);
 
   const { data: meta } = useQuery({
     queryKey: ["link-meta", linkUrl],
@@ -138,8 +141,8 @@ export const FlowThumbnail = ({
   }, [src]);
 
   const v = pickVisual(category, fileUrl, linkUrl);
-  const isAudioVisual = isAudioCategory || isUploadedAudio || isHostedAudio;
-  const showImage = !!src && !imageFailed && (!useDesignedArtwork || fileLooksLikeImage);
+  const isAudioVisual = isAudioContext;
+  const showImage = !!src && !imageFailed;
 
   return (
     <div

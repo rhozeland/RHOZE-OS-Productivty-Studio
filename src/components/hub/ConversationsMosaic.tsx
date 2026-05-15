@@ -15,7 +15,7 @@
  *    opportunities lead with the brief, works show the verified badge.
  *  - Staggered framer-motion entrance + subtle hover lift for tactility.
  */
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -35,6 +35,8 @@ import {
   Video,
   PenTool,
   Theater,
+  Play,
+  Pause,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
@@ -396,19 +398,40 @@ const MosaicTileCard = ({
   const hasDropVisual = tile.kind === "drop" && !!(tile.fileUrl || tile.linkUrl || tile.category);
   const isDropVisual = tile.kind === "drop" && hasDropVisual;
   const isLarge = sizeClass.includes("row-span-2") || sizeClass.includes("col-span-2");
-  // Offerings without a cover image lean on a bold category icon + theme
-  // color so they stop reading as "empty white space". The big icon does
-  // the visual lifting; copy fills in the rest.
   const isIconHero = !hasImage && tile.kind === "offering";
   const catVisual = getCategoryVisual(tile.category);
-  // The category accent overrides the kind tint for offerings — gives
-  // each craft (Music / Design / Photo / etc.) a distinct color identity
-  // even when no media is attached.
   const accentStyle = isIconHero
     ? {
         background: `radial-gradient(circle at 30% 20%, ${catVisual.accent}22, transparent 60%), radial-gradient(circle at 80% 90%, ${catVisual.accent}1a, transparent 55%)`,
       }
     : undefined;
+
+  // Hover-to-play preview for drops with a direct audio file_url.
+  // Hosted audio (Spotify, SoundCloud) can't be previewed inline, so they
+  // only show artwork — clicking still opens Flow Mode.
+  const isPlayableAudio = tile.kind === "drop" && !!tile.fileUrl && /\.(mp3|wav|flac|aac|m4a|ogg|opus)(\?|$)/i.test(tile.fileUrl);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      audioRef.current?.pause();
+    };
+  }, []);
+
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const a = audioRef.current;
+    if (!a) return;
+    if (playing) {
+      a.pause();
+      setPlaying(false);
+    } else {
+      a.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+    }
+  };
+
 
   const tileButton = (
     <motion.button
@@ -470,6 +493,35 @@ const MosaicTileCard = ({
 
        {/* Hover scrim */}
        <div className={`absolute inset-0 transition-colors duration-300 pointer-events-none ${isDropVisual ? "bg-black/10 group-hover:bg-black/20" : "bg-foreground/0 group-hover:bg-foreground/5"}`} />
+
+      {/* Hover-to-play preview button for direct audio drops */}
+      {isPlayableAudio && (
+        <>
+          <audio
+            ref={audioRef}
+            src={tile.fileUrl ?? undefined}
+            preload="none"
+            onEnded={() => setPlaying(false)}
+            onPause={() => setPlaying(false)}
+          />
+          <button
+            type="button"
+            onClick={togglePlay}
+            aria-label={playing ? "Pause preview" : "Play preview"}
+            className={cn(
+              "absolute z-20 grid place-items-center rounded-full bg-white/95 text-black shadow-xl backdrop-blur transition-all duration-200 hover:scale-110",
+              isLarge ? "h-14 w-14 right-3 bottom-3" : "h-10 w-10 right-2 bottom-2",
+              playing ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+            )}
+          >
+            {playing ? (
+              <Pause className={isLarge ? "h-6 w-6" : "h-4 w-4"} />
+            ) : (
+              <Play className={cn(isLarge ? "h-6 w-6 ml-0.5" : "h-4 w-4 ml-0.5", "fill-black")} />
+            )}
+          </button>
+        </>
+      )}
 
       {/* Top chip row */}
       <div className="absolute top-2.5 left-2.5 right-2.5 flex items-start justify-between gap-2 z-10">
