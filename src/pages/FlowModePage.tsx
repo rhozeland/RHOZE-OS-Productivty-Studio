@@ -2048,11 +2048,12 @@ const FlowModePage = () => {
             ];
             const allValid = checks.every((c) => c.ok);
             const canPublish = allValid && !createFlowItem.isPending;
-            const captionLen = newTitle.length;
+            const captionLen = newDesc.length;
             const captionWithinLimit = captionLen <= CAPTION_LIMIT;
-            // Step gating: pick needs media + no errors; caption only checks caption length.
+            const titleValid = newTitle.trim().length > 0 && newTitle.length <= 80;
+            // Step gating: pick needs media + no errors; caption needs a title + caption within limit.
             const pickValid = hasMedia && noFileErrors && !filesUploading;
-            const captionValid = captionWithinLimit;
+            const captionValid = titleValid && captionWithinLimit;
 
             const goNext = () => {
               if (shareStep === "pick" && pickValid) setShareStep("caption");
