@@ -99,7 +99,6 @@ const LaunchDetailPage = () => {
   const [workSig, setWorkSig] = useState<string | null>(null);
   const [myHolding, setMyHolding] = useState<{ balance: number; sol_invested: number } | null>(null);
   const [showChart, setShowChart] = useState(false);
-  const [chartMode, setChartMode] = useState<"momentum" | "price">("momentum");
   const [traderView, setTraderView] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(TRADER_VIEW_KEY) === "1";
