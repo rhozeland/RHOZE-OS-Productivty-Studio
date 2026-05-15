@@ -2399,16 +2399,34 @@ const FlowModePage = () => {
 
                 {shareStep === "caption" && (
                   <div className="space-y-3">
+                    {/* Title — name of the content */}
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+                        Title
+                      </label>
+                      <Input
+                        autoFocus
+                        placeholder="Name your post"
+                        value={newTitle}
+                        onChange={(e) => setNewTitle(e.target.value.slice(0, 80))}
+                        maxLength={80}
+                        className="rounded-xl text-sm"
+                      />
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-muted-foreground">Required · shows as the post title</span>
+                        <span className="text-[10px] tabular-nums text-muted-foreground">{newTitle.length}/80</span>
+                      </div>
+                    </div>
+
                     {/* Comment-bubble caption — this becomes the first comment on the post */}
                     <div className="relative rounded-2xl rounded-tl-sm border border-primary/30 bg-primary/5 p-3.5 shadow-sm">
                       <div className="absolute -top-2 left-3 px-1.5 py-0.5 rounded-md bg-background border border-primary/30 text-[10px] uppercase tracking-wider text-primary font-medium">
                         Your first comment
                       </div>
                       <Textarea
-                        autoFocus
                         placeholder="Say something about it… a vibe, a story, a credit."
-                        value={newTitle}
-                        onChange={(e) => setNewTitle(e.target.value.slice(0, CAPTION_LIMIT))}
+                        value={newDesc}
+                        onChange={(e) => setNewDesc(e.target.value.slice(0, CAPTION_LIMIT))}
                         rows={4}
                         maxLength={CAPTION_LIMIT}
                         className="border-0 bg-transparent p-0 resize-none focus-visible:ring-0 text-sm shadow-none"
