@@ -959,6 +959,11 @@ const FlowModePage = () => {
     }
   }, [allItems, baseItems, deepLinkItem, pendingDeepLinkId, searchParams, feedScope, flowItemsFetching, setSearchParams]);
 
+  useEffect(() => {
+    if (pendingDeepLinkId) return;
+    appliedDeepLinkRef.current = null;
+  }, [pendingDeepLinkId]);
+
   const handleExitFlow = useCallback(() => {
     const fromState = (location.state as { from?: string } | null)?.from;
     const currentPath = `${location.pathname}${location.search}${location.hash}`;
