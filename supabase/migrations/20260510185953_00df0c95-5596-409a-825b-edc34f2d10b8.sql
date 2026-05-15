@@ -109,6 +109,6 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.redeem_referral_code(TEXT) TO authenticated;
 
--- Seed SHOPIFY code
-INSERT INTO public.referral_codes (code, reward_rhoze, max_uses, active, note)
-VALUES ('SHOPIFY', 100000, NULL, true, 'Shopify presentation — 2026-05-10');
+-- Seed SHOPIFY code (deactivated — re-enable when needed)
+-- INSERT INTO public.referral_codes (code, reward_rhoze, max_uses, active, note)
+-- VALUES ('SHOPIFY', 100000, NULL, true, 'Shopify presentation — 2026-05-10');
