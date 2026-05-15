@@ -29,18 +29,23 @@ import {
   ChevronUp,
   TrendingUp,
   TrendingDown,
+  Sparkles,
+  CandlestickChart,
 } from "lucide-react";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import TradePanel from "@/components/launchpad/TradePanel";
 import LaunchpadModeBanner from "@/components/launchpad/LaunchpadModeBanner";
 import OnChainBalancesCard from "@/components/launchpad/OnChainBalancesCard";
 import PriceChartCard from "@/components/launchpad/PriceChartCard";
+import BackingMomentumChart from "@/components/launchpad/BackingMomentumChart";
 import HoldersList from "@/components/launchpad/HoldersList";
 import { Button } from "@/components/ui/button";
 import { deriveLaunchPda, isLaunchpadOnChainEnabled, LAUNCHPAD_NETWORK } from "@/lib/launchpad-onchain";
 import MintAddressChip from "@/components/launchpad/MintAddressChip";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
+const TRADER_VIEW_KEY = "rhoze-trader-view";
 
 type Launch = {
   id: string;
