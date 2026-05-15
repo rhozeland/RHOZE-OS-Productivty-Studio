@@ -494,6 +494,35 @@ const MosaicTileCard = ({
        {/* Hover scrim */}
        <div className={`absolute inset-0 transition-colors duration-300 pointer-events-none ${isDropVisual ? "bg-black/10 group-hover:bg-black/20" : "bg-foreground/0 group-hover:bg-foreground/5"}`} />
 
+      {/* Hover-to-play preview button for direct audio drops */}
+      {isPlayableAudio && (
+        <>
+          <audio
+            ref={audioRef}
+            src={tile.fileUrl ?? undefined}
+            preload="none"
+            onEnded={() => setPlaying(false)}
+            onPause={() => setPlaying(false)}
+          />
+          <button
+            type="button"
+            onClick={togglePlay}
+            aria-label={playing ? "Pause preview" : "Play preview"}
+            className={cn(
+              "absolute z-20 grid place-items-center rounded-full bg-white/95 text-black shadow-xl backdrop-blur transition-all duration-200 hover:scale-110",
+              isLarge ? "h-14 w-14 right-3 bottom-3" : "h-10 w-10 right-2 bottom-2",
+              playing ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+            )}
+          >
+            {playing ? (
+              <Pause className={isLarge ? "h-6 w-6" : "h-4 w-4"} />
+            ) : (
+              <Play className={cn(isLarge ? "h-6 w-6 ml-0.5" : "h-4 w-4 ml-0.5", "fill-black")} />
+            )}
+          </button>
+        </>
+      )}
+
       {/* Top chip row */}
       <div className="absolute top-2.5 left-2.5 right-2.5 flex items-start justify-between gap-2 z-10">
         <div className="flex items-center gap-1.5 flex-wrap">
