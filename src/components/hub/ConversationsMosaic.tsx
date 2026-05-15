@@ -463,7 +463,7 @@ const MosaicTileCard = ({
       aria-label={`${label}: ${tile.title}. Click to open.`}
     >
       {/* Background — image, gradient tint, or category-tinted icon hero */}
-      {tile.cover ? (
+      {tile.cover && !isDropVisual ? (
         <img
           src={tile.cover}
           alt={tile.title}
@@ -478,7 +478,7 @@ const MosaicTileCard = ({
           description={tile.description}
           category={tile.category}
           hideCaption
-            className="absolute inset-0 transition-transform duration-700 group-hover:scale-105 [&_img]:scale-[1.1]"
+          className="absolute inset-0 h-full w-full p-0 transition-transform duration-700 group-hover:scale-105 [&_img]:!scale-100 [&_img]:object-cover"
         />
       ) : isIconHero ? (
         // Category-driven hero: subtle dual-radial wash + huge soft icon

@@ -949,6 +949,7 @@ const FlowModePage = () => {
   //     deep link as applied, and strip ?item so subsequent swipes are
   //     not reverted.
   const appliedDeepLinkRef = useRef<string | null>(null);
+  const suppressSwipeRestoreRef = useRef(false);
   const pendingDeepLinkId = searchParams.get("item") ?? routedFlowItemId;
   useEffect(() => {
     const targetId = pendingDeepLinkId;
@@ -968,6 +969,7 @@ const FlowModePage = () => {
 
     // Always re-pin so the user stays on the right card as the feed
     // hydrates and re-orders around the prepended deep-link copy.
+    suppressSwipeRestoreRef.current = true;
     setCurrentIndex((cur) => (cur === idx ? cur : idx));
 
     // Mark the deep link as applied as soon as we've pinned the cursor once.
@@ -988,6 +990,7 @@ const FlowModePage = () => {
   useEffect(() => {
     if (pendingDeepLinkId) return;
     appliedDeepLinkRef.current = null;
+    suppressSwipeRestoreRef.current = false;
   }, [pendingDeepLinkId]);
 
   const handleExitFlow = useCallback(() => {
@@ -1086,7 +1089,7 @@ const FlowModePage = () => {
       // Swipe view: restore the saved card index when toggling back to a
       // previously-visited scope; brand-new scopes start at card #0.
       const shouldRestoreSwipe = swipeScopeVisitedRef.current[scope];
-      if (!pendingDeepLinkId) {
+      if (!pendingDeepLinkId && !suppressSwipeRestoreRef.current) {
         setCurrentIndex(shouldRestoreSwipe ? swipeIndexByScopeRef.current[scope] : 0);
       }
       setExpandedCard(false);
