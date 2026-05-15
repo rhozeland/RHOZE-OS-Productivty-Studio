@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Disc3, Palette, Camera, Video, PenLine, Sparkles, AudioLines, type LucideIcon } from "lucide-react";
+import { Disc3, Palette, Camera, Video, PenLine, Sparkles, AudioLines, Music2, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getDirectThumbnail, needsRemoteThumbnail } from "@/lib/link-thumbnail";
 import { cn } from "@/lib/utils";
@@ -39,8 +39,8 @@ interface HeroVisual {
 }
 
 const CATEGORY_VISUAL: Record<string, HeroVisual> = {
-  music:   { Icon: Disc3,       from: "hsl(280 90% 22%)", via: "hsl(320 95% 45%)", to: "hsl(15 100% 58%)",  glyph: "hsl(50 100% 75%)", label: "Music", pattern: "waves" },
-  audio:   { Icon: AudioLines,  from: "hsl(265 90% 25%)", via: "hsl(295 90% 50%)", to: "hsl(195 100% 55%)", glyph: "hsl(180 100% 80%)", label: "Audio", pattern: "waves" },
+  music:   { Icon: Music2,      from: "hsl(0 0% 96%)", via: "hsl(210 14% 90%)", to: "hsl(0 0% 8%)",      glyph: "hsl(48 88% 76%)", label: "Music", pattern: "waves" },
+  audio:   { Icon: AudioLines,  from: "hsl(0 0% 95%)", via: "hsl(220 12% 88%)", to: "hsl(0 0% 10%)",      glyph: "hsl(48 88% 76%)", label: "Audio", pattern: "waves" },
   design:  { Icon: Palette,     from: "hsl(165 85% 25%)", via: "hsl(180 90% 45%)", to: "hsl(140 90% 55%)",  glyph: "hsl(60 100% 80%)",  label: "Design", pattern: "grid" },
   photo:   { Icon: Camera,      from: "hsl(15 90% 35%)",  via: "hsl(35 95% 55%)",  to: "hsl(50 100% 65%)",  glyph: "hsl(0 0% 100%)",    label: "Photo", pattern: "dots" },
   video:   { Icon: Video,       from: "hsl(340 90% 30%)", via: "hsl(355 90% 55%)", to: "hsl(25 95% 60%)",   glyph: "hsl(45 100% 75%)",  label: "Video", pattern: "dots" },
@@ -163,7 +163,7 @@ export const FlowThumbnail = ({
           className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${imageLoaded ? "opacity-0" : "opacity-100"}`}
           style={{
             background:
-              "linear-gradient(180deg, hsl(var(--background) / 0.02) 0%, hsl(var(--background) / 0.04) 36%, hsl(var(--foreground) / 0.52) 76%, hsl(var(--foreground) / 0.86) 100%)",
+              "linear-gradient(180deg, hsl(var(--background) / 0.02) 0%, hsl(var(--background) / 0.06) 34%, hsl(var(--foreground) / 0.26) 68%, hsl(var(--foreground) / 0.9) 100%)",
           }}
           aria-hidden
         />
@@ -221,7 +221,7 @@ export const FlowThumbnail = ({
       <v.Icon
         aria-hidden
         className="absolute -right-6 -top-6 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110 mix-blend-overlay"
-        style={{ color: v.glyph, opacity: imageLoaded ? 0.2 : 0.7, width: "10rem", height: "10rem" }}
+        style={{ color: v.glyph, opacity: imageLoaded ? 0.16 : 0.78, width: "10rem", height: "10rem" }}
         strokeWidth={1.5}
       />
 
@@ -231,12 +231,6 @@ export const FlowThumbnail = ({
           <div className={`absolute inset-x-0 bottom-0 h-2/3 pointer-events-none transition-opacity duration-300 ${imageLoaded ? "bg-gradient-to-t from-black/70 via-black/25 to-transparent opacity-100" : "bg-gradient-to-t from-black/55 via-black/15 to-transparent opacity-100"}`} />
 
           <div className="relative z-10 text-left">
-            <p
-              className="inline-block text-[9px] font-bold uppercase tracking-[0.22em] mb-1.5 px-2 py-0.5 rounded-full backdrop-blur-sm"
-              style={{ color: v.glyph, background: "rgba(0,0,0,0.35)" }}
-            >
-              {v.label}
-            </p>
             <p className="font-display font-bold text-white leading-tight line-clamp-3 text-sm drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
               {title}
             </p>

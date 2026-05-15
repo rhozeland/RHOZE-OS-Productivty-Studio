@@ -947,17 +947,25 @@ const FlowModePage = () => {
     // hydrates and re-orders around the prepended deep-link copy.
     setCurrentIndex((cur) => (cur === idx ? cur : idx));
 
-    // Only finalize (mark applied + strip ?item) once the item is part
-    // of the real feed — otherwise mergeDeepLinkIntoFeed will drop the
-    // prepended copy on the next render and our index will point at the
-    // wrong card with no ?item left to recover from.
+    // Mark the deep link as applied as soon as we've pinned the cursor once.
+    // This prevents out-of-scope deep links (which only exist via the
+    // prepended fallback item) from re-snapping the deck back to the same
+    // card on every render and effectively killing left/right navigation.
+    appliedDeepLinkRef.current = targetId;
+
+    // Once the item is present in the real feed, clean the URL so future
+    // refreshes don't carry a stale `?item=` param.
     if (!flowItemsFetching && baseItems.some((i: any) => i.id === targetId)) {
-      appliedDeepLinkRef.current = targetId;
       const next = new URLSearchParams(searchParams);
       next.delete("item");
       setSearchParams(next, { replace: true });
     }
   }, [allItems, baseItems, deepLinkItem, pendingDeepLinkId, searchParams, feedScope, flowItemsFetching, setSearchParams]);
+
+  useEffect(() => {
+    if (pendingDeepLinkId) return;
+    appliedDeepLinkRef.current = null;
+  }, [pendingDeepLinkId]);
 
   const handleExitFlow = useCallback(() => {
     const fromState = (location.state as { from?: string } | null)?.from;

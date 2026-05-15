@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Plus, Heart, Send, ShieldCheck, MessageCircle, ArrowRight } from "lucide-react";
+import { Plus, Heart, Send, ShieldCheck, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -243,16 +243,6 @@ const CompactFlowFeed = () => {
                     className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/85 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-card"
                   >
                     <Send className="h-3.5 w-3.5" /> Send
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (activeItem?.user_id) navigate(`/profiles/${activeItem.user_id}`);
-                    }}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90"
-                  >
-                    Open <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                 </div>
 
