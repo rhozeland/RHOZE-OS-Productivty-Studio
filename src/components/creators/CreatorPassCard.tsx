@@ -365,14 +365,45 @@ const CreatorPassCard = () => {
                   </button>
                 );
               }
+              if (stat.action === "projects") {
+                const completed = projectsData?.completed ?? [];
+                return (
+                  <HoverCard key={stat.label} openDelay={120} closeDelay={80}>
+                    <HoverCardTrigger asChild>
+                      <div className="text-center cursor-default">{Body}</div>
+                    </HoverCardTrigger>
+                    <HoverCardContent align="center" className="w-72 p-3">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-body mb-2">
+                        Recent projects
+                      </p>
+                      {completed.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">
+                          No completed projects yet — wrap one to start building your portfolio.
+                        </p>
+                      ) : (
+                        <ul className="space-y-1.5">
+                          {completed.map((p: any) => (
+                            <li key={p.id} className="flex items-center justify-between gap-2 text-xs">
+                              <span className="font-medium text-foreground truncate">{p.name}</span>
+                              <span className="text-[10px] text-muted-foreground shrink-0 capitalize">
+                                {p.status}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </HoverCardContent>
+                  </HoverCard>
+                );
+              }
               if (typeof stat.action === "string") {
                 return (
-                  <Link key={stat.label} to={stat.action} className="text-center group hover:opacity-90 transition-opacity">
+                  <Link key={stat.label} to={stat.action as string} className="text-center group hover:opacity-90 transition-opacity">
                     {Body}
                   </Link>
                 );
               }
-              return <div key={stat.label} className="text-center">{Body}</div>;
+              return <div key={(stat as any).label} className="text-center">{Body}</div>;
             })}
           </div>
         </div>
