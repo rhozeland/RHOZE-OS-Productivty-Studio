@@ -325,6 +325,7 @@ const MarketRoomPage = () => {
               );
             })}
           </div>
+          </div>
         </div>
       </div>
     </div>
