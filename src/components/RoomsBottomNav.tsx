@@ -119,8 +119,8 @@ const RoomsBottomNav = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  // Hide on auth/onboarding/landing/flow; show everywhere else.
-  if (HIDDEN_EXACT.has(pathname) || pathname.startsWith("/flow")) {
+  // Only show on Discover.
+  if (!VISIBLE_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
     return null;
   }
 
