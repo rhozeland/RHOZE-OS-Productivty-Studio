@@ -54,6 +54,7 @@ import GuestDashboardPreview from "@/components/guest/GuestDashboardPreview";
 import FirstRunChecklist from "@/components/dashboard/FirstRunChecklist";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { format } from "date-fns";
+import { todayGradient } from "@/lib/rhoze-gradients";
 
 type DashboardLayout = {
   sections: string[];
