@@ -9,6 +9,7 @@ import {
   Sparkles, TrendingUp, Image as ImageIcon,
 } from "lucide-react";
 import WorksLightbox from "@/components/creators/WorksLightbox";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import ClaimRhozeButton from "@/components/ClaimRhozeButton";
 import { Input } from "@/components/ui/input";
@@ -122,34 +123,61 @@ const CreatorPassCard = () => {
   });
 
   // Events attended — count of issued/checked-in tickets the user holds.
+  // NOTE: event_tickets uses `issued_at` (not created_at).
   const { data: ticketsData } = useQuery({
     queryKey: ["pass-tickets", user?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("event_tickets")
-        .select("id, status, created_at, event_id, event:events(id,title,starts_at,cover_url,category)")
+        .select("id, status, issued_at, event_id, event:events(id,title,starts_at,cover_url,category)")
         .eq("holder_id", user!.id)
         .in("status", ["issued", "checked_in"])
-        .order("created_at", { ascending: false });
+        .order("issued_at", { ascending: false });
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  // Spaces visited — confirmed studio bookings (any non-cancelled). Paired
+  // with tickets to form the "Passport" stat.
+  const { data: spaceBookings } = useQuery({
+    queryKey: ["pass-space-bookings", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("studio_bookings")
+        .select("id, status, start_time, studio_id")
+        .eq("user_id", user!.id)
+        .not("status", "in", "(cancelled,declined)");
       return data ?? [];
     },
     enabled: !!user,
   });
 
   const eventsAttended = (ticketsData ?? []).filter((t: any) => t.status === "checked_in").length;
+  const passportCount = (ticketsData?.length ?? 0) + (spaceBookings?.length ?? 0);
 
-  // Projects — total projects the creator owns. No detail click; just a stat.
-  const { data: projectsCount } = useQuery({
-    queryKey: ["projects-count-pass", user?.id],
+  // Projects — total + recent completed (for hover preview).
+  const { data: projectsData } = useQuery({
+    queryKey: ["projects-pass", user?.id],
     queryFn: async () => {
-      const { count } = await supabase
-        .from("projects")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user!.id);
-      return count ?? 0;
+      const [{ count }, { data: completed }] = await Promise.all([
+        supabase
+          .from("projects")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user!.id),
+        supabase
+          .from("projects")
+          .select("id, name, status, updated_at")
+          .eq("user_id", user!.id)
+          .eq("status", "completed")
+          .order("updated_at", { ascending: false })
+          .limit(5),
+      ]);
+      return { total: count ?? 0, completed: completed ?? [] };
     },
     enabled: !!user,
   });
+  const projectsCount = projectsData?.total ?? 0;
 
   // ─── Personal "Studio activity" metrics — relocated here from the
   // retired My Studio dashboard. Surfaces the live counts for a creator's
@@ -274,12 +302,12 @@ const CreatorPassCard = () => {
                 action: "works" as const,
               },
               {
-                label: "Events",
-                value: `${ticketsData?.length ?? 0}`,
+                label: "Passport",
+                value: `${passportCount}`,
                 icon: Ticket,
-                isZero: (ticketsData?.length ?? 0) === 0,
+                isZero: passportCount === 0,
                 hint: { text: "Find events →", to: "/discover?view=events" as string | null },
-                action: "/credits?tab=tickets",
+                action: "/credits?tab=passport",
               },
               {
                 label: "Projects",
@@ -287,7 +315,7 @@ const CreatorPassCard = () => {
                 icon: FolderKanban,
                 isZero: false,
                 hint: { text: "", to: null as string | null },
-                action: null,
+                action: "projects" as const,
               },
               {
                 label: "Fundraising",
@@ -338,14 +366,45 @@ const CreatorPassCard = () => {
                   </button>
                 );
               }
+              if (stat.action === "projects") {
+                const completed = projectsData?.completed ?? [];
+                return (
+                  <HoverCard key={stat.label} openDelay={120} closeDelay={80}>
+                    <HoverCardTrigger asChild>
+                      <div className="text-center cursor-default">{Body}</div>
+                    </HoverCardTrigger>
+                    <HoverCardContent align="center" className="w-72 p-3">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-body mb-2">
+                        Recent projects
+                      </p>
+                      {completed.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">
+                          No completed projects yet — wrap one to start building your portfolio.
+                        </p>
+                      ) : (
+                        <ul className="space-y-1.5">
+                          {completed.map((p: any) => (
+                            <li key={p.id} className="flex items-center justify-between gap-2 text-xs">
+                              <span className="font-medium text-foreground truncate">{p.name}</span>
+                              <span className="text-[10px] text-muted-foreground shrink-0 capitalize">
+                                {p.status}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </HoverCardContent>
+                  </HoverCard>
+                );
+              }
               if (typeof stat.action === "string") {
                 return (
-                  <Link key={stat.label} to={stat.action} className="text-center group hover:opacity-90 transition-opacity">
+                  <Link key={stat.label} to={stat.action as string} className="text-center group hover:opacity-90 transition-opacity">
                     {Body}
                   </Link>
                 );
               }
-              return <div key={stat.label} className="text-center">{Body}</div>;
+              return <div key={(stat as any).label} className="text-center">{Body}</div>;
             })}
           </div>
         </div>

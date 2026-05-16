@@ -68,7 +68,11 @@ const CreditShopPage = () => {
 const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<typeof useAuth>["user"]> }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get("tab");
-  const activeTab = rawTab === "tiers" ? "pass" : (rawTab || "pass");
+  // Legacy redirects: `tiers` → My Pass; `tickets` → new Passport tab.
+  const activeTab =
+    rawTab === "tiers" ? "pass"
+    : rawTab === "tickets" ? "passport"
+    : (rawTab || "pass");
 
   const { data: userCredits } = useQuery({
     queryKey: ["user-credits", user?.id],
@@ -110,7 +114,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="pass" className="gap-1.5"><Award className="h-3.5 w-3.5" /> My Pass</TabsTrigger>
           <TabsTrigger value="portfolio" className="gap-1.5"><Briefcase className="h-3.5 w-3.5" /> Portfolio</TabsTrigger>
-          <TabsTrigger value="tickets" className="gap-1.5"><TicketIcon className="h-3.5 w-3.5" /> Tickets</TabsTrigger>
+          <TabsTrigger value="passport" className="gap-1.5"><TicketIcon className="h-3.5 w-3.5" /> Passport</TabsTrigger>
           <TabsTrigger value="works" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Verified IP</TabsTrigger>
           <TabsTrigger value="topup" className="gap-1.5"><Wallet className="h-3.5 w-3.5" /> Top up</TabsTrigger>
         </TabsList>
@@ -155,15 +159,28 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
           <CoinPortfolio />
         </TabsContent>
 
-        {/* ═══════ Tickets — wallet-style stub collection ═══════ */}
-        <TabsContent value="tickets" className="mt-4 space-y-4">
+        {/* ═══════ Passport — event tickets + spaces visited ═══════ */}
+        <TabsContent value="passport" className="mt-4 space-y-6">
+          <button
+            type="button"
+            onClick={() => setTab("pass")}
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to My Pass
+          </button>
           <div className="space-y-1.5">
-            <h2 className="font-display text-xl font-bold text-foreground">Tickets</h2>
+            <h2 className="font-display text-xl font-bold text-foreground">Passport</h2>
             <p className="text-sm text-muted-foreground max-w-2xl">
-              Your event passes — upcoming and past. Tap a stub for the QR, ticket detail, and on-chain receipt.
+              Every event you've registered for and every space you've visited — your portfolio of places and moments.
             </p>
           </div>
-          <TicketsTab userId={user.id} />
+          <section className="space-y-3">
+            <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
+              <TicketIcon className="h-4 w-4 text-muted-foreground" /> Events
+            </h3>
+            <TicketsTab userId={user.id} />
+          </section>
+          <SpacesPassportSection userId={user.id} />
         </TabsContent>
 
         {/* ═══════ Verified IP ═══════ */}
@@ -194,6 +211,89 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
         </TabsContent>
       </Tabs>
     </div>
+  );
+};
+
+
+/* ─────────────── Passport · Spaces visited ─────────────── */
+const SpacesPassportSection = ({ userId }: { userId: string }) => {
+  const { data: rows = [], isLoading } = useQuery({
+    queryKey: ["passport-spaces", userId],
+    queryFn: async () => {
+      const { data: bks } = await supabase
+        .from("studio_bookings")
+        .select("id, status, start_time, end_time, studio_id, total_price")
+        .eq("user_id", userId)
+        .not("status", "in", "(cancelled,declined)")
+        .order("start_time", { ascending: false });
+      const ids = Array.from(new Set((bks ?? []).map((b: any) => b.studio_id)));
+      if (!ids.length) return [];
+      const { data: studios } = await supabase
+        .from("studios")
+        .select("id, name, location, cover_url")
+        .in("id", ids);
+      const m = new Map((studios ?? []).map((s: any) => [s.id, s]));
+      return (bks ?? []).map((b: any) => ({ ...b, studio: m.get(b.studio_id) }));
+    },
+  });
+
+  if (isLoading) {
+    return <div className="h-24 animate-pulse rounded-xl bg-muted/40" />;
+  }
+  if (rows.length === 0) {
+    return (
+      <section className="space-y-3">
+        <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-muted-foreground" /> Spaces visited
+        </h3>
+        <div className="rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            No spaces booked yet — they'll appear here on the day of your booking.
+          </p>
+          <Link to="/discover?kind=space" className="inline-flex items-center gap-1 text-xs text-foreground hover:underline mt-2">
+            Browse spaces <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="space-y-3">
+      <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
+        <Sparkles className="h-4 w-4 text-muted-foreground" /> Spaces visited
+        <span className="text-[10px] text-muted-foreground font-body">{rows.length}</span>
+      </h3>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {rows.map((r: any) => {
+          const s = r.studio;
+          return (
+            <Link
+              key={r.id}
+              to={s ? `/studios/${s.id}` : "#"}
+              className="group flex gap-3 rounded-2xl border border-border bg-card overflow-hidden hover:border-foreground/30 transition-colors"
+            >
+              <div className="relative w-24 shrink-0 bg-muted">
+                {s?.cover_url ? (
+                  <img src={s.cover_url} alt={s.name} className="absolute inset-0 w-full h-full object-cover" />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-fuchsia-500/20" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0 py-3 pr-3">
+                <p className="font-display font-semibold text-sm truncate">{s?.name ?? "Space"}</p>
+                {s?.location && (
+                  <p className="text-[11px] text-muted-foreground truncate">{s.location}</p>
+                )}
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  {format(new Date(r.start_time), "MMM d, yyyy")} · <span className="capitalize">{r.status}</span>
+                </p>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
   );
 };
 
