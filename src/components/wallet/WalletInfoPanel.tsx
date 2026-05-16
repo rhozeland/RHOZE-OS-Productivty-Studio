@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import ClaimLimitsControl from "@/components/settings/ClaimLimitsControl";
+import WalletButton from "@/components/WalletButton";
 import { toast } from "sonner";
 
 /**
