@@ -26,19 +26,19 @@ import {
 const ROOMS = [
   {
     id: "scene",
-    label: "Scene",
-    sub: "Social",
-    Icon: Sparkles,
-    to: "/scene",
-    matches: ["/scene", "/discover", "/flow", "/stream", "/people", "/profiles", "/creators"],
+    label: "Today",
+    sub: "Discover",
+    Icon: Sun,
+    to: "/discover",
+    matches: ["/scene", "/discover", "/stream", "/people", "/profiles", "/creators"],
   },
   {
     id: "market",
-    label: "Market",
-    sub: "Work",
-    Icon: Store,
+    label: "Connect",
+    sub: "Creators · Spaces · Calls",
+    Icon: Users,
     to: "/market",
-    matches: ["/market", "/marketplace", "/spaces", "/studios", "/services", "/projects", "/bookings", "/calendar", "/messages"],
+    matches: ["/market", "/marketplace", "/spaces", "/studios", "/services"],
   },
   {
     id: "vault",
@@ -53,10 +53,10 @@ const ROOMS = [
 const isMatch = (pathname: string, prefixes: string[]) =>
   prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
 
-// Routes where the dock should be hidden (auth/onboarding/landing/fullscreen).
-// Everywhere else, the HUD dock is always visible.
-const HIDDEN_PREFIXES = ["/auth", "/onboarding", "/", "/landing", "/flow"];
-const HIDDEN_EXACT = new Set(["/", "/auth", "/onboarding", "/landing"]);
+// v9.4: dock now only appears on Discover (and its legacy /scene alias).
+// Everywhere else (Connect, Vault, Inbox, Flow, detail pages) the dock is
+// hidden — users navigate back via the sidebar.
+const VISIBLE_PREFIXES = ["/discover", "/scene"];
 
 const SCROLL_HIDE_THRESHOLD = 12;
 
