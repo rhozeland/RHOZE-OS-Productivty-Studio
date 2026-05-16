@@ -215,6 +215,89 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
 };
 
 
+/* ─────────────── Passport · Spaces visited ─────────────── */
+const SpacesPassportSection = ({ userId }: { userId: string }) => {
+  const { data: rows = [], isLoading } = useQuery({
+    queryKey: ["passport-spaces", userId],
+    queryFn: async () => {
+      const { data: bks } = await supabase
+        .from("studio_bookings")
+        .select("id, status, start_time, end_time, studio_id, total_price")
+        .eq("user_id", userId)
+        .not("status", "in", "(cancelled,declined)")
+        .order("start_time", { ascending: false });
+      const ids = Array.from(new Set((bks ?? []).map((b: any) => b.studio_id)));
+      if (!ids.length) return [];
+      const { data: studios } = await supabase
+        .from("studios")
+        .select("id, name, location, cover_url")
+        .in("id", ids);
+      const m = new Map((studios ?? []).map((s: any) => [s.id, s]));
+      return (bks ?? []).map((b: any) => ({ ...b, studio: m.get(b.studio_id) }));
+    },
+  });
+
+  if (isLoading) {
+    return <div className="h-24 animate-pulse rounded-xl bg-muted/40" />;
+  }
+  if (rows.length === 0) {
+    return (
+      <section className="space-y-3">
+        <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-muted-foreground" /> Spaces visited
+        </h3>
+        <div className="rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            No spaces booked yet — they'll appear here on the day of your booking.
+          </p>
+          <Link to="/discover?kind=space" className="inline-flex items-center gap-1 text-xs text-foreground hover:underline mt-2">
+            Browse spaces <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="space-y-3">
+      <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
+        <Sparkles className="h-4 w-4 text-muted-foreground" /> Spaces visited
+        <span className="text-[10px] text-muted-foreground font-body">{rows.length}</span>
+      </h3>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {rows.map((r: any) => {
+          const s = r.studio;
+          return (
+            <Link
+              key={r.id}
+              to={s ? `/studios/${s.id}` : "#"}
+              className="group flex gap-3 rounded-2xl border border-border bg-card overflow-hidden hover:border-foreground/30 transition-colors"
+            >
+              <div className="relative w-24 shrink-0 bg-muted">
+                {s?.cover_url ? (
+                  <img src={s.cover_url} alt={s.name} className="absolute inset-0 w-full h-full object-cover" />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-fuchsia-500/20" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0 py-3 pr-3">
+                <p className="font-display font-semibold text-sm truncate">{s?.name ?? "Space"}</p>
+                {s?.location && (
+                  <p className="text-[11px] text-muted-foreground truncate">{s.location}</p>
+                )}
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  {format(new Date(r.start_time), "MMM d, yyyy")} · <span className="capitalize">{r.status}</span>
+                </p>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
+  );
+};
+
+
 /* ─────────────── Activity preview (My Pass) ─────────────── */
 const ActivityPreview = ({ userId, onSeeAll }: { userId: string; onSeeAll: () => void }) => {
   const { data: recent } = useQuery({
