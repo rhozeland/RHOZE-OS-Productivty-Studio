@@ -83,16 +83,18 @@ const SmartboardDetailPage = () => {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDesc, setEditDesc] = useState("");
-  const [itemType, setItemType] = useState<"note" | "link" | "image" | "video" | "audio" | "pdf">("note");
-  const [itemTitle, setItemTitle] = useState("");
+  // Add-to-board now has 4 surfaces: note, link, upload (auto-detect image/
+  // video/audio), and "from Flow" (pull from your liked/saved Flow items).
+  // PDF, manual title, and the cross-post-to-Flow checkbox are gone.
+  const [itemType, setItemType] = useState<"note" | "link" | "upload" | "flow">("note");
   const [itemContent, setItemContent] = useState("");
   const [itemLink, setItemLink] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   // Tracks the allowlist verdict from <UploadFileMeta>; null while no file is selected.
   const [uploadOk, setUploadOk] = useState<boolean | null>(null);
+  const [selectedFlowItemId, setSelectedFlowItemId] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [alsoPostToFlow, setAlsoPostToFlow] = useState(false);
 
   const { data: board } = useQuery({
     queryKey: ["smartboard", id],
