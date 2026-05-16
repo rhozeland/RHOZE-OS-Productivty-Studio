@@ -473,46 +473,6 @@ const ProjectDetailPage = () => {
 
       </Tabs>
 
-      {/* Link Smartboard Dialog */}
-      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-display">Link a Smartboard</DialogTitle>
-          </DialogHeader>
-          {availableToLink.length === 0 ? (
-            <div className="text-center py-8">
-              <LayoutGrid className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-              <p className="text-sm text-muted-foreground">
-                {mySmartboards?.length === 0
-                  ? "You don't have any smartboards yet"
-                  : "All your smartboards are already linked"}
-              </p>
-              <Link to="/smartboards">
-                <Button variant="outline" className="mt-3 rounded-full" size="sm">
-                  Create a Smartboard
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-80 overflow-y-auto">
-              {availableToLink.map((board) => (
-                <button
-                  key={board.id}
-                  onClick={() => { linkSmartboard.mutate(board.id); setLinkDialogOpen(false); }}
-                  className="flex w-full items-center gap-3 rounded-lg p-3 text-left hover:bg-muted/60 transition-colors"
-                >
-                  <div className="h-10 w-10 rounded-lg shrink-0" style={{ background: board.cover_color || "hsl(var(--muted))" }} />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{board.title}</p>
-                    {board.description && <p className="text-xs text-muted-foreground truncate">{board.description}</p>}
-                  </div>
-                  <Link2 className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
-                </button>
-              ))}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
