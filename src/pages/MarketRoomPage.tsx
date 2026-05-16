@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 import { avatarGradientFor } from "@/lib/avatar-gradient";
 import ConnectMatchDeck from "@/components/connect/ConnectMatchDeck";
@@ -145,23 +146,76 @@ const MarketRoomPage = () => {
           )}
           {filtered.map((row) => {
             const grad = avatarGradientFor(row.ownerId || row.id);
+            const ownerName = row.ownerName || "Creator";
+            const initials = ownerName
+              .split(" ")
+              .map((w) => w[0])
+              .filter(Boolean)
+              .slice(0, 2)
+              .join("")
+              .toUpperCase();
             return (
-              <button
+              <div
                 key={row.id}
-                onClick={() => navigate(row.detailHref)}
-                className="w-full text-left px-4 py-3 transition-colors flex items-start gap-3 hover:bg-muted/40"
+                className="group w-full px-4 py-3 transition-colors flex items-start gap-3 hover:bg-muted/40"
               >
-                <div
-                  className="shrink-0 h-10 w-10 rounded-lg overflow-hidden ring-1 ring-border/60"
-                  style={{ background: grad.background }}
+                <HoverCard openDelay={120} closeDelay={80}>
+                  <HoverCardTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (row.ownerId) navigate(`/profiles/${row.ownerId}`);
+                      }}
+                      aria-label={`View ${ownerName}'s profile`}
+                      className="shrink-0 h-10 w-10 rounded-full overflow-hidden ring-1 ring-border/60 hover:ring-2 hover:ring-foreground/40 transition flex items-center justify-center"
+                      style={{ background: grad.background }}
+                    >
+                      {row.ownerAvatar ? (
+                        <img src={row.ownerAvatar} alt={ownerName} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-[11px] font-semibold text-foreground/80">
+                          {initials || "·"}
+                        </span>
+                      )}
+                    </button>
+                  </HoverCardTrigger>
+                  <HoverCardContent side="right" align="start" className="w-64 p-3">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="h-12 w-12 rounded-full overflow-hidden ring-1 ring-border/60 flex items-center justify-center shrink-0"
+                        style={{ background: grad.background }}
+                      >
+                        {row.ownerAvatar ? (
+                          <img src={row.ownerAvatar} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="text-sm font-semibold text-foreground/80">{initials || "·"}</span>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{ownerName}</p>
+                        <p className="text-[11px] text-muted-foreground capitalize truncate">
+                          {row.category || row.kind}
+                        </p>
+                      </div>
+                    </div>
+                    {row.ownerId && (
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/profiles/${row.ownerId}`)}
+                        className="mt-3 w-full inline-flex items-center justify-center gap-1 text-xs font-medium rounded-md border border-border/60 px-2 py-1.5 hover:bg-muted transition"
+                      >
+                        View profile <ArrowRight className="h-3 w-3" />
+                      </button>
+                    )}
+                  </HoverCardContent>
+                </HoverCard>
+
+                <button
+                  type="button"
+                  onClick={() => navigate(row.detailHref)}
+                  className="min-w-0 flex-1 text-left"
                 >
-                  {row.ownerAvatar ? (
-                    <img src={row.ownerAvatar} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <Heading.Icon className="h-4 w-4 text-foreground/70 m-auto mt-3" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-medium text-sm text-foreground leading-snug line-clamp-2">
                       {row.title}
@@ -187,8 +241,8 @@ const MarketRoomPage = () => {
                       </>
                     )}
                   </div>
-                </div>
-              </button>
+                </button>
+              </div>
             );
           })}
         </div>
