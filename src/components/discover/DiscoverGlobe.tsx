@@ -374,27 +374,39 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
     setIsDragging(false);
   };
 
+  const grad = todayGradient();
+
   return (
     <div
       className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-card/55"
       onMouseLeave={() => setHoveredCode(null)}
+      data-rhoze-gradient={grad.id}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_18%,hsl(var(--accent)/0.16),transparent_28%),radial-gradient(circle_at_72%_22%,hsl(var(--primary)/0.22),transparent_26%),radial-gradient(circle_at_52%_82%,hsl(var(--foreground)/0.06),transparent_30%)]" />
+      {/* Rhozeland gradient wash — rotates daily */}
+      <div
+        aria-hidden
+        className="absolute inset-0"
+        style={{ background: grad.surface }}
+      />
       <motion.div
-        className="absolute inset-0 opacity-80"
+        aria-hidden
+        className="absolute inset-0 opacity-60 mix-blend-soft-light"
         animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
-        transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
+        transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
         style={{
-          backgroundImage:
-            "linear-gradient(135deg, hsl(var(--background) / 0.96), hsl(var(--background) / 0.7), hsl(var(--card) / 0.9), hsl(var(--background) / 0.96))",
-          backgroundSize: "180% 180%",
+          backgroundImage: grad.text,
+          backgroundSize: "220% 220%",
         }}
       />
 
       <div className="relative grid gap-3 p-3 sm:p-4 sm:gap-4 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px] lg:items-stretch">
         {/* ── Globe ─────────────────────────────────────────────── */}
-        <div className="relative overflow-hidden rounded-[1.5rem] border border-border/50 bg-background/45 backdrop-blur-xl">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_46%,hsl(var(--background)/0)_0%,hsl(var(--primary)/0.12)_32%,transparent_54%),radial-gradient(circle_at_50%_86%,hsl(var(--accent)/0.18),transparent_30%)]" />
+        <div className="relative overflow-hidden rounded-[1.5rem] border border-border/50 bg-background/30 backdrop-blur-xl">
+          <div
+            aria-hidden
+            className="absolute inset-0 opacity-70"
+            style={{ background: grad.surface }}
+          />
 
           <div className="relative flex min-h-[280px] items-center justify-center px-2 py-2 sm:px-3 lg:min-h-[420px]">
             <div
