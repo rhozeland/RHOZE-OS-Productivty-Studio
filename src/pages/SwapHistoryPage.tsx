@@ -38,8 +38,12 @@ const fmt = (n: number, d = 4) =>
 
 const SwapHistoryPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
-  const { data, isLoading } = useQuery({
+  const handleBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/vault");
+  };
     queryKey: ["swap-history", user?.id],
     enabled: !!user,
     queryFn: async () => {
