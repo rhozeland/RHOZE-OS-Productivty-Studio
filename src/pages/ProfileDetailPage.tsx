@@ -360,14 +360,33 @@ const ProfileDetailPage = () => {
           {/* Banner */}
           <div className="h-36 sm:h-44 relative" style={{ background: bannerGradient }}>
             {bannerImageUrl && <img src={bannerImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-            {isOwnProfile && (
+            {isOwnProfile ? (
               <div className="absolute top-3 right-3 flex items-center gap-2">
                 <Button variant="secondary" size="sm" onClick={() => navigate("/settings")}
                   className="gap-1.5 bg-card/80 backdrop-blur-sm hover:bg-card/95 shadow-md text-xs">
                   <Settings className="h-3.5 w-3.5" /> Edit Profile
                 </Button>
               </div>
-            )}
+            ) : user ? (
+              <div className="absolute top-3 right-3 flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => followMutation.mutate()}
+                  disabled={followMutation.isPending}
+                  className="gap-1.5 bg-gradient-to-r from-primary to-fuchsia-500 hover:opacity-90 text-primary-foreground shadow-md text-xs"
+                >
+                  {isFollowing ? <><UserCheck className="h-3.5 w-3.5" /> Following</> : <><UserPlus className="h-3.5 w-3.5" /> Follow</>}
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => navigate(`/messages?to=${id}`)}
+                  className="gap-1.5 bg-card/80 backdrop-blur-sm hover:bg-card/95 shadow-md text-xs"
+                >
+                  <MessageSquare className="h-3.5 w-3.5" /> Message
+                </Button>
+              </div>
+            ) : null}
           </div>
 
           <div className="px-5 sm:px-8 pb-5 pt-3">
