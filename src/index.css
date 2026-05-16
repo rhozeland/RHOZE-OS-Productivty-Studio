@@ -229,6 +229,29 @@
   animation: iridescent-flow 8s ease-in-out infinite;
 }
 
+/* Room hero — slow drifting gradient blob behind headline text.
+   Pair with `.room-hero-blob` element inside an overflow-hidden parent. */
+@keyframes blob-drift {
+  0%   { transform: translate3d(-8%, -4%, 0) scale(1);   }
+  25%  { transform: translate3d(6%, 4%, 0)  scale(1.08); }
+  50%  { transform: translate3d(10%, -6%, 0) scale(0.96);}
+  75%  { transform: translate3d(-4%, 6%, 0)  scale(1.05);}
+  100% { transform: translate3d(-8%, -4%, 0) scale(1);   }
+}
+.room-hero-blob {
+  position: absolute;
+  inset: -20% -10% -20% -10%;
+  border-radius: 9999px;
+  filter: blur(60px) saturate(115%);
+  opacity: 0.55;
+  pointer-events: none;
+  animation: blob-drift 18s ease-in-out infinite;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .room-hero-blob { animation: none; }
+}
+
 /* Tier card shimmer — diagonal sweep, 3s loop, respects reduced motion. */
 @keyframes tier-shimmer-sweep {
   0% { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
