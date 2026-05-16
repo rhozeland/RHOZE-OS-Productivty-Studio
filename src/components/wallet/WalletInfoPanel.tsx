@@ -34,8 +34,7 @@ const WalletInfoPanel = () => {
     <div className="space-y-5">
       <div className="space-y-3">
         <p className="text-xs text-muted-foreground">
-          Your connected Solana wallet address is stored here for on-chain features.
-          One wallet per account — to change it, disconnect first then re-link from the header.
+          One wallet per account, bound on first connect. Disconnect here to re-link a different one.
         </p>
         {profile?.wallet_address ? (
           <div className="flex items-center gap-2">
@@ -62,9 +61,7 @@ const WalletInfoPanel = () => {
           <div className="rounded-lg border border-dashed border-border bg-muted/20 p-4 space-y-3">
             <p className="text-sm text-foreground font-medium">No wallet connected</p>
             <p className="text-xs text-muted-foreground">
-              Connect a Solana wallet (Phantom, Solflare, Backpack…) to enable cash outs,
-              on-chain claims, and Artist Share trades. Your wallet is bound 1:1 to your account
-              the first time you connect.
+              Link Phantom, Solflare, or Backpack to claim $RHOZE and trade Artist Shares. Bound 1:1 to your account on first connect.
             </p>
             <WalletButton />
           </div>
