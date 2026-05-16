@@ -397,67 +397,59 @@ const ProfileDetailPage = () => {
               </div>
 
               <div className="flex-1 min-w-0 pb-1">
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-x-2 gap-y-1 flex-wrap">
                   <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground tracking-tight break-words leading-none">
                     {p.display_name || p.username || "Creator"}
                   </h1>
-                  <VerifiedArtistBadge status={p.verification_status} size="sm" showLabel={false} />
-                  {p.username && (
-                    <span className="text-sm text-muted-foreground leading-none">@{p.username}</span>
+                  {p.verification_status === "verified" && (
+                    <HoverCard openDelay={120} closeDelay={80}>
+                      <HoverCardTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label="Verified Artist — identity confirmed by Rhozeland"
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 hover:bg-sky-500/20 transition-colors"
+                        >
+                          <BadgeCheck className="h-3.5 w-3.5" />
+                        </button>
+                      </HoverCardTrigger>
+                      <HoverCardContent align="start" className="w-64 text-xs">
+                        <p className="font-semibold text-foreground flex items-center gap-1.5">
+                          <BadgeCheck className="h-3.5 w-3.5 text-sky-500" /> Verified Artist
+                        </p>
+                        <p className="mt-1 text-muted-foreground">
+                          Identity confirmed by Rhozeland. Unlocks paid services,
+                          coin launches, and protects fans from impersonation.
+                        </p>
+                      </HoverCardContent>
+                    </HoverCard>
                   )}
-                </div>
-                <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                  <VerifiedArtistBadge status={p.verification_status} size="xs" />
                   <ProfileBadges userId={id!} compact />
-                  {reviewStats && reviewStats.count > 0 && (
-                    <Badge variant="outline" className="text-[10px] gap-1 font-medium">
-                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {reviewStats.avg} ({reviewStats.count})
-                    </Badge>
-                  )}
                 </div>
+                {p.username && (
+                  <p className="text-sm text-muted-foreground leading-none mt-1.5">
+                    @{p.username}
+                  </p>
+                )}
               </div>
             </div>
 
-            {/* Roles + meta — compact, no emojis, no italics */}
-            <div className="mt-4 space-y-2.5">
-              {Array.isArray(p.creator_roles) && p.creator_roles.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {p.creator_roles.map((rid: string) => {
-                    const role = ROLE_BY_ID.get(rid);
-                    return (
-                      <span
-                        key={rid}
-                        className="rounded-full bg-foreground/5 border border-border/60 px-2.5 py-0.5 text-[11px] font-medium text-foreground/80"
-                      >
-                        {role?.label ?? rid}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
-              {p.headline && (
-                <p className="text-sm text-foreground/80 leading-snug">{p.headline}</p>
-              )}
-
-              <div className="flex items-center gap-x-4 gap-y-1 flex-wrap text-xs text-muted-foreground">
-                {p.location && (
-                  <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {p.location}</span>
-                )}
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" /> Joined {format(new Date(profile.created_at), "MMM yyyy")}
+            {/* Compact meta — pass badge + location + rating only */}
+            <div className="mt-4 flex items-center gap-x-3 gap-y-2 flex-wrap">
+              <ProfileTierBadge userId={id!} isOwnProfile={isOwnProfile} />
+              {p.location && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <MapPin className="h-3 w-3" /> {p.location}
                 </span>
-                {hasSellerContent && (
-                  <span className="flex items-center gap-1">
-                    <Store className="h-3 w-3" /> Active seller
-                  </span>
-                )}
-                {totalProofs > 0 && (
-                  <span className="flex items-center gap-1">
-                    <Shield className="h-3 w-3 text-primary" />
-                    {anchoredCount > 0 ? `${anchoredCount} verified earnings` : `${totalProofs} earnings`}
-                  </span>
-                )}
-              </div>
+              )}
+              {reviewStats && reviewStats.count > 0 && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                  {reviewStats.avg} <span className="opacity-70">({reviewStats.count})</span>
+                </span>
+              )}
+            </div>
+
+            <div className="mt-3 space-y-2.5">
 
               {/* Bio inline — moved out of About tab so it lives in the header */}
               {profile.bio && (
