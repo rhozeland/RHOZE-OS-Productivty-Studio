@@ -158,9 +158,10 @@ const VaultRoomPage = () => {
           );
           const className =
             "group relative rounded-xl border border-border bg-card hover:bg-muted/60 transition-colors p-4 text-left w-full";
-          if (action === "activity") {
+          if (action === "activity" || action === "wallet") {
+            const onClick = action === "activity" ? () => setActivityOpen(true) : () => setWalletOpen(true);
             return (
-              <button key={label} onClick={() => setActivityOpen(true)} className={className}>
+              <button key={label} onClick={onClick} className={className}>
                 {inner}
               </button>
             );
@@ -217,6 +218,19 @@ const VaultRoomPage = () => {
               </Link>
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Wallet dialog — connected wallet + claim limits */}
+      <Dialog open={walletOpen} onOpenChange={setWalletOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">Wallet</DialogTitle>
+            <DialogDescription>
+              Your connected Solana wallet and on-chain claim limits.
+            </DialogDescription>
+          </DialogHeader>
+          <WalletInfoPanel />
         </DialogContent>
       </Dialog>
     </div>
