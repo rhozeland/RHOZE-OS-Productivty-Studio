@@ -1,10 +1,8 @@
 /**
- * DropRoomLauncher — compact "Start Drop Room" button for the Progress
- * Overview header. Opens the same launch dialog ProjectTools used to host,
- * and links to any currently-active room. Keeps the surface minimal so the
- * roadmap stays focused on stages + smartboards.
+ * DropRoomLauncher — one-click "Start video chat" button for the Progress
+ * Overview header. No setup dialog: click → spin up a room → drop you in.
+ * Active rooms are accessible from the dropdown caret beside the main CTA.
  */
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { isPast, formatDistanceToNow } from "date-fns";
@@ -12,55 +10,28 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { Radio, Plus, Clock } from "lucide-react";
-
-const ROOM_DURATIONS = [
-  { label: "1 hour", hours: 1 },
-  { label: "3 hours", hours: 3 },
-  { label: "6 hours", hours: 6 },
-  { label: "24 hours", hours: 24 },
-  { label: "7 days", hours: 24 * 7 },
-];
+import { Video, ChevronDown, Clock } from "lucide-react";
 
 interface Props {
   projectId: string;
   projectTitle: string;
 }
 
+// Default room window. Per-tier auto-extend can be wired in later; for now
+// every room runs for 60 minutes and the team is notified when it ends.
+const DEFAULT_ROOM_HOURS = 1;
+
 const DropRoomLauncher = ({ projectId, projectTitle }: Props) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [hours, setHours] = useState(24);
-  const [creating, setCreating] = useState(false);
 
   const { data: rooms } = useQuery({
     queryKey: ["project-drop-rooms", projectId],
@@ -78,13 +49,13 @@ const DropRoomLauncher = ({ projectId, projectTitle }: Props) => {
 
   const createRoom = useMutation({
     mutationFn: async () => {
-      if (!user || !title.trim()) throw new Error("Title required");
-      const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+      if (!user) throw new Error("Sign in required");
+      const expiresAt = new Date(Date.now() + DEFAULT_ROOM_HOURS * 60 * 60 * 1000).toISOString();
       const { data, error } = await supabase
         .from("drop_rooms")
         .insert({
-          title: title.trim(),
-          description: description.trim() || null,
+          title: `${projectTitle} · Video chat`,
+          description: null,
           category: "general",
           created_by: user.id,
           expires_at: expiresAt,
@@ -95,15 +66,9 @@ const DropRoomLauncher = ({ projectId, projectTitle }: Props) => {
       if (error) throw error;
       return data.id as string;
     },
-    onMutate: () => setCreating(true),
-    onSettled: () => setCreating(false),
     onSuccess: (roomId) => {
       qc.invalidateQueries({ queryKey: ["project-drop-rooms", projectId] });
-      setOpen(false);
-      setTitle("");
-      setDescription("");
-      setHours(24);
-      toast.success("Drop Room launched");
+      toast.success("Video chat started — team notified");
       navigate(`/drop-rooms/${roomId}`);
     },
     onError: (e: any) => toast.error(e.message),
@@ -112,12 +77,26 @@ const DropRoomLauncher = ({ projectId, projectTitle }: Props) => {
   const activeCount = rooms?.length ?? 0;
 
   return (
-    <>
+    <div className="inline-flex items-center">
+      <Button
+        size="sm"
+        variant="outline"
+        className="rounded-full h-8 gap-1.5 rounded-r-none border-r-0 pr-2.5"
+        onClick={() => createRoom.mutate()}
+        disabled={createRoom.isPending}
+      >
+        <Video className="h-3.5 w-3.5 text-primary" />
+        {createRoom.isPending ? "Starting…" : "Start video chat"}
+      </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button size="sm" variant="outline" className="rounded-full h-8 gap-1.5">
-            <Radio className="h-3.5 w-3.5 text-primary" />
-            Drop Room
+          <Button
+            size="sm"
+            variant="outline"
+            className="rounded-full h-8 px-1.5 rounded-l-none"
+            aria-label="Active video chats"
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
             {activeCount > 0 && (
               <span className="ml-1 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-primary/15 text-primary text-[10px] font-bold">
                 {activeCount}
@@ -126,14 +105,14 @@ const DropRoomLauncher = ({ projectId, projectTitle }: Props) => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64">
-          <DropdownMenuItem onClick={() => setOpen(true)} className="gap-2">
-            <Plus className="h-3.5 w-3.5" /> Start a new room
-          </DropdownMenuItem>
-          {activeCount > 0 && (
+          {activeCount === 0 ? (
+            <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+              No active video chats. Click "Start video chat" to begin.
+            </DropdownMenuLabel>
+          ) : (
             <>
-              <DropdownMenuSeparator />
               <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                Active rooms
+                Active video chats
               </DropdownMenuLabel>
               {rooms!.map((r: any) => (
                 <DropdownMenuItem
@@ -152,55 +131,7 @@ const DropRoomLauncher = ({ projectId, projectTitle }: Props) => {
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-display">New Drop Room</DialogTitle>
-            <DialogDescription>
-              A pop-up collaboration space scoped to "{projectTitle}".
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <div>
-              <Label>Room name</Label>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Final mix review"
-              />
-            </div>
-            <div>
-              <Label>Description</Label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="What are we working on?"
-                rows={3}
-              />
-            </div>
-            <div>
-              <Label>Duration</Label>
-              <Select value={String(hours)} onValueChange={(v) => setHours(Number(v))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {ROOM_DURATIONS.map((d) => (
-                    <SelectItem key={d.hours} value={String(d.hours)}>{d.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button
-              onClick={() => createRoom.mutate()}
-              disabled={creating || !title.trim()}
-              className="w-full"
-            >
-              {creating ? "Launching…" : "Launch room"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+    </div>
   );
 };
 
