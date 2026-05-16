@@ -138,35 +138,40 @@ const RoomsBottomNav = () => {
         animate={controls}
       >
         <div className="px-3 pb-4 pointer-events-auto">
-          {/* Outer glow halo to make the dock pop off the page */}
-          <div className="relative">
-            <div
-              aria-hidden
-              className="absolute -inset-2 rounded-full bg-gradient-to-r from-primary/40 via-fuchsia-500/40 to-amber-400/40 blur-2xl opacity-70"
-            />
-            <div className="relative inline-flex items-stretch gap-1.5 rounded-full border-2 border-foreground/10 bg-card/95 backdrop-blur-xl shadow-2xl shadow-fuchsia-500/20 p-1.5 ring-1 ring-foreground/5">
-              <div className="flex items-center gap-1">
-                {ROOMS.map(({ id, label, sub, Icon, to, matches }) => {
-                  const active = isMatch(pathname, matches);
-                  return (
-                    <Tooltip key={id}>
-                      <TooltipTrigger asChild>
-                        <NavLink to={to} aria-current={active ? "page" : undefined} aria-label={`${label} · ${sub}`}>
-                          <motion.div
-                            whileTap={{ scale: 0.92 }}
-                            whileHover={{ y: -2 }}
-                            className={cn(
-                              "h-11 px-4 flex items-center gap-2 rounded-full transition-all font-semibold text-sm",
-                              active
-                                ? "bg-gradient-to-r from-primary via-fuchsia-500 to-amber-400 text-primary-foreground shadow-lg shadow-fuchsia-500/30"
-                                : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
-                            )}
-                          >
-                            <Icon className={cn("h-5 w-5", active && "drop-shadow")} />
-                            <span>{label}</span>
-                          </motion.div>
-                        </NavLink>
-                      </TooltipTrigger>
+          {(() => {
+            const grad = todayGradient();
+            return (
+              <div className="relative" data-rhoze-gradient={grad.id}>
+                {/* Outer glow halo — daily Rhozeland gradient */}
+                <div
+                  aria-hidden
+                  className="absolute -inset-2 rounded-full blur-2xl opacity-70"
+                  style={{ background: grad.halo }}
+                />
+                <div className="relative inline-flex items-stretch gap-1.5 rounded-full border-2 border-foreground/10 bg-card/95 backdrop-blur-xl shadow-2xl shadow-foreground/10 p-1.5 ring-1 ring-foreground/5">
+                  <div className="flex items-center gap-1">
+                    {ROOMS.map(({ id, label, sub, Icon, to, matches }) => {
+                      const active = isMatch(pathname, matches);
+                      return (
+                        <Tooltip key={id}>
+                          <TooltipTrigger asChild>
+                            <NavLink to={to} aria-current={active ? "page" : undefined} aria-label={`${label} · ${sub}`}>
+                              <motion.div
+                                whileTap={{ scale: 0.92 }}
+                                whileHover={{ y: -2 }}
+                                className={cn(
+                                  "h-11 px-4 flex items-center gap-2 rounded-full transition-all font-semibold text-sm",
+                                  active
+                                    ? "text-white shadow-lg"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+                                )}
+                                style={active ? { backgroundImage: grad.text } : undefined}
+                              >
+                                <Icon className={cn("h-5 w-5", active && "drop-shadow")} />
+                                <span>{label}</span>
+                              </motion.div>
+                            </NavLink>
+                          </TooltipTrigger>
                       <TooltipContent side="top" className="text-xs">
                         <p className="font-bold">{label}</p>
                         <p className="text-muted-foreground">{sub}</p>
