@@ -54,10 +54,10 @@ const ROOMS = [
 const isMatch = (pathname: string, prefixes: string[]) =>
   prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
 
-// v9.4: dock now only appears on Discover (and its legacy /scene alias).
-// Everywhere else (Connect, Vault, Inbox, Flow, detail pages) the dock is
-// hidden — users navigate back via the sidebar.
-const VISIBLE_PREFIXES = ["/discover", "/scene"];
+// v9.7: dock appears across the 3 Discover rooms (Today, Connect, Vault)
+// so you can hop between them without going back to the sidebar. Hidden
+// on Inbox, Flow, Profile, detail pages, etc.
+const VISIBLE_PREFIXES = ["/discover", "/scene", "/market", "/vault"];
 
 const SCROLL_HIDE_THRESHOLD = 12;
 

@@ -66,6 +66,7 @@ import VerificationPage from "@/pages/VerificationPage";
 import SceneRoomPage from "@/pages/SceneRoomPage";
 import MarketRoomPage from "@/pages/MarketRoomPage";
 import VaultRoomPage from "@/pages/VaultRoomPage";
+import ConnectMatchPage from "@/pages/ConnectMatchPage";
 import NotFound from "./pages/NotFound";
 import { useParams, Navigate as NavigateAlias } from "react-router-dom";
 import { EventNotFound } from "@/components/events/EventNotFound";
@@ -247,6 +248,7 @@ const App = () => (
                     organize existing routes without removing any. */}
                 <Route path="/scene" element={<SceneRoomPage />} />
                 <Route path="/market" element={<MarketRoomPage />} />
+                <Route path="/connect/match" element={<ConnectMatchPage />} />
                 <Route path="/vault" element={<ProtectedRoute><VaultRoomPage /></ProtectedRoute>} />
                 <Route path="/discover" element={<DiscoverPage />} />
                 {/* v8: Hub/Stream retired — Discover is the unified front
