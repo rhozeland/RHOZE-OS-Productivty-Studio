@@ -379,8 +379,10 @@ const ProjectDetailPage = () => {
             projectId={id!}
             projectTitle={project.title}
             smartboardDetails={smartboardDetails}
-            onLinkSmartboard={() => setLinkDialogOpen(true)}
+            onCreateSmartboard={() => createSmartboard.mutate()}
             onUnlinkSmartboard={(sbId: string) => unlinkSmartboard.mutate(sbId)}
+            smartboardCap={smartboardCap}
+            isCreating={createSmartboard.isPending}
           />
 
           <Tabs defaultValue="stages" className="w-full">
