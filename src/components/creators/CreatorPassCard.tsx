@@ -411,64 +411,6 @@ const CreatorPassCard = () => {
       </motion.div>
       </Tilt3D>
 
-      {/* ── Ticket Collection — collectible row of attended/upcoming tickets ── */}
-      {(ticketsData?.length ?? 0) > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="surface-card p-4 space-y-3"
-        >
-          <div className="flex items-center gap-2">
-            <Ticket className="h-4 w-4 text-muted-foreground" />
-            <p className="font-body font-semibold text-sm">Ticket Collection</p>
-            <span className="text-[10px] text-muted-foreground tabular-nums">
-              {ticketsData!.length} {ticketsData!.length === 1 ? "stub" : "stubs"}
-            </span>
-          </div>
-          <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 snap-x">
-            {ticketsData!.slice(0, 12).map((t: any) => {
-              const ev = t.event;
-              const checked = t.status === "checked_in";
-              return (
-                <Link
-                  key={t.id}
-                  to={`/tickets/${t.id}`}
-                  className="snap-start shrink-0 w-36 group"
-                >
-                  <div className="relative aspect-[4/5] rounded-xl overflow-hidden bg-muted border border-border group-hover:border-foreground/30 transition-colors">
-                    {ev?.cover_url ? (
-                      <img src={ev.cover_url} alt={ev.title} className="absolute inset-0 w-full h-full object-cover" />
-                    ) : (
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/10" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                    <div className="absolute top-2 left-2">
-                      <span className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full font-medium ${
-                        checked
-                          ? "bg-emerald-500/90 text-white"
-                          : "bg-white/85 text-foreground"
-                      }`}>
-                        {checked ? "Attended" : "RSVP"}
-                      </span>
-                    </div>
-                    <div className="absolute inset-x-2 bottom-2 text-white">
-                      <p className="text-[11px] font-semibold leading-tight line-clamp-2">{ev?.title ?? "Event"}</p>
-                      {ev?.starts_at && (
-                        <p className="text-[9px] opacity-80 mt-0.5">
-                          {format(new Date(ev.starts_at), "MMM d")}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </motion.div>
-      )}
-
-
       {/* ── Studio activity (relocated from My Studio) ── */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
