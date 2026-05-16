@@ -29,7 +29,8 @@ import VerifiedIPHub from "@/components/credits/VerifiedIPHub";
 import BuyRhozeSection from "@/components/credits/BuyRhozeSection";
 
 import { format, formatDistanceToNow } from "date-fns";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import CreatorPassCard from "@/components/creators/CreatorPassCard";
 import NextStepCard from "@/components/creators/NextStepCard";
 import TierMatrix from "@/components/creators/TierMatrix";
