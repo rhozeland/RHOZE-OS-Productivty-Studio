@@ -122,34 +122,61 @@ const CreatorPassCard = () => {
   });
 
   // Events attended — count of issued/checked-in tickets the user holds.
+  // NOTE: event_tickets uses `issued_at` (not created_at).
   const { data: ticketsData } = useQuery({
     queryKey: ["pass-tickets", user?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("event_tickets")
-        .select("id, status, created_at, event_id, event:events(id,title,starts_at,cover_url,category)")
+        .select("id, status, issued_at, event_id, event:events(id,title,starts_at,cover_url,category)")
         .eq("holder_id", user!.id)
         .in("status", ["issued", "checked_in"])
-        .order("created_at", { ascending: false });
+        .order("issued_at", { ascending: false });
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  // Spaces visited — confirmed studio bookings (any non-cancelled). Paired
+  // with tickets to form the "Passport" stat.
+  const { data: spaceBookings } = useQuery({
+    queryKey: ["pass-space-bookings", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("studio_bookings")
+        .select("id, status, start_time, studio_id")
+        .eq("user_id", user!.id)
+        .not("status", "in", "(cancelled,declined)");
       return data ?? [];
     },
     enabled: !!user,
   });
 
   const eventsAttended = (ticketsData ?? []).filter((t: any) => t.status === "checked_in").length;
+  const passportCount = (ticketsData?.length ?? 0) + (spaceBookings?.length ?? 0);
 
-  // Projects — total projects the creator owns. No detail click; just a stat.
-  const { data: projectsCount } = useQuery({
-    queryKey: ["projects-count-pass", user?.id],
+  // Projects — total + recent completed (for hover preview).
+  const { data: projectsData } = useQuery({
+    queryKey: ["projects-pass", user?.id],
     queryFn: async () => {
-      const { count } = await supabase
-        .from("projects")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user!.id);
-      return count ?? 0;
+      const [{ count }, { data: completed }] = await Promise.all([
+        supabase
+          .from("projects")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user!.id),
+        supabase
+          .from("projects")
+          .select("id, name, status, updated_at")
+          .eq("user_id", user!.id)
+          .eq("status", "completed")
+          .order("updated_at", { ascending: false })
+          .limit(5),
+      ]);
+      return { total: count ?? 0, completed: completed ?? [] };
     },
     enabled: !!user,
   });
+  const projectsCount = projectsData?.total ?? 0;
 
   // ─── Personal "Studio activity" metrics — relocated here from the
   // retired My Studio dashboard. Surfaces the live counts for a creator's
