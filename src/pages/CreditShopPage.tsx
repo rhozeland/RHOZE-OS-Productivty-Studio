@@ -432,4 +432,22 @@ const ActivityRow = ({ tx, compact = false }: { tx: any; compact?: boolean }) =>
   );
 };
 
+const ActivityBackButton = () => {
+  const navigate = useNavigate();
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => {
+        if (window.history.length > 1) navigate(-1);
+        else navigate("/vault");
+      }}
+      className="gap-1.5 -ml-2 text-muted-foreground hover:text-foreground"
+    >
+      <ArrowLeft className="h-4 w-4" />
+      Back
+    </Button>
+  );
+};
+
 export default CreditShopPage;
