@@ -75,7 +75,7 @@ const BackingMomentumChart = ({ launchId }: Props) => {
       // Only count buys toward "raised" — sells reduce momentum but don't refund cumulative raised
       if (t.side === "buy") {
         cum += rhoze;
-        seenBackers.add(t.trader_id);
+        seenBackers.add(t.trader_hash);
       }
       out.push({ t: new Date(t.created_at).getTime(), raised: cum, backers: seenBackers.size });
     }
