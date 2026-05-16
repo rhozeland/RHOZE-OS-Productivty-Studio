@@ -238,7 +238,7 @@ const ProjectDetailPage = () => {
 
   if (!project) return <div className="text-muted-foreground">Loading...</div>;
 
-  const availableToLink = mySmartboards?.filter((s) => !linkedIds.includes(s.id)) ?? [];
+  
   const isPaid = project.project_type !== "collaborative";
   const isLocked = contract?.status === "active" || contract?.status === "completed";
 
