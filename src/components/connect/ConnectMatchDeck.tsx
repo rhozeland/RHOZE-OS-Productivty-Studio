@@ -10,12 +10,13 @@
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { Expand, ArrowRight, ArrowLeft, MessageSquare, Sparkles } from "lucide-react";
+import { Expand, ArrowRight, ArrowLeft, MessageSquare, Sparkles, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useMixedConnectRows, KIND_META, type ConnectRow } from "./useConnectRows";
 import { avatarGradientFor } from "@/lib/avatar-gradient";
 import { todayGradient } from "@/lib/rhoze-gradients";
+import PostMenuButton from "@/components/PostMenuButton";
 
 const SWIPE_THRESHOLD = 90;
 
@@ -66,14 +67,28 @@ const ConnectMatchDeck = () => {
             Swipe to find collaborators · {cursor + 1}/{rows.length}
           </span>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          className="rounded-full hidden"
-          onClick={() => navigate("/connect/match")}
-        >
-          <Expand className="h-3.5 w-3.5 mr-1.5" /> Expand
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <PostMenuButton
+            trigger={
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-8 w-8 rounded-full bg-background/80 backdrop-blur"
+                aria-label="Post"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            }
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            className="rounded-full hidden"
+            onClick={() => navigate("/connect/match")}
+          >
+            <Expand className="h-3.5 w-3.5 mr-1.5" /> Expand
+          </Button>
+        </div>
       </div>
 
       {/* Card stack */}
