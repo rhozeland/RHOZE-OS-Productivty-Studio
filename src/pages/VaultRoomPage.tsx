@@ -25,6 +25,7 @@ import {
 import RoomHero from "@/components/rooms/RoomHero";
 import { todayGradient } from "@/lib/rhoze-gradients";
 import WithdrawalPanel from "@/components/seller/WithdrawalPanel";
+import WalletInfoPanel from "@/components/wallet/WalletInfoPanel";
 
 /**
  * THE VAULT — Room 3 (Finance / Growth).
@@ -32,7 +33,7 @@ import WithdrawalPanel from "@/components/seller/WithdrawalPanel";
  */
 const VAULT_LINKS: Array<{
   to?: string;
-  action?: "activity";
+  action?: "activity" | "wallet";
   label: string;
   desc: string;
   Icon: typeof CreditCard;
@@ -40,13 +41,14 @@ const VAULT_LINKS: Array<{
   { to: "/credits", label: "Creator Pass", desc: "Tier · rewards · how it works", Icon: CreditCard },
   { action: "activity", label: "Activity", desc: "Earns, spends & receipts", Icon: ShoppingBag },
   { to: "/swaps", label: "Swaps", desc: "Credits ↔ Artist Shares", Icon: Repeat },
-  { to: "/settings", label: "Wallet", desc: "Payout details & history", Icon: Wallet },
+  { action: "wallet", label: "Wallet", desc: "Connected wallet & limits", Icon: Wallet },
 ];
 
 const VaultRoomPage = () => {
   const { user } = useAuth();
   const [cashOutOpen, setCashOutOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
+  const [walletOpen, setWalletOpen] = useState(false);
   const grad = todayGradient();
 
   const { data: portfolio } = useQuery({
@@ -156,9 +158,10 @@ const VaultRoomPage = () => {
           );
           const className =
             "group relative rounded-xl border border-border bg-card hover:bg-muted/60 transition-colors p-4 text-left w-full";
-          if (action === "activity") {
+          if (action === "activity" || action === "wallet") {
+            const onClick = action === "activity" ? () => setActivityOpen(true) : () => setWalletOpen(true);
             return (
-              <button key={label} onClick={() => setActivityOpen(true)} className={className}>
+              <button key={label} onClick={onClick} className={className}>
                 {inner}
               </button>
             );
@@ -215,6 +218,19 @@ const VaultRoomPage = () => {
               </Link>
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Wallet dialog — connected wallet + claim limits */}
+      <Dialog open={walletOpen} onOpenChange={setWalletOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">Wallet</DialogTitle>
+            <DialogDescription>
+              Your connected Solana wallet and on-chain claim limits.
+            </DialogDescription>
+          </DialogHeader>
+          <WalletInfoPanel />
         </DialogContent>
       </Dialog>
     </div>
