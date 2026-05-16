@@ -23,6 +23,7 @@ import {
   Coins, Sparkles, Wallet, ShoppingBag, Download, Music, Shield,
   Award, Palette, Camera, Video, PenTool, Star, HelpCircle, ArrowRight,
   Activity as ActivityIcon, Briefcase, TrendingUp, ArrowUpRight, ArrowDownRight,
+  Ticket as TicketIcon,
 } from "lucide-react";
 import RewardsExplainerV2 from "@/components/credits/RewardsExplainerV2";
 import VerifiedIPHub from "@/components/credits/VerifiedIPHub";
@@ -37,6 +38,7 @@ import TierMatrix from "@/components/creators/TierMatrix";
 import TierStripCompact from "@/components/creators/TierStripCompact";
 import TierProgressCard from "@/components/creators/TierProgressCard";
 import CoinPortfolio from "@/components/creators/CoinPortfolio";
+import TicketsTab from "@/components/credits/TicketsTab";
 
 import { cn } from "@/lib/utils";
 
@@ -108,6 +110,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="pass" className="gap-1.5"><Award className="h-3.5 w-3.5" /> My Pass</TabsTrigger>
           <TabsTrigger value="portfolio" className="gap-1.5"><Briefcase className="h-3.5 w-3.5" /> Portfolio</TabsTrigger>
+          <TabsTrigger value="tickets" className="gap-1.5"><TicketIcon className="h-3.5 w-3.5" /> Tickets</TabsTrigger>
           <TabsTrigger value="works" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Verified IP</TabsTrigger>
           <TabsTrigger value="topup" className="gap-1.5"><Wallet className="h-3.5 w-3.5" /> Top up</TabsTrigger>
         </TabsList>
@@ -150,6 +153,17 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
             </p>
           </div>
           <CoinPortfolio />
+        </TabsContent>
+
+        {/* ═══════ Tickets — wallet-style stub collection ═══════ */}
+        <TabsContent value="tickets" className="mt-4 space-y-4">
+          <div className="space-y-1.5">
+            <h2 className="font-display text-xl font-bold text-foreground">Tickets</h2>
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              Your event passes — upcoming and past. Tap a stub for the QR, ticket detail, and on-chain receipt.
+            </p>
+          </div>
+          <TicketsTab userId={user.id} />
         </TabsContent>
 
         {/* ═══════ Verified IP ═══════ */}

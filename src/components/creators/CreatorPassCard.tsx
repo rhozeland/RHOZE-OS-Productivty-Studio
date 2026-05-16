@@ -6,7 +6,9 @@ import { Link } from "react-router-dom";
 import {
   Flame, Coins, Shield, Download, BadgeCheck, Ticket,
   FolderKanban, MessageSquare, Calendar, Check, Info,
+  Sparkles, TrendingUp, Image as ImageIcon,
 } from "lucide-react";
+import WorksLightbox from "@/components/creators/WorksLightbox";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import ClaimRhozeButton from "@/components/ClaimRhozeButton";
 import { Input } from "@/components/ui/input";
@@ -61,6 +63,7 @@ export function getTokenTier(balance: number): string {
 const CreatorPassCard = () => {
   const { user } = useAuth();
   const [claimAmount, setClaimAmount] = useState(0);
+  const [worksOpen, setWorksOpen] = useState(false);
 
   const { data: credits } = useQuery({
     queryKey: ["user-credits-pass", user?.id],
@@ -134,6 +137,19 @@ const CreatorPassCard = () => {
   });
 
   const eventsAttended = (ticketsData ?? []).filter((t: any) => t.status === "checked_in").length;
+
+  // Projects — total projects the creator owns. No detail click; just a stat.
+  const { data: projectsCount } = useQuery({
+    queryKey: ["projects-count-pass", user?.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("projects")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id);
+      return count ?? 0;
+    },
+    enabled: !!user,
+  });
 
   // ─── Personal "Studio activity" metrics — relocated here from the
   // retired My Studio dashboard. Surfaces the live counts for a creator's
@@ -236,45 +252,53 @@ const CreatorPassCard = () => {
             </div>
           </div>
 
-          {/* Stats — 4 collectible metrics. Events + Verified Works link out
-              to dedicated views (tickets list / works vault). */}
-          <div className="grid grid-cols-4 gap-3">
+          {/* Stats — 5 collectible metrics. Streak leads (most active), then
+              Works (opens lightbox), Events (→ tickets wallet), Projects
+              (display-only), Fundraising (→ Portfolio). */}
+          <div className="grid grid-cols-5 gap-2">
             {([
-              {
-                label: "Tokens Launched",
-                value: `${tokensLaunched ?? 0}`,
-                icon: Coins,
-                isZero: (tokensLaunched ?? 0) === 0,
-                hint: { text: "Launch a coin →", to: "/launchpad" },
-                to: "/credits?tab=portfolio",
-              },
               {
                 label: "Streak",
                 value: `${credits?.reward_streak ?? 0}d`,
                 icon: Flame,
                 isZero: Number(credits?.reward_streak ?? 0) === 0,
-                hint: { text: "Sign in daily to start", to: null as string | null },
-                to: null,
+                hint: { text: "Sign in daily", to: null as string | null },
+                action: null as null | "works" | string,
               },
               {
-                label: "Events Attended",
-                value: `${eventsAttended}`,
+                label: "Works",
+                value: `${verifiedWorks ?? 0}`,
+                icon: ImageIcon,
+                isZero: (verifiedWorks ?? 0) === 0,
+                hint: { text: "Upload a work →", to: "/credits?tab=works" as string | null },
+                action: "works" as const,
+              },
+              {
+                label: "Events",
+                value: `${ticketsData?.length ?? 0}`,
                 icon: Ticket,
+                isZero: (ticketsData?.length ?? 0) === 0,
+                hint: { text: "Find events →", to: "/discover?view=events" as string | null },
+                action: "/credits?tab=tickets",
+              },
+              {
+                label: "Projects",
+                value: `${projectsCount ?? 0}`,
+                icon: FolderKanban,
                 isZero: false,
                 hint: { text: "", to: null as string | null },
-                to: "/credits?tab=activity",
+                action: null,
               },
               {
-                label: "Verified Works",
-                value: `${verifiedWorks ?? 0}`,
-                icon: Shield,
-                isZero: (verifiedWorks ?? 0) === 0,
-                hint: { text: "Register a work →", to: "/credits?tab=verified-ip" },
-                to: "/credits?tab=verified-ip",
+                label: "Fundraising",
+                value: `${tokensLaunched ?? 0}`,
+                icon: TrendingUp,
+                isZero: (tokensLaunched ?? 0) === 0,
+                hint: { text: "Launch a coin →", to: "/launchpad" as string | null },
+                action: "/credits?tab=portfolio",
               },
             ] as const).map((stat) => {
-              const showHint = stat.isZero && stat.hint;
-              const wrapperTo = !showHint ? (stat as any).to : null;
+              const showHint = stat.isZero && !!stat.hint?.text;
               const Body = (
                 <>
                   <div className="h-9 w-9 mx-auto rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center mb-1">
@@ -299,13 +323,29 @@ const CreatorPassCard = () => {
                   <p className="text-[9px] uppercase tracking-wider opacity-60 font-body mt-0.5">{stat.label}</p>
                 </>
               );
-              return wrapperTo ? (
-                <Link key={stat.label} to={wrapperTo} className="text-center group hover:opacity-90 transition-opacity">
-                  {Body}
-                </Link>
-              ) : (
-                <div key={stat.label} className="text-center">{Body}</div>
-              );
+              if (showHint) {
+                return <div key={stat.label} className="text-center">{Body}</div>;
+              }
+              if (stat.action === "works") {
+                return (
+                  <button
+                    key={stat.label}
+                    type="button"
+                    onClick={() => setWorksOpen(true)}
+                    className="text-center group hover:opacity-90 transition-opacity"
+                  >
+                    {Body}
+                  </button>
+                );
+              }
+              if (typeof stat.action === "string") {
+                return (
+                  <Link key={stat.label} to={stat.action} className="text-center group hover:opacity-90 transition-opacity">
+                    {Body}
+                  </Link>
+                );
+              }
+              return <div key={stat.label} className="text-center">{Body}</div>;
             })}
           </div>
         </div>
@@ -436,6 +476,7 @@ const CreatorPassCard = () => {
         />
       </div>
 
+      <WorksLightbox open={worksOpen} onOpenChange={setWorksOpen} userId={user.id} />
     </div>
   );
 };
