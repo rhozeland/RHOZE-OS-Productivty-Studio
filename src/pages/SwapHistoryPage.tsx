@@ -9,9 +9,9 @@
  * the realised price + 3% sell-fee (the only fee in the simulator) instead.
  */
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownRight, ArrowUpRight, Coins, Loader2, Receipt } from "lucide-react";
+import { ArrowDownRight, ArrowLeft, ArrowUpRight, Coins, Loader2, Receipt } from "lucide-react";
 import { format } from "date-fns";
 
 import { supabase } from "@/integrations/supabase/client";
