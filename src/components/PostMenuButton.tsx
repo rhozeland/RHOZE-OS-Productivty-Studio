@@ -33,6 +33,7 @@ import { useAuthGate } from "@/components/AuthGateDialog";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import NoteComposer from "@/components/notes/NoteComposer";
 import { cn } from "@/lib/utils";
+import { todayGradient } from "@/lib/rhoze-gradients";
 
 type PostIntent = {
   key: "note" | "work" | "listing" | "event" | "space";
@@ -155,7 +156,8 @@ const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
         <button
           type="button"
           onClick={handleOpen}
-          className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-3 py-1.5 text-xs font-semibold text-background hover:bg-foreground/90 transition-colors shadow-sm"
+          className="group relative inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-transform hover:scale-[1.03] active:scale-[0.98] bg-[length:200%_200%] animate-gradient-shift"
+          style={{ backgroundImage: `linear-gradient(120deg, hsl(${todayGradient().stops[0]}), hsl(${todayGradient().stops[1]}), hsl(${todayGradient().stops[2]}), hsl(${todayGradient().stops[0]}))` }}
           aria-label="Create a post"
         >
           <Plus className="h-3.5 w-3.5" />

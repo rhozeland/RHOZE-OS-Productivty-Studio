@@ -802,9 +802,6 @@ const ProfileDetailPage = () => {
               <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
                 <ImageIcon className="h-4 w-4 text-primary" /> Posts
               </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Uploads, tracks, videos and links shared on Flow.
-              </p>
             </div>
             {flowPosts && flowPosts.length > 0 ? (
               <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-1 sm:gap-1.5">
