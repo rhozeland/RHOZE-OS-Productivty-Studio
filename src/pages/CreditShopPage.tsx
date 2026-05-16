@@ -174,12 +174,7 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
               Every event you've registered for and every space you've visited — your portfolio of places and moments.
             </p>
           </div>
-          <section className="space-y-3">
-            <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
-              <TicketIcon className="h-4 w-4 text-muted-foreground" /> Events
-            </h3>
-            <TicketsTab userId={user.id} />
-          </section>
+          <TicketCollection userId={user.id} />
           <SpacesPassportSection userId={user.id} />
         </TabsContent>
 
