@@ -39,6 +39,7 @@ import TierStripCompact from "@/components/creators/TierStripCompact";
 import TierProgressCard from "@/components/creators/TierProgressCard";
 import CoinPortfolio from "@/components/creators/CoinPortfolio";
 import TicketsTab from "@/components/credits/TicketsTab";
+import TicketCollection from "@/components/credits/TicketCollection";
 
 import { cn } from "@/lib/utils";
 
