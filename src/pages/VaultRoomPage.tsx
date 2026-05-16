@@ -268,7 +268,7 @@ const ActivityQuickList = ({ userId }: { userId: string | null }) => {
           <li key={t.id} className="flex items-center justify-between gap-3 py-3">
             <div className="min-w-0">
               <div className="text-sm text-foreground truncate">
-                {t.description || t.source || "Activity"}
+                {t.description || t.type || "Activity"}
               </div>
               <div className="text-[11px] text-muted-foreground">
                 {new Date(t.created_at).toLocaleString()}
