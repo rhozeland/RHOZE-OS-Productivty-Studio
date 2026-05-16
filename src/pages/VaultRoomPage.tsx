@@ -167,18 +167,13 @@ const VaultRoomPage = () => {
                     <ShieldCheck className="h-4 w-4 text-primary" />
                     How cash out works
                   </p>
-                  <p className="text-muted-foreground leading-relaxed">
-                    Earnings are held in your Rhozeland balance (USD). To cash out, link your
-                    Solana wallet — it acts as your identity for on-chain claims and payouts.
-                  </p>
-                  <ul className="text-muted-foreground space-y-1 pl-3 list-disc">
-                    <li>Connect once — your wallet is bound 1:1 to your account.</li>
-                    <li>Pick a payout method (bank, PayPal, Cash App, Zelle).</li>
-                    <li>Admin review takes 3–5 business days; funds arrive 1–3 days after.</li>
-                  </ul>
+                  <ol className="text-muted-foreground space-y-1 pl-4 list-decimal leading-relaxed">
+                    <li>Connect a Solana wallet (Phantom, Solflare, Backpack).</li>
+                    <li>Pick how much $RHOZE to claim — it's airdropped straight to your wallet.</li>
+                    <li>To turn it into cash, send the $RHOZE from your wallet to an exchange (Coinbase, Kraken, etc.) and withdraw to your bank or PayPal from there.</li>
+                  </ol>
                   <p className="text-[10px] text-muted-foreground/80">
-                    Solana wallet is required for security and to prevent duplicate accounts. No gas
-                    fees are charged for fiat cash outs.
+                    Rhozeland doesn't touch your bank — you stay in control of the off-ramp. Your wallet is bound 1:1 to your account the first time you connect.
                   </p>
                 </HoverCardContent>
               </HoverCard>
