@@ -86,18 +86,7 @@ const MarketRoomPage = () => {
     <div className="space-y-6">
       <RoomHero variant="connect" eyebrow="Connect" title="Find your next collaborator." />
 
-      {/* Post action sits to the right; tabs live inside the search shell below */}
-      <div className="flex justify-end">
-        <PostMenuButton
-          trigger={
-            <Button size="sm" className="rounded-full">
-              <Plus className="mr-1.5 h-4 w-4" /> Post
-            </Button>
-          }
-        />
-      </div>
-
-      {/* Matchmaking HUD — swipeable deck */}
+      {/* Matchmaking HUD — swipeable deck (Post lives in its header) */}
       <ConnectMatchDeck />
 
       {/* Combined tabs + search shell */}
