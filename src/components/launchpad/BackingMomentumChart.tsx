@@ -36,14 +36,17 @@ const BackingMomentumChart = ({ launchId }: Props) => {
   const { data: trades, isLoading } = useQuery({
     queryKey: ["backing-momentum-trades", launchId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("coin_trades")
-        .select("id, side, sol_amount, trader_id, created_at")
-        .eq("launch_id", launchId)
-        .order("created_at", { ascending: true })
-        .limit(2000);
+      // Use SECURITY DEFINER helper that exposes per-launch trader_hash
+      // instead of trader_id, so chart aggregates work without leaking
+      // PII to other authenticated users.
+      const { data, error } = await supabase.rpc("get_coin_trades_public", {
+        _launch_id: launchId,
+        _limit: 2000,
+      });
       if (error) throw error;
-      return (data ?? []) as Array<TradeRow & { trader_id: string }>;
+      // Helper returns DESC; chart wants ASC.
+      const rows = ((data ?? []) as Array<TradeRow & { trader_hash: string }>).slice().reverse();
+      return rows;
     },
     refetchInterval: 10_000,
   });
