@@ -7,18 +7,30 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Palette, Link2, X } from "lucide-react";
+import { Palette, Plus, X } from "lucide-react";
 
 interface Props {
   projectId: string;
   projectTitle: string;
   smartboardDetails?: any[] | null;
-  onLinkSmartboard?: () => void;
+  onCreateSmartboard?: () => void;
   onUnlinkSmartboard?: (id: string) => void;
+  /** Max boards allowed by the user's tier. Infinity = unlimited (Play tier). */
+  smartboardCap?: number;
+  isCreating?: boolean;
 }
 
-const ProjectTools = ({ projectId, smartboardDetails, onLinkSmartboard, onUnlinkSmartboard }: Props) => {
+const ProjectTools = ({
+  projectId,
+  smartboardDetails,
+  onCreateSmartboard,
+  onUnlinkSmartboard,
+  smartboardCap = Infinity,
+  isCreating = false,
+}: Props) => {
   const boards = smartboardDetails ?? [];
+  const atCap = boards.length >= smartboardCap;
+  const capLabel = Number.isFinite(smartboardCap) ? `${boards.length} / ${smartboardCap}` : `${boards.length}`;
 
   return (
     <section className="rounded-2xl border border-border bg-card p-4">
@@ -26,18 +38,18 @@ const ProjectTools = ({ projectId, smartboardDetails, onLinkSmartboard, onUnlink
         <div className="flex items-center gap-2">
           <Palette className="h-4 w-4 text-primary" />
           <h4 className="font-display text-sm font-semibold">Smartboards</h4>
-          {boards.length > 0 && (
-            <span className="text-[10px] text-muted-foreground">· {boards.length}</span>
-          )}
+          <span className="text-[10px] text-muted-foreground">· {capLabel}</span>
         </div>
-        {onLinkSmartboard && (
+        {onCreateSmartboard && (
           <Button
             size="sm"
             variant="ghost"
             className="rounded-full h-7 gap-1 text-xs"
-            onClick={onLinkSmartboard}
+            onClick={onCreateSmartboard}
+            disabled={atCap || isCreating}
+            title={atCap ? "You've hit your tier's smartboard cap for this project. Upgrade for more." : undefined}
           >
-            <Link2 className="h-3 w-3" /> Link
+            <Plus className="h-3 w-3" /> {isCreating ? "Creating…" : "New"}
           </Button>
         )}
       </div>
