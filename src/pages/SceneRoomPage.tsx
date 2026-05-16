@@ -9,6 +9,7 @@ const SceneRoomPage = () => {
   return (
     <div className="space-y-4">
       <RoomHero
+        variant="today"
         eyebrow="Today"
         title="What's happening now."
         subtitle="The pulse of Rhozeland — fresh works, live events, creators on the rise."
