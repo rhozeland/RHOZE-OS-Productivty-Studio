@@ -10,7 +10,14 @@ import {
   ArrowRight,
   ArrowDownToLine,
   ExternalLink,
+  Info,
+  ShieldCheck,
 } from "lucide-react";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import RhozeBalanceChip from "@/components/RhozeBalanceChip";
@@ -50,6 +57,20 @@ const VaultRoomPage = () => {
   const [activityOpen, setActivityOpen] = useState(false);
   const [walletOpen, setWalletOpen] = useState(false);
   const grad = todayGradient();
+
+  const { data: walletProfile } = useQuery({
+    queryKey: ["vault-wallet", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("wallet_address")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data as { wallet_address: string | null } | null;
+    },
+  });
+  const walletConnected = !!walletProfile?.wallet_address;
 
   const { data: portfolio } = useQuery({
     queryKey: ["vault-portfolio", user?.id],
@@ -130,14 +151,63 @@ const VaultRoomPage = () => {
           </div>
           <div className="flex flex-col items-start sm:items-end gap-2">
             <RhozeBalanceChip />
-            <Button
-              size="sm"
-              className="rounded-full gap-1.5"
-              onClick={() => setCashOutOpen(true)}
-            >
-              <ArrowDownToLine className="h-3.5 w-3.5" />
-              Cash Out
-            </Button>
+            <div className="flex items-center gap-1.5">
+              <HoverCard openDelay={120}>
+                <HoverCardTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="How cash out works"
+                    className="h-7 w-7 inline-flex items-center justify-center rounded-full border border-border bg-background/60 text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
+                  >
+                    <Info className="h-3.5 w-3.5" />
+                  </button>
+                </HoverCardTrigger>
+                <HoverCardContent align="end" className="w-80 text-xs space-y-2">
+                  <p className="font-display text-sm font-semibold flex items-center gap-1.5">
+                    <ShieldCheck className="h-4 w-4 text-primary" />
+                    How cash out works
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Earnings are held in your Rhozeland balance (USD). To cash out, link your
+                    Solana wallet — it acts as your identity for on-chain claims and payouts.
+                  </p>
+                  <ul className="text-muted-foreground space-y-1 pl-3 list-disc">
+                    <li>Connect once — your wallet is bound 1:1 to your account.</li>
+                    <li>Pick a payout method (bank, PayPal, Cash App, Zelle).</li>
+                    <li>Admin review takes 3–5 business days; funds arrive 1–3 days after.</li>
+                  </ul>
+                  <p className="text-[10px] text-muted-foreground/80">
+                    Solana wallet is required for security and to prevent duplicate accounts. No gas
+                    fees are charged for fiat cash outs.
+                  </p>
+                </HoverCardContent>
+              </HoverCard>
+              {walletConnected ? (
+                <Button
+                  size="sm"
+                  className="rounded-full gap-1.5"
+                  onClick={() => setCashOutOpen(true)}
+                >
+                  <ArrowDownToLine className="h-3.5 w-3.5" />
+                  Cash Out
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-full gap-1.5"
+                  onClick={() => setWalletOpen(true)}
+                >
+                  <Wallet className="h-3.5 w-3.5" />
+                  Connect wallet to cash out
+                </Button>
+              )}
+            </div>
+            {!walletConnected && (
+              <p className="text-[10px] text-muted-foreground/80 sm:text-right max-w-[14rem]">
+                Link your Solana wallet to enable withdrawals.
+              </p>
+            )}
           </div>
         </div>
       </div>
