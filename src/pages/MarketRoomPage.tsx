@@ -243,7 +243,17 @@ const MarketRoomPage = () => {
         </div>
 
         {/* LEFT on desktop, AFTER preview on mobile — dense list */}
-        <div className="order-2 lg:order-1 rounded-2xl border border-border bg-card/60 overflow-hidden">
+        <div className="order-2 lg:order-1 space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={`Search ${Heading.label.toLowerCase()}…`}
+              className="pl-10 rounded-full h-10"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="rounded-2xl border border-border bg-card/60 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/60 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
             <span>{filtered.length} results</span>
             <span className="hidden sm:inline">{Heading.desc}</span>
