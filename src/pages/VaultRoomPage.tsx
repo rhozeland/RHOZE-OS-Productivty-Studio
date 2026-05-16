@@ -48,6 +48,7 @@ const VaultRoomPage = () => {
   const { user } = useAuth();
   const [cashOutOpen, setCashOutOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
+  const [walletOpen, setWalletOpen] = useState(false);
   const grad = todayGradient();
 
   const { data: portfolio } = useQuery({
