@@ -172,17 +172,20 @@ const RoomsBottomNav = () => {
                               </motion.div>
                             </NavLink>
                           </TooltipTrigger>
-                      <TooltipContent side="top" className="text-xs">
-                        <p className="font-bold">{label}</p>
-                        <p className="text-muted-foreground">{sub}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  );
-                })}
+                          <TooltipContent side="top" className="text-xs">
+                            <p className="font-bold">{label}</p>
+                            <p className="text-muted-foreground">{sub}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            );
+          })()}
         </div>
+
       </motion.nav>
     </TooltipProvider>
   );
