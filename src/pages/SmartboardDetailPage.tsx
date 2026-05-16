@@ -457,49 +457,48 @@ const SmartboardDetailPage = () => {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Add to Board</DialogTitle></DialogHeader>
-              {/* Content type tabs */}
+              {/* Content type tabs — condensed from 6 (note/link/img/vid/audio/pdf)
+                  down to 4: note, link, upload (auto-detects), from Flow. */}
               <div className="flex gap-2 mb-4 flex-wrap">
-                {(["note", "link", "image", "video", "audio", "pdf"] as const).map((type) => (
+                {([
+                  { type: "note", label: "Note", Icon: StickyNote },
+                  { type: "link", label: "Link", Icon: Link2 },
+                  { type: "upload", label: "Upload", Icon: ImageIcon },
+                  { type: "flow", label: "From Flow", Icon: Send },
+                ] as const).map(({ type, label, Icon }) => (
                   <Button
                     key={type}
                     variant={itemType === type ? "default" : "outline"}
                     size="sm"
-                    className="rounded-full capitalize"
-                    onClick={() => { setItemType(type); setImageFile(null); setUploadOk(null); setItemLink(""); }}
+                    className="rounded-full"
+                    onClick={() => {
+                      setItemType(type);
+                      setImageFile(null);
+                      setUploadOk(null);
+                      setItemLink("");
+                      setSelectedFlowItemId(null);
+                    }}
                   >
-                    {type === "note" && <StickyNote className="mr-1 h-4 w-4" />}
-                    {type === "link" && <Link2 className="mr-1 h-4 w-4" />}
-                    {type === "image" && <ImageIcon className="mr-1 h-4 w-4" />}
-                    {type === "video" && <Video className="mr-1 h-4 w-4" />}
-                    {type === "audio" && <AudioLines className="mr-1 h-4 w-4" />}
-                    {type === "pdf" && <FileText className="mr-1 h-4 w-4" />}
-                    {type}
+                    <Icon className="mr-1 h-4 w-4" />
+                    {label}
                   </Button>
                 ))}
               </div>
               <form onSubmit={(e) => { e.preventDefault(); addItem.mutate(); }} className="space-y-4">
-                <Input placeholder="Title (optional)" value={itemTitle} onChange={(e) => setItemTitle(e.target.value)} />
-
                 {itemType === "note" && (
-                  <Textarea placeholder="Write your note..." value={itemContent} onChange={(e) => setItemContent(e.target.value)} rows={4} />
+                  <Textarea placeholder="Write your note..." value={itemContent} onChange={(e) => setItemContent(e.target.value)} rows={5} autoFocus />
                 )}
+
                 {itemType === "link" && (
-                  <>
-                    <Input placeholder="https://..." value={itemLink} onChange={(e) => setItemLink(e.target.value)} />
-                    <Textarea placeholder="Description (optional)" value={itemContent} onChange={(e) => setItemContent(e.target.value)} rows={2} />
-                  </>
+                  <Input placeholder="https://..." value={itemLink} onChange={(e) => setItemLink(e.target.value)} autoFocus />
                 )}
-                {(itemType === "image" || itemType === "video" || itemType === "audio" || itemType === "pdf") && (
+
+                {itemType === "upload" && (
                   <div>
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept={
-                        itemType === "image" ? "image/*" :
-                        itemType === "video" ? "video/*" :
-                        itemType === "audio" ? "audio/*" :
-                        ".pdf"
-                      }
+                      accept="image/*,video/*,audio/*"
                       className="hidden"
                       onChange={(e) => { setImageFile(e.target.files?.[0] || null); setUploadOk(null); }}
                     />
@@ -510,26 +509,17 @@ const SmartboardDetailPage = () => {
                       {imageFile ? (
                         <div className="flex items-center justify-center gap-2">
                           <Check className="h-4 w-4 text-primary" />
-                          <span className="text-sm text-foreground truncate max-w-[200px]">{imageFile.name}</span>
+                          <span className="text-sm text-foreground truncate max-w-[220px]">{imageFile.name}</span>
                         </div>
                       ) : (
                         <>
-                          {itemType === "image" && <ImageIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />}
-                          {itemType === "video" && <Video className="h-8 w-8 text-muted-foreground mx-auto mb-2" />}
-                          {itemType === "audio" && <AudioLines className="h-8 w-8 text-muted-foreground mx-auto mb-2" />}
-                          {itemType === "pdf" && <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />}
-                          <p className="text-sm text-muted-foreground">
-                            {itemType === "image" ? "Upload image" :
-                             itemType === "video" ? "Upload video" :
-                             itemType === "audio" ? "Upload audio" :
-                             "Upload PDF"}
-                          </p>
-                          <p className="text-xs text-muted-foreground/60 mt-1">
-                            {itemType === "image" ? "JPG, PNG, WEBP up to 20MB" :
-                             itemType === "video" ? "MP4, MOV, WEBM up to 20MB" :
-                             itemType === "audio" ? "MP3, WAV, FLAC up to 20MB" :
-                             "PDF files up to 20MB"}
-                          </p>
+                          <div className="flex items-center justify-center gap-3 mb-2 text-muted-foreground">
+                            <ImageIcon className="h-6 w-6" />
+                            <Video className="h-6 w-6" />
+                            <AudioLines className="h-6 w-6" />
+                          </div>
+                          <p className="text-sm text-muted-foreground">Upload image, video, or audio</p>
+                          <p className="text-xs text-muted-foreground/60 mt-1">Up to 20MB</p>
                         </>
                       )}
                     </div>
@@ -541,37 +531,62 @@ const SmartboardDetailPage = () => {
                         onValidation={(ok) => setUploadOk(ok)}
                       />
                     )}
-                    <div className="mt-3">
-                      <Input
-                        placeholder={
-                          itemType === "image" ? "Or paste image URL" :
-                          itemType === "video" ? "Or paste YouTube / Vimeo link" :
-                          itemType === "audio" ? "Or paste Spotify / SoundCloud link" :
-                          "Or paste link to PDF"
-                        }
-                        value={itemLink}
-                        onChange={(e) => setItemLink(e.target.value)}
-                      />
-                    </div>
                   </div>
                 )}
 
-                <div className="flex items-center gap-2 pt-1">
-                  <Checkbox
-                    id="also-flow"
-                    checked={alsoPostToFlow}
-                    onCheckedChange={(v) => setAlsoPostToFlow(!!v)}
-                  />
-                  <Label htmlFor="also-flow" className="text-sm text-muted-foreground cursor-pointer">
-                    Also share to Flow Mode
-                  </Label>
-                </div>
+                {itemType === "flow" && (
+                  <div className="max-h-72 overflow-y-auto rounded-xl border border-border divide-y divide-border">
+                    {!flowMemories ? (
+                      <p className="p-4 text-sm text-muted-foreground">Loading your Flow memories…</p>
+                    ) : flowMemories.length === 0 ? (
+                      <p className="p-6 text-sm text-muted-foreground text-center">
+                        Nothing saved yet. Like or save items in Flow Mode and they'll show up here.
+                      </p>
+                    ) : (
+                      flowMemories.map((m: any) => {
+                        const isPicked = selectedFlowItemId === m.id;
+                        return (
+                          <button
+                            type="button"
+                            key={m.id}
+                            onClick={() => setSelectedFlowItemId(m.id)}
+                            className={`flex w-full items-center gap-3 p-3 text-left transition-colors ${isPicked ? "bg-primary/10" : "hover:bg-muted/50"}`}
+                          >
+                            <div className="h-10 w-10 rounded-lg bg-muted shrink-0 overflow-hidden flex items-center justify-center">
+                              {m.file_url && m.content_type === "image" ? (
+                                <img src={m.file_url} alt="" className="h-full w-full object-cover" />
+                              ) : m.content_type === "video" ? (
+                                <Video className="h-4 w-4 text-muted-foreground" />
+                              ) : m.content_type === "audio" ? (
+                                <AudioLines className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <StickyNote className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-foreground truncate">{m.title}</p>
+                              {m.creator_name && (
+                                <p className="text-xs text-muted-foreground truncate">by {m.creator_name}</p>
+                              )}
+                            </div>
+                            {isPicked && <Check className="h-4 w-4 text-primary shrink-0" />}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+
                 <Button
                   type="submit"
                   className="w-full rounded-full"
-                  disabled={!!imageFile && uploadOk === false}
+                  disabled={
+                    addItem.isPending ||
+                    (itemType === "upload" && (!imageFile || uploadOk === false)) ||
+                    (itemType === "flow" && !selectedFlowItemId)
+                  }
                 >
-                  Add to Board
+                  {addItem.isPending ? "Adding…" : "Add to Board"}
                 </Button>
               </form>
             </DialogContent>
