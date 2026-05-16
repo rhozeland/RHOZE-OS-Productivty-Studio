@@ -17,7 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Plus, Trash2, LayoutGrid, Link2, X, FileDown, Pencil, Check,
+  Plus, Trash2, X, FileDown, Pencil, Check,
   Milestone, ListTodo, CalendarDays, Lock, Unlock, ArrowLeft,
 } from "lucide-react";
 import { exportProjectPDF } from "@/lib/export-project-pdf";
@@ -36,6 +36,15 @@ import RevenueSplitConfig from "@/components/revenue/RevenueSplitConfig";
 import ProjectTools from "@/components/project/ProjectTools";
 import DropRoomLauncher from "@/components/project/DropRoomLauncher";
 import { useProjectRole } from "@/hooks/useProjectRole";
+import { getHoldTier } from "@/lib/tier-matrix";
+
+// Tier-based cap on smartboards per project. Play tier is unlimited.
+const SMARTBOARD_CAP_BY_TIER: Record<string, number> = {
+  spark: 2,
+  bloom: 5,
+  glow: 12,
+  play: Infinity,
+};
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -43,7 +52,23 @@ const ProjectDetailPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { canManage: canManageProject } = useProjectRole(id);
-  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+
+  // Tier comes from in-app $RHOZE balance (user_credits), not on-chain wallet.
+  const { data: credits } = useQuery({
+    queryKey: ["user-credits-balance", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_credits")
+        .select("balance")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data?.balance ?? 0;
+    },
+    enabled: !!user,
+  });
+  const userTier = getHoldTier(credits ?? 0);
+  const smartboardCap = SMARTBOARD_CAP_BY_TIER[userTier] ?? 2;
+
   const [editingHeader, setEditingHeader] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -139,27 +164,43 @@ const ProjectDetailPage = () => {
     enabled: linkedIds.length > 0,
   });
 
-  // All user's smartboards for linking
-  const { data: mySmartboards } = useQuery({
-    queryKey: ["my-smartboards", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("smartboards").select("*").eq("user_id", user!.id).order("created_at", { ascending: false });
+  // Smartboards are now project-scoped & team-shared. Hitting "New" spins up
+  // a fresh board owned by the creator and auto-links it. No more picking
+  // from a dropdown of dusty old boards — every project gets clean canvases.
+  const createSmartboard = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Sign in required");
+      if (smartboardDetails && smartboardDetails.length >= smartboardCap) {
+        throw new Error(
+          `You've hit your tier's smartboard cap (${smartboardCap}) for this project. Upgrade to add more.`,
+        );
+      }
+      const count = (smartboardDetails?.length ?? 0) + 1;
+      const { data: board, error } = await supabase
+        .from("smartboards")
+        .insert({
+          title: `${project?.title ?? "Project"} · Board ${count}`,
+          description: null,
+          cover_color: project?.cover_color ?? "#7c3aed",
+          user_id: user.id,
+        })
+        .select("id")
+        .single();
       if (error) throw error;
-      return data;
-    },
-    enabled: !!user && linkDialogOpen,
-  });
-
-  const linkSmartboard = useMutation({
-    mutationFn: async (smartboardId: string) => {
-      const { error } = await supabase.from("project_smartboards" as any).insert({
-        project_id: id!, smartboard_id: smartboardId, linked_by: user!.id,
+      const { error: linkErr } = await supabase.from("project_smartboards" as any).insert({
+        project_id: id!,
+        smartboard_id: board.id,
+        linked_by: user.id,
       } as any);
-      if (error) throw error;
+      if (linkErr) throw linkErr;
+      return board.id as string;
     },
-    onSuccess: () => {
+    onSuccess: (boardId) => {
       queryClient.invalidateQueries({ queryKey: ["project-smartboards", id] });
-      toast.success("Smartboard linked!");
+      toast.success("Smartboard created");
+      navigate(`/smartboards/${boardId}?from=project:${id}`, {
+        state: { backTo: `/projects/${id}`, backLabel: "Back to project" },
+      });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -175,7 +216,7 @@ const ProjectDetailPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project-smartboards", id] });
-      toast.success("Smartboard unlinked");
+      toast.success("Smartboard removed from project");
     },
   });
 
@@ -197,7 +238,7 @@ const ProjectDetailPage = () => {
 
   if (!project) return <div className="text-muted-foreground">Loading...</div>;
 
-  const availableToLink = mySmartboards?.filter((s) => !linkedIds.includes(s.id)) ?? [];
+  
   const isPaid = project.project_type !== "collaborative";
   const isLocked = contract?.status === "active" || contract?.status === "completed";
 
@@ -338,8 +379,10 @@ const ProjectDetailPage = () => {
             projectId={id!}
             projectTitle={project.title}
             smartboardDetails={smartboardDetails}
-            onLinkSmartboard={() => setLinkDialogOpen(true)}
+            onCreateSmartboard={() => createSmartboard.mutate()}
             onUnlinkSmartboard={(sbId: string) => unlinkSmartboard.mutate(sbId)}
+            smartboardCap={smartboardCap}
+            isCreating={createSmartboard.isPending}
           />
 
           <Tabs defaultValue="stages" className="w-full">
@@ -430,46 +473,6 @@ const ProjectDetailPage = () => {
 
       </Tabs>
 
-      {/* Link Smartboard Dialog */}
-      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-display">Link a Smartboard</DialogTitle>
-          </DialogHeader>
-          {availableToLink.length === 0 ? (
-            <div className="text-center py-8">
-              <LayoutGrid className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-              <p className="text-sm text-muted-foreground">
-                {mySmartboards?.length === 0
-                  ? "You don't have any smartboards yet"
-                  : "All your smartboards are already linked"}
-              </p>
-              <Link to="/smartboards">
-                <Button variant="outline" className="mt-3 rounded-full" size="sm">
-                  Create a Smartboard
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-80 overflow-y-auto">
-              {availableToLink.map((board) => (
-                <button
-                  key={board.id}
-                  onClick={() => { linkSmartboard.mutate(board.id); setLinkDialogOpen(false); }}
-                  className="flex w-full items-center gap-3 rounded-lg p-3 text-left hover:bg-muted/60 transition-colors"
-                >
-                  <div className="h-10 w-10 rounded-lg shrink-0" style={{ background: board.cover_color || "hsl(var(--muted))" }} />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{board.title}</p>
-                    {board.description && <p className="text-xs text-muted-foreground truncate">{board.description}</p>}
-                  </div>
-                  <Link2 className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
-                </button>
-              ))}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

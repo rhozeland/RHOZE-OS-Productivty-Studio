@@ -1,6 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { useParams, Link, useSearchParams, useLocation } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,16 +81,18 @@ const SmartboardDetailPage = () => {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDesc, setEditDesc] = useState("");
-  const [itemType, setItemType] = useState<"note" | "link" | "image" | "video" | "audio" | "pdf">("note");
-  const [itemTitle, setItemTitle] = useState("");
+  // Add-to-board now has 4 surfaces: note, link, upload (auto-detect image/
+  // video/audio), and "from Flow" (pull from your liked/saved Flow items).
+  // PDF, manual title, and the cross-post-to-Flow checkbox are gone.
+  const [itemType, setItemType] = useState<"note" | "link" | "upload" | "flow">("note");
   const [itemContent, setItemContent] = useState("");
   const [itemLink, setItemLink] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   // Tracks the allowlist verdict from <UploadFileMeta>; null while no file is selected.
   const [uploadOk, setUploadOk] = useState<boolean | null>(null);
+  const [selectedFlowItemId, setSelectedFlowItemId] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [alsoPostToFlow, setAlsoPostToFlow] = useState(false);
 
   const { data: board } = useQuery({
     queryKey: ["smartboard", id],
@@ -175,69 +175,86 @@ const SmartboardDetailPage = () => {
     }
   }, [board]);
 
+  // Pull the user's liked + saved Flow items so they can re-use them as
+  // smartboard memories. Only loaded once the "From Flow" tab is opened.
+  const { data: flowMemories } = useQuery({
+    queryKey: ["flow-memories", user?.id],
+    queryFn: async () => {
+      const { data: interactions, error: iErr } = await supabase
+        .from("flow_interactions")
+        .select("flow_item_id, action, created_at")
+        .eq("user_id", user!.id)
+        .in("action", ["like", "save"])
+        .order("created_at", { ascending: false })
+        .limit(60);
+      if (iErr) throw iErr;
+      const ids = Array.from(new Set((interactions ?? []).map((i: any) => i.flow_item_id)));
+      if (ids.length === 0) return [];
+      const { data: items, error: fErr } = await supabase
+        .from("flow_items")
+        .select("id, title, description, content_type, file_url, link_url, category, creator_name")
+        .in("id", ids);
+      if (fErr) throw fErr;
+      return items ?? [];
+    },
+    enabled: !!user && addOpen && itemType === "flow",
+  });
+
   const addItem = useMutation({
     mutationFn: async () => {
       let fileUrl: string | null = null;
-      const uploadTypes = ["image", "video", "audio", "pdf"];
+      let resolvedType: string = itemType;
+      let resolvedContent: string | null = itemContent || null;
+      let resolvedLink: string | null = null;
 
-      // Upload file if provided
-      if (uploadTypes.includes(itemType) && imageFile) {
-        // Belt-and-suspenders: refuse to send anything the allowlist already rejected.
-        if (uploadOk === false) {
-          throw new Error("This file type isn't allowed by upload policy.");
-        }
-        // Path layout enforced by buildSmartboardFilePath so RLS stays happy.
+      if (itemType === "upload") {
+        if (!imageFile) throw new Error("Pick a file to upload.");
+        if (uploadOk === false) throw new Error("This file type isn't allowed by upload policy.");
+        // Auto-detect content_type from MIME (image / video / audio).
+        const mime = imageFile.type || "";
+        if (mime.startsWith("image/")) resolvedType = "image";
+        else if (mime.startsWith("video/")) resolvedType = "video";
+        else if (mime.startsWith("audio/")) resolvedType = "audio";
+        else throw new Error("Only images, video, and audio uploads are supported.");
         const path = buildSmartboardFilePath(id!, user!.id, imageFile, { kind: "item" });
         const { url, error: uploadErrMsg } = await uploadAndGetUrl(SMARTBOARD_BUCKET, path, imageFile);
         if (uploadErrMsg) throw new Error(uploadErrMsg);
         fileUrl = url;
-      }
-
-      // For image/video/audio/pdf with URL but no file upload, use link as file_url
-      if (!fileUrl && uploadTypes.includes(itemType) && itemLink) {
-        fileUrl = itemLink;
+      } else if (itemType === "link") {
+        if (!itemLink.trim()) throw new Error("Paste a link to add.");
+        resolvedType = "link";
+        resolvedLink = itemLink.trim();
+      } else if (itemType === "flow") {
+        const memory = (flowMemories ?? []).find((f: any) => f.id === selectedFlowItemId);
+        if (!memory) throw new Error("Pick a Flow memory to add.");
+        resolvedType = memory.content_type === "text" ? (memory.link_url ? "link" : "note") : memory.content_type;
+        resolvedContent = memory.description || null;
+        resolvedLink = memory.link_url || null;
+        fileUrl = memory.file_url || null;
+      } else if (itemType === "note") {
+        if (!itemContent.trim()) throw new Error("Write something for your note.");
       }
 
       const { error } = await supabase.from("smartboard_items").insert({
         smartboard_id: id!,
         user_id: user!.id,
-        content_type: itemType,
-        title: itemTitle || null,
-        content: itemContent || null,
-        link_url: itemType === "link" ? itemLink : null,
+        content_type: resolvedType,
+        title: null,
+        content: resolvedContent,
+        link_url: resolvedLink,
         file_url: fileUrl,
       });
       if (error) throw error;
-
-      // Cross-post to Flow Mode if opted in
-      if (alsoPostToFlow) {
-        const categoryMap: Record<string, string> = {
-          image: "Photo", video: "Video", audio: "Music", note: "Writing", link: "Writing", pdf: "Writing",
-        };
-        await supabase.from("flow_items").insert({
-          user_id: user!.id,
-          title: itemTitle || `From board`,
-          description: itemContent || null,
-          category: categoryMap[itemType] || "Photo",
-          content_type: itemType === "note" || itemType === "link" ? "text" : "file",
-          file_url: fileUrl || (itemType === "link" ? itemLink : null),
-          link_url: itemType === "link" ? itemLink : null,
-        });
-      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["smartboard-items", id] });
-      if (alsoPostToFlow) {
-        queryClient.invalidateQueries({ queryKey: ["flow-items"] });
-      }
       setAddOpen(false);
-      setItemTitle("");
       setItemContent("");
       setItemLink("");
       setImageFile(null);
       setUploadOk(null);
-      setAlsoPostToFlow(false);
-      toast.success(alsoPostToFlow ? "Added to board & Flow Mode!" : "Item added!");
+      setSelectedFlowItemId(null);
+      toast.success("Added to board");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -438,49 +455,48 @@ const SmartboardDetailPage = () => {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Add to Board</DialogTitle></DialogHeader>
-              {/* Content type tabs */}
+              {/* Content type tabs — condensed from 6 (note/link/img/vid/audio/pdf)
+                  down to 4: note, link, upload (auto-detects), from Flow. */}
               <div className="flex gap-2 mb-4 flex-wrap">
-                {(["note", "link", "image", "video", "audio", "pdf"] as const).map((type) => (
+                {([
+                  { type: "note", label: "Note", Icon: StickyNote },
+                  { type: "link", label: "Link", Icon: Link2 },
+                  { type: "upload", label: "Upload", Icon: ImageIcon },
+                  { type: "flow", label: "From Flow", Icon: Send },
+                ] as const).map(({ type, label, Icon }) => (
                   <Button
                     key={type}
                     variant={itemType === type ? "default" : "outline"}
                     size="sm"
-                    className="rounded-full capitalize"
-                    onClick={() => { setItemType(type); setImageFile(null); setUploadOk(null); setItemLink(""); }}
+                    className="rounded-full"
+                    onClick={() => {
+                      setItemType(type);
+                      setImageFile(null);
+                      setUploadOk(null);
+                      setItemLink("");
+                      setSelectedFlowItemId(null);
+                    }}
                   >
-                    {type === "note" && <StickyNote className="mr-1 h-4 w-4" />}
-                    {type === "link" && <Link2 className="mr-1 h-4 w-4" />}
-                    {type === "image" && <ImageIcon className="mr-1 h-4 w-4" />}
-                    {type === "video" && <Video className="mr-1 h-4 w-4" />}
-                    {type === "audio" && <AudioLines className="mr-1 h-4 w-4" />}
-                    {type === "pdf" && <FileText className="mr-1 h-4 w-4" />}
-                    {type}
+                    <Icon className="mr-1 h-4 w-4" />
+                    {label}
                   </Button>
                 ))}
               </div>
               <form onSubmit={(e) => { e.preventDefault(); addItem.mutate(); }} className="space-y-4">
-                <Input placeholder="Title (optional)" value={itemTitle} onChange={(e) => setItemTitle(e.target.value)} />
-
                 {itemType === "note" && (
-                  <Textarea placeholder="Write your note..." value={itemContent} onChange={(e) => setItemContent(e.target.value)} rows={4} />
+                  <Textarea placeholder="Write your note..." value={itemContent} onChange={(e) => setItemContent(e.target.value)} rows={5} autoFocus />
                 )}
+
                 {itemType === "link" && (
-                  <>
-                    <Input placeholder="https://..." value={itemLink} onChange={(e) => setItemLink(e.target.value)} />
-                    <Textarea placeholder="Description (optional)" value={itemContent} onChange={(e) => setItemContent(e.target.value)} rows={2} />
-                  </>
+                  <Input placeholder="https://..." value={itemLink} onChange={(e) => setItemLink(e.target.value)} autoFocus />
                 )}
-                {(itemType === "image" || itemType === "video" || itemType === "audio" || itemType === "pdf") && (
+
+                {itemType === "upload" && (
                   <div>
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept={
-                        itemType === "image" ? "image/*" :
-                        itemType === "video" ? "video/*" :
-                        itemType === "audio" ? "audio/*" :
-                        ".pdf"
-                      }
+                      accept="image/*,video/*,audio/*"
                       className="hidden"
                       onChange={(e) => { setImageFile(e.target.files?.[0] || null); setUploadOk(null); }}
                     />
@@ -491,26 +507,17 @@ const SmartboardDetailPage = () => {
                       {imageFile ? (
                         <div className="flex items-center justify-center gap-2">
                           <Check className="h-4 w-4 text-primary" />
-                          <span className="text-sm text-foreground truncate max-w-[200px]">{imageFile.name}</span>
+                          <span className="text-sm text-foreground truncate max-w-[220px]">{imageFile.name}</span>
                         </div>
                       ) : (
                         <>
-                          {itemType === "image" && <ImageIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />}
-                          {itemType === "video" && <Video className="h-8 w-8 text-muted-foreground mx-auto mb-2" />}
-                          {itemType === "audio" && <AudioLines className="h-8 w-8 text-muted-foreground mx-auto mb-2" />}
-                          {itemType === "pdf" && <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />}
-                          <p className="text-sm text-muted-foreground">
-                            {itemType === "image" ? "Upload image" :
-                             itemType === "video" ? "Upload video" :
-                             itemType === "audio" ? "Upload audio" :
-                             "Upload PDF"}
-                          </p>
-                          <p className="text-xs text-muted-foreground/60 mt-1">
-                            {itemType === "image" ? "JPG, PNG, WEBP up to 20MB" :
-                             itemType === "video" ? "MP4, MOV, WEBM up to 20MB" :
-                             itemType === "audio" ? "MP3, WAV, FLAC up to 20MB" :
-                             "PDF files up to 20MB"}
-                          </p>
+                          <div className="flex items-center justify-center gap-3 mb-2 text-muted-foreground">
+                            <ImageIcon className="h-6 w-6" />
+                            <Video className="h-6 w-6" />
+                            <AudioLines className="h-6 w-6" />
+                          </div>
+                          <p className="text-sm text-muted-foreground">Upload image, video, or audio</p>
+                          <p className="text-xs text-muted-foreground/60 mt-1">Up to 20MB</p>
                         </>
                       )}
                     </div>
@@ -522,37 +529,62 @@ const SmartboardDetailPage = () => {
                         onValidation={(ok) => setUploadOk(ok)}
                       />
                     )}
-                    <div className="mt-3">
-                      <Input
-                        placeholder={
-                          itemType === "image" ? "Or paste image URL" :
-                          itemType === "video" ? "Or paste YouTube / Vimeo link" :
-                          itemType === "audio" ? "Or paste Spotify / SoundCloud link" :
-                          "Or paste link to PDF"
-                        }
-                        value={itemLink}
-                        onChange={(e) => setItemLink(e.target.value)}
-                      />
-                    </div>
                   </div>
                 )}
 
-                <div className="flex items-center gap-2 pt-1">
-                  <Checkbox
-                    id="also-flow"
-                    checked={alsoPostToFlow}
-                    onCheckedChange={(v) => setAlsoPostToFlow(!!v)}
-                  />
-                  <Label htmlFor="also-flow" className="text-sm text-muted-foreground cursor-pointer">
-                    Also share to Flow Mode
-                  </Label>
-                </div>
+                {itemType === "flow" && (
+                  <div className="max-h-72 overflow-y-auto rounded-xl border border-border divide-y divide-border">
+                    {!flowMemories ? (
+                      <p className="p-4 text-sm text-muted-foreground">Loading your Flow memories…</p>
+                    ) : flowMemories.length === 0 ? (
+                      <p className="p-6 text-sm text-muted-foreground text-center">
+                        Nothing saved yet. Like or save items in Flow Mode and they'll show up here.
+                      </p>
+                    ) : (
+                      flowMemories.map((m: any) => {
+                        const isPicked = selectedFlowItemId === m.id;
+                        return (
+                          <button
+                            type="button"
+                            key={m.id}
+                            onClick={() => setSelectedFlowItemId(m.id)}
+                            className={`flex w-full items-center gap-3 p-3 text-left transition-colors ${isPicked ? "bg-primary/10" : "hover:bg-muted/50"}`}
+                          >
+                            <div className="h-10 w-10 rounded-lg bg-muted shrink-0 overflow-hidden flex items-center justify-center">
+                              {m.file_url && m.content_type === "image" ? (
+                                <img src={m.file_url} alt="" className="h-full w-full object-cover" />
+                              ) : m.content_type === "video" ? (
+                                <Video className="h-4 w-4 text-muted-foreground" />
+                              ) : m.content_type === "audio" ? (
+                                <AudioLines className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <StickyNote className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-foreground truncate">{m.title}</p>
+                              {m.creator_name && (
+                                <p className="text-xs text-muted-foreground truncate">by {m.creator_name}</p>
+                              )}
+                            </div>
+                            {isPicked && <Check className="h-4 w-4 text-primary shrink-0" />}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+
                 <Button
                   type="submit"
                   className="w-full rounded-full"
-                  disabled={!!imageFile && uploadOk === false}
+                  disabled={
+                    addItem.isPending ||
+                    (itemType === "upload" && (!imageFile || uploadOk === false)) ||
+                    (itemType === "flow" && !selectedFlowItemId)
+                  }
                 >
-                  Add to Board
+                  {addItem.isPending ? "Adding…" : "Add to Board"}
                 </Button>
               </form>
             </DialogContent>
