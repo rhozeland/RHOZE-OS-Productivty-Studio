@@ -4648,6 +4648,50 @@ export type Database = {
       }
     }
     Views: {
+      coin_trades_public: {
+        Row: {
+          created_at: string | null
+          fee_sol: number | null
+          id: string | null
+          launch_id: string | null
+          price_per_token: number | null
+          side: string | null
+          sol_amount: number | null
+          token_amount: number | null
+          trader_hash: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          fee_sol?: number | null
+          id?: string | null
+          launch_id?: string | null
+          price_per_token?: number | null
+          side?: string | null
+          sol_amount?: number | null
+          token_amount?: number | null
+          trader_hash?: never
+        }
+        Update: {
+          created_at?: string | null
+          fee_sol?: number | null
+          id?: string | null
+          launch_id?: string | null
+          price_per_token?: number | null
+          side?: string | null
+          sol_amount?: number | null
+          token_amount?: number | null
+          trader_hash?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coin_trades_launch_id_fkey"
+            columns: ["launch_id"]
+            isOneToOne: false
+            referencedRelation: "coin_launches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles_public: {
         Row: {
           avatar_url: string | null
@@ -4845,6 +4889,20 @@ export type Database = {
           score_weight_tenure: number
           tenure_floor_mult: number
           tenure_full_months: number
+        }[]
+      }
+      get_coin_trades_public: {
+        Args: { _launch_id: string; _limit?: number; _since?: string }
+        Returns: {
+          created_at: string
+          fee_sol: number
+          id: string
+          launch_id: string
+          price_per_token: number
+          side: string
+          sol_amount: number
+          token_amount: number
+          trader_hash: string
         }[]
       }
       get_host_fiat_earnings: {

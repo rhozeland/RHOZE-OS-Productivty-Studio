@@ -82,7 +82,7 @@ type Trade = {
   fee_sol: number;
   price_per_token: number;
   created_at: string;
-  trader_id: string;
+  trader_hash: string;
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -152,22 +152,20 @@ const LaunchDetailPage = () => {
         .maybeSingle();
       setWorkSig(w?.solana_signature ?? null);
     }
-    const { data: t } = await supabase
-      .from("coin_trades")
-      .select("id,side,sol_amount,token_amount,fee_sol,price_per_token,created_at,trader_id")
-      .eq("launch_id", l.id)
-      .order("created_at", { ascending: false })
-      .limit(50);
+    const { data: t } = await supabase.rpc("get_coin_trades_public", {
+      _launch_id: l.id,
+      _limit: 50,
+    });
     setTrades((t ?? []) as Trade[]);
 
-    // 24h SOL volume
+    // 24h SOL volume — same anonymized helper.
     const since = new Date(Date.now() - 24 * 3600_000).toISOString();
-    const { data: vol } = await supabase
-      .from("coin_trades")
-      .select("sol_amount")
-      .eq("launch_id", l.id)
-      .gte("created_at", since);
-    setVol24h((vol ?? []).reduce((s, r) => s + Number(r.sol_amount), 0));
+    const { data: vol } = await supabase.rpc("get_coin_trades_public", {
+      _launch_id: l.id,
+      _limit: 5000,
+      _since: since,
+    });
+    setVol24h(((vol ?? []) as Array<{ sol_amount: number }>).reduce((s, r) => s + Number(r.sol_amount), 0));
 
     // Holder count (creator-only RLS — fall back gracefully)
     const { count } = await supabase
