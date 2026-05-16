@@ -155,6 +155,17 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
           <CoinPortfolio />
         </TabsContent>
 
+        {/* ═══════ Tickets — wallet-style stub collection ═══════ */}
+        <TabsContent value="tickets" className="mt-4 space-y-4">
+          <div className="space-y-1.5">
+            <h2 className="font-display text-xl font-bold text-foreground">Tickets</h2>
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              Your event passes — upcoming and past. Tap a stub for the QR, ticket detail, and on-chain receipt.
+            </p>
+          </div>
+          <TicketsTab userId={user.id} />
+        </TabsContent>
+
         {/* ═══════ Verified IP ═══════ */}
         <TabsContent value="works" className="mt-4 space-y-6">
           <VerifiedIPHub userId={user?.id ?? null} />
