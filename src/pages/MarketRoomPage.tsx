@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import PostMenuButton from "@/components/PostMenuButton";
 import { avatarGradientFor } from "@/lib/avatar-gradient";
 import ConnectMatchDeck from "@/components/connect/ConnectMatchDeck";
+import RoomHero from "@/components/rooms/RoomHero";
 import {
   useHireRows,
   useSpaceRows,
