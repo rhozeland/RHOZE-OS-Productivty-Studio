@@ -54,6 +54,7 @@ import GuestDashboardPreview from "@/components/guest/GuestDashboardPreview";
 import FirstRunChecklist from "@/components/dashboard/FirstRunChecklist";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { format } from "date-fns";
+import { todayGradient } from "@/lib/rhoze-gradients";
 
 type DashboardLayout = {
   sections: string[];
@@ -643,41 +644,31 @@ const DashboardPage = () => {
           {user ? "Your Studio" : "Get discovered. Get supported. On-chain."}
         </p>
         <h1 className="font-display text-3xl sm:text-4xl md:text-5xl leading-[1.1] text-foreground">
-          {user ? (
-            <>
-              {greeting()},{" "}
-              <span
-                className="inline-block"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(to right, hsl(330 81% 60%), hsl(292 84% 61%), hsl(38 92% 50%))",
-                  WebkitBackgroundClip: "text",
-                  backgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  color: "transparent",
-                }}
-              >
-                {firstName}.
-              </span>
-            </>
-          ) : (
-            <>
-              Two networks.{" "}
-              <span
-                className="inline-block"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(to right, hsl(330 81% 60%), hsl(292 84% 61%), hsl(38 92% 50%))",
-                  WebkitBackgroundClip: "text",
-                  backgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  color: "transparent",
-                }}
-              >
-                One creative space.
-              </span>
-            </>
-          )}
+          {(() => {
+            const grad = todayGradient();
+            const gradStyle = {
+              backgroundImage: grad.text,
+              WebkitBackgroundClip: "text" as const,
+              backgroundClip: "text" as const,
+              WebkitTextFillColor: "transparent" as const,
+              color: "transparent",
+            };
+            return user ? (
+              <>
+                {greeting()},{" "}
+                <span className="inline-block" style={gradStyle} data-rhoze-gradient={grad.id}>
+                  {firstName}.
+                </span>
+              </>
+            ) : (
+              <>
+                Two networks.{" "}
+                <span className="inline-block" style={gradStyle} data-rhoze-gradient={grad.id}>
+                  One creative space.
+                </span>
+              </>
+            );
+          })()}
         </h1>
         <p className="text-sm text-muted-foreground mt-3 max-w-xl">
           {user
