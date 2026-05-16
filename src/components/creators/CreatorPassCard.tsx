@@ -138,6 +138,19 @@ const CreatorPassCard = () => {
 
   const eventsAttended = (ticketsData ?? []).filter((t: any) => t.status === "checked_in").length;
 
+  // Projects — total projects the creator owns. No detail click; just a stat.
+  const { data: projectsCount } = useQuery({
+    queryKey: ["projects-count-pass", user?.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("projects")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id);
+      return count ?? 0;
+    },
+    enabled: !!user,
+  });
+
   // ─── Personal "Studio activity" metrics — relocated here from the
   // retired My Studio dashboard. Surfaces the live counts for a creator's
   // private workspace without needing a separate page.
