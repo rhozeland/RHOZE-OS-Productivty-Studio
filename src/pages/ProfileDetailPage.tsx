@@ -13,14 +13,16 @@ import {
   EyeOff, Loader2, Settings, Store, Star, ExternalLink, ShoppingBag,
   Sparkles, Image as ImageIcon, Play, Music, FileText, Award, Shield,
   Zap, Coins, Calendar as CalendarIcon, User as UserIcon, FolderKanban,
-  Heart, ArrowRight, Search, Building2,
+  Heart, ArrowRight, Search, Building2, BadgeCheck,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import ProfileBadges from "@/components/profile/ProfileBadges";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
+import ProfileTierBadge from "@/components/profile/ProfileTierBadge";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
