@@ -122,17 +122,6 @@ const MarketRoomPage = () => {
         />
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder={`Search ${Heading.label.toLowerCase()}…`}
-          className="pl-10 rounded-full h-10"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
       {/* Matchmaking HUD — swipeable deck */}
       <ConnectMatchDeck />
 
