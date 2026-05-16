@@ -322,36 +322,6 @@ const ProjectDetailPage = () => {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-            onClick={() => {
-              toast.promise(
-                exportProjectPDF(
-                  project as any,
-                  goals,
-                  approvals as any,
-                  contract ? {
-                    status: contract.status,
-                    total_credits: contract.total_credits,
-                    released_credits: contract.released_credits,
-                    escrowed_credits: contract.escrowed_credits,
-                  } : undefined
-                ),
-                {
-                  loading: "Generating PDF...",
-                  success: "PDF downloaded!",
-                  error: "Failed to generate PDF",
-                }
-              );
-            }}
-          >
-            <FileDown className="h-4 w-4" />
-            Export PDF
-          </Button>
-        </div>
       </div>
 
       {/* Progress Overview — Drop Room launcher lives in the header so a
