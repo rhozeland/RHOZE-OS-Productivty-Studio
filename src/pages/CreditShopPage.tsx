@@ -23,6 +23,7 @@ import {
   Coins, Sparkles, Wallet, ShoppingBag, Download, Music, Shield,
   Award, Palette, Camera, Video, PenTool, Star, HelpCircle, ArrowRight,
   Activity as ActivityIcon, Briefcase, TrendingUp, ArrowUpRight, ArrowDownRight,
+  Ticket as TicketIcon,
 } from "lucide-react";
 import RewardsExplainerV2 from "@/components/credits/RewardsExplainerV2";
 import VerifiedIPHub from "@/components/credits/VerifiedIPHub";
