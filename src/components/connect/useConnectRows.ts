@@ -47,9 +47,9 @@ const fetchProfiles = async (ids: (string | null | undefined)[]) => {
   if (unique.length === 0) return new Map<string, any>();
   const { data } = await supabase
     .from("profiles")
-    .select("id,display_name,username,avatar_url")
-    .in("id", unique);
-  return new Map((data ?? []).map((p: any) => [p.id, p]));
+    .select("user_id,display_name,username,avatar_url")
+    .in("user_id", unique);
+  return new Map((data ?? []).map((p: any) => [p.user_id, p]));
 };
 
 export const useHireRows = (enabled = true) =>
