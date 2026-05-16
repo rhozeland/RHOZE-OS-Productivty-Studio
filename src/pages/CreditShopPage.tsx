@@ -68,7 +68,11 @@ const CreditShopPage = () => {
 const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<typeof useAuth>["user"]> }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get("tab");
-  const activeTab = rawTab === "tiers" ? "pass" : (rawTab || "pass");
+  // Legacy redirects: `tiers` → My Pass; `tickets` → new Passport tab.
+  const activeTab =
+    rawTab === "tiers" ? "pass"
+    : rawTab === "tickets" ? "passport"
+    : (rawTab || "pass");
 
   const { data: userCredits } = useQuery({
     queryKey: ["user-credits", user?.id],
