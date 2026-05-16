@@ -224,7 +224,8 @@ export const useMixedConnectRows = (enabled = true) => {
   const call = useCallRows(enabled);
   const event = useEventRows(enabled);
 
-  const isLoading = hire.isLoading || space.isLoading || call.isLoading || event.isLoading;
+  const isLoading =
+    hire.isLoading && space.isLoading && call.isLoading && event.isLoading;
   const rows = interleave([
     hire.data ?? [],
     space.data ?? [],

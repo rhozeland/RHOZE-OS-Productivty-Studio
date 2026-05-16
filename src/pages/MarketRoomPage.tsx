@@ -228,11 +228,6 @@ const MarketRoomPage = () => {
                   )}
                 </div>
 
-                <p className="text-[11px] text-muted-foreground pt-2 border-t border-border/40">
-                  <Sparkles className="inline h-3 w-3 mr-1" />
-                  Inquiries appear in your <Link to="/messages" className="underline hover:text-foreground">Inbox</Link>;
-                  accepted bookings become <Link to="/messages?tab=projects" className="underline hover:text-foreground">Projects</Link>.
-                </p>
               </motion.div>
             ) : (
               <div className="h-full flex items-center justify-center text-sm text-muted-foreground p-10 text-center">
