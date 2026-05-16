@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import PostMenuButton from "@/components/PostMenuButton";
 import { avatarGradientFor } from "@/lib/avatar-gradient";
 import ConnectMatchDeck from "@/components/connect/ConnectMatchDeck";
+import RoomHero from "@/components/rooms/RoomHero";
 import {
   useHireRows,
   useSpaceRows,
@@ -74,18 +75,11 @@ const MarketRoomPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-1">
-        <span className="text-[10px] uppercase tracking-[0.28em] text-primary font-semibold">
-          Connect
-        </span>
-        <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground leading-tight">
-          Find your next collaborator.
-        </h1>
-        <p className="text-sm text-muted-foreground max-w-xl">
-          Hire creators, book their spaces, browse open calls, or join an event.
-          Tap any row to preview — inquiries land in your Inbox, bookings become Projects.
-        </p>
-      </div>
+      <RoomHero
+        eyebrow="Connect"
+        title="Find your next collaborator."
+      />
+
 
       {/* Filter chips + Post */}
       <div className="flex flex-wrap items-center gap-2 justify-between">

@@ -29,7 +29,8 @@ import VerifiedIPHub from "@/components/credits/VerifiedIPHub";
 import BuyRhozeSection from "@/components/credits/BuyRhozeSection";
 
 import { format, formatDistanceToNow } from "date-fns";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import CreatorPassCard from "@/components/creators/CreatorPassCard";
 import NextStepCard from "@/components/creators/NextStepCard";
 import TierMatrix from "@/components/creators/TierMatrix";
@@ -157,7 +158,8 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
         </TabsContent>
 
         {/* ═══════ Activity — pure ledger, no buy module ═══════ */}
-        <TabsContent value="activity" className="mt-4 space-y-6">
+        <TabsContent value="activity" className="mt-4 space-y-4">
+          <ActivityBackButton />
           <ActivityFeed userId={user.id} />
         </TabsContent>
 
@@ -427,6 +429,24 @@ const ActivityRow = ({ tx, compact = false }: { tx: any; compact?: boolean }) =>
         {isEarn ? "+" : "−"}{Math.abs(amount).toLocaleString()} $RHOZE
       </span>
     </div>
+  );
+};
+
+const ActivityBackButton = () => {
+  const navigate = useNavigate();
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => {
+        if (window.history.length > 1) navigate(-1);
+        else navigate("/vault");
+      }}
+      className="gap-1.5 -ml-2 text-muted-foreground hover:text-foreground"
+    >
+      <ArrowLeft className="h-4 w-4" />
+      Back
+    </Button>
   );
 };
 

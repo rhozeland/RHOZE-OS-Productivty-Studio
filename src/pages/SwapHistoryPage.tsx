@@ -9,9 +9,9 @@
  * the realised price + 3% sell-fee (the only fee in the simulator) instead.
  */
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownRight, ArrowUpRight, Coins, Loader2, Receipt } from "lucide-react";
+import { ArrowDownRight, ArrowLeft, ArrowUpRight, Coins, Loader2, Receipt } from "lucide-react";
 import { format } from "date-fns";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +38,12 @@ const fmt = (n: number, d = 4) =>
 
 const SwapHistoryPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/vault");
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ["swap-history", user?.id],
@@ -81,6 +87,15 @@ const SwapHistoryPage = () => {
 
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 space-y-6">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleBack}
+        className="gap-1.5 -ml-2 text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back
+      </Button>
       <header className="space-y-1">
         <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
           <Receipt className="h-3.5 w-3.5" />
