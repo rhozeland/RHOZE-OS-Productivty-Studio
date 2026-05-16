@@ -159,15 +159,28 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
           <CoinPortfolio />
         </TabsContent>
 
-        {/* ═══════ Tickets — wallet-style stub collection ═══════ */}
-        <TabsContent value="tickets" className="mt-4 space-y-4">
+        {/* ═══════ Passport — event tickets + spaces visited ═══════ */}
+        <TabsContent value="passport" className="mt-4 space-y-6">
+          <button
+            type="button"
+            onClick={() => setTab("pass")}
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to My Pass
+          </button>
           <div className="space-y-1.5">
-            <h2 className="font-display text-xl font-bold text-foreground">Tickets</h2>
+            <h2 className="font-display text-xl font-bold text-foreground">Passport</h2>
             <p className="text-sm text-muted-foreground max-w-2xl">
-              Your event passes — upcoming and past. Tap a stub for the QR, ticket detail, and on-chain receipt.
+              Every event you've registered for and every space you've visited — your portfolio of places and moments.
             </p>
           </div>
-          <TicketsTab userId={user.id} />
+          <section className="space-y-3">
+            <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
+              <TicketIcon className="h-4 w-4 text-muted-foreground" /> Events
+            </h3>
+            <TicketsTab userId={user.id} />
+          </section>
+          <SpacesPassportSection userId={user.id} />
         </TabsContent>
 
         {/* ═══════ Verified IP ═══════ */}
