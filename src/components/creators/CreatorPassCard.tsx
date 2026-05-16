@@ -301,12 +301,12 @@ const CreatorPassCard = () => {
                 action: "works" as const,
               },
               {
-                label: "Events",
-                value: `${ticketsData?.length ?? 0}`,
+                label: "Passport",
+                value: `${passportCount}`,
                 icon: Ticket,
-                isZero: (ticketsData?.length ?? 0) === 0,
+                isZero: passportCount === 0,
                 hint: { text: "Find events →", to: "/discover?view=events" as string | null },
-                action: "/credits?tab=tickets",
+                action: "/credits?tab=passport",
               },
               {
                 label: "Projects",
@@ -314,7 +314,7 @@ const CreatorPassCard = () => {
                 icon: FolderKanban,
                 isZero: false,
                 hint: { text: "", to: null as string | null },
-                action: null,
+                action: "projects" as const,
               },
               {
                 label: "Fundraising",
