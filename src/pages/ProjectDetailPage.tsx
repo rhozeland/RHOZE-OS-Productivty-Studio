@@ -17,10 +17,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Plus, Trash2, X, FileDown, Pencil, Check,
+  Plus, Trash2, X, Pencil, Check,
   Milestone, ListTodo, CalendarDays, Lock, Unlock, ArrowLeft,
 } from "lucide-react";
-import { exportProjectPDF } from "@/lib/export-project-pdf";
 import { useState } from "react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
