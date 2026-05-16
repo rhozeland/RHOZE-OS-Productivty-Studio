@@ -10,6 +10,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { REGIONS, type RegionMarket } from "@/lib/regions";
 import { cn } from "@/lib/utils";
 import type { FeaturedSlide } from "./useDiscoverFeatured";
+import { todayGradient } from "@/lib/rhoze-gradients";
 import ArtistSpotlightCard from "./ArtistSpotlightCard";
 
 const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
