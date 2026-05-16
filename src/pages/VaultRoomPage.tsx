@@ -25,6 +25,7 @@ import {
 import RoomHero from "@/components/rooms/RoomHero";
 import { todayGradient } from "@/lib/rhoze-gradients";
 import WithdrawalPanel from "@/components/seller/WithdrawalPanel";
+import WalletInfoPanel from "@/components/wallet/WalletInfoPanel";
 
 /**
  * THE VAULT — Room 3 (Finance / Growth).
@@ -32,7 +33,7 @@ import WithdrawalPanel from "@/components/seller/WithdrawalPanel";
  */
 const VAULT_LINKS: Array<{
   to?: string;
-  action?: "activity";
+  action?: "activity" | "wallet";
   label: string;
   desc: string;
   Icon: typeof CreditCard;
@@ -40,7 +41,7 @@ const VAULT_LINKS: Array<{
   { to: "/credits", label: "Creator Pass", desc: "Tier · rewards · how it works", Icon: CreditCard },
   { action: "activity", label: "Activity", desc: "Earns, spends & receipts", Icon: ShoppingBag },
   { to: "/swaps", label: "Swaps", desc: "Credits ↔ Artist Shares", Icon: Repeat },
-  { to: "/settings", label: "Wallet", desc: "Payout details & history", Icon: Wallet },
+  { action: "wallet", label: "Wallet", desc: "Connected wallet & limits", Icon: Wallet },
 ];
 
 const VaultRoomPage = () => {
