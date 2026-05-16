@@ -63,6 +63,7 @@ export function getTokenTier(balance: number): string {
 const CreatorPassCard = () => {
   const { user } = useAuth();
   const [claimAmount, setClaimAmount] = useState(0);
+  const [worksOpen, setWorksOpen] = useState(false);
 
   const { data: credits } = useQuery({
     queryKey: ["user-credits-pass", user?.id],
