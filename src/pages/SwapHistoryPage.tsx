@@ -87,6 +87,15 @@ const SwapHistoryPage = () => {
 
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 space-y-6">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleBack}
+        className="gap-1.5 -ml-2 text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back
+      </Button>
       <header className="space-y-1">
         <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
           <Receipt className="h-3.5 w-3.5" />
