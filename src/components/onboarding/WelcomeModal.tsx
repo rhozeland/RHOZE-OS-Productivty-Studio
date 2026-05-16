@@ -291,14 +291,14 @@ const WelcomeModal = () => {
                         Icon: Brush,
                         title: "Create",
                         body: "Sell work, book studios, take on projects.",
-                        chip: "Lands in The Market",
+                        chip: "Lands in Connect",
                       },
                       {
                         role: "investor" as const,
                         Icon: TrendingUp,
                         title: "Invest",
                         body: "Discover artists, back their coins, earn $RHOZE.",
-                        chip: "Lands in The Scene",
+                        chip: "Lands in Today",
                       },
                     ]).map(({ role, Icon, title, body, chip }) => {
                       const selected = chosenRole === role;

@@ -12,10 +12,10 @@ const SceneRoomPage = () => {
     <div className="space-y-4">
       <div className="flex items-baseline gap-3">
         <span className="text-[10px] uppercase tracking-[0.28em] text-primary font-semibold">
-          Room 1 · The Scene
+          Today
         </span>
         <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          Social · Discovery
+          What's happening now
         </span>
       </div>
       <DiscoverPage />
