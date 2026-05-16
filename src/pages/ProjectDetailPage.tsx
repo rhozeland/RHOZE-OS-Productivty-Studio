@@ -164,27 +164,43 @@ const ProjectDetailPage = () => {
     enabled: linkedIds.length > 0,
   });
 
-  // All user's smartboards for linking
-  const { data: mySmartboards } = useQuery({
-    queryKey: ["my-smartboards", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("smartboards").select("*").eq("user_id", user!.id).order("created_at", { ascending: false });
+  // Smartboards are now project-scoped & team-shared. Hitting "New" spins up
+  // a fresh board owned by the creator and auto-links it. No more picking
+  // from a dropdown of dusty old boards — every project gets clean canvases.
+  const createSmartboard = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Sign in required");
+      if (smartboardDetails && smartboardDetails.length >= smartboardCap) {
+        throw new Error(
+          `You've hit your tier's smartboard cap (${smartboardCap}) for this project. Upgrade to add more.`,
+        );
+      }
+      const count = (smartboardDetails?.length ?? 0) + 1;
+      const { data: board, error } = await supabase
+        .from("smartboards")
+        .insert({
+          title: `${project?.title ?? "Project"} · Board ${count}`,
+          description: null,
+          cover_color: project?.cover_color ?? "#7c3aed",
+          user_id: user.id,
+        })
+        .select("id")
+        .single();
       if (error) throw error;
-      return data;
-    },
-    enabled: !!user && linkDialogOpen,
-  });
-
-  const linkSmartboard = useMutation({
-    mutationFn: async (smartboardId: string) => {
-      const { error } = await supabase.from("project_smartboards" as any).insert({
-        project_id: id!, smartboard_id: smartboardId, linked_by: user!.id,
+      const { error: linkErr } = await supabase.from("project_smartboards" as any).insert({
+        project_id: id!,
+        smartboard_id: board.id,
+        linked_by: user.id,
       } as any);
-      if (error) throw error;
+      if (linkErr) throw linkErr;
+      return board.id as string;
     },
-    onSuccess: () => {
+    onSuccess: (boardId) => {
       queryClient.invalidateQueries({ queryKey: ["project-smartboards", id] });
-      toast.success("Smartboard linked!");
+      toast.success("Smartboard created");
+      navigate(`/smartboards/${boardId}?from=project:${id}`, {
+        state: { backTo: `/projects/${id}`, backLabel: "Back to project" },
+      });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -200,7 +216,7 @@ const ProjectDetailPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project-smartboards", id] });
-      toast.success("Smartboard unlinked");
+      toast.success("Smartboard removed from project");
     },
   });
 
