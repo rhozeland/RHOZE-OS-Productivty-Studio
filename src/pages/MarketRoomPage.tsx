@@ -1,10 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Search, Plus } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import PostMenuButton from "@/components/PostMenuButton";
+
 import { avatarGradientFor } from "@/lib/avatar-gradient";
 import ConnectMatchDeck from "@/components/connect/ConnectMatchDeck";
 import RoomHero from "@/components/rooms/RoomHero";
