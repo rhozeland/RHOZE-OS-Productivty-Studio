@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 import { avatarGradientFor } from "@/lib/avatar-gradient";
 import ConnectMatchDeck from "@/components/connect/ConnectMatchDeck";
