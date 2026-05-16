@@ -408,16 +408,32 @@ const LaunchDetailPage = () => {
             );
           })()}
 
-          {/* Inline graduation progress + backing momentum sparkline.
-              Replaces the bulky standalone BackingMomentumChart — same data,
-              one slim strip wired to the graduation goal. */}
-          {launch.status !== "cancelled" && (
+          {/* Graduation progress only matters once the on-chain program is live —
+              in simulation it's a moving target with no real LP at the end.
+              Hidden in fan/sim mode; trader view + on-chain still see it. */}
+          {launch.status !== "cancelled" && (isLaunchpadOnChainEnabled() || traderView) && (
             <GraduationProgressBar
               launchId={launch.id}
               raisedRhoze={Number(launch.real_sol_reserves) * 100}
               targetRhoze={Number(launch.graduation_sol_target) * 100}
               status={launch.status}
             />
+          )}
+
+          {/* Gamification chips — lightweight social proof */}
+          {launch.status !== "cancelled" && (vol24h > 0 || holderCount) && (
+            <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+              {vol24h > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 text-amber-600 dark:text-amber-400">
+                  🔥 {(vol24h * 100).toFixed(0)} $RHOZE in 24h
+                </span>
+              )}
+              {myHolding && myHolding.balance > 0 && holderCount && holderCount > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-emerald-600 dark:text-emerald-400">
+                  <Sparkles className="h-2.5 w-2.5" /> You're a backer · {holderCount.toLocaleString()} total
+                </span>
+              )}
+            </div>
           )}
 
           {/* Graduated payout summary */}
