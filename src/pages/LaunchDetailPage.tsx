@@ -82,7 +82,7 @@ type Trade = {
   fee_sol: number;
   price_per_token: number;
   created_at: string;
-  trader_id: string;
+  trader_hash: string;
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
