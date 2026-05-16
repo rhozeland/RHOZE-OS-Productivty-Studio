@@ -36,7 +36,6 @@ import RevenueSplitConfig from "@/components/revenue/RevenueSplitConfig";
 import ProjectTools from "@/components/project/ProjectTools";
 import DropRoomLauncher from "@/components/project/DropRoomLauncher";
 import { useProjectRole } from "@/hooks/useProjectRole";
-import { useRhozeBalance } from "@/hooks/useRhozeBalance";
 import { getHoldTier } from "@/lib/tier-matrix";
 
 // Tier-based cap on smartboards per project. Play tier is unlimited.
@@ -53,9 +52,23 @@ const ProjectDetailPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { canManage: canManageProject } = useProjectRole(id);
-  const { balance: rhozeBalance } = useRhozeBalance();
-  const userTier = getHoldTier(rhozeBalance ?? 0);
+
+  // Tier comes from in-app $RHOZE balance (user_credits), not on-chain wallet.
+  const { data: credits } = useQuery({
+    queryKey: ["user-credits-balance", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_credits")
+        .select("balance")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data?.balance ?? 0;
+    },
+    enabled: !!user,
+  });
+  const userTier = getHoldTier(credits ?? 0);
   const smartboardCap = SMARTBOARD_CAP_BY_TIER[userTier] ?? 2;
+
   const [editingHeader, setEditingHeader] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
