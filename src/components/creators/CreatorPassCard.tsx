@@ -9,6 +9,7 @@ import {
   Sparkles, TrendingUp, Image as ImageIcon,
 } from "lucide-react";
 import WorksLightbox from "@/components/creators/WorksLightbox";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import ClaimRhozeButton from "@/components/ClaimRhozeButton";
 import { Input } from "@/components/ui/input";
