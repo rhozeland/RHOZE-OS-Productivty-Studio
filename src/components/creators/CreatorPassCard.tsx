@@ -6,7 +6,9 @@ import { Link } from "react-router-dom";
 import {
   Flame, Coins, Shield, Download, BadgeCheck, Ticket,
   FolderKanban, MessageSquare, Calendar, Check, Info,
+  Sparkles, TrendingUp, Image as ImageIcon,
 } from "lucide-react";
+import WorksLightbox from "@/components/creators/WorksLightbox";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import ClaimRhozeButton from "@/components/ClaimRhozeButton";
 import { Input } from "@/components/ui/input";
