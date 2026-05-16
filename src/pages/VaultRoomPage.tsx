@@ -10,7 +10,14 @@ import {
   ArrowRight,
   ArrowDownToLine,
   ExternalLink,
+  Info,
+  ShieldCheck,
 } from "lucide-react";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import RhozeBalanceChip from "@/components/RhozeBalanceChip";
