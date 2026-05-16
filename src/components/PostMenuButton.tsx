@@ -33,6 +33,7 @@ import { useAuthGate } from "@/components/AuthGateDialog";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import NoteComposer from "@/components/notes/NoteComposer";
 import { cn } from "@/lib/utils";
+import { todayGradient } from "@/lib/rhoze-gradients";
 
 type PostIntent = {
   key: "note" | "work" | "listing" | "event" | "space";
