@@ -58,6 +58,20 @@ const VaultRoomPage = () => {
   const [walletOpen, setWalletOpen] = useState(false);
   const grad = todayGradient();
 
+  const { data: walletProfile } = useQuery({
+    queryKey: ["vault-wallet", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("wallet_address")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data as { wallet_address: string | null } | null;
+    },
+  });
+  const walletConnected = !!walletProfile?.wallet_address;
+
   const { data: portfolio } = useQuery({
     queryKey: ["vault-portfolio", user?.id],
     enabled: !!user,
