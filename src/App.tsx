@@ -46,10 +46,11 @@ import DiscoverPage from "@/pages/DiscoverPage";
 import InfrastructurePage from "@/pages/InfrastructurePage";
 // WorksPage is no longer routed here — it's mounted inside SettingsPage
 // (Provenance section). /works redirects to /settings#provenance below.
-// /spaces is the Luma-inspired hub: Events timeline · Spaces marketplace · Discover.
+// /spaces and /events browse pages retired (v9.8) — both redirect into the
+// Connect room (/market) so Spaces and Events live as tabs there. Detail and
+// create routes (/spaces/events/:id, /spaces/events/new) stay live.
 // PeoplePage retained but unrouted — /people redirects to /discover.
 // HubPage retired in v8 — /stream + /hub redirect to /discover.
-import SpacesHubPage from "@/pages/SpacesHubPage";
 import EventCreatePage from "@/pages/EventCreatePage";
 import EventDetailPage from "@/pages/EventDetailPage";
 // EventsExplorePage retired (v8.5) — events now live inside Conversations → Events tab
@@ -256,8 +257,8 @@ const App = () => (
                     Legacy roots redirect; sub-routes stay live. */}
                 <Route path="/stream" element={<Navigate to="/discover" replace />} />
                 <Route path="/hub" element={<Navigate to="/discover" replace />} />
-                <Route path="/spaces" element={<SpacesHubPage />} />
-                <Route path="/events" element={<SpacesHubPage />} />
+                <Route path="/spaces" element={<Navigate to="/market?kind=space" replace />} />
+                <Route path="/events" element={<Navigate to="/market?kind=event" replace />} />
                 <Route path="/events/new" element={<Navigate to="/spaces/events/new" replace />} />
                 <Route path="/events/:id" element={<LegacyEventRedirect />} />
                 <Route path="/events/:id/manage" element={<LegacyEventRedirect manage />} />
