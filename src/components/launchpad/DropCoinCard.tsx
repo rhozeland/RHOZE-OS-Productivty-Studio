@@ -93,13 +93,7 @@ const DropCoinCard = ({ coin, hideContext }: Props) => {
         </div>
         <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/50 group-hover:text-foreground transition-colors shrink-0" />
       </div>
-      <div className="flex items-end justify-between gap-3 pt-1 border-t border-border/50">
-        <div>
-          <p className="text-[9px] uppercase tracking-wider text-muted-foreground/70">Price</p>
-          <p className="text-xs font-mono font-semibold text-foreground">
-            {fmtPrice(priceRhoze)} <span className="text-muted-foreground font-normal">$RHOZE</span>
-          </p>
-        </div>
+      <div className="flex items-end justify-end gap-3 pt-1 border-t border-border/50">
         <div className="text-right">
           <p className="text-[9px] uppercase tracking-wider text-muted-foreground/70">Mkt cap</p>
           <p className="text-xs font-mono font-semibold text-foreground">
