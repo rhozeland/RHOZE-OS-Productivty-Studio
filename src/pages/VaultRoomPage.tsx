@@ -91,6 +91,7 @@ const VaultRoomPage = () => {
   return (
     <div className="space-y-6">
       <RoomHero
+        variant="vault"
         eyebrow="The Vault"
         title="Your portfolio."
         subtitle="Track what you hold and cash out when you're ready."

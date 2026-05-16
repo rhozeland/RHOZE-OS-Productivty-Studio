@@ -230,13 +230,26 @@
 }
 
 /* Room hero — slow drifting gradient blob behind headline text.
-   Pair with `.room-hero-blob` element inside an overflow-hidden parent. */
+   Three motion variants so each Room (Today · Connect · Vault) has its own
+   personality while sharing the daily Rhozeland gradient. */
 @keyframes blob-drift {
   0%   { transform: translate3d(-8%, -4%, 0) scale(1);   }
   25%  { transform: translate3d(6%, 4%, 0)  scale(1.08); }
   50%  { transform: translate3d(10%, -6%, 0) scale(0.96);}
   75%  { transform: translate3d(-4%, 6%, 0)  scale(1.05);}
   100% { transform: translate3d(-8%, -4%, 0) scale(1);   }
+}
+/* Connect — wider horizontal sweep, mirrors origin (matchmaking energy). */
+@keyframes blob-drift-sweep {
+  0%   { transform: translate3d(-14%, 2%, 0) scale(1.02) rotate(0deg);  }
+  50%  { transform: translate3d(14%, -3%, 0) scale(1.1)  rotate(8deg);  }
+  100% { transform: translate3d(-14%, 2%, 0) scale(1.02) rotate(0deg);  }
+}
+/* Vault — slower vertical breath, smaller travel (calm / financial). */
+@keyframes blob-drift-breathe {
+  0%   { transform: translate3d(0, -6%, 0) scale(1);    }
+  50%  { transform: translate3d(2%, 6%, 0) scale(1.06); }
+  100% { transform: translate3d(0, -6%, 0) scale(1);    }
 }
 .room-hero-blob {
   position: absolute;
@@ -248,8 +261,12 @@
   animation: blob-drift 18s ease-in-out infinite;
   will-change: transform;
 }
+.room-hero-blob--connect { animation: blob-drift-sweep 22s ease-in-out infinite; }
+.room-hero-blob--vault   { animation: blob-drift-breathe 28s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .room-hero-blob { animation: none; }
+  .room-hero-blob,
+  .room-hero-blob--connect,
+  .room-hero-blob--vault { animation: none; }
 }
 
 /* Tier card shimmer — diagonal sweep, 3s loop, respects reduced motion. */

@@ -84,7 +84,7 @@ const MarketRoomPage = () => {
 
   return (
     <div className="space-y-6">
-      <RoomHero eyebrow="Connect" title="Find your next collaborator." />
+      <RoomHero variant="connect" eyebrow="Connect" title="Find your next collaborator." />
 
       {/* Post action sits to the right; tabs live inside the search shell below */}
       <div className="flex justify-end">
