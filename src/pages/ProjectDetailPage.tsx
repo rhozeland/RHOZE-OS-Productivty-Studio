@@ -17,10 +17,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Plus, Trash2, X, FileDown, Pencil, Check,
+  Plus, Trash2, X, Pencil, Check,
   Milestone, ListTodo, CalendarDays, Lock, Unlock, ArrowLeft,
 } from "lucide-react";
-import { exportProjectPDF } from "@/lib/export-project-pdf";
 import { useState } from "react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -321,36 +320,6 @@ const ProjectDetailPage = () => {
               </p>
             </div>
           )}
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-            onClick={() => {
-              toast.promise(
-                exportProjectPDF(
-                  project as any,
-                  goals,
-                  approvals as any,
-                  contract ? {
-                    status: contract.status,
-                    total_credits: contract.total_credits,
-                    released_credits: contract.released_credits,
-                    escrowed_credits: contract.escrowed_credits,
-                  } : undefined
-                ),
-                {
-                  loading: "Generating PDF...",
-                  success: "PDF downloaded!",
-                  error: "Failed to generate PDF",
-                }
-              );
-            }}
-          >
-            <FileDown className="h-4 w-4" />
-            Export PDF
-          </Button>
         </div>
       </div>
 
