@@ -157,7 +157,8 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
         </TabsContent>
 
         {/* ═══════ Activity — pure ledger, no buy module ═══════ */}
-        <TabsContent value="activity" className="mt-4 space-y-6">
+        <TabsContent value="activity" className="mt-4 space-y-4">
+          <ActivityBackButton />
           <ActivityFeed userId={user.id} />
         </TabsContent>
 
