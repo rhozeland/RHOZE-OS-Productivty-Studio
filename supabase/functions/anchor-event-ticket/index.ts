@@ -77,8 +77,20 @@ Deno.serve(async (req) => {
       .from("events")
       .select("id, creator_id, manifest_hash")
       .eq("id", ticket.event_id)
-      .single();
-    if (!ev) return respond(404, { error: "Event not found" });
+      .maybeSingle();
+    if (!ev) {
+      // Event was deleted — can't anchor, but don't surface as a hard error.
+      // Stop the retry loop by flagging it on the ticket.
+      await admin
+        .from("event_tickets")
+        .update({
+          anchor_attempts: 99,
+          anchor_last_attempt_at: new Date().toISOString(),
+          anchor_last_error: "Event no longer exists",
+        })
+        .eq("id", ticket.id);
+      return respond(200, { skipped: true, reason: "event_missing" });
+    }
 
     const isHolder = ticket.holder_id === user.id;
     const isHost = ev.creator_id === user.id;
