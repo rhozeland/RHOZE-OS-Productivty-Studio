@@ -36,6 +36,16 @@ import RevenueSplitConfig from "@/components/revenue/RevenueSplitConfig";
 import ProjectTools from "@/components/project/ProjectTools";
 import DropRoomLauncher from "@/components/project/DropRoomLauncher";
 import { useProjectRole } from "@/hooks/useProjectRole";
+import { useRhozeBalance } from "@/hooks/useRhozeBalance";
+import { getHoldTier } from "@/lib/tier-matrix";
+
+// Tier-based cap on smartboards per project. Play tier is unlimited.
+const SMARTBOARD_CAP_BY_TIER: Record<string, number> = {
+  spark: 2,
+  bloom: 5,
+  glow: 12,
+  play: Infinity,
+};
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -43,7 +53,9 @@ const ProjectDetailPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { canManage: canManageProject } = useProjectRole(id);
-  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const { balance: rhozeBalance } = useRhozeBalance();
+  const userTier = getHoldTier(rhozeBalance ?? 0);
+  const smartboardCap = SMARTBOARD_CAP_BY_TIER[userTier] ?? 2;
   const [editingHeader, setEditingHeader] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
