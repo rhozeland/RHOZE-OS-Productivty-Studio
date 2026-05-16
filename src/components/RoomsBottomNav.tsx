@@ -5,6 +5,7 @@ import { motion, useAnimationControls } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSidebar } from "@/components/ui/sidebar";
+import { todayGradient } from "@/lib/rhoze-gradients";
 import {
   Tooltip,
   TooltipContent,
