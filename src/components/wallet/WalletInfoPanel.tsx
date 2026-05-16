@@ -34,8 +34,7 @@ const WalletInfoPanel = () => {
     <div className="space-y-5">
       <div className="space-y-3">
         <p className="text-xs text-muted-foreground">
-          Your connected Solana wallet address is stored here for on-chain features.
-          One wallet per account — to change it, disconnect first then re-link from the header.
+          One wallet per account, bound on first connect. Disconnect here to re-link a different one.
         </p>
         {profile?.wallet_address ? (
           <div className="flex items-center gap-2">
