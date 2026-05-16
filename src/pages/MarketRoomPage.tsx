@@ -147,13 +147,6 @@ const MarketRoomPage = () => {
           {filtered.map((row) => {
             const grad = avatarGradientFor(row.ownerId || row.id);
             const ownerName = row.ownerName || "Creator";
-            const initials = ownerName
-              .split(" ")
-              .map((w) => w[0])
-              .filter(Boolean)
-              .slice(0, 2)
-              .join("")
-              .toUpperCase();
             return (
               <div
                 key={row.id}
@@ -168,28 +161,22 @@ const MarketRoomPage = () => {
                         if (row.ownerId) navigate(`/profiles/${row.ownerId}`);
                       }}
                       aria-label={`View ${ownerName}'s profile`}
-                      className="shrink-0 h-10 w-10 rounded-full overflow-hidden ring-1 ring-border/60 hover:ring-2 hover:ring-foreground/40 transition flex items-center justify-center"
+                      className="shrink-0 h-10 w-10 rounded-full overflow-hidden ring-1 ring-border/60 hover:ring-2 hover:ring-foreground/40 transition"
                       style={{ background: grad.background }}
                     >
-                      {row.ownerAvatar ? (
+                      {row.ownerAvatar && (
                         <img src={row.ownerAvatar} alt={ownerName} className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="text-[11px] font-semibold text-foreground/80">
-                          {initials || "·"}
-                        </span>
                       )}
                     </button>
                   </HoverCardTrigger>
                   <HoverCardContent side="right" align="start" className="w-64 p-3">
                     <div className="flex items-center gap-3">
                       <div
-                        className="h-12 w-12 rounded-full overflow-hidden ring-1 ring-border/60 flex items-center justify-center shrink-0"
+                        className="h-12 w-12 rounded-full overflow-hidden ring-1 ring-border/60 shrink-0"
                         style={{ background: grad.background }}
                       >
-                        {row.ownerAvatar ? (
+                        {row.ownerAvatar && (
                           <img src={row.ownerAvatar} alt="" className="h-full w-full object-cover" />
-                        ) : (
-                          <span className="text-sm font-semibold text-foreground/80">{initials || "·"}</span>
                         )}
                       </div>
                       <div className="min-w-0">
