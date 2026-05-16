@@ -13,14 +13,16 @@ import {
   EyeOff, Loader2, Settings, Store, Star, ExternalLink, ShoppingBag,
   Sparkles, Image as ImageIcon, Play, Music, FileText, Award, Shield,
   Zap, Coins, Calendar as CalendarIcon, User as UserIcon, FolderKanban,
-  Heart, ArrowRight, Search, Building2,
+  Heart, ArrowRight, Search, Building2, BadgeCheck,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import ProfileBadges from "@/components/profile/ProfileBadges";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
+import ProfileTierBadge from "@/components/profile/ProfileTierBadge";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
@@ -397,67 +399,59 @@ const ProfileDetailPage = () => {
               </div>
 
               <div className="flex-1 min-w-0 pb-1">
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-x-2 gap-y-1 flex-wrap">
                   <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground tracking-tight break-words leading-none">
                     {p.display_name || p.username || "Creator"}
                   </h1>
-                  <VerifiedArtistBadge status={p.verification_status} size="sm" showLabel={false} />
-                  {p.username && (
-                    <span className="text-sm text-muted-foreground leading-none">@{p.username}</span>
+                  {p.verification_status === "verified" && (
+                    <HoverCard openDelay={120} closeDelay={80}>
+                      <HoverCardTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label="Verified Artist — identity confirmed by Rhozeland"
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 hover:bg-sky-500/20 transition-colors"
+                        >
+                          <BadgeCheck className="h-3.5 w-3.5" />
+                        </button>
+                      </HoverCardTrigger>
+                      <HoverCardContent align="start" className="w-64 text-xs">
+                        <p className="font-semibold text-foreground flex items-center gap-1.5">
+                          <BadgeCheck className="h-3.5 w-3.5 text-sky-500" /> Verified Artist
+                        </p>
+                        <p className="mt-1 text-muted-foreground">
+                          Identity confirmed by Rhozeland. Unlocks paid services,
+                          coin launches, and protects fans from impersonation.
+                        </p>
+                      </HoverCardContent>
+                    </HoverCard>
                   )}
-                </div>
-                <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                  <VerifiedArtistBadge status={p.verification_status} size="xs" />
                   <ProfileBadges userId={id!} compact />
-                  {reviewStats && reviewStats.count > 0 && (
-                    <Badge variant="outline" className="text-[10px] gap-1 font-medium">
-                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {reviewStats.avg} ({reviewStats.count})
-                    </Badge>
-                  )}
                 </div>
+                {p.username && (
+                  <p className="text-sm text-muted-foreground leading-none mt-1.5">
+                    @{p.username}
+                  </p>
+                )}
               </div>
             </div>
 
-            {/* Roles + meta — compact, no emojis, no italics */}
-            <div className="mt-4 space-y-2.5">
-              {Array.isArray(p.creator_roles) && p.creator_roles.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {p.creator_roles.map((rid: string) => {
-                    const role = ROLE_BY_ID.get(rid);
-                    return (
-                      <span
-                        key={rid}
-                        className="rounded-full bg-foreground/5 border border-border/60 px-2.5 py-0.5 text-[11px] font-medium text-foreground/80"
-                      >
-                        {role?.label ?? rid}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
-              {p.headline && (
-                <p className="text-sm text-foreground/80 leading-snug">{p.headline}</p>
-              )}
-
-              <div className="flex items-center gap-x-4 gap-y-1 flex-wrap text-xs text-muted-foreground">
-                {p.location && (
-                  <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {p.location}</span>
-                )}
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" /> Joined {format(new Date(profile.created_at), "MMM yyyy")}
+            {/* Compact meta — pass badge + location + rating only */}
+            <div className="mt-4 flex items-center gap-x-3 gap-y-2 flex-wrap">
+              <ProfileTierBadge userId={id!} isOwnProfile={isOwnProfile} />
+              {p.location && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <MapPin className="h-3 w-3" /> {p.location}
                 </span>
-                {hasSellerContent && (
-                  <span className="flex items-center gap-1">
-                    <Store className="h-3 w-3" /> Active seller
-                  </span>
-                )}
-                {totalProofs > 0 && (
-                  <span className="flex items-center gap-1">
-                    <Shield className="h-3 w-3 text-primary" />
-                    {anchoredCount > 0 ? `${anchoredCount} verified earnings` : `${totalProofs} earnings`}
-                  </span>
-                )}
-              </div>
+              )}
+              {reviewStats && reviewStats.count > 0 && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                  {reviewStats.avg} <span className="opacity-70">({reviewStats.count})</span>
+                </span>
+              )}
+            </div>
+
+            <div className="mt-3 space-y-2.5">
 
               {/* Bio inline — moved out of About tab so it lives in the header */}
               {profile.bio && (
@@ -612,15 +606,78 @@ const ProfileDetailPage = () => {
               const totalCount = listings.length + events.length + spaces.length;
 
               return (
-                <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
-                      <Heart className="h-4 w-4 text-primary" /> Ways to support
-                    </h3>
-                    {totalCount > 0 && (
+                <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5 space-y-4">
+                  {/* ─── Verify this creator — collapsible header, sits ABOVE the tabs ─── */}
+                  <Collapsible open={reputationOpen} onOpenChange={setReputationOpen}>
+                    <CollapsibleTrigger asChild>
+                      <button className="w-full flex items-center justify-between gap-3 text-left">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Award className="h-4 w-4 text-primary shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-foreground">Verify this creator</p>
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              On-chain reputation, investor signal & proof of work.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {totalProofs > 0 && (
+                            <Badge variant="secondary" className="font-mono text-[10px]">
+                              {anchoredCount}/{totalProofs}
+                            </Badge>
+                          )}
+                          <ArrowRight className={cn("h-4 w-4 text-muted-foreground transition-transform", reputationOpen && "rotate-90")} />
+                        </div>
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-4 space-y-4">
+                      {isOwnProfile && totalProofs > 0 && anchoredCount < totalProofs && (
+                        <div className="flex justify-end">
+                          <AnchorButton proofs={proofs!} />
+                        </div>
+                      )}
+                      <CreatorReadinessCard creatorId={id!} memberSince={p.created_at} />
+                      {totalProofs > 0 && (
+                        <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
+                          <div className="grid grid-cols-3 gap-3">
+                            {Object.entries(
+                              proofs!.reduce<Record<string, number>>((acc, pr) => {
+                                acc[pr.action_type] = (acc[pr.action_type] || 0) + 1;
+                                return acc;
+                              }, {})
+                            ).sort(([, a], [, b]) => b - a).slice(0, 3).map(([type, count]) => {
+                              const meta = PROOF_TYPE_META[type] ?? {
+                                label: type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+                                href: null as string | null,
+                              };
+                              const inner = (
+                                <>
+                                  <p className="text-2xl font-bold text-foreground">{count}</p>
+                                  <p className="text-xs text-muted-foreground">{meta.label}</p>
+                                </>
+                              );
+                              return meta.href ? (
+                                <Link key={type} to={meta.href} className="rounded-lg border border-border bg-card/50 p-3 text-center transition-colors hover:bg-muted/60">
+                                  {inner}
+                                </Link>
+                              ) : (
+                                <div key={type} className="rounded-lg border border-border bg-card/50 p-3 text-center">
+                                  {inner}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </CollapsibleContent>
+                  </Collapsible>
+
+                  {totalCount > 0 && (
+                    <div className="flex justify-end -mb-2">
                       <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{totalCount} total</span>
-                    )}
-                  </div>
+                    </div>
+                  )}
+
                   <Tabs defaultValue="launches">
                     <TabsList className="w-full justify-start overflow-x-auto bg-muted/40 p-1 h-auto">
                       {tabs.map(({ value, label, icon: Icon, count }) => (
@@ -731,93 +788,7 @@ const ProfileDetailPage = () => {
                     )}
                   </Tabs>
 
-                  {/* ─── Inline: Verify this creator (collapsible footer) ─── */}
-                  <Collapsible open={reputationOpen} onOpenChange={setReputationOpen}>
-                    <div className="mt-5 pt-4 border-t border-border/50">
-                      <CollapsibleTrigger asChild>
-                        <button className="w-full flex items-center justify-between gap-3 text-left">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <Award className="h-4 w-4 text-primary shrink-0" />
-                            <div className="min-w-0">
-                              <p className="text-sm font-semibold text-foreground">Verify this creator</p>
-                              <p className="text-[11px] text-muted-foreground truncate">
-                                On-chain reputation, investor signal & proof of work.
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            {totalProofs > 0 && (
-                              <Badge variant="secondary" className="font-mono text-[10px]">
-                                {anchoredCount}/{totalProofs}
-                              </Badge>
-                            )}
-                            <ArrowRight className={cn("h-4 w-4 text-muted-foreground transition-transform", reputationOpen && "rotate-90")} />
-                          </div>
-                        </button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="mt-4 space-y-4">
-                        {isOwnProfile && totalProofs > 0 && anchoredCount < totalProofs && (
-                          <div className="flex justify-end">
-                            <AnchorButton proofs={proofs!} />
-                          </div>
-                        )}
-                        <CreatorReadinessCard creatorId={id!} memberSince={p.created_at} />
-                        {totalProofs > 0 && (
-                          <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
-                            <div className="grid grid-cols-3 gap-3">
-                              {Object.entries(
-                                proofs!.reduce<Record<string, number>>((acc, pr) => {
-                                  acc[pr.action_type] = (acc[pr.action_type] || 0) + 1;
-                                  return acc;
-                                }, {})
-                              ).sort(([, a], [, b]) => b - a).slice(0, 3).map(([type, count]) => {
-                                const meta = PROOF_TYPE_META[type] ?? {
-                                  label: type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-                                  href: null as string | null,
-                                };
-                                const inner = (
-                                  <>
-                                    <p className="text-2xl font-bold text-foreground">{count}</p>
-                                    <p className="text-xs text-muted-foreground">{meta.label}</p>
-                                  </>
-                                );
-                                return meta.href ? (
-                                  <Link key={type} to={meta.href} className="rounded-lg border border-border bg-card/50 p-3 text-center transition-colors hover:bg-muted/60">
-                                    {inner}
-                                  </Link>
-                                ) : (
-                                  <div key={type} className="rounded-lg border border-border bg-card/50 p-3 text-center">
-                                    {inner}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                            {anchoredCount > 0 && (
-                              <p className="text-xs text-muted-foreground text-center mt-3 flex items-center justify-center gap-1">
-                                <ExternalLink className="h-3 w-3" />
-                                Independently verifiable on the public ledger
-                              </p>
-                            )}
-                          </div>
-                        )}
-                        {reviewStats && reviewStats.count > 0 && (
-                          <div className="rounded-xl border border-border/50 bg-muted/20 p-4 flex items-center gap-4">
-                            <div className="text-center">
-                              <p className="text-3xl font-bold text-foreground">{reviewStats.avg}</p>
-                              <div className="flex items-center gap-0.5 mt-1 justify-center">
-                                {[1, 2, 3, 4, 5].map((s) => (
-                                  <Star key={s} className={cn("h-3.5 w-3.5", s <= Math.round(reviewStats.avg) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30")} />
-                                ))}
-                              </div>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              {reviewStats.count} rating{reviewStats.count !== 1 ? "s" : ""} from clients & collaborators.
-                            </p>
-                          </div>
-                        )}
-                      </CollapsibleContent>
-                    </div>
-                  </Collapsible>
+
                 </div>
               );
             })()}
