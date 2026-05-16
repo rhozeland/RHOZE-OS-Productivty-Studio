@@ -606,15 +606,78 @@ const ProfileDetailPage = () => {
               const totalCount = listings.length + events.length + spaces.length;
 
               return (
-                <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
-                      <Heart className="h-4 w-4 text-primary" /> Ways to support
-                    </h3>
-                    {totalCount > 0 && (
+                <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5 space-y-4">
+                  {/* ─── Verify this creator — collapsible header, sits ABOVE the tabs ─── */}
+                  <Collapsible open={reputationOpen} onOpenChange={setReputationOpen}>
+                    <CollapsibleTrigger asChild>
+                      <button className="w-full flex items-center justify-between gap-3 text-left">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Award className="h-4 w-4 text-primary shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-foreground">Verify this creator</p>
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              On-chain reputation, investor signal & proof of work.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {totalProofs > 0 && (
+                            <Badge variant="secondary" className="font-mono text-[10px]">
+                              {anchoredCount}/{totalProofs}
+                            </Badge>
+                          )}
+                          <ArrowRight className={cn("h-4 w-4 text-muted-foreground transition-transform", reputationOpen && "rotate-90")} />
+                        </div>
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-4 space-y-4">
+                      {isOwnProfile && totalProofs > 0 && anchoredCount < totalProofs && (
+                        <div className="flex justify-end">
+                          <AnchorButton proofs={proofs!} />
+                        </div>
+                      )}
+                      <CreatorReadinessCard creatorId={id!} memberSince={p.created_at} />
+                      {totalProofs > 0 && (
+                        <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
+                          <div className="grid grid-cols-3 gap-3">
+                            {Object.entries(
+                              proofs!.reduce<Record<string, number>>((acc, pr) => {
+                                acc[pr.action_type] = (acc[pr.action_type] || 0) + 1;
+                                return acc;
+                              }, {})
+                            ).sort(([, a], [, b]) => b - a).slice(0, 3).map(([type, count]) => {
+                              const meta = PROOF_TYPE_META[type] ?? {
+                                label: type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+                                href: null as string | null,
+                              };
+                              const inner = (
+                                <>
+                                  <p className="text-2xl font-bold text-foreground">{count}</p>
+                                  <p className="text-xs text-muted-foreground">{meta.label}</p>
+                                </>
+                              );
+                              return meta.href ? (
+                                <Link key={type} to={meta.href} className="rounded-lg border border-border bg-card/50 p-3 text-center transition-colors hover:bg-muted/60">
+                                  {inner}
+                                </Link>
+                              ) : (
+                                <div key={type} className="rounded-lg border border-border bg-card/50 p-3 text-center">
+                                  {inner}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </CollapsibleContent>
+                  </Collapsible>
+
+                  {totalCount > 0 && (
+                    <div className="flex justify-end -mb-2">
                       <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{totalCount} total</span>
-                    )}
-                  </div>
+                    </div>
+                  )}
+
                   <Tabs defaultValue="launches">
                     <TabsList className="w-full justify-start overflow-x-auto bg-muted/40 p-1 h-auto">
                       {tabs.map(({ value, label, icon: Icon, count }) => (
