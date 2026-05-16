@@ -229,7 +229,7 @@ const ActivityQuickList = ({ userId }: { userId: string | null }) => {
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("credit_transactions")
-        .select("id, amount, description, source, created_at")
+        .select("id, amount, description, type, created_at")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(6);
@@ -237,7 +237,7 @@ const ActivityQuickList = ({ userId }: { userId: string | null }) => {
         id: string;
         amount: number;
         description: string | null;
-        source: string | null;
+        type: string | null;
         created_at: string;
       }>;
     },
