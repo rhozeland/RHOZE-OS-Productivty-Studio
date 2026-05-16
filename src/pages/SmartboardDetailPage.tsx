@@ -177,69 +177,86 @@ const SmartboardDetailPage = () => {
     }
   }, [board]);
 
+  // Pull the user's liked + saved Flow items so they can re-use them as
+  // smartboard memories. Only loaded once the "From Flow" tab is opened.
+  const { data: flowMemories } = useQuery({
+    queryKey: ["flow-memories", user?.id],
+    queryFn: async () => {
+      const { data: interactions, error: iErr } = await supabase
+        .from("flow_interactions")
+        .select("flow_item_id, action, created_at")
+        .eq("user_id", user!.id)
+        .in("action", ["like", "save"])
+        .order("created_at", { ascending: false })
+        .limit(60);
+      if (iErr) throw iErr;
+      const ids = Array.from(new Set((interactions ?? []).map((i: any) => i.flow_item_id)));
+      if (ids.length === 0) return [];
+      const { data: items, error: fErr } = await supabase
+        .from("flow_items")
+        .select("id, title, description, content_type, file_url, link_url, category, creator_name")
+        .in("id", ids);
+      if (fErr) throw fErr;
+      return items ?? [];
+    },
+    enabled: !!user && addOpen && itemType === "flow",
+  });
+
   const addItem = useMutation({
     mutationFn: async () => {
       let fileUrl: string | null = null;
-      const uploadTypes = ["image", "video", "audio", "pdf"];
+      let resolvedType: string = itemType;
+      let resolvedContent: string | null = itemContent || null;
+      let resolvedLink: string | null = null;
 
-      // Upload file if provided
-      if (uploadTypes.includes(itemType) && imageFile) {
-        // Belt-and-suspenders: refuse to send anything the allowlist already rejected.
-        if (uploadOk === false) {
-          throw new Error("This file type isn't allowed by upload policy.");
-        }
-        // Path layout enforced by buildSmartboardFilePath so RLS stays happy.
+      if (itemType === "upload") {
+        if (!imageFile) throw new Error("Pick a file to upload.");
+        if (uploadOk === false) throw new Error("This file type isn't allowed by upload policy.");
+        // Auto-detect content_type from MIME (image / video / audio).
+        const mime = imageFile.type || "";
+        if (mime.startsWith("image/")) resolvedType = "image";
+        else if (mime.startsWith("video/")) resolvedType = "video";
+        else if (mime.startsWith("audio/")) resolvedType = "audio";
+        else throw new Error("Only images, video, and audio uploads are supported.");
         const path = buildSmartboardFilePath(id!, user!.id, imageFile, { kind: "item" });
         const { url, error: uploadErrMsg } = await uploadAndGetUrl(SMARTBOARD_BUCKET, path, imageFile);
         if (uploadErrMsg) throw new Error(uploadErrMsg);
         fileUrl = url;
-      }
-
-      // For image/video/audio/pdf with URL but no file upload, use link as file_url
-      if (!fileUrl && uploadTypes.includes(itemType) && itemLink) {
-        fileUrl = itemLink;
+      } else if (itemType === "link") {
+        if (!itemLink.trim()) throw new Error("Paste a link to add.");
+        resolvedType = "link";
+        resolvedLink = itemLink.trim();
+      } else if (itemType === "flow") {
+        const memory = (flowMemories ?? []).find((f: any) => f.id === selectedFlowItemId);
+        if (!memory) throw new Error("Pick a Flow memory to add.");
+        resolvedType = memory.content_type === "text" ? (memory.link_url ? "link" : "note") : memory.content_type;
+        resolvedContent = memory.description || null;
+        resolvedLink = memory.link_url || null;
+        fileUrl = memory.file_url || null;
+      } else if (itemType === "note") {
+        if (!itemContent.trim()) throw new Error("Write something for your note.");
       }
 
       const { error } = await supabase.from("smartboard_items").insert({
         smartboard_id: id!,
         user_id: user!.id,
-        content_type: itemType,
-        title: itemTitle || null,
-        content: itemContent || null,
-        link_url: itemType === "link" ? itemLink : null,
+        content_type: resolvedType,
+        title: null,
+        content: resolvedContent,
+        link_url: resolvedLink,
         file_url: fileUrl,
       });
       if (error) throw error;
-
-      // Cross-post to Flow Mode if opted in
-      if (alsoPostToFlow) {
-        const categoryMap: Record<string, string> = {
-          image: "Photo", video: "Video", audio: "Music", note: "Writing", link: "Writing", pdf: "Writing",
-        };
-        await supabase.from("flow_items").insert({
-          user_id: user!.id,
-          title: itemTitle || `From board`,
-          description: itemContent || null,
-          category: categoryMap[itemType] || "Photo",
-          content_type: itemType === "note" || itemType === "link" ? "text" : "file",
-          file_url: fileUrl || (itemType === "link" ? itemLink : null),
-          link_url: itemType === "link" ? itemLink : null,
-        });
-      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["smartboard-items", id] });
-      if (alsoPostToFlow) {
-        queryClient.invalidateQueries({ queryKey: ["flow-items"] });
-      }
       setAddOpen(false);
-      setItemTitle("");
       setItemContent("");
       setItemLink("");
       setImageFile(null);
       setUploadOk(null);
-      setAlsoPostToFlow(false);
-      toast.success(alsoPostToFlow ? "Added to board & Flow Mode!" : "Item added!");
+      setSelectedFlowItemId(null);
+      toast.success("Added to board");
     },
     onError: (e: any) => toast.error(e.message),
   });
