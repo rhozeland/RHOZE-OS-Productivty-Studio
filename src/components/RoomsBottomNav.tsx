@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Sparkles, Store, Coins } from "lucide-react";
+import { Sun, Users, Coins } from "lucide-react";
 import { motion, useAnimationControls } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
