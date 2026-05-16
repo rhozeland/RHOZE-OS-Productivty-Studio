@@ -59,9 +59,15 @@ const WalletInfoPanel = () => {
             </Button>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            No wallet connected. Connect your wallet using the button in the header to link it.
-          </p>
+          <div className="rounded-lg border border-dashed border-border bg-muted/20 p-4 space-y-3">
+            <p className="text-sm text-foreground font-medium">No wallet connected</p>
+            <p className="text-xs text-muted-foreground">
+              Connect a Solana wallet (Phantom, Solflare, Backpack…) to enable cash outs,
+              on-chain claims, and Artist Share trades. Your wallet is bound 1:1 to your account
+              the first time you connect.
+            </p>
+            <WalletButton />
+          </div>
         )}
       </div>
       <Separator />
