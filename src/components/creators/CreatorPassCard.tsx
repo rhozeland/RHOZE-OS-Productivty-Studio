@@ -476,6 +476,7 @@ const CreatorPassCard = () => {
         />
       </div>
 
+      <WorksLightbox open={worksOpen} onOpenChange={setWorksOpen} userId={user.id} />
     </div>
   );
 };
