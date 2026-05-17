@@ -313,6 +313,8 @@ const DiscoverPage = () => {
     return counts;
   }, [streamTab, eventCategoryRows, spaceCategoryRows]);
 
+  const todayGrad = todayGradient();
+
   return (
     <div className="max-w-6xl mx-auto pb-20 space-y-6">
       {/* ─── Personal greeting (signed in) ───────────────────────────── */}
