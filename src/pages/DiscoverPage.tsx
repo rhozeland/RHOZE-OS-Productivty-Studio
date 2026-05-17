@@ -40,6 +40,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { RegionMarket } from "@/lib/regions";
+import { todayGradient } from "@/lib/rhoze-gradients";
 import {
   ArrowRight,
   Coins,
@@ -312,6 +313,8 @@ const DiscoverPage = () => {
     return counts;
   }, [streamTab, eventCategoryRows, spaceCategoryRows]);
 
+  const todayGrad = todayGradient();
+
   return (
     <div className="max-w-6xl mx-auto pb-20 space-y-6">
       {/* ─── Personal greeting (signed in) ───────────────────────────── */}
@@ -327,17 +330,13 @@ const DiscoverPage = () => {
             <span
               className="inline-block"
               style={{
-                backgroundImage:
-                  "linear-gradient(to right, hsl(330 81% 60%), hsl(292 84% 61%), hsl(38 92% 50%))",
+                backgroundImage: todayGrad.text,
                 WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent",
               }}
             >
               {firstName}.
             </span>
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Everything happening on Rhozeland — in one breath.
-          </p>
         </motion.header>
       )}
 
