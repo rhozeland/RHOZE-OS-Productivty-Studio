@@ -40,6 +40,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { RegionMarket } from "@/lib/regions";
+import { todayGradient } from "@/lib/rhoze-gradients";
 import {
   ArrowRight,
   Coins,
