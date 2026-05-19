@@ -23,6 +23,7 @@ import ListingDetailPage from "@/pages/ListingDetailPage";
 import SmartboardDetailPage from "@/pages/SmartboardDetailPage";
 import SmartboardPresentationPage from "@/pages/SmartboardPresentationPage";
 import ProfileDetailPage from "@/pages/ProfileDetailPage";
+import ProfilesPage from "@/pages/ProfilesPage";
 import MessagesPage from "@/pages/MessagesPage";
 import SettingsPage from "@/pages/SettingsPage";
 import ServicesPage from "@/pages/ServicesPage";
@@ -315,7 +316,7 @@ const App = () => (
                 <Route path="/marketplace/:id" element={<ListingDetailPage />} />
                 <Route path="/seller" element={<Navigate to="/settings" replace />} />
                 <Route path="/inquiries" element={<Navigate to="/messages" replace />} />
-                <Route path="/profiles" element={<Navigate to="/discover" replace />} />
+                <Route path="/profiles" element={<ProfilesPage />} />
                 <Route path="/profiles/:id" element={<ProfileDetailPage />} />
                 {/* Centralized legacy aliases — generated from NAV_ALIASES.
                     Add a new redirect by adding a `matchPaths` entry to a
