@@ -81,12 +81,12 @@ const AuthedMyWorkPage = ({ userId }: { userId: string }) => {
   // === Projects count (active = not completed/cancelled) ===
   const { data: projects } = useQuery({
     queryKey: ["my-work-projects", userId],
-    queryFn: async () => {
-      const ownerRes = await supabase
+    queryFn: async (): Promise<Array<{ id: string; status: string | null }>> => {
+      const ownerRes: any = await supabase
         .from("projects")
         .select("id,status")
         .eq("owner_id", userId);
-      const collabRes = await supabase
+      const collabRes: any = await supabase
         .from("project_collaborators")
         .select("project_id")
         .eq("user_id", userId);
@@ -94,12 +94,12 @@ const AuthedMyWorkPage = ({ userId }: { userId: string }) => {
       const collabIds = (collabRes.data ?? []).map((r: any) => r.project_id);
       let collabProjects: any[] = [];
       if (collabIds.length) {
-        const r = await supabase.from("projects").select("id,status").in("id", collabIds);
+        const r: any = await supabase.from("projects").select("id,status").in("id", collabIds);
         collabProjects = r.data ?? [];
       }
       const all = [...(ownerRes.data ?? []), ...collabProjects];
       const seen = new Set<string>();
-      return all.filter((p) => (seen.has(p.id) ? false : (seen.add(p.id), true)));
+      return all.filter((p: any) => (seen.has(p.id) ? false : (seen.add(p.id), true)));
     },
   });
   const activeProjectsCount = (projects ?? []).filter(
