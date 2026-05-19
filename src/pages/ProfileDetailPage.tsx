@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import ProfileBadges from "@/components/profile/ProfileBadges";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
+import VerifiedProBadge from "@/components/profile/VerifiedProBadge";
 import ProfileTierBadge from "@/components/profile/ProfileTierBadge";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
@@ -419,6 +420,7 @@ const ProfileDetailPage = () => {
                   <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground tracking-tight break-words leading-none">
                     {p.display_name || p.username || "Creator"}
                   </h1>
+                  {p.verified_pro_at && <VerifiedProBadge size="md" />}
                   {p.verification_status === "verified" && (
                     <HoverCard openDelay={120} closeDelay={80}>
                       <HoverCardTrigger asChild>

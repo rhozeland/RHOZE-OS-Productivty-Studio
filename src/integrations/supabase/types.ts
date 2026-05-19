@@ -2507,6 +2507,7 @@ export type Database = {
           username: string | null
           verification_status: string
           verified_at: string | null
+          verified_pro_at: string | null
           wallet_address: string | null
           wallet_locked: boolean
           youtube_url: string | null
@@ -2563,6 +2564,7 @@ export type Database = {
           username?: string | null
           verification_status?: string
           verified_at?: string | null
+          verified_pro_at?: string | null
           wallet_address?: string | null
           wallet_locked?: boolean
           youtube_url?: string | null
@@ -2619,6 +2621,7 @@ export type Database = {
           username?: string | null
           verification_status?: string
           verified_at?: string | null
+          verified_pro_at?: string | null
           wallet_address?: string | null
           wallet_locked?: boolean
           youtube_url?: string | null
@@ -5125,6 +5128,7 @@ export type Database = {
         Args: { _buyer_id: string; _listing_id: string }
         Returns: string
       }
+      purchase_verified_pro: { Args: never; Returns: Json }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {

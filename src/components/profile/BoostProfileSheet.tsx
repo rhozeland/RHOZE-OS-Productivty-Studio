@@ -4,7 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Sparkles, Globe, Zap, Check } from "lucide-react";
+import { Sparkles, Globe, Zap, Check, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -84,7 +84,7 @@ export function BoostProfileSheet({ open, onOpenChange }: Props) {
       if (!user) return null;
       const { data } = await supabase
         .from("profiles")
-        .select("featured_pin_until, featured_tier")
+        .select("featured_pin_until, featured_tier, verified_pro_at")
         .eq("user_id", user.id)
         .maybeSingle();
       return data;
@@ -109,6 +109,24 @@ export function BoostProfileSheet({ open, onOpenChange }: Props) {
       toast.error(err?.message ?? "Could not purchase boost");
     },
   });
+
+  const PRO_CREDITS = 2900;
+  const purchasePro = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc("purchase_verified_pro");
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Welcome to Verified Pro — fee floor now 10%.");
+      qc.invalidateQueries({ queryKey: ["user-credits-balance"] });
+      qc.invalidateQueries({ queryKey: ["profile-featured-pin"] });
+      qc.invalidateQueries({ queryKey: ["profile", user?.id] });
+      onOpenChange(false);
+    },
+    onError: (err: any) => toast.error(err?.message ?? "Could not upgrade"),
+  });
+
 
   const chosen = SKUS.find((s) => s.id === selected)!;
   const balance = credits ?? 0;
@@ -177,6 +195,63 @@ export function BoostProfileSheet({ open, onOpenChange }: Props) {
             );
           })}
         </div>
+
+        {/* Phase B3 — Verified Pro one-time upgrade */}
+        {pin?.verified_pro_at ? (
+          <div className="mt-5 rounded-xl bg-gradient-to-r from-amber-500/10 via-fuchsia-500/10 to-indigo-500/10 border border-fuchsia-500/30 p-4">
+            <div className="flex items-center gap-2 font-semibold">
+              <BadgeCheck className="h-4 w-4 text-fuchsia-500" /> You're Verified Pro
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Custom banners unlocked · Connect priority · platform fee floored at 10%
+            </p>
+          </div>
+        ) : (
+          <Card className="mt-5 p-4 border-2 border-fuchsia-500/30 bg-gradient-to-br from-amber-500/5 via-fuchsia-500/5 to-indigo-500/5">
+            <div className="flex items-start gap-3">
+              <div className="shrink-0 h-10 w-10 rounded-full bg-gradient-to-br from-amber-500 via-fuchsia-500 to-indigo-500 text-white flex items-center justify-center">
+                <BadgeCheck className="h-5 w-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="font-semibold flex items-center gap-2">
+                    Verified Pro
+                    <Badge variant="secondary" className="text-[10px]">One-time</Badge>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold">{PRO_CREDITS.toLocaleString()} Credits</div>
+                    <div className="text-xs text-muted-foreground">≈ $29 forever</div>
+                  </div>
+                </div>
+                <ul className="mt-2 space-y-1">
+                  {[
+                    "Pro chip next to your name",
+                    "Upload a custom banner image",
+                    "Priority in Connect matching",
+                    "Platform fee floored at 10% (skip Spark/Bloom)",
+                  ].map((p) => (
+                    <li key={p} className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <Check className="h-3 w-3 text-emerald-500 shrink-0" /> {p}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  size="sm"
+                  className="mt-3 w-full bg-gradient-to-r from-amber-500 via-fuchsia-500 to-indigo-500 text-white border-0 hover:opacity-90"
+                  disabled={balance < PRO_CREDITS || purchasePro.isPending}
+                  onClick={() => purchasePro.mutate()}
+                >
+                  {purchasePro.isPending
+                    ? "Upgrading…"
+                    : balance >= PRO_CREDITS
+                      ? "Upgrade to Verified Pro"
+                      : `Need ${(PRO_CREDITS - balance).toLocaleString()} more Credits`}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
 
         <div className="mt-5 space-y-3">
           <div className="flex items-center justify-between text-sm">
