@@ -888,6 +888,11 @@ const ProfileDetailPage = () => {
           />
         )}
 
+        {/* Phase B2 — self-serve profile boost (owner only) */}
+        {isOwnProfile && (
+          <BoostProfileSheet open={boostOpen} onOpenChange={setBoostOpen} />
+        )}
+
         {/* Umbrella "Back this creator" sheet — funnels into Shares / Show up / Work / DM */}
         {!isOwnProfile && id && (
           <SupportCreatorSheet
