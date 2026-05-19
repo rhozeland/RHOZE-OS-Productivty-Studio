@@ -377,14 +377,45 @@ const AuthedMyWorkPage = ({ userId }: { userId: string }) => {
 
         {/* ── SAVED ── */}
         <TabsContent value="saved" className="mt-4">
-          {savedItems.length === 0 ? (
+          {savedRows.length === 0 ? (
             <EmptyState
               icon={Bookmark}
               title="Nothing saved yet. Browse Discover and tap the save icon on any creator."
               ctaLabel="Go to Discover"
               ctaTo="/discover"
             />
-          ) : null}
+          ) : (
+            <ScrollArea className="max-h-[calc(100vh-18rem)]">
+              <div className="space-y-2">
+                {savedRows.map((row) => (
+                  <div
+                    key={row.key}
+                    className="surface-card flex items-center gap-4 px-4 py-3 rounded-2xl transition-shadow hover:shadow-md"
+                  >
+                    <Avatar name={row.name} url={row.avatar} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {row.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">{row.sub}</p>
+                    </div>
+                    <SaveButton type={row.type} id={row.id} size="sm" stopPropagation={false} />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-full shrink-0 gap-1"
+                      onClick={() => {
+                        if (row.href.startsWith("http")) window.open(row.href, "_blank");
+                        else navigate(row.href);
+                      }}
+                    >
+                      Open <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
         </TabsContent>
       </Tabs>
     </div>
