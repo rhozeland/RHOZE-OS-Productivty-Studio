@@ -359,7 +359,7 @@ const ProfileDetailPage = () => {
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8 p-4 md:p-8 transition-colors duration-500" style={{ background: profileBg || undefined }}>
-      <div className="space-y-5 max-w-4xl mx-auto">
+      <div className="space-y-5 max-w-6xl mx-auto">
 
         {/* ─── Hero Header ─── */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
