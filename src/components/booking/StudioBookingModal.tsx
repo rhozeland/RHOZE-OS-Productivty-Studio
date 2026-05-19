@@ -25,6 +25,7 @@ import {
   ChevronRight,
   Minus,
   Plus,
+  Coins,
 } from "lucide-react";
 import {
   format,
@@ -43,7 +44,10 @@ import PaySolAndVerify from "@/components/PaySolAndVerify";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
 
 type Step = "schedule" | "details" | "payment";
-type PaymentMethod = "card" | "crypto";
+type PaymentMethod = "credits" | "card" | "crypto";
+
+// 100 Credits ≈ $1 (mirrors PRO_CREDITS pricing + event-ticket checkout).
+const CREDITS_PER_USD = 100;
 
 interface StudioBookingModalProps {
   open: boolean;
@@ -66,12 +70,27 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
 
   const [step, setStep] = useState<Step>("schedule");
   const [currentWeek, setCurrentWeek] = useState(new Date());
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("credits");
   const [notes, setNotes] = useState("");
   const [guestCount, setGuestCount] = useState(1);
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [cardToken, setCardToken] = useState<string | null>(null);
+
+  // Fetch the user's in-app credit balance
+  const { data: userCredits = 0 } = useQuery({
+    queryKey: ["user-credits", user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      const { data } = await supabase
+        .from("user_credits")
+        .select("balance")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return Number((data as any)?.balance ?? 0);
+    },
+    enabled: !!user && open,
+  });
 
   // Drag state
   const [isDragging, setIsDragging] = useState(false);
@@ -117,7 +136,7 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
 
   const resetForm = () => {
     setStep("schedule");
-    setPaymentMethod("card");
+    setPaymentMethod("credits");
     setNotes("");
     setGuestCount(1);
     setSelectedStaffId(null);
@@ -174,6 +193,8 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
       : 0;
   const totalPrice = studio.hourly_rate * selectedDuration;
   const solPrice = +(totalPrice / 150).toFixed(4);
+  const creditsPrice = Math.max(1, Math.round(totalPrice * CREDITS_PER_USD));
+  const hasEnoughCredits = userCredits >= creditsPrice;
   const maxGuests = studio.max_guests ?? 10;
 
   const canProceedToDetails = dragDate && dragStartHour !== null && dragEndHour !== null && selectedDuration > 0;
@@ -236,7 +257,20 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
 
     setLoading(true);
     try {
-      if (paymentMethod === "card") {
+      if (paymentMethod === "credits") {
+        if (!hasEnoughCredits) {
+          toast.error("Not enough Credits");
+          setLoading(false);
+          return;
+        }
+        const { error: creditError } = await supabase.rpc("adjust_user_credits", {
+          _user_id: user.id,
+          _amount: -creditsPrice,
+          _type: "usage",
+          _description: `Studio booking: ${studio.name} — ${selectedDuration}h`,
+        });
+        if (creditError) throw creditError;
+      } else if (paymentMethod === "card") {
         const token = tokenOverride || cardToken;
         if (!token) {
           toast.error("Please enter your card details");
@@ -287,6 +321,7 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
 
       queryClient.invalidateQueries({ queryKey: ["studio-bookings"] });
       queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
+      queryClient.invalidateQueries({ queryKey: ["user-credits"] });
 
       toast.success("Studio booked successfully!");
       onOpenChange(false);
@@ -662,13 +697,40 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
               <div className="border-t border-border pt-2 flex items-center justify-between">
                 <span className="font-medium text-foreground">Total</span>
                 <span className="font-display text-xl font-bold text-primary">
-                  {paymentMethod === "card" ? `$${totalPrice}` : `~${solPrice} SOL`}
+                  {paymentMethod === "credits"
+                    ? `${creditsPrice.toLocaleString()} Credits`
+                    : paymentMethod === "card"
+                    ? `$${totalPrice}`
+                    : `~${solPrice} SOL`}
                 </span>
               </div>
             </div>
 
             {/* Payment method */}
             <div className="grid gap-3">
+              {/* Credits */}
+              <button
+                onClick={() => setPaymentMethod("credits")}
+                className={cn(
+                  "flex items-center gap-4 rounded-xl border p-4 transition-all text-left",
+                  paymentMethod === "credits"
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:bg-muted/50"
+                )}
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Coins className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-foreground">Pay with Credits</p>
+                  <p className="text-xs text-muted-foreground">
+                    {creditsPrice.toLocaleString()} Credits · Balance: {userCredits.toLocaleString()}
+                    {!hasEnoughCredits && " (insufficient)"}
+                  </p>
+                </div>
+                {paymentMethod === "credits" && <Check className="h-5 w-5 text-primary" />}
+              </button>
+
               <button
                 onClick={() => setPaymentMethod("card")}
                 className={cn(
@@ -713,7 +775,15 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
             </div>
 
             {/* Payment form */}
-            {paymentMethod === "card" ? (
+            {paymentMethod === "credits" ? (
+              <Button
+                className="w-full"
+                disabled={loading || !hasEnoughCredits}
+                onClick={() => handleConfirm()}
+              >
+                {loading ? "Booking..." : `Confirm · ${creditsPrice.toLocaleString()} Credits`}
+              </Button>
+            ) : paymentMethod === "card" ? (
               <SquareCardForm amount={totalPrice} onTokenize={handleCardTokenize} disabled={loading} />
             ) : (
               <PaySolAndVerify

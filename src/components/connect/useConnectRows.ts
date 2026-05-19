@@ -30,6 +30,7 @@ export interface ConnectRow {
   description?: string | null;
   detailHref: string;
   coverUrl?: string | null;
+  isPro?: boolean;
 }
 
 export const KIND_META: Record<
@@ -47,7 +48,7 @@ const fetchProfiles = async (ids: (string | null | undefined)[]) => {
   if (unique.length === 0) return new Map<string, any>();
   const { data } = await supabase
     .from("profiles")
-    .select("user_id,display_name,username,avatar_url")
+    .select("user_id,display_name,username,avatar_url,verified_pro_at")
     .in("user_id", unique);
   return new Map((data ?? []).map((p: any) => [p.user_id, p]));
 };
@@ -84,6 +85,7 @@ export const useHireRows = (enabled = true) =>
           ownerId: l.user_id,
           ownerName: p?.display_name || p?.username || null,
           ownerAvatar: p?.avatar_url || null,
+          isPro: !!p?.verified_pro_at,
           category: l.category,
           description: l.description,
           detailHref: `/marketplace/${l.id}`,
@@ -119,6 +121,7 @@ export const useSpaceRows = (enabled = true) =>
           ownerId: s.owner_id,
           ownerName: p?.display_name || p?.username || null,
           ownerAvatar: p?.avatar_url || null,
+          isPro: !!p?.verified_pro_at,
           category: s.category,
           description: s.short_description,
           detailHref: `/studios/${s.id}`,
@@ -163,6 +166,7 @@ export const useCallRows = (enabled = true) =>
           ownerId: l.user_id,
           ownerName: p?.display_name || p?.username || null,
           ownerAvatar: p?.avatar_url || null,
+          isPro: !!p?.verified_pro_at,
           category: l.category,
           description: l.description,
           detailHref: `/marketplace/${l.id}`,
@@ -208,6 +212,7 @@ export const useEventRows = (enabled = true) =>
           ownerId: e.host_id,
           ownerName: p?.display_name || p?.username || null,
           ownerAvatar: p?.avatar_url || null,
+          isPro: !!p?.verified_pro_at,
           category: e.is_online ? "online" : "in-person",
           description: e.description,
           detailHref: `/spaces/events/${e.id}`,
@@ -226,12 +231,14 @@ export const useMixedConnectRows = (enabled = true) => {
 
   const isLoading =
     hire.isLoading && space.isLoading && call.isLoading && event.isLoading;
-  const rows = interleave([
+  const mixed = interleave([
     hire.data ?? [],
     space.data ?? [],
     call.data ?? [],
     event.data ?? [],
   ]);
+  // Verified Pro creators float to the top of the matchmaking deck.
+  const rows = [...mixed.filter((r) => r.isPro), ...mixed.filter((r) => !r.isPro)];
   return { rows, isLoading };
 };
 

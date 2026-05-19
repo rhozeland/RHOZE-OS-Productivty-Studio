@@ -236,6 +236,7 @@ const SettingsPage = () => {
 
   const handleBannerUpload = async (file: File) => {
     if (!user) return;
+    if (!(profile as any)?.verified_pro_at) { toast.error("Verified Pro required for custom banner uploads."); return; }
     if (file.size > 10 * 1024 * 1024) { toast.error("Banner image must be under 10MB"); return; }
     setUploadingBanner(true);
     try {
@@ -632,6 +633,8 @@ const SettingsPage = () => {
     </div>
   );
 
+  const isVerifiedPro = !!(profile as any)?.verified_pro_at;
+
   const renderBanner = () => (
     <Tabs defaultValue="banner" className="w-full">
       <TabsList className="grid w-full grid-cols-2 max-w-xs">
@@ -640,19 +643,31 @@ const SettingsPage = () => {
       </TabsList>
 
       <TabsContent value="banner" className="mt-4 space-y-4">
-        <p className="text-xs text-muted-foreground">Upload a custom banner image or choose a gradient. Recommended: 1200×400px.</p>
+        <p className="text-xs text-muted-foreground">Pick a gradient, or upgrade to Verified Pro to upload a custom image. Recommended: 1200×400px.</p>
         <div
           className="h-20 rounded-xl border border-border overflow-hidden"
           style={{ background: bannerGradient || "linear-gradient(135deg, hsl(var(--primary) / 0.3), hsl(var(--accent) / 0.2), hsl(var(--primary) / 0.1))" }}
         >
           {bannerImageUrl && <img src={bannerImageUrl} alt="Banner" className="w-full h-full object-cover" />}
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={() => bannerFileRef.current?.click()} disabled={uploadingBanner}>
+        <div className="flex items-center gap-3 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (!isVerifiedPro) { toast.error("Custom banner uploads are a Verified Pro perk. Upgrade from your profile."); return; }
+              bannerFileRef.current?.click();
+            }}
+            disabled={uploadingBanner}
+            className={!isVerifiedPro ? "opacity-60" : ""}
+          >
             <Upload className="mr-2 h-4 w-4" />
-            {uploadingBanner ? "Uploading..." : "Upload Image"}
+            {uploadingBanner ? "Uploading..." : isVerifiedPro ? "Upload Image" : "Upload Image (Pro)"}
           </Button>
-          {bannerImageUrl && (
+          {!isVerifiedPro && (
+            <span className="text-[11px] text-muted-foreground">Verified Pro unlocks custom banners.</span>
+          )}
+          {bannerImageUrl && isVerifiedPro && (
             <Button variant="ghost" size="sm" onClick={async () => {
               setBannerImageUrl("");
               await supabase.from("profiles").update({ banner_url: null } as any).eq("user_id", user!.id);
