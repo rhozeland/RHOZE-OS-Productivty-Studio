@@ -44,7 +44,10 @@ import PaySolAndVerify from "@/components/PaySolAndVerify";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
 
 type Step = "schedule" | "details" | "payment";
-type PaymentMethod = "card" | "crypto";
+type PaymentMethod = "credits" | "card" | "crypto";
+
+// 100 Credits ≈ $1 (mirrors PRO_CREDITS pricing + event-ticket checkout).
+const CREDITS_PER_USD = 100;
 
 interface StudioBookingModalProps {
   open: boolean;
