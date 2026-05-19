@@ -201,7 +201,7 @@ const RootEntry = () => {
       </div>
     );
   }
-  return <Navigate to={user ? "/dashboard" : "/discover"} replace />;
+  return <Navigate to="/discover" replace />;
 };
 
 const App = () => (
