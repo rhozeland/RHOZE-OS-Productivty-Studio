@@ -571,7 +571,8 @@ const AppLayout = () => {
       </CommandDialog>
       
       {user && <WelcomeModal />}
-      {user && <RoomsBottomNav />}
+      {/* v9.9: RoomsBottomNav retired — sidebar is the only primary nav. */}
+      {false && user && <RoomsBottomNav />}
       </CelebrationProvider>
     </SidebarProvider>
   );

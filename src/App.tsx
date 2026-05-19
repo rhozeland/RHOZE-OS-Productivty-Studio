@@ -12,7 +12,7 @@ import AppLayout from "@/components/AppLayout";
 import FlowAuthGuard from "@/components/FlowAuthGuard";
 import AuthPage from "@/pages/AuthPage";
 import LandingPage from "@/pages/LandingPage";
-// DashboardPage retired in v8 — /dashboard now redirects to /discover.
+import DashboardPage from "@/pages/DashboardPage";
 import ProjectsPage from "@/pages/ProjectsPage";
 import ProjectDetailPage from "@/pages/ProjectDetailPage";
 import CalendarPage from "@/pages/CalendarPage";
@@ -243,8 +243,9 @@ const App = () => (
 
               {/* Main app — browsable by everyone, auth-gated actions inside */}
               <Route element={<AppLayout />}>
-                {/* v8: My Studio retired. /dashboard → Discover. */}
-                <Route path="/dashboard" element={<Navigate to="/discover" replace />} />
+                {/* v9.9: Home = personalized fan feed (DashboardPage). */}
+                <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                <Route path="/home" element={<Navigate to="/dashboard" replace />} />
                 {/* Three-Room front doors (Scene · Market · Vault) — additive,
                     organize existing routes without removing any. */}
                 <Route path="/scene" element={<SceneRoomPage />} />
