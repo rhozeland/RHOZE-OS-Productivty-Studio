@@ -9,7 +9,7 @@ import { Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSavedItems, type SavedItemType } from "@/hooks/useSavedItems";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAuthGate } from "@/components/auth/useAuthGate";
+import { useAuthGate } from "@/components/AuthGateDialog";
 
 type Props = {
   type: SavedItemType;
