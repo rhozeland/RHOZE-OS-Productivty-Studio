@@ -321,6 +321,7 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
 
       queryClient.invalidateQueries({ queryKey: ["studio-bookings"] });
       queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
+      queryClient.invalidateQueries({ queryKey: ["user-credits"] });
 
       toast.success("Studio booked successfully!");
       onOpenChange(false);
