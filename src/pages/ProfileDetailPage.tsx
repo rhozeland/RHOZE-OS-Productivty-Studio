@@ -486,11 +486,6 @@ const ProfileDetailPage = () => {
             {/* Compact meta — pass badge + location + rating only */}
             <div className="mt-4 flex items-center gap-x-3 gap-y-2 flex-wrap">
               <ProfileTierBadge userId={id!} isOwnProfile={isOwnProfile} />
-              {p.location && (
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <MapPin className="h-3 w-3" /> {p.location}
-                </span>
-              )}
               {reviewStats && reviewStats.count > 0 && (
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
