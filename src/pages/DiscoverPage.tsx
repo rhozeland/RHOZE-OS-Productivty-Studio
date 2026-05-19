@@ -118,15 +118,15 @@ const StreamCategorySection = ({
   counts: Record<string, number>;
   onSelect: (category: string | null) => void;
 }) => (
-  <section className="rounded-[1.75rem] border border-border/70 bg-card/65 p-5 sm:p-6 space-y-4">
-    <div className="flex items-end justify-between gap-3 flex-wrap">
-      <div>
-        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 mb-1">
-          Browse by category
-        </p>
-        <h3 className="text-2xl font-semibold tracking-tight text-foreground">
+  <section className="rounded-2xl border border-border/70 bg-card/65 px-4 py-3 sm:px-5 sm:py-4 space-y-3">
+    <div className="flex items-center justify-between gap-3 flex-wrap">
+      <div className="flex items-baseline gap-2 min-w-0">
+        <h3 className="text-sm font-semibold tracking-tight text-foreground truncate">
           Explore {noun === "event" ? "events" : "spaces"} by mood
         </h3>
+        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
+          Browse by category
+        </p>
       </div>
       {activeCategory && (
         <button
@@ -139,7 +139,7 @@ const StreamCategorySection = ({
       )}
     </div>
 
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="flex flex-wrap gap-1.5">
       {defs.map((def) => {
         const Icon = def.icon;
         const active = activeCategory === def.slug;
@@ -151,28 +151,19 @@ const StreamCategorySection = ({
             type="button"
             onClick={() => onSelect(active ? null : def.slug)}
             className={cn(
-              "group flex items-center gap-4 rounded-[1.4rem] border bg-background/70 p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:bg-background",
-              active && "border-foreground/40 bg-background shadow-sm",
+              "group inline-flex items-center gap-1.5 rounded-full border bg-background/70 px-3 py-1.5 text-xs font-medium text-foreground/80 transition-all duration-200 hover:border-foreground/20 hover:bg-background hover:text-foreground",
+              active && "border-foreground/40 bg-background text-foreground shadow-sm",
             )}
           >
-            <div
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border bg-secondary/60"
-              style={{ borderColor: active ? def.accent : "hsl(var(--border))" }}
-            >
-              <Icon className="h-5 w-5" style={{ color: def.accent }} />
-            </div>
-
-            <div className="min-w-0">
-              <p className="text-base font-semibold text-foreground truncate">{def.label}</p>
-              <p className="text-sm text-muted-foreground">
-                {count.toLocaleString()} {noun}{count === 1 ? "" : "s"}
-              </p>
-            </div>
+            <Icon className="h-3.5 w-3.5" style={{ color: def.accent }} />
+            <span>{def.label}</span>
+            <span className="text-[10px] tabular-nums text-muted-foreground">{count}</span>
           </button>
         );
       })}
     </div>
   </section>
+
 );
 
 const getGreeting = () => {
