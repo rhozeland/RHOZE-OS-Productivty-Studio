@@ -363,6 +363,10 @@ const ProfileDetailPage = () => {
             {bannerImageUrl && <img src={bannerImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />}
             {isOwnProfile ? (
               <div className="absolute top-3 right-3 flex items-center gap-2">
+                <Button variant="secondary" size="sm" onClick={() => setBoostOpen(true)}
+                  className="gap-1.5 bg-gradient-to-r from-amber-500 to-fuchsia-500 text-white hover:opacity-90 shadow-md text-xs border-0">
+                  <Sparkles className="h-3.5 w-3.5" /> Boost
+                </Button>
                 <Button variant="secondary" size="sm" onClick={() => navigate("/settings")}
                   className="gap-1.5 bg-card/80 backdrop-blur-sm hover:bg-card/95 shadow-md text-xs">
                   <Settings className="h-3.5 w-3.5" /> Edit Profile
