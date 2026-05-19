@@ -136,7 +136,7 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
 
   const resetForm = () => {
     setStep("schedule");
-    setPaymentMethod("card");
+    setPaymentMethod("credits");
     setNotes("");
     setGuestCount(1);
     setSelectedStaffId(null);
