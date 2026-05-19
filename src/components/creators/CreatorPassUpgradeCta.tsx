@@ -88,12 +88,12 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
     const effective = getEffectiveTier(subTier, holdTier);
 
     const nextTier = TIERS.find((t) => TIER_RANK[t.id] === TIER_RANK[effective] + 1);
-    if (!nextTier) return { effective, next: null as null };
+    if (!nextTier) return { effective, next: null as null, balance, pct: 100 };
 
-    const remaining = Math.max(0, nextTier.hold - balance);
-    const hint = `${formatRhoze(balance)} / ${formatRhoze(nextTier.hold)} $RHOZE held — ${formatRhoze(remaining)} more to ${nextTier.label}.`;
-
-    return { effective, next: nextTier, hint };
+    const pct = nextTier.hold > 0
+      ? Math.max(0, Math.min(100, (balance / nextTier.hold) * 100))
+      : 0;
+    return { effective, next: nextTier, balance, pct };
   }, [activity, credits]);
 
   if (!user) return null;
@@ -145,19 +145,27 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
         <Sparkles className="h-5 w-5 text-foreground" />
       </div>
       <div className="relative flex-1 min-w-0 pr-8">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            Creator Pass
-          </span>
-          <span className="text-[10px] uppercase tracking-wider text-foreground/60">
-            · {personalized.effective}
-          </span>
-        </div>
-        <h3 className="font-display text-base md:text-lg font-bold text-foreground leading-tight mt-0.5">
-          Climb to {personalized.next.label} for bigger rewards
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          Creator Pass
+        </span>
+        <h3 className="font-display text-base md:text-lg font-bold text-foreground leading-tight mt-0.5 capitalize">
+          You're on {personalized.effective} tier
         </h3>
-        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{personalized.hint}</p>
-        
+        <p className="text-xs text-muted-foreground mt-1">
+          {personalized.balance.toLocaleString(undefined, { maximumFractionDigits: 2 })} / {personalized.next.hold.toLocaleString()} $RHOZE to {personalized.next.label}
+        </p>
+        <div
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(personalized.pct)}
+          className="relative mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted"
+        >
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-primary to-amber-500 transition-[width] duration-500"
+            style={{ width: `${personalized.pct}%` }}
+          />
+        </div>
       </div>
       <button
         type="button"
