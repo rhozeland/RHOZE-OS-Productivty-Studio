@@ -69,6 +69,7 @@ import {
   mergeDeepLinkProfile,
   mergeDeepLinkIntoFeed,
   resolveDeepLinkSelection,
+  resolveDisplayedFlowIndex,
   normalizeLoopedIndex,
   shouldRepinDeepLink,
 } from "@/lib/flow-navigation";
@@ -931,8 +932,6 @@ const FlowModePage = () => {
       };
     },
   });
-  const currentItem = allItems.length > 0 ? allItems[currentIndex % allItems.length] : null;
-
   // Deep-link: when navigated with ?item=<flow_item_id>, jump the swipe
   // cursor to that card once, then strip the param so subsequent swipes
   // aren't snapped back to the deep-linked card on every index change.
@@ -955,6 +954,15 @@ const FlowModePage = () => {
   const lockedDeepLinkItemRef = useRef<string | null>(null);
   const suppressSwipeRestoreRef = useRef(false);
   const pendingDeepLinkId = requestedFlowItemId;
+  const displayedIndex = resolveDisplayedFlowIndex({
+    currentIndex,
+    allItems: allItems as any[],
+    baseItems: baseItems as any[],
+    targetId: pendingDeepLinkId ?? lockedDeepLinkItemRef.current,
+    flowItemsFetching,
+    hasFallbackItem: !!deepLinkItem || !!(pendingDeepLinkId ?? lockedDeepLinkItemRef.current),
+  });
+  const currentItem = allItems.length > 0 ? allItems[displayedIndex] : null;
   useEffect(() => {
     if (!requestedFlowItemId) return;
     lockedDeepLinkItemRef.current = requestedFlowItemId;
@@ -990,7 +998,7 @@ const FlowModePage = () => {
 
     lockedDeepLinkItemRef.current = targetId;
     const normalizedIndex = normalizeLoopedIndex(currentIndex, allItems.length);
-    const visibleItemId = allItems[normalizedIndex]?.id ?? null;
+    const visibleItemId = allItems[displayedIndex]?.id ?? null;
 
     console.log("[FlowDeepLink] resolve", {
       targetId,
@@ -999,7 +1007,7 @@ const FlowModePage = () => {
       normalizedIndex,
       selectionIndex: selection.index,
       visibleItemId,
-      visibleTitle: allItems[normalizedIndex]?.title ?? null,
+      visibleTitle: allItems[displayedIndex]?.title ?? null,
       targetTitle: allItems[selection.index]?.title ?? null,
       shouldFinalize: selection.shouldFinalize,
       flowItemsFetching,
@@ -1028,7 +1036,7 @@ const FlowModePage = () => {
       targetId,
       selectionIndex: selection.index,
       visibleItemId,
-      visibleTitle: allItems[normalizedIndex]?.title ?? null,
+      visibleTitle: allItems[displayedIndex]?.title ?? null,
     });
 
     // Mark the deep link as applied only once the target is stable enough
@@ -1043,7 +1051,7 @@ const FlowModePage = () => {
       next.delete("item");
       setSearchParams(next, { replace: true });
     }
-  }, [allItems, baseItems, currentIndex, deepLinkItem, pendingDeepLinkId, searchParams, feedScope, flowItemsFetching, setSearchParams, isAdvancing]);
+  }, [allItems, baseItems, currentIndex, deepLinkItem, pendingDeepLinkId, searchParams, feedScope, flowItemsFetching, setSearchParams, isAdvancing, displayedIndex]);
 
   useEffect(() => {
     if (pendingDeepLinkId || lockedDeepLinkItemRef.current) return;
