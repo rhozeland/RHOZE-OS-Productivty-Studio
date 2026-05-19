@@ -69,6 +69,8 @@ import {
   mergeDeepLinkProfile,
   mergeDeepLinkIntoFeed,
   resolveDeepLinkSelection,
+  normalizeLoopedIndex,
+  shouldRepinDeepLink,
 } from "@/lib/flow-navigation";
 import { computeContentHash } from "@/lib/content-hash";
 import FlowCreatorPeek from "@/components/flow/FlowCreatorPeek";
@@ -987,13 +989,20 @@ const FlowModePage = () => {
     }
 
     lockedDeepLinkItemRef.current = targetId;
-    const normalizedIndex = ((currentIndex % allItems.length) + allItems.length) % allItems.length;
+    const normalizedIndex = normalizeLoopedIndex(currentIndex, allItems.length);
     const visibleItemId = allItems[normalizedIndex]?.id ?? null;
 
     // Always re-pin so the user stays on the right card as the feed
     // hydrates and re-orders around the prepended deep-link copy.
     suppressSwipeRestoreRef.current = true;
-    if (visibleItemId !== targetId) {
+    if (shouldRepinDeepLink({
+      currentIndex,
+      targetIndex: selection.index,
+      itemCount: allItems.length,
+      visibleItemId,
+      targetId,
+      isAdvancing,
+    })) {
       setCurrentIndex((cur) => (cur === selection.index ? cur : selection.index));
     }
 
@@ -1011,7 +1020,7 @@ const FlowModePage = () => {
       next.delete("item");
       setSearchParams(next, { replace: true });
     }
-  }, [allItems, baseItems, currentIndex, deepLinkItem, pendingDeepLinkId, searchParams, feedScope, flowItemsFetching, setSearchParams]);
+  }, [allItems, baseItems, currentIndex, deepLinkItem, pendingDeepLinkId, searchParams, feedScope, flowItemsFetching, setSearchParams, isAdvancing]);
 
   useEffect(() => {
     if (pendingDeepLinkId || lockedDeepLinkItemRef.current) return;
