@@ -932,16 +932,6 @@ const FlowModePage = () => {
       };
     },
   });
-  const displayedIndex = resolveDisplayedFlowIndex({
-    currentIndex,
-    allItems: allItems as any[],
-    baseItems: baseItems as any[],
-    targetId: pendingDeepLinkId ?? lockedDeepLinkItemRef.current,
-    flowItemsFetching,
-    hasFallbackItem: !!deepLinkItem || !!(pendingDeepLinkId ?? lockedDeepLinkItemRef.current),
-  });
-  const currentItem = allItems.length > 0 ? allItems[displayedIndex] : null;
-
   // Deep-link: when navigated with ?item=<flow_item_id>, jump the swipe
   // cursor to that card once, then strip the param so subsequent swipes
   // aren't snapped back to the deep-linked card on every index change.
@@ -964,6 +954,15 @@ const FlowModePage = () => {
   const lockedDeepLinkItemRef = useRef<string | null>(null);
   const suppressSwipeRestoreRef = useRef(false);
   const pendingDeepLinkId = requestedFlowItemId;
+  const displayedIndex = resolveDisplayedFlowIndex({
+    currentIndex,
+    allItems: allItems as any[],
+    baseItems: baseItems as any[],
+    targetId: pendingDeepLinkId ?? lockedDeepLinkItemRef.current,
+    flowItemsFetching,
+    hasFallbackItem: !!deepLinkItem || !!(pendingDeepLinkId ?? lockedDeepLinkItemRef.current),
+  });
+  const currentItem = allItems.length > 0 ? allItems[displayedIndex] : null;
   useEffect(() => {
     if (!requestedFlowItemId) return;
     lockedDeepLinkItemRef.current = requestedFlowItemId;
