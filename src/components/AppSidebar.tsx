@@ -39,7 +39,7 @@ const pillarItems = [
   { icon: Home, label: "Home", path: "/discover" },
   { icon: Compass, label: "Discover", path: "/market" },
   { icon: Heart, label: "Support", path: "/messages" },
-  { icon: Trophy, label: "Creator Pass", path: "/credits" },
+  { icon: Trophy, label: "My Pass", path: "/credits" },
 ];
 
 const AppSidebar = () => {
