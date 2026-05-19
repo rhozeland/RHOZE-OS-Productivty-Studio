@@ -21,6 +21,8 @@ import { ArrowRight, Bookmark, FolderKanban, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ProjectsInbox from "@/components/messages/ProjectsInbox";
 import GuestMessagesPreview from "@/components/guest/GuestMessagesPreview";
+import { useSavedItems } from "@/hooks/useSavedItems";
+import SaveButton from "@/components/saved/SaveButton";
 
 type Profile = { user_id: string; display_name: string | null; avatar_url: string | null };
 
@@ -189,8 +191,86 @@ const AuthedMyWorkPage = ({ userId }: { userId: string }) => {
     setSearchParams(next, { replace: true });
   };
 
-  // === Saved — not yet implemented, always empty for now ===
-  const savedItems: any[] = [];
+  // === Saved items (creators / works / listings) ===
+  const { items: savedItems } = useSavedItems();
+  const savedCreatorIds = savedItems.filter((i) => i.item_type === "creator").map((i) => i.item_id);
+  const savedWorkIds = savedItems.filter((i) => i.item_type === "work").map((i) => i.item_id);
+  const savedListingIds = savedItems.filter((i) => i.item_type === "listing").map((i) => i.item_id);
+
+  const { data: savedCreators } = useQuery({
+    queryKey: ["saved-creators", savedCreatorIds],
+    queryFn: async () => {
+      const { data, error } = await sb.rpc("get_profiles_by_ids", { _ids: savedCreatorIds });
+      if (error) throw error;
+      return (data ?? []) as Array<{ user_id: string; display_name: string | null; avatar_url: string | null; headline?: string | null }>;
+    },
+    enabled: savedCreatorIds.length > 0,
+  });
+
+  const { data: savedWorks } = useQuery({
+    queryKey: ["saved-works", savedWorkIds],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("flow_items")
+        .select("id, title, link_url, thumbnail_url, user_id")
+        .in("id", savedWorkIds);
+      if (error) throw error;
+      return (data ?? []) as Array<{ id: string; title: string | null; link_url: string | null; thumbnail_url: string | null; user_id: string }>;
+    },
+    enabled: savedWorkIds.length > 0,
+  });
+
+  const { data: savedListings } = useQuery({
+    queryKey: ["saved-listings", savedListingIds],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("marketplace_listings")
+        .select("id, title, listing_type, user_id")
+        .in("id", savedListingIds);
+      if (error) throw error;
+      return (data ?? []) as Array<{ id: string; title: string | null; listing_type: string | null; user_id: string }>;
+    },
+    enabled: savedListingIds.length > 0,
+  });
+
+  type SavedRow = {
+    key: string;
+    type: "creator" | "work" | "listing";
+    id: string;
+    name: string;
+    sub: string;
+    avatar: string | null;
+    href: string;
+  };
+  const savedRows: SavedRow[] = [
+    ...((savedCreators ?? []).map((p: any) => ({
+      key: `creator-${p.user_id}`,
+      type: "creator" as const,
+      id: p.user_id,
+      name: p.display_name || "Creator",
+      sub: p.headline || "Creator",
+      avatar: p.avatar_url,
+      href: `/profiles/${p.user_id}`,
+    }))),
+    ...((savedWorks ?? []).map((w: any) => ({
+      key: `work-${w.id}`,
+      type: "work" as const,
+      id: w.id,
+      name: w.title || "Untitled work",
+      sub: "Work",
+      avatar: w.thumbnail_url,
+      href: w.link_url || `/profiles/${w.user_id}`,
+    }))),
+    ...((savedListings ?? []).map((l: any) => ({
+      key: `listing-${l.id}`,
+      type: "listing" as const,
+      id: l.id,
+      name: l.title || "Listing",
+      sub: l.listing_type === "project_request" || l.listing_type === "collab" ? "Open call" : "Listing",
+      avatar: null,
+      href: `/creators/${l.id}`,
+    }))),
+  ];
 
   return (
     <div className="w-full min-w-0 space-y-6">
@@ -297,14 +377,45 @@ const AuthedMyWorkPage = ({ userId }: { userId: string }) => {
 
         {/* ── SAVED ── */}
         <TabsContent value="saved" className="mt-4">
-          {savedItems.length === 0 ? (
+          {savedRows.length === 0 ? (
             <EmptyState
               icon={Bookmark}
               title="Nothing saved yet. Browse Discover and tap the save icon on any creator."
               ctaLabel="Go to Discover"
               ctaTo="/discover"
             />
-          ) : null}
+          ) : (
+            <ScrollArea className="max-h-[calc(100vh-18rem)]">
+              <div className="space-y-2">
+                {savedRows.map((row) => (
+                  <div
+                    key={row.key}
+                    className="surface-card flex items-center gap-4 px-4 py-3 rounded-2xl transition-shadow hover:shadow-md"
+                  >
+                    <Avatar name={row.name} url={row.avatar} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {row.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">{row.sub}</p>
+                    </div>
+                    <SaveButton type={row.type} id={row.id} size="sm" stopPropagation={false} />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-full shrink-0 gap-1"
+                      onClick={() => {
+                        if (row.href.startsWith("http")) window.open(row.href, "_blank");
+                        else navigate(row.href);
+                      }}
+                    >
+                      Open <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
         </TabsContent>
       </Tabs>
     </div>

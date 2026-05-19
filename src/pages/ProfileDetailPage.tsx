@@ -33,6 +33,7 @@ import { BoostProfileSheet } from "@/components/profile/BoostProfileSheet";
 import CreatorDropsCatalog from "@/components/profile/CreatorDropsCatalog";
 import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import SaveButton from "@/components/saved/SaveButton";
 import { cn } from "@/lib/utils";
 import { ROLE_BY_ID } from "@/lib/creator-roles";
 import { archetypeBannerGradient } from "@/lib/archetypes";
@@ -466,6 +467,9 @@ const ProfileDetailPage = () => {
                   <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                   {reviewStats.avg} <span className="opacity-70">({reviewStats.count})</span>
                 </span>
+              )}
+              {!isOwnProfile && id && (
+                <SaveButton type="creator" id={id} variant="chip" />
               )}
             </div>
 

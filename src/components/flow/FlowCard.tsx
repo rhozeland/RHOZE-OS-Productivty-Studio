@@ -11,6 +11,7 @@ import VerifyWorkDialog from "@/components/works/VerifyWorkDialog";
 import FlowUnlockGate from "@/components/flow/FlowUnlockGate";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import { ShieldCheck } from "lucide-react";
+import SaveButton from "@/components/saved/SaveButton";
 
 /* ─── Platform detection ─── */
 const detectPlatform = (url?: string | null) => {
@@ -559,6 +560,9 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
               <Send className="h-[18px] w-[18px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               <span className="text-[11px] font-medium">Send</span>
             </button>
+            {item.id && (
+              <SaveButton type="work" id={item.id} variant="icon" size="sm" />
+            )}
 
             {item.link_url && (
               <a
