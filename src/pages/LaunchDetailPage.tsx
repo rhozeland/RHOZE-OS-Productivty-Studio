@@ -393,10 +393,8 @@ const LaunchDetailPage = () => {
             );
           })()}
 
-          {/* Graduation progress only matters once the on-chain program is live —
-              in simulation it's a moving target with no real LP at the end.
-              Hidden in fan/sim mode; trader view + on-chain still see it. */}
-          {launch.status !== "cancelled" && (isLaunchpadOnChainEnabled() || traderView) && (
+          {/* Backing momentum — the fan-facing progress bar. Always visible. */}
+          {launch.status !== "cancelled" && (
             <GraduationProgressBar
               launchId={launch.id}
               raisedRhoze={Number(launch.real_sol_reserves) * 100}
