@@ -53,6 +53,7 @@ const KIND_ICONS: Record<string, typeof Music> = {
 const VerifiedIPHub = ({ userId }: { userId: string | null }) => {
   const qc = useQueryClient();
   const [registeringId, setRegisteringId] = useState<string | null>(null);
+  const [justRegisteredId, setJustRegisteredId] = useState<string | null>(null);
 
   // Eligible Flow drops = mine, has a file_url, no work_id yet
   const { data: eligibleFlow = [], isLoading: loadingFlow } = useQuery({
@@ -143,13 +144,19 @@ const VerifiedIPHub = ({ userId }: { userId: string | null }) => {
 
       return work.id;
     },
-    onSuccess: () => {
+    onSuccess: (_workId, item) => {
+      // Show per-tile success state for 1.2s so the user clearly sees WHICH
+      // item registered (not all of them) before the list refetches.
+      setJustRegisteredId(item.id);
       toast.success("Registered as Verified IP", {
-        description: "Anchor it on Solana from your Works vault.",
+        description: `“${item.title}” is now in your vault — anchor it on Solana from Works.`,
       });
-      qc.invalidateQueries({ queryKey: ["flow-eligible-for-ip"] });
-      qc.invalidateQueries({ queryKey: ["my-works-ip"] });
-      qc.invalidateQueries({ queryKey: ["works-mine"] });
+      setTimeout(() => {
+        setJustRegisteredId(null);
+        qc.invalidateQueries({ queryKey: ["flow-eligible-for-ip"] });
+        qc.invalidateQueries({ queryKey: ["my-works-ip"] });
+        qc.invalidateQueries({ queryKey: ["works-mine"] });
+      }, 1200);
     },
     onError: (err: any) => {
       toast.error("Could not register", { description: err?.message ?? "Unknown error" });
@@ -228,10 +235,17 @@ const VerifiedIPHub = ({ userId }: { userId: string | null }) => {
             {eligibleFlow.map((item) => {
               const Icon = KIND_ICONS[item.content_type] ?? Sparkles;
               const isRegistering = registeringId === item.id;
+              const isDone = justRegisteredId === item.id;
+              const otherInFlight =
+                registerFromFlow.isPending && !isRegistering && !isDone;
               return (
                 <div
                   key={item.id}
-                  className="group rounded-xl border border-border bg-background/40 overflow-hidden flex flex-col"
+                  className={`group rounded-xl border bg-background/40 overflow-hidden flex flex-col transition-all ${
+                    isDone
+                      ? "border-emerald-500/60 ring-2 ring-emerald-500/30"
+                      : "border-border"
+                  } ${otherInFlight ? "opacity-40" : ""}`}
                 >
                   <div className="aspect-square bg-muted/40 relative overflow-hidden">
                     {item.content_type === "image" && item.file_url ? (
@@ -251,12 +265,19 @@ const VerifiedIPHub = ({ userId }: { userId: string | null }) => {
                     </p>
                     <Button
                       size="sm"
-                      className="w-full h-7 text-[11px] rounded-full gap-1"
-                      disabled={isRegistering || registerFromFlow.isPending}
+                      variant={isDone ? "secondary" : "default"}
+                      className={`w-full h-7 text-[11px] rounded-full gap-1 ${
+                        isDone
+                          ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20"
+                          : ""
+                      }`}
+                      disabled={isRegistering || otherInFlight || isDone}
                       onClick={() => registerFromFlow.mutate(item)}
                     >
-                      {isRegistering ? (
-                        <><Loader2 className="h-3 w-3 animate-spin" /> Registering…</>
+                      {isDone ? (
+                        <><ShieldCheck className="h-3 w-3" /> Registered</>
+                      ) : isRegistering ? (
+                        <><Loader2 className="h-3 w-3 animate-spin" /> Registering this one…</>
                       ) : (
                         <><Shield className="h-3 w-3" /> Register</>
                       )}

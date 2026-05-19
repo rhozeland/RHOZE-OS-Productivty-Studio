@@ -26,7 +26,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
-import InvestUnlockSheet from "@/components/profile/InvestUnlockSheet";
+import BackCreatorSheet from "@/components/profile/BackCreatorSheet";
 import SupportCreatorSheet from "@/components/profile/SupportCreatorSheet";
 import CreatorDropsCatalog from "@/components/profile/CreatorDropsCatalog";
 import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
@@ -872,9 +872,9 @@ const ProfileDetailPage = () => {
 
         </Tabs>
 
-        {/* Invest & Unlock — Shares purchase sheet (Section 2: The Heart) */}
+        {/* Back this creator — rebuilt 3-screen flow (replaces InvestUnlockSheet). */}
         {!isOwnProfile && id && (
-          <InvestUnlockSheet
+          <BackCreatorSheet
             open={investOpen}
             onOpenChange={setInvestOpen}
             artistId={id}
