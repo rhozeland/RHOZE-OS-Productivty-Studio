@@ -21,6 +21,8 @@ import { ArrowRight, Bookmark, FolderKanban, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ProjectsInbox from "@/components/messages/ProjectsInbox";
 import GuestMessagesPreview from "@/components/guest/GuestMessagesPreview";
+import { useSavedItems } from "@/hooks/useSavedItems";
+import SaveButton from "@/components/saved/SaveButton";
 
 type Profile = { user_id: string; display_name: string | null; avatar_url: string | null };
 
