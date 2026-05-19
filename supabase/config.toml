@@ -19,3 +19,5 @@ project_id = "puielauovddatgqvgxdy"
     verify_jwt = false
   [functions.subscription-renewal]
     verify_jwt = true
+  [functions.cron-sync-ics]
+    verify_jwt = false
