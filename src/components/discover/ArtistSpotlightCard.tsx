@@ -273,11 +273,11 @@ const ArtistSpotlightCard = ({
           onClick={handleBack}
           className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/40"
         >
-          Back {firstName(title)}
+          {isSelf ? "View your profile" : `Back ${firstName(title)}`}
           <ArrowUpRight className="h-4 w-4" />
         </button>
         <span className="mt-2 flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
-          or tap card to view profile
+          {isSelf ? "This is you — featured on Discover today" : "or tap card to view profile"}
         </span>
       </div>
     </div>
