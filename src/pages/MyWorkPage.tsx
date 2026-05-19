@@ -197,7 +197,6 @@ const AuthedMyWorkPage = ({ userId }: { userId: string }) => {
   const savedWorkIds = savedItems.filter((i) => i.item_type === "work").map((i) => i.item_id);
   const savedListingIds = savedItems.filter((i) => i.item_type === "listing").map((i) => i.item_id);
 
-  const sb: any = supabase;
   const { data: savedCreators } = useQuery({
     queryKey: ["saved-creators", savedCreatorIds],
     queryFn: async () => {
