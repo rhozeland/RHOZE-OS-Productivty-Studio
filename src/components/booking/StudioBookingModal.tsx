@@ -25,6 +25,7 @@ import {
   ChevronRight,
   Minus,
   Plus,
+  Coins,
 } from "lucide-react";
 import {
   format,
