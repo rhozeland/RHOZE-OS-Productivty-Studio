@@ -12,7 +12,7 @@ import { Lock, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import InvestUnlockSheet from "@/components/profile/InvestUnlockSheet";
+import BackCreatorSheet from "@/components/profile/BackCreatorSheet";
 import { SHARE_LABEL } from "@/lib/economy-copy";
 
 interface Props {
@@ -111,7 +111,7 @@ const FlowUnlockGate = ({ artistId, artistName, children }: Props) => {
         </div>
       </div>
       {artistId && (
-        <InvestUnlockSheet
+        <BackCreatorSheet
           open={sheetOpen}
           onOpenChange={setSheetOpen}
           artistId={artistId}
