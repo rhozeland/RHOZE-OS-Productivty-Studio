@@ -170,131 +170,104 @@ const MarketRoomPage = () => {
       </div>
 
       {/* Results */}
-      <div className="rounded-2xl border border-border bg-card/60 overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/60 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-          <span>{filtered.length} results</span>
-          <span className="hidden sm:inline">
-            {FILTERS.find((f) => f.key === filter)?.label}
-          </span>
+      <div>
+        <div className="flex items-center justify-between mb-4 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          <div className="flex items-center gap-3">
+            <span>{filtered.length} results</span>
+            <span className="hidden sm:inline">·</span>
+            <span className="hidden sm:inline">
+              {FILTERS.find((f) => f.key === filter)?.label}
+            </span>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition">
+              Sort: Most Recent
+              <ChevronDown className="h-3 w-3" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>Most Recent</DropdownMenuItem>
+              <DropdownMenuItem>Featured First</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        <div className="divide-y divide-border/50">
-          {isLoading && (
-            <div className="p-6 space-y-3">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-16 bg-muted/50 animate-pulse rounded-lg" />
-              ))}
-            </div>
-          )}
-          {!isLoading && filtered.length === 0 && (
-            <div className="p-10 text-center">
-              <LayoutGrid className="h-8 w-8 text-muted-foreground/40 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">Nothing here yet.</p>
-            </div>
-          )}
-          {filtered.map((row) => {
-            const grad = avatarGradientFor(row.ownerId || row.id);
-            const ownerName = row.ownerName || "Creator";
-            const KindIcon = KIND_META[row.kind].Icon;
-            return (
-              <div
-                key={`${row.kind}-${row.id}`}
-                className="group w-full px-4 py-3 transition-colors flex items-start gap-3 hover:bg-muted/40"
-              >
-                <HoverCard openDelay={120} closeDelay={80}>
-                  <HoverCardTrigger asChild>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (row.ownerId) navigate(`/profiles/${row.ownerId}`);
-                      }}
-                      aria-label={`View ${ownerName}'s profile`}
-                      className="shrink-0 h-10 w-10 rounded-full overflow-hidden ring-1 ring-border/60 hover:ring-2 hover:ring-foreground/40 transition"
-                      style={{ background: grad.background }}
-                    >
-                      {row.ownerAvatar && (
-                        <img src={row.ownerAvatar} alt={ownerName} className="h-full w-full object-cover" />
-                      )}
-                    </button>
-                  </HoverCardTrigger>
-                  <HoverCardContent side="right" align="start" className="w-64 p-3">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="h-12 w-12 rounded-full overflow-hidden ring-1 ring-border/60 shrink-0"
-                        style={{ background: grad.background }}
-                      >
-                        {row.ownerAvatar && (
-                          <img src={row.ownerAvatar} alt="" className="h-full w-full object-cover" />
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm truncate">{ownerName}</p>
-                        <p className="text-[11px] text-muted-foreground capitalize truncate">
-                          {row.category || row.kind}
-                        </p>
-                      </div>
-                    </div>
-                    {row.ownerId && (
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/profiles/${row.ownerId}`)}
-                        className="mt-3 w-full inline-flex items-center justify-center gap-1 text-xs font-medium rounded-md border border-border/60 px-2 py-1.5 hover:bg-muted transition"
-                      >
-                        View profile <ArrowRight className="h-3 w-3" />
-                      </button>
-                    )}
-                  </HoverCardContent>
-                </HoverCard>
 
+        {isLoading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-72 bg-muted/50 animate-pulse rounded-2xl" />
+            ))}
+          </div>
+        )}
+
+        {!isLoading && filtered.length === 0 && (
+          <div className="rounded-2xl border border-border bg-card/60 p-10 text-center">
+            <LayoutGrid className="h-8 w-8 text-muted-foreground/40 mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">Nothing here yet.</p>
+          </div>
+        )}
+
+        {!isLoading && filtered.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filtered.map((row) => {
+              const grad = avatarGradientFor(row.ownerId || row.id);
+              const ownerName = row.ownerName || "Creator";
+              return (
                 <button
+                  key={`${row.kind}-${row.id}`}
                   type="button"
                   onClick={() => navigate(row.detailHref)}
-                  className="min-w-0 flex-1 text-left"
+                  className="group relative text-left rounded-2xl overflow-hidden bg-card border border-border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium border",
-                            KIND_TAG_COLOR[row.kind],
-                          )}
-                        >
-                          <KindIcon className="h-3 w-3" />
-                          {KIND_TAG_LABEL[row.kind]}
-                        </span>
-                      </div>
-                      <h3 className="font-medium text-sm text-foreground leading-snug line-clamp-2">
-                        {row.title}
-                      </h3>
-                    </div>
-                    {row.priceLabel && (
-                      <span className="shrink-0 text-xs font-semibold text-foreground tabular-nums">
-                        {row.priceLabel}
-                      </span>
+                  {/* Top: cover image */}
+                  <div
+                    className="relative h-44 w-full overflow-hidden"
+                    style={!row.coverUrl ? { background: grad.background } : undefined}
+                  >
+                    {row.coverUrl && (
+                      <img
+                        src={row.coverUrl}
+                        alt={row.title}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
                     )}
+                    {/* gradient fade */}
+                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card to-transparent" />
+                    {/* Category tag */}
+                    <span
+                      className={cn(
+                        "absolute top-3 left-3 inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide shadow-sm",
+                        KIND_TAG_COLOR[row.kind],
+                      )}
+                    >
+                      {KIND_TAG_LABEL[row.kind]}
+                    </span>
                   </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
-                    {row.subtitle && <span className="truncate">{row.subtitle}</span>}
-                    {row.metaLabel && (
-                      <>
-                        <span>·</span>
-                        <span>{row.metaLabel}</span>
-                      </>
-                    )}
-                    {row.category && (
-                      <>
-                        <span>·</span>
-                        <span className="capitalize">{row.category}</span>
-                      </>
-                    )}
+
+                  {/* Bottom: content */}
+                  <div className="flex-1 flex flex-col p-4 gap-2">
+                    <h3 className="font-semibold text-[15px] text-foreground leading-snug line-clamp-2">
+                      {row.title}
+                    </h3>
+                    <p className="text-xs text-muted-foreground line-clamp-1">
+                      {ownerName}
+                      {row.subtitle ? ` · ${row.subtitle}` : ""}
+                    </p>
+                    <div className="mt-auto pt-2 flex items-end justify-between gap-2">
+                      <span className="text-[11px] text-muted-foreground">
+                        {row.priceLabel || row.metaLabel || row.category || ""}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground group-hover:gap-1.5 transition-all">
+                        Open <ArrowRight className="h-3.5 w-3.5" />
+                      </span>
+                    </div>
                   </div>
                 </button>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
+
     </div>
   );
 };
