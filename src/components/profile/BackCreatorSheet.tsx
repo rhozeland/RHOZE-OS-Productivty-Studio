@@ -26,6 +26,9 @@ import {
   Unlock,
   TrendingUp,
   MessageSquare,
+  Calendar,
+  Building2,
+  Tag,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
