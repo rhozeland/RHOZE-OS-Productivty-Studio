@@ -28,6 +28,7 @@ import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilit
 import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
 import BackCreatorSheet from "@/components/profile/BackCreatorSheet";
 import SupportCreatorSheet from "@/components/profile/SupportCreatorSheet";
+import { BoostProfileSheet } from "@/components/profile/BoostProfileSheet";
 import CreatorDropsCatalog from "@/components/profile/CreatorDropsCatalog";
 import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -81,6 +82,7 @@ const ProfileDetailPage = () => {
   const [investOpen, setInvestOpen] = useState(searchParams.get("back") === "1");
   const [supportOpen, setSupportOpen] = useState(false);
   const [reputationOpen, setReputationOpen] = useState(false);
+  const [boostOpen, setBoostOpen] = useState(false);
 
   // Strip `?back=1` from the URL once we've consumed it so refreshes don't
   // re-open the sheet after the user closes it.
@@ -363,6 +365,10 @@ const ProfileDetailPage = () => {
             {bannerImageUrl && <img src={bannerImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />}
             {isOwnProfile ? (
               <div className="absolute top-3 right-3 flex items-center gap-2">
+                <Button variant="secondary" size="sm" onClick={() => setBoostOpen(true)}
+                  className="gap-1.5 bg-gradient-to-r from-amber-500 to-fuchsia-500 text-white hover:opacity-90 shadow-md text-xs border-0">
+                  <Sparkles className="h-3.5 w-3.5" /> Boost
+                </Button>
                 <Button variant="secondary" size="sm" onClick={() => navigate("/settings")}
                   className="gap-1.5 bg-card/80 backdrop-blur-sm hover:bg-card/95 shadow-md text-xs">
                   <Settings className="h-3.5 w-3.5" /> Edit Profile
@@ -881,6 +887,11 @@ const ProfileDetailPage = () => {
             artistId={id}
             artistName={p.display_name || p.username || null}
           />
+        )}
+
+        {/* Phase B2 — self-serve profile boost (owner only) */}
+        {isOwnProfile && (
+          <BoostProfileSheet open={boostOpen} onOpenChange={setBoostOpen} />
         )}
 
         {/* Umbrella "Back this creator" sheet — funnels into Shares / Show up / Work / DM */}

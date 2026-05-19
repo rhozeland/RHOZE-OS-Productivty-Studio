@@ -1757,6 +1757,45 @@ export type Database = {
           },
         ]
       }
+      featured_boost_purchases: {
+        Row: {
+          created_at: string
+          credits_spent: number
+          duration_hours: number
+          expires_at: string
+          id: string
+          sku: string
+          starts_at: string
+          tier: string
+          usd_equivalent: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_spent: number
+          duration_hours: number
+          expires_at: string
+          id?: string
+          sku: string
+          starts_at?: string
+          tier: string
+          usd_equivalent: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_spent?: number
+          duration_hours?: number
+          expires_at?: string
+          id?: string
+          sku?: string
+          starts_at?: string
+          tier?: string
+          usd_equivalent?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       flow_comments: {
         Row: {
           body: string
@@ -2436,6 +2475,7 @@ export type Database = {
           email_notif_purchases: boolean | null
           email_notif_reviews: boolean | null
           featured_pin_until: string | null
+          featured_tier: string | null
           flow_feed_scope: string | null
           flow_preferred_categories: string[] | null
           headline: string | null
@@ -2491,6 +2531,7 @@ export type Database = {
           email_notif_purchases?: boolean | null
           email_notif_reviews?: boolean | null
           featured_pin_until?: string | null
+          featured_tier?: string | null
           flow_feed_scope?: string | null
           flow_preferred_categories?: string[] | null
           headline?: string | null
@@ -2546,6 +2587,7 @@ export type Database = {
           email_notif_purchases?: boolean | null
           email_notif_reviews?: boolean | null
           featured_pin_until?: string | null
+          featured_tier?: string | null
           flow_feed_scope?: string | null
           flow_preferred_categories?: string[] | null
           headline?: string | null
@@ -5078,6 +5120,7 @@ export type Database = {
         Args: { _project_id: string; _user_id: string }
         Returns: string
       }
+      purchase_featured_boost: { Args: { _sku: string }; Returns: Json }
       purchase_listing: {
         Args: { _buyer_id: string; _listing_id: string }
         Returns: string
