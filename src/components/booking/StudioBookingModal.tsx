@@ -697,13 +697,40 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
               <div className="border-t border-border pt-2 flex items-center justify-between">
                 <span className="font-medium text-foreground">Total</span>
                 <span className="font-display text-xl font-bold text-primary">
-                  {paymentMethod === "card" ? `$${totalPrice}` : `~${solPrice} SOL`}
+                  {paymentMethod === "credits"
+                    ? `${creditsPrice.toLocaleString()} Credits`
+                    : paymentMethod === "card"
+                    ? `$${totalPrice}`
+                    : `~${solPrice} SOL`}
                 </span>
               </div>
             </div>
 
             {/* Payment method */}
             <div className="grid gap-3">
+              {/* Credits */}
+              <button
+                onClick={() => setPaymentMethod("credits")}
+                className={cn(
+                  "flex items-center gap-4 rounded-xl border p-4 transition-all text-left",
+                  paymentMethod === "credits"
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:bg-muted/50"
+                )}
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Coins className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-foreground">Pay with Credits</p>
+                  <p className="text-xs text-muted-foreground">
+                    {creditsPrice.toLocaleString()} Credits · Balance: {userCredits.toLocaleString()}
+                    {!hasEnoughCredits && " (insufficient)"}
+                  </p>
+                </div>
+                {paymentMethod === "credits" && <Check className="h-5 w-5 text-primary" />}
+              </button>
+
               <button
                 onClick={() => setPaymentMethod("card")}
                 className={cn(
@@ -748,7 +775,15 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
             </div>
 
             {/* Payment form */}
-            {paymentMethod === "card" ? (
+            {paymentMethod === "credits" ? (
+              <Button
+                className="w-full"
+                disabled={loading || !hasEnoughCredits}
+                onClick={() => handleConfirm()}
+              >
+                {loading ? "Booking..." : `Confirm · ${creditsPrice.toLocaleString()} Credits`}
+              </Button>
+            ) : paymentMethod === "card" ? (
               <SquareCardForm amount={totalPrice} onTokenize={handleCardTokenize} disabled={loading} />
             ) : (
               <PaySolAndVerify
