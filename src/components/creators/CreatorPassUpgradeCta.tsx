@@ -88,12 +88,12 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
     const effective = getEffectiveTier(subTier, holdTier);
 
     const nextTier = TIERS.find((t) => TIER_RANK[t.id] === TIER_RANK[effective] + 1);
-    if (!nextTier) return { effective, next: null as null };
+    if (!nextTier) return { effective, next: null as null, balance, pct: 100 };
 
-    const remaining = Math.max(0, nextTier.hold - balance);
-    const hint = `${formatRhoze(balance)} / ${formatRhoze(nextTier.hold)} $RHOZE held — ${formatRhoze(remaining)} more to ${nextTier.label}.`;
-
-    return { effective, next: nextTier, hint };
+    const pct = nextTier.hold > 0
+      ? Math.max(0, Math.min(100, (balance / nextTier.hold) * 100))
+      : 0;
+    return { effective, next: nextTier, balance, pct };
   }, [activity, credits]);
 
   if (!user) return null;
