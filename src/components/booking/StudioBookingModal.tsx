@@ -257,7 +257,20 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
 
     setLoading(true);
     try {
-      if (paymentMethod === "card") {
+      if (paymentMethod === "credits") {
+        if (!hasEnoughCredits) {
+          toast.error("Not enough Credits");
+          setLoading(false);
+          return;
+        }
+        const { error: creditError } = await supabase.rpc("adjust_user_credits", {
+          _user_id: user.id,
+          _amount: -creditsPrice,
+          _type: "usage",
+          _description: `Studio booking: ${studio.name} — ${selectedDuration}h`,
+        });
+        if (creditError) throw creditError;
+      } else if (paymentMethod === "card") {
         const token = tokenOverride || cardToken;
         if (!token) {
           toast.error("Please enter your card details");
