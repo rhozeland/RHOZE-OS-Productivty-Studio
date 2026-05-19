@@ -578,7 +578,8 @@ const LaunchDetailPage = () => {
             hidden in simulation mode — the only Solana detail users care
             about is the CA chip in the header (links out when on-chain). */}
         <div className="space-y-4">
-          <LaunchpadModeBanner />
+          {/* Demo-mode banner is creator-only — fans shouldn't see "no real money" copy. */}
+          {isCreator && <LaunchpadModeBanner />}
           <TradePanel
             launchId={launch.id}
             ticker={launch.ticker}
