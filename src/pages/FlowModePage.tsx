@@ -105,11 +105,7 @@ const FlowModePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { isAdmin } = useAdminCheck();
   const queryClient = useQueryClient();
-  const routedFlowItemId =
-    location.pathname === "/flow"
-      ? (location.state as { flowItemId?: string | null } | null)?.flowItemId ?? null
-      : null;
-  const requestedFlowItemId = searchParams.get("item") ?? routedFlowItemId;
+  const requestedFlowItemId = searchParams.get("item");
   const [calibrated, setCalibrated] = useState(false);
   const [showIdleHints, setShowIdleHints] = useState(false);
   const [showTutorialOverlay, setShowTutorialOverlay] = useState(false);
@@ -194,19 +190,6 @@ const FlowModePage = () => {
   const [viewMode, setViewMode] = useState<"swipe" | "browse">(
     searchParams.get("view") === "browse" ? "browse" : "swipe",
   );
-  useEffect(() => {
-    const routedItemId = (location.state as { flowItemId?: string | null } | null)?.flowItemId;
-    if (!routedItemId || searchParams.get("item")) return;
-    const next = new URLSearchParams(searchParams);
-    next.set("item", routedItemId);
-    setSearchParams(next, { replace: true });
-  }, [location.state, searchParams, setSearchParams]);
-
-  useEffect(() => {
-    const routedItemId = (location.state as { flowItemId?: string | null } | null)?.flowItemId;
-    if (!routedItemId || location.pathname !== "/flow") return;
-    navigate(location.pathname + location.search + location.hash, { replace: true, state: null });
-  }, [location.hash, location.pathname, location.search, location.state, navigate]);
   useEffect(() => {
     const nextView = searchParams.get("view") === "browse" ? "browse" : "swipe";
     setViewMode((current) => (current === nextView ? current : nextView));
@@ -890,7 +873,7 @@ const FlowModePage = () => {
   // Deep-link fallback: when ?item=<id> points to an item that's outside the
   // current feed (different category, hidden by RLS, etc.), fetch it directly
   // and prepend it so the user lands on the card they actually clicked.
-  const deepLinkId = searchParams.get("item") ?? routedFlowItemId;
+  const deepLinkId = requestedFlowItemId;
   const inFeed = deepLinkId ? baseItems.some((i: any) => i.id === deepLinkId) : true;
   const { data: deepLinkItem } = useQuery({
     queryKey: ["flow-deep-link-item", deepLinkId],
@@ -990,6 +973,13 @@ const FlowModePage = () => {
     });
 
     if (!selection) {
+      console.log("[FlowDeepLink] missing-selection", {
+        targetId,
+        pendingDeepLinkId,
+        flowItemsFetching,
+        feedScope,
+        baseItemIds: baseItems.map((item: any) => item.id),
+      });
       // Item not in current scope — widen so the next refetch surfaces it.
       if (pendingDeepLinkId && !flowItemsFetching && !deepLinkItem && feedScope !== "all") {
         setFeedScope("all");
@@ -1001,6 +991,19 @@ const FlowModePage = () => {
     lockedDeepLinkItemRef.current = targetId;
     const normalizedIndex = normalizeLoopedIndex(currentIndex, allItems.length);
     const visibleItemId = allItems[normalizedIndex]?.id ?? null;
+
+    console.log("[FlowDeepLink] resolve", {
+      targetId,
+      pendingDeepLinkId,
+      currentIndex,
+      normalizedIndex,
+      selectionIndex: selection.index,
+      visibleItemId,
+      visibleTitle: allItems[normalizedIndex]?.title ?? null,
+      targetTitle: allItems[selection.index]?.title ?? null,
+      shouldFinalize: selection.shouldFinalize,
+      flowItemsFetching,
+    });
 
     // Always re-pin so the user stays on the right card as the feed
     // hydrates and re-orders around the prepended deep-link copy.
@@ -1020,6 +1023,13 @@ const FlowModePage = () => {
       allItems[selection.index]?.id === targetId && visibleItemId === targetId;
 
     if (!selection.shouldFinalize || !targetIsVisible) return;
+
+    console.log("[FlowDeepLink] finalized", {
+      targetId,
+      selectionIndex: selection.index,
+      visibleItemId,
+      visibleTitle: allItems[normalizedIndex]?.title ?? null,
+    });
 
     // Mark the deep link as applied only once the target is stable enough
     // to survive URL cleanup; this avoids stale clicks getting "stuck" as

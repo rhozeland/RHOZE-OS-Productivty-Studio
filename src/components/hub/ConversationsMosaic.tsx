@@ -350,7 +350,7 @@ const ConversationsMosaic = ({
           key={tile.id}
           tile={tile}
           index={i}
-          onClick={() => navigate(tile.href, { state: { flowItemId: tile.kind === "drop" ? tile.id.replace(/^drop-/, "") : null } })}
+          onClick={() => navigate(tile.href)}
         />
       ))}
     </div>
@@ -459,6 +459,12 @@ const MosaicTileCard = ({
   const tileButton = (
     <motion.div
       onClick={() => {
+        console.log("[FlowTileClick]", {
+          tileId: tile.id,
+          title: tile.title,
+          href: tile.href,
+          kind: tile.kind,
+        });
         if (hrefItemId) {
           onClick();
           return;
