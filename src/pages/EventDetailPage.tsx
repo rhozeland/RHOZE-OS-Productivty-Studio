@@ -266,6 +266,11 @@ const EventDetailPage = () => {
       >
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0 space-y-1">
+            {isExternal && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-border bg-background/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                <Link2 className="h-3 w-3" /> Synced from {sourceLabel}
+              </span>
+            )}
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               {format(start, "EEE, MMM d · h:mm a")}
             </p>
