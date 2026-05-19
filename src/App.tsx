@@ -12,7 +12,7 @@ import AppLayout from "@/components/AppLayout";
 import FlowAuthGuard from "@/components/FlowAuthGuard";
 import AuthPage from "@/pages/AuthPage";
 import LandingPage from "@/pages/LandingPage";
-// DashboardPage retired in v8 — /dashboard now redirects to /discover.
+import DashboardPage from "@/pages/DashboardPage";
 import ProjectsPage from "@/pages/ProjectsPage";
 import ProjectDetailPage from "@/pages/ProjectDetailPage";
 import CalendarPage from "@/pages/CalendarPage";
@@ -175,7 +175,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to="/discover" replace />;
+  if (user) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
@@ -190,8 +190,7 @@ const AuthGateWrapper = ({ children }: { children: React.ReactNode }) => {
 
 /**
  * Root entry — `/`
- * v6: Discover is the front door for everyone. Guests see it (with the
- * landing-style hero copy), authed users see it personalized.
+ * v9.9: Authed users land on Home (personalized feed). Guests on Discover.
  */
 const RootEntry = () => {
   const { loading, user } = useAuth();
@@ -202,9 +201,7 @@ const RootEntry = () => {
       </div>
     );
   }
-  // Everyone — guests + authed — lands on Discover. Guest mode handles
-  // gating inside the app (protected actions open the auth modal).
-  return <Navigate to="/discover" replace />;
+  return <Navigate to={user ? "/dashboard" : "/discover"} replace />;
 };
 
 const App = () => (
@@ -243,8 +240,9 @@ const App = () => (
 
               {/* Main app — browsable by everyone, auth-gated actions inside */}
               <Route element={<AppLayout />}>
-                {/* v8: My Studio retired. /dashboard → Discover. */}
-                <Route path="/dashboard" element={<Navigate to="/discover" replace />} />
+                {/* v9.9: Home = personalized fan feed (DashboardPage). */}
+                <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                <Route path="/home" element={<Navigate to="/dashboard" replace />} />
                 {/* Three-Room front doors (Scene · Market · Vault) — additive,
                     organize existing routes without removing any. */}
                 <Route path="/scene" element={<SceneRoomPage />} />
