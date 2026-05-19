@@ -30,18 +30,16 @@ import {
 } from "@/components/ui/sidebar";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-// v9.9: 5-tab primary nav. Sidebar-only — RoomsBottomNav retired.
-//   Home     → personalized fan feed + activity (My Studio)
-//   Discover → browse/search all artists + filters
-//   Support  → supporter inbox + tier management (messages)
-//   Rewards  → badges, rank history, $RHOZE portfolio (Creator Pass)
-//   Profile  → public profile + edit mode
+// v9.9.1: 4-tab sidebar.
+//   Home          → Discover feed (artists / works)
+//   Discover      → Marketplace (Connect room — hire/spaces/calls/events)
+//   Support       → supporter inbox
+//   Creator Pass  → badges, rank, $RHOZE portfolio
 const pillarItems = [
-  { icon: Home, label: "Home", path: "/dashboard" },
-  { icon: Compass, label: "Discover", path: "/discover" },
+  { icon: Home, label: "Home", path: "/discover" },
+  { icon: Compass, label: "Discover", path: "/market" },
   { icon: Heart, label: "Support", path: "/messages" },
-  { icon: Trophy, label: "Rewards", path: "/credits" },
-  { icon: UserIcon, label: "Profile", path: "/profile" },
+  { icon: Trophy, label: "Creator Pass", path: "/credits" },
 ];
 
 const AppSidebar = () => {
