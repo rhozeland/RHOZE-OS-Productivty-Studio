@@ -196,6 +196,14 @@ const EventDetailPage = () => {
   const hasPaidTier = (tiers ?? []).some(
     (t: any) => (Number(t.price_usd) || 0) > 0 || (Number(t.price_rhoze) || 0) > 0
   );
+  // External (ICS-synced) events live on another platform — Luma, Google
+  // Calendar, Eventbrite, Apple, etc. We can't process RSVP/tickets for
+  // them, so the page becomes a read-only stub that outbounds to the
+  // canonical event URL and still offers "Add to calendar".
+  const isExternal = !!(ev as any).external_source && !!(ev as any).external_url;
+  const externalSource = ((ev as any).external_source as string | null) ?? null;
+  const externalUrl = ((ev as any).external_url as string | null) ?? null;
+  const sourceLabel = externalSource === "ics" ? "external calendar" : (externalSource ?? "external");
 
   // Hero registration CTA — pick the cheapest available tier as the
   // primary action. If the user already holds a ticket, show their
