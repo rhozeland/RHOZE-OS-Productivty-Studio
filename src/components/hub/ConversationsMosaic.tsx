@@ -459,6 +459,12 @@ const MosaicTileCard = ({
   const tileButton = (
     <motion.div
       onClick={() => {
+        console.log("[FlowTileClick]", {
+          tileId: tile.id,
+          title: tile.title,
+          href: tile.href,
+          kind: tile.kind,
+        });
         if (hrefItemId) {
           onClick();
           return;

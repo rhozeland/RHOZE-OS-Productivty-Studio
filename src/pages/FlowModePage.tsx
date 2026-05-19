@@ -973,6 +973,13 @@ const FlowModePage = () => {
     });
 
     if (!selection) {
+      console.log("[FlowDeepLink] missing-selection", {
+        targetId,
+        pendingDeepLinkId,
+        flowItemsFetching,
+        feedScope,
+        baseItemIds: baseItems.map((item: any) => item.id),
+      });
       // Item not in current scope — widen so the next refetch surfaces it.
       if (pendingDeepLinkId && !flowItemsFetching && !deepLinkItem && feedScope !== "all") {
         setFeedScope("all");
@@ -984,6 +991,19 @@ const FlowModePage = () => {
     lockedDeepLinkItemRef.current = targetId;
     const normalizedIndex = normalizeLoopedIndex(currentIndex, allItems.length);
     const visibleItemId = allItems[normalizedIndex]?.id ?? null;
+
+    console.log("[FlowDeepLink] resolve", {
+      targetId,
+      pendingDeepLinkId,
+      currentIndex,
+      normalizedIndex,
+      selectionIndex: selection.index,
+      visibleItemId,
+      visibleTitle: allItems[normalizedIndex]?.title ?? null,
+      targetTitle: allItems[selection.index]?.title ?? null,
+      shouldFinalize: selection.shouldFinalize,
+      flowItemsFetching,
+    });
 
     // Always re-pin so the user stays on the right card as the feed
     // hydrates and re-orders around the prepended deep-link copy.
@@ -1003,6 +1023,13 @@ const FlowModePage = () => {
       allItems[selection.index]?.id === targetId && visibleItemId === targetId;
 
     if (!selection.shouldFinalize || !targetIsVisible) return;
+
+    console.log("[FlowDeepLink] finalized", {
+      targetId,
+      selectionIndex: selection.index,
+      visibleItemId,
+      visibleTitle: allItems[normalizedIndex]?.title ?? null,
+    });
 
     // Mark the deep link as applied only once the target is stable enough
     // to survive URL cleanup; this avoids stale clicks getting "stuck" as
