@@ -71,16 +71,6 @@ const ProfileDetailPage = () => {
   const { data: profileNote } = useUserNote(id);
   
 
-  // v9.5 tabs: Support (default) · Drops (formerly "Works").
-  // Legacy ?tab=coin/building/about/overview → support; ?tab=works → drops.
-  const rawTab = searchParams.get("tab") || "support";
-  const tabFromUrl =
-    rawTab === "coin" || rawTab === "building" || rawTab === "about" || rawTab === "overview"
-      ? "support"
-      : rawTab === "works"
-      ? "drops"
-      : rawTab;
-  const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [bookingOpen, setBookingOpen] = useState(false);
   // `?back=1` now opens the rebuilt BackCreatorSheet directly (skips the umbrella).
   const [investOpen, setInvestOpen] = useState(searchParams.get("back") === "1");
@@ -99,12 +89,6 @@ const ProfileDetailPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleTabChange = (v: string) => {
-    setActiveTab(v);
-    const next = new URLSearchParams(searchParams);
-    if (v === "support") next.delete("tab"); else next.set("tab", v);
-    setSearchParams(next, { replace: true });
-  };
 
   // ─── Data fetching ───
   const { data: profile, isLoading } = useQuery({
