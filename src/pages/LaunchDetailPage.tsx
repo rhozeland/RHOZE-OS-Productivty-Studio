@@ -100,14 +100,8 @@ const LaunchDetailPage = () => {
   const [workSig, setWorkSig] = useState<string | null>(null);
   const [myHolding, setMyHolding] = useState<{ balance: number; sol_invested: number } | null>(null);
   const [showChart, setShowChart] = useState(false);
-  const [traderView, setTraderView] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return window.localStorage.getItem(TRADER_VIEW_KEY) === "1";
-  });
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(TRADER_VIEW_KEY, traderView ? "1" : "0");
-  }, [traderView]);
+  // v9.8: fan-first only — no localStorage toggle, no trader view.
+  const traderView = false;
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
