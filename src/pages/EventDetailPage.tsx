@@ -23,7 +23,8 @@ import {
   Clock,
   Wallet,
   CalendarPlus,
-  
+  ExternalLink,
+  Link2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -195,6 +196,14 @@ const EventDetailPage = () => {
   const hasPaidTier = (tiers ?? []).some(
     (t: any) => (Number(t.price_usd) || 0) > 0 || (Number(t.price_rhoze) || 0) > 0
   );
+  // External (ICS-synced) events live on another platform — Luma, Google
+  // Calendar, Eventbrite, Apple, etc. We can't process RSVP/tickets for
+  // them, so the page becomes a read-only stub that outbounds to the
+  // canonical event URL and still offers "Add to calendar".
+  const isExternal = !!(ev as any).external_source && !!(ev as any).external_url;
+  const externalSource = ((ev as any).external_source as string | null) ?? null;
+  const externalUrl = ((ev as any).external_url as string | null) ?? null;
+  const sourceLabel = externalSource === "ics" ? "external calendar" : (externalSource ?? "external");
 
   // Hero registration CTA — pick the cheapest available tier as the
   // primary action. If the user already holds a ticket, show their
@@ -257,6 +266,11 @@ const EventDetailPage = () => {
       >
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0 space-y-1">
+            {isExternal && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-border bg-background/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                <Link2 className="h-3 w-3" /> Synced from {sourceLabel}
+              </span>
+            )}
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               {format(start, "EEE, MMM d · h:mm a")}
             </p>
@@ -264,7 +278,22 @@ const EventDetailPage = () => {
               {ev.title}
             </h2>
           </div>
-          {myTicket ? (
+          {isExternal ? (
+            <a
+              href={externalUrl!}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0"
+            >
+              <Button
+                size="lg"
+                className="h-16 rounded-2xl px-8 text-lg font-bold shadow-lg shrink-0 md:min-w-[260px]"
+              >
+                <ExternalLink className="h-5 w-5 mr-2" />
+                View on {sourceLabel}
+              </Button>
+            </a>
+          ) : myTicket ? (
             <Link to={`/tickets/${myTicket.id}`} className="shrink-0">
               <Button
                 size="lg"
@@ -551,7 +580,22 @@ const EventDetailPage = () => {
             </div>
           </div>
 
-          {/* Registration */}
+          {/* Registration — hidden for ICS-synced events (handled on source platform) */}
+          {isExternal ? (
+            <div className="overflow-hidden rounded-[22px] border border-dashed border-border bg-muted/20 p-5 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <ExternalLink className="h-4 w-4" /> Registration on {sourceLabel}
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                This event is hosted on {sourceLabel}. RSVP, tickets, and updates live there — Rhozeland just shows the listing so people can find it.
+              </p>
+              <a href={externalUrl!} target="_blank" rel="noopener noreferrer" className="block">
+                <Button size="sm" className="w-full rounded-full">
+                  Open on {sourceLabel} <ExternalLink className="h-3.5 w-3.5 ml-1" />
+                </Button>
+              </a>
+            </div>
+          ) : (
           <div className="overflow-hidden rounded-[22px] border border-border bg-card">
             <div className="border-b border-border bg-muted/30 px-5 py-3">
               <h3 className="text-sm font-semibold text-foreground">
@@ -658,6 +702,7 @@ const EventDetailPage = () => {
               )}
             </div>
           </div>
+          )}
 
           {/* About */}
           {ev.description && (
