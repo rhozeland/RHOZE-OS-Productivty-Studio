@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
 
     const gating = (work.gating ?? {}) as {
       enabled?: boolean;
-      pool_type?: "launch" | "rhoze_pool";
+      pool_type?: "launch" | "rhoze_pool" | "backer";
       launch_id?: string | null;
       min_tokens?: number;
       gated_path?: string;
@@ -101,6 +101,85 @@ Deno.serve(async (req) => {
 
     const isOwner = work.user_id === userId;
     const poolType = gating.pool_type ?? "launch";
+
+    // BACKER branch — gate on holdings of the creator's profile coin
+    // ("Artist Shares"). Owner always passes. Threshold defaults to 1.
+    if (poolType === "backer") {
+      const threshold = Number(gating.min_tokens ?? 1);
+
+      if (!isOwner) {
+        const { data: launch } = await adminClient
+          .from("coin_launches")
+          .select("id, ticker")
+          .eq("creator_id", work.user_id)
+          .neq("status", "cancelled")
+          .order("work_id", { ascending: true, nullsFirst: true })
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (!launch) {
+          return json(200, {
+            allowed: false,
+            reason: "backing_not_open",
+            balance: 0,
+            threshold,
+            ticker: null,
+            launch_id: null,
+          });
+        }
+        const { data: holding } = await adminClient
+          .from("coin_holdings")
+          .select("balance")
+          .eq("launch_id", launch.id)
+          .eq("trader_id", userId)
+          .maybeSingle();
+        const balance = Number(holding?.balance ?? 0);
+        if (balance < threshold) {
+          return json(200, {
+            allowed: false,
+            reason: "not_a_backer",
+            balance,
+            threshold,
+            ticker: launch.ticker,
+            launch_id: launch.id,
+          });
+        }
+
+        const { data: signed, error: signErr } = await adminClient.storage
+          .from("gated-works")
+          .createSignedUrl(gating.gated_path, 300);
+        if (signErr || !signed?.signedUrl) {
+          return json(500, {
+            error: signErr?.message ?? "Could not sign URL",
+          });
+        }
+        return json(200, {
+          allowed: true,
+          signed_url: signed.signedUrl,
+          balance,
+          threshold,
+          ticker: launch.ticker,
+          launch_id: launch.id,
+          is_owner: false,
+        });
+      }
+
+      // Owner — always allowed.
+      const { data: signed, error: signErr } = await adminClient.storage
+        .from("gated-works")
+        .createSignedUrl(gating.gated_path, 300);
+      if (signErr || !signed?.signedUrl) {
+        return json(500, { error: signErr?.message ?? "Could not sign URL" });
+      }
+      return json(200, {
+        allowed: true,
+        signed_url: signed.signedUrl,
+        balance: 0,
+        threshold,
+        ticker: null,
+        is_owner: true,
+      });
+    }
 
     // Branch: $RHOZE-pool gating reads live wallet balance server-side.
     if (poolType === "rhoze_pool") {

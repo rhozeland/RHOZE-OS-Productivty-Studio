@@ -31,13 +31,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type PoolType = "backer" | "launch" | "rhoze_pool";
+
 type Props = {
   workId: string;
   workTitle?: string;
   /** Existing gating config so the dialog can hydrate. */
   current?: {
     enabled?: boolean;
-    pool_type?: "launch" | "rhoze_pool";
+    pool_type?: PoolType;
     launch_id?: string;
     min_tokens?: number;
     gated_path?: string;
@@ -55,12 +57,12 @@ export const TokenGateDialog = ({
   const { user } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [poolType, setPoolType] = useState<"launch" | "rhoze_pool">(
-    current?.pool_type ?? "launch",
+  const [poolType, setPoolType] = useState<PoolType>(
+    current?.pool_type ?? "backer",
   );
   const [launchId, setLaunchId] = useState<string>(current?.launch_id ?? "");
   const [minTokens, setMinTokens] = useState<string>(
-    current?.min_tokens != null ? String(current.min_tokens) : "1000",
+    current?.min_tokens != null ? String(current.min_tokens) : "1",
   );
   const [file, setFile] = useState<File | null>(null);
 
@@ -175,7 +177,21 @@ export const TokenGateDialog = ({
           {/* Pool type toggle */}
           <div className="space-y-1.5">
             <Label>Who can unlock?</Label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setPoolType("backer")}
+                className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors text-left ${
+                  poolType === "backer"
+                    ? "border-primary bg-primary/5 text-foreground"
+                    : "border-border/60 text-muted-foreground hover:bg-muted/30"
+                }`}
+              >
+                My backers
+                <span className="block text-[10px] font-normal text-muted-foreground/80">
+                  Anyone who's backed you
+                </span>
+              </button>
               <button
                 type="button"
                 onClick={() => setPoolType("launch")}
@@ -185,9 +201,9 @@ export const TokenGateDialog = ({
                     : "border-border/60 text-muted-foreground hover:bg-muted/30"
                 }`}
               >
-                Holders of my coin
+                Specific coin
                 <span className="block text-[10px] font-normal text-muted-foreground/80">
-                  Requires an active launch
+                  Pick one of your coins
                 </span>
               </button>
               <button
@@ -207,10 +223,18 @@ export const TokenGateDialog = ({
             </div>
           </div>
 
+          {poolType === "backer" && (
+            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs text-foreground">
+              Anyone holding at least <strong>{minTokens || 1}</strong> Share
+              from your profile unlocks this. Most creators leave this at 1 —
+              backing is the unlock.
+            </div>
+          )}
+
           {poolType === "launch" && ((launches?.length ?? 0) === 0 ? (
             <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-xs text-muted-foreground">
               You need an active coin launch to use this pool. Head to the
-              Launchpad to create one — or switch to $RHOZE holders above.
+              Launchpad to create one — or switch to Backers above.
             </div>
           ) : (
             <div className="space-y-1.5">
