@@ -45,7 +45,8 @@ import MintAddressChip from "@/components/launchpad/MintAddressChip";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const TRADER_VIEW_KEY = "rhoze-trader-view";
+// Trader-view toggle retired in v9.8 — the page is fan-first for everyone.
+// Creators still see their earnings + the demo banner.
 
 type Launch = {
   id: string;
@@ -99,14 +100,8 @@ const LaunchDetailPage = () => {
   const [workSig, setWorkSig] = useState<string | null>(null);
   const [myHolding, setMyHolding] = useState<{ balance: number; sol_invested: number } | null>(null);
   const [showChart, setShowChart] = useState(false);
-  const [traderView, setTraderView] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return window.localStorage.getItem(TRADER_VIEW_KEY) === "1";
-  });
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(TRADER_VIEW_KEY, traderView ? "1" : "0");
-  }, [traderView]);
+  // v9.8: fan-first only — no localStorage toggle, no trader view.
+  const traderView = false;
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -263,19 +258,9 @@ const LaunchDetailPage = () => {
                 {launch.mint_address && <MintAddressChip address={launch.mint_address} size="xs" />}
               </div>
               <p className="text-sm text-muted-foreground truncate">
-                {traderView ? "Bonding-curve drop · backed in $RHOZE" : "A drop you can back · denominated in $RHOZE"}
+                A drop you can back · denominated in $RHOZE
               </p>
             </div>
-
-            {/* Trader view toggle — fans see Kickstarter labels, traders flip back to market data */}
-            <button
-              type="button"
-              onClick={() => setTraderView((v) => !v)}
-              className="shrink-0 text-[10px] uppercase tracking-wide rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 hover:border-foreground/40 hover:text-foreground transition-colors text-muted-foreground"
-              title={traderView ? "Switch to fan view (recommended)" : "Switch to trader view"}
-            >
-              {traderView ? "Trader view" : "Fan view"}
-            </button>
           </div>
 
           {/* Hero stats — Kickstarter-style by default. Trader view flips to
@@ -408,10 +393,8 @@ const LaunchDetailPage = () => {
             );
           })()}
 
-          {/* Graduation progress only matters once the on-chain program is live —
-              in simulation it's a moving target with no real LP at the end.
-              Hidden in fan/sim mode; trader view + on-chain still see it. */}
-          {launch.status !== "cancelled" && (isLaunchpadOnChainEnabled() || traderView) && (
+          {/* Backing momentum — the fan-facing progress bar. Always visible. */}
+          {launch.status !== "cancelled" && (
             <GraduationProgressBar
               launchId={launch.id}
               raisedRhoze={Number(launch.real_sol_reserves) * 100}
@@ -595,7 +578,8 @@ const LaunchDetailPage = () => {
             hidden in simulation mode — the only Solana detail users care
             about is the CA chip in the header (links out when on-chain). */}
         <div className="space-y-4">
-          <LaunchpadModeBanner />
+          {/* Demo-mode banner is creator-only — fans shouldn't see "no real money" copy. */}
+          {isCreator && <LaunchpadModeBanner />}
           <TradePanel
             launchId={launch.id}
             ticker={launch.ticker}

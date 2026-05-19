@@ -227,14 +227,23 @@ const BackCreatorSheet = ({ open, onOpenChange, artistId, artistName }: Props) =
         ) : !launch && step === "amount" ? (
           <div className="px-6 pb-6 space-y-3">
             <div className="rounded-xl border border-dashed border-border/60 bg-muted/30 p-5 text-center space-y-2">
-              <Lock className="h-5 w-5 text-muted-foreground mx-auto" />
+              <Sparkles className="h-5 w-5 text-emerald-500 mx-auto" />
               <p className="text-sm text-foreground font-medium">
-                Shares aren't live yet
+                {displayName} hasn't opened a drop yet
               </p>
               <p className="text-xs text-muted-foreground">
-                Follow {displayName} and you'll be first to know when they open.
+                You can still reach out — send a DM to let them know you're around for when they launch.
               </p>
             </div>
+            <Link
+              to={`/messages?to=${artistId}`}
+              onClick={() => onOpenChange(false)}
+              className="block"
+            >
+              <Button className="w-full gap-1.5">
+                <MessageSquare className="h-4 w-4" /> Message {displayName}
+              </Button>
+            </Link>
             <Button
               variant="outline"
               className="w-full"

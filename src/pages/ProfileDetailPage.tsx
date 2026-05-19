@@ -77,8 +77,9 @@ const ProfileDetailPage = () => {
       : rawTab;
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [bookingOpen, setBookingOpen] = useState(false);
-  const [investOpen, setInvestOpen] = useState(false);
-  const [supportOpen, setSupportOpen] = useState(searchParams.get("back") === "1");
+  // `?back=1` now opens the rebuilt BackCreatorSheet directly (skips the umbrella).
+  const [investOpen, setInvestOpen] = useState(searchParams.get("back") === "1");
+  const [supportOpen, setSupportOpen] = useState(false);
   const [reputationOpen, setReputationOpen] = useState(false);
 
   // Strip `?back=1` from the URL once we've consumed it so refreshes don't
@@ -582,7 +583,7 @@ const ProfileDetailPage = () => {
                     </div>
                   </div>
                   <Button
-                    onClick={() => user ? setSupportOpen(true) : navigate("/auth")}
+                    onClick={() => user ? setInvestOpen(true) : navigate("/auth")}
                     size="lg"
                     className="gap-1.5 shrink-0 w-full sm:w-auto"
                   >
