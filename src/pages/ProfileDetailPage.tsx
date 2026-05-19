@@ -419,6 +419,7 @@ const ProfileDetailPage = () => {
                   <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground tracking-tight break-words leading-none">
                     {p.display_name || p.username || "Creator"}
                   </h1>
+                  {p.verified_pro_at && <VerifiedProBadge size="md" />}
                   {p.verification_status === "verified" && (
                     <HoverCard openDelay={120} closeDelay={80}>
                       <HoverCardTrigger asChild>
