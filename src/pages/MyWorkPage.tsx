@@ -83,11 +83,11 @@ const AuthedMyWorkPage = ({ userId }: { userId: string }) => {
   const { data: projects } = useQuery({
     queryKey: ["my-work-projects", userId],
     queryFn: async (): Promise<Array<{ id: string; status: string | null }>> => {
-      const ownerRes: any = await supabase
+      const ownerRes: any = await sb
         .from("projects")
         .select("id,status")
         .eq("owner_id", userId);
-      const collabRes: any = await supabase
+      const collabRes: any = await sb
         .from("project_collaborators")
         .select("project_id")
         .eq("user_id", userId);
@@ -95,7 +95,7 @@ const AuthedMyWorkPage = ({ userId }: { userId: string }) => {
       const collabIds = (collabRes.data ?? []).map((r: any) => r.project_id);
       let collabProjects: any[] = [];
       if (collabIds.length) {
-        const r: any = await supabase.from("projects").select("id,status").in("id", collabIds);
+        const r: any = await sb.from("projects").select("id,status").in("id", collabIds);
         collabProjects = r.data ?? [];
       }
       const all = [...(ownerRes.data ?? []), ...collabProjects];
