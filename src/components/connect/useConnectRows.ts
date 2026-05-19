@@ -56,40 +56,33 @@ const fetchProfiles = async (ids: (string | null | undefined)[]) => {
 export const useHireRows = (enabled = true) =>
   useQuery({
     enabled,
-    queryKey: ["connect", "hire"],
+    queryKey: ["connect", "hire", "creators"],
     queryFn: async (): Promise<ConnectRow[]> => {
       const { data, error } = await supabase
-        .from("marketplace_listings")
-        .select("id,title,description,category,price,currency,credits_price,delivery_days,cover_url,user_id,listing_type")
-        .eq("is_active", true)
-        .eq("listing_type", "service")
+        .from("profiles")
+        .select("user_id,display_name,username,avatar_url,banner_url,headline,bio,archetype,region_code,creator_roles,verified_pro_at,available,is_public,created_at")
+        .eq("is_public", true)
+        .order("verified_pro_at", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false })
-        .limit(60);
+        .limit(120);
       if (error) throw error;
-      const profs = await fetchProfiles((data ?? []).map((d) => d.user_id));
-      return (data ?? []).map((l: any) => {
-        const p = profs.get(l.user_id);
-        const price =
-          l.price != null
-            ? `${l.currency || "USD"} ${Number(l.price).toLocaleString()}`
-            : l.credits_price != null
-              ? `${Number(l.credits_price).toLocaleString()} $RHOZE`
-              : null;
+      return (data ?? []).map((p: any) => {
+        const roles = Array.isArray(p.creator_roles) ? p.creator_roles.filter(Boolean) : [];
         return {
-          id: l.id,
+          id: p.user_id,
           kind: "hire" as const,
-          title: l.title,
-          subtitle: p?.display_name || p?.username || "Creator",
-          priceLabel: price,
-          metaLabel: l.delivery_days ? `${l.delivery_days}d delivery` : null,
-          ownerId: l.user_id,
-          ownerName: p?.display_name || p?.username || null,
-          ownerAvatar: p?.avatar_url || null,
-          isPro: !!p?.verified_pro_at,
-          category: l.category,
-          description: l.description,
-          detailHref: `/marketplace/${l.id}`,
-          coverUrl: l.cover_url,
+          title: p.display_name || p.username || "Creator",
+          subtitle: p.headline || (roles.length ? roles.slice(0, 3).join(" · ") : p.archetype || "Creator"),
+          priceLabel: p.available ? "Available for work" : null,
+          metaLabel: p.region_code || p.archetype || null,
+          ownerId: p.user_id,
+          ownerName: p.display_name || p.username || null,
+          ownerAvatar: p.avatar_url || null,
+          isPro: !!p.verified_pro_at,
+          category: p.archetype,
+          description: p.bio,
+          detailHref: `/profiles/${p.user_id}`,
+          coverUrl: p.banner_url || p.avatar_url || null,
         };
       });
     },
