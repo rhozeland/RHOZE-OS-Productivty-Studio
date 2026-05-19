@@ -11,7 +11,7 @@ import WelcomeModal from "@/components/onboarding/WelcomeModal";
 import RoomsBottomNav from "@/components/RoomsBottomNav";
 // FlowLauncher (floating FAB) retired — Flow is now reachable via the Hub view toggle + HubFlowWidget.
 // DockBar retired in v7 (post phase-2) — navigation happens via the left side nav + global ⌘K search.
-import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Settings as SettingsIcon, LogOut, Coins, ChevronDown } from "lucide-react";
+import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Settings as SettingsIcon, LogOut, Coins, ChevronDown, Inbox } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -375,6 +375,20 @@ const AppLayout = () => {
               </button>
 
               {user && <PostMenuButton />}
+              {user && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      to="/messages"
+                      aria-label="Inbox"
+                      className="h-8 w-8 rounded-full border border-border bg-card flex items-center justify-center hover:bg-muted/50 transition-colors"
+                    >
+                      <Inbox className="h-4 w-4 text-muted-foreground" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent>Inbox</TooltipContent>
+                </Tooltip>
+              )}
               {user && <NotificationBell />}
               {user && <RhozeBalanceChip />}
 
