@@ -587,46 +587,39 @@ const ProfileDetailPage = () => {
           </div>
         </motion.div>
 
-        {/* ─── Tabbed sections ─── */}
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="w-full grid grid-cols-2 h-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-1">
-            <TabsTrigger value="support" className="text-xs gap-1.5"><Heart className="h-3 w-3" />Support</TabsTrigger>
-            <TabsTrigger value="drops" className="text-xs gap-1.5"><ImageIcon className="h-3 w-3" />Posts</TabsTrigger>
-          </TabsList>
-
-          {/* ─── Support tab — back this artist (actions + token) ─── */}
-          <TabsContent value="support" className="mt-5 space-y-4">
-            {/* Primary CTA — opens the umbrella Support sheet with all backing paths */}
+        {/* ─── Asymmetric grid: Storefront (left) · Social Feed (right) ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* ─── LEFT: Storefront — economic CTAs, sticky on desktop ─── */}
+          <aside className="lg:col-span-4 lg:sticky lg:top-6 flex flex-col gap-4">
+            {/* Back this creator card */}
             {!isOwnProfile && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35 }}
-                className="rounded-2xl bg-gradient-to-br from-primary/10 via-card/80 to-accent/5 border border-border/60 p-5 sm:p-6 backdrop-blur-sm"
+                className="rounded-2xl bg-gradient-to-br from-primary/10 via-card/80 to-accent/5 border border-border/60 p-5 backdrop-blur-sm"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="h-11 w-11 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-                      <Heart className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="min-w-0">
-                      <h2 className="font-display text-lg font-semibold text-foreground truncate">
-                        Back {p.display_name || p.username || "this artist"}
-                      </h2>
-                      <p className="text-xs text-muted-foreground">
-                        Shares, shows, sessions, or a tip — all in one place.
-                      </p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-11 w-11 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                    <Heart className="h-5 w-5 text-primary" />
                   </div>
-                  <Button
-                    onClick={() => user ? setInvestOpen(true) : navigate("/auth")}
-                    size="lg"
-                    className="gap-1.5 shrink-0 w-full sm:w-auto"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    Back them
-                  </Button>
+                  <div className="min-w-0">
+                    <h2 className="font-display text-lg font-semibold text-foreground truncate">
+                      Back {p.display_name || p.username || "this artist"}
+                    </h2>
+                    <p className="text-xs text-muted-foreground">
+                      Shares, shows, sessions, or a tip — all in one place.
+                    </p>
+                  </div>
                 </div>
+                <Button
+                  onClick={() => user ? setInvestOpen(true) : navigate("/auth")}
+                  size="lg"
+                  className="gap-1.5 w-full mt-4"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Back them
+                </Button>
                 <Link
                   to="/credits?tab=how"
                   className="mt-3 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
@@ -636,221 +629,210 @@ const ProfileDetailPage = () => {
               </motion.div>
             )}
 
-            {/* ─── Ways to support — launches + listings + events + spaces (+ inline Verify) ─── */}
-            {(() => {
-              const events    = allHostedEvents ?? [];
-              const spaces    = hostedSpaces ?? [];
-              const listings  = sellerListings ?? [];
-
-              const tabs: { value: string; label: string; icon: any; count: number | null }[] = [
-                { value: "launches", label: "Launches", icon: Coins, count: null },
-              ];
-              if (listings.length) tabs.push({ value: "listings", label: "Listings", icon: ShoppingBag, count: listings.length });
-              if (events.length)   tabs.push({ value: "events",   label: "Events",   icon: CalendarIcon, count: events.length });
-              if (spaces.length)   tabs.push({ value: "spaces",   label: "Spaces",   icon: Building2,    count: spaces.length });
-
-              const totalCount = listings.length + events.length + spaces.length;
-
-              return (
-                <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5 space-y-4">
-                  {/* ─── Verify this creator — collapsible header, sits ABOVE the tabs ─── */}
-                  <Collapsible open={reputationOpen} onOpenChange={setReputationOpen}>
-                    <CollapsibleTrigger asChild>
-                      <button className="w-full flex items-center justify-between gap-3 text-left">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <Award className="h-4 w-4 text-primary shrink-0" />
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-foreground">Verify this creator</p>
-                            <p className="text-[11px] text-muted-foreground truncate">
-                              On-chain reputation, investor signal & proof of work.
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {totalProofs > 0 && (
-                            <Badge variant="secondary" className="font-mono text-[10px]">
-                              {anchoredCount}/{totalProofs}
-                            </Badge>
-                          )}
-                          <ArrowRight className={cn("h-4 w-4 text-muted-foreground transition-transform", reputationOpen && "rotate-90")} />
-                        </div>
-                      </button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="mt-4 space-y-4">
-                      {isOwnProfile && totalProofs > 0 && anchoredCount < totalProofs && (
-                        <div className="flex justify-end">
-                          <AnchorButton proofs={proofs!} />
-                        </div>
-                      )}
-                      <CreatorReadinessCard creatorId={id!} memberSince={p.created_at} />
+            {/* Verify this creator */}
+            <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
+              <Collapsible open={reputationOpen} onOpenChange={setReputationOpen}>
+                <CollapsibleTrigger asChild>
+                  <button className="w-full flex items-center justify-between gap-3 text-left">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Award className="h-4 w-4 text-primary shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Verify this creator</p>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          On-chain reputation, investor signal & proof of work.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
                       {totalProofs > 0 && (
-                        <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
-                          <div className="grid grid-cols-3 gap-3">
-                            {Object.entries(
-                              proofs!.reduce<Record<string, number>>((acc, pr) => {
-                                acc[pr.action_type] = (acc[pr.action_type] || 0) + 1;
-                                return acc;
-                              }, {})
-                            ).sort(([, a], [, b]) => b - a).slice(0, 3).map(([type, count]) => {
-                              const meta = PROOF_TYPE_META[type] ?? {
-                                label: type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-                                href: null as string | null,
-                              };
-                              const inner = (
-                                <>
-                                  <p className="text-2xl font-bold text-foreground">{count}</p>
-                                  <p className="text-xs text-muted-foreground">{meta.label}</p>
-                                </>
-                              );
-                              return meta.href ? (
-                                <Link key={type} to={meta.href} className="rounded-lg border border-border bg-card/50 p-3 text-center transition-colors hover:bg-muted/60">
-                                  {inner}
-                                </Link>
-                              ) : (
-                                <div key={type} className="rounded-lg border border-border bg-card/50 p-3 text-center">
-                                  {inner}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
+                        <Badge variant="secondary" className="font-mono text-[10px]">
+                          {anchoredCount}/{totalProofs}
+                        </Badge>
                       )}
-                    </CollapsibleContent>
-                  </Collapsible>
-
-                  {totalCount > 0 && (
-                    <div className="flex justify-end -mb-2">
-                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{totalCount} total</span>
+                      <ArrowRight className={cn("h-4 w-4 text-muted-foreground transition-transform", reputationOpen && "rotate-90")} />
+                    </div>
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4 space-y-4">
+                  {isOwnProfile && totalProofs > 0 && anchoredCount < totalProofs && (
+                    <div className="flex justify-end">
+                      <AnchorButton proofs={proofs!} />
                     </div>
                   )}
-
-                  <Tabs defaultValue="launches">
-                    <TabsList className="w-full justify-start overflow-x-auto bg-muted/40 p-1 h-auto">
-                      {tabs.map(({ value, label, icon: Icon, count }) => (
-                        <TabsTrigger key={value} value={value} className="text-xs gap-1.5 data-[state=active]:bg-background">
-                          <Icon className="h-3 w-3" />
-                          {label}
-                          {count !== null && <span className="text-[9px] text-muted-foreground">{count}</span>}
-                        </TabsTrigger>
-                      ))}
-                    </TabsList>
-
-                    <TabsContent value="launches" className="mt-3">
-                      <CreatorDropsCatalog creatorId={id!} isOwnProfile={isOwnProfile} />
-                    </TabsContent>
-
-                    {listings.length > 0 && (
-                      <TabsContent value="listings" className="mt-3 space-y-2">
-                        {listings.map((l: any) => {
-                          const priceLabel = l.credits_price
-                            ? `${l.credits_price} $RHOZE`
-                            : l.price
-                            ? `${l.currency || "$"}${l.price}`
-                            : null;
-                          const typeLabel = l.listing_type === "project_request" ? "Open call" : "Offering";
-                          return (
-                            <button
-                              key={l.id}
-                              onClick={() => navigate(`/marketplace/${l.id}`)}
-                              className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
-                            >
-                              <div className="h-10 w-10 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
-                                <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-foreground truncate">{l.title}</p>
-                                <p className="text-[11px] text-muted-foreground truncate">
-                                  {typeLabel}
-                                  {priceLabel ? ` · ${priceLabel}` : ""}
-                                </p>
-                              </div>
-                              <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                            </button>
+                  <CreatorReadinessCard creatorId={id!} memberSince={p.created_at} />
+                  {totalProofs > 0 && (
+                    <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
+                      <div className="grid grid-cols-3 gap-3">
+                        {Object.entries(
+                          proofs!.reduce<Record<string, number>>((acc, pr) => {
+                            acc[pr.action_type] = (acc[pr.action_type] || 0) + 1;
+                            return acc;
+                          }, {})
+                        ).sort(([, a], [, b]) => b - a).slice(0, 3).map(([type, count]) => {
+                          const meta = PROOF_TYPE_META[type] ?? {
+                            label: type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+                            href: null as string | null,
+                          };
+                          const inner = (
+                            <>
+                              <p className="text-2xl font-bold text-foreground">{count}</p>
+                              <p className="text-xs text-muted-foreground">{meta.label}</p>
+                            </>
                           );
-                        })}
-                      </TabsContent>
-                    )}
-
-                    {events.length > 0 && (
-                      <TabsContent value="events" className="mt-3 space-y-2">
-                        {events.map((e: any) => {
-                          const isPast = new Date(e.starts_at) < new Date();
-                          return (
-                            <button
-                              key={e.id}
-                              onClick={() => navigate(`/events/${e.slug || e.id}`)}
-                              className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
-                            >
-                              {e.cover_url ? (
-                                <img src={e.cover_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
-                              ) : (
-                                <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
-                                  <CalendarIcon className="h-5 w-5 text-muted-foreground/40" />
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5">
-                                  <p className="text-sm font-medium text-foreground truncate">{e.title}</p>
-                                  {isPast && <Badge variant="outline" className="text-[8px] shrink-0">Past</Badge>}
-                                </div>
-                                <p className="text-[11px] text-muted-foreground truncate">
-                                  {format(new Date(e.starts_at), "MMM d · h:mm a")}
-                                  {e.is_online ? " · Online" : e.venue_name ? ` · ${e.venue_name}` : ""}
-                                </p>
-                              </div>
-                              <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                            </button>
-                          );
-                        })}
-                      </TabsContent>
-                    )}
-
-                    {spaces.length > 0 && (
-                      <TabsContent value="spaces" className="mt-3 space-y-2">
-                        {spaces.map((s: any) => (
-                          <button
-                            key={s.id}
-                            onClick={() => navigate(`/studios/${s.id}`)}
-                            className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
-                          >
-                            {s.cover_image_url ? (
-                              <img src={s.cover_image_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
-                            ) : (
-                              <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
-                                <Building2 className="h-5 w-5 text-muted-foreground/40" />
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-foreground truncate">{s.name}</p>
-                              <p className="text-[11px] text-muted-foreground truncate">
-                                {[s.city, s.state].filter(Boolean).join(" · ") || "Space"}
-                                {s.hourly_rate ? ` · ${s.currency || "$"}${s.hourly_rate}/hr` : ""}
-                              </p>
+                          return meta.href ? (
+                            <Link key={type} to={meta.href} className="rounded-lg border border-border bg-card/50 p-3 text-center transition-colors hover:bg-muted/60">
+                              {inner}
+                            </Link>
+                          ) : (
+                            <div key={type} className="rounded-lg border border-border bg-card/50 p-3 text-center">
+                              {inner}
                             </div>
-                            <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                          </button>
-                        ))}
-                      </TabsContent>
-                    )}
-                  </Tabs>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
 
+            {/* Token / Launches card */}
+            <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <Coins className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold text-foreground">Launches</h3>
+              </div>
+              <CreatorDropsCatalog creatorId={id!} isOwnProfile={isOwnProfile} />
+            </div>
 
+            {/* Listings card */}
+            {(sellerListings?.length ?? 0) > 0 && (
+              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <ShoppingBag className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Listings</h3>
+                  <span className="text-[10px] text-muted-foreground">{sellerListings!.length}</span>
                 </div>
-              );
-            })()}
-          </TabsContent>
+                <div className="space-y-2">
+                  {sellerListings!.map((l: any) => {
+                    const priceLabel = l.credits_price
+                      ? `${l.credits_price} $RHOZE`
+                      : l.price
+                      ? `${l.currency || "$"}${l.price}`
+                      : null;
+                    const typeLabel = l.listing_type === "project_request" ? "Open call" : "Offering";
+                    return (
+                      <button
+                        key={l.id}
+                        onClick={() => navigate(`/marketplace/${l.id}`)}
+                        className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
+                      >
+                        <div className="h-10 w-10 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
+                          <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{l.title}</p>
+                          <p className="text-[11px] text-muted-foreground truncate">
+                            {typeLabel}
+                            {priceLabel ? ` · ${priceLabel}` : ""}
+                          </p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
-          {/* ─── Posts tab — TikTok/Instagram-style grid of everything they've shared on Flow.
-              No titles, no labels — just the work. A small category glyph in the corner
-              hints at the medium (music / video / image / link / writing). */}
-          <TabsContent value="drops" className="mt-5 space-y-3">
-            <div>
+            {/* Events card */}
+            {(allHostedEvents?.length ?? 0) > 0 && (
+              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Events</h3>
+                  <span className="text-[10px] text-muted-foreground">{allHostedEvents!.length}</span>
+                </div>
+                <div className="space-y-2">
+                  {allHostedEvents!.map((e: any) => {
+                    const isPast = new Date(e.starts_at) < new Date();
+                    return (
+                      <button
+                        key={e.id}
+                        onClick={() => navigate(`/events/${e.slug || e.id}`)}
+                        className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
+                      >
+                        {e.cover_url ? (
+                          <img src={e.cover_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
+                        ) : (
+                          <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
+                            <CalendarIcon className="h-5 w-5 text-muted-foreground/40" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-medium text-foreground truncate">{e.title}</p>
+                            {isPast && <Badge variant="outline" className="text-[8px] shrink-0">Past</Badge>}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground truncate">
+                            {format(new Date(e.starts_at), "MMM d · h:mm a")}
+                            {e.is_online ? " · Online" : e.venue_name ? ` · ${e.venue_name}` : ""}
+                          </p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Spaces card */}
+            {(hostedSpaces?.length ?? 0) > 0 && (
+              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Spaces</h3>
+                  <span className="text-[10px] text-muted-foreground">{hostedSpaces!.length}</span>
+                </div>
+                <div className="space-y-2">
+                  {hostedSpaces!.map((s: any) => (
+                    <button
+                      key={s.id}
+                      onClick={() => navigate(`/studios/${s.id}`)}
+                      className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
+                    >
+                      {s.cover_image_url ? (
+                        <img src={s.cover_image_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
+                      ) : (
+                        <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
+                          <Building2 className="h-5 w-5 text-muted-foreground/40" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{s.name}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {[s.city, s.state].filter(Boolean).join(" · ") || "Space"}
+                          {s.hourly_rate ? ` · ${s.currency || "$"}${s.hourly_rate}/hr` : ""}
+                        </p>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </aside>
+
+          {/* ─── RIGHT: Social Feed — posts grid ─── */}
+          <section className="lg:col-span-8 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
               <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
                 <ImageIcon className="h-4 w-4 text-primary" /> Posts
               </h2>
             </div>
             {flowPosts && flowPosts.length > 0 ? (
-              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-1 sm:gap-1.5">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-1 sm:gap-1.5">
                 {flowPosts.map((post: any) => {
                   const cat = (post.category || "").toLowerCase();
                   const CatIcon =
@@ -875,7 +857,6 @@ const ProfileDetailPage = () => {
                         hideCaption
                         className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                      {/* Tiny medium glyph — top-left */}
                       <div className="absolute top-1.5 left-1.5 h-6 w-6 rounded-full bg-black/55 backdrop-blur-sm flex items-center justify-center">
                         <CatIcon className="h-3 w-3 text-white" />
                       </div>
@@ -904,10 +885,9 @@ const ProfileDetailPage = () => {
             ) : (
               <p className="text-xs text-muted-foreground italic">No posts yet.</p>
             )}
-          </TabsContent>
-          {/* Building tab removed in v9 — projects live in the owner's private dashboard. */}
+          </section>
+        </div>
 
-        </Tabs>
 
         {/* Back this creator — rebuilt 3-screen flow (replaces InvestUnlockSheet). */}
         {!isOwnProfile && id && (
