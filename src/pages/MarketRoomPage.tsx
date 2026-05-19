@@ -1,8 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Search, ArrowRight } from "lucide-react";
+import { Search, ArrowRight, Sparkles, LayoutGrid } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
@@ -16,20 +15,44 @@ import {
   useEventRows,
   KIND_META,
   type ConnectKind,
+  type ConnectRow,
 } from "@/components/connect/useConnectRows";
 
 /**
- * CONNECT — Room 2.
+ * CONNECT — Discover marketplace.
  *
- * v9.8: detail preview pane removed (rows now navigate straight to detail),
- * filter chips moved into the search shell as tabs, search placeholder
- * neutralized ("What are you looking for?"), and ?kind= URL param honored
- * so legacy /spaces and /events redirects land on the right tab.
+ * v9.9.2: Instagram Explore–style single-surface feed. Filter pills
+ * ("All · Find Creators · Opportunities · Spaces · Events · For You") refilter
+ * the unified feed inline — no navigation. Match deck stays pinned at the top.
  */
 
-const KIND_ORDER: ConnectKind[] = ["hire", "space", "call", "event"];
+type FilterKey = "all" | "hire" | "call" | "space" | "event" | "foryou";
 
-const URL_TO_KIND: Record<string, ConnectKind> = {
+const FILTERS: { key: FilterKey; label: string; kinds: ConnectKind[] | "all" | "foryou" }[] = [
+  { key: "all", label: "All", kinds: "all" },
+  { key: "hire", label: "Find Creators", kinds: ["hire"] },
+  { key: "call", label: "Opportunities", kinds: ["call"] },
+  { key: "space", label: "Spaces", kinds: ["space"] },
+  { key: "event", label: "Events", kinds: ["event"] },
+  { key: "foryou", label: "For You", kinds: "foryou" },
+];
+
+const KIND_TAG_COLOR: Record<ConnectKind, string> = {
+  hire: "bg-rose-500/15 text-rose-600 dark:text-rose-300 border-rose-500/20",
+  call: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/20",
+  space: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/20",
+  event: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/20",
+};
+
+const KIND_TAG_LABEL: Record<ConnectKind, string> = {
+  hire: "Creator",
+  call: "Open Call",
+  space: "Space",
+  event: "Event",
+};
+
+// URL ?kind= back-compat → map onto new filter keys
+const URL_TO_FILTER: Record<string, FilterKey> = {
   hire: "hire",
   space: "space",
   spaces: "space",
@@ -37,31 +60,49 @@ const URL_TO_KIND: Record<string, ConnectKind> = {
   calls: "call",
   event: "event",
   events: "event",
+  foryou: "foryou",
+  all: "all",
 };
 
 const MarketRoomPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const urlKind = URL_TO_KIND[(searchParams.get("kind") || "").toLowerCase()];
-  const [kind, setKind] = useState<ConnectKind>(urlKind ?? "hire");
+  const urlFilter = URL_TO_FILTER[(searchParams.get("kind") || "").toLowerCase()];
+  const [filter, setFilter] = useState<FilterKey>(urlFilter ?? "all");
   const [search, setSearch] = useState("");
 
-  // React to URL changes (legacy /spaces /events redirects).
   useEffect(() => {
-    if (urlKind && urlKind !== kind) setKind(urlKind);
+    if (urlFilter && urlFilter !== filter) setFilter(urlFilter);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlKind]);
+  }, [urlFilter]);
 
-  const hire = useHireRows(kind === "hire");
-  const spaces = useSpaceRows(kind === "space");
-  const calls = useCallRows(kind === "call");
-  const events = useEventRows(kind === "event");
+  // Always fetch all kinds so filter switches are instant.
+  const hire = useHireRows(true);
+  const spaces = useSpaceRows(true);
+  const calls = useCallRows(true);
+  const events = useEventRows(true);
 
-  const query =
-    kind === "hire" ? hire : kind === "space" ? spaces : kind === "call" ? calls : events;
-  const rows = query.data ?? [];
+  const isLoading =
+    hire.isLoading && spaces.isLoading && calls.isLoading && events.isLoading;
+
+  const all: ConnectRow[] = useMemo(() => {
+    return interleave([
+      hire.data ?? [],
+      spaces.data ?? [],
+      calls.data ?? [],
+      events.data ?? [],
+    ]);
+  }, [hire.data, spaces.data, calls.data, events.data]);
 
   const filtered = useMemo(() => {
+    let rows = all;
+    const def = FILTERS.find((f) => f.key === filter);
+    if (def?.kinds === "foryou") {
+      // Simple heuristic: Verified Pro creators first, then newest mixed.
+      rows = [...all.filter((r) => r.isPro), ...all.filter((r) => !r.isPro)];
+    } else if (Array.isArray(def?.kinds)) {
+      rows = all.filter((r) => (def!.kinds as ConnectKind[]).includes(r.kind));
+    }
     const q = search.trim().toLowerCase();
     if (!q) return rows;
     return rows.filter(
@@ -70,15 +111,12 @@ const MarketRoomPage = () => {
         (r.subtitle || "").toLowerCase().includes(q) ||
         (r.category || "").toLowerCase().includes(q),
     );
-  }, [rows, search]);
+  }, [all, filter, search]);
 
-  const Heading = KIND_META[kind];
-
-  const handleKindChange = (next: ConnectKind) => {
-    setKind(next);
-    // Reflect in URL so refresh/back works, but keep it clean.
+  const handleFilterChange = (next: FilterKey) => {
+    setFilter(next);
     const params = new URLSearchParams(searchParams);
-    if (next === "hire") params.delete("kind");
+    if (next === "all") params.delete("kind");
     else params.set("kind", next);
     setSearchParams(params, { replace: true });
   };
@@ -87,33 +125,35 @@ const MarketRoomPage = () => {
     <div className="space-y-6">
       <RoomHero variant="connect" eyebrow="Connect" title="Find your next collaborator." />
 
-      {/* Matchmaking HUD — swipeable deck (Post lives in its header) */}
+      {/* Matchmaking HUD — pinned regardless of filter */}
       <ConnectMatchDeck />
 
-      {/* Combined tabs + search shell */}
-      <div className="rounded-2xl border border-border bg-card/60 overflow-hidden">
-        <div className="flex flex-wrap items-center gap-1 border-b border-border/60 px-2 pt-2">
-          {KIND_ORDER.map((key) => {
-            const { label, Icon } = KIND_META[key];
-            const active = kind === key;
+      {/* Filter pills + search */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none -mx-1 px-1 pb-1">
+          {FILTERS.map(({ key, label }) => {
+            const active = filter === key;
+            const Icon = key === "all" ? LayoutGrid : key === "foryou" ? Sparkles : null;
             return (
               <button
                 key={key}
-                onClick={() => handleKindChange(key)}
+                type="button"
+                onClick={() => handleFilterChange(key)}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-t-lg px-3.5 py-2 text-xs sm:text-sm font-medium border-b-2 transition-colors -mb-px",
+                  "inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-medium transition-all whitespace-nowrap shrink-0 border",
                   active
-                    ? "border-foreground text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground",
+                    ? "bg-foreground text-background border-foreground shadow-sm"
+                    : "bg-card border-border text-muted-foreground hover:text-foreground hover:border-foreground/30",
                 )}
               >
-                <Icon className="h-3.5 w-3.5" />
+                {Icon && <Icon className="h-3.5 w-3.5" />}
                 {label}
               </button>
             );
           })}
         </div>
-        <div className="relative">
+
+        <div className="relative rounded-2xl border border-border bg-card/60 overflow-hidden">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="What are you looking for?"
@@ -124,32 +164,35 @@ const MarketRoomPage = () => {
         </div>
       </div>
 
-      {/* Results — full width list, clicking navigates to detail */}
+      {/* Results */}
       <div className="rounded-2xl border border-border bg-card/60 overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/60 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
           <span>{filtered.length} results</span>
-          <span className="hidden sm:inline">{Heading.desc}</span>
+          <span className="hidden sm:inline">
+            {FILTERS.find((f) => f.key === filter)?.label}
+          </span>
         </div>
         <div className="divide-y divide-border/50">
-          {query.isLoading && (
+          {isLoading && (
             <div className="p-6 space-y-3">
               {[1, 2, 3, 4, 5].map((i) => (
                 <div key={i} className="h-16 bg-muted/50 animate-pulse rounded-lg" />
               ))}
             </div>
           )}
-          {!query.isLoading && filtered.length === 0 && (
+          {!isLoading && filtered.length === 0 && (
             <div className="p-10 text-center">
-              <Heading.Icon className="h-8 w-8 text-muted-foreground/40 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">No {Heading.label.toLowerCase()} yet.</p>
+              <LayoutGrid className="h-8 w-8 text-muted-foreground/40 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">Nothing here yet.</p>
             </div>
           )}
           {filtered.map((row) => {
             const grad = avatarGradientFor(row.ownerId || row.id);
             const ownerName = row.ownerName || "Creator";
+            const KindIcon = KIND_META[row.kind].Icon;
             return (
               <div
-                key={row.id}
+                key={`${row.kind}-${row.id}`}
                 className="group w-full px-4 py-3 transition-colors flex items-start gap-3 hover:bg-muted/40"
               >
                 <HoverCard openDelay={120} closeDelay={80}>
@@ -204,9 +247,22 @@ const MarketRoomPage = () => {
                   className="min-w-0 flex-1 text-left"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-medium text-sm text-foreground leading-snug line-clamp-2">
-                      {row.title}
-                    </h3>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium border",
+                            KIND_TAG_COLOR[row.kind],
+                          )}
+                        >
+                          <KindIcon className="h-3 w-3" />
+                          {KIND_TAG_LABEL[row.kind]}
+                        </span>
+                      </div>
+                      <h3 className="font-medium text-sm text-foreground leading-snug line-clamp-2">
+                        {row.title}
+                      </h3>
+                    </div>
                     {row.priceLabel && (
                       <span className="shrink-0 text-xs font-semibold text-foreground tabular-nums">
                         {row.priceLabel}
@@ -237,5 +293,14 @@ const MarketRoomPage = () => {
     </div>
   );
 };
+
+function interleave<T>(groups: T[][]): T[] {
+  const out: T[] = [];
+  const max = Math.max(0, ...groups.map((g) => g.length));
+  for (let i = 0; i < max; i++) {
+    for (const g of groups) if (g[i]) out.push(g[i]);
+  }
+  return out;
+}
 
 export default MarketRoomPage;
