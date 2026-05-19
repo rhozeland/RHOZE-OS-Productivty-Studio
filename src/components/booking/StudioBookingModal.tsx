@@ -70,12 +70,27 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
 
   const [step, setStep] = useState<Step>("schedule");
   const [currentWeek, setCurrentWeek] = useState(new Date());
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("credits");
   const [notes, setNotes] = useState("");
   const [guestCount, setGuestCount] = useState(1);
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [cardToken, setCardToken] = useState<string | null>(null);
+
+  // Fetch the user's in-app credit balance
+  const { data: userCredits = 0 } = useQuery({
+    queryKey: ["user-credits", user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      const { data } = await supabase
+        .from("user_credits")
+        .select("balance")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return Number((data as any)?.balance ?? 0);
+    },
+    enabled: !!user && open,
+  });
 
   // Drag state
   const [isDragging, setIsDragging] = useState(false);
