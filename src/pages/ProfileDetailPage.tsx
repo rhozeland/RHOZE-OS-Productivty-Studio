@@ -583,7 +583,7 @@ const ProfileDetailPage = () => {
                     </div>
                   </div>
                   <Button
-                    onClick={() => user ? setSupportOpen(true) : navigate("/auth")}
+                    onClick={() => user ? setInvestOpen(true) : navigate("/auth")}
                     size="lg"
                     className="gap-1.5 shrink-0 w-full sm:w-auto"
                   >
