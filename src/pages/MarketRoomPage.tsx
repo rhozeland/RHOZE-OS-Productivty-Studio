@@ -242,6 +242,11 @@ const MarketRoomPage = () => {
                     >
                       {KIND_TAG_LABEL[row.kind]}
                     </span>
+                    {(row.kind === "hire" || row.kind === "call") && (
+                      <div className="absolute top-3 right-3">
+                        <SaveButton type="listing" id={row.id} size="sm" />
+                      </div>
+                    )}
                   </div>
 
                   {/* Bottom: content */}
