@@ -22,6 +22,10 @@ export type FlowItemLike = {
   id: string;
   user_id?: string | null;
   creator_name?: string | null;
+  content_type?: string | null;
+  category?: string | null;
+  file_url?: string | null;
+  link_url?: string | null;
   profiles?: {
     display_name?: string | null;
     avatar_url?: string | null;
@@ -41,6 +45,24 @@ export type DeepLinkSelection = {
   index: number;
   shouldFinalize: boolean;
 };
+
+export function normalizeLoopedIndex(index: number, length: number): number {
+  if (length <= 0) return 0;
+  return ((index % length) + length) % length;
+}
+
+export function shouldRepinDeepLink(options: {
+  currentIndex: number;
+  targetIndex: number;
+  itemCount: number;
+  visibleItemId: string | null;
+  targetId: string;
+  isAdvancing: boolean;
+}): boolean {
+  if (options.itemCount <= 0 || options.isAdvancing) return false;
+  if (options.visibleItemId !== options.targetId) return true;
+  return normalizeLoopedIndex(options.currentIndex, options.itemCount) !== options.targetIndex;
+}
 
 /**
  * Given a Flow item, resolve the creator-peek target.

@@ -69,6 +69,8 @@ import {
   mergeDeepLinkProfile,
   mergeDeepLinkIntoFeed,
   resolveDeepLinkSelection,
+  normalizeLoopedIndex,
+  shouldRepinDeepLink,
 } from "@/lib/flow-navigation";
 import { computeContentHash } from "@/lib/content-hash";
 import FlowCreatorPeek from "@/components/flow/FlowCreatorPeek";
@@ -175,6 +177,8 @@ const FlowModePage = () => {
   // animation replays even on rapid double-taps.
   const [heartBurst, setHeartBurst] = useState<{ key: number; itemId: string } | null>(null);
   const [expandedCard, setExpandedCard] = useState(false);
+  const [isAdvancing, setIsAdvancing] = useState(false);
+  const advancingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   // Open the Share-to-Flow composer when navigated to with ?share=1
   // (used by the dock "+" button and PostMenuButton's "Post Work" option).
@@ -987,13 +991,20 @@ const FlowModePage = () => {
     }
 
     lockedDeepLinkItemRef.current = targetId;
-    const normalizedIndex = ((currentIndex % allItems.length) + allItems.length) % allItems.length;
+    const normalizedIndex = normalizeLoopedIndex(currentIndex, allItems.length);
     const visibleItemId = allItems[normalizedIndex]?.id ?? null;
 
     // Always re-pin so the user stays on the right card as the feed
     // hydrates and re-orders around the prepended deep-link copy.
     suppressSwipeRestoreRef.current = true;
-    if (visibleItemId !== targetId) {
+    if (shouldRepinDeepLink({
+      currentIndex,
+      targetIndex: selection.index,
+      itemCount: allItems.length,
+      visibleItemId,
+      targetId,
+      isAdvancing,
+    })) {
       setCurrentIndex((cur) => (cur === selection.index ? cur : selection.index));
     }
 
@@ -1011,7 +1022,7 @@ const FlowModePage = () => {
       next.delete("item");
       setSearchParams(next, { replace: true });
     }
-  }, [allItems, baseItems, currentIndex, deepLinkItem, pendingDeepLinkId, searchParams, feedScope, flowItemsFetching, setSearchParams]);
+  }, [allItems, baseItems, currentIndex, deepLinkItem, pendingDeepLinkId, searchParams, feedScope, flowItemsFetching, setSearchParams, isAdvancing]);
 
   useEffect(() => {
     if (pendingDeepLinkId || lockedDeepLinkItemRef.current) return;
@@ -1156,9 +1167,6 @@ const FlowModePage = () => {
   // mutation queue. The 200ms here matches the `advanceCard` settle delay
   // — long enough for the exit animation to finish, short enough that the
   // next card feels immediately interactive.
-  const [isAdvancing, setIsAdvancing] = useState(false);
-  const advancingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const advanceCard = useCallback(() => {
     lockedDeepLinkItemRef.current = null;
     appliedDeepLinkRef.current = null;

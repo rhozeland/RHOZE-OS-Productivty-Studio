@@ -18,6 +18,8 @@ import {
   mergeDeepLinkProfile,
   mergeDeepLinkIntoFeed,
   resolveDeepLinkSelection,
+  normalizeLoopedIndex,
+  shouldRepinDeepLink,
   type FlowItemLike,
 } from "./flow-navigation";
 
@@ -183,5 +185,53 @@ describe("resolveDeepLinkSelection", () => {
         hasFallbackItem: false,
       }),
     ).toBeNull();
+  });
+});
+
+describe("deep-link repinning guards", () => {
+  it("normalizes looped indexes safely", () => {
+    expect(normalizeLoopedIndex(0, 5)).toBe(0);
+    expect(normalizeLoopedIndex(6, 5)).toBe(1);
+    expect(normalizeLoopedIndex(-1, 5)).toBe(4);
+    expect(normalizeLoopedIndex(2, 0)).toBe(0);
+  });
+
+  it("re-pins when the visible card is not the deep-linked target", () => {
+    expect(
+      shouldRepinDeepLink({
+        currentIndex: 3,
+        targetIndex: 1,
+        itemCount: 5,
+        visibleItemId: "other",
+        targetId: "target",
+        isAdvancing: false,
+      }),
+    ).toBe(true);
+  });
+
+  it("does not re-pin while the deck is advancing to the next card", () => {
+    expect(
+      shouldRepinDeepLink({
+        currentIndex: 0,
+        targetIndex: 0,
+        itemCount: 5,
+        visibleItemId: "target",
+        targetId: "target",
+        isAdvancing: true,
+      }),
+    ).toBe(false);
+  });
+
+  it("does not re-pin once the current card already matches the target index and id", () => {
+    expect(
+      shouldRepinDeepLink({
+        currentIndex: 6,
+        targetIndex: 1,
+        itemCount: 5,
+        visibleItemId: "target",
+        targetId: "target",
+        isAdvancing: false,
+      }),
+    ).toBe(false);
   });
 });

@@ -22,6 +22,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import FlowThumbnail from "@/components/flow/FlowThumbnail";
+import AudioPreview from "@/components/marketplace/AudioPreview";
 import { ArrowRight, X, ImageIcon, Music, FileText, Video, Palette } from "lucide-react";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
@@ -47,6 +49,19 @@ const CAT_ICON: Record<string, any> = {
   writing: FileText,
 };
 
+const AUDIO_EXT = /\.(mp3|wav|flac|aac|m4a|ogg|opus|aiff)(\?|$)/i;
+
+const isAudioWork = (work: { content_type?: string | null; category?: string | null; file_url?: string | null; link_url?: string | null }) => {
+  const category = (work.category ?? "").toLowerCase();
+  return (
+    work.content_type === "audio" ||
+    category === "music" ||
+    category === "audio" ||
+    (!!work.file_url && AUDIO_EXT.test(work.file_url)) ||
+    /(spotify\.com|soundcloud\.com|music\.apple\.com|bandcamp\.com|tidal\.com|audius\.co|lnkfi\.re|linkfire\.com|songwhip\.com|distrokid\.com|orcd\.co)/i.test(work.link_url ?? "")
+  );
+};
+
 const FlowCreatorPeek = ({ open, onOpenChange, creatorId, initial }: Props) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -70,7 +85,7 @@ const FlowCreatorPeek = ({ open, onOpenChange, creatorId, initial }: Props) => {
     queryFn: async () => {
       const { data } = await supabase
         .from("flow_items")
-        .select("id, title, category, content_type, file_url")
+        .select("id, title, category, content_type, file_url, link_url, description")
         .eq("user_id", creatorId)
         .order("created_at", { ascending: false })
         .limit(6);
@@ -180,6 +195,7 @@ const FlowCreatorPeek = ({ open, onOpenChange, creatorId, initial }: Props) => {
                   <div className="grid grid-cols-3 gap-2">
                     {works.map((w: any) => {
                       const Icon = CAT_ICON[w.category] || Palette;
+                      const audioWork = isAudioWork(w);
                       return (
                         <button
                           key={w.id}
@@ -195,14 +211,38 @@ const FlowCreatorPeek = ({ open, onOpenChange, creatorId, initial }: Props) => {
                           )}
                           title={w.title}
                         >
-                          {w.file_url ? (
-                            <img
-                              src={w.file_url}
-                              alt={w.title}
-                              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                          {audioWork ? (
+                            <div className="relative h-full w-full bg-card">
+                              <FlowThumbnail
+                                fileUrl={w.file_url}
+                                linkUrl={w.link_url}
+                                title={w.title}
+                                description={w.description}
+                                category={w.category}
+                                className="absolute inset-0 h-full w-full p-0"
+                                hideCaption
+                              />
+                              {w.file_url && AUDIO_EXT.test(w.file_url) && (
+                                <div
+                                  className="absolute inset-x-1.5 bottom-1.5 z-10 rounded-xl border border-border/60 bg-card/90 backdrop-blur-sm shadow-sm"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <AudioPreview src={w.file_url} compact />
+                                </div>
+                              )}
+                            </div>
+                          ) : w.file_url || w.link_url ? (
+                            <FlowThumbnail
+                              fileUrl={w.file_url}
+                              linkUrl={w.link_url}
+                              title={w.title}
+                              description={w.description}
+                              category={w.category}
+                              className="h-full w-full p-0 transition-transform group-hover:scale-105"
+                              hideCaption
                             />
                           ) : (
-                            <div className="h-full w-full flex items-center justify-center">
+                            <div className="h-full w-full flex items-center justify-center bg-background/50">
                               <Icon className="h-5 w-5 text-muted-foreground/60" />
                             </div>
                           )}
