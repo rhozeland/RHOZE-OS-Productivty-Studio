@@ -26,6 +26,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/contexts/AuthContext";
 import RegionChip from "@/components/profile/RegionChip";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import { ROLE_BY_ID } from "@/lib/creator-roles";
