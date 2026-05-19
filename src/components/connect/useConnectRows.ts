@@ -30,6 +30,7 @@ export interface ConnectRow {
   description?: string | null;
   detailHref: string;
   coverUrl?: string | null;
+  isPro?: boolean;
 }
 
 export const KIND_META: Record<
