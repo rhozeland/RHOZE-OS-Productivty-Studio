@@ -1674,6 +1674,10 @@ export type Database = {
           currency_code: string
           description: string | null
           ends_at: string
+          external_source: string | null
+          external_synced_at: string | null
+          external_uid: string | null
+          external_url: string | null
           host_id: string
           id: string
           is_online: boolean
@@ -1702,6 +1706,10 @@ export type Database = {
           currency_code?: string
           description?: string | null
           ends_at: string
+          external_source?: string | null
+          external_synced_at?: string | null
+          external_uid?: string | null
+          external_url?: string | null
           host_id: string
           id?: string
           is_online?: boolean
@@ -1730,6 +1738,10 @@ export type Database = {
           currency_code?: string
           description?: string | null
           ends_at?: string
+          external_source?: string | null
+          external_synced_at?: string | null
+          external_uid?: string | null
+          external_url?: string | null
           host_id?: string
           id?: string
           is_online?: boolean
@@ -2479,10 +2491,12 @@ export type Database = {
           flow_feed_scope: string | null
           flow_preferred_categories: string[] | null
           headline: string | null
+          ics_last_synced_at: string | null
           id: string
           instagram_url: string | null
           is_public: boolean | null
           location: string | null
+          luma_ics_url: string | null
           mediums: string[] | null
           portfolio_url: string | null
           primary_role: string | null
@@ -2536,10 +2550,12 @@ export type Database = {
           flow_feed_scope?: string | null
           flow_preferred_categories?: string[] | null
           headline?: string | null
+          ics_last_synced_at?: string | null
           id?: string
           instagram_url?: string | null
           is_public?: boolean | null
           location?: string | null
+          luma_ics_url?: string | null
           mediums?: string[] | null
           portfolio_url?: string | null
           primary_role?: string | null
@@ -2593,10 +2609,12 @@ export type Database = {
           flow_feed_scope?: string | null
           flow_preferred_categories?: string[] | null
           headline?: string | null
+          ics_last_synced_at?: string | null
           id?: string
           instagram_url?: string | null
           is_public?: boolean | null
           location?: string | null
+          luma_ics_url?: string | null
           mediums?: string[] | null
           portfolio_url?: string | null
           primary_role?: string | null
