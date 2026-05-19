@@ -231,7 +231,7 @@ const AuthedMyWorkPage = ({ userId }: { userId: string }) => {
               ctaTo="/discover"
             />
           ) : (
-            <ProjectsInbox />
+            <ProjectsInbox userId={userId} />
           )}
         </TabsContent>
 
