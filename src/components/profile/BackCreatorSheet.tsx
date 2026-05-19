@@ -266,31 +266,91 @@ const BackCreatorSheet = ({ open, onOpenChange, artistId, artistName }: Props) =
           </div>
         ) : !launch && step === "amount" ? (
           <div className="px-6 pb-6 space-y-3">
-            <div className="rounded-xl border border-dashed border-border/60 bg-muted/30 p-5 text-center space-y-2">
+            <div className="rounded-xl border border-dashed border-border/60 bg-muted/30 p-4 text-center space-y-1.5">
               <Sparkles className="h-5 w-5 text-emerald-500 mx-auto" />
               <p className="text-sm text-foreground font-medium">
                 {displayName} hasn't opened a drop yet
               </p>
               <p className="text-xs text-muted-foreground">
-                You can still reach out — send a DM to let them know you're around for when they launch.
+                Here are other ways to show up for them.
               </p>
             </div>
+
+            {/* Alternative ways to back: upcoming event / their space / a listing */}
+            <div className="space-y-2">
+              {altWays?.event && (
+                <Link
+                  to={`/events/${altWays.event.slug ?? altWays.event.id}`}
+                  onClick={() => onOpenChange(false)}
+                  className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/40 transition-colors"
+                >
+                  <div className="h-9 w-9 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
+                    <Calendar className="h-4 w-4 text-rose-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                      Upcoming event
+                    </p>
+                    <p className="text-sm font-semibold truncate">
+                      {altWays.event.title}
+                    </p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </Link>
+              )}
+
+              {altWays?.studio && (
+                <Link
+                  to={`/studios/${altWays.studio.id}`}
+                  onClick={() => onOpenChange(false)}
+                  className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/40 transition-colors"
+                >
+                  <div className="h-9 w-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
+                    <Building2 className="h-4 w-4 text-indigo-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                      Book their space
+                    </p>
+                    <p className="text-sm font-semibold truncate">
+                      {altWays.studio.name}
+                    </p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </Link>
+              )}
+
+              {altWays?.listing && (
+                <Link
+                  to={`/marketplace/${altWays.listing.id}`}
+                  onClick={() => onOpenChange(false)}
+                  className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/40 transition-colors"
+                >
+                  <div className="h-9 w-9 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                    <Tag className="h-4 w-4 text-amber-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                      Hire them
+                    </p>
+                    <p className="text-sm font-semibold truncate">
+                      {altWays.listing.title}
+                    </p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </Link>
+              )}
+            </div>
+
             <Link
               to={`/messages?to=${artistId}`}
               onClick={() => onOpenChange(false)}
               className="block"
             >
-              <Button className="w-full gap-1.5">
+              <Button variant="outline" className="w-full gap-1.5">
                 <MessageSquare className="h-4 w-4" /> Message {displayName}
               </Button>
             </Link>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => onOpenChange(false)}
-            >
-              Close
-            </Button>
           </div>
         ) : step === "amount" ? (
           <div className="px-6 pb-5 space-y-4">
