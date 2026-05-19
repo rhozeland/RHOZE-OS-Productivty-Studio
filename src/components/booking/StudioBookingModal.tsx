@@ -193,6 +193,8 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
       : 0;
   const totalPrice = studio.hourly_rate * selectedDuration;
   const solPrice = +(totalPrice / 150).toFixed(4);
+  const creditsPrice = Math.max(1, Math.round(totalPrice * CREDITS_PER_USD));
+  const hasEnoughCredits = userCredits >= creditsPrice;
   const maxGuests = studio.max_guests ?? 10;
 
   const canProceedToDetails = dragDate && dragStartHour !== null && dragEndHour !== null && selectedDuration > 0;
