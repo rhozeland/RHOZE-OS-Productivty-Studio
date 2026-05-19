@@ -79,6 +79,8 @@ const ArtistSpotlightCard = ({
   hosted_space,
 }: Props) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isSelf = !!user && user.id === id;
   const grad = avatarGradientFor(id);
   const roleLabels = (creator_roles ?? [])
     .slice(0, 3)
