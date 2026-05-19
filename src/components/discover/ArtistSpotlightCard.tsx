@@ -26,6 +26,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/contexts/AuthContext";
 import RegionChip from "@/components/profile/RegionChip";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import { ROLE_BY_ID } from "@/lib/creator-roles";
@@ -78,6 +79,8 @@ const ArtistSpotlightCard = ({
   hosted_space,
 }: Props) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isSelf = !!user && user.id === id;
   const grad = avatarGradientFor(id);
   const roleLabels = (creator_roles ?? [])
     .slice(0, 3)
@@ -105,7 +108,12 @@ const ArtistSpotlightCard = ({
   const handleBack = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Land on the profile Support tab — SupportCreatorSheet auto-opens via ?back=1
+    // If the viewer IS this creator, the BackCreatorSheet won't render
+    // (you can't back yourself). Send them straight to their profile.
+    if (isSelf) {
+      navigate(href);
+      return;
+    }
     navigate(`${href}?tab=support&back=1`);
   };
 
@@ -265,11 +273,11 @@ const ArtistSpotlightCard = ({
           onClick={handleBack}
           className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/40"
         >
-          Back {firstName(title)}
+          {isSelf ? "View your profile" : `Back ${firstName(title)}`}
           <ArrowUpRight className="h-4 w-4" />
         </button>
         <span className="mt-2 flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
-          or tap card to view profile
+          {isSelf ? "This is you — featured on Discover today" : "or tap card to view profile"}
         </span>
       </div>
     </div>
