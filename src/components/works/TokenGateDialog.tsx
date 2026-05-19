@@ -31,13 +31,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type PoolType = "backer" | "launch" | "rhoze_pool";
+
 type Props = {
   workId: string;
   workTitle?: string;
   /** Existing gating config so the dialog can hydrate. */
   current?: {
     enabled?: boolean;
-    pool_type?: "launch" | "rhoze_pool";
+    pool_type?: PoolType;
     launch_id?: string;
     min_tokens?: number;
     gated_path?: string;
@@ -55,12 +57,12 @@ export const TokenGateDialog = ({
   const { user } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [poolType, setPoolType] = useState<"launch" | "rhoze_pool">(
-    current?.pool_type ?? "launch",
+  const [poolType, setPoolType] = useState<PoolType>(
+    current?.pool_type ?? "backer",
   );
   const [launchId, setLaunchId] = useState<string>(current?.launch_id ?? "");
   const [minTokens, setMinTokens] = useState<string>(
-    current?.min_tokens != null ? String(current.min_tokens) : "1000",
+    current?.min_tokens != null ? String(current.min_tokens) : "1",
   );
   const [file, setFile] = useState<File | null>(null);
 
