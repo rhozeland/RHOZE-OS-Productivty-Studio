@@ -468,6 +468,9 @@ const ProfileDetailPage = () => {
                   {reviewStats.avg} <span className="opacity-70">({reviewStats.count})</span>
                 </span>
               )}
+              {!isOwnProfile && id && (
+                <SaveButton type="creator" id={id} variant="chip" />
+              )}
             </div>
 
             <div className="mt-3 space-y-2.5">
