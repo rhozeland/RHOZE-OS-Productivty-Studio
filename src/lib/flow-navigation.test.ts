@@ -18,6 +18,7 @@ import {
   mergeDeepLinkProfile,
   mergeDeepLinkIntoFeed,
   resolveDeepLinkSelection,
+  resolveDisplayedFlowIndex,
   normalizeLoopedIndex,
   shouldRepinDeepLink,
   type FlowItemLike,
@@ -233,5 +234,36 @@ describe("deep-link repinning guards", () => {
         isAdvancing: false,
       }),
     ).toBe(false);
+  });
+
+  it("renders the deep-linked card immediately even before currentIndex has repinned", () => {
+    const target = item({ id: "target" });
+    const other = item({ id: "other" });
+    const all = [target, other];
+
+    expect(
+      resolveDisplayedFlowIndex({
+        currentIndex: 1,
+        allItems: all,
+        baseItems: all,
+        targetId: "target",
+        flowItemsFetching: false,
+        hasFallbackItem: false,
+      }),
+    ).toBe(0);
+  });
+
+  it("falls back to the normalized current index when there is no deep link", () => {
+    const all = [item({ id: "a" }), item({ id: "b" }), item({ id: "c" })];
+    expect(
+      resolveDisplayedFlowIndex({
+        currentIndex: 4,
+        allItems: all,
+        baseItems: all,
+        targetId: null,
+        flowItemsFetching: false,
+        hasFallbackItem: false,
+      }),
+    ).toBe(1);
   });
 });
