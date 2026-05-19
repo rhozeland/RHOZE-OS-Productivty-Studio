@@ -364,7 +364,7 @@ const DiscoverPage = () => {
               Discover
             </p>
             <h1 className="font-display text-4xl sm:text-5xl leading-[1.02] text-foreground tracking-tight max-w-2xl">
-              Real creators.{" "}
+              Get Discovered.{" "}
               <span
                 className="inline-block"
                 style={{
@@ -373,7 +373,7 @@ const DiscoverPage = () => {
                   WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent",
                 }}
               >
-                Real spaces. Real moments.
+                Get Supported. On-Chain.
               </span>
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-3 max-w-xl leading-relaxed">
