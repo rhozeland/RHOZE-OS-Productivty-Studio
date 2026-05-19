@@ -43,10 +43,10 @@ const FILTERS: { key: FilterKey; label: string; kinds: ConnectKind[] | "all" | "
 ];
 
 const KIND_TAG_COLOR: Record<ConnectKind, string> = {
-  hire: "bg-rose-500/15 text-rose-600 dark:text-rose-300 border-rose-500/20",
-  call: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/20",
-  space: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/20",
-  event: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/20",
+  hire: "bg-rose-500 text-white",
+  call: "bg-purple-500 text-white",
+  space: "bg-teal-500 text-white",
+  event: "bg-amber-500 text-white",
 };
 
 const KIND_TAG_LABEL: Record<ConnectKind, string> = {
