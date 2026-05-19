@@ -702,6 +702,7 @@ const EventDetailPage = () => {
               )}
             </div>
           </div>
+          )}
 
           {/* About */}
           {ev.description && (
