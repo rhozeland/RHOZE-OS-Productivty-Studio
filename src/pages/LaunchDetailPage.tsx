@@ -258,19 +258,9 @@ const LaunchDetailPage = () => {
                 {launch.mint_address && <MintAddressChip address={launch.mint_address} size="xs" />}
               </div>
               <p className="text-sm text-muted-foreground truncate">
-                {traderView ? "Bonding-curve drop · backed in $RHOZE" : "A drop you can back · denominated in $RHOZE"}
+                A drop you can back · denominated in $RHOZE
               </p>
             </div>
-
-            {/* Trader view toggle — fans see Kickstarter labels, traders flip back to market data */}
-            <button
-              type="button"
-              onClick={() => setTraderView((v) => !v)}
-              className="shrink-0 text-[10px] uppercase tracking-wide rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 hover:border-foreground/40 hover:text-foreground transition-colors text-muted-foreground"
-              title={traderView ? "Switch to fan view (recommended)" : "Switch to trader view"}
-            >
-              {traderView ? "Trader view" : "Fan view"}
-            </button>
           </div>
 
           {/* Hero stats — Kickstarter-style by default. Trader view flips to
