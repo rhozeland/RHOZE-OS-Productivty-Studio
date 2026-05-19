@@ -79,6 +79,7 @@ const AuthedMyWorkPage = ({ userId }: { userId: string }) => {
   const navigate = useNavigate();
 
   // === Projects count (active = not completed/cancelled) ===
+  const sb: any = supabase;
   const { data: projects } = useQuery({
     queryKey: ["my-work-projects", userId],
     queryFn: async (): Promise<Array<{ id: string; status: string | null }>> => {
