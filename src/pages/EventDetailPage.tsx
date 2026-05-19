@@ -273,7 +273,22 @@ const EventDetailPage = () => {
               {ev.title}
             </h2>
           </div>
-          {myTicket ? (
+          {isExternal ? (
+            <a
+              href={externalUrl!}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0"
+            >
+              <Button
+                size="lg"
+                className="h-16 rounded-2xl px-8 text-lg font-bold shadow-lg shrink-0 md:min-w-[260px]"
+              >
+                <ExternalLink className="h-5 w-5 mr-2" />
+                View on {sourceLabel}
+              </Button>
+            </a>
+          ) : myTicket ? (
             <Link to={`/tickets/${myTicket.id}`} className="shrink-0">
               <Button
                 size="lg"
