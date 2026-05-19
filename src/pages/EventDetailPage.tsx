@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   Clock,
   Wallet,
+  CalendarPlus,
   
 } from "lucide-react";
 import { toast } from "sonner";
@@ -33,6 +34,7 @@ import EventInviteBanner from "@/components/events/EventInviteBanner";
 import EventMediaCarousel from "@/components/events/EventMediaCarousel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EventNotFound } from "@/components/events/EventNotFound";
+import { downloadIcs } from "@/lib/ics-export";
 
 const EventDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -285,6 +287,28 @@ const EventDetailPage = () => {
               {heroLabel}
             </Button>
           )}
+        </div>
+        <div className="mt-4 flex justify-end">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={() =>
+              downloadIcs({
+                uid: ev.id,
+                title: ev.title,
+                description: ev.description ?? undefined,
+                starts_at: ev.starts_at,
+                ends_at: ev.ends_at,
+                url: typeof window !== "undefined" ? window.location.href : null,
+                location: ev.venue_name ?? ev.venue_address ?? (ev.is_online ? "Online" : null),
+              })
+            }
+          >
+            <CalendarPlus className="h-4 w-4 mr-1.5" />
+            Add to calendar
+          </Button>
         </div>
       </motion.section>
 
