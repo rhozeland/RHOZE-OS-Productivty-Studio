@@ -331,6 +331,7 @@ const App = () => (
                   />
                 ))}
                 <Route path="/messages" element={<MessagesPage />} />
+                <Route path="/my-work" element={<MyWorkPage />} />
                 <Route path="/network" element={<Navigate to="/messages" replace />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/settings/verification" element={<VerificationPage />} />
