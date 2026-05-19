@@ -236,6 +236,7 @@ const SettingsPage = () => {
 
   const handleBannerUpload = async (file: File) => {
     if (!user) return;
+    if (!(profile as any)?.verified_pro_at) { toast.error("Verified Pro required for custom banner uploads."); return; }
     if (file.size > 10 * 1024 * 1024) { toast.error("Banner image must be under 10MB"); return; }
     setUploadingBanner(true);
     try {
