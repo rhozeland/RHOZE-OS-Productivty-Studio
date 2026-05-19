@@ -117,6 +117,43 @@ const BackCreatorSheet = ({ open, onOpenChange, artistId, artistName }: Props) =
     },
   });
 
+  // Fallback: when the creator has no live drop, surface other ways to back
+  // them — upcoming event, their space, or an active listing.
+  const { data: altWays } = useQuery({
+    queryKey: ["back-sheet-alt-ways", artistId],
+    enabled: open && !!artistId,
+    queryFn: async () => {
+      const nowIso = new Date().toISOString();
+      const [eventsRes, studiosRes, listingsRes] = await Promise.all([
+        supabase
+          .from("events")
+          .select("id, title, slug, starts_at, cover_url")
+          .eq("host_id", artistId)
+          .eq("status", "published")
+          .gte("starts_at", nowIso)
+          .order("starts_at", { ascending: true })
+          .limit(1),
+        supabase
+          .from("studios")
+          .select("id, name, cover_image_url")
+          .eq("owner_id", artistId)
+          .eq("is_active", true)
+          .limit(1),
+        supabase
+          .from("marketplace_listings")
+          .select("id, title")
+          .eq("user_id", artistId)
+          .eq("is_active", true)
+          .limit(1),
+      ]);
+      return {
+        event: eventsRes.data?.[0] ?? null,
+        studio: studiosRes.data?.[0] ?? null,
+        listing: listingsRes.data?.[0] ?? null,
+      };
+    },
+  });
+
   const creditBalance = Math.max(0, Math.floor(Number(balance ?? 0)));
   const hasEnoughCredits = creditBalance >= amountCredits;
 
