@@ -84,7 +84,7 @@ export function BoostProfileSheet({ open, onOpenChange }: Props) {
       if (!user) return null;
       const { data } = await supabase
         .from("profiles")
-        .select("featured_pin_until, featured_tier")
+        .select("featured_pin_until, featured_tier, verified_pro_at")
         .eq("user_id", user.id)
         .maybeSingle();
       return data;
@@ -109,6 +109,24 @@ export function BoostProfileSheet({ open, onOpenChange }: Props) {
       toast.error(err?.message ?? "Could not purchase boost");
     },
   });
+
+  const PRO_CREDITS = 2900;
+  const purchasePro = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc("purchase_verified_pro");
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Welcome to Verified Pro — fee floor now 10%.");
+      qc.invalidateQueries({ queryKey: ["user-credits-balance"] });
+      qc.invalidateQueries({ queryKey: ["profile-featured-pin"] });
+      qc.invalidateQueries({ queryKey: ["profile", user?.id] });
+      onOpenChange(false);
+    },
+    onError: (err: any) => toast.error(err?.message ?? "Could not upgrade"),
+  });
+
 
   const chosen = SKUS.find((s) => s.id === selected)!;
   const balance = credits ?? 0;
