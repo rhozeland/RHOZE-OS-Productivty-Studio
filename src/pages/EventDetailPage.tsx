@@ -580,7 +580,22 @@ const EventDetailPage = () => {
             </div>
           </div>
 
-          {/* Registration */}
+          {/* Registration — hidden for ICS-synced events (handled on source platform) */}
+          {isExternal ? (
+            <div className="overflow-hidden rounded-[22px] border border-dashed border-border bg-muted/20 p-5 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <ExternalLink className="h-4 w-4" /> Registration on {sourceLabel}
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                This event is hosted on {sourceLabel}. RSVP, tickets, and updates live there — Rhozeland just shows the listing so people can find it.
+              </p>
+              <a href={externalUrl!} target="_blank" rel="noopener noreferrer" className="block">
+                <Button size="sm" className="w-full rounded-full">
+                  Open on {sourceLabel} <ExternalLink className="h-3.5 w-3.5 ml-1" />
+                </Button>
+              </a>
+            </div>
+          ) : (
           <div className="overflow-hidden rounded-[22px] border border-border bg-card">
             <div className="border-b border-border bg-muted/30 px-5 py-3">
               <h3 className="text-sm font-semibold text-foreground">
