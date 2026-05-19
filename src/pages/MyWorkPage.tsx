@@ -191,8 +191,87 @@ const AuthedMyWorkPage = ({ userId }: { userId: string }) => {
     setSearchParams(next, { replace: true });
   };
 
-  // === Saved — not yet implemented, always empty for now ===
-  const savedItems: any[] = [];
+  // === Saved items (creators / works / listings) ===
+  const { items: savedItems } = useSavedItems();
+  const savedCreatorIds = savedItems.filter((i) => i.item_type === "creator").map((i) => i.item_id);
+  const savedWorkIds = savedItems.filter((i) => i.item_type === "work").map((i) => i.item_id);
+  const savedListingIds = savedItems.filter((i) => i.item_type === "listing").map((i) => i.item_id);
+
+  const sb: any = supabase;
+  const { data: savedCreators } = useQuery({
+    queryKey: ["saved-creators", savedCreatorIds],
+    queryFn: async () => {
+      const { data, error } = await sb.rpc("get_profiles_by_ids", { _ids: savedCreatorIds });
+      if (error) throw error;
+      return (data ?? []) as Array<{ user_id: string; display_name: string | null; avatar_url: string | null; headline?: string | null }>;
+    },
+    enabled: savedCreatorIds.length > 0,
+  });
+
+  const { data: savedWorks } = useQuery({
+    queryKey: ["saved-works", savedWorkIds],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("flow_items")
+        .select("id, title, link_url, thumbnail_url, user_id")
+        .in("id", savedWorkIds);
+      if (error) throw error;
+      return (data ?? []) as Array<{ id: string; title: string | null; link_url: string | null; thumbnail_url: string | null; user_id: string }>;
+    },
+    enabled: savedWorkIds.length > 0,
+  });
+
+  const { data: savedListings } = useQuery({
+    queryKey: ["saved-listings", savedListingIds],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("marketplace_listings")
+        .select("id, title, listing_type, user_id")
+        .in("id", savedListingIds);
+      if (error) throw error;
+      return (data ?? []) as Array<{ id: string; title: string | null; listing_type: string | null; user_id: string }>;
+    },
+    enabled: savedListingIds.length > 0,
+  });
+
+  type SavedRow = {
+    key: string;
+    type: "creator" | "work" | "listing";
+    id: string;
+    name: string;
+    sub: string;
+    avatar: string | null;
+    href: string;
+  };
+  const savedRows: SavedRow[] = [
+    ...((savedCreators ?? []).map((p: any) => ({
+      key: `creator-${p.user_id}`,
+      type: "creator" as const,
+      id: p.user_id,
+      name: p.display_name || "Creator",
+      sub: p.headline || "Creator",
+      avatar: p.avatar_url,
+      href: `/profiles/${p.user_id}`,
+    }))),
+    ...((savedWorks ?? []).map((w: any) => ({
+      key: `work-${w.id}`,
+      type: "work" as const,
+      id: w.id,
+      name: w.title || "Untitled work",
+      sub: "Work",
+      avatar: w.thumbnail_url,
+      href: w.link_url || `/profiles/${w.user_id}`,
+    }))),
+    ...((savedListings ?? []).map((l: any) => ({
+      key: `listing-${l.id}`,
+      type: "listing" as const,
+      id: l.id,
+      name: l.title || "Listing",
+      sub: l.listing_type === "project_request" || l.listing_type === "collab" ? "Open call" : "Listing",
+      avatar: null,
+      href: `/creators/${l.id}`,
+    }))),
+  ];
 
   return (
     <div className="w-full min-w-0 space-y-6">
