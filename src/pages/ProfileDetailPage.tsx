@@ -28,6 +28,7 @@ import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilit
 import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
 import BackCreatorSheet from "@/components/profile/BackCreatorSheet";
 import SupportCreatorSheet from "@/components/profile/SupportCreatorSheet";
+import { BoostProfileSheet } from "@/components/profile/BoostProfileSheet";
 import CreatorDropsCatalog from "@/components/profile/CreatorDropsCatalog";
 import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
