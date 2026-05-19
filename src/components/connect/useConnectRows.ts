@@ -231,12 +231,14 @@ export const useMixedConnectRows = (enabled = true) => {
 
   const isLoading =
     hire.isLoading && space.isLoading && call.isLoading && event.isLoading;
-  const rows = interleave([
+  const mixed = interleave([
     hire.data ?? [],
     space.data ?? [],
     call.data ?? [],
     event.data ?? [],
   ]);
+  // Verified Pro creators float to the top of the matchmaking deck.
+  const rows = [...mixed.filter((r) => r.isPro), ...mixed.filter((r) => !r.isPro)];
   return { rows, isLoading };
 };
 
