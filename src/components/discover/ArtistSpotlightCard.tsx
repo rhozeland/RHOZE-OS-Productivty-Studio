@@ -108,7 +108,12 @@ const ArtistSpotlightCard = ({
   const handleBack = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Land on the profile Support tab — SupportCreatorSheet auto-opens via ?back=1
+    // If the viewer IS this creator, the BackCreatorSheet won't render
+    // (you can't back yourself). Send them straight to their profile.
+    if (isSelf) {
+      navigate(href);
+      return;
+    }
     navigate(`${href}?tab=support&back=1`);
   };
 
