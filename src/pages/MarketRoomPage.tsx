@@ -12,6 +12,7 @@ import {
 
 import { avatarGradientFor } from "@/lib/avatar-gradient";
 import ConnectMatchDeck from "@/components/connect/ConnectMatchDeck";
+import SaveButton from "@/components/saved/SaveButton";
 import RoomHero from "@/components/rooms/RoomHero";
 import {
   useHireRows,
