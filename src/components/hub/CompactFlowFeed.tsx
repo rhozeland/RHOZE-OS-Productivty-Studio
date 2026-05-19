@@ -239,13 +239,33 @@ const CompactFlowFeed = () => {
               </span>
             )}
 
-            {/* Inline audio for music drops */}
+            {/* Inline audio for music drops — tapping play expands to full Flow
+                instead of starting playback in the mini widget, so audio always
+                plays in context with the creator card + actions. */}
             {isMusic && isAudioFile && activeItem?.file_url && (
               <div
-                className="absolute left-2 right-2 bottom-2 z-10 rounded-xl border border-border/60 bg-card/90 backdrop-blur-sm shadow-sm"
-                onClick={(e) => e.stopPropagation()}
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openFlow(activeItem.id);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openFlow(activeItem.id);
+                  }
+                }}
+                className="absolute left-2 right-2 bottom-2 z-10 rounded-xl border border-border/60 bg-card/90 backdrop-blur-sm shadow-sm cursor-pointer"
+                aria-label="Open in Flow to play"
               >
-                <AudioPreview src={activeItem.file_url} compact />
+                {/* Pointer events disabled so the AudioPreview's own play button
+                    can't capture the click — the wrapper always wins and
+                    expands into Flow. */}
+                <div className="pointer-events-none">
+                  <AudioPreview src={activeItem.file_url} compact />
+                </div>
               </div>
             )}
 
