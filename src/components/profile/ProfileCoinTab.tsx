@@ -1,28 +1,34 @@
 /**
- * ProfileCoinTab — embedded inside ProfileDetailPage's "Coin" tab.
+ * ProfileCoinTab — v9.8 (A4): speculation chrome stripped.
  *
- * Behaviour:
- *  - If the creator has an active profile coin, render the bonding-curve
- *    chart + trade panel inline so investors can speculate without leaving
- *    the profile.
- *  - If not, and the visitor is the profile owner, surface a Launch CTA.
- *  - If not, and the visitor is anyone else, render an editorial empty
- *    state ("This creator hasn't launched a coin yet").
+ * Default view = `<ProfileBackersPanel />` style:
+ *   - Backer count + momentum %
+ *   - "Back {Name}" primary CTA (opens BackCreatorSheet)
+ *   - Quiet "View market →" link toggles the legacy chart + trade panel
+ *     for power users who actually want to trade.
  *
- * Coins are profile-bound (one active per creator). The chart and trade
- * panel are the same components used by the legacy LaunchDetailPage.
+ * No price chart, no mint address, no bonding-curve language by default.
+ * Owner empty-state keeps the Launch Shares CTA.
  */
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Coins, Loader2, Sparkles, TrendingUp } from "lucide-react";
+import {
+  Coins,
+  Loader2,
+  Sparkles,
+  TrendingUp,
+  Users,
+  ArrowRight,
+  LineChart,
+  ChevronUp,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PriceChartCard from "@/components/launchpad/PriceChartCard";
 import TradePanel from "@/components/launchpad/TradePanel";
 import LaunchCoinDialog from "@/components/launchpad/LaunchCoinDialog";
-import MintAddressChip from "@/components/launchpad/MintAddressChip";
 import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
+import BackCreatorSheet from "@/components/profile/BackCreatorSheet";
 
 interface Props {
   creatorId: string;
@@ -34,8 +40,17 @@ interface Props {
   showReadiness?: boolean;
 }
 
-const ProfileCoinTab = ({ creatorId, isOwnProfile, defaultName, defaultImage, memberSince, showReadiness = true }: Props) => {
+const ProfileCoinTab = ({
+  creatorId,
+  isOwnProfile,
+  defaultName,
+  defaultImage,
+  memberSince,
+  showReadiness = true,
+}: Props) => {
   const [launchOpen, setLaunchOpen] = useState(false);
+  const [backOpen, setBackOpen] = useState(false);
+  const [marketOpen, setMarketOpen] = useState(false);
 
   const { data: coin, isLoading, refetch } = useQuery({
     queryKey: ["profile-coin", creatorId],
@@ -45,14 +60,25 @@ const ProfileCoinTab = ({ creatorId, isOwnProfile, defaultName, defaultImage, me
         .select("*")
         .eq("creator_id", creatorId)
         .neq("status", "cancelled")
-        // Profile coins (work_id IS NULL) take precedence; otherwise fall back
-        // to the most recent legacy work-bound coin so they still surface.
         .order("work_id", { ascending: true, nullsFirst: true })
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       if (error && (error as any).code !== "PGRST116") throw error;
       return data;
+    },
+  });
+
+  const { data: backerCount } = useQuery({
+    queryKey: ["profile-coin-backers", coin?.id],
+    enabled: !!coin?.id,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("coin_holdings")
+        .select("trader_id", { count: "exact", head: true })
+        .eq("launch_id", coin!.id)
+        .gt("balance", 0);
+      return count ?? 0;
     },
   });
 
@@ -68,25 +94,27 @@ const ProfileCoinTab = ({ creatorId, isOwnProfile, defaultName, defaultImage, me
   if (!coin) {
     return (
       <div className="space-y-4">
-        {showReadiness && <CreatorReadinessCard creatorId={creatorId} memberSince={memberSince} />}
+        {showReadiness && (
+          <CreatorReadinessCard creatorId={creatorId} memberSince={memberSince} />
+        )}
         <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-6 text-center space-y-3">
           <div className="mx-auto h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
             <Coins className="h-5 w-5 text-emerald-500" />
           </div>
           <div>
             <h3 className="font-display text-base font-semibold text-foreground">
-              {isOwnProfile ? "Launch your Artist Shares" : "No Artist Shares yet"}
+              {isOwnProfile ? "Open backing for your profile" : "Not open for backing yet"}
             </h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
               {isOwnProfile
-                ? "Issue Shares tied to your profile so fans can back your career and share in the upside."
-                : "This artist hasn't issued Shares yet."}
+                ? "Let fans back you with a few dollars each — they unlock your private feed, you get the upside."
+                : "This creator hasn't opened backing yet."}
             </p>
           </div>
           {isOwnProfile && (
             <Button onClick={() => setLaunchOpen(true)} size="sm" className="gap-2">
               <Sparkles className="h-4 w-4" />
-              Launch Shares
+              Open backing
             </Button>
           )}
           <LaunchCoinDialog
@@ -101,69 +129,120 @@ const ProfileCoinTab = ({ creatorId, isOwnProfile, defaultName, defaultImage, me
     );
   }
 
-  // ── Coin exists — chart + trade panel ────────────────────────
+  // ── Coin exists — backer-first summary ───────────────────────
+  const momentumPct =
+    (Number(coin.real_sol_reserves) /
+      Math.max(Number(coin.graduation_sol_target), 1e-9)) *
+    100;
+  const displayName = defaultName ?? "this creator";
+
   return (
     <div className="space-y-4">
-      {showReadiness && <CreatorReadinessCard creatorId={creatorId} memberSince={memberSince} />}
-      <Link
-        to={`/coin/${coin.mint_address || coin.ticker}`}
-        className="block rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-4 flex items-center gap-3 hover:border-emerald-500/40 hover:bg-card transition-colors group"
-        aria-label={`Open ${coin.ticker} coin page`}
-      >
-        {coin.image_url ? (
-          <img src={coin.image_url} alt="" className="h-12 w-12 rounded-md object-cover" />
-        ) : (
-          <div className="h-12 w-12 rounded-md bg-gradient-to-br from-emerald-500/30 to-fuchsia-500/30 flex items-center justify-center">
-            <Coins className="h-5 w-5 text-emerald-500" />
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-mono font-bold text-base group-hover:text-emerald-500 transition-colors">${coin.ticker}</span>
-            {coin.status === "graduated" && (
-              <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500">
-                Graduated
-              </span>
-            )}
-            {coin.mint_address && (
-              <span onClick={(e) => e.preventDefault()}>
-                <MintAddressChip address={coin.mint_address} size="xs" />
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground truncate">{coin.name}</p>
-        </div>
-        <div className="text-right text-[11px] text-muted-foreground flex items-center gap-1">
-          <TrendingUp className="h-3 w-3" />
-          <span className="font-mono">
-            Market Growth · {((Number(coin.real_sol_reserves) / Math.max(Number(coin.graduation_sol_target), 1e-9)) * 100).toFixed(1)}%
-          </span>
-        </div>
-      </Link>
+      {showReadiness && (
+        <CreatorReadinessCard creatorId={creatorId} memberSince={memberSince} />
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2">
-          <PriceChartCard launchId={coin.id} ticker={coin.ticker} />
+      {/* Backers summary card */}
+      <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5 space-y-4">
+        <div className="flex items-start gap-4">
+          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-fuchsia-500/20 flex items-center justify-center shrink-0">
+            <Users className="h-5 w-5 text-emerald-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+              Backers
+            </p>
+            <p className="font-display text-2xl font-bold leading-tight">
+              {(backerCount ?? 0).toLocaleString()}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              People backing {displayName}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 justify-end">
+              <TrendingUp className="h-3 w-3" /> Momentum
+            </p>
+            <p className="font-display text-2xl font-bold leading-tight text-emerald-500">
+              {momentumPct.toFixed(1)}%
+            </p>
+          </div>
         </div>
-        <div>
-          <TradePanel
-            launchId={coin.id}
-            ticker={coin.ticker}
-            status={coin.status}
-            virtualSol={Number(coin.virtual_sol_reserves)}
-            virtualToken={Number(coin.virtual_token_reserves)}
-            creatorFeeBps={Number(coin.creator_fee_bps ?? 200)}
-            platformFeeBps={Number(coin.platform_fee_bps ?? 100)}
-            onTraded={() => refetch()}
-          />
+
+        {/* Momentum bar */}
+        <div className="space-y-1">
+          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-emerald-500 to-fuchsia-500 transition-all"
+              style={{ width: `${Math.min(100, momentumPct)}%` }}
+            />
+          </div>
         </div>
+
+        {!isOwnProfile && (
+          <Button
+            className="w-full gap-1.5"
+            size="lg"
+            onClick={() => setBackOpen(true)}
+          >
+            <Sparkles className="h-4 w-4" />
+            Back {displayName}
+            <ArrowRight className="h-4 w-4 ml-1" />
+          </Button>
+        )}
+
+        {/* Quiet escape hatch for power users / the creator themselves */}
+        <button
+          type="button"
+          onClick={() => setMarketOpen((v) => !v)}
+          className="w-full flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors pt-1"
+        >
+          <LineChart className="h-3 w-3" />
+          {marketOpen ? (
+            <>
+              Hide market view <ChevronUp className="h-3 w-3" />
+            </>
+          ) : (
+            <>View market →</>
+          )}
+        </button>
       </div>
 
       {coin.description && (
         <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-4">
-          <p className="text-sm text-muted-foreground leading-relaxed">{coin.description}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {coin.description}
+          </p>
         </div>
       )}
+
+      {/* Power-user market view — folded by default */}
+      {marketOpen && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="lg:col-span-2">
+            <PriceChartCard launchId={coin.id} ticker={coin.ticker} />
+          </div>
+          <div>
+            <TradePanel
+              launchId={coin.id}
+              ticker={coin.ticker}
+              status={coin.status}
+              virtualSol={Number(coin.virtual_sol_reserves)}
+              virtualToken={Number(coin.virtual_token_reserves)}
+              creatorFeeBps={Number(coin.creator_fee_bps ?? 200)}
+              platformFeeBps={Number(coin.platform_fee_bps ?? 100)}
+              onTraded={() => refetch()}
+            />
+          </div>
+        </div>
+      )}
+
+      <BackCreatorSheet
+        open={backOpen}
+        onOpenChange={setBackOpen}
+        artistId={creatorId}
+        artistName={defaultName}
+      />
     </div>
   );
 };
