@@ -139,3 +139,36 @@ export function resolveDeepLinkSelection<T extends FlowItemLike>(
       !options.flowItemsFetching && (inBaseFeed || options.hasFallbackItem),
   };
 }
+
+/**
+ * Resolve which deck index should be rendered right now.
+ *
+ * This is stricter than `currentIndex`: when Flow is entered through a deep
+ * link, we want the clicked card to render immediately even before the effect
+ * that syncs `currentIndex` has had a chance to run. Without this, the deck can
+ * briefly show whatever card previously lived at index 0, while the background
+ * or subsequent repin settles onto the requested item.
+ */
+export function resolveDisplayedFlowIndex<T extends FlowItemLike>(options: {
+  currentIndex: number;
+  allItems: T[];
+  baseItems: T[];
+  targetId?: string | null;
+  flowItemsFetching: boolean;
+  hasFallbackItem: boolean;
+}): number {
+  const normalizedIndex = normalizeLoopedIndex(options.currentIndex, options.allItems.length);
+  if (!options.targetId) return normalizedIndex;
+
+  const selection = resolveDeepLinkSelection(
+    options.targetId,
+    options.allItems,
+    options.baseItems,
+    {
+      flowItemsFetching: options.flowItemsFetching,
+      hasFallbackItem: options.hasFallbackItem,
+    },
+  );
+
+  return selection?.index ?? normalizedIndex;
+}
