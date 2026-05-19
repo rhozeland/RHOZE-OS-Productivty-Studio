@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import ProfileBadges from "@/components/profile/ProfileBadges";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
+import VerifiedProBadge from "@/components/profile/VerifiedProBadge";
 import ProfileTierBadge from "@/components/profile/ProfileTierBadge";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
