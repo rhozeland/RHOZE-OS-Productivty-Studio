@@ -350,7 +350,7 @@ const ConversationsMosaic = ({
           key={tile.id}
           tile={tile}
           index={i}
-          onClick={() => navigate(tile.href, { state: { flowItemId: tile.kind === "drop" ? tile.id.replace(/^drop-/, "") : null } })}
+          onClick={() => navigate(tile.href)}
         />
       ))}
     </div>
