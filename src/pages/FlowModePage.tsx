@@ -177,6 +177,8 @@ const FlowModePage = () => {
   // animation replays even on rapid double-taps.
   const [heartBurst, setHeartBurst] = useState<{ key: number; itemId: string } | null>(null);
   const [expandedCard, setExpandedCard] = useState(false);
+  const [isAdvancing, setIsAdvancing] = useState(false);
+  const advancingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   // Open the Share-to-Flow composer when navigated to with ?share=1
   // (used by the dock "+" button and PostMenuButton's "Post Work" option).
@@ -1165,9 +1167,6 @@ const FlowModePage = () => {
   // mutation queue. The 200ms here matches the `advanceCard` settle delay
   // — long enough for the exit animation to finish, short enough that the
   // next card feels immediately interactive.
-  const [isAdvancing, setIsAdvancing] = useState(false);
-  const advancingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const advanceCard = useCallback(() => {
     lockedDeepLinkItemRef.current = null;
     appliedDeepLinkRef.current = null;
