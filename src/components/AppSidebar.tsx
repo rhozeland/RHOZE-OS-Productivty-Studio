@@ -3,9 +3,11 @@ import { cn } from "@/lib/utils";
 import {
   LogIn,
   UserPlus,
-  CreditCard,
-  MessageSquare,
+  Home,
   Compass,
+  Heart,
+  Trophy,
+  User as UserIcon,
   ShieldCheck,
   Flame,
 } from "lucide-react";
@@ -28,13 +30,18 @@ import {
 } from "@/components/ui/sidebar";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-// v8: primary pillars in the side nav. Hub + My Studio retired —
-// Discover is the unified front door, Conversations holds every back-
-// and-forth (DMs + Projects + Inquiries + Listings).
+// v9.9: 5-tab primary nav. Sidebar-only — RoomsBottomNav retired.
+//   Home     → personalized fan feed + activity (My Studio)
+//   Discover → browse/search all artists + filters
+//   Support  → supporter inbox + tier management (messages)
+//   Rewards  → badges, rank history, $RHOZE portfolio (Creator Pass)
+//   Profile  → public profile + edit mode
 const pillarItems = [
+  { icon: Home, label: "Home", path: "/dashboard" },
   { icon: Compass, label: "Discover", path: "/discover" },
-  { icon: MessageSquare, label: "Inbox", path: "/messages" },
-  { icon: CreditCard, label: "Creator Pass", path: "/credits" },
+  { icon: Heart, label: "Support", path: "/messages" },
+  { icon: Trophy, label: "Rewards", path: "/credits" },
+  { icon: UserIcon, label: "Profile", path: "/profile" },
 ];
 
 const AppSidebar = () => {
