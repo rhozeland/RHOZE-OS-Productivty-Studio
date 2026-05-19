@@ -469,7 +469,7 @@ const ProfileDetailPage = () => {
                     if (!role) return null;
                     return (
                       <span key={roleId} className="inline-flex items-center gap-1 text-[11px] bg-primary/10 text-primary rounded-full px-2 py-0.5 font-medium">
-                        {role.emoji} {role.label}
+                        {role.label}
                       </span>
                     );
                   })}
