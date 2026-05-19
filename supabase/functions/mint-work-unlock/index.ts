@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
 
     const gating = (work.gating ?? {}) as {
       enabled?: boolean;
-      pool_type?: "launch" | "rhoze_pool";
+      pool_type?: "launch" | "rhoze_pool" | "backer";
       launch_id?: string | null;
       min_tokens?: number;
       gated_path?: string;
@@ -100,7 +100,39 @@ Deno.serve(async (req) => {
     }
 
     const isOwner = work.user_id === userId;
-    const poolType = gating.pool_type ?? "launch";
+    let poolType = gating.pool_type ?? "launch";
+
+    // BACKER branch — resolve to creator's active profile coin and fall
+    // through to the standard launch gating path.
+    if (poolType === "backer") {
+      if (isOwner) {
+        // Owner short-circuit handled below by request_work_unlock path.
+        poolType = "launch";
+      } else {
+        const { data: launch } = await adminClient
+          .from("coin_launches")
+          .select("id")
+          .eq("creator_id", work.user_id)
+          .neq("status", "cancelled")
+          .order("work_id", { ascending: true, nullsFirst: true })
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (!launch) {
+          return json(200, {
+            allowed: false,
+            reason: "backing_not_open",
+            balance: 0,
+            threshold: Number(gating.min_tokens ?? 1),
+            ticker: null,
+            launch_id: null,
+          });
+        }
+        // Rewrite gating in-memory so the launch branch below uses this id.
+        gating.launch_id = launch.id;
+        poolType = "launch";
+      }
+    }
 
     // Branch: $RHOZE-pool gating reads live wallet balance server-side.
     if (poolType === "rhoze_pool") {
