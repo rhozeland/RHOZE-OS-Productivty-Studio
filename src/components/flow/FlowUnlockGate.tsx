@@ -105,7 +105,7 @@ const FlowUnlockGate = ({ artistId, artistName, children }: Props) => {
               }}
             >
               <Sparkles className="h-3.5 w-3.5" />
-              Invest & Unlock
+              Back creator
             </Button>
           </div>
         </div>
