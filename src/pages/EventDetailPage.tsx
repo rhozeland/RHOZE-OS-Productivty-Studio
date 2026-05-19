@@ -288,6 +288,11 @@ const EventDetailPage = () => {
         </div>
       </motion.section>
 
+      {/* Gallery (images + videos) — hoisted above the fold, hides when empty */}
+      <EventMediaCarousel eventId={ev.id} />
+
+
+
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-[240px_minmax(0,1fr)] md:gap-10 xl:grid-cols-[300px_minmax(0,1fr)]">
         {/* LEFT — compact poster + host rail */}
