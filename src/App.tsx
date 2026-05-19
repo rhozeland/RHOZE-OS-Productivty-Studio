@@ -25,6 +25,7 @@ import SmartboardPresentationPage from "@/pages/SmartboardPresentationPage";
 import ProfileDetailPage from "@/pages/ProfileDetailPage";
 import ProfilesPage from "@/pages/ProfilesPage";
 import MessagesPage from "@/pages/MessagesPage";
+import MyWorkPage from "@/pages/MyWorkPage";
 import SettingsPage from "@/pages/SettingsPage";
 import ServicesPage from "@/pages/ServicesPage";
 import CreditShopPage from "@/pages/CreditShopPage";
@@ -330,6 +331,7 @@ const App = () => (
                   />
                 ))}
                 <Route path="/messages" element={<MessagesPage />} />
+                <Route path="/my-work" element={<MyWorkPage />} />
                 <Route path="/network" element={<Navigate to="/messages" replace />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/settings/verification" element={<VerificationPage />} />
