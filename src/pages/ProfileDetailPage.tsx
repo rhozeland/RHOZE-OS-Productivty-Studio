@@ -22,6 +22,8 @@ import ProfileBadges from "@/components/profile/ProfileBadges";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import VerifiedProBadge from "@/components/profile/VerifiedProBadge";
 import ProfileTierBadge from "@/components/profile/ProfileTierBadge";
+import ArchetypeChip from "@/components/profile/ArchetypeChip";
+import RegionChip from "@/components/profile/RegionChip";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
@@ -444,15 +446,42 @@ const ProfileDetailPage = () => {
                       </HoverCardContent>
                     </HoverCard>
                   )}
-                  <ProfileBadges userId={id!} compact />
-                </div>
-                {p.username && (
-                  <p className="text-sm text-muted-foreground leading-none mt-1.5">
-                    @{p.username}
-                  </p>
-                )}
+                <ProfileBadges userId={id!} compact />
               </div>
+              {p.username && (
+                <p className="text-sm text-muted-foreground leading-none mt-1.5">
+                  @{p.username}
+                </p>
+              )}
+
+              {/* Structural metadata tags — immediate context before bio */}
+              {(p.location || p.archetype || p.region_code || (p.creator_roles?.length > 0) || (p.skills?.length > 0)) && (
+                <div className="mt-2.5 flex items-center gap-1.5 flex-wrap">
+                  {p.location && (
+                    <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground bg-muted/50 rounded-full px-2 py-0.5">
+                      <MapPin className="h-2.5 w-2.5" /> {p.location}
+                    </span>
+                  )}
+                  {p.archetype && <ArchetypeChip archetype={p.archetype} size="xs" />}
+                  {p.region_code && <RegionChip code={p.region_code} size="xs" />}
+                  {p.creator_roles?.slice(0, 2).map((roleId: string) => {
+                    const role = ROLE_BY_ID.get(roleId);
+                    if (!role) return null;
+                    return (
+                      <span key={roleId} className="inline-flex items-center gap-1 text-[11px] bg-primary/10 text-primary rounded-full px-2 py-0.5 font-medium">
+                        {role.emoji} {role.label}
+                      </span>
+                    );
+                  })}
+                  {p.skills?.slice(0, 3).map((skill: string) => (
+                    <span key={skill} className="text-[11px] text-muted-foreground font-medium">
+                      #{skill.replace(/\s/g, "")}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
+          </div>
 
             {/* Compact meta — pass badge + location + rating only */}
             <div className="mt-4 flex items-center gap-x-3 gap-y-2 flex-wrap">
