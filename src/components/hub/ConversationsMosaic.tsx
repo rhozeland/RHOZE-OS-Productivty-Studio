@@ -457,14 +457,19 @@ const MosaicTileCard = ({
 
 
   const tileButton = (
-    <motion.button
-      type="button"
+    <motion.div
       onClick={() => {
         if (hrefItemId) {
           onClick();
           return;
         }
         onClick();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
       }}
       initial={{ opacity: 0, y: 14, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -473,6 +478,8 @@ const MosaicTileCard = ({
       whileTap={{ scale: 0.98 }}
       style={{ aspectRatio }}
       className="mb-3 break-inside-avoid block w-full group relative overflow-hidden rounded-2xl border border-border bg-card text-left transition-all duration-300 hover:border-foreground/40 hover:shadow-lg cursor-pointer"
+      role="button"
+      tabIndex={0}
       aria-label={`${label}: ${tile.title}. Click to open.`}
     >
       {/* Background — image, gradient tint, or category-tinted icon hero */}
@@ -641,7 +648,7 @@ const MosaicTileCard = ({
           </p>
         )}
       </div>
-    </motion.button>
+    </motion.div>
   );
 
   return tileButton;

@@ -109,6 +109,7 @@ const FlowModePage = () => {
     location.pathname === "/flow"
       ? (location.state as { flowItemId?: string | null } | null)?.flowItemId ?? null
       : null;
+  const requestedFlowItemId = searchParams.get("item") ?? routedFlowItemId;
   const [calibrated, setCalibrated] = useState(false);
   const [showIdleHints, setShowIdleHints] = useState(false);
   const [showTutorialOverlay, setShowTutorialOverlay] = useState(false);
@@ -465,7 +466,7 @@ const FlowModePage = () => {
     // a Discover tile (or shared link) expecting to land on a specific card.
     // Skip the calibration gate entirely so the swipe deck is interactive on
     // arrival; preferences fall back to "all" categories.
-    if (searchParams.get("item") || routedFlowItemId) {
+    if (requestedFlowItemId) {
       setPreferredCategories(CATEGORIES);
       setSelectedCategories(CATEGORIES);
       setFeedScope("all");
@@ -523,7 +524,7 @@ const FlowModePage = () => {
       cancelled = true;
       if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
     };
-  }, [user, calibrationKey, persistFlowPrefs, routedFlowItemId]);
+  }, [user, calibrationKey, persistFlowPrefs, requestedFlowItemId]);
 
   const {
     data: flowItems,
@@ -970,7 +971,14 @@ const FlowModePage = () => {
   const appliedDeepLinkRef = useRef<string | null>(null);
   const lockedDeepLinkItemRef = useRef<string | null>(null);
   const suppressSwipeRestoreRef = useRef(false);
-  const pendingDeepLinkId = searchParams.get("item") ?? routedFlowItemId;
+  const pendingDeepLinkId = requestedFlowItemId;
+  useEffect(() => {
+    if (!requestedFlowItemId) return;
+    lockedDeepLinkItemRef.current = requestedFlowItemId;
+    appliedDeepLinkRef.current = null;
+    suppressSwipeRestoreRef.current = true;
+  }, [requestedFlowItemId]);
+
   useEffect(() => {
     const targetId = pendingDeepLinkId ?? lockedDeepLinkItemRef.current;
     if (!targetId) return;
@@ -1008,7 +1016,10 @@ const FlowModePage = () => {
       setCurrentIndex((cur) => (cur === selection.index ? cur : selection.index));
     }
 
-    if (!selection.shouldFinalize) return;
+    const targetIsVisible =
+      allItems[selection.index]?.id === targetId && visibleItemId === targetId;
+
+    if (!selection.shouldFinalize || !targetIsVisible) return;
 
     // Mark the deep link as applied only once the target is stable enough
     // to survive URL cleanup; this avoids stale clicks getting "stuck" as
