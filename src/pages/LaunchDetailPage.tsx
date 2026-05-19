@@ -45,7 +45,8 @@ import MintAddressChip from "@/components/launchpad/MintAddressChip";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const TRADER_VIEW_KEY = "rhoze-trader-view";
+// Trader-view toggle retired in v9.8 — the page is fan-first for everyone.
+// Creators still see their earnings + the demo banner.
 
 type Launch = {
   id: string;
