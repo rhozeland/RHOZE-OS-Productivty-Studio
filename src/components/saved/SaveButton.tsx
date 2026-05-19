@@ -38,7 +38,7 @@ const SaveButton = ({
     if (stopPropagation) e.stopPropagation();
     e.preventDefault();
     if (!user) {
-      requireAuth("save items", () => toggle(type, id));
+      requireAuth("Save your favourite creators, works, and listings.");
       return;
     }
     toggle(type, id);
