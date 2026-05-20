@@ -17,6 +17,8 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { SubscriberLock } from "@/components/profile/SubscriberLock";
 
 interface Props {
   open: boolean;
@@ -28,18 +30,50 @@ type Filter = "all" | "verified";
 
 const WorksLightbox = ({ open, onOpenChange, userId }: Props) => {
   const [filter, setFilter] = useState<Filter>("all");
+  const { user } = useAuth();
+  const isOwner = user?.id === userId;
 
   const { data: works = [], isLoading } = useQuery({
-    queryKey: ["works-lightbox", userId],
+    queryKey: ["works-lightbox", userId, user?.id ?? "anon"],
     enabled: open && !!userId,
     queryFn: async () => {
+      // RLS auto-filters to: public + (owner OR subscriber). Subscribing
+      // automatically unlocks any private/subscriber-only rows on next fetch.
       const { data } = await supabase
         .from("works")
-        .select("id, title, file_url, mime_type, kind, is_unverified, anchored_at, created_at")
+        .select("id, title, file_url, mime_type, kind, visibility, is_unverified, anchored_at, created_at")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(120);
       return data ?? [];
+    },
+  });
+
+  // How many subscriber-only posts the viewer can't see — drives the upsell.
+  const { data: lockedCount = 0 } = useQuery({
+    queryKey: ["works-locked-count", userId, user?.id ?? "anon"],
+    enabled: open && !!userId && !isOwner,
+    queryFn: async () => {
+      const { data, error } = await (supabase.rpc as any)(
+        "count_locked_works_for_creator",
+        { _creator_id: userId },
+      );
+      if (error) return 0;
+      return (data as number) ?? 0;
+    },
+  });
+
+  // Creator handle for the lock card upsell copy.
+  const { data: creator } = useQuery({
+    queryKey: ["lightbox-creator", userId],
+    enabled: open && !!userId && !isOwner && lockedCount > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, username")
+        .eq("id", userId)
+        .maybeSingle();
+      return data;
     },
   });
 
@@ -78,6 +112,23 @@ const WorksLightbox = ({ open, onOpenChange, userId }: Props) => {
             </button>
           ))}
         </div>
+
+        {/* Subscriber-only posts upsell — auto-disappears once subscribed
+            (RLS unlocks them and lockedCount drops to 0). */}
+        {!isOwner && lockedCount > 0 && (
+          <div className="mt-3">
+            <SubscriberLock
+              creatorId={userId}
+              creatorName={creator?.display_name ?? undefined}
+              creatorUsername={creator?.username ?? undefined}
+              unlockLabel={`${lockedCount} ${lockedCount === 1 ? "post" : "posts"}`}
+            >
+              {/* Children never render for non-subs; placeholder kept for type. */}
+              <span />
+            </SubscriberLock>
+          </div>
+        )}
+
 
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-2">

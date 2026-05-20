@@ -4981,6 +4981,10 @@ export type Database = {
         }
         Returns: Json
       }
+      count_locked_works_for_creator: {
+        Args: { _creator_id: string }
+        Returns: number
+      }
       create_coin_launch: {
         Args: {
           _creator_fee_bps?: number

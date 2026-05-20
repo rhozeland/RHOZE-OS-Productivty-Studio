@@ -403,7 +403,7 @@ function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
             )}
             {work.visibility === "private" && (
               <Badge variant="outline" className="gap-1 text-[10px] py-0 h-5">
-                <Lock className="h-3 w-3" /> Private
+                <Lock className="h-3 w-3" /> Subscribers only
               </Badge>
             )}
             <UnverifiedWorkChip isUnverified={work.is_unverified} size="xs" />
@@ -669,8 +669,8 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="public">Public — listed in registry</SelectItem>
-            <SelectItem value="private">Private — only visible to you</SelectItem>
+            <SelectItem value="public">Public — anyone can see this</SelectItem>
+            <SelectItem value="private">Subscribers only — paywalled to your subscribers</SelectItem>
           </SelectContent>
         </Select>
       </div>
