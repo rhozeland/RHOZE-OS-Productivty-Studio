@@ -17,6 +17,8 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { SubscriberLock } from "@/components/profile/SubscriberLock";
 
 interface Props {
   open: boolean;
