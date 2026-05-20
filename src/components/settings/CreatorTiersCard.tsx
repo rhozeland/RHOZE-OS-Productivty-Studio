@@ -61,16 +61,25 @@ export default function CreatorTiersCard() {
     standard: { tier: "standard", perks: DEFAULT_PERKS.standard, active: true, perksText: DEFAULT_PERKS.standard.join("\n") },
     premium: { tier: "premium", perks: DEFAULT_PERKS.premium, active: true, perksText: DEFAULT_PERKS.premium.join("\n") },
   });
+  const [dmSubsOnly, setDmSubsOnly] = useState(false);
+  const [dmSaving, setDmSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     void (async () => {
-      const { data } = await supabase
-        .from("creator_subscription_tiers")
-        .select("tier, perks, active")
-        .eq("creator_id", user.id);
+      const [{ data }, { data: prof }] = await Promise.all([
+        supabase
+          .from("creator_subscription_tiers")
+          .select("tier, perks, active")
+          .eq("creator_id", user.id),
+        supabase
+          .from("profiles")
+          .select("dm_subscribers_only")
+          .eq("id", user.id)
+          .maybeSingle(),
+      ]);
 
       if (data && data.length > 0) {
         setRows((prev) => {
@@ -88,9 +97,27 @@ export default function CreatorTiersCard() {
           return next;
         });
       }
+      setDmSubsOnly(!!prof?.dm_subscribers_only);
       setLoading(false);
     })();
   }, [user]);
+
+  const handleDmToggle = async (v: boolean) => {
+    if (!user) return;
+    setDmSubsOnly(v); // optimistic
+    setDmSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ dm_subscribers_only: v })
+      .eq("id", user.id);
+    setDmSaving(false);
+    if (error) {
+      setDmSubsOnly(!v);
+      toast.error(error.message);
+      return;
+    }
+    toast.success(v ? "DMs are now subscribers-only" : "DMs are open to everyone");
+  };
 
   const handleSave = async () => {
     if (!user) return;
