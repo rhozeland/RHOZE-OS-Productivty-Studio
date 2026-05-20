@@ -123,9 +123,7 @@ export function SubscriberLock({
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         creatorId={creatorId}
-        creatorName={creatorName ?? undefined}
-        creatorUsername={creatorUsername ?? undefined}
-        creatorAvatar={creatorAvatar ?? undefined}
+        creatorName={creatorName ?? creatorUsername ?? undefined}
       />
     </>
   );
