@@ -403,7 +403,7 @@ function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
             )}
             {work.visibility === "private" && (
               <Badge variant="outline" className="gap-1 text-[10px] py-0 h-5">
-                <Lock className="h-3 w-3" /> Private
+                <Lock className="h-3 w-3" /> Subscribers only
               </Badge>
             )}
             <UnverifiedWorkChip isUnverified={work.is_unverified} size="xs" />
