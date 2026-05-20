@@ -72,7 +72,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
+
 
 const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
 
@@ -400,8 +400,6 @@ const DiscoverPage = () => {
         </Suspense>
       </motion.section>
 
-      {/* ─── Creator Pass upgrade nudge ─────────────────────────────── */}
-      <CreatorPassUpgradeCta />
 
       {/* ─── Trending artists (self-gated by liquidity) ───────────── */}
       <TrendingArtistsLane marketFilter={marketFilter} />
