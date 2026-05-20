@@ -39,6 +39,8 @@ import InquiryThreadBanner from "@/components/messages/InquiryThreadBanner";
 import LiveInquiriesFeed from "@/components/messages/LiveInquiriesFeed";
 
 import ConversationsEventsBrowser from "@/components/messages/ConversationsEventsBrowser";
+import { useSubscriberRelationships } from "@/hooks/useSubscriberRelationships";
+import { Sparkles } from "lucide-react";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pending", color: "bg-amber-500/15 text-amber-600", icon: Clock },
