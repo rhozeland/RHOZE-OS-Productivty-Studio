@@ -151,6 +151,11 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
           </details>
         </TabsContent>
 
+        {/* ═══════ Earnings — creator subscription dashboard ═══════ */}
+        <TabsContent value="earnings" className="mt-4">
+          <CreatorEarningsTab userId={user.id} />
+        </TabsContent>
+
         {/* ═══════ Portfolio ═══════ */}
         <TabsContent value="portfolio" className="mt-4 space-y-4">
           <div className="space-y-1.5">
