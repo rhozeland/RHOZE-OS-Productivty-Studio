@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Lock, MessageSquare, Sparkles, Check } from "lucide-react";
+import { Loader2, Lock, MessageSquare, Sparkles, Check, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
