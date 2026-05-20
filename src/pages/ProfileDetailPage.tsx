@@ -530,18 +530,18 @@ const ProfileDetailPage = () => {
             {/* Action buttons for visitors */}
             {!isOwnProfile && user && (
               <div className="flex flex-col gap-3 mt-4">
-                {/* Primary CTA — Invest & Unlock */}
+                {/* Primary CTA — Subscribe (v10) */}
                 <div className="flex flex-col gap-1.5">
                   <Button
                     size="lg"
-                    onClick={() => setInvestOpen(true)}
+                    onClick={() => user ? setSubscribeOpen(true) : navigate("/auth")}
                     className="self-start gap-1.5 bg-gradient-to-r from-primary to-fuchsia-500 hover:opacity-90 text-primary-foreground shadow-lg"
                   >
                     <Sparkles className="h-4 w-4" />
-                    Invest & Unlock
+                    Subscribe — from $5/mo
                   </Button>
                   <span className="text-[11px] text-muted-foreground max-w-[280px] leading-snug">
-                    Buy a Share to unlock private posts, drops, and behind-the-scenes.
+                    Unlock private posts, DMs, and behind-the-scenes. Cancel anytime.
                   </span>
                 </div>
 
