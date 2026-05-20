@@ -669,8 +669,8 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="public">Public — listed in registry</SelectItem>
-            <SelectItem value="private">Private — only visible to you</SelectItem>
+            <SelectItem value="public">Public — anyone can see this</SelectItem>
+            <SelectItem value="private">Subscribers only — paywalled to your subscribers</SelectItem>
           </SelectContent>
         </Select>
       </div>
