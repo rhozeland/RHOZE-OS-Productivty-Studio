@@ -35,6 +35,9 @@ const QuickMessageDialog = ({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState(prefillMessage);
+  const [subSheetOpen, setSubSheetOpen] = useState(false);
+  const { canDm, gated, loading: gateLoading } = useCanDm(recipientId);
+  const locked = gated && !canDm && !!user && user.id !== recipientId;
 
   const sendMutation = useMutation({
     mutationFn: async () => {
