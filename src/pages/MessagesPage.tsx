@@ -39,6 +39,8 @@ import InquiryThreadBanner from "@/components/messages/InquiryThreadBanner";
 import LiveInquiriesFeed from "@/components/messages/LiveInquiriesFeed";
 
 import ConversationsEventsBrowser from "@/components/messages/ConversationsEventsBrowser";
+import { useSubscriberRelationships } from "@/hooks/useSubscriberRelationships";
+import { Sparkles } from "lucide-react";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pending", color: "bg-amber-500/15 text-amber-600", icon: Clock },
@@ -122,6 +124,9 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
     },
     enabled: conversationPartnerIds.length > 0,
   });
+
+  // Subscription relationship per partner (for inbox badge).
+  const { data: subRelMap } = useSubscriberRelationships(conversationPartnerIds);
 
   // Search for new conversations
   const { data: searchResults } = useQuery({
@@ -617,16 +622,41 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <span
-                              className={cn(
-                                "text-sm text-foreground truncate",
-                                unread > 0 ? "font-semibold" : "font-medium",
-                              )}
-                            >
-                              {name}
-                            </span>
-                            {lastMsg && <span className="text-[10px] text-muted-foreground shrink-0 ml-2">{formatTime(lastMsg.created_at)}</span>}
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span
+                                className={cn(
+                                  "text-sm text-foreground truncate",
+                                  unread > 0 ? "font-semibold" : "font-medium",
+                                )}
+                              >
+                                {name}
+                              </span>
+                              {(() => {
+                                const rel = subRelMap?.get(profile.user_id);
+                                if (!rel) return null;
+                                const isSubscriber = rel === "subscriber";
+                                return (
+                                  <span
+                                    title={
+                                      isSubscriber
+                                        ? `${name} is one of your subscribers`
+                                        : `You're subscribed to ${name}`
+                                    }
+                                    className={cn(
+                                      "inline-flex items-center gap-0.5 shrink-0 rounded-full px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide",
+                                      isSubscriber
+                                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                        : "bg-fuchsia-500/15 text-fuchsia-600 dark:text-fuchsia-400",
+                                    )}
+                                  >
+                                    <Sparkles className="h-2.5 w-2.5" />
+                                    {isSubscriber ? "Subscriber" : "Subscribed"}
+                                  </span>
+                                );
+                              })()}
+                            </div>
+                            {lastMsg && <span className="text-[10px] text-muted-foreground shrink-0">{formatTime(lastMsg.created_at)}</span>}
                           </div>
                           {lastMsg && (
                             <div className="flex items-center gap-2">
