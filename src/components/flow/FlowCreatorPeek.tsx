@@ -27,7 +27,7 @@ import AudioPreview from "@/components/marketplace/AudioPreview";
 import { ArrowRight, X, ImageIcon, Music, FileText, Video, Palette } from "lucide-react";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
-import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
+import TokenDiscoveryChip from "@/components/profile/TokenDiscoveryChip";
 import { cn } from "@/lib/utils";
 
 interface Props {
