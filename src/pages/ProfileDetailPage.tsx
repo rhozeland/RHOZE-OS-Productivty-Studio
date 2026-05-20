@@ -28,9 +28,6 @@ import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
-import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
-import BackCreatorSheet from "@/components/profile/BackCreatorSheet";
-import SupportCreatorSheet from "@/components/profile/SupportCreatorSheet";
 import SubscribeToCreatorSheet from "@/components/profile/SubscribeToCreatorSheet";
 import { BoostProfileSheet } from "@/components/profile/BoostProfileSheet";
 import CreatorDropsCatalog from "@/components/profile/CreatorDropsCatalog";
@@ -73,19 +70,19 @@ const ProfileDetailPage = () => {
   
 
   const [bookingOpen, setBookingOpen] = useState(false);
-  // `?back=1` now opens the rebuilt BackCreatorSheet directly (skips the umbrella).
-  const [investOpen, setInvestOpen] = useState(searchParams.get("back") === "1");
-  const [supportOpen, setSupportOpen] = useState(false);
   const [reputationOpen, setReputationOpen] = useState(false);
   const [boostOpen, setBoostOpen] = useState(false);
-  const [subscribeOpen, setSubscribeOpen] = useState(searchParams.get("subscribe") === "1");
+  // v10: `?back=1` legacy deeplinks redirect to the Subscribe sheet.
+  const [subscribeOpen, setSubscribeOpen] = useState(
+    searchParams.get("subscribe") === "1" || searchParams.get("back") === "1",
+  );
 
-  // Strip `?back=1` from the URL once we've consumed it so refreshes don't
-  // re-open the sheet after the user closes it.
+  // Strip legacy `?back=1` / `?subscribe=1` from the URL once consumed.
   useEffect(() => {
-    if (searchParams.get("back") === "1") {
+    if (searchParams.get("back") === "1" || searchParams.get("subscribe") === "1") {
       const next = new URLSearchParams(searchParams);
       next.delete("back");
+      next.delete("subscribe");
       setSearchParams(next, { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -533,18 +530,18 @@ const ProfileDetailPage = () => {
             {/* Action buttons for visitors */}
             {!isOwnProfile && user && (
               <div className="flex flex-col gap-3 mt-4">
-                {/* Primary CTA — Invest & Unlock */}
+                {/* Primary CTA — Subscribe (v10) */}
                 <div className="flex flex-col gap-1.5">
                   <Button
                     size="lg"
-                    onClick={() => setInvestOpen(true)}
+                    onClick={() => user ? setSubscribeOpen(true) : navigate("/auth")}
                     className="self-start gap-1.5 bg-gradient-to-r from-primary to-fuchsia-500 hover:opacity-90 text-primary-foreground shadow-lg"
                   >
                     <Sparkles className="h-4 w-4" />
-                    Invest & Unlock
+                    Subscribe — from $5/mo
                   </Button>
                   <span className="text-[11px] text-muted-foreground max-w-[280px] leading-snug">
-                    Buy a Share to unlock private posts, drops, and behind-the-scenes.
+                    Unlock private posts, DMs, and behind-the-scenes. Cancel anytime.
                   </span>
                 </div>
 
@@ -882,40 +879,9 @@ const ProfileDetailPage = () => {
           />
         )}
 
-        {/* Back this creator — rebuilt 3-screen flow (replaces InvestUnlockSheet). */}
-        {!isOwnProfile && id && (
-          <BackCreatorSheet
-            open={investOpen}
-            onOpenChange={setInvestOpen}
-            artistId={id}
-            artistName={p.display_name || p.username || null}
-          />
-        )}
-
         {/* Phase B2 — self-serve profile boost (owner only) */}
         {isOwnProfile && (
           <BoostProfileSheet open={boostOpen} onOpenChange={setBoostOpen} />
-        )}
-
-        {/* Umbrella "Back this creator" sheet — funnels into Shares / Show up / Work / DM */}
-        {!isOwnProfile && id && (
-          <SupportCreatorSheet
-            open={supportOpen}
-            onOpenChange={setSupportOpen}
-            artistName={p.display_name || p.username || "this artist"}
-            hasShares={true}
-            hasHappenings={(upcomingEvents?.length ?? 0) + (hostedSpaces?.length ?? 0) > 0}
-            hasOfferings={(sellerListings ?? []).some((l: any) => l.listing_type !== "project_request")}
-            isAvailableForBooking={!!profile?.available}
-            onBackCareer={() => setInvestOpen(true)}
-            onShowUp={() => {
-              const first = upcomingEvents?.[0];
-              if (first) navigate(`/events/${first.slug || first.id}`);
-              else if (hostedSpaces?.[0]) navigate(`/studios/${hostedSpaces[0].id}`);
-            }}
-            onWorkWithThem={() => setBookingOpen(true)}
-            onSendMessage={() => navigate(`/messages?to=${id}`)}
-          />
         )}
 
         {/* Booking modal — opened from the "Book a session" support card */}
