@@ -100,9 +100,27 @@ export default function CreatorTiersCard() {
         });
       }
       setDmSubsOnly(!!prof?.dm_subscribers_only);
+      setShowTokenChip(prof?.show_token_chip !== false);
       setLoading(false);
     })();
   }, [user]);
+
+  const handleChipToggle = async (v: boolean) => {
+    if (!user) return;
+    setShowTokenChip(v);
+    setChipSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ show_token_chip: v })
+      .eq("id", user.id);
+    setChipSaving(false);
+    if (error) {
+      setShowTokenChip(!v);
+      toast.error(error.message);
+      return;
+    }
+    toast.success(v ? "Token discovery chip is now visible" : "Token discovery chip hidden");
+  };
 
   const handleDmToggle = async (v: boolean) => {
     if (!user) return;
