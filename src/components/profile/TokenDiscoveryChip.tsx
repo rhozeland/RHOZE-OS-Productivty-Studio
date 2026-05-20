@@ -36,17 +36,27 @@ const TokenDiscoveryChip = ({ creatorId, className, requireMint = true }: Props)
   const { data: coin } = useQuery({
     queryKey: ["token-discovery-chip", creatorId],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("coin_launches")
-        .select("id, ticker, name, mint_address, status")
-        .eq("creator_id", creatorId)
-        .neq("status", "cancelled")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data;
+      const [{ data: launch }, { data: prof }] = await Promise.all([
+        supabase
+          .from("coin_launches")
+          .select("id, ticker, name, mint_address, status")
+          .eq("creator_id", creatorId)
+          .neq("status", "cancelled")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("show_token_chip")
+          .eq("id", creatorId)
+          .maybeSingle(),
+      ]);
+      // Creator opted out → hide chip entirely
+      if (prof && prof.show_token_chip === false) return null;
+      return launch;
     },
   });
+
 
   const mint = coin?.mint_address ?? null;
 

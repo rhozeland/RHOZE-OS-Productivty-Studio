@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Lock, MessageSquare, Sparkles, Check } from "lucide-react";
+import { Loader2, Lock, MessageSquare, Sparkles, Check, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +63,8 @@ export default function CreatorTiersCard() {
   });
   const [dmSubsOnly, setDmSubsOnly] = useState(false);
   const [dmSaving, setDmSaving] = useState(false);
+  const [showTokenChip, setShowTokenChip] = useState(true);
+  const [chipSaving, setChipSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -76,7 +78,7 @@ export default function CreatorTiersCard() {
           .eq("creator_id", user.id),
         supabase
           .from("profiles")
-          .select("dm_subscribers_only")
+          .select("dm_subscribers_only, show_token_chip")
           .eq("id", user.id)
           .maybeSingle(),
       ]);
@@ -98,9 +100,27 @@ export default function CreatorTiersCard() {
         });
       }
       setDmSubsOnly(!!prof?.dm_subscribers_only);
+      setShowTokenChip(prof?.show_token_chip !== false);
       setLoading(false);
     })();
   }, [user]);
+
+  const handleChipToggle = async (v: boolean) => {
+    if (!user) return;
+    setShowTokenChip(v);
+    setChipSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ show_token_chip: v })
+      .eq("id", user.id);
+    setChipSaving(false);
+    if (error) {
+      setShowTokenChip(!v);
+      toast.error(error.message);
+      return;
+    }
+    toast.success(v ? "Token discovery chip is now visible" : "Token discovery chip hidden");
+  };
 
   const handleDmToggle = async (v: boolean) => {
     if (!user) return;
@@ -188,6 +208,34 @@ export default function CreatorTiersCard() {
           />
         </div>
       </div>
+
+      <div className="rounded-xl border border-border/40 bg-card/60 p-4 flex items-start gap-3">
+        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <Coins className="h-4 w-4 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground">
+            Token discovery chip
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            If you've launched a coin on pump.fun, show a small read-only chip on your profile
+            with live price and a "Trade on pump.fun" link. Turn off to hide it entirely — no
+            trading or token UI will appear on your profile.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            {showTokenChip ? "On" : "Off"}
+          </span>
+          <Switch
+            checked={showTokenChip}
+            onCheckedChange={handleChipToggle}
+            disabled={chipSaving}
+          />
+        </div>
+      </div>
+
+
 
 
       <div className="grid gap-4">

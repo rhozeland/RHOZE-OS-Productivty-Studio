@@ -2621,6 +2621,7 @@ export type Database = {
           show_offerings: boolean | null
           show_public_boards: boolean | null
           show_seller_stats: boolean | null
+          show_token_chip: boolean
           skills: string[] | null
           tiktok_url: string | null
           twitter_url: string | null
@@ -2681,6 +2682,7 @@ export type Database = {
           show_offerings?: boolean | null
           show_public_boards?: boolean | null
           show_seller_stats?: boolean | null
+          show_token_chip?: boolean
           skills?: string[] | null
           tiktok_url?: string | null
           twitter_url?: string | null
@@ -2741,6 +2743,7 @@ export type Database = {
           show_offerings?: boolean | null
           show_public_boards?: boolean | null
           show_seller_stats?: boolean | null
+          show_token_chip?: boolean
           skills?: string[] | null
           tiktok_url?: string | null
           twitter_url?: string | null
