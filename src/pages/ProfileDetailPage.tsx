@@ -872,6 +872,16 @@ const ProfileDetailPage = () => {
         </div>
 
 
+        {/* v10 — Subscribe to creator (primary monetization) */}
+        {!isOwnProfile && id && (
+          <SubscribeToCreatorSheet
+            open={subscribeOpen}
+            onOpenChange={setSubscribeOpen}
+            creatorId={id}
+            creatorName={p.display_name || p.username || "this artist"}
+          />
+        )}
+
         {/* Back this creator — rebuilt 3-screen flow (replaces InvestUnlockSheet). */}
         {!isOwnProfile && id && (
           <BackCreatorSheet
