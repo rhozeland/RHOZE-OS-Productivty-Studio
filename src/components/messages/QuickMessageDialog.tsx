@@ -10,8 +10,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, User } from "lucide-react";
+import { Send, Loader2, User, Lock, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useCanDm } from "@/hooks/useCanDm";
+import SubscribeToCreatorSheet from "@/components/profile/SubscribeToCreatorSheet";
 
 interface QuickMessageDialogProps {
   open: boolean;
