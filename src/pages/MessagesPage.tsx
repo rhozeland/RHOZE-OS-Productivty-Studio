@@ -125,6 +125,9 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
     enabled: conversationPartnerIds.length > 0,
   });
 
+  // Subscription relationship per partner (for inbox badge).
+  const { data: subRelMap } = useSubscriberRelationships(conversationPartnerIds);
+
   // Search for new conversations
   const { data: searchResults } = useQuery({
     queryKey: ["user-search", newConvoSearch],
