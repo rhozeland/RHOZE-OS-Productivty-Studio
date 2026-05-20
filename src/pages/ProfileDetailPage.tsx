@@ -610,6 +610,13 @@ const ProfileDetailPage = () => {
               </motion.div>
             )}
 
+            {/* v10 — read-only token discovery chip (renders only if coin has a mint) */}
+            {id && (
+              <TokenDiscoveryChip creatorId={id} className="self-start" />
+            )}
+
+
+
             {/* Verify this creator */}
             <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
               <Collapsible open={reputationOpen} onOpenChange={setReputationOpen}>
