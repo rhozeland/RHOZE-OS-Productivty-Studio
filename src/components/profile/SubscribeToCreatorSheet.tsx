@@ -140,7 +140,7 @@ export default function SubscribeToCreatorSheet({ open, onOpenChange, creatorId,
 
         {!selectedTier && (
           <div className="px-4 pb-5 pt-2 space-y-2 overflow-y-auto">
-            {TIERS.map((t) => (
+            {tiers.map((t) => (
               <button
                 key={t.id}
                 type="button"
