@@ -68,7 +68,8 @@ export const NAV_ITEMS: NavItem[] = [
   },
   { id: "calendar", label: "Calendar", icon: Calendar, path: "/calendar" },
   { id: "bookings", label: "Bookings", icon: Calendar, path: "/bookings" },
-  { id: "credits", label: "Credits", icon: CreditCard, path: "/credits" },
+  // v10: Subscriptions is the spine. Credits page still exists for creator B2B (boosts, Verified Pro) — surface it via its own route only.
+  { id: "subscriptions", label: "Subscriptions", icon: Sparkles, path: "/subscriptions", matchPaths: ["/credits"] },
   { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
   { id: "services", label: "Services", icon: Store, path: "/services" },
 ];
