@@ -29,6 +29,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import SubscribeToCreatorSheet from "@/components/profile/SubscribeToCreatorSheet";
+import TokenDiscoveryChip from "@/components/profile/TokenDiscoveryChip";
 import { BoostProfileSheet } from "@/components/profile/BoostProfileSheet";
 import CreatorDropsCatalog from "@/components/profile/CreatorDropsCatalog";
 import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
@@ -608,6 +609,13 @@ const ProfileDetailPage = () => {
                 </p>
               </motion.div>
             )}
+
+            {/* v10 — read-only token discovery chip (renders only if coin has a mint) */}
+            {id && (
+              <TokenDiscoveryChip creatorId={id} className="self-start" />
+            )}
+
+
 
             {/* Verify this creator */}
             <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">

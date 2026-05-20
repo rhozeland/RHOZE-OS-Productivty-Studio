@@ -27,7 +27,7 @@ import AudioPreview from "@/components/marketplace/AudioPreview";
 import { ArrowRight, X, ImageIcon, Music, FileText, Video, Palette } from "lucide-react";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
-import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
+import TokenDiscoveryChip from "@/components/profile/TokenDiscoveryChip";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -172,18 +172,9 @@ const FlowCreatorPeek = ({ open, onOpenChange, creatorId, initial }: Props) => {
                 <CreatorReadinessCard creatorId={creatorId} />
               </div>
 
-              {/* Coin / Support CTA */}
+              {/* v10 — read-only token discovery chip (no swap, deeplinks to pump.fun) */}
               <div className="mb-6">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 mb-2">
-                  Support this artist
-                </p>
-                <ProfileCoinTab
-                  creatorId={creatorId}
-                  isOwnProfile={false}
-                  defaultName={name}
-                  defaultImage={avatar}
-                  showReadiness={false}
-                />
+                <TokenDiscoveryChip creatorId={creatorId} />
               </div>
 
               {/* More works */}
