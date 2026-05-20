@@ -78,7 +78,7 @@ export default function CreatorTiersCard() {
           .eq("creator_id", user.id),
         supabase
           .from("profiles")
-          .select("dm_subscribers_only")
+          .select("dm_subscribers_only, show_token_chip")
           .eq("id", user.id)
           .maybeSingle(),
       ]);
