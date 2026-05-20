@@ -3,7 +3,7 @@ import { useNavigate, Link, NavLink, useLocation } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import AppSidebar from "@/components/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import RhozeBalanceChip from "@/components/RhozeBalanceChip";
+
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import NotificationBell from "@/components/NotificationBell";
 import PostMenuButton from "@/components/PostMenuButton";
@@ -392,7 +392,6 @@ const AppLayout = () => {
                 </Tooltip>
               )}
               {user && <NotificationBell />}
-              {user && <RhozeBalanceChip />}
 
               {/* Profile dropdown — top-right */}
               {user && (

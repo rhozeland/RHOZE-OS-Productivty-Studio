@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/hover-card";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import RhozeBalanceChip from "@/components/RhozeBalanceChip";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -150,7 +150,6 @@ const VaultRoomPage = () => {
             </p>
           </div>
           <div className="flex flex-col items-start sm:items-end gap-2">
-            <RhozeBalanceChip />
             <div className="flex items-center gap-1.5">
               <HoverCard openDelay={120}>
                 <HoverCardTrigger asChild>

@@ -34,7 +34,7 @@ import ProjectsInbox from "@/components/messages/ProjectsInbox";
 import ListingsTab from "@/components/messages/ListingsTab";
 import HubFlowWidget from "@/components/hub/HubFlowWidget";
 import FollowingPickerDialog from "@/components/messages/FollowingPickerDialog";
-import CreatorPassUpgradeCta from "@/components/creators/CreatorPassUpgradeCta";
+
 import InquiryThreadBanner from "@/components/messages/InquiryThreadBanner";
 import LiveInquiriesFeed from "@/components/messages/LiveInquiriesFeed";
 
