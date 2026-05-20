@@ -70,19 +70,19 @@ const ProfileDetailPage = () => {
   
 
   const [bookingOpen, setBookingOpen] = useState(false);
-  // `?back=1` now opens the rebuilt BackCreatorSheet directly (skips the umbrella).
-  const [investOpen, setInvestOpen] = useState(searchParams.get("back") === "1");
-  const [supportOpen, setSupportOpen] = useState(false);
   const [reputationOpen, setReputationOpen] = useState(false);
   const [boostOpen, setBoostOpen] = useState(false);
-  const [subscribeOpen, setSubscribeOpen] = useState(searchParams.get("subscribe") === "1");
+  // v10: `?back=1` legacy deeplinks redirect to the Subscribe sheet.
+  const [subscribeOpen, setSubscribeOpen] = useState(
+    searchParams.get("subscribe") === "1" || searchParams.get("back") === "1",
+  );
 
-  // Strip `?back=1` from the URL once we've consumed it so refreshes don't
-  // re-open the sheet after the user closes it.
+  // Strip legacy `?back=1` / `?subscribe=1` from the URL once consumed.
   useEffect(() => {
-    if (searchParams.get("back") === "1") {
+    if (searchParams.get("back") === "1" || searchParams.get("subscribe") === "1") {
       const next = new URLSearchParams(searchParams);
       next.delete("back");
+      next.delete("subscribe");
       setSearchParams(next, { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
