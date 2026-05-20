@@ -61,16 +61,25 @@ export default function CreatorTiersCard() {
     standard: { tier: "standard", perks: DEFAULT_PERKS.standard, active: true, perksText: DEFAULT_PERKS.standard.join("\n") },
     premium: { tier: "premium", perks: DEFAULT_PERKS.premium, active: true, perksText: DEFAULT_PERKS.premium.join("\n") },
   });
+  const [dmSubsOnly, setDmSubsOnly] = useState(false);
+  const [dmSaving, setDmSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     void (async () => {
-      const { data } = await supabase
-        .from("creator_subscription_tiers")
-        .select("tier, perks, active")
-        .eq("creator_id", user.id);
+      const [{ data }, { data: prof }] = await Promise.all([
+        supabase
+          .from("creator_subscription_tiers")
+          .select("tier, perks, active")
+          .eq("creator_id", user.id),
+        supabase
+          .from("profiles")
+          .select("dm_subscribers_only")
+          .eq("id", user.id)
+          .maybeSingle(),
+      ]);
 
       if (data && data.length > 0) {
         setRows((prev) => {
@@ -88,9 +97,27 @@ export default function CreatorTiersCard() {
           return next;
         });
       }
+      setDmSubsOnly(!!prof?.dm_subscribers_only);
       setLoading(false);
     })();
   }, [user]);
+
+  const handleDmToggle = async (v: boolean) => {
+    if (!user) return;
+    setDmSubsOnly(v); // optimistic
+    setDmSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ dm_subscribers_only: v })
+      .eq("id", user.id);
+    setDmSaving(false);
+    if (error) {
+      setDmSubsOnly(!v);
+      toast.error(error.message);
+      return;
+    }
+    toast.success(v ? "DMs are now subscribers-only" : "DMs are open to everyone");
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -136,6 +163,32 @@ export default function CreatorTiersCard() {
           want to offer it.
         </p>
       </div>
+
+      <div className="rounded-xl border border-border/40 bg-card/60 p-4 flex items-start gap-3">
+        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <MessageSquare className="h-4 w-4 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground">
+            Subscribers-only DMs
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            When on, only active subscribers can start or reply in a thread with you.
+            Existing threads from non-subscribers stay readable but they can't send new messages.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            {dmSubsOnly ? "On" : "Off"}
+          </span>
+          <Switch
+            checked={dmSubsOnly}
+            onCheckedChange={handleDmToggle}
+            disabled={dmSaving}
+          />
+        </div>
+      </div>
+
 
       <div className="grid gap-4">
         {(Object.keys(TIER_META) as Tier[]).map((tier) => {
