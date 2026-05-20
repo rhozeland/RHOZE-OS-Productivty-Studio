@@ -209,6 +209,34 @@ export default function CreatorTiersCard() {
         </div>
       </div>
 
+      <div className="rounded-xl border border-border/40 bg-card/60 p-4 flex items-start gap-3">
+        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <Coins className="h-4 w-4 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground">
+            Token discovery chip
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            If you've launched a coin on pump.fun, show a small read-only chip on your profile
+            with live price and a "Trade on pump.fun" link. Turn off to hide it entirely — no
+            trading or token UI will appear on your profile.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            {showTokenChip ? "On" : "Off"}
+          </span>
+          <Switch
+            checked={showTokenChip}
+            onCheckedChange={handleChipToggle}
+            disabled={chipSaving}
+          />
+        </div>
+      </div>
+
+
+
 
       <div className="grid gap-4">
         {(Object.keys(TIER_META) as Tier[]).map((tier) => {
