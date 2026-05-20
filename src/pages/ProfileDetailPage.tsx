@@ -31,6 +31,7 @@ import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilit
 import ProfileCoinTab from "@/components/profile/ProfileCoinTab";
 import BackCreatorSheet from "@/components/profile/BackCreatorSheet";
 import SupportCreatorSheet from "@/components/profile/SupportCreatorSheet";
+import SubscribeToCreatorSheet from "@/components/profile/SubscribeToCreatorSheet";
 import { BoostProfileSheet } from "@/components/profile/BoostProfileSheet";
 import CreatorDropsCatalog from "@/components/profile/CreatorDropsCatalog";
 import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
@@ -77,6 +78,7 @@ const ProfileDetailPage = () => {
   const [supportOpen, setSupportOpen] = useState(false);
   const [reputationOpen, setReputationOpen] = useState(false);
   const [boostOpen, setBoostOpen] = useState(false);
+  const [subscribeOpen, setSubscribeOpen] = useState(searchParams.get("subscribe") === "1");
 
   // Strip `?back=1` from the URL once we've consumed it so refreshes don't
   // re-open the sheet after the user closes it.
@@ -575,7 +577,7 @@ const ProfileDetailPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* ─── LEFT: Storefront — economic CTAs, sticky on desktop ─── */}
           <aside className="lg:col-span-4 lg:sticky lg:top-6 flex flex-col gap-4">
-            {/* Back this creator card */}
+            {/* Subscribe to this creator card (v10 — replaces "Back them") */}
             {!isOwnProfile && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
@@ -589,27 +591,24 @@ const ProfileDetailPage = () => {
                   </div>
                   <div className="min-w-0">
                     <h2 className="font-display text-lg font-semibold text-foreground truncate">
-                      Back {p.display_name || p.username || "this artist"}
+                      Subscribe to {p.display_name || p.username || "this artist"}
                     </h2>
                     <p className="text-xs text-muted-foreground">
-                      Shares, shows, sessions, or a tip — all in one place.
+                      Unlock their private feed, DMs, and behind-the-scenes from $5/mo.
                     </p>
                   </div>
                 </div>
                 <Button
-                  onClick={() => user ? setInvestOpen(true) : navigate("/auth")}
+                  onClick={() => user ? setSubscribeOpen(true) : navigate("/auth")}
                   size="lg"
                   className="gap-1.5 w-full mt-4"
                 >
                   <Sparkles className="h-4 w-4" />
-                  Back them
+                  Subscribe — from $5/mo
                 </Button>
-                <Link
-                  to="/credits?tab=how"
-                  className="mt-3 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
-                >
-                  How this works <ArrowRight className="h-3 w-3" />
-                </Link>
+                <p className="mt-3 text-[11px] text-muted-foreground text-center">
+                  Cancel anytime. {p.display_name || "Creator"} keeps 85%.
+                </p>
               </motion.div>
             )}
 
@@ -872,6 +871,16 @@ const ProfileDetailPage = () => {
           </section>
         </div>
 
+
+        {/* v10 — Subscribe to creator (primary monetization) */}
+        {!isOwnProfile && id && (
+          <SubscribeToCreatorSheet
+            open={subscribeOpen}
+            onOpenChange={setSubscribeOpen}
+            creatorId={id}
+            creatorName={p.display_name || p.username || "this artist"}
+          />
+        )}
 
         {/* Back this creator — rebuilt 3-screen flow (replaces InvestUnlockSheet). */}
         {!isOwnProfile && id && (
