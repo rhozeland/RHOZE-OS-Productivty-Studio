@@ -113,6 +113,23 @@ const WorksLightbox = ({ open, onOpenChange, userId }: Props) => {
           ))}
         </div>
 
+        {/* Subscriber-only posts upsell — auto-disappears once subscribed
+            (RLS unlocks them and lockedCount drops to 0). */}
+        {!isOwner && lockedCount > 0 && (
+          <div className="mt-3">
+            <SubscriberLock
+              creatorId={userId}
+              creatorName={creator?.display_name ?? undefined}
+              creatorUsername={creator?.username ?? undefined}
+              unlockLabel={`${lockedCount} ${lockedCount === 1 ? "post" : "posts"}`}
+            >
+              {/* Children never render for non-subs; placeholder kept for type. */}
+              <span />
+            </SubscriberLock>
+          </div>
+        )}
+
+
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-2">
             {Array.from({ length: 8 }).map((_, i) => (
