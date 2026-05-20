@@ -57,7 +57,7 @@ const PAGES: { name: string; path: string; icon: any; keywords?: string[] }[] = 
   { name: "Offerings", path: "/marketplace", icon: ShoppingBag, keywords: ["marketplace", "services", "shop", "listings"] },
   { name: "Projects", path: "/projects", icon: FolderKanban, keywords: ["work", "collabs"] },
   { name: "Messages", path: "/messages", icon: User, keywords: ["dms", "inbox", "conversations", "chat"] },
-  { name: "Credits", path: "/credits", icon: Coins, keywords: ["rhoze", "pass", "tier", "rewards"] },
+  { name: "Subscriptions", path: "/subscriptions", icon: Coins, keywords: ["subscribe", "tiers", "creators", "back"] },
   { name: "Events", path: "/discover?view=events", icon: Calendar, keywords: ["shows", "tickets", "calendar", "happening"] },
   { name: "Spaces", path: "/discover?view=spaces", icon: Building2, keywords: ["studios", "venues", "rooms"] },
   { name: "Settings", path: "/settings", icon: SettingsIcon, keywords: ["account", "profile", "wallet"] },
