@@ -2588,6 +2588,7 @@ export type Database = {
           creator_roles: string[]
           dashboard_layout: Json | null
           display_name: string | null
+          dm_subscribers_only: boolean
           dock_config: Json | null
           email_notif_inquiries: boolean | null
           email_notif_messages: boolean | null
@@ -2647,6 +2648,7 @@ export type Database = {
           creator_roles?: string[]
           dashboard_layout?: Json | null
           display_name?: string | null
+          dm_subscribers_only?: boolean
           dock_config?: Json | null
           email_notif_inquiries?: boolean | null
           email_notif_messages?: boolean | null
@@ -2706,6 +2708,7 @@ export type Database = {
           creator_roles?: string[]
           dashboard_layout?: Json | null
           display_name?: string | null
+          dm_subscribers_only?: boolean
           dock_config?: Json | null
           email_notif_inquiries?: boolean | null
           email_notif_messages?: boolean | null
@@ -4950,6 +4953,10 @@ export type Database = {
       award_rhoze: {
         Args: { _amount: number; _description: string; _user_id: string }
         Returns: undefined
+      }
+      can_dm: {
+        Args: { _receiver_id: string; _sender_id: string }
+        Returns: boolean
       }
       can_manage_event: {
         Args: { _event_id: string; _user_id: string }
