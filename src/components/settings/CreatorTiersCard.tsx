@@ -164,6 +164,32 @@ export default function CreatorTiersCard() {
         </p>
       </div>
 
+      <div className="rounded-xl border border-border/40 bg-card/60 p-4 flex items-start gap-3">
+        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <MessageSquare className="h-4 w-4 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground">
+            Subscribers-only DMs
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            When on, only active subscribers can start or reply in a thread with you.
+            Existing threads from non-subscribers stay readable but they can't send new messages.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            {dmSubsOnly ? "On" : "Off"}
+          </span>
+          <Switch
+            checked={dmSubsOnly}
+            onCheckedChange={handleDmToggle}
+            disabled={dmSaving}
+          />
+        </div>
+      </div>
+
+
       <div className="grid gap-4">
         {(Object.keys(TIER_META) as Tier[]).map((tier) => {
           const meta = TIER_META[tier];
