@@ -71,6 +71,8 @@ import MarketRoomPage from "@/pages/MarketRoomPage";
 import VaultRoomPage from "@/pages/VaultRoomPage";
 import ConnectMatchPage from "@/pages/ConnectMatchPage";
 import NotFound from "./pages/NotFound";
+import CheckoutReturn from "@/pages/CheckoutReturn";
+import SubscriptionsPage from "@/pages/SubscriptionsPage";
 import { useParams, Navigate as NavigateAlias } from "react-router-dom";
 import { EventNotFound } from "@/components/events/EventNotFound";
 
@@ -231,6 +233,9 @@ const App = () => (
               {/* Email unsubscribe — fully public, accessible from email links */}
               <Route path="/unsubscribe" element={<UnsubscribePage />} />
 
+              {/* Stripe Embedded Checkout return URL — public so Stripe can redirect here */}
+              <Route path="/checkout/return" element={<CheckoutReturn />} />
+
               {/* Explore pages — fully public */}
               <Route path="/explore/studios" element={<ExploreStudiosPage />} />
               <Route path="/explore/studios/:id" element={<ExploreStudiosPage />} />
@@ -333,6 +338,7 @@ const App = () => (
                 <Route path="/messages" element={<MessagesPage />} />
                 <Route path="/my-work" element={<MyWorkPage />} />
                 <Route path="/network" element={<Navigate to="/messages" replace />} />
+                <Route path="/subscriptions" element={<SubscriptionsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/settings/verification" element={<VerificationPage />} />
                 <Route path="/admin" element={<AdminPage />} />
