@@ -63,6 +63,8 @@ export default function CreatorTiersCard() {
   });
   const [dmSubsOnly, setDmSubsOnly] = useState(false);
   const [dmSaving, setDmSaving] = useState(false);
+  const [showTokenChip, setShowTokenChip] = useState(true);
+  const [chipSaving, setChipSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
