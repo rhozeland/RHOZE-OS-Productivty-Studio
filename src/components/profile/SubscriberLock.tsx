@@ -3,7 +3,7 @@ import { Lock, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { SubscribeToCreatorSheet } from "@/components/profile/SubscribeToCreatorSheet";
+import SubscribeToCreatorSheet from "@/components/profile/SubscribeToCreatorSheet";
 
 interface SubscriberLockProps {
   /** The creator whose subscription is required to unlock the content. */
