@@ -5,7 +5,7 @@
  * Embedded Checkout inline. On success, Stripe redirects to /checkout/return
  * and the webhook writes the row to creator_subscriptions.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -31,32 +31,59 @@ interface Props {
 
 type Tier = "basic" | "standard" | "premium";
 
-const TIERS: { id: Tier; price: number; name: string; perks: string[]; popular?: boolean }[] = [
-  {
-    id: "basic",
-    price: 5,
-    name: "Basic",
-    perks: ["Private feed access", "Subscriber-only posts"],
-  },
-  {
-    id: "standard",
-    price: 10,
-    name: "Standard",
-    popular: true,
-    perks: ["Everything in Basic", "Direct messaging", "Early drops"],
-  },
-  {
-    id: "premium",
-    price: 25,
-    name: "Premium",
-    perks: ["Everything in Standard", "Behind-the-scenes", "Priority DMs"],
-  },
+interface TierCard {
+  id: Tier;
+  price: number;
+  name: string;
+  perks: string[];
+  popular?: boolean;
+}
+
+const DEFAULT_TIERS: TierCard[] = [
+  { id: "basic", price: 5, name: "Basic", perks: ["Private feed access", "Subscriber-only posts"] },
+  { id: "standard", price: 10, name: "Standard", popular: true, perks: ["Everything in Basic", "Direct messaging", "Early drops"] },
+  { id: "premium", price: 25, name: "Premium", perks: ["Everything in Standard", "Behind-the-scenes", "Priority DMs"] },
 ];
 
 export default function SubscribeToCreatorSheet({ open, onOpenChange, creatorId, creatorName }: Props) {
   const { user } = useAuth();
   const [selectedTier, setSelectedTier] = useState<Tier | null>(null);
   const [loadingTier, setLoadingTier] = useState<Tier | null>(null);
+  const [tiers, setTiers] = useState<TierCard[]>(DEFAULT_TIERS);
+
+  // Pull creator-defined perks; fall back to defaults for any tier they
+  // haven't customized yet. Hide tiers the creator has turned off.
+  useEffect(() => {
+    if (!open || !creatorId) return;
+    void (async () => {
+      const { data } = await supabase
+        .from("creator_subscription_tiers")
+        .select("tier, perks, active")
+        .eq("creator_id", creatorId);
+
+      const byTier = new Map<Tier, { perks: string[]; active: boolean }>();
+      for (const r of data ?? []) {
+        byTier.set(r.tier as Tier, {
+          perks: Array.isArray(r.perks) ? (r.perks as string[]) : [],
+          active: r.active,
+        });
+      }
+
+      const merged = DEFAULT_TIERS
+        .map((def) => {
+          const override = byTier.get(def.id);
+          if (!override) return def;
+          if (!override.active) return null;
+          return {
+            ...def,
+            perks: override.perks.length > 0 ? override.perks : def.perks,
+          };
+        })
+        .filter((t): t is TierCard => t !== null);
+
+      setTiers(merged.length > 0 ? merged : DEFAULT_TIERS);
+    })();
+  }, [open, creatorId]);
 
   const fetchClientSecret = async (): Promise<string> => {
     if (!selectedTier) throw new Error("No tier selected");
@@ -113,7 +140,7 @@ export default function SubscribeToCreatorSheet({ open, onOpenChange, creatorId,
 
         {!selectedTier && (
           <div className="px-4 pb-5 pt-2 space-y-2 overflow-y-auto">
-            {TIERS.map((t) => (
+            {tiers.map((t) => (
               <button
                 key={t.id}
                 type="button"
