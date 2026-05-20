@@ -14,7 +14,7 @@ import {
   Moon, Sun, Upload, X, Camera, Lock, Bell,
   Trash2, AlertTriangle, Download, User, Box, Wallet,
   ChevronRight, BadgeCheck, Instagram, Music2, Twitter, Youtube, Globe,
-  Truck, IdCard, Image as ImageIcon, CalendarSync,
+  Truck, IdCard, Image as ImageIcon, CalendarSync, Sparkles,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -29,6 +29,7 @@ import SettingsSubNav, {
 import WorksPage from "@/pages/WorksPage";
 import MyVerificationRequests from "@/components/works/MyVerificationRequests";
 import IcsImportCard from "@/components/settings/IcsImportCard";
+import CreatorTiersCard from "@/components/settings/CreatorTiersCard";
 import LaunchpadIdlSettings from "@/components/launchpad/LaunchpadIdlSettings";
 import LaunchpadIdlVersions from "@/components/launchpad/LaunchpadIdlVersions";
 import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
@@ -55,6 +56,7 @@ const CATEGORY_OPTIONS = [
 const SECTIONS = [
   // Avatar + banner now folded into Profile (one identity surface).
   { id: "profile", label: "Profile", icon: User },
+  { id: "subscriptions", label: "Subscriptions", icon: Sparkles },
   { id: "wallet", label: "Wallet", icon: Wallet },
   // Verified IP vault + Verified Artist identity merged into one "Verification" surface.
   // id stays "provenance" so existing /settings#provenance links keep working.
@@ -1065,6 +1067,7 @@ const SettingsPage = () => {
         </TabsContent>
       </Tabs>
     ),
+    subscriptions: () => <CreatorTiersCard />,
     wallet: renderWallet,
     provenance: () => (
       <div className="space-y-8">
