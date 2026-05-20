@@ -914,6 +914,113 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_subscription_tiers: {
+        Row: {
+          active: boolean
+          created_at: string
+          creator_id: string
+          id: string
+          monthly_price_usd: number
+          perks: Json
+          stripe_price_id: string | null
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          creator_id: string
+          id?: string
+          monthly_price_usd: number
+          perks?: Json
+          stripe_price_id?: string | null
+          tier: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          creator_id?: string
+          id?: string
+          monthly_price_usd?: number
+          perks?: Json
+          stripe_price_id?: string | null
+          tier?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_subscription_tiers_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      creator_subscriptions: {
+        Row: {
+          canceled_at: string | null
+          created_at: string
+          creator_id: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          monthly_price_usd: number
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscriber_id: string
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          canceled_at?: string | null
+          created_at?: string
+          creator_id: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          monthly_price_usd: number
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscriber_id: string
+          tier: string
+          updated_at?: string
+        }
+        Update: {
+          canceled_at?: string | null
+          created_at?: string
+          creator_id?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          monthly_price_usd?: number
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscriber_id?: string
+          tier?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_subscriptions_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_subscriptions_subscriber_id_fkey"
+            columns: ["subscriber_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_transactions: {
         Row: {
           amount: number
@@ -5080,6 +5187,10 @@ export type Database = {
       }
       is_split_collaborator: {
         Args: { _config_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_subscribed_to: {
+        Args: { _creator_id: string; _min_tier?: string }
         Returns: boolean
       }
       is_verified_artist: { Args: { _user_id: string }; Returns: boolean }
