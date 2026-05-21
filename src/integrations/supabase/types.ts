@@ -4789,6 +4789,7 @@ export type Database = {
       works: {
         Row: {
           anchored_at: string | null
+          archived_at: string | null
           content_hash: string
           created_at: string
           description: string | null
@@ -4809,6 +4810,7 @@ export type Database = {
         }
         Insert: {
           anchored_at?: string | null
+          archived_at?: string | null
           content_hash: string
           created_at?: string
           description?: string | null
@@ -4829,6 +4831,7 @@ export type Database = {
         }
         Update: {
           anchored_at?: string | null
+          archived_at?: string | null
           content_hash?: string
           created_at?: string
           description?: string | null
