@@ -108,10 +108,11 @@ const FlowPostOwnerMenu = ({ post }: Props) => {
 
   const isArchived = !!post.archived_at;
 
-  // Stop clicks from bubbling up to the parent tile's onClick (which navigates to /flow).
-  const stop = (e: React.MouseEvent | React.PointerEvent) => {
+  // Stop clicks bubbling up to the parent tile (which navigates to /flow).
+  // We only stopPropagation — calling preventDefault on pointerdown would
+  // block Radix from opening the dropdown menu.
+  const stop = (e: React.SyntheticEvent) => {
     e.stopPropagation();
-    e.preventDefault();
   };
 
   return (
