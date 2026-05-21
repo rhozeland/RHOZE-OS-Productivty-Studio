@@ -179,6 +179,29 @@ const AppLayout = () => {
     return () => { cancelled = true; };
   }, [user]);
 
+  // First-login role gate: if the signed-in user hasn't picked Fan vs Creator
+  // yet, send them to the role-select screen before they see the rest of the
+  // app. Runs once per auth change. Skipped while already on the gate route
+  // (and on /onboarding so the existing tour still works).
+  useEffect(() => {
+    if (!user) return;
+    const path = location.pathname;
+    if (path.startsWith("/welcome") || path.startsWith("/onboarding")) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_type")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      if (data && !(data as any).user_type) {
+        navigate("/welcome", { replace: true });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user, location.pathname, navigate]);
+
   // Global navigation shortcuts (Alt+1..4 and "g d / p / c / f").
   // Active state in the dock / header / sidebar already syncs via
   // `useLocation` + `isNavItemActive`, so navigating is enough.
