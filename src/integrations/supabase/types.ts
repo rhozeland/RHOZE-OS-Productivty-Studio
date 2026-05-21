@@ -1992,6 +1992,7 @@ export type Database = {
       flow_items: {
         Row: {
           anchored_at: string | null
+          archived_at: string | null
           category: string
           content_hash: string | null
           content_type: string
@@ -2010,6 +2011,7 @@ export type Database = {
         }
         Insert: {
           anchored_at?: string | null
+          archived_at?: string | null
           category?: string
           content_hash?: string | null
           content_type?: string
@@ -2028,6 +2030,7 @@ export type Database = {
         }
         Update: {
           anchored_at?: string | null
+          archived_at?: string | null
           category?: string
           content_hash?: string | null
           content_type?: string
