@@ -1437,4 +1437,13 @@ const DashboardPage = () => {
   );
 };
 
+// Creator-mode-only stats strip (Home dashboard addition).
+const CreatorModeStrip = () => {
+  const [role] = useActiveRole();
+  if (role !== "creator") return null;
+  return <CreatorHomeStatsStrip />;
+};
+
+
+
 export default DashboardPage;
