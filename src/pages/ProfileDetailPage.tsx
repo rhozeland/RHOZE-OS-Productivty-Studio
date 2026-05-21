@@ -616,6 +616,31 @@ const ProfileDetailPage = () => {
               <TokenDiscoveryChip creatorId={id} className="self-start" />
             )}
 
+            {/* v10.2 — Luma calendar connect promo (own profile only, when not yet linked) */}
+            {isOwnProfile && !(p as any).luma_ics_url && (
+              <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-4">
+                <div className="flex items-start gap-3">
+                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <CalendarIcon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-foreground">Connect your Luma calendar</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Auto-sync your events here — free or paid, no manual setup.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3 h-8 text-xs"
+                      onClick={() => navigate("/settings#calendar")}
+                    >
+                      Connect
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
 
 
             {/* Verify this creator */}
