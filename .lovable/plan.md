@@ -1,138 +1,126 @@
 
-# Rhozeland v10 — "Subscribe to creators, discover their tokens"
+# v10.2 — Lean into discovery, stop pretending to be a launchpad
 
-The platform stops trying to be a launchpad, a marketplace, and a token economy at once. Instead:
-
-- **Fans pay USD subscriptions** ($5 / $10 / $25) to unlock creator private feeds, DMs, and perks. This is the only thing fans pay for.
-- **Tokens are discovery-only.** If a creator has a token on pump.fun / Bags / anywhere on Solana, we display price + chart + a "Buy on pump.fun" deeplink. No bonding curve, no custody, no swaps.
-- **Credits / $RHOZE disappear from fan-facing UI.** They survive only as a creator B2B currency (boosts, featured slots, future Rhozeland Launches partnership).
-- **Events / Spaces become subscriber perks**, not public marketplaces.
+Three workstreams, shippable in this order so each one stands on its own.
 
 ---
 
-## Phase 1 — Subscriptions (the spine)
+## 1. Kill the simulated launchpad (cleanup)
 
-### 1a. Enable Stripe payments
-Use Lovable's built-in `enable_stripe_payments`. Pick **tax calculation only** (option 2) — works for global digital subscriptions, keeps fee floor low. Square stays only for legacy event/booking flows, marked deprecated.
+Rip out every page and component that pretends Rhozeland operates a token. Replace with the existing read-only `<TokenDiscoveryChip />`.
 
-### 1b. Schema
+**Routes & pages to remove from the app router (`src/App.tsx`):**
+- `/coin/:id` → `LaunchDetailPage` (the Back / Withdraw / "BACKING MOMENTUM" UI in your screenshots)
+- `/launchpad` → already redirects, leave the redirect
+- The `<LaunchpadWalletBridge />` mount (no longer needed)
+
+**Files to delete (code + tests):**
+- `src/pages/LaunchDetailPage.tsx`
+- `src/pages/LaunchpadPage.tsx`, `src/pages/LaunchRedirect.tsx`
+- `src/components/launchpad/` entire folder (DropCoinCard, TradePanel, LaunchpadWalletBridge, MintAddressChip, etc.)
+- `src/components/profile/ProfileCoinTab.tsx` (already unmounted on profile, kill the dead code)
+- `src/components/creators/CreatorReadinessCard.tsx` "investor signal"
+- `src/lib/launchpad-onchain.ts`, `src/lib/launchpad-idl-*.ts`, `src/lib/launchpad-error-decoder.ts`
+- `supabase/functions/mint-work-unlock/` (the simulated-pool variant)
+- `.lovable/launchpad-program-spec.md`, `.lovable/anchor-program-spec.md`
+
+**DB cleanup (migration):**
+- Drop tables: `coin_swap_ledger`, `coin_holdings`, `coin_launches` (cascade), `rhoze_booking_ledger`, `featured_boost_purchases` *(keep — still used by boosts)*
+- Drop RPCs: `swap_rhoze_for_coin`, `get_coin_market`, vanity-CA trigger
+- Drop `works.gating` pool_type `launch` handling — keep `rhoze_pool` only
+
+**Profile / Flow cleanup:**
+- Confirm `<TokenDiscoveryChip creatorId={…} />` is rendered on `ProfileDetailPage` overview header and `FlowCreatorPeek` (already is per memory) — verify the "Launches" card in screenshot 1 is gone.
+
+---
+
+## 2. Token discovery lane on Discover home
+
+Add one horizontal lane on `/discover` between Featured Creators and Fresh Works, titled **"Trending creator tokens"**.
+
+**Data:** new `<TrendingTokensLane />` component.
+- Query `profiles` where `token_mint_address is not null` AND `show_token_chip != false`.
+- For each mint, batch-fetch live data from **Jupiter Price v3** (`/price/v3?ids=mint1,mint2,…`) — we already proved this works in `useRhozeMarketPrice`. Single request, no rate-limit pain.
+- Fall back to DexScreener `/tokens/v1/solana/{mint}` for 24h volume + price change %.
+
+**Card UI (Dexscreener-ish, compact):**
+- Avatar + creator name (link → profile)
+- `$TICKER` + truncated CA
+- Live price (USD)
+- 24h % change (green/red)
+- Market cap chip
+- "Trade ↗" → pump.fun deeplink
+
+**Schema change:** move `mint_address` from `coin_launches` (about to be dropped) to `profiles.token_mint_address text` + `profiles.token_ticker text`. One coin per creator. Settings UI to paste it in (Profile settings → "Link your token" field, validates as Solana pubkey).
+
+**Empty state:** lane hidden entirely if no creator has linked a token yet.
+
+---
+
+## 3. Luma connect — promote and tighten
+
+The plumbing already exists (`profiles.luma_ics_url` + `sync-ics-events` edge fn). What's missing is visibility.
+
+- **Promote the connector to the Profile page** (`ProfileDetailPage` for own profile) — small "Connect your Luma calendar" card under the hero if `luma_ics_url is null`. One field, pastes ICS URL, runs `sync-ics-events`, shows count of synced events.
+- **Settings → Calendar tab** — keep `<IcsImportCard />`, add status row: last sync time, # of imported events, "Sync now" button, "Disconnect" button.
+- **Event create flow (`EventCreatePage`)** — add a top banner: "Already use Luma? Connect once and your events appear here automatically. [Connect]". Skip the form entirely.
+- The ICS sync already handles both free and paid Luma events (it just mirrors them with the `external_url` linking back to Luma for RSVP/checkout). No code change needed there — works as-is.
+
+---
+
+## 4. Rhozeland-hosted paid events (Stripe)
+
+For events created natively on Rhozeland (not Luma-mirrored), let the host charge USD via Stripe Embedded Checkout with our tier-based platform fee.
+
+**Schema (migration):**
 ```sql
--- Creator-side: every creator gets the same 3 tiers (no per-creator config)
-create table creator_subscription_tiers (
-  id uuid pk,
-  creator_id uuid → profiles,
-  tier text check in ('basic','standard','premium'),    -- $5 / $10 / $25
-  stripe_price_id text not null,
-  perks jsonb,                                          -- ["Private feed","DMs","Early drops"]
-  active bool default true
+alter table events
+  add column price_usd_cents int,            -- null = free
+  add column stripe_account_id text;         -- host's Stripe Connect acct (future; null = funds to platform for now)
+
+create table event_tickets (
+  id uuid pk default gen_random_uuid(),
+  event_id uuid references events(id) on delete cascade,
+  buyer_id uuid references auth.users(id),
+  amount_cents int not null,
+  platform_fee_cents int not null,
+  stripe_session_id text not null,
+  stripe_payment_intent text,
+  status text not null default 'pending',   -- pending | paid | refunded
+  created_at timestamptz default now()
 );
-
--- Fan-side: active subscriptions
-create table creator_subscriptions (
-  id uuid pk,
-  subscriber_id uuid → profiles,
-  creator_id uuid → profiles,
-  tier text,
-  stripe_subscription_id text,
-  status text,                                          -- active|past_due|canceled
-  current_period_end timestamptz,
-  unique(subscriber_id, creator_id)                     -- one sub per creator per fan
-);
+-- RLS: buyer + host can read; service role writes.
 ```
-Standard RLS: subscribers see their own subs; creators see who's subscribed to them.
 
-### 1c. New UI
-- **`<SubscribeToCreatorSheet />`** — replaces `<BackCreatorSheet />`. Three pricing cards ($5/$10/$25), Stripe Checkout redirect, "You're in" confirmation routing to private feed.
-- **Profile primary CTA**: "Subscribe to {Name}" (was "Back {Name}").
-- **`<SubscriberLock />`** — replaces `<BackerLock />`. Same overlay pattern, gates on `creator_subscriptions.status='active'`.
-- **Creator dashboard panel** — "Your subscribers" with MRR, churn, latest 10 subscribers.
+**Edge functions:**
+- `create-event-ticket-checkout` — takes `event_id`, resolves host, computes platform fee via `get_platform_fee_bps()`, creates Stripe Embedded session with `application_fee_amount` (or simple platform-collects-all v0), returns clientSecret. Mirrors `create-subscription-checkout` shell.
+- Extend `payments-webhook` to handle `checkout.session.completed` for `mode=payment` with `metadata.kind='event_ticket'` → upsert into `event_tickets`, mark `status='paid'`, anchor ticket via existing `anchor-event-ticket` flow.
 
-### 1d. Edge functions
-- `create-subscription-checkout` — creates Stripe Checkout session
-- `stripe-webhook` — handles `customer.subscription.created/updated/deleted`, writes to `creator_subscriptions`
-- `creator-payout-monthly` — pg_cron monthly job that calculates 85% of net subs to each creator, queues payout
+**UI:**
+- `EventCreatePage` — add "Price" field (free / USD amount). If priced, show fee preview ("You get $X, Rhozeland fee Y%").
+- `EventDetailPage` — primary CTA becomes "Get ticket — $X" → opens Stripe embedded sheet (same pattern as `<SubscribeToCreatorSheet />`). Existing free RSVP CTA stays for free events.
+- Order confirmation surfaces in `/messages` inbox + email (reuse `event-ticket-confirmation` template).
 
-### 1e. Gating
-Reuse `works.gating` jsonb with new `pool_type='subscriber_tier'` and `min_tier` field. `mint-work-unlock` edge fn branches on it.
+**Stripe Connect deferred.** For v10.2, funds go to the platform Stripe account and we manually pay out hosts (same model as Spaces today). Note this on `EventCreatePage`. Connect onboarding becomes its own loop later.
 
 ---
 
-## Phase 2 — Token discovery overlay (display + deeplink only)
+## Order of operations
 
-### 2a. Schema
-```sql
-alter table profiles add column external_token jsonb;
--- Shape: { mint, symbol, source: 'pumpfun'|'birdeye', launch_url, verified_at }
-```
-Creators paste a Solana mint address in settings. We hit Birdeye API to verify it exists + cache `symbol/name`.
+1. **Migration A** — `profiles.token_mint_address` + `token_ticker` columns; data backfill from `coin_launches` before dropping it.
+2. **Workstream 1** (cleanup) — delete files, drop tables, update router.
+3. **Workstream 2** (Trending tokens lane + profile token-link settings UI).
+4. **Workstream 3** (Luma promotion — pure UI, no schema).
+5. **Migration B** + **Workstream 4** (paid events). This is the cash-flow piece.
 
-### 2b. UI
-- **`<ProfileTokenCard />`** — shown on profile only if `external_token` is set. Renders: live price, 24h change, holders, mini sparkline (Birdeye `defi/price` + `defi/history_price`). Single CTA: "Buy {symbol} on pump.fun" → opens `https://pump.fun/{mint}` in new tab.
-- **No swap widgets, no Jupiter embed, no bonding curve.**
-- Kills `<ProfileCoinTab />` `<TradePanel />` `<InvestUnlockSheet />` buy/sell tabs and the simulated `coin_swap_ledger` write path.
-
-### 2c. Edge function
-- `fetch-token-snapshot` — proxies Birdeye, 5min cache by mint address. Stored in new `token_snapshots` table.
-
-Birdeye needs an API key — I'll ask for `BIRDEYE_API_KEY` when we hit this phase.
+Each workstream ends in a working app. We can ship #1+#2 first to see the lane live before touching events.
 
 ---
 
-## Phase 3 — Strip Credits from fan-facing UI
+## Open items I'll handle as I go
 
-### What gets removed
-- Sidebar "Creator Pass" tab (replaced with "My Subscriptions")
-- `<RhozeBalanceChip />` from top bar
-- All "Pay with Credits" toggles on event tickets, space bookings, marketplace
-- `BuyRhozeSection` Top-up tab on /credits
-- "Earn $RHOZE" prompts across the app
-- Tier ladder (Spark/Bloom/Glow/Play) from profile + landing
+- Tax handling on event tickets — I'll ask which option (full compliance vs calculation-only vs none) when we hit workstream #4.
+- Whether to email hosts a weekly payout summary — separate small task once paid events have data.
+- Memory updates: drop launchpad/coin-swap/booking-ledger entries, add `v10.2-discovery`, `v10.2-paid-events`, `v10-token-link`.
 
-### What stays (creator B2B only)
-- `<BoostProfileSheet />` — paid with **USD via Stripe** (not Credits)
-- `<VerifiedProBadge />` upgrade — paid with USD via Stripe
-- Future `/launches` partnership page (Phase 4, not now)
-- Existing Credits balances **read-only** on a single "Legacy Credits" page so holders can withdraw via existing wallet flow. No more topping up.
-
-### Sidebar nav v10
-1. **Home** (`/discover`)
-2. **Discover** (`/market`)
-3. **Inbox** (`/messages`)
-4. **Subscriptions** (`/subscriptions` — what I subscribe to + my subscribers if I'm a creator)
-
----
-
-## Phase 4 — Parked (document, don't build this loop)
-
-- **Rhozeland Launches** curated partnership page — handpicked creators we co-launch on pump.fun. Apply form + admin queue. Build when we have ≥5 active subscribed creators.
-- **Earn-by-holding tier rewards** — quiet backend cron drip for active users, no UI surface. Build only if Credits ecosystem shows life after Phase 3.
-- **Events / Spaces as subscriber perks** — reframe the existing pages to show "Subscribers only" badges. Stop investing in them as public marketplaces.
-
----
-
-## Build order this loop
-
-I'll ship Phase 1 + start Phase 3 stripping in the same loop. Phase 2 (token overlay) comes next loop once we have Birdeye key.
-
-1. Stripe enablement + tax config
-2. Schema migration (subscription tiers + subscriptions)
-3. `create-subscription-checkout` + `stripe-webhook` edge fns
-4. `<SubscribeToCreatorSheet />` + profile CTA swap
-5. `<SubscriberLock />` + gating extension
-6. Subscriptions inbox page (`/subscriptions`)
-7. Sidebar nav swap + remove `<RhozeBalanceChip />`
-8. Hide Pay-with-Credits toggles on fan checkouts
-9. Delete `<BackCreatorSheet />` `<TradePanel />` `<InvestUnlockSheet />` and their entry points
-10. Memory update — v10 core rules replace v9.8 / v9.9 framing
-
-Estimated scope: ~25-30 files touched, 1 migration, 2 edge functions, 1 Stripe enable, 1 secret request (Stripe pricing IDs created automatically by `batch_create_product` after enable).
-
----
-
-## Technical notes
-
-- Stripe products will be created with `batch_create_product` after enable — 3 products (basic/standard/premium) per creator is too many; instead we create **3 global products** ($5/$10/$25) and each subscription stores `creator_id` as metadata so the webhook can route to the right creator
-- 85/15 revenue split: we don't use Stripe Connect in v10 (too much KYC overhead). Instead we pool fan payments → monthly batch payout to creators from our Stripe balance. Tracked in `creator_subscriptions` + `creator_payouts` table
-- Birdeye free tier handles ~10k req/day — plenty for cached snapshots
-- All deleted components stay on disk (commented `// v9-legacy`) for 30 days in case we need to revert
-- Memory updates: replace "v9.8 framing" + "v9.9.1 Primary nav" Core rules with v10 equivalents
+Ready to start with workstream #1?
