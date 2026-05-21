@@ -51,7 +51,29 @@ import {
   Plus,
   Lock,
   Globe,
+  MoreVertical,
+  Archive,
+  ArchiveRestore,
+  Trash2,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
   computeContentHash,
@@ -92,6 +114,7 @@ interface Work {
   created_at: string;
   gating?: WorkGating | null;
   is_unverified?: boolean;
+  archived_at?: string | null;
 }
 
 const KIND_ICON: Record<WorkKind, typeof Music> = {
@@ -262,13 +285,11 @@ const WorksPage = ({ embedded = false }: WorksPageProps = {}) => {
               }
             />
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {myWorks.map((w) => (
-                <WorkCard key={w.id} work={w} isOwner />
-              ))}
-            </div>
+            <MyWorksList works={myWorks} />
           )}
         </TabsContent>
+
+
 
         <TabsContent value="registry" className="mt-6">
           {loadingRegistry ? (
@@ -317,6 +338,54 @@ function EmptyState({
       </h3>
       <p className="text-sm text-muted-foreground max-w-md mx-auto">{body}</p>
       {cta && <div className="pt-2">{cta}</div>}
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────── */
+
+function MyWorksList({ works }: { works: Work[] }) {
+  const [showArchived, setShowArchived] = useState(false);
+  const active = works.filter((w) => !w.archived_at);
+  const archived = works.filter((w) => !!w.archived_at);
+  const visible = showArchived ? archived : active;
+
+  return (
+    <div className="space-y-3">
+      {archived.length > 0 && (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowArchived(false)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              !showArchived ? "bg-foreground text-background" : "bg-muted/60 text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            Active <span className="opacity-60 tabular-nums">· {active.length}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowArchived(true)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              showArchived ? "bg-foreground text-background" : "bg-muted/60 text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            <Archive className="h-3 w-3" /> Archived <span className="opacity-60 tabular-nums">· {archived.length}</span>
+          </button>
+        </div>
+      )}
+
+      {visible.length === 0 ? (
+        <div className="surface-card p-8 text-center text-sm text-muted-foreground">
+          {showArchived ? "No archived posts." : "No active posts."}
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {visible.map((w) => (
+            <WorkCard key={w.id} work={w} isOwner />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -386,6 +455,45 @@ function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
     onSettled: () => setAnchoring(false),
   });
 
+  const archiveMutation = useMutation({
+    mutationFn: async (archive: boolean) => {
+      const { error } = await supabase
+        .from("works")
+        .update({ archived_at: archive ? new Date().toISOString() : null })
+        .eq("id", work.id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, archive) => {
+      toast.success(archive ? "Post archived" : "Post restored");
+      queryClient.invalidateQueries({ queryKey: ["works-mine"] });
+      queryClient.invalidateQueries({ queryKey: ["works-registry"] });
+      queryClient.invalidateQueries({ queryKey: ["works-lightbox"] });
+    },
+    onError: (err: unknown) =>
+      toast.error("Could not update post", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("works").delete().eq("id", work.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Post deleted");
+      queryClient.invalidateQueries({ queryKey: ["works-mine"] });
+      queryClient.invalidateQueries({ queryKey: ["works-registry"] });
+      queryClient.invalidateQueries({ queryKey: ["works-lightbox"] });
+    },
+    onError: (err: unknown) =>
+      toast.error("Could not delete post", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      }),
+  });
+
+  const isArchived = !!work.archived_at;
+
   return (
     <article className="surface-card p-4 sm:p-5 space-y-3 group">
       <div className="flex items-start gap-3">
@@ -397,6 +505,11 @@ function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
             <h3 className="font-display text-base font-semibold text-foreground truncate">
               {work.title}
             </h3>
+            {isArchived && (
+              <Badge variant="outline" className="gap-1 text-[10px] py-0 h-5">
+                <Archive className="h-3 w-3" /> Archived
+              </Badge>
+            )}
             {work.solana_signature && (
               <Badge variant="outline" className="gap-1 text-[10px] py-0 h-5">
                 <ShieldCheck className="h-3 w-3" /> Anchored
@@ -414,6 +527,68 @@ function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
             {work.file_size && <span>· {formatFileSize(work.file_size)}</span>}
           </div>
         </div>
+        {isOwner && (
+          <AlertDialog>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 -mr-1 -mt-1 opacity-60 hover:opacity-100"
+                  aria-label="Post actions"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                {isArchived ? (
+                  <DropdownMenuItem
+                    onClick={() => archiveMutation.mutate(false)}
+                    disabled={archiveMutation.isPending}
+                  >
+                    <ArchiveRestore className="h-4 w-4 mr-2" /> Unarchive
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    onClick={() => archiveMutation.mutate(true)}
+                    disabled={archiveMutation.isPending}
+                  >
+                    <Archive className="h-4 w-4 mr-2" /> Archive
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem
+                    onSelect={(e) => e.preventDefault()}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" /> Delete
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this post?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  "{work.title}" will be permanently removed. This cannot be undone.
+                  {work.solana_signature
+                    ? " The on-chain Solana memo will remain as a public record."
+                    : ""}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => deleteMutation.mutate()}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
 
       {work.description && (
