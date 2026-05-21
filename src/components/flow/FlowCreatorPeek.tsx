@@ -167,10 +167,7 @@ const FlowCreatorPeek = ({ open, onOpenChange, creatorId, initial }: Props) => {
                 </p>
               )}
 
-              {/* Investor signal */}
-              <div className="mb-5">
-                <CreatorReadinessCard creatorId={creatorId} />
-              </div>
+              {/* v10.2 — investor-signal card removed. Token discovery chip below carries the on-chain info. */}
 
               {/* v10 — read-only token discovery chip (no swap, deeplinks to pump.fun) */}
               <div className="mb-6">

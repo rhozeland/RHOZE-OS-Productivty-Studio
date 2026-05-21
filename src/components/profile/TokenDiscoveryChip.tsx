@@ -1,14 +1,16 @@
 /**
- * TokenDiscoveryChip — v10 read-only discovery overlay
+ * TokenDiscoveryChip — v10.2 read-only discovery overlay
  *
- * Replaces the v9 `<ProfileCoinTab />` everywhere a creator's token used to
- * surface. NO swap, NO custody, NO bonding-curve UI — just:
+ * Reads the creator's linked Solana token directly off
+ * `profiles.token_mint_address` / `token_ticker` — Rhozeland no longer
+ * operates a simulated launchpad, so there's no `coin_launches` row to
+ * resolve. Renders:
  *   • ticker + truncated CA
- *   • live price (Jupiter price API v2, no key required) when available
+ *   • live price (Jupiter price API v3, no key required) when available
  *   • "Trade on pump.fun ↗" deeplink
  *
- * Renders null if the creator has no launched coin (or no mint address),
- * so callers can drop it in unconditionally.
+ * Returns null if the creator hasn't linked a token (or opted out via
+ * `show_token_chip = false`), so callers can drop it in unconditionally.
  */
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,8 +20,6 @@ import { cn } from "@/lib/utils";
 interface Props {
   creatorId: string;
   className?: string;
-  /** Hide if no on-chain mint address (default true — pre-graduation coins stay hidden) */
-  requireMint?: boolean;
 }
 
 const trunc = (s: string, head = 4, tail = 4) =>
@@ -32,45 +32,37 @@ const fmtPrice = (p: number) => {
   return `$${p.toExponential(2)}`;
 };
 
-const TokenDiscoveryChip = ({ creatorId, className, requireMint = true }: Props) => {
-  const { data: coin } = useQuery({
-    queryKey: ["token-discovery-chip", creatorId],
+const TokenDiscoveryChip = ({ creatorId, className }: Props) => {
+  const { data: token } = useQuery({
+    queryKey: ["token-discovery-chip-v2", creatorId],
     queryFn: async () => {
-      const [{ data: launch }, { data: prof }] = await Promise.all([
-        supabase
-          .from("coin_launches")
-          .select("id, ticker, name, mint_address, status")
-          .eq("creator_id", creatorId)
-          .neq("status", "cancelled")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-        supabase
-          .from("profiles")
-          .select("show_token_chip")
-          .eq("id", creatorId)
-          .maybeSingle(),
-      ]);
-      // Creator opted out → hide chip entirely
-      if (prof && prof.show_token_chip === false) return null;
-      return launch;
+      const { data } = await supabase
+        .from("profiles")
+        .select("token_mint_address, token_ticker, show_token_chip")
+        .eq("id", creatorId)
+        .maybeSingle();
+      if (!data) return null;
+      if (data.show_token_chip === false) return null;
+      if (!data.token_mint_address) return null;
+      return {
+        mint: data.token_mint_address as string,
+        ticker: (data.token_ticker ?? "TOKEN") as string,
+      };
     },
   });
 
+  const mint = token?.mint ?? null;
 
-  const mint = coin?.mint_address ?? null;
-
-  // Live price from Jupiter — graceful fail (no spinner, just no price)
   const { data: price } = useQuery({
-    queryKey: ["jup-price", mint],
+    queryKey: ["jup-price-v3", mint],
     enabled: !!mint,
     staleTime: 60_000,
     queryFn: async () => {
       try {
-        const res = await fetch(`https://api.jup.ag/price/v2?ids=${mint}`);
+        const res = await fetch(`https://lite-api.jup.ag/price/v3?ids=${mint}`);
         if (!res.ok) return null;
         const json = await res.json();
-        const raw = json?.data?.[mint!]?.price;
+        const raw = json?.[mint!]?.usdPrice;
         const n = typeof raw === "string" ? parseFloat(raw) : raw;
         return Number.isFinite(n) ? n : null;
       } catch {
@@ -79,43 +71,35 @@ const TokenDiscoveryChip = ({ creatorId, className, requireMint = true }: Props)
     },
   });
 
-  if (!coin) return null;
-  if (requireMint && !mint) return null;
+  if (!token) return null;
 
   const priceLabel = price != null ? fmtPrice(price) : null;
-  const pumpUrl = mint ? `https://pump.fun/coin/${mint}` : null;
+  const pumpUrl = `https://pump.fun/coin/${token.mint}`;
 
   return (
     <a
-      href={pumpUrl ?? "#"}
+      href={pumpUrl}
       target="_blank"
       rel="noopener noreferrer"
-      onClick={(e) => {
-        if (!pumpUrl) e.preventDefault();
-      }}
       className={cn(
         "group inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/60 backdrop-blur-sm",
         "px-3 py-1.5 text-xs hover:bg-card hover:border-border transition-colors max-w-full",
         className,
       )}
-      title={mint ? `Trade $${coin.ticker} on pump.fun` : `$${coin.ticker}`}
+      title={`Trade $${token.ticker} on pump.fun`}
     >
       <Coins className="h-3.5 w-3.5 text-primary shrink-0" />
-      <span className="font-mono font-medium text-foreground shrink-0">${coin.ticker}</span>
+      <span className="font-mono font-medium text-foreground shrink-0">${token.ticker}</span>
       {priceLabel && (
         <span className="text-muted-foreground tabular-nums shrink-0">{priceLabel}</span>
       )}
-      {mint && (
-        <span className="text-muted-foreground/60 font-mono text-[10px] hidden sm:inline truncate">
-          {trunc(mint)}
-        </span>
-      )}
-      {pumpUrl && (
-        <span className="ml-auto inline-flex items-center gap-0.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0">
-          <span className="hidden sm:inline">pump.fun</span>
-          <ExternalLink className="h-3 w-3" />
-        </span>
-      )}
+      <span className="text-muted-foreground/60 font-mono text-[10px] hidden sm:inline truncate">
+        {trunc(token.mint)}
+      </span>
+      <span className="ml-auto inline-flex items-center gap-0.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0">
+        <span className="hidden sm:inline">pump.fun</span>
+        <ExternalLink className="h-3 w-3" />
+      </span>
     </a>
   );
 };

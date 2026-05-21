@@ -174,21 +174,12 @@ const FeaturedCarousel = ({ slides }: FeaturedCarouselProps) => {
                   </div>
                 )}
 
-                {/* Investing signal — coin chip if launched */}
-                {current.coin ? (
-                  <div className="inline-flex items-center gap-2 rounded-full bg-foreground text-background px-3 py-1.5 text-[11px] font-semibold shadow-lg">
-                    {current.coin.image_url ? (
-                      <img src={current.coin.image_url} alt="" className="h-5 w-5 rounded-full object-cover" />
-                    ) : (
-                      <Coins className="h-3.5 w-3.5" />
-                    )}
-                    Invest in ${current.coin.ticker}
-                  </div>
-                ) : (
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur border border-border px-3 py-1 text-[11px] font-medium text-foreground">
-                    <Sparkles className="h-3 w-3" /> Hold $RHOZE to back
-                  </div>
-                )}
+                {/* v10.2 — "Invest in $TICKER" chip removed; Rhozeland is no
+                    longer a launchpad. Profile header shows a read-only
+                    TokenDiscoveryChip that deep-links to pump.fun. */}
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur border border-border px-3 py-1 text-[11px] font-medium text-foreground">
+                  <Sparkles className="h-3 w-3" /> Hold $RHOZE to back
+                </div>
               </div>
             )}
           </Link>

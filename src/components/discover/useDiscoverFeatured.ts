@@ -287,21 +287,11 @@ export const useDiscoverFeatured = (marketFilter: RegionMarket | "All") => {
         }
       });
 
-      // Active artist coin (one per creator)
-      const coinByCreator = new Map<string, { id: string; ticker: string; name: string | null; image_url: string | null }>();
-      const { data: coinRows } = await supabase
-        .from("coin_launches")
-        .select("id, ticker, name, image_url, creator_id, status, updated_at")
-        .in("creator_id", userIds)
-        .in("status", ["active", "graduated"])
-        .order("updated_at", { ascending: false });
-      (coinRows ?? []).forEach((row: any) => {
-        if (!coinByCreator.has(row.creator_id)) {
-          coinByCreator.set(row.creator_id, {
-            id: row.id, ticker: row.ticker, name: row.name, image_url: row.image_url,
-          });
-        }
-      });
+      // v10.2 — no longer enriching with simulated coin_launches. Featured
+      // ranking now relies on profile completeness + activity only. A
+      // creator's linked token (profiles.token_mint_address) is surfaced
+      // via the read-only TokenDiscoveryChip in the profile header.
+      const coinByCreator = new Map<string, never>();
 
       // Next upcoming event hosted by the artist
       const nextEventByHost = new Map<string, { id: string; slug: string | null; title: string; starts_at: string; cover_url: string | null }>();

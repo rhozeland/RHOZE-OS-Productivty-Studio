@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { SolanaWalletProvider } from "@/contexts/SolanaWalletContext";
-import LaunchpadWalletBridge from "@/components/launchpad/LaunchpadWalletBridge";
+// v10.2 — simulated launchpad wallet bridge removed; tokens are now read-only discovery
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthGateProvider } from "@/components/AuthGateDialog";
 import AppLayout from "@/components/AppLayout";
@@ -63,8 +63,7 @@ import EventManagePage from "@/pages/EventManagePage";
 import TicketDetailPage from "@/pages/TicketDetailPage";
 import { ProfileRedirect } from "@/components/ProfileRedirect";
 import FlowModePage from "@/pages/FlowModePage";
-import LaunchRedirect from "@/pages/LaunchRedirect";
-import LaunchDetailPage from "@/pages/LaunchDetailPage";
+// v10.2 — LaunchRedirect / LaunchDetailPage removed from the router; deep links redirect to Discover.
 // /rewards now redirects to /credits?tab=how — explainer lives inside Creator Pass
 import SwapHistoryPage from "@/pages/SwapHistoryPage";
 import UnsubscribePage from "@/pages/UnsubscribePage";
@@ -217,7 +216,6 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
     <SolanaWalletProvider>
-    <LaunchpadWalletBridge />
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -308,13 +306,12 @@ const App = () => (
                     redirect into Projects; their detail routes stay live so
                     the Tools panel can deep-link individual items. */}
                 <Route path="/flow" element={<FlowAuthGuard><FlowModePage /></FlowAuthGuard>} />
-                {/* Launchpad page is gone — coins are now profile-bound.
-                    /launchpad redirects to the Hub; /launchpad/:id resolves
-                    the coin's creator and forwards to their profile Coin tab. */}
+                {/* v10.2 — Rhozeland is no longer a launchpad. Tokens surface
+                    as read-only discovery overlays on profiles + a Trending
+                    Tokens lane on Discover. Legacy deep links land on Discover. */}
                 <Route path="/launchpad" element={<Navigate to="/discover" replace />} />
-                <Route path="/launchpad/:id" element={<LaunchRedirect />} />
-                {/* Coin detail page — slug = ticker (case-insensitive). */}
-                <Route path="/coin/:slug" element={<LaunchDetailPage />} />
+                <Route path="/launchpad/:id" element={<Navigate to="/discover" replace />} />
+                <Route path="/coin/:slug" element={<Navigate to="/discover" replace />} />
                 
                 <Route path="/smartboards" element={<Navigate to="/projects" replace />} />
                 <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
