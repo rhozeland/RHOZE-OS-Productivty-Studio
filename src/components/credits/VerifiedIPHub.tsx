@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Shield, ShieldCheck, Upload, Loader2, Fingerprint, Sparkles, ExternalLink, Music,
-  Image as ImageIcon, Video, FileText, Flame,
+  Image as ImageIcon, Video, FileText, Flame, Archive, ArchiveRestore, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { computeContentHash, inferWorkKind } from "@/lib/content-hash";
