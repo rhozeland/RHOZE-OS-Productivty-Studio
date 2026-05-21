@@ -417,6 +417,7 @@ const AppLayout = () => {
               )}
               {user && <InboxDrawer />}
               {user && <NotificationBell />}
+              {user && <WalletButton />}
 
               {/* Profile dropdown — top-right */}
               {user && (
