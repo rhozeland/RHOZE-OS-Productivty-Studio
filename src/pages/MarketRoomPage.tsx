@@ -221,7 +221,10 @@ const MarketRoomPage = () => {
                 >
                   {/* Top: cover image */}
                   <div
-                    className="relative h-44 w-full overflow-hidden"
+                    className={cn(
+                      "relative w-full overflow-hidden",
+                      row.kind === "hire" ? "h-24" : "h-44",
+                    )}
                     style={!row.coverUrl ? { background: grad.background } : undefined}
                   >
                     {row.coverUrl && (
@@ -251,6 +254,26 @@ const MarketRoomPage = () => {
 
                   {/* Bottom: content */}
                   <div className="flex-1 flex flex-col p-4 gap-2">
+                    {row.kind === "hire" && (
+                      <div className="-mt-12 mb-1">
+                        <div
+                          className="h-16 w-16 rounded-full border-4 border-card overflow-hidden flex items-center justify-center shadow-md"
+                          style={!row.ownerAvatar ? { background: grad.background } : { background: "hsl(var(--muted))" }}
+                        >
+                          {row.ownerAvatar ? (
+                            <img
+                              src={row.ownerAvatar}
+                              alt={ownerName}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span className="font-display text-lg font-bold text-white drop-shadow">
+                              {ownerName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     <h3 className="font-semibold text-[15px] text-foreground leading-snug line-clamp-2">
                       {row.title}
                     </h3>
@@ -263,10 +286,11 @@ const MarketRoomPage = () => {
                         {row.priceLabel || row.metaLabel || row.category || ""}
                       </span>
                       <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground group-hover:gap-1.5 transition-all">
-                        Open <ArrowRight className="h-3.5 w-3.5" />
+                        {row.kind === "hire" ? "View Creator" : row.kind === "space" ? "Join Space" : row.kind === "event" ? "See Event" : "See Listing"} <ArrowRight className="h-3.5 w-3.5" />
                       </span>
                     </div>
                   </div>
+
                 </button>
               );
             })}
