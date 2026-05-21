@@ -29,6 +29,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
+import SidebarRoleSwitcher from "@/components/SidebarRoleSwitcher";
 
 // v9.9.1: 4-tab sidebar.
 //   Home          → Discover feed (artists / works)
