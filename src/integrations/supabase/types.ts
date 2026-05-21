@@ -4801,6 +4801,7 @@ export type Database = {
           kind: string
           mime_type: string | null
           solana_signature: string | null
+          thumbnail_url: string | null
           title: string
           updated_at: string
           user_id: string
@@ -4820,6 +4821,7 @@ export type Database = {
           kind?: string
           mime_type?: string | null
           solana_signature?: string | null
+          thumbnail_url?: string | null
           title: string
           updated_at?: string
           user_id: string
@@ -4839,6 +4841,7 @@ export type Database = {
           kind?: string
           mime_type?: string | null
           solana_signature?: string | null
+          thumbnail_url?: string | null
           title?: string
           updated_at?: string
           user_id?: string
