@@ -224,6 +224,7 @@ const App = () => (
               {/* Auth page — redirect to dashboard if already logged in */}
               <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
               <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
+              <Route path="/welcome" element={<ProtectedRoute><RoleSelectPage /></ProtectedRoute>} />
 
               {/* Legacy landing — kept mounted but no longer the front door. */}
               <Route path="/landing" element={<Navigate to="/" replace />} />
