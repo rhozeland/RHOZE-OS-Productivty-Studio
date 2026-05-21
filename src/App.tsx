@@ -227,6 +227,9 @@ const App = () => (
               <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
               <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
               <Route path="/welcome" element={<ProtectedRoute><RoleSelectPage /></ProtectedRoute>} />
+              {/* Fan mode pages (Prompt 3) */}
+              <Route path="/portfolio" element={<ProtectedRoute><PortfolioPage /></ProtectedRoute>} />
+              <Route path="/fan/rewards" element={<ProtectedRoute><FanRewardsPage /></ProtectedRoute>} />
 
               {/* Legacy landing — kept mounted but no longer the front door. */}
               <Route path="/landing" element={<Navigate to="/" replace />} />
