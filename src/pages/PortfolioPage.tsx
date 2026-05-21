@@ -246,7 +246,7 @@ const EmptyState = () => (
     </p>
     <div className="pt-2">
       <Button asChild>
-        <Link to="/discover">Discover Creators</Link>
+        <Link to="/creators">Discover Creators</Link>
       </Button>
     </div>
   </div>
