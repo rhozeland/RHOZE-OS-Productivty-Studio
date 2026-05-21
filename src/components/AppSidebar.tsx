@@ -68,6 +68,22 @@ const AppSidebar = () => {
   const [activeRole] = useActiveRole();
   const pillarItems = activeRole === "fan" ? fanPillarItems : creatorPillarItems;
 
+  // Pending inquiry count for the My Work nav badge (creator mode).
+  const { data: pendingInquiries = 0 } = useQuery({
+    queryKey: ["sidebar-pending-inquiries", user?.id],
+    enabled: !!user?.id && activeRole !== "fan",
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("listing_inquiries")
+        .select("id", { count: "exact", head: true })
+        .eq("receiver_id", user!.id)
+        .eq("status", "pending");
+      return count ?? 0;
+    },
+  });
+  const badgeCounts: Record<string, number> = { pendingInquiries: Number(pendingInquiries) };
+
+
   const handleNavClick = () => {
     if (isMobile) setOpenMobile(false);
   };
