@@ -29,6 +29,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
+import SidebarRoleSwitcher from "@/components/SidebarRoleSwitcher";
 
 // v9.9.1: 4-tab sidebar.
 //   Home          → Discover feed (artists / works)
@@ -138,6 +139,7 @@ const AppSidebar = () => {
       </Link>
 
       <SidebarContent className="px-2 pt-3 space-y-2">
+        <SidebarRoleSwitcher collapsed={collapsed} />
         {renderGroup(pillarItems, { label: "Explore" })}
         {personalItems.length > 0 && renderGroup(personalItems)}
       </SidebarContent>
