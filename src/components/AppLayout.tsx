@@ -8,6 +8,7 @@ import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import NotificationBell from "@/components/NotificationBell";
 import InboxDrawer from "@/components/InboxDrawer";
 import PostMenuButton from "@/components/PostMenuButton";
+import WalletButton from "@/components/WalletButton";
 
 import WelcomeModal from "@/components/onboarding/WelcomeModal";
 import RoomsBottomNav from "@/components/RoomsBottomNav";
