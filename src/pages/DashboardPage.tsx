@@ -89,6 +89,9 @@ const DashboardPage = () => {
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [networkSearch, setNetworkSearch] = useState("");
   const [pulseScope, setPulseScope] = useState<"all" | "studios" | "hub">("all");
+  const [activeRole] = useActiveRole();
+  const isFan = activeRole === "fan";
+
 
   // ── Profile & layout (personal sections only) ──
   const { data: profile } = useQuery({
@@ -201,6 +204,33 @@ const DashboardPage = () => {
     },
     enabled: !!user,
   });
+  const { data: rhozeBalance = 0 } = useQuery({
+    queryKey: ["dashboard-rhoze-balance", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_credits")
+        .select("balance")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return Number((data as any)?.balance ?? 0);
+    },
+  });
+  const { data: creatorsBacked = 0 } = useQuery({
+    queryKey: ["dashboard-creators-backed", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const sb: any = supabase;
+      const { count } = await sb
+        .from("creator_subscriptions")
+        .select("id", { count: "exact", head: true })
+        .eq("subscriber_id", user!.id)
+        .eq("status", "active");
+      return count ?? 0;
+    },
+  });
+
+
   const { data: recentMessages } = useQuery({
     queryKey: ["recent-messages-dashboard", user?.id],
     queryFn: async () => {
@@ -643,7 +673,7 @@ const DashboardPage = () => {
         className="pt-2"
       >
         <p className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-2">
-          {user ? "Your Studio" : "Get discovered. Get supported. On-chain."}
+          {user ? (isFan ? "Your Feed" : "Your Studio") : "Get discovered. Get supported. On-chain."}
         </p>
         <h1 className="font-display text-3xl sm:text-4xl md:text-5xl leading-[1.1] text-foreground">
           {(() => {
@@ -676,9 +706,14 @@ const DashboardPage = () => {
           {user
             ? (unreadCount ?? 0) > 0
               ? `${unreadCount} unread.`
-              : "Your workspace. Drafts, drops, bookings, and what's next."
-            : "Your workspace. Drafts, drops, bookings, and what's next."}
+              : isFan
+                ? "Posts and updates from creators you follow and support."
+                : "Your workspace. Drafts, drops, bookings, and what's next."
+            : isFan
+              ? "Posts and updates from creators you follow and support."
+              : "Your workspace. Drafts, drops, bookings, and what's next."}
         </p>
+
       </motion.div>
 
       {/* ─── First-run checklist ─────────────────────────────────────────
@@ -1289,32 +1324,60 @@ const DashboardPage = () => {
       {user && (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-[1px] bg-border rounded-lg overflow-hidden">
-            {[
-              {
-                icon: FolderKanban,
-                label: "Active Projects",
-                value: activeProjects,
-                path: "/projects",
-              },
-              {
-                icon: MessageSquare,
-                label: "Unread Messages",
-                value: unreadCount ?? 0,
-                path: "/messages",
-              },
-              {
-                icon: Calendar,
-                label: "Upcoming Events",
-                value: events?.length ?? 0,
-                path: "/calendar",
-              },
-              {
-                icon: Zap,
-                label: "Tasks Completed",
-                value: `${completedTasks}/${totalTasks}`,
-                path: "/projects",
-              },
-            ].map((stat, i) => (
+            {(isFan
+              ? [
+                  {
+                    icon: Users,
+                    label: "Creators Backed",
+                    value: creatorsBacked,
+                    path: "/portfolio",
+                  },
+                  {
+                    icon: MessageSquare,
+                    label: "Unread Messages",
+                    value: unreadCount ?? 0,
+                    path: "/messages",
+                  },
+                  {
+                    icon: Calendar,
+                    label: "Upcoming Events",
+                    value: events?.length ?? 0,
+                    path: "/calendar",
+                  },
+                  {
+                    icon: Sparkles,
+                    label: "$RHOZE Earned",
+                    value: Math.round(rhozeBalance).toLocaleString(),
+                    path: "/fan/rewards",
+                  },
+                ]
+              : [
+                  {
+                    icon: FolderKanban,
+                    label: "Active Projects",
+                    value: activeProjects,
+                    path: "/projects",
+                  },
+                  {
+                    icon: MessageSquare,
+                    label: "Unread Messages",
+                    value: unreadCount ?? 0,
+                    path: "/messages",
+                  },
+                  {
+                    icon: Calendar,
+                    label: "Upcoming Events",
+                    value: events?.length ?? 0,
+                    path: "/calendar",
+                  },
+                  {
+                    icon: Zap,
+                    label: "Tasks Completed",
+                    value: `${completedTasks}/${totalTasks}`,
+                    path: "/projects",
+                  },
+                ]).map((stat, i) => (
+
               <Link key={stat.label} to={stat.path}>
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}

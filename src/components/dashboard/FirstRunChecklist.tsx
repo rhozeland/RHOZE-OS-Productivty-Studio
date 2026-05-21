@@ -15,7 +15,9 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Check, ArrowRight, X, User, Flame, Compass, Wallet } from "lucide-react";
+import { Check, ArrowRight, X, User, Flame, Compass, Wallet, Sparkles } from "lucide-react";
+import { useActiveRole } from "@/hooks/useActiveRole";
+
 import { Button } from "@/components/ui/button";
 
 const DISMISS_KEY = "rhozeland.firstrun.dismissed";
@@ -31,10 +33,13 @@ interface ChecklistItem {
 
 const FirstRunChecklist = () => {
   const { user } = useAuth();
+  const [activeRole] = useActiveRole();
+  const isFan = activeRole === "fan";
   const [dismissed, setDismissed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(DISMISS_KEY) === "1";
   });
+
 
   // Profile completeness
   const { data: profile } = useQuery({
@@ -90,11 +95,14 @@ const FirstRunChecklist = () => {
       {
         id: "post",
         done: (flowCount ?? 0) > 0,
-        label: "Share something",
-        helper: "Post a track, image, or work-in-progress to the Flow feed.",
-        href: "/flow",
-        icon: Flame,
+        label: isFan ? "Discover a creator" : "Share something",
+        helper: isFan
+          ? "Find someone rising early before everyone else does"
+          : "Post a track, image, or work-in-progress to the Flow feed.",
+        href: isFan ? "/creators" : "/flow",
+        icon: isFan ? Sparkles : Flame,
       },
+
       {
         id: "explore",
         done: (interactionCount ?? 0) > 0,
@@ -173,7 +181,7 @@ const FirstRunChecklist = () => {
               Get started · {completed} of {total}
             </p>
             <h2 className="font-display text-lg sm:text-xl font-semibold text-foreground leading-tight">
-              Four small steps to get discovered.
+              {isFan ? "Four steps to get started as a fan." : "Four small steps to get discovered."}
             </h2>
           </div>
 
