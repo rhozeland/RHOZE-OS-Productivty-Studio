@@ -123,6 +123,11 @@ const AppSidebar = () => {
               active ? "text-primary" : ""
             )} />
             {!collapsed && <span className="flex-1">{item.label}</span>}
+            {!collapsed && item.badgeKey && badgeCounts[item.badgeKey] > 0 && (
+              <span className="ml-auto h-5 min-w-5 px-1.5 rounded-full bg-foreground text-background text-[10px] font-semibold flex items-center justify-center">
+                {badgeCounts[item.badgeKey]}
+              </span>
+            )}
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
