@@ -1324,32 +1324,60 @@ const DashboardPage = () => {
       {user && (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-[1px] bg-border rounded-lg overflow-hidden">
-            {[
-              {
-                icon: FolderKanban,
-                label: "Active Projects",
-                value: activeProjects,
-                path: "/projects",
-              },
-              {
-                icon: MessageSquare,
-                label: "Unread Messages",
-                value: unreadCount ?? 0,
-                path: "/messages",
-              },
-              {
-                icon: Calendar,
-                label: "Upcoming Events",
-                value: events?.length ?? 0,
-                path: "/calendar",
-              },
-              {
-                icon: Zap,
-                label: "Tasks Completed",
-                value: `${completedTasks}/${totalTasks}`,
-                path: "/projects",
-              },
-            ].map((stat, i) => (
+            {(isFan
+              ? [
+                  {
+                    icon: Users,
+                    label: "Creators Backed",
+                    value: creatorsBacked,
+                    path: "/portfolio",
+                  },
+                  {
+                    icon: MessageSquare,
+                    label: "Unread Messages",
+                    value: unreadCount ?? 0,
+                    path: "/messages",
+                  },
+                  {
+                    icon: Calendar,
+                    label: "Upcoming Events",
+                    value: events?.length ?? 0,
+                    path: "/calendar",
+                  },
+                  {
+                    icon: Sparkles,
+                    label: "$RHOZE Earned",
+                    value: Math.round(rhozeBalance).toLocaleString(),
+                    path: "/fan/rewards",
+                  },
+                ]
+              : [
+                  {
+                    icon: FolderKanban,
+                    label: "Active Projects",
+                    value: activeProjects,
+                    path: "/projects",
+                  },
+                  {
+                    icon: MessageSquare,
+                    label: "Unread Messages",
+                    value: unreadCount ?? 0,
+                    path: "/messages",
+                  },
+                  {
+                    icon: Calendar,
+                    label: "Upcoming Events",
+                    value: events?.length ?? 0,
+                    path: "/calendar",
+                  },
+                  {
+                    icon: Zap,
+                    label: "Tasks Completed",
+                    value: `${completedTasks}/${totalTasks}`,
+                    path: "/projects",
+                  },
+                ]).map((stat, i) => (
+
               <Link key={stat.label} to={stat.path}>
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
