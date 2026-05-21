@@ -2630,6 +2630,7 @@ export type Database = {
           twitter_url: string | null
           updated_at: string
           user_id: string
+          user_type: string | null
           username: string | null
           verification_status: string
           verified_at: string | null
@@ -2691,6 +2692,7 @@ export type Database = {
           twitter_url?: string | null
           updated_at?: string
           user_id: string
+          user_type?: string | null
           username?: string | null
           verification_status?: string
           verified_at?: string | null
@@ -2752,6 +2754,7 @@ export type Database = {
           twitter_url?: string | null
           updated_at?: string
           user_id?: string
+          user_type?: string | null
           username?: string | null
           verification_status?: string
           verified_at?: string | null
