@@ -52,6 +52,8 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import GuestDashboardPreview from "@/components/guest/GuestDashboardPreview";
 import FirstRunChecklist from "@/components/dashboard/FirstRunChecklist";
+import CreatorHomeStatsStrip from "@/components/dashboard/CreatorHomeStatsStrip";
+import { useActiveRole } from "@/hooks/useActiveRole";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { format } from "date-fns";
 import { todayGradient } from "@/lib/rhoze-gradients";
