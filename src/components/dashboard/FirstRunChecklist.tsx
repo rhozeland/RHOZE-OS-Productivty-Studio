@@ -181,7 +181,7 @@ const FirstRunChecklist = () => {
               Get started · {completed} of {total}
             </p>
             <h2 className="font-display text-lg sm:text-xl font-semibold text-foreground leading-tight">
-              Four small steps to get discovered.
+              {isFan ? "Four steps to get started as a fan." : "Four small steps to get discovered."}
             </h2>
           </div>
 
