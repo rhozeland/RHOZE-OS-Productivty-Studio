@@ -831,10 +831,18 @@ const ProfileDetailPage = () => {
                     : cat.includes("link") ? ExternalLink
                     : ImageIcon;
                   return (
-                    <button
+                    <div
                       key={post.id}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => navigate(`/flow?item=${post.id}`, { state: { from: location.pathname + location.search + location.hash } })}
-                      className="group relative aspect-square overflow-hidden bg-muted rounded-md hover:opacity-90 transition-opacity"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          navigate(`/flow?item=${post.id}`, { state: { from: location.pathname + location.search + location.hash } });
+                        }
+                      }}
+                      className="group relative aspect-square overflow-hidden bg-muted rounded-md hover:opacity-90 transition-opacity cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/40"
                       aria-label={post.title || "Open post"}
                     >
                       <FlowThumbnail
@@ -867,7 +875,7 @@ const ProfileDetailPage = () => {
                         </div>
                       )}
                       {isOwnProfile && <FlowPostOwnerMenu post={post} />}
-                    </button>
+                    </div>
                   );
                 })}
               </div>
