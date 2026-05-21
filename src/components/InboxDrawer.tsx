@@ -22,13 +22,14 @@ const InboxDrawer = () => {
     queryKey: ["inbox-drawer-unread", user?.id],
     enabled: !!user,
     queryFn: async () => {
+      const sb: any = supabase;
       const [msgs, inq] = await Promise.all([
-        supabase
+        sb
           .from("messages")
           .select("id", { count: "exact", head: true })
           .eq("recipient_id", user!.id)
           .eq("read", false),
-        supabase
+        sb
           .from("listing_inquiries")
           .select("id", { count: "exact", head: true })
           .eq("receiver_id", user!.id)
