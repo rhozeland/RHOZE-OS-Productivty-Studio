@@ -415,6 +415,7 @@ const AppLayout = () => {
                   <TooltipContent>Inbox</TooltipContent>
                 </Tooltip>
               )}
+              {user && <InboxDrawer />}
               {user && <NotificationBell />}
 
               {/* Profile dropdown — top-right */}
