@@ -344,6 +344,9 @@ const App = () => (
                 <Route path="/network" element={<Navigate to="/messages" replace />} />
                 <Route path="/subscriptions" element={<SubscriptionsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
+                {/* Fan mode pages (Prompt 3) */}
+                <Route path="/portfolio" element={<ProtectedRoute><PortfolioPage /></ProtectedRoute>} />
+                <Route path="/fan/rewards" element={<ProtectedRoute><FanRewardsPage /></ProtectedRoute>} />
                 <Route path="/settings/verification" element={<VerificationPage />} />
                 <Route path="/admin" element={<AdminPage />} />
               </Route>
