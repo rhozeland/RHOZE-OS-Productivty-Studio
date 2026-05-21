@@ -114,6 +114,7 @@ interface Work {
   created_at: string;
   gating?: WorkGating | null;
   is_unverified?: boolean;
+  archived_at?: string | null;
 }
 
 const KIND_ICON: Record<WorkKind, typeof Music> = {
