@@ -515,6 +515,7 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
   const [hashing, setHashing] = useState(false);
   const [contentHash, setContentHash] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [thumbnailBlob, setThumbnailBlob] = useState<Blob | null>(null);
 
   const resetForm = () => {
     setFile(null);
@@ -522,6 +523,7 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
     setDescription("");
     setContentHash(null);
     setVisibility("public");
+    setThumbnailBlob(null);
   };
 
   const inferredKind = useMemo(
