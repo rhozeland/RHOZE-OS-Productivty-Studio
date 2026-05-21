@@ -51,7 +51,8 @@ const creatorPillarItems = [
 
 // Fan-mode nav (Prompt 3). Same component styling as creator items.
 const fanPillarItems = [
-  { icon: Compass, label: "Discover", path: "/discover" },
+  { icon: Home, label: "Home", path: "/discover" },
+  { icon: Compass, label: "Discover", path: "/market" },
   { icon: Briefcase, label: "Portfolio", path: "/portfolio" },
   { icon: Rss, label: "Feed", path: "/dashboard" },
   { icon: Gift, label: "Rewards", path: "/fan/rewards" },
