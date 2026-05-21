@@ -31,6 +31,7 @@ import PostMenuButton from "@/components/PostMenuButton";
 import CreatorsGrid from "@/components/discover/CreatorsGrid";
 
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
+import TrendingTokensLane from "@/components/discover/TrendingTokensLane";
 import DiscoverEventsGrid from "@/components/discover/DiscoverEventsGrid";
 import EventCategoryPills from "@/components/discover/EventCategoryPills";
 import {
@@ -393,6 +394,10 @@ const DiscoverPage = () => {
 
       {/* ─── Trending artists (self-gated by liquidity) ───────────── */}
       <TrendingArtistsLane marketFilter={marketFilter} />
+
+      {/* ─── Trending creator tokens (Dexscreener-style, self-gated) ─ */}
+      <TrendingTokensLane />
+
 
       {/* ─── Feed ───────────────────────────────────────────────────── */}
       <section id="discover-stream" className="space-y-4 scroll-mt-20">
