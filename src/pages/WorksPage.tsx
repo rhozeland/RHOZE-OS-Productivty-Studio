@@ -670,6 +670,17 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
         </div>
       </div>
 
+      {file && (inferredKind === "video" || inferredKind === "audio") && (
+        <ThumbnailPicker
+          file={file}
+          kind={inferredKind}
+          title={title}
+          onPick={setThumbnailBlob}
+        />
+      )}
+
+
+
       <div className="space-y-1.5">
         <Label htmlFor="work-desc">Description (optional)</Label>
         <Textarea
