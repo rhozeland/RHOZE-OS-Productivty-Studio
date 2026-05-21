@@ -569,6 +569,25 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
         .from("flow-uploads")
         .getPublicUrl(path);
 
+      // Upload optional thumbnail (auto-generated from video frames or audio cover)
+      let thumbnailUrl: string | null = null;
+      if (thumbnailBlob) {
+        const thumbPath = `${user.id}/works/thumbs/${Date.now()}_${safeName}.jpg`;
+        const { error: thumbErr } = await supabase.storage
+          .from("flow-uploads")
+          .upload(thumbPath, thumbnailBlob, {
+            cacheControl: "3600",
+            upsert: false,
+            contentType: "image/jpeg",
+          });
+        if (!thumbErr) {
+          const { data: thumbPub } = supabase.storage
+            .from("flow-uploads")
+            .getPublicUrl(thumbPath);
+          thumbnailUrl = thumbPub.publicUrl;
+        }
+      }
+
       // Tag with verification state so UI can mark unverified work clearly.
       const { data: profileRow } = await supabase
         .from("profiles")
@@ -589,7 +608,8 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
         file_size: file.size,
         visibility,
         is_unverified: isUnverified,
-      });
+        thumbnail_url: thumbnailUrl,
+      } as any);
       if (insertErr) throw insertErr;
 
       toast.success("Work registered", {
