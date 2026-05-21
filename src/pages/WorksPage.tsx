@@ -344,6 +344,54 @@ function EmptyState({
 
 /* ────────────────────────────────────────────────────────────────────── */
 
+function MyWorksList({ works }: { works: Work[] }) {
+  const [showArchived, setShowArchived] = useState(false);
+  const active = works.filter((w) => !w.archived_at);
+  const archived = works.filter((w) => !!w.archived_at);
+  const visible = showArchived ? archived : active;
+
+  return (
+    <div className="space-y-3">
+      {archived.length > 0 && (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowArchived(false)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              !showArchived ? "bg-foreground text-background" : "bg-muted/60 text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            Active <span className="opacity-60 tabular-nums">· {active.length}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowArchived(true)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              showArchived ? "bg-foreground text-background" : "bg-muted/60 text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            <Archive className="h-3 w-3" /> Archived <span className="opacity-60 tabular-nums">· {archived.length}</span>
+          </button>
+        </div>
+      )}
+
+      {visible.length === 0 ? (
+        <div className="surface-card p-8 text-center text-sm text-muted-foreground">
+          {showArchived ? "No archived posts." : "No active posts."}
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {visible.map((w) => (
+            <WorkCard key={w.id} work={w} isOwner />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────── */
+
 function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
   const queryClient = useQueryClient();
   const Icon = KIND_ICON[work.kind] ?? FileIcon;
