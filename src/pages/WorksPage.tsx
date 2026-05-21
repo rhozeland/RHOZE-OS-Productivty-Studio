@@ -455,6 +455,45 @@ function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
     onSettled: () => setAnchoring(false),
   });
 
+  const archiveMutation = useMutation({
+    mutationFn: async (archive: boolean) => {
+      const { error } = await supabase
+        .from("works")
+        .update({ archived_at: archive ? new Date().toISOString() : null })
+        .eq("id", work.id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, archive) => {
+      toast.success(archive ? "Post archived" : "Post restored");
+      queryClient.invalidateQueries({ queryKey: ["works-mine"] });
+      queryClient.invalidateQueries({ queryKey: ["works-registry"] });
+      queryClient.invalidateQueries({ queryKey: ["works-lightbox"] });
+    },
+    onError: (err: unknown) =>
+      toast.error("Could not update post", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("works").delete().eq("id", work.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Post deleted");
+      queryClient.invalidateQueries({ queryKey: ["works-mine"] });
+      queryClient.invalidateQueries({ queryKey: ["works-registry"] });
+      queryClient.invalidateQueries({ queryKey: ["works-lightbox"] });
+    },
+    onError: (err: unknown) =>
+      toast.error("Could not delete post", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      }),
+  });
+
+  const isArchived = !!work.archived_at;
+
   return (
     <article className="surface-card p-4 sm:p-5 space-y-3 group">
       <div className="flex items-start gap-3">
@@ -462,6 +501,15 @@ function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
           <Icon className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-display text-base font-semibold text-foreground truncate">
+              {work.title}
+            </h3>
+            {isArchived && (
+              <Badge variant="outline" className="gap-1 text-[10px] py-0 h-5">
+                <Archive className="h-3 w-3" /> Archived
+              </Badge>
+            )}
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-display text-base font-semibold text-foreground truncate">
               {work.title}
