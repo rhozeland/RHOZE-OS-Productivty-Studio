@@ -33,10 +33,13 @@ interface ChecklistItem {
 
 const FirstRunChecklist = () => {
   const { user } = useAuth();
+  const [activeRole] = useActiveRole();
+  const isFan = activeRole === "fan";
   const [dismissed, setDismissed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(DISMISS_KEY) === "1";
   });
+
 
   // Profile completeness
   const { data: profile } = useQuery({
