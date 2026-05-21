@@ -223,7 +223,7 @@ const MarketRoomPage = () => {
                   <div
                     className={cn(
                       "relative w-full overflow-hidden",
-                      row.kind === "hire" ? "h-24" : "h-44",
+                      row.kind === "hire" ? "h-20" : "h-40",
                     )}
                     style={!row.coverUrl ? { background: grad.background } : undefined}
                   >
@@ -234,8 +234,6 @@ const MarketRoomPage = () => {
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     )}
-                    {/* gradient fade */}
-                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card to-transparent" />
                     {/* Category tag */}
                     <span
                       className={cn(
@@ -255,10 +253,9 @@ const MarketRoomPage = () => {
                   {/* Bottom: content */}
                   <div className="flex-1 flex flex-col p-4 gap-2">
                     {row.kind === "hire" && (
-                      <div className="-mt-12 mb-1">
+                      <div className="-mt-10 mb-1">
                         <div
-                          className="h-16 w-16 rounded-full border-4 border-card overflow-hidden flex items-center justify-center shadow-md"
-                          style={!row.ownerAvatar ? { background: grad.background } : { background: "hsl(var(--muted))" }}
+                          className="h-14 w-14 rounded-full border-4 border-card overflow-hidden flex items-center justify-center shadow-md bg-muted"
                         >
                           {row.ownerAvatar ? (
                             <img
@@ -267,9 +264,14 @@ const MarketRoomPage = () => {
                               className="h-full w-full object-cover"
                             />
                           ) : (
-                            <span className="font-display text-lg font-bold text-white drop-shadow">
-                              {ownerName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
-                            </span>
+                            <div
+                              className="h-full w-full flex items-center justify-center"
+                              style={{ background: grad.background }}
+                            >
+                              <span className="font-display text-base font-bold text-white drop-shadow">
+                                {ownerName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+                              </span>
+                            </div>
                           )}
                         </div>
                       </div>
