@@ -285,13 +285,11 @@ const WorksPage = ({ embedded = false }: WorksPageProps = {}) => {
               }
             />
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {myWorks.map((w) => (
-                <WorkCard key={w.id} work={w} isOwner />
-              ))}
-            </div>
+            <MyWorksList works={myWorks} />
           )}
         </TabsContent>
+
+
 
         <TabsContent value="registry" className="mt-6">
           {loadingRegistry ? (
