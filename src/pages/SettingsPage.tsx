@@ -139,6 +139,8 @@ const SettingsPage = () => {
   const [tiktokUrl, setTiktokUrl] = useState("");
   const [twitterUrl, setTwitterUrl] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [tokenMint, setTokenMint] = useState("");
+  const [tokenTicker, setTokenTicker] = useState("");
 
   // Shipping fields
   const [addressLine1, setAddressLine1] = useState("");
@@ -203,6 +205,8 @@ const SettingsPage = () => {
       setTiktokUrl(p.tiktok_url ?? "");
       setTwitterUrl(p.twitter_url ?? "");
       setYoutubeUrl(p.youtube_url ?? "");
+      setTokenMint(p.token_mint_address ?? "");
+      setTokenTicker(p.token_ticker ?? "");
       setAddressLine1(p.shipping_address_line1 ?? "");
       setAddressLine2(p.shipping_address_line2 ?? "");
       setCity(p.shipping_city ?? "");
@@ -284,6 +288,8 @@ const SettingsPage = () => {
         tiktok_url: tiktokUrl || null,
         twitter_url: twitterUrl || null,
         youtube_url: youtubeUrl || null,
+        token_mint_address: tokenMint.trim() || null,
+        token_ticker: tokenTicker.trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10) || null,
       } as any).eq("user_id", user!.id);
       if (error) throw error;
     },
