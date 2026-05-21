@@ -73,6 +73,33 @@ async function markCanceled(sub: any) {
     .eq("stripe_subscription_id", sub.id);
 }
 
+async function handleEventTicketCheckout(session: any) {
+  const meta = session.metadata || {};
+  if (meta.kind !== "event_ticket") return;
+  if (session.payment_status !== "paid") return;
+  const { event_id, tier_id, buyer_name, buyer_email } = meta;
+  if (!event_id || !tier_id || !buyer_email || !buyer_name) {
+    console.error("event_ticket session missing metadata", session.id, meta);
+    return;
+  }
+  const amount = Number(session.amount_total ?? 0) / 100;
+  // Forward to claim-event-ticket with the Stripe payment reference.
+  const { error } = await getSupabase().functions.invoke("claim-event-ticket", {
+    body: {
+      event_id,
+      tier_id,
+      name: buyer_name,
+      email: buyer_email,
+      payment: {
+        currency: "usd",
+        reference: session.payment_intent ?? session.id,
+        amount,
+      },
+    },
+  });
+  if (error) console.error("claim-event-ticket via webhook failed", error);
+}
+
 async function handleWebhook(req: Request, env: StripeEnv) {
   const event = await verifyWebhook(req, env);
   console.log("webhook:", event.type, env);
@@ -84,6 +111,9 @@ async function handleWebhook(req: Request, env: StripeEnv) {
       break;
     case "customer.subscription.deleted":
       await markCanceled(event.data.object);
+      break;
+    case "checkout.session.completed":
+      await handleEventTicketCheckout(event.data.object);
       break;
     default:
       console.log("Unhandled event:", event.type);

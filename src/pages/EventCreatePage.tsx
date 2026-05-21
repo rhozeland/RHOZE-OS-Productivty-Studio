@@ -303,6 +303,22 @@ const EventCreatePage = () => {
         </p>
       </div>
 
+      {/* Luma promo banner */}
+      <Link
+        to="/settings#calendar"
+        className="flex items-center gap-3 rounded-xl border border-dashed border-border/70 bg-muted/30 p-3 hover:bg-muted/50 transition-colors"
+      >
+        <CalendarDays className="h-4 w-4 text-primary shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold text-foreground">Already use Luma?</p>
+          <p className="text-[11px] text-muted-foreground">
+            Connect your calendar once and your events appear here automatically — paid or free.
+          </p>
+        </div>
+        <span className="text-[10px] text-primary font-semibold uppercase tracking-wider shrink-0">Connect</span>
+      </Link>
+
+
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}

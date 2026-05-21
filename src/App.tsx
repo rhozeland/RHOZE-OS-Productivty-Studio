@@ -61,6 +61,7 @@ import EventDetailPage from "@/pages/EventDetailPage";
 // EventsExplorePage retired (v8.5) — events now live inside Conversations → Events tab
 import EventManagePage from "@/pages/EventManagePage";
 import TicketDetailPage from "@/pages/TicketDetailPage";
+import TicketCheckoutReturnPage from "@/pages/TicketCheckoutReturnPage";
 import { ProfileRedirect } from "@/components/ProfileRedirect";
 import FlowModePage from "@/pages/FlowModePage";
 // v10.2 — LaunchRedirect / LaunchDetailPage removed from the router; deep links redirect to Discover.
@@ -274,6 +275,7 @@ const App = () => (
                 <Route path="/spaces/events/new" element={<ProtectedRoute><EventCreatePage /></ProtectedRoute>} />
                 <Route path="/spaces/events/:id" element={<EventDetailPage />} />
                 <Route path="/spaces/events/:id/manage" element={<ProtectedRoute><EventManagePage /></ProtectedRoute>} />
+                <Route path="/tickets/return" element={<TicketCheckoutReturnPage />} />
                 <Route path="/tickets/:id" element={<ProtectedRoute><TicketDetailPage /></ProtectedRoute>} />
                 <Route path="/people" element={<Navigate to="/discover" replace />} />
                 <Route path="/profile" element={<ProfileRedirect />} />

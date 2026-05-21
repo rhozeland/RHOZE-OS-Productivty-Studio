@@ -139,6 +139,8 @@ const SettingsPage = () => {
   const [tiktokUrl, setTiktokUrl] = useState("");
   const [twitterUrl, setTwitterUrl] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [tokenMint, setTokenMint] = useState("");
+  const [tokenTicker, setTokenTicker] = useState("");
 
   // Shipping fields
   const [addressLine1, setAddressLine1] = useState("");
@@ -203,6 +205,8 @@ const SettingsPage = () => {
       setTiktokUrl(p.tiktok_url ?? "");
       setTwitterUrl(p.twitter_url ?? "");
       setYoutubeUrl(p.youtube_url ?? "");
+      setTokenMint(p.token_mint_address ?? "");
+      setTokenTicker(p.token_ticker ?? "");
       setAddressLine1(p.shipping_address_line1 ?? "");
       setAddressLine2(p.shipping_address_line2 ?? "");
       setCity(p.shipping_city ?? "");
@@ -284,6 +288,8 @@ const SettingsPage = () => {
         tiktok_url: tiktokUrl || null,
         twitter_url: twitterUrl || null,
         youtube_url: youtubeUrl || null,
+        token_mint_address: tokenMint.trim() || null,
+        token_ticker: tokenTicker.trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10) || null,
       } as any).eq("user_id", user!.id);
       if (error) throw error;
     },
@@ -535,6 +541,31 @@ const SettingsPage = () => {
               />
             </PopoverContent>
           </Popover>
+        </div>
+      </div>
+
+      {/* Linked Solana token (pump.fun discovery overlay) */}
+      <div className="space-y-2 rounded-xl border border-border/60 bg-muted/20 p-4">
+        <Label className="flex items-center gap-2 text-sm">
+          🪙 Linked token <span className="text-[10px] uppercase tracking-wider text-muted-foreground">optional</span>
+        </Label>
+        <p className="text-[11px] text-muted-foreground">
+          Paste your pump.fun mint address — we'll surface a read-only price chip on your profile and Discover. Rhozeland never custodies or trades tokens.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-2">
+          <Input
+            value={tokenMint}
+            onChange={(e) => setTokenMint(e.target.value)}
+            placeholder="Mint address (e.g. 7xKXt…RHOZE)"
+            className="font-mono text-xs"
+          />
+          <Input
+            value={tokenTicker}
+            onChange={(e) => setTokenTicker(e.target.value)}
+            placeholder="TICKER"
+            maxLength={10}
+            className="uppercase font-mono"
+          />
         </div>
       </div>
 

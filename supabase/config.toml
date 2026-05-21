@@ -3,6 +3,8 @@ project_id = "puielauovddatgqvgxdy"
 [functions]
   [functions.auth-email-hook]
     verify_jwt = false
+  [functions.create-event-ticket-checkout]
+    verify_jwt = false
   [functions.process-email-queue]
     verify_jwt = true
   [functions.fetch-link-metadata]
