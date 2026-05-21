@@ -79,19 +79,51 @@ const VerifiedIPHub = ({ userId }: { userId: string | null }) => {
 
   // Recent works (registered IP)
   const { data: works = [], isLoading: loadingWorks } = useQuery({
-    queryKey: ["my-works-ip", userId],
+    queryKey: ["my-works-ip", userId, showArchived],
     queryFn: async () => {
       if (!userId) return [];
-      const { data } = await supabase
+      let q = supabase
         .from("works")
-        .select("id, title, kind, content_hash, solana_signature, created_at")
+        .select("id, title, kind, content_hash, solana_signature, created_at, archived_at")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
-        .limit(6);
+        .limit(24);
+      q = showArchived ? q.not("archived_at", "is", null) : q.is("archived_at", null);
+      const { data } = await q;
       return (data ?? []) as WorkRow[];
     },
     enabled: !!userId,
   });
+
+  const archiveWork = async (w: WorkRow) => {
+    setBusyId(w.id);
+    const next = w.archived_at ? null : new Date().toISOString();
+    const { error } = await supabase.from("works").update({ archived_at: next }).eq("id", w.id);
+    setBusyId(null);
+    if (error) {
+      toast.error("Could not update post", { description: error.message });
+      return;
+    }
+    toast.success(next ? "Post archived" : "Post restored");
+    qc.invalidateQueries({ queryKey: ["my-works-ip"] });
+    qc.invalidateQueries({ queryKey: ["works-mine"] });
+    qc.invalidateQueries({ queryKey: ["works-lightbox"] });
+  };
+
+  const deleteWork = async (w: WorkRow) => {
+    if (!window.confirm(`Delete "${w.title}"? This cannot be undone.`)) return;
+    setBusyId(w.id);
+    const { error } = await supabase.from("works").delete().eq("id", w.id);
+    setBusyId(null);
+    if (error) {
+      toast.error("Could not delete post", { description: error.message });
+      return;
+    }
+    toast.success("Post deleted");
+    qc.invalidateQueries({ queryKey: ["my-works-ip"] });
+    qc.invalidateQueries({ queryKey: ["works-mine"] });
+    qc.invalidateQueries({ queryKey: ["works-lightbox"] });
+  };
 
   const stats = useMemo(() => ({
     fingerprinted: works.length,
