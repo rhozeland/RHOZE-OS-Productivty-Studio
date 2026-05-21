@@ -1,10 +1,13 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Calendar, Flame, Activity, ArrowLeft, Heart, X, Sparkles, MessageCircle } from "lucide-react";
+import { Search, Calendar, Flame, Activity, ArrowLeft, Heart, X, Sparkles, MessageCircle, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import SubscribeToCreatorSheet from "@/components/profile/SubscribeToCreatorSheet";
 import { supabase } from "@/integrations/supabase/client";
+
 
 type Creator = {
   user_id: string;
@@ -49,6 +52,7 @@ const hashNum = (s: string, mod: number) => {
 const CreatorCard = ({ creator }: { creator: Creator }) => {
   const navigate = useNavigate();
   const [hover, setHover] = useState(false);
+  const [backOpen, setBackOpen] = useState(false);
   const open = () => navigate(`/profiles/${creator.user_id}`);
   const fillPct = Math.min(100, Math.max(4, creator.signal));
   const banner =
@@ -128,9 +132,20 @@ const CreatorCard = ({ creator }: { creator: Creator }) => {
         {/* Signal bar */}
         <div className="mt-3">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[9px] uppercase tracking-widest text-muted-foreground/70">
-              Signal
-            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 text-[9px] uppercase tracking-widest text-muted-foreground/70 cursor-help"
+                >
+                  Signal
+                  <Info className="h-2.5 w-2.5" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[220px] text-xs">
+                Signal reflects a creator's activity, engagement and momentum on Rhozeland
+              </TooltipContent>
+            </Tooltip>
             <span className="text-[11px] font-semibold tabular-nums" style={{ color: creator.color }}>
               {creator.signal}
             </span>
@@ -144,24 +159,49 @@ const CreatorCard = ({ creator }: { creator: Creator }) => {
         </div>
 
         {/* Inline stats row */}
-        <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground border-t border-border/60 pt-2.5">
-          <span className="flex items-center gap-1">
+        <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] text-muted-foreground border-t border-border/60 pt-2.5 text-center">
+          <div className="flex flex-col items-center gap-0.5">
             <Calendar className="h-3 w-3" />
-            <span className="font-semibold text-foreground">{creator.events}</span>
-          </span>
-          <span className="flex items-center gap-1">
+            <span className="font-semibold text-foreground leading-none">{creator.events}</span>
+            <span className="text-[10px] text-muted-foreground/80">Works</span>
+          </div>
+          <div className="flex flex-col items-center gap-0.5">
             <Flame className="h-3 w-3" />
-            <span className="font-semibold text-foreground">{creator.drops}</span>
-          </span>
-          <span className="flex items-center gap-1">
+            <span className="font-semibold text-foreground leading-none">{creator.drops}</span>
+            <span className="text-[10px] text-muted-foreground/80">Backed by</span>
+          </div>
+          <div className="flex flex-col items-center gap-0.5">
             <Activity className="h-3 w-3" />
-            <span className="font-semibold text-foreground">{creator.activeDays}d</span>
-          </span>
+            <span className="font-semibold text-foreground leading-none">{creator.activeDays}d</span>
+            <span className="text-[10px] text-muted-foreground/80">Active</span>
+          </div>
         </div>
+
+        {/* Back button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setBackOpen(true);
+          }}
+          className="mt-3 w-full rounded-full"
+        >
+          <Heart className="h-3.5 w-3.5 mr-1.5" />
+          Back
+        </Button>
       </div>
+
+      <SubscribeToCreatorSheet
+        open={backOpen}
+        onOpenChange={setBackOpen}
+        creatorId={creator.user_id}
+        creatorName={creator.name}
+      />
     </div>
   );
 };
+
 
 /* ------------------------------------------------------------------ */
 /* Match Mode — minimal Tinder-style swipe overlay                     */
