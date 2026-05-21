@@ -216,6 +216,20 @@ const DashboardPage = () => {
       return Number((data as any)?.balance ?? 0);
     },
   });
+  const { data: creatorsBacked = 0 } = useQuery({
+    queryKey: ["dashboard-creators-backed", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const sb: any = supabase;
+      const { count } = await sb
+        .from("creator_subscriptions")
+        .select("id", { count: "exact", head: true })
+        .eq("subscriber_id", user!.id)
+        .eq("status", "active");
+      return count ?? 0;
+    },
+  });
+
 
   const { data: recentMessages } = useQuery({
     queryKey: ["recent-messages-dashboard", user?.id],
