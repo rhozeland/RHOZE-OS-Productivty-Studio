@@ -15,9 +15,11 @@ import {
   Gift,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useCreatorXP } from "@/hooks/useCreatorXP";
+import { supabase } from "@/integrations/supabase/client";
 import { resolveNavLink } from "@/hooks/useNavLink";
 import { useActiveRole } from "@/hooks/useActiveRole";
 import {
