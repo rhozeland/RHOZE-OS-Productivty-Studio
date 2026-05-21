@@ -1,10 +1,9 @@
 project_id = "puielauovddatgqvgxdy"
 
-[functions.create-event-ticket-checkout]
-verify_jwt = false
-
 [functions]
   [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.create-event-ticket-checkout]
     verify_jwt = false
   [functions.process-email-queue]
     verify_jwt = true
