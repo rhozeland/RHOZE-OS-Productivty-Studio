@@ -316,6 +316,8 @@ const EventCreatePage = () => {
           </p>
         </div>
         <span className="text-[10px] text-primary font-semibold uppercase tracking-wider shrink-0">Connect</span>
+      </Link>
+
 
       <motion.div
         initial={{ opacity: 0, y: 12 }}
