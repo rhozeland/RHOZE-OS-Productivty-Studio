@@ -327,13 +327,27 @@ const VerifiedIPHub = ({ userId }: { userId: string | null }) => {
 
       {/* ─── Recent registered works ─── */}
       <div className="surface-card p-5">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
           <h4 className="font-display text-base font-semibold text-foreground inline-flex items-center gap-2">
-            <Fingerprint className="h-4 w-4 text-primary" /> Recently registered
+            <Fingerprint className="h-4 w-4 text-primary" />
+            {showArchived ? "Archived posts" : "Your posts"}
           </h4>
-          <Link to="/works" className="text-xs text-muted-foreground hover:text-foreground">
-            See all →
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowArchived((s) => !s)}
+              className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1"
+            >
+              {showArchived ? (
+                <><ArchiveRestore className="h-3 w-3" /> View active</>
+              ) : (
+                <><Archive className="h-3 w-3" /> View archived</>
+              )}
+            </button>
+            <Link to="/works" className="text-xs text-muted-foreground hover:text-foreground">
+              See all →
+            </Link>
+          </div>
         </div>
         {loadingWorks ? (
           <div className="flex items-center justify-center py-8 text-muted-foreground">
@@ -341,47 +355,85 @@ const VerifiedIPHub = ({ userId }: { userId: string | null }) => {
           </div>
         ) : works.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4 text-center">
-            No works registered yet — promote a Flow drop above or upload one fresh.
+            {showArchived
+              ? "No archived posts."
+              : "No works registered yet — promote a Flow drop above or upload one fresh."}
           </p>
         ) : (
           <ul className="divide-y divide-border">
-            {works.map((w) => (
-              <li key={w.id} className="flex items-center gap-3 py-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary shrink-0">
-                  <Shield className="h-3.5 w-3.5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-medium text-foreground truncate">{w.title}</p>
-                    <Badge variant="outline" className="text-[10px] py-0 h-4 capitalize">{w.kind}</Badge>
-                    {w.solana_signature && (
-                      <Badge variant="outline" className="gap-1 text-[10px] py-0 h-4">
-                        <ShieldCheck className="h-2.5 w-2.5" /> Anchored
-                      </Badge>
-                    )}
+            {works.map((w) => {
+              const isArchived = !!w.archived_at;
+              const isBusy = busyId === w.id;
+              return (
+                <li key={w.id} className="flex items-center gap-3 py-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary shrink-0">
+                    <Shield className="h-3.5 w-3.5" />
                   </div>
-                  <p className="text-[10px] font-mono text-muted-foreground truncate">
-                    sha256:{w.content_hash?.slice(0, 10)}…{w.content_hash?.slice(-6)}
-                  </p>
-                </div>
-                {w.solana_signature && (
-                  <a
-                    href={`https://solscan.io/tx/${w.solana_signature}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-muted-foreground hover:text-foreground text-xs inline-flex items-center gap-1"
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-medium text-foreground truncate">{w.title}</p>
+                      <Badge variant="outline" className="text-[10px] py-0 h-4 capitalize">{w.kind}</Badge>
+                      {isArchived && (
+                        <Badge variant="outline" className="gap-1 text-[10px] py-0 h-4">
+                          <Archive className="h-2.5 w-2.5" /> Archived
+                        </Badge>
+                      )}
+                      {w.solana_signature && (
+                        <Badge variant="outline" className="gap-1 text-[10px] py-0 h-4">
+                          <ShieldCheck className="h-2.5 w-2.5" /> Anchored
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-[10px] font-mono text-muted-foreground truncate">
+                      sha256:{w.content_hash?.slice(0, 10)}…{w.content_hash?.slice(-6)}
+                    </p>
+                  </div>
+                  {w.solana_signature && (
+                    <a
+                      href={`https://solscan.io/tx/${w.solana_signature}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-muted-foreground hover:text-foreground text-xs inline-flex items-center gap-1 shrink-0"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                    title={isArchived ? "Unarchive" : "Archive"}
+                    disabled={isBusy}
+                    onClick={() => archiveWork(w)}
                   >
-                    Solscan <ExternalLink className="h-3 w-3" />
-                  </a>
-                )}
-              </li>
-            ))}
+                    {isBusy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : isArchived ? (
+                      <ArchiveRestore className="h-4 w-4" />
+                    ) : (
+                      <Archive className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    title="Delete"
+                    disabled={isBusy}
+                    onClick={() => deleteWork(w)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
     </div>
   );
 };
+
 
 const StatTile = ({
   label, value, accent, icon: Icon,
