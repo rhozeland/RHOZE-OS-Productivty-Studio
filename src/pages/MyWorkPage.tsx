@@ -380,7 +380,7 @@ const AuthedMyWorkPage = ({ userId }: { userId: string }) => {
           {savedRows.length === 0 ? (
             <EmptyState
               icon={Bookmark}
-              title="Nothing saved yet. Browse Discover and tap the save icon on any creator."
+              title="Nothing saved yet"
               ctaLabel="Go to Discover"
               ctaTo="/discover"
             />
