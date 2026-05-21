@@ -221,10 +221,7 @@ const MarketRoomPage = () => {
                 >
                   {/* Top: cover image */}
                   <div
-                    className={cn(
-                      "relative w-full overflow-hidden",
-                      row.kind === "hire" ? "h-20" : "h-40",
-                    )}
+                    className="relative h-44 w-full overflow-hidden"
                     style={!row.coverUrl ? { background: grad.background } : undefined}
                   >
                     {row.coverUrl && (
@@ -234,6 +231,8 @@ const MarketRoomPage = () => {
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     )}
+                    {/* gradient fade */}
+                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card to-transparent" />
                     {/* Category tag */}
                     <span
                       className={cn(
@@ -252,30 +251,6 @@ const MarketRoomPage = () => {
 
                   {/* Bottom: content */}
                   <div className="flex-1 flex flex-col p-4 gap-2">
-                    {row.kind === "hire" && (
-                      <div className="-mt-10 mb-1">
-                        <div
-                          className="h-14 w-14 rounded-full border-4 border-card overflow-hidden flex items-center justify-center shadow-md bg-muted"
-                        >
-                          {row.ownerAvatar ? (
-                            <img
-                              src={row.ownerAvatar}
-                              alt={ownerName}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div
-                              className="h-full w-full flex items-center justify-center"
-                              style={{ background: grad.background }}
-                            >
-                              <span className="font-display text-base font-bold text-white drop-shadow">
-                                {ownerName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
                     <h3 className="font-semibold text-[15px] text-foreground leading-snug line-clamp-2">
                       {row.title}
                     </h3>
@@ -288,11 +263,10 @@ const MarketRoomPage = () => {
                         {row.priceLabel || row.metaLabel || row.category || ""}
                       </span>
                       <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground group-hover:gap-1.5 transition-all">
-                        {row.kind === "hire" ? "View Creator" : row.kind === "space" ? "Join Space" : row.kind === "event" ? "See Event" : "See Listing"} <ArrowRight className="h-3.5 w-3.5" />
+                        Open <ArrowRight className="h-3.5 w-3.5" />
                       </span>
                     </div>
                   </div>
-
                 </button>
               );
             })}

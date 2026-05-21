@@ -73,7 +73,7 @@ export const useHireRows = (enabled = true) =>
           kind: "hire" as const,
           title: p.display_name || p.username || "Creator",
           subtitle: p.headline || (roles.length ? roles.slice(0, 3).join(" · ") : p.archetype || "Creator"),
-          priceLabel: null,
+          priceLabel: p.available ? "Available for work" : null,
           metaLabel: p.region_code || p.archetype || null,
           ownerId: p.user_id,
           ownerName: p.display_name || p.username || null,
@@ -82,7 +82,7 @@ export const useHireRows = (enabled = true) =>
           category: p.archetype,
           description: p.bio,
           detailHref: `/profiles/${p.user_id}`,
-          coverUrl: p.banner_url || null,
+          coverUrl: p.banner_url || p.avatar_url || null,
         };
       });
     },
