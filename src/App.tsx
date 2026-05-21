@@ -41,6 +41,7 @@ import StudioManagePage from "@/pages/StudioManagePage";
 import ExploreStudiosPage from "@/pages/ExploreStudiosPage";
 import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import OnboardingPage from "@/pages/OnboardingPage";
+import RoleSelectPage from "@/pages/RoleSelectPage";
 import MarketplacePage from "@/pages/MarketplacePage";
 import CreatorsPage from "@/pages/CreatorsPage";
 import HomePage from "@/pages/HomePage";
@@ -223,6 +224,7 @@ const App = () => (
               {/* Auth page — redirect to dashboard if already logged in */}
               <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
               <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
+              <Route path="/welcome" element={<ProtectedRoute><RoleSelectPage /></ProtectedRoute>} />
 
               {/* Legacy landing — kept mounted but no longer the front door. */}
               <Route path="/landing" element={<Navigate to="/" replace />} />
