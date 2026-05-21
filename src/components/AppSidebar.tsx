@@ -42,8 +42,8 @@ import SidebarRoleSwitcher from "@/components/SidebarRoleSwitcher";
 //   Creator Pass  → badges, rank, $RHOZE portfolio
 const creatorPillarItems = [
   { icon: Home, label: "Home", path: "/discover" },
+  { icon: Heart, label: "My Work", path: "/my-work", badgeKey: "pendingInquiries" as const },
   { icon: Compass, label: "Discover", path: "/market" },
-  { icon: Heart, label: "My Work", path: "/my-work" },
   { icon: Trophy, label: "My Pass", path: "/credits" },
 ];
 
