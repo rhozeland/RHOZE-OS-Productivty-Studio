@@ -139,6 +139,7 @@ const AppSidebar = () => {
       </Link>
 
       <SidebarContent className="px-2 pt-3 space-y-2">
+        <SidebarRoleSwitcher collapsed={collapsed} />
         {renderGroup(pillarItems, { label: "Explore" })}
         {personalItems.length > 0 && renderGroup(personalItems)}
       </SidebarContent>
