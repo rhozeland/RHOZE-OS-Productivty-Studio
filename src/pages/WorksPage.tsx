@@ -510,10 +510,6 @@ function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
                 <Archive className="h-3 w-3" /> Archived
               </Badge>
             )}
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-display text-base font-semibold text-foreground truncate">
-              {work.title}
-            </h3>
             {work.solana_signature && (
               <Badge variant="outline" className="gap-1 text-[10px] py-0 h-5">
                 <ShieldCheck className="h-3 w-3" /> Anchored
@@ -531,6 +527,68 @@ function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
             {work.file_size && <span>· {formatFileSize(work.file_size)}</span>}
           </div>
         </div>
+        {isOwner && (
+          <AlertDialog>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 -mr-1 -mt-1 opacity-60 hover:opacity-100"
+                  aria-label="Post actions"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                {isArchived ? (
+                  <DropdownMenuItem
+                    onClick={() => archiveMutation.mutate(false)}
+                    disabled={archiveMutation.isPending}
+                  >
+                    <ArchiveRestore className="h-4 w-4 mr-2" /> Unarchive
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    onClick={() => archiveMutation.mutate(true)}
+                    disabled={archiveMutation.isPending}
+                  >
+                    <Archive className="h-4 w-4 mr-2" /> Archive
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem
+                    onSelect={(e) => e.preventDefault()}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" /> Delete
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this post?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  "{work.title}" will be permanently removed. This cannot be undone.
+                  {work.solana_signature
+                    ? " The on-chain Solana memo will remain as a public record."
+                    : ""}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => deleteMutation.mutate()}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
 
       {work.description && (
