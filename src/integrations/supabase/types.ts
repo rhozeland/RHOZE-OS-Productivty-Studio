@@ -2627,6 +2627,8 @@ export type Database = {
           show_token_chip: boolean
           skills: string[] | null
           tiktok_url: string | null
+          token_mint_address: string | null
+          token_ticker: string | null
           twitter_url: string | null
           updated_at: string
           user_id: string
@@ -2689,6 +2691,8 @@ export type Database = {
           show_token_chip?: boolean
           skills?: string[] | null
           tiktok_url?: string | null
+          token_mint_address?: string | null
+          token_ticker?: string | null
           twitter_url?: string | null
           updated_at?: string
           user_id: string
@@ -2751,6 +2755,8 @@ export type Database = {
           show_token_chip?: boolean
           skills?: string[] | null
           tiktok_url?: string | null
+          token_mint_address?: string | null
+          token_ticker?: string | null
           twitter_url?: string | null
           updated_at?: string
           user_id?: string
