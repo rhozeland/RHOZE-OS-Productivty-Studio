@@ -55,6 +55,8 @@ const VerifiedIPHub = ({ userId }: { userId: string | null }) => {
   const qc = useQueryClient();
   const [registeringId, setRegisteringId] = useState<string | null>(null);
   const [justRegisteredId, setJustRegisteredId] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   // Eligible Flow drops = mine, has a file_url, no work_id yet
   const { data: eligibleFlow = [], isLoading: loadingFlow } = useQuery({
