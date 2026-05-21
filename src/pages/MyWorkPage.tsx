@@ -306,7 +306,7 @@ const AuthedMyWorkPage = ({ userId }: { userId: string }) => {
           {activeProjectsCount === 0 && (projects?.length ?? 0) === 0 ? (
             <EmptyState
               icon={FolderKanban}
-              title="No active projects yet. Find someone on Discover to get started."
+              title="No active projects yet"
               ctaLabel="Go to Discover"
               ctaTo="/discover"
             />
