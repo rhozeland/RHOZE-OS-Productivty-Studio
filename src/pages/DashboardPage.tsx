@@ -659,7 +659,7 @@ const DashboardPage = () => {
         className="pt-2"
       >
         <p className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-2">
-          {user ? "Your Studio" : "Get discovered. Get supported. On-chain."}
+          {user ? (isFan ? "Your Feed" : "Your Studio") : "Get discovered. Get supported. On-chain."}
         </p>
         <h1 className="font-display text-3xl sm:text-4xl md:text-5xl leading-[1.1] text-foreground">
           {(() => {
@@ -692,9 +692,14 @@ const DashboardPage = () => {
           {user
             ? (unreadCount ?? 0) > 0
               ? `${unreadCount} unread.`
-              : "Your workspace. Drafts, drops, bookings, and what's next."
-            : "Your workspace. Drafts, drops, bookings, and what's next."}
+              : isFan
+                ? "Posts and updates from creators you follow and support."
+                : "Your workspace. Drafts, drops, bookings, and what's next."
+            : isFan
+              ? "Posts and updates from creators you follow and support."
+              : "Your workspace. Drafts, drops, bookings, and what's next."}
         </p>
+
       </motion.div>
 
       {/* ─── First-run checklist ─────────────────────────────────────────
