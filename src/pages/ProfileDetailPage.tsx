@@ -845,6 +845,13 @@ const ProfileDetailPage = () => {
                         hideCaption
                         className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
+                      {post.archived_at && (
+                        <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+                          <span className="text-[10px] uppercase tracking-wider font-semibold text-white/90 bg-white/10 backdrop-blur-sm rounded-full px-2 py-0.5 border border-white/20">
+                            Archived
+                          </span>
+                        </div>
+                      )}
                       <div className="absolute top-1.5 left-1.5 h-6 w-6 rounded-full bg-black/55 backdrop-blur-sm flex items-center justify-center">
                         <CatIcon className="h-3 w-3 text-white" />
                       </div>
@@ -858,6 +865,7 @@ const ProfileDetailPage = () => {
                           />
                         </div>
                       )}
+                      {isOwnProfile && <FlowPostOwnerMenu post={post} />}
                     </button>
                   );
                 })}
