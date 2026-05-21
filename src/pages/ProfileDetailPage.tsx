@@ -39,6 +39,7 @@ import { cn } from "@/lib/utils";
 import { ROLE_BY_ID } from "@/lib/creator-roles";
 import { archetypeBannerGradient } from "@/lib/archetypes";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
+import FlowPostOwnerMenu from "@/components/profile/FlowPostOwnerMenu";
 import NoteBubble from "@/components/notes/NoteBubble";
 import { useUserNote } from "@/hooks/useNotes";
 
@@ -158,8 +159,8 @@ const ProfileDetailPage = () => {
     queryKey: ["profile-flow-posts", id],
     queryFn: async () => {
       const { data } = await supabase.from("flow_items")
-        .select("id, title, file_url, link_url, category, content_type, description, solana_signature, anchored_at, created_at")
-        .eq("user_id", id!).order("created_at", { ascending: false }).limit(12);
+        .select("id, title, file_url, link_url, category, content_type, description, solana_signature, anchored_at, archived_at, created_at")
+        .eq("user_id", id!).order("created_at", { ascending: false }).limit(24);
       return data ?? [];
     },
     enabled: !!id,
@@ -845,6 +846,13 @@ const ProfileDetailPage = () => {
                         hideCaption
                         className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
+                      {post.archived_at && (
+                        <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+                          <span className="text-[10px] uppercase tracking-wider font-semibold text-white/90 bg-white/10 backdrop-blur-sm rounded-full px-2 py-0.5 border border-white/20">
+                            Archived
+                          </span>
+                        </div>
+                      )}
                       <div className="absolute top-1.5 left-1.5 h-6 w-6 rounded-full bg-black/55 backdrop-blur-sm flex items-center justify-center">
                         <CatIcon className="h-3 w-3 text-white" />
                       </div>
@@ -858,6 +866,7 @@ const ProfileDetailPage = () => {
                           />
                         </div>
                       )}
+                      {isOwnProfile && <FlowPostOwnerMenu post={post} />}
                     </button>
                   );
                 })}
