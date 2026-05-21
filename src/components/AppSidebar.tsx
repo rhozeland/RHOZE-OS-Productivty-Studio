@@ -63,6 +63,8 @@ const AppSidebar = () => {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const { data: xp } = useCreatorXP();
+  const [activeRole] = useActiveRole();
+  const pillarItems = activeRole === "fan" ? fanPillarItems : creatorPillarItems;
 
   const handleNavClick = () => {
     if (isMobile) setOpenMobile(false);
