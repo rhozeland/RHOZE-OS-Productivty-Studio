@@ -64,6 +64,7 @@ import TokenGateDialog from "@/components/works/TokenGateDialog";
 import UnlockButton from "@/components/works/UnlockButton";
 import UnverifiedWorkChip from "@/components/works/UnverifiedWorkChip";
 import RhozeRewardBadge from "@/components/RhozeRewardBadge";
+import ThumbnailPicker from "@/components/works/ThumbnailPicker";
 
 type WorkKind = "audio" | "image" | "video" | "text" | "other";
 
