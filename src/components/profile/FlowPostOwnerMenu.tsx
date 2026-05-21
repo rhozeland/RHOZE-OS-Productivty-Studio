@@ -123,7 +123,7 @@ const FlowPostOwnerMenu = ({ post }: Props) => {
             onClick={stop}
             onPointerDown={stop}
             aria-label="Post options"
-            className="absolute bottom-1.5 right-1.5 z-10 inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-black/75"
+            className="absolute bottom-1.5 right-1.5 z-10 inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm hover:bg-black/75 transition-colors"
           >
             <MoreHorizontal className="h-4 w-4" />
           </button>
