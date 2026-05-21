@@ -164,6 +164,8 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/network",
   "/settings",
   "/admin",
+  "/portfolio",
+  "/fan/rewards",
   "/boards/:id",
   "/tickets/:id",
   // Auto-register every legacy alias as `<from>/*` so the dev-only nav
