@@ -320,9 +320,9 @@ const AuthedMyWorkPage = ({ userId }: { userId: string }) => {
           {(inquiries?.length ?? 0) === 0 ? (
             <EmptyState
               icon={Inbox}
-              title="No inquiries yet. Post a listing to start receiving them."
-              ctaLabel="Post Now"
-              ctaTo="/discover?view=offerings"
+              title="No inquiries yet"
+              ctaLabel="Go to Discover"
+              ctaTo="/discover"
             />
           ) : (
             <ScrollArea className="max-h-[calc(100vh-18rem)]">
