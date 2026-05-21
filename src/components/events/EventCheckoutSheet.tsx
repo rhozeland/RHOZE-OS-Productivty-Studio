@@ -25,7 +25,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import SquareCardForm from "@/components/booking/SquareCardForm";
+import StripeEmbeddedCheckoutMount, { getStripeEnvironment } from "@/components/payments/StripeEmbeddedCheckout";
 import PayWithRhozeButton from "@/components/PayWithRhozeButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -187,23 +187,25 @@ const EventCheckoutSheet = ({ open, onOpenChange, event, tier, onIssued }: Props
     }
   };
 
-  const handleSquareToken = async (token: string) => {
-    const { data, error } = await supabase.functions.invoke("square-payment", {
+  // Stripe Embedded Checkout — fetchClientSecret hits create-event-ticket-checkout.
+  // The webhook (payments-webhook → claim-event-ticket) issues the ticket once
+  // payment_status === "paid", so the return URL just confirms.
+  const fetchStripeClientSecret = async () => {
+    const { data, error } = await supabase.functions.invoke("create-event-ticket-checkout", {
       body: {
-        amount_cents: Math.round(fiatPrice * 100),
-        currency,
-        description: `Rhozeland Event: ${event.title} — ${tier.name}`,
-        source_id: token,
-        location_id: "DDWDTXBFW3T4R",
+        event_id: event.id,
+        tier_id: tier.id,
+        name: buyerInfo.name,
+        email: buyerInfo.email,
+        userId: user?.id,
+        returnUrl: `${window.location.origin}/tickets/return?session_id={CHECKOUT_SESSION_ID}&event_id=${event.id}`,
+        environment: getStripeEnvironment(),
       },
     });
-    if (error) throw new Error(error.message || "Payment failed");
-    if (!data?.success) throw new Error(data?.error || "Payment declined");
-    await submitClaim({
-      currency: "usd",
-      reference: data.payment_id ?? data.id ?? "square",
-      amount: fiatPrice,
-    });
+    if (error || !data?.clientSecret) {
+      throw new Error(error?.message || data?.error || "Could not start checkout");
+    }
+    return data.clientSecret as string;
   };
 
   const handleRhozeSuccess = async () => {
@@ -312,7 +314,7 @@ const EventCheckoutSheet = ({ open, onOpenChange, event, tier, onIssued }: Props
               </>
             )}
 
-            {/* Paid — USD + $RHOZE */}
+            {/* Paid — USD (Stripe) + $RHOZE */}
             {isPaid && hasFiat && hasRhoze && (
               <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
                 <TabsList className="grid grid-cols-2 w-full">
@@ -324,7 +326,7 @@ const EventCheckoutSheet = ({ open, onOpenChange, event, tier, onIssued }: Props
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="usd" className="pt-3">
-                  <SquareCardForm amount={fiatPrice} onTokenize={handleSquareToken} disabled={submitting} />
+                  <StripeEmbeddedCheckoutMount fetchClientSecret={fetchStripeClientSecret} />
                 </TabsContent>
                 <TabsContent value="rhoze" className="pt-3 space-y-3">
                   {discountPct > 0 && (
@@ -353,7 +355,7 @@ const EventCheckoutSheet = ({ open, onOpenChange, event, tier, onIssued }: Props
               </Tabs>
             )}
             {isPaid && hasFiat && !hasRhoze && (
-              <SquareCardForm amount={fiatPrice} onTokenize={handleSquareToken} disabled={submitting} />
+              <StripeEmbeddedCheckoutMount fetchClientSecret={fetchStripeClientSecret} />
             )}
             {isPaid && !hasFiat && hasRhoze && user && (
               <PayWithRhozeButton
