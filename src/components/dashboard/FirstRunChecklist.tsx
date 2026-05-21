@@ -95,11 +95,14 @@ const FirstRunChecklist = () => {
       {
         id: "post",
         done: (flowCount ?? 0) > 0,
-        label: "Share something",
-        helper: "Post a track, image, or work-in-progress to the Flow feed.",
-        href: "/flow",
-        icon: Flame,
+        label: isFan ? "Discover a creator" : "Share something",
+        helper: isFan
+          ? "Find someone rising early before everyone else does"
+          : "Post a track, image, or work-in-progress to the Flow feed.",
+        href: isFan ? "/creators" : "/flow",
+        icon: isFan ? Sparkles : Flame,
       },
+
       {
         id: "explore",
         done: (interactionCount ?? 0) > 0,
