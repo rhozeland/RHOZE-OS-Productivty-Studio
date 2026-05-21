@@ -82,7 +82,7 @@ export const useHireRows = (enabled = true) =>
           category: p.archetype,
           description: p.bio,
           detailHref: `/profiles/${p.user_id}`,
-          coverUrl: p.banner_url || p.avatar_url || null,
+          coverUrl: p.banner_url || null,
         };
       });
     },
