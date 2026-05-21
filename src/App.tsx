@@ -42,6 +42,8 @@ import ExploreStudiosPage from "@/pages/ExploreStudiosPage";
 import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import OnboardingPage from "@/pages/OnboardingPage";
 import RoleSelectPage from "@/pages/RoleSelectPage";
+import PortfolioPage from "@/pages/PortfolioPage";
+import FanRewardsPage from "@/pages/FanRewardsPage";
 import MarketplacePage from "@/pages/MarketplacePage";
 import CreatorsPage from "@/pages/CreatorsPage";
 import HomePage from "@/pages/HomePage";
@@ -162,6 +164,8 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/network",
   "/settings",
   "/admin",
+  "/portfolio",
+  "/fan/rewards",
   "/boards/:id",
   "/tickets/:id",
   // Auto-register every legacy alias as `<from>/*` so the dev-only nav
@@ -342,6 +346,9 @@ const App = () => (
                 <Route path="/network" element={<Navigate to="/messages" replace />} />
                 <Route path="/subscriptions" element={<SubscriptionsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
+                {/* Fan mode pages (Prompt 3) */}
+                <Route path="/portfolio" element={<ProtectedRoute><PortfolioPage /></ProtectedRoute>} />
+                <Route path="/fan/rewards" element={<ProtectedRoute><FanRewardsPage /></ProtectedRoute>} />
                 <Route path="/settings/verification" element={<VerificationPage />} />
                 <Route path="/admin" element={<AdminPage />} />
               </Route>

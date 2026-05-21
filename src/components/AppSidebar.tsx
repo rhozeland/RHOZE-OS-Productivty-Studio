@@ -10,12 +10,16 @@ import {
   User as UserIcon,
   ShieldCheck,
   Flame,
+  Briefcase,
+  Rss,
+  Gift,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useCreatorXP } from "@/hooks/useCreatorXP";
 import { resolveNavLink } from "@/hooks/useNavLink";
+import { useActiveRole } from "@/hooks/useActiveRole";
 import {
   Sidebar,
   SidebarContent,
@@ -31,16 +35,24 @@ import {
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 import SidebarRoleSwitcher from "@/components/SidebarRoleSwitcher";
 
-// v9.9.1: 4-tab sidebar.
+// v9.9.1: 4-tab sidebar (creator view — the default).
 //   Home          → Discover feed (artists / works)
 //   Discover      → Marketplace (Connect room — hire/spaces/calls/events)
 //   Support       → supporter inbox
 //   Creator Pass  → badges, rank, $RHOZE portfolio
-const pillarItems = [
+const creatorPillarItems = [
   { icon: Home, label: "Home", path: "/discover" },
   { icon: Compass, label: "Discover", path: "/market" },
   { icon: Heart, label: "My Work", path: "/my-work" },
   { icon: Trophy, label: "My Pass", path: "/credits" },
+];
+
+// Fan-mode nav (Prompt 3). Same component styling as creator items.
+const fanPillarItems = [
+  { icon: Compass, label: "Discover", path: "/discover" },
+  { icon: Briefcase, label: "Portfolio", path: "/portfolio" },
+  { icon: Rss, label: "Feed", path: "/dashboard" },
+  { icon: Gift, label: "Rewards", path: "/fan/rewards" },
 ];
 
 const AppSidebar = () => {
@@ -51,6 +63,8 @@ const AppSidebar = () => {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const { data: xp } = useCreatorXP();
+  const [activeRole] = useActiveRole();
+  const pillarItems = activeRole === "fan" ? fanPillarItems : creatorPillarItems;
 
   const handleNavClick = () => {
     if (isMobile) setOpenMobile(false);
