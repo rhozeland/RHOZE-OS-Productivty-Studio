@@ -64,6 +64,7 @@ import TokenGateDialog from "@/components/works/TokenGateDialog";
 import UnlockButton from "@/components/works/UnlockButton";
 import UnverifiedWorkChip from "@/components/works/UnverifiedWorkChip";
 import RhozeRewardBadge from "@/components/RhozeRewardBadge";
+import ThumbnailPicker from "@/components/works/ThumbnailPicker";
 
 type WorkKind = "audio" | "image" | "video" | "text" | "other";
 
@@ -514,6 +515,7 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
   const [hashing, setHashing] = useState(false);
   const [contentHash, setContentHash] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [thumbnailBlob, setThumbnailBlob] = useState<Blob | null>(null);
 
   const resetForm = () => {
     setFile(null);
@@ -521,6 +523,7 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
     setDescription("");
     setContentHash(null);
     setVisibility("public");
+    setThumbnailBlob(null);
   };
 
   const inferredKind = useMemo(
@@ -566,6 +569,25 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
         .from("flow-uploads")
         .getPublicUrl(path);
 
+      // Upload optional thumbnail (auto-generated from video frames or audio cover)
+      let thumbnailUrl: string | null = null;
+      if (thumbnailBlob) {
+        const thumbPath = `${user.id}/works/thumbs/${Date.now()}_${safeName}.jpg`;
+        const { error: thumbErr } = await supabase.storage
+          .from("flow-uploads")
+          .upload(thumbPath, thumbnailBlob, {
+            cacheControl: "3600",
+            upsert: false,
+            contentType: "image/jpeg",
+          });
+        if (!thumbErr) {
+          const { data: thumbPub } = supabase.storage
+            .from("flow-uploads")
+            .getPublicUrl(thumbPath);
+          thumbnailUrl = thumbPub.publicUrl;
+        }
+      }
+
       // Tag with verification state so UI can mark unverified work clearly.
       const { data: profileRow } = await supabase
         .from("profiles")
@@ -586,7 +608,8 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
         file_size: file.size,
         visibility,
         is_unverified: isUnverified,
-      });
+        thumbnail_url: thumbnailUrl,
+      } as any);
       if (insertErr) throw insertErr;
 
       toast.success("Work registered", {
@@ -646,6 +669,17 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
           />
         </div>
       </div>
+
+      {file && (inferredKind === "video" || inferredKind === "audio") && (
+        <ThumbnailPicker
+          file={file}
+          kind={inferredKind}
+          title={title}
+          onPick={setThumbnailBlob}
+        />
+      )}
+
+
 
       <div className="space-y-1.5">
         <Label htmlFor="work-desc">Description (optional)</Label>
