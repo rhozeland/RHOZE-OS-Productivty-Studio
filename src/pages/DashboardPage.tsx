@@ -686,6 +686,7 @@ const DashboardPage = () => {
           (missing avatar/bio, no Flow posts). Auto-hides once they
           have a profile + at least one post, or on dismiss. */}
       {user && <FirstRunChecklist />}
+      {user && <CreatorModeStrip />}
 
       {/* ════════════════════════════════════════════════════════════════
           v7 (post phase-2): Studio is now "My Studio" — the artist's
