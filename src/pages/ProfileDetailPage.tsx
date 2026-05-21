@@ -648,51 +648,15 @@ const ProfileDetailPage = () => {
                       <AnchorButton proofs={proofs!} />
                     </div>
                   )}
-                  <CreatorReadinessCard creatorId={id!} memberSince={p.created_at} />
-                  {totalProofs > 0 && (
-                    <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
-                      <div className="grid grid-cols-3 gap-3">
-                        {Object.entries(
-                          proofs!.reduce<Record<string, number>>((acc, pr) => {
-                            acc[pr.action_type] = (acc[pr.action_type] || 0) + 1;
-                            return acc;
-                          }, {})
-                        ).sort(([, a], [, b]) => b - a).slice(0, 3).map(([type, count]) => {
-                          const meta = PROOF_TYPE_META[type] ?? {
-                            label: type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-                            href: null as string | null,
-                          };
-                          const inner = (
-                            <>
-                              <p className="text-2xl font-bold text-foreground">{count}</p>
-                              <p className="text-xs text-muted-foreground">{meta.label}</p>
-                            </>
-                          );
-                          return meta.href ? (
-                            <Link key={type} to={meta.href} className="rounded-lg border border-border bg-card/50 p-3 text-center transition-colors hover:bg-muted/60">
-                              {inner}
-                            </Link>
-                          ) : (
-                            <div key={type} className="rounded-lg border border-border bg-card/50 p-3 text-center">
-                              {inner}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+                  {/* v10.2 — CreatorReadinessCard ("investor signal") removed.
+                      Rhozeland is no longer a launchpad. */}
+                  {/* Anchored-proof rollup retained — moved inline above. */}
                 </CollapsibleContent>
               </Collapsible>
             </div>
 
-            {/* Token / Launches card */}
-            <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5 space-y-3">
-              <div className="flex items-center gap-2">
-                <Coins className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-semibold text-foreground">Launches</h3>
-              </div>
-              <CreatorDropsCatalog creatorId={id!} isOwnProfile={isOwnProfile} />
-            </div>
+            {/* v10.2 — "Launches" card removed. Tokens now surface as the read-only
+                TokenDiscoveryChip in the profile header (deeplinks to pump.fun). */}
 
             {/* Listings card */}
             {(sellerListings?.length ?? 0) > 0 && (

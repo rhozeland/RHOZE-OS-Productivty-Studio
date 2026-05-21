@@ -252,19 +252,9 @@ const DiscoverPage = () => {
     return user?.email?.split("@")[0] || "Creator";
   })();
 
-  // ─── Coins moving today ─────────────────────────────────────────
-  const { data: coins } = useQuery({
-    queryKey: ["discover-coins"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("coin_launches")
-        .select("id, ticker, name, image_url, status, virtual_sol_reserves, real_sol_reserves, creator_id, updated_at")
-        .in("status", ["active", "graduated"])
-        .order("updated_at", { ascending: false })
-        .limit(6);
-      return data ?? [];
-    },
-  });
+  // v10.2 — "Coins moving today" lane removed. A new Trending Tokens lane
+  // (reading from profiles.token_mint_address + live Jupiter/Dexscreener
+  // prices) will replace it in the next loop.
 
   // ─── Category counts (events + spaces) for the Luma-style tile picker ───
   const { data: eventCategoryRows = [] } = useQuery({
@@ -491,40 +481,7 @@ const DiscoverPage = () => {
         )}
       </section>
 
-      {/* ─── Coins moving today ─────────────────────────────────────── */}
-      {coins && coins.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-display text-sm uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-1.5">
-              <Coins className="h-3.5 w-3.5" /> Coins moving today
-            </h2>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {coins.map((c: any) => (
-              <Link
-                key={c.id}
-                to={`/launchpad/${c.id}`}
-                className="group rounded-xl border border-border/60 bg-card p-3 hover:border-foreground/30 transition-colors text-center"
-              >
-                <div className="aspect-square rounded-lg bg-muted overflow-hidden mb-2">
-                  {c.image_url ? (
-                    <img src={c.image_url} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="h-full w-full flex items-center justify-center">
-                      <Coins className="h-6 w-6 text-muted-foreground/40" />
-                    </div>
-                  )}
-                </div>
-                <p className="text-xs font-bold text-foreground truncate">${c.ticker}</p>
-                <p className="text-[10px] text-muted-foreground truncate">{c.name}</p>
-                {c.status === "graduated" && (
-                  <Badge variant="secondary" className="text-[9px] mt-1">Graduated</Badge>
-                )}
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
+      {/* v10.2 — "Coins moving today" lane removed; Trending Tokens lane lands next loop. */}
 
       {!user && (
         <section className="text-center pt-4 space-y-2">
