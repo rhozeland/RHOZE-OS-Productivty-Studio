@@ -6,6 +6,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import NotificationBell from "@/components/NotificationBell";
+import InboxDrawer from "@/components/InboxDrawer";
 import PostMenuButton from "@/components/PostMenuButton";
 
 import WelcomeModal from "@/components/onboarding/WelcomeModal";
