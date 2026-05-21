@@ -544,6 +544,31 @@ const SettingsPage = () => {
         </div>
       </div>
 
+      {/* Linked Solana token (pump.fun discovery overlay) */}
+      <div className="space-y-2 rounded-xl border border-border/60 bg-muted/20 p-4">
+        <Label className="flex items-center gap-2 text-sm">
+          🪙 Linked token <span className="text-[10px] uppercase tracking-wider text-muted-foreground">optional</span>
+        </Label>
+        <p className="text-[11px] text-muted-foreground">
+          Paste your pump.fun mint address — we'll surface a read-only price chip on your profile and Discover. Rhozeland never custodies or trades tokens.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-2">
+          <Input
+            value={tokenMint}
+            onChange={(e) => setTokenMint(e.target.value)}
+            placeholder="Mint address (e.g. 7xKXt…RHOZE)"
+            className="font-mono text-xs"
+          />
+          <Input
+            value={tokenTicker}
+            onChange={(e) => setTokenTicker(e.target.value)}
+            placeholder="TICKER"
+            maxLength={10}
+            className="uppercase font-mono"
+          />
+        </div>
+      </div>
+
       <Button type="submit" disabled={updateProfile.isPending}>
         {updateProfile.isPending ? "Saving..." : "Save Changes"}
       </Button>
