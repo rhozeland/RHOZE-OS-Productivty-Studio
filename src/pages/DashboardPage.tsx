@@ -204,6 +204,19 @@ const DashboardPage = () => {
     },
     enabled: !!user,
   });
+  const { data: rhozeBalance = 0 } = useQuery({
+    queryKey: ["dashboard-rhoze-balance", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_credits")
+        .select("balance")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return Number((data as any)?.balance ?? 0);
+    },
+  });
+
   const { data: recentMessages } = useQuery({
     queryKey: ["recent-messages-dashboard", user?.id],
     queryFn: async () => {
