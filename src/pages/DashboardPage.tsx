@@ -52,6 +52,8 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import GuestDashboardPreview from "@/components/guest/GuestDashboardPreview";
 import FirstRunChecklist from "@/components/dashboard/FirstRunChecklist";
+import CreatorHomeStatsStrip from "@/components/dashboard/CreatorHomeStatsStrip";
+import { useActiveRole } from "@/hooks/useActiveRole";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { format } from "date-fns";
 import { todayGradient } from "@/lib/rhoze-gradients";
@@ -684,6 +686,7 @@ const DashboardPage = () => {
           (missing avatar/bio, no Flow posts). Auto-hides once they
           have a profile + at least one post, or on dismiss. */}
       {user && <FirstRunChecklist />}
+      {user && <CreatorModeStrip />}
 
       {/* ════════════════════════════════════════════════════════════════
           v7 (post phase-2): Studio is now "My Studio" — the artist's
@@ -1433,5 +1436,14 @@ const DashboardPage = () => {
     </div>
   );
 };
+
+// Creator-mode-only stats strip (Home dashboard addition).
+const CreatorModeStrip = () => {
+  const [role] = useActiveRole();
+  if (role !== "creator") return null;
+  return <CreatorHomeStatsStrip />;
+};
+
+
 
 export default DashboardPage;

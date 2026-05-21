@@ -306,7 +306,7 @@ const AuthedMyWorkPage = ({ userId }: { userId: string }) => {
           {activeProjectsCount === 0 && (projects?.length ?? 0) === 0 ? (
             <EmptyState
               icon={FolderKanban}
-              title="No active projects yet. Find someone on Discover to get started."
+              title="No active projects yet"
               ctaLabel="Go to Discover"
               ctaTo="/discover"
             />
@@ -320,9 +320,9 @@ const AuthedMyWorkPage = ({ userId }: { userId: string }) => {
           {(inquiries?.length ?? 0) === 0 ? (
             <EmptyState
               icon={Inbox}
-              title="No inquiries yet. Post a listing to start receiving them."
-              ctaLabel="Post Now"
-              ctaTo="/discover?view=offerings"
+              title="No inquiries yet"
+              ctaLabel="Go to Discover"
+              ctaTo="/discover"
             />
           ) : (
             <ScrollArea className="max-h-[calc(100vh-18rem)]">
@@ -380,7 +380,7 @@ const AuthedMyWorkPage = ({ userId }: { userId: string }) => {
           {savedRows.length === 0 ? (
             <EmptyState
               icon={Bookmark}
-              title="Nothing saved yet. Browse Discover and tap the save icon on any creator."
+              title="Nothing saved yet"
               ctaLabel="Go to Discover"
               ctaTo="/discover"
             />

@@ -15,9 +15,11 @@ import {
   Gift,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useCreatorXP } from "@/hooks/useCreatorXP";
+import { supabase } from "@/integrations/supabase/client";
 import { resolveNavLink } from "@/hooks/useNavLink";
 import { useActiveRole } from "@/hooks/useActiveRole";
 import {
@@ -42,8 +44,8 @@ import SidebarRoleSwitcher from "@/components/SidebarRoleSwitcher";
 //   Creator Pass  → badges, rank, $RHOZE portfolio
 const creatorPillarItems = [
   { icon: Home, label: "Home", path: "/discover" },
+  { icon: Heart, label: "My Work", path: "/my-work", badgeKey: "pendingInquiries" as const },
   { icon: Compass, label: "Discover", path: "/market" },
-  { icon: Heart, label: "My Work", path: "/my-work" },
   { icon: Trophy, label: "My Pass", path: "/credits" },
 ];
 
@@ -65,6 +67,22 @@ const AppSidebar = () => {
   const { data: xp } = useCreatorXP();
   const [activeRole] = useActiveRole();
   const pillarItems = activeRole === "fan" ? fanPillarItems : creatorPillarItems;
+
+  // Pending inquiry count for the My Work nav badge (creator mode).
+  const { data: pendingInquiries = 0 } = useQuery({
+    queryKey: ["sidebar-pending-inquiries", user?.id],
+    enabled: !!user?.id && activeRole !== "fan",
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("listing_inquiries")
+        .select("id", { count: "exact", head: true })
+        .eq("receiver_id", user!.id)
+        .eq("status", "pending");
+      return count ?? 0;
+    },
+  });
+  const badgeCounts: Record<string, number> = { pendingInquiries: Number(pendingInquiries) };
+
 
   const handleNavClick = () => {
     if (isMobile) setOpenMobile(false);
@@ -105,6 +123,11 @@ const AppSidebar = () => {
               active ? "text-primary" : ""
             )} />
             {!collapsed && <span className="flex-1">{item.label}</span>}
+            {!collapsed && item.badgeKey && badgeCounts[item.badgeKey] > 0 && (
+              <span className="ml-auto h-5 min-w-5 px-1.5 rounded-full bg-foreground text-background text-[10px] font-semibold flex items-center justify-center">
+                {badgeCounts[item.badgeKey]}
+              </span>
+            )}
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
