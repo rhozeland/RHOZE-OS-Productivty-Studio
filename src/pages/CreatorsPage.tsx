@@ -1,10 +1,13 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Calendar, Flame, Activity, ArrowLeft, Heart, X, Sparkles, MessageCircle } from "lucide-react";
+import { Search, Calendar, Flame, Activity, ArrowLeft, Heart, X, Sparkles, MessageCircle, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import SubscribeToCreatorSheet from "@/components/profile/SubscribeToCreatorSheet";
 import { supabase } from "@/integrations/supabase/client";
+
 
 type Creator = {
   user_id: string;
