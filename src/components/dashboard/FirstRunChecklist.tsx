@@ -15,7 +15,9 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Check, ArrowRight, X, User, Flame, Compass, Wallet } from "lucide-react";
+import { Check, ArrowRight, X, User, Flame, Compass, Wallet, Sparkles } from "lucide-react";
+import { useActiveRole } from "@/hooks/useActiveRole";
+
 import { Button } from "@/components/ui/button";
 
 const DISMISS_KEY = "rhozeland.firstrun.dismissed";
