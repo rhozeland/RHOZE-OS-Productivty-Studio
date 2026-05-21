@@ -89,6 +89,9 @@ const DashboardPage = () => {
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [networkSearch, setNetworkSearch] = useState("");
   const [pulseScope, setPulseScope] = useState<"all" | "studios" | "hub">("all");
+  const [activeRole] = useActiveRole();
+  const isFan = activeRole === "fan";
+
 
   // ── Profile & layout (personal sections only) ──
   const { data: profile } = useQuery({
