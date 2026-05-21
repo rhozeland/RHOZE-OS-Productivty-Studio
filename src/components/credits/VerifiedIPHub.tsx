@@ -44,6 +44,7 @@ type WorkRow = {
   content_hash: string;
   solana_signature: string | null;
   created_at: string;
+  archived_at: string | null;
 };
 
 const KIND_ICONS: Record<string, typeof Music> = {
