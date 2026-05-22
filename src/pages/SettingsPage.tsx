@@ -380,7 +380,12 @@ const SettingsPage = () => {
 
   const handleExportData = async () => {
     if (!user) return;
-    const { data: profileData } = await supabase.from("profiles").select("*").eq("user_id", user.id).single();
+    const [{ data: baseProfile }, { data: priv }] = await Promise.all([
+      supabase.from("profiles").select("id,user_id,display_name,username,headline,bio,portfolio_url,creator_roles,archetype,skills,mediums,location,region_code,available,is_public,avatar_url,banner_gradient,banner_url,profile_background,instagram_url,tiktok_url,twitter_url,youtube_url,token_mint_address,token_ticker,email_notif_messages,email_notif_inquiries,email_notif_purchases,email_notif_reviews,created_at,updated_at").eq("user_id", user.id).single(),
+      (supabase as any).rpc("get_my_private_profile_fields"),
+    ]);
+    const privRow = Array.isArray(priv) ? priv[0] : priv;
+    const profileData = { ...(baseProfile as any), ...(privRow ?? {}) };
     const { data: projects } = await supabase.from("projects").select("*").eq("user_id", user.id);
     const { data: listings } = await supabase.from("marketplace_listings").select("*").eq("user_id", user.id);
     const exportData = { profile: profileData, projects, listings, exported_at: new Date().toISOString() };
