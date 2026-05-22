@@ -59,12 +59,21 @@ export default function SupportSheet({ open, onOpenChange, creatorId, creatorNam
   const [loadingTier, setLoadingTier] = useState<Tier | null>(null);
   const [tiers, setTiers] = useState<TierCard[]>(DEFAULT_TIERS);
 
+  // Tip state
+  const TIP_PRESETS = [5, 10, 25];
+  const [tipAmount, setTipAmount] = useState<number>(10);
+  const [tipMessage, setTipMessage] = useState<string>("");
+  const [tipCheckoutOpen, setTipCheckoutOpen] = useState(false);
+
   // Reset state on close
   useEffect(() => {
     if (!open) {
       setSelectedTier(null);
       setLoadingTier(null);
       setTab(initialTab);
+      setTipCheckoutOpen(false);
+      setTipMessage("");
+      setTipAmount(10);
     }
   }, [open, initialTab]);
 
