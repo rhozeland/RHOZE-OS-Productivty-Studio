@@ -193,12 +193,18 @@ export default function SupportSheet({ open, onOpenChange, creatorId, creatorNam
         <DialogHeader className="px-6 pt-6 pb-3 shrink-0">
           <DialogTitle className="font-display text-xl flex items-center gap-2">
             <Heart className="h-4 w-4 text-primary" />
-            {selectedTier ? `Subscribing to ${creatorName}` : `Support ${creatorName}`}
+            {selectedTier
+              ? `Subscribing to ${creatorName}`
+              : tipCheckoutOpen
+                ? `Tipping ${creatorName}`
+                : `Support ${creatorName}`}
           </DialogTitle>
           <DialogDescription className="text-xs">
             {selectedTier
               ? "Complete payment to unlock instantly."
-              : "Three ways to back this creator. Pick what fits."}
+              : tipCheckoutOpen
+                ? `Sending $${tipAmount.toFixed(2)} as a one-off tip.`
+                : "Three ways to back this creator. Pick what fits."}
           </DialogDescription>
         </DialogHeader>
 
@@ -209,6 +215,17 @@ export default function SupportSheet({ open, onOpenChange, creatorId, creatorNam
             </EmbeddedCheckoutProvider>
             <div className="px-6 py-3 border-t border-border/40">
               <Button variant="ghost" size="sm" onClick={() => setSelectedTier(null)} className="w-full">
+                ← Back to options
+              </Button>
+            </div>
+          </div>
+        ) : tipCheckoutOpen ? (
+          <div className="flex-1 overflow-y-auto">
+            <EmbeddedCheckoutProvider stripe={getStripe()} options={{ fetchClientSecret: fetchTipClientSecret }}>
+              <EmbeddedCheckout />
+            </EmbeddedCheckoutProvider>
+            <div className="px-6 py-3 border-t border-border/40">
+              <Button variant="ghost" size="sm" onClick={() => setTipCheckoutOpen(false)} className="w-full">
                 ← Back to options
               </Button>
             </div>
