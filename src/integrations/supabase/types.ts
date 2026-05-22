@@ -1021,6 +1021,62 @@ export type Database = {
           },
         ]
       }
+      creator_tips: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          creator_id: string
+          currency: string
+          environment: string
+          id: string
+          message: string | null
+          paid_at: string | null
+          status: string
+          stripe_payment_intent: string | null
+          stripe_session_id: string | null
+          tipper_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          creator_id: string
+          currency?: string
+          environment?: string
+          id?: string
+          message?: string | null
+          paid_at?: string | null
+          status?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
+          tipper_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          creator_id?: string
+          currency?: string
+          environment?: string
+          id?: string
+          message?: string | null
+          paid_at?: string | null
+          status?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
+          tipper_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_tips_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_transactions: {
         Row: {
           amount: number
