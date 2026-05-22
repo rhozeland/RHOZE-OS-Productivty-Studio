@@ -100,6 +100,26 @@ async function handleEventTicketCheckout(session: any) {
   if (error) console.error("claim-event-ticket via webhook failed", error);
 }
 
+async function handleTipCheckout(session: any, env: StripeEnv) {
+  const meta = session.metadata || {};
+  if (meta.kind !== "creator_tip") return;
+  if (session.payment_status !== "paid") return;
+  const sessionId = session.id;
+  const paymentIntent = typeof session.payment_intent === "string"
+    ? session.payment_intent
+    : session.payment_intent?.id ?? null;
+  await getSupabase()
+    .from("creator_tips")
+    .update({
+      status: "paid",
+      stripe_payment_intent: paymentIntent,
+      paid_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("stripe_session_id", sessionId)
+    .eq("environment", env);
+}
+
 async function handleWebhook(req: Request, env: StripeEnv) {
   const event = await verifyWebhook(req, env);
   console.log("webhook:", event.type, env);
@@ -114,6 +134,7 @@ async function handleWebhook(req: Request, env: StripeEnv) {
       break;
     case "checkout.session.completed":
       await handleEventTicketCheckout(event.data.object);
+      await handleTipCheckout(event.data.object, env);
       break;
     default:
       console.log("Unhandled event:", event.type);
