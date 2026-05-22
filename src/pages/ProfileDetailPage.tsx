@@ -667,11 +667,9 @@ const ProfileDetailPage = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      {totalProofs > 0 && (
-                        <Badge variant="secondary" className="font-mono text-[10px]">
-                          {anchoredCount}/{totalProofs}
-                        </Badge>
-                      )}
+                      <Badge variant="secondary" className="font-mono text-[10px]">
+                        {anchoredCount}/{Math.max(50, totalProofs)}
+                      </Badge>
                       <ArrowRight className={cn("h-4 w-4 text-muted-foreground transition-transform", reputationOpen && "rotate-90")} />
                     </div>
                   </button>
@@ -680,6 +678,19 @@ const ProfileDetailPage = () => {
                   {isOwnProfile && totalProofs > 0 && anchoredCount < totalProofs && (
                     <div className="flex justify-end">
                       <AnchorButton proofs={proofs!} />
+                    </div>
+                  )}
+                  {isOwnProfile && (totalProofs === 0 || anchoredCount >= totalProofs) && (
+                    <div className="flex justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs gap-1.5"
+                        onClick={() => navigate("/settings/verification")}
+                      >
+                        <Shield className="h-3.5 w-3.5" />
+                        Verify ({totalProofs})
+                      </Button>
                     </div>
                   )}
                   {/* v10.2 — CreatorReadinessCard ("investor signal") removed.
