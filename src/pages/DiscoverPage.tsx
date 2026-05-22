@@ -29,6 +29,7 @@ import ConversationsMosaic from "@/components/hub/ConversationsMosaic";
 import CompactFlowFeed from "@/components/hub/CompactFlowFeed";
 import PostMenuButton from "@/components/PostMenuButton";
 import DiscoverTable from "@/components/discover/DiscoverTable";
+import SubscribedFeed from "@/components/discover/SubscribedFeed";
 
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
 import TrendingTokensLane from "@/components/discover/TrendingTokensLane";
