@@ -30,6 +30,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import SupportSheet from "@/components/profile/SupportSheet";
 import TokenDiscoveryChip from "@/components/profile/TokenDiscoveryChip";
+import { LumaEventEmbed } from "@/components/profile/LumaEventEmbed";
 import { BoostProfileSheet } from "@/components/profile/BoostProfileSheet";
 import CreatorDropsCatalog from "@/components/profile/CreatorDropsCatalog";
 import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
@@ -616,17 +617,23 @@ const ProfileDetailPage = () => {
               <TokenDiscoveryChip creatorId={id} className="self-start" />
             )}
 
-            {/* v10.2 — Luma calendar connect promo (own profile only, when not yet linked) */}
-            {isOwnProfile && !(p as any).luma_ics_url && (
+            {/* v10.3 — Luma event embed (when creator has linked a lu.ma URL) */}
+            {(p as any).luma_url && (
+              <LumaEventEmbed
+                url={(p as any).luma_url}
+                title={`${p.display_name || p.username || "Creator"}'s upcoming events`}
+              />
+            )}
+            {isOwnProfile && !(p as any).luma_url && (
               <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-4">
                 <div className="flex items-start gap-3">
                   <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                     <CalendarIcon className="h-4 w-4 text-primary" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-foreground">Connect your Luma calendar</p>
+                    <p className="text-sm font-semibold text-foreground">Add your Luma link</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5">
-                      Auto-sync your events here — free or paid, no manual setup.
+                      Paste a lu.ma URL — your events embed straight on your profile.
                     </p>
                     <Button
                       variant="outline"
@@ -634,7 +641,7 @@ const ProfileDetailPage = () => {
                       className="mt-3 h-8 text-xs"
                       onClick={() => navigate("/settings#calendar")}
                     >
-                      Connect
+                      Add Luma URL
                     </Button>
                   </div>
                 </div>
