@@ -555,8 +555,13 @@ const SettingsPage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-2">
           <Input
             value={tokenMint}
-            onChange={(e) => setTokenMint(e.target.value)}
-            placeholder="Mint address (e.g. 7xKXt…RHOZE)"
+            onChange={(e) => {
+              // Accept either a raw mint or a full pump.fun URL — auto-extract the mint.
+              const raw = e.target.value.trim();
+              const match = raw.match(/pump\.fun\/(?:coin\/)?([1-9A-HJ-NP-Za-km-z]{32,44})/i);
+              setTokenMint(match ? match[1] : raw);
+            }}
+            placeholder="pump.fun URL or mint address"
             className="font-mono text-xs"
           />
           <Input
@@ -567,6 +572,9 @@ const SettingsPage = () => {
             className="uppercase font-mono"
           />
         </div>
+        <p className="text-[10px] text-muted-foreground">
+          Tip: just paste the full <code className="px-1 rounded bg-muted">pump.fun/coin/...</code> URL — we'll grab the mint for you. Add the ticker (e.g. <code className="px-1 rounded bg-muted">INDO</code>) so fans see it on your profile.
+        </p>
       </div>
 
       <Button type="submit" disabled={updateProfile.isPending}>
