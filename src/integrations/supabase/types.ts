@@ -1483,6 +1483,47 @@ export type Database = {
           },
         ]
       }
+      event_attendance_claims: {
+        Row: {
+          anchor_last_error: string | null
+          anchored_at: string | null
+          created_at: string
+          id: string
+          luma_url: string
+          memo_signature: string | null
+          profile_id: string
+          user_id: string
+        }
+        Insert: {
+          anchor_last_error?: string | null
+          anchored_at?: string | null
+          created_at?: string
+          id?: string
+          luma_url: string
+          memo_signature?: string | null
+          profile_id: string
+          user_id: string
+        }
+        Update: {
+          anchor_last_error?: string | null
+          anchored_at?: string | null
+          created_at?: string
+          id?: string
+          luma_url?: string
+          memo_signature?: string | null
+          profile_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_attendance_claims_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_check_ins: {
         Row: {
           id: string
