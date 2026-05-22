@@ -28,7 +28,7 @@ import SettingsSubNav, {
 } from "@/components/settings/SettingsSubNav";
 import WorksPage from "@/pages/WorksPage";
 import MyVerificationRequests from "@/components/works/MyVerificationRequests";
-import IcsImportCard from "@/components/settings/IcsImportCard";
+import LumaUrlSettingsCard from "@/components/settings/LumaUrlSettingsCard";
 import CreatorTiersCard from "@/components/settings/CreatorTiersCard";
 import LaunchpadIdlSettings from "@/components/launchpad/LaunchpadIdlSettings";
 import LaunchpadIdlVersions from "@/components/launchpad/LaunchpadIdlVersions";
