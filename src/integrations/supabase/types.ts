@@ -5244,6 +5244,19 @@ export type Database = {
           ticket_count: number
         }[]
       }
+      get_my_private_profile_fields: {
+        Args: never
+        Returns: {
+          shipping_address_line1: string
+          shipping_address_line2: string
+          shipping_city: string
+          shipping_country: string
+          shipping_state: string
+          shipping_zip: string
+          wallet_address: string
+          wallet_locked: boolean
+        }[]
+      }
       get_platform_fee_bps: { Args: { _user_id: string }; Returns: number }
       get_profiles_by_ids: {
         Args: { _ids: string[] }
