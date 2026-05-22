@@ -145,6 +145,26 @@ export default function SupportSheet({ open, onOpenChange, creatorId, creatorNam
     return data.clientSecret as string;
   };
 
+  const fetchTipClientSecret = async (): Promise<string> => {
+    if (!user) throw new Error("Sign in required");
+    const returnUrl = `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}&creator=${creatorId}&kind=tip`;
+    const { data, error } = await supabase.functions.invoke("create-tip-checkout", {
+      body: {
+        creatorId,
+        amountCents: Math.round(tipAmount * 100),
+        userId: user.id,
+        email: user.email,
+        message: tipMessage.trim() || undefined,
+        returnUrl,
+        environment: getStripeEnvironment(),
+      },
+    });
+    if (error || !data?.clientSecret) {
+      throw new Error(error?.message || data?.error || "Failed to start checkout");
+    }
+    return data.clientSecret as string;
+  };
+
   const handlePick = (tier: Tier) => {
     if (!user) {
       toast.error("Sign in to subscribe");
@@ -153,6 +173,18 @@ export default function SupportSheet({ open, onOpenChange, creatorId, creatorNam
     setLoadingTier(tier);
     setSelectedTier(tier);
     setTimeout(() => setLoadingTier(null), 400);
+  };
+
+  const handleStartTip = () => {
+    if (!user) {
+      toast.error("Sign in to tip");
+      return;
+    }
+    if (tipAmount < 1 || tipAmount > 500) {
+      toast.error("Tip must be between $1 and $500");
+      return;
+    }
+    setTipCheckoutOpen(true);
   };
 
   return (
