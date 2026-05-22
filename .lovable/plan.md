@@ -1,126 +1,112 @@
+# v10.3 — Simplify & Re-anchor
 
-# v10.2 — Lean into discovery, stop pretending to be a launchpad
-
-Three workstreams, shippable in this order so each one stands on its own.
-
----
-
-## 1. Kill the simulated launchpad (cleanup)
-
-Rip out every page and component that pretends Rhozeland operates a token. Replace with the existing read-only `<TokenDiscoveryChip />`.
-
-**Routes & pages to remove from the app router (`src/App.tsx`):**
-- `/coin/:id` → `LaunchDetailPage` (the Back / Withdraw / "BACKING MOMENTUM" UI in your screenshots)
-- `/launchpad` → already redirects, leave the redirect
-- The `<LaunchpadWalletBridge />` mount (no longer needed)
-
-**Files to delete (code + tests):**
-- `src/pages/LaunchDetailPage.tsx`
-- `src/pages/LaunchpadPage.tsx`, `src/pages/LaunchRedirect.tsx`
-- `src/components/launchpad/` entire folder (DropCoinCard, TradePanel, LaunchpadWalletBridge, MintAddressChip, etc.)
-- `src/components/profile/ProfileCoinTab.tsx` (already unmounted on profile, kill the dead code)
-- `src/components/creators/CreatorReadinessCard.tsx` "investor signal"
-- `src/lib/launchpad-onchain.ts`, `src/lib/launchpad-idl-*.ts`, `src/lib/launchpad-error-decoder.ts`
-- `supabase/functions/mint-work-unlock/` (the simulated-pool variant)
-- `.lovable/launchpad-program-spec.md`, `.lovable/anchor-program-spec.md`
-
-**DB cleanup (migration):**
-- Drop tables: `coin_swap_ledger`, `coin_holdings`, `coin_launches` (cascade), `rhoze_booking_ledger`, `featured_boost_purchases` *(keep — still used by boosts)*
-- Drop RPCs: `swap_rhoze_for_coin`, `get_coin_market`, vanity-CA trigger
-- Drop `works.gating` pool_type `launch` handling — keep `rhoze_pool` only
-
-**Profile / Flow cleanup:**
-- Confirm `<TokenDiscoveryChip creatorId={…} />` is rendered on `ProfileDetailPage` overview header and `FlowCreatorPeek` (already is per memory) — verify the "Launches" card in screenshot 1 is gone.
+The product has drifted into too many surfaces. This loop cuts pages, collapses CTAs into one "Support" story, makes Discover scannable instead of visual-heavy, and turns Luma events into a revenue + on-chain proof funnel.
 
 ---
 
-## 2. Token discovery lane on Discover home
+## 1. Money story — one CTA, layered
 
-Add one horizontal lane on `/discover` between Featured Creators and Fresh Works, titled **"Trending creator tokens"**.
+Every profile gets a single primary **Support {Name}** button. Two smaller chips sit beside it: **Book a call** and **Trade $TICKER** (only if creator has a token).
 
-**Data:** new `<TrendingTokensLane />` component.
-- Query `profiles` where `token_mint_address is not null` AND `show_token_chip != false`.
-- For each mint, batch-fetch live data from **Jupiter Price v3** (`/price/v3?ids=mint1,mint2,…`) — we already proved this works in `useRhozeMarketPrice`. Single request, no rate-limit pain.
-- Fall back to DexScreener `/tokens/v1/solana/{mint}` for 24h volume + price change %.
+- **Support** opens a sheet with three rails, Subscribe is default and visually dominant:
+  1. **Subscribe** — $5 / $10 / $25 monthly via Stripe (existing flow, 85/15 split). Unlocks gated works + DMs.
+  2. **One-off support** — Tip $5 / $10 / custom via Stripe one-time. New flow.
+  3. **Trade their coin** — Link out to pump.fun with read-only Jupiter price chip.
+- **Book a call** — existing `StudioBookingModal`, 10–15% platform fee
+- **Trade $TICKER** — existing `TokenDiscoveryChip` deeplink
 
-**Card UI (Dexscreener-ish, compact):**
-- Avatar + creator name (link → profile)
-- `$TICKER` + truncated CA
-- Live price (USD)
-- 24h % change (green/red)
-- Market cap chip
-- "Trade ↗" → pump.fun deeplink
+Result: one revenue narrative on every profile. No more BackCreatorSheet vs SubscribeSheet vs ProfileCoinTab competing.
 
-**Schema change:** move `mint_address` from `coin_launches` (about to be dropped) to `profiles.token_mint_address text` + `profiles.token_ticker text`. One coin per creator. Settings UI to paste it in (Profile settings → "Link your token" field, validates as Solana pubkey).
+## 2. Nav — kill, merge, move
 
-**Empty state:** lane hidden entirely if no creator has linked a token yet.
+Sidebar becomes 4 tabs:
 
----
-
-## 3. Luma connect — promote and tighten
-
-The plumbing already exists (`profiles.luma_ics_url` + `sync-ics-events` edge fn). What's missing is visibility.
-
-- **Promote the connector to the Profile page** (`ProfileDetailPage` for own profile) — small "Connect your Luma calendar" card under the hero if `luma_ics_url is null`. One field, pastes ICS URL, runs `sync-ics-events`, shows count of synced events.
-- **Settings → Calendar tab** — keep `<IcsImportCard />`, add status row: last sync time, # of imported events, "Sync now" button, "Disconnect" button.
-- **Event create flow (`EventCreatePage`)** — add a top banner: "Already use Luma? Connect once and your events appear here automatically. [Connect]". Skip the form entirely.
-- The ICS sync already handles both free and paid Luma events (it just mirrors them with the `external_url` linking back to Luma for RSVP/checkout). No code change needed there — works as-is.
-
----
-
-## 4. Rhozeland-hosted paid events (Stripe)
-
-For events created natively on Rhozeland (not Luma-mirrored), let the host charge USD via Stripe Embedded Checkout with our tier-based platform fee.
-
-**Schema (migration):**
-```sql
-alter table events
-  add column price_usd_cents int,            -- null = free
-  add column stripe_account_id text;         -- host's Stripe Connect acct (future; null = funds to platform for now)
-
-create table event_tickets (
-  id uuid pk default gen_random_uuid(),
-  event_id uuid references events(id) on delete cascade,
-  buyer_id uuid references auth.users(id),
-  amount_cents int not null,
-  platform_fee_cents int not null,
-  stripe_session_id text not null,
-  stripe_payment_intent text,
-  status text not null default 'pending',   -- pending | paid | refunded
-  created_at timestamptz default now()
-);
--- RLS: buyer + host can read; service role writes.
+```
+Home          → merged Home + Flow feed (subscribed creators first, Fresh rail below)
+Discover      → dense Riipen × Dexscreener table (see §3)
+Conversations → DMs + Inbox as left rail inside this page
+Creator Pass  → unchanged
 ```
 
-**Edge functions:**
-- `create-event-ticket-checkout` — takes `event_id`, resolves host, computes platform fee via `get_platform_fee_bps()`, creates Stripe Embedded session with `application_fee_amount` (or simple platform-collects-all v0), returns clientSecret. Mirrors `create-subscription-checkout` shell.
-- Extend `payments-webhook` to handle `checkout.session.completed` for `mode=payment` with `metadata.kind='event_ticket'` → upsert into `event_tickets`, mark `status='paid'`, anchor ticket via existing `anchor-event-ticket` flow.
+- **Kill Portfolio page** — `/portfolio` redirects to `/profile`. Works grid already lives on profile.
+- **Kill Fan/Creator role switcher** — same UI for everyone, creator tools appear contextually when you have works/events.
+- **Move Inbox under Conversations** — top-bar Inbox sibling removed. Inbox lives as left rail of `/messages`.
+- **Merge Home + Flow** — `/home` shows subscribed creators' posts first, then a "Fresh on Rhozeland" rail. `/flow` stays as the fullscreen swipe surface, entered from a Home button.
 
-**UI:**
-- `EventCreatePage` — add "Price" field (free / USD amount). If priced, show fee preview ("You get $X, Rhozeland fee Y%").
-- `EventDetailPage` — primary CTA becomes "Get ticket — $X" → opens Stripe embedded sheet (same pattern as `<SubscribeToCreatorSheet />`). Existing free RSVP CTA stays for free events.
-- Order confirmation surfaces in `/messages` inbox + email (reuse `event-ticket-confirmation` template).
+## 3. Discover — Riipen × Dexscreener
 
-**Stripe Connect deferred.** For v10.2, funds go to the platform Stripe account and we manually pay out hosts (same model as Spaces today). Note this on `EventCreatePage`. Connect onboarding becomes its own loop later.
+`/discover` becomes a dense, scannable table by default. Columns:
+
+```
+Creator (avatar 32px + name + archetype dot)
+Region
+Subs (count)
+Token ($TICKER · 24h ±%) — null if no token
+Open listings (count)
+Last active
+[Support] button
+```
+
+- **Top 3 editorial cards** float above the table for taste (existing FeaturedCarousel, trimmed)
+- **Kill blurry thumbnail cards**. If a row needs a visual, use a 40px archetype-gradient chip instead of a 400px void.
+- Filter chips stay: Artist · Builder · Influencer · region · "Has token"
+- Listings, open calls, events render as rows in the same table with a type pill (no separate `/market` page — that route redirects to `/discover?kind=listing`)
+
+## 4. Luma embed + on-chain attendance
+
+Calendar sync (ICS import/export) is out. Replace with a thinner, sharper play:
+
+- **Profile field**: "Luma URL" (single input). Saved to `profiles.luma_url`.
+- **Event embed**: when a Luma URL is on a profile, we embed the Luma event card via iframe on a new section of the profile + on `/events`. Zero scraping, zero ticket checkout (phase 1).
+- **On-chain attendance** (phase 1 minimum):
+  - After event end time, attendee taps "Claim attendance" on the event embed
+  - We mint a Solana memo TX with `{event_url, attendee_wallet, claim_ts}` via existing memo-tx infra
+  - Records to new `event_attendance_claims` table → drops $RHOZE reward → counts toward creator's "engagement score" on Discover
+  - Honor system in phase 1 (no QR check-in). If abused, we add Luma OAuth in phase 2 to verify the RSVP.
+- Kill `IcsImportCard`, `sync-ics-events` edge fn, `events.external_source/external_uid` cols are kept but unused.
+
+## 5. What stays the same
+
+- Stripe subscriptions, `creator_subscriptions` table, `is_subscribed_to()`, gated works
+- Token chip + pump.fun deeplink
+- Creator Pass / $RHOZE rewards mechanics
+- Spaces booking + platform fee (10–15%)
+- Archetypes, gradient system, onboarding
 
 ---
 
-## Order of operations
+## Technical details
 
-1. **Migration A** — `profiles.token_mint_address` + `token_ticker` columns; data backfill from `coin_launches` before dropping it.
-2. **Workstream 1** (cleanup) — delete files, drop tables, update router.
-3. **Workstream 2** (Trending tokens lane + profile token-link settings UI).
-4. **Workstream 3** (Luma promotion — pure UI, no schema).
-5. **Migration B** + **Workstream 4** (paid events). This is the cash-flow piece.
+- **DB migration**: `profiles.luma_url text null`. New table `event_attendance_claims (id, user_id, luma_url, profile_id, memo_tx_signature, claimed_at)` with RLS (user_id = auth.uid()).
+- **Edge fns**: new `claim-event-attendance` (writes memo + row + rewards). New `create-tip-checkout` (one-off Stripe Checkout, uses existing `payments-webhook` with a `tip` mode branch).
+- **Components**:
+  - New `<SupportSheet />` (3-rail tabbed sheet) — replaces `<BackCreatorSheet />` + `<SubscribeToCreatorSheet />` usage
+  - New `<DiscoverTable />` — replaces `<CreatorsGrid />` as the Discover default
+  - New `<LumaEventEmbed />` + new `<ClaimAttendanceButton />`
+- **Routes deleted/redirected**:
+  - `/portfolio` → `/profile`
+  - `/market` → `/discover`
+  - `/settings#calendar` removed
+- **Files to retire** (kept on disk for revert):
+  - `BackCreatorSheet.tsx`, `SubscribeToCreatorSheet.tsx` (callers updated to SupportSheet)
+  - `IcsImportCard.tsx`, `sync-ics-events/`
+  - `ConnectMatchDeck.tsx` (Match mode goes with /market)
 
-Each workstream ends in a working app. We can ship #1+#2 first to see the lane live before touching events.
+## Build order (so we can stop anywhere and still have a working app)
 
----
+1. **Nav cuts + redirects** — Portfolio kill, Inbox→Conversations, fan/creator switcher kill, sidebar to 4 tabs *(safe, no data changes)*
+2. **SupportSheet + profile CTA collapse** — biggest UX win, no DB changes beyond reusing existing subscription flow
+3. **Discover table** — replaces current card grid
+4. **Home + Flow merge** — `/home` route reshape
+5. **One-off tip checkout** — new Stripe flow
+6. **Luma embed on profile + events**
+7. **On-chain attendance claim** — DB + edge fn + UI
 
-## Open items I'll handle as I go
+Each step is independently shippable.
 
-- Tax handling on event tickets — I'll ask which option (full compliance vs calculation-only vs none) when we hit workstream #4.
-- Whether to email hosts a weekly payout summary — separate small task once paid events have data.
-- Memory updates: drop launchpad/coin-swap/booking-ledger entries, add `v10.2-discovery`, `v10.2-paid-events`, `v10-token-link`.
+## What this does NOT include
 
-Ready to start with workstream #1?
+- Luma OAuth / verified RSVP (phase 2 if abused)
+- QR check-in
+- Paid Luma ticket reselling through Stripe (you picked embed-only)
+- Any change to projects, smartboards, drop rooms, dashboard
