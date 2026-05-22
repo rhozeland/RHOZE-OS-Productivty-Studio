@@ -622,6 +622,8 @@ const ProfileDetailPage = () => {
               <LumaEventEmbed
                 url={(p as any).luma_url}
                 title={`${p.display_name || p.username || "Creator"}'s upcoming events`}
+                profileId={p.id}
+                profileUserId={p.user_id}
               />
             )}
             {isOwnProfile && !(p as any).luma_url && (
