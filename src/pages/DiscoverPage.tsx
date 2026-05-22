@@ -28,7 +28,7 @@ import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import ConversationsMosaic from "@/components/hub/ConversationsMosaic";
 import CompactFlowFeed from "@/components/hub/CompactFlowFeed";
 import PostMenuButton from "@/components/PostMenuButton";
-import CreatorsGrid from "@/components/discover/CreatorsGrid";
+import DiscoverTable from "@/components/discover/DiscoverTable";
 
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
 import TrendingTokensLane from "@/components/discover/TrendingTokensLane";
@@ -465,7 +465,7 @@ const DiscoverPage = () => {
                 <span className="text-muted-foreground">— tap a chip on a card to filter again</span>
               </div>
             )}
-            <CreatorsGrid archetype={archetype} onArchetypeClick={handleArchetype} />
+            <DiscoverTable archetype={archetype} onArchetypeClick={handleArchetype} />
           </div>
         ) : streamTab === "event" || streamTab === "space" ? (
           <div className="space-y-4">
