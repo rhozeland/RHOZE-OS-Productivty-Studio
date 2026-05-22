@@ -29,6 +29,7 @@ import ConversationsMosaic from "@/components/hub/ConversationsMosaic";
 import CompactFlowFeed from "@/components/hub/CompactFlowFeed";
 import PostMenuButton from "@/components/PostMenuButton";
 import DiscoverTable from "@/components/discover/DiscoverTable";
+import SubscribedFeed from "@/components/discover/SubscribedFeed";
 
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
 import TrendingTokensLane from "@/components/discover/TrendingTokensLane";
@@ -479,9 +480,15 @@ const DiscoverPage = () => {
             <ConversationsMosaic kind={streamTab} category={category} />
           </div>
         ) : (
-          <div className="space-y-4">
-            <CompactFlowFeed />
-            <ConversationsMosaic kind="all" />
+          <div className="space-y-6">
+            <SubscribedFeed />
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold tracking-tight text-foreground/80 uppercase tracking-wider text-[11px]">
+                Fresh on Rhozeland
+              </h3>
+              <CompactFlowFeed />
+              <ConversationsMosaic kind="all" />
+            </div>
           </div>
         )}
       </section>
