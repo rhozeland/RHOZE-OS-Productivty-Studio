@@ -94,13 +94,13 @@ Calendar sync (ICS import/export) is out. Replace with a thinner, sharper play:
 
 ## Build order (so we can stop anywhere and still have a working app)
 
-1. **Nav cuts + redirects** — Portfolio kill, Inbox→Conversations, fan/creator switcher kill, sidebar to 4 tabs *(safe, no data changes)*
-2. **SupportSheet + profile CTA collapse** — biggest UX win, no DB changes beyond reusing existing subscription flow
-3. **Discover table** — replaces current card grid
-4. **Home + Flow merge** — `/home` route reshape
-5. **One-off tip checkout** — new Stripe flow
-6. **Luma embed on profile + events**
-7. **On-chain attendance claim** — DB + edge fn + UI
+1. ✅ Nav cuts + redirects
+2. ✅ SupportSheet + profile CTA collapse
+3. ✅ Discover table
+4. ✅ Home + Flow merge
+5. ✅ One-off tip checkout
+6. ✅ Luma embed on profile
+7. ✅ On-chain attendance claim — `event_attendance_claims` + `claim-event-attendance` edge fn + `<ClaimAttendanceButton />`
 
 Each step is independently shippable.
 
