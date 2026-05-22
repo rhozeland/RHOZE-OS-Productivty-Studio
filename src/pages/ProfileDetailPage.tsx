@@ -612,9 +612,10 @@ const ProfileDetailPage = () => {
               </motion.div>
             )}
 
-            {/* v10 — read-only token discovery chip (renders only if coin has a mint) */}
-            {id && (
-              <TokenDiscoveryChip creatorId={id} className="self-start" />
+            {/* v10 — read-only token discovery chip (renders only if coin has a mint).
+                Use p.id (profiles.id) — the URL param can be either user_id or profile id. */}
+            {p?.id && (
+              <TokenDiscoveryChip creatorId={p.id} className="self-start" />
             )}
 
             {/* v10.3 — Luma event embed (when creator has linked a lu.ma URL) */}
