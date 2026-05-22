@@ -28,7 +28,7 @@ import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
-import SubscribeToCreatorSheet from "@/components/profile/SubscribeToCreatorSheet";
+import SupportSheet from "@/components/profile/SupportSheet";
 import TokenDiscoveryChip from "@/components/profile/TokenDiscoveryChip";
 import { BoostProfileSheet } from "@/components/profile/BoostProfileSheet";
 import CreatorDropsCatalog from "@/components/profile/CreatorDropsCatalog";
