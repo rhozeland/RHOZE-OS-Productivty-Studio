@@ -2664,6 +2664,7 @@ export type Database = {
           is_public: boolean | null
           location: string | null
           luma_ics_url: string | null
+          luma_url: string | null
           mediums: string[] | null
           portfolio_url: string | null
           primary_role: string | null
@@ -2728,6 +2729,7 @@ export type Database = {
           is_public?: boolean | null
           location?: string | null
           luma_ics_url?: string | null
+          luma_url?: string | null
           mediums?: string[] | null
           portfolio_url?: string | null
           primary_role?: string | null
@@ -2792,6 +2794,7 @@ export type Database = {
           is_public?: boolean | null
           location?: string | null
           luma_ics_url?: string | null
+          luma_url?: string | null
           mediums?: string[] | null
           portfolio_url?: string | null
           primary_role?: string | null
