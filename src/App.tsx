@@ -345,9 +345,9 @@ const App = () => (
                 <Route path="/network" element={<Navigate to="/messages" replace />} />
                 <Route path="/subscriptions" element={<SubscriptionsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
-                {/* Fan mode pages (Prompt 3) */}
-                <Route path="/portfolio" element={<ProtectedRoute><PortfolioPage /></ProtectedRoute>} />
-                <Route path="/fan/rewards" element={<ProtectedRoute><FanRewardsPage /></ProtectedRoute>} />
+                {/* v10.3: Fan/Creator switcher killed. Portfolio folded into profile, Fan rewards folded into Creator Pass. */}
+                <Route path="/portfolio" element={<Navigate to="/profile" replace />} />
+                <Route path="/fan/rewards" element={<Navigate to="/credits" replace />} />
                 <Route path="/settings/verification" element={<VerificationPage />} />
                 <Route path="/admin" element={<AdminPage />} />
               </Route>

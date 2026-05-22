@@ -402,21 +402,7 @@ const AppLayout = () => {
               </button>
 
               {user && <PostMenuButton />}
-              {user && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link
-                      to="/messages"
-                      aria-label="Inbox"
-                      className="h-8 w-8 rounded-full border border-border bg-card flex items-center justify-center hover:bg-muted/50 transition-colors"
-                    >
-                      <Inbox className="h-4 w-4 text-muted-foreground" />
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent>Inbox</TooltipContent>
-                </Tooltip>
-              )}
-              {user && <InboxDrawer />}
+              {/* v10.3: top-bar Inbox sibling removed — inbox now lives as the left rail of /messages (Conversations sidebar tab). */}
               {user && <NotificationBell />}
               {user && <WalletButton />}
 
