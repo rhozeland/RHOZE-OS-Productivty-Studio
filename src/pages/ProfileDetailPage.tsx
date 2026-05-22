@@ -676,6 +676,32 @@ const ProfileDetailPage = () => {
                   </button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-4 space-y-4">
+                  {/* Signal breakdown — always visible so viewers see real data */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="rounded-xl border border-border/50 bg-background/40 p-3 text-center">
+                      <p className="text-lg font-semibold text-foreground">{totalProofs}</p>
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground mt-0.5">Works</p>
+                    </div>
+                    <div className="rounded-xl border border-border/50 bg-background/40 p-3 text-center">
+                      <p className="text-lg font-semibold text-foreground">{anchoredCount}</p>
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground mt-0.5">On-chain</p>
+                    </div>
+                    <div className="rounded-xl border border-border/50 bg-background/40 p-3 text-center">
+                      <p className="text-lg font-semibold text-foreground">
+                        {p.verification_status === "verified" ? "Yes" : "—"}
+                      </p>
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground mt-0.5">Verified</p>
+                    </div>
+                  </div>
+
+                  {totalProofs === 0 && (
+                    <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                      {isOwnProfile
+                        ? "Upload works and anchor them on-chain to build your investor signal."
+                        : "This creator hasn't published any on-chain proofs yet."}
+                    </p>
+                  )}
+
                   {isOwnProfile && totalProofs > 0 && anchoredCount < totalProofs && (
                     <div className="flex justify-end">
                       <AnchorButton proofs={proofs!} />
@@ -690,14 +716,12 @@ const ProfileDetailPage = () => {
                         onClick={() => navigate("/settings/verification")}
                       >
                         <Shield className="h-3.5 w-3.5" />
-                        Verify ({totalProofs})
+                        {totalProofs === 0 ? "Start verifying" : `Verify (${totalProofs})`}
                       </Button>
                     </div>
                   )}
-                  {/* v10.2 — CreatorReadinessCard ("investor signal") removed.
-                      Rhozeland is no longer a launchpad. */}
-                  {/* Anchored-proof rollup retained — moved inline above. */}
                 </CollapsibleContent>
+
               </Collapsible>
             </div>
 
