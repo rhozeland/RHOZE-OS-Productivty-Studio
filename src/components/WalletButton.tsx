@@ -11,18 +11,16 @@ const WalletButton = () => {
   const [walletLocked, setWalletLocked] = useState(false);
   const [storedWallet, setStoredWallet] = useState<string | null>(null);
 
-  // Fetch wallet lock status on mount
+  // Fetch wallet lock status on mount (via SECURITY DEFINER RPC — base columns are revoked from authenticated)
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("profiles")
-      .select("wallet_address, wallet_locked")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          setWalletLocked(!!(data as any).wallet_locked);
-          setStoredWallet(data.wallet_address);
+    (supabase as any)
+      .rpc("get_my_private_profile_fields")
+      .then(({ data }: { data: any }) => {
+        const row = Array.isArray(data) ? data[0] : data;
+        if (row) {
+          setWalletLocked(!!row.wallet_locked);
+          setStoredWallet(row.wallet_address);
         }
       });
   }, [user]);
