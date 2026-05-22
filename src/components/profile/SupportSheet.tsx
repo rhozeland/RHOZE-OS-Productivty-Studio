@@ -299,17 +299,61 @@ export default function SupportSheet({ open, onOpenChange, creatorId, creatorNam
                 </p>
               </TabsContent>
 
-              <TabsContent value="tip" className="mt-0">
-                <div className="rounded-xl border border-dashed border-border bg-card/40 p-6 text-center">
-                  <Hourglass className="h-6 w-6 mx-auto mb-3 text-muted-foreground" />
-                  <p className="text-sm font-semibold text-foreground">One-off tips coming soon</p>
-                  <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto leading-relaxed">
-                    We're wiring up one-time Stripe checkouts. Until then, subscribe monthly to support {creatorName} — cancel anytime.
-                  </p>
-                  <Button size="sm" variant="outline" className="mt-4" onClick={() => setTab("subscribe")}>
-                    See subscription tiers
-                  </Button>
+              <TabsContent value="tip" className="mt-0 space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  A one-time thank-you. {creatorName} keeps 85%, Rhozeland 15%. No subscription, no recurring charge.
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {TIP_PRESETS.map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => setTipAmount(amt)}
+                      className={cn(
+                        "rounded-xl border p-3 text-center transition-all",
+                        tipAmount === amt
+                          ? "border-primary bg-primary/10 text-foreground"
+                          : "border-border bg-card/40 hover:border-foreground/30",
+                      )}
+                    >
+                      <div className="font-display font-semibold text-lg">${amt}</div>
+                    </button>
+                  ))}
                 </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                    Custom amount
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={500}
+                      step={1}
+                      value={tipAmount}
+                      onChange={(e) => setTipAmount(Number(e.target.value) || 0)}
+                      className="w-full h-9 rounded-md border border-border bg-background pl-7 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                    Note (optional)
+                  </label>
+                  <textarea
+                    value={tipMessage}
+                    onChange={(e) => setTipMessage(e.target.value.slice(0, 200))}
+                    placeholder={`Say something nice to ${creatorName}…`}
+                    rows={2}
+                    className="w-full rounded-md border border-border bg-background p-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+                  />
+                  <p className="text-[10px] text-muted-foreground text-right">{tipMessage.length}/200</p>
+                </div>
+                <Button onClick={handleStartTip} className="w-full" disabled={tipAmount < 1 || tipAmount > 500}>
+                  <Heart className="h-3.5 w-3.5 mr-1.5" />
+                  Tip ${Number.isFinite(tipAmount) ? tipAmount.toFixed(2) : "0.00"}
+                </Button>
               </TabsContent>
 
               <TabsContent value="trade" className="mt-0">
