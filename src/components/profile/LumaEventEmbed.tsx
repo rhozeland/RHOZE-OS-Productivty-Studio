@@ -1,25 +1,30 @@
 import { ExternalLink, CalendarDays } from "lucide-react";
+import { ClaimAttendanceButton } from "@/components/profile/ClaimAttendanceButton";
 
 /**
  * Embeds a Luma event or calendar via lu.ma's official iframe.
  *
- * Accepts any `https://lu.ma/<slug>` or `https://lu.ma/calendar/<id>` URL.
- * Falls back to a quiet link card if the URL isn't a lu.ma URL.
+ * When `profileId` + `profileUserId` are provided, also renders a phase-1
+ * "I went — claim on-chain" button that mints a Solana memo attestation.
  */
 export function LumaEventEmbed({
   url,
   title = "Upcoming events",
   className = "",
+  profileId,
+  profileUserId,
 }: {
   url: string;
   title?: string;
   className?: string;
+  profileId?: string;
+  profileUserId?: string;
 }) {
   const isLuma = /^https?:\/\/(www\.)?lu\.ma\//i.test(url);
   if (!isLuma) return null;
 
-  // lu.ma supports `?compact=true` for slim embeds on event pages.
   const src = url.includes("?") ? `${url}&compact=true` : `${url}?compact=true`;
+  const showClaim = !!(profileId && profileUserId);
 
   return (
     <section className={`rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm overflow-hidden ${className}`}>
@@ -47,6 +52,18 @@ export function LumaEventEmbed({
           className="w-full h-[520px] border-0"
         />
       </div>
+      {showClaim && (
+        <footer className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-t border-border/40 bg-muted/20">
+          <p className="text-[11px] text-muted-foreground">
+            Went to one of these? Anchor your attendance on Solana + earn $RHOZE.
+          </p>
+          <ClaimAttendanceButton
+            profileId={profileId!}
+            profileUserId={profileUserId!}
+            lumaUrl={url}
+          />
+        </footer>
+      )}
     </section>
   );
 }
