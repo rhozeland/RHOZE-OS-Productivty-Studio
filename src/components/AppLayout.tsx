@@ -6,7 +6,6 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import NotificationBell from "@/components/NotificationBell";
-import NotificationBell from "@/components/NotificationBell";
 import PostMenuButton from "@/components/PostMenuButton";
 import WalletButton from "@/components/WalletButton";
 
