@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Check, Loader2, Lock, MessageSquare, Sparkles, Coins, Heart, ExternalLink, Hourglass } from "lucide-react";
+import { Check, Loader2, Lock, MessageSquare, Sparkles, Coins, Heart, ExternalLink } from "lucide-react";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { supabase } from "@/integrations/supabase/client";
