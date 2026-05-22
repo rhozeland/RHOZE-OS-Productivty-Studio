@@ -5,14 +5,10 @@ import {
   UserPlus,
   Home,
   Compass,
-  Heart,
+  MessageSquare,
   Trophy,
-  User as UserIcon,
   ShieldCheck,
   Flame,
-  Briefcase,
-  Rss,
-  Gift,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -21,7 +17,6 @@ import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useCreatorXP } from "@/hooks/useCreatorXP";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveNavLink } from "@/hooks/useNavLink";
-import { useActiveRole } from "@/hooks/useActiveRole";
 import {
   Sidebar,
   SidebarContent,
@@ -35,27 +30,18 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
-import SidebarRoleSwitcher from "@/components/SidebarRoleSwitcher";
 
-// v9.9.1: 4-tab sidebar (creator view — the default).
-//   Home          → Discover feed (artists / works)
-//   Discover      → Marketplace (Connect room — hire/spaces/calls/events)
-//   Support       → supporter inbox
+// v10.3: 4-tab sidebar — no Fan/Creator switcher.
+//   Home          → personalized feed (subscribed creators + Fresh) — DashboardPage for now,
+//                   reshaped in step 4
+//   Discover      → dense Riipen × Dexscreener table (DiscoverPage)
+//   Conversations → DMs + inbox as left rail (MessagesPage)
 //   Creator Pass  → badges, rank, $RHOZE portfolio
-const creatorPillarItems = [
-  { icon: Home, label: "Home", path: "/discover" },
-  { icon: Heart, label: "My Work", path: "/my-work", badgeKey: "pendingInquiries" as const },
-  { icon: Compass, label: "Discover", path: "/market" },
-  { icon: Trophy, label: "My Pass", path: "/credits" },
-];
-
-// Fan-mode nav (Prompt 3). Same component styling as creator items.
-const fanPillarItems = [
-  { icon: Home, label: "Home", path: "/discover" },
-  { icon: Compass, label: "Discover", path: "/market" },
-  { icon: Briefcase, label: "Portfolio", path: "/portfolio" },
-  { icon: Rss, label: "Feed", path: "/dashboard" },
-  { icon: Gift, label: "Rewards", path: "/fan/rewards" },
+const pillarItems = [
+  { icon: Home, label: "Home", path: "/home" },
+  { icon: Compass, label: "Discover", path: "/discover" },
+  { icon: MessageSquare, label: "Conversations", path: "/messages", badgeKey: "pendingInquiries" as const },
+  { icon: Trophy, label: "Creator Pass", path: "/credits" },
 ];
 
 const AppSidebar = () => {
@@ -66,13 +52,11 @@ const AppSidebar = () => {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const { data: xp } = useCreatorXP();
-  const [activeRole] = useActiveRole();
-  const pillarItems = activeRole === "fan" ? fanPillarItems : creatorPillarItems;
 
   // Pending inquiry count for the My Work nav badge (creator mode).
   const { data: pendingInquiries = 0 } = useQuery({
     queryKey: ["sidebar-pending-inquiries", user?.id],
-    enabled: !!user?.id && activeRole !== "fan",
+    enabled: !!user?.id,
     queryFn: async () => {
       const { count } = await supabase
         .from("listing_inquiries")
@@ -177,8 +161,7 @@ const AppSidebar = () => {
       </Link>
 
       <SidebarContent className="px-2 pt-3 space-y-2">
-        <SidebarRoleSwitcher collapsed={collapsed} />
-        {renderGroup(pillarItems, { label: "Explore" })}
+        {renderGroup(pillarItems)}
         {personalItems.length > 0 && renderGroup(personalItems)}
       </SidebarContent>
 

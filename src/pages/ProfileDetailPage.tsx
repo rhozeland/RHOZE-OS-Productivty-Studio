@@ -28,7 +28,7 @@ import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
-import SubscribeToCreatorSheet from "@/components/profile/SubscribeToCreatorSheet";
+import SupportSheet from "@/components/profile/SupportSheet";
 import TokenDiscoveryChip from "@/components/profile/TokenDiscoveryChip";
 import { BoostProfileSheet } from "@/components/profile/BoostProfileSheet";
 import CreatorDropsCatalog from "@/components/profile/CreatorDropsCatalog";
@@ -539,11 +539,11 @@ const ProfileDetailPage = () => {
                     onClick={() => user ? setSubscribeOpen(true) : navigate("/auth")}
                     className="self-start gap-1.5 bg-gradient-to-r from-primary to-fuchsia-500 hover:opacity-90 text-primary-foreground shadow-lg"
                   >
-                    <Sparkles className="h-4 w-4" />
-                    Subscribe — from $5/mo
+                    <Heart className="h-4 w-4" />
+                    Support {p.display_name || p.username || "creator"}
                   </Button>
                   <span className="text-[11px] text-muted-foreground max-w-[280px] leading-snug">
-                    Unlock private posts, DMs, and behind-the-scenes. Cancel anytime.
+                    Subscribe, tip, or trade their token — all in one place.
                   </span>
                 </div>
 
@@ -602,8 +602,8 @@ const ProfileDetailPage = () => {
                   size="lg"
                   className="gap-1.5 w-full mt-4"
                 >
-                  <Sparkles className="h-4 w-4" />
-                  Subscribe — from $5/mo
+                  <Heart className="h-4 w-4" />
+                  Support {p.display_name || p.username || "creator"}
                 </Button>
                 <p className="mt-3 text-[11px] text-muted-foreground text-center">
                   Cancel anytime. {p.display_name || "Creator"} keeps 85%.
@@ -883,9 +883,9 @@ const ProfileDetailPage = () => {
         </div>
 
 
-        {/* v10 — Subscribe to creator (primary monetization) */}
+        {/* v10.3 — unified Support sheet (Subscribe / Tip / Trade) */}
         {!isOwnProfile && id && (
-          <SubscribeToCreatorSheet
+          <SupportSheet
             open={subscribeOpen}
             onOpenChange={setSubscribeOpen}
             creatorId={id}

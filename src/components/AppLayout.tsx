@@ -6,7 +6,6 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import NotificationBell from "@/components/NotificationBell";
-import InboxDrawer from "@/components/InboxDrawer";
 import PostMenuButton from "@/components/PostMenuButton";
 import WalletButton from "@/components/WalletButton";
 
@@ -14,8 +13,8 @@ import WelcomeModal from "@/components/onboarding/WelcomeModal";
 import RoomsBottomNav from "@/components/RoomsBottomNav";
 // FlowLauncher (floating FAB) retired — Flow is now reachable via the Hub view toggle + HubFlowWidget.
 // DockBar retired in v7 (post phase-2) — navigation happens via the left side nav + global ⌘K search.
-import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Settings as SettingsIcon, LogOut, Coins, ChevronDown, Inbox } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+// v10.3: top-bar Inbox removed — inbox lives inside /messages as the Conversations left rail.
+import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Settings as SettingsIcon, LogOut, Coins, ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -402,21 +401,7 @@ const AppLayout = () => {
               </button>
 
               {user && <PostMenuButton />}
-              {user && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link
-                      to="/messages"
-                      aria-label="Inbox"
-                      className="h-8 w-8 rounded-full border border-border bg-card flex items-center justify-center hover:bg-muted/50 transition-colors"
-                    >
-                      <Inbox className="h-4 w-4 text-muted-foreground" />
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent>Inbox</TooltipContent>
-                </Tooltip>
-              )}
-              {user && <InboxDrawer />}
+              {/* v10.3: top-bar Inbox sibling removed — inbox now lives as the left rail of /messages (Conversations sidebar tab). */}
               {user && <NotificationBell />}
               {user && <WalletButton />}
 
