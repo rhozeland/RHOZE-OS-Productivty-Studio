@@ -21,12 +21,9 @@ const WalletInfoPanel = () => {
     queryKey: ["wallet-panel-profile", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("wallet_address")
-        .eq("user_id", user!.id)
-        .maybeSingle();
-      return data as { wallet_address: string | null } | null;
+      const { data } = await (supabase as any).rpc("get_my_private_profile_fields");
+      const row = Array.isArray(data) ? data[0] : data;
+      return row ? { wallet_address: row.wallet_address as string | null } : null;
     },
   });
 
