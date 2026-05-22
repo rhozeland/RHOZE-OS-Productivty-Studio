@@ -1108,7 +1108,7 @@ const SettingsPage = () => {
       </div>
     ),
     shipping: renderShipping,
-    calendar: () => <IcsImportCard />,
+    calendar: () => <LumaUrlSettingsCard />,
     notifications: renderNotifications,
     security: renderSecurity,
     account: renderAccount,
