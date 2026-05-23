@@ -82,6 +82,22 @@ const DEFAULT_LAYOUT: DashboardLayout = {
 // City lists) is unmounted from the Studio page. Flip to `true` to revive.
 const SHOW_PUBLIC_NETWORK = false;
 
+/** Friendly preview for "latest message" tile — hides rich envelopes. */
+function prettifyMessagePreview(raw?: string | null): string {
+  if (!raw) return "No messages yet";
+  const s = raw.trim();
+  if (s.startsWith("[FLOW:") || s.startsWith('{"type":"flow_share"')) return "Shared a Flow item";
+  if (s.startsWith("[FILE:")) return "Sent a file";
+  if (s.startsWith("[SMARTBOARD:")) return "Shared a Smartboard";
+  if (s.startsWith("[PROFILE:")) return "Shared a profile";
+  if (s.startsWith("[LISTING:")) return "Shared a listing";
+  if (s.startsWith("[EVENT:")) return "Shared an event";
+  if (s.startsWith("[LINK:")) return "Sent a link";
+  if (s.startsWith("[STAFF_INVITE:")) return "Sent a staff invitation";
+  if (s.startsWith("[QUOTE:")) return "Sent a quote";
+  return s;
+}
+
 const DashboardPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
