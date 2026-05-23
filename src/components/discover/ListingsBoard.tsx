@@ -35,23 +35,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const TYPE_META: Record<string, { label: string; icon: any; accent: string }> = {
-  service:           { label: "Offering",  icon: Briefcase, accent: "hsl(var(--primary))" },
-  digital_product:   { label: "Offering",  icon: Briefcase, accent: "hsl(var(--primary))" },
-  physical_product:  { label: "Offering",  icon: Briefcase, accent: "hsl(var(--primary))" },
-  project_request:   { label: "Open call", icon: Search,    accent: "hsl(38 92% 55%)" },
-  collaboration:     { label: "Collab",    icon: Users,     accent: "hsl(292 84% 61%)" },
-};
-
-type TypeFilter = "all" | "project_request" | "service" | "collaboration";
-
-const TYPE_TABS: { id: TypeFilter; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "project_request", label: "Open calls" },
-  { id: "service", label: "Offerings" },
-  { id: "collaboration", label: "Collabs" },
-];
+import { listingMeta } from "@/lib/listing-types";
 
 const ListingsBoard = () => {
   const navigate = useNavigate();
