@@ -740,53 +740,6 @@ const DashboardPage = () => {
   const visibleSections = sectionOrder.filter((s) => !hiddenSections.includes(s));
 
   return (
-    <div className="max-w-5xl mx-auto pb-24 space-y-12">
-      {/* ─── Greeting strip ─────────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="pt-2"
-      >
-        {!user && (
-          <p className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-2">
-            Get discovered. Get supported. On-chain.
-          </p>
-        )}
-        <h1 className="font-display text-3xl sm:text-4xl md:text-5xl leading-[1.1] text-foreground">
-          {(() => {
-            const grad = todayGradient();
-            const gradStyle = {
-              backgroundImage: grad.text,
-              WebkitBackgroundClip: "text" as const,
-              backgroundClip: "text" as const,
-              WebkitTextFillColor: "transparent" as const,
-              color: "transparent",
-            };
-            return user ? (
-              <>
-                {greeting()},{" "}
-                <span className="inline-block" style={gradStyle} data-rhoze-gradient={grad.id}>
-                  {firstName}.
-                </span>
-              </>
-            ) : (
-              <>
-                Two networks.{" "}
-                <span className="inline-block" style={gradStyle} data-rhoze-gradient={grad.id}>
-                  One creative space.
-                </span>
-              </>
-            );
-          })()}
-        </h1>
-        <p className="text-sm text-muted-foreground mt-3 max-w-xl">
-          {user
-            ? (unreadCount ?? 0) > 0
-              ? `${unreadCount} unread.`
-              : isFan
-                ? "Posts and updates from creators you follow and support."
-                : "Your workspace. Drafts, drops, bookings, and what's next."
-  return (
     <div className="max-w-6xl mx-auto pb-24 space-y-16 px-1">
       {/* Guests stop here (preview shown above already covers the personal view) */}
       {!user && (
