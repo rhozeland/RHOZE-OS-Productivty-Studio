@@ -11,9 +11,10 @@ import WalletButton from "@/components/WalletButton";
 
 import WelcomeModal from "@/components/onboarding/WelcomeModal";
 import RoomsBottomNav from "@/components/RoomsBottomNav";
+import InboxDrawer from "@/components/InboxDrawer";
 // FlowLauncher (floating FAB) retired — Flow is now reachable via the Hub view toggle + HubFlowWidget.
 // DockBar retired in v7 (post phase-2) — navigation happens via the left side nav + global ⌘K search.
-// v10.3: top-bar Inbox removed — inbox lives inside /messages as the Conversations left rail.
+// v10.4: top-bar Inbox restored as a slide-out drawer sibling to NotificationBell (with unread ticker).
 import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Settings as SettingsIcon, LogOut, Coins, ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -401,7 +402,7 @@ const AppLayout = () => {
               </button>
 
               {user && <PostMenuButton />}
-              {/* v10.3: top-bar Inbox sibling removed — inbox now lives as the left rail of /messages (Conversations sidebar tab). */}
+              {user && <InboxDrawer />}
               {user && <NotificationBell />}
               {user && <WalletButton />}
 

@@ -32,7 +32,7 @@ import DiscoverTable from "@/components/discover/DiscoverTable";
 import SubscribedFeed from "@/components/discover/SubscribedFeed";
 
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
-import TrendingTokensLane from "@/components/discover/TrendingTokensLane";
+// TrendingTokensLane removed from Discover — token discovery now lives on the Connect page.
 import DiscoverEventsGrid from "@/components/discover/DiscoverEventsGrid";
 import EventCategoryPills from "@/components/discover/EventCategoryPills";
 import {
@@ -396,8 +396,9 @@ const DiscoverPage = () => {
       {/* ─── Trending artists (self-gated by liquidity) ───────────── */}
       <TrendingArtistsLane marketFilter={marketFilter} />
 
-      {/* ─── Trending creator tokens (Dexscreener-style, self-gated) ─ */}
-      <TrendingTokensLane />
+      {/* Trending creator tokens lane removed — discovery of tokens now lives on the Connect (Find collaborators) page only. */}
+
+
 
 
       {/* ─── Feed ───────────────────────────────────────────────────── */}
