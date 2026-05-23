@@ -42,7 +42,7 @@ import ExploreStudiosPage from "@/pages/ExploreStudiosPage";
 import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import OnboardingPage from "@/pages/OnboardingPage";
 import RoleSelectPage from "@/pages/RoleSelectPage";
-// v10.3: PortfolioPage + FanRewardsPage no longer routed; routes redirect to /profile and /credits.
+import PortfolioPage from "@/pages/PortfolioPage"; // v10.4: restored as a top-level sidebar destination.
 import MarketplacePage from "@/pages/MarketplacePage";
 import CreatorsPage from "@/pages/CreatorsPage";
 import HomePage from "@/pages/HomePage";
