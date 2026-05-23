@@ -5,7 +5,7 @@ import AppSidebar from "@/components/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
-import NotificationBell from "@/components/NotificationBell";
+// NotificationBell retired v10.5 — notifications now live inside InboxDrawer tabs.
 import PostMenuButton from "@/components/PostMenuButton";
 import WalletButton from "@/components/WalletButton";
 
@@ -402,8 +402,8 @@ const AppLayout = () => {
               </button>
 
               {user && <PostMenuButton />}
+              {/* Inbox drawer merges messages + notifications (v10.5) */}
               {user && <InboxDrawer />}
-              {user && <NotificationBell />}
               {user && <WalletButton />}
 
               {/* Profile dropdown — top-right */}
