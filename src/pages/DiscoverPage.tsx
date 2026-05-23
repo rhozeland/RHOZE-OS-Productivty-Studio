@@ -482,16 +482,20 @@ const DiscoverPage = () => {
             <ConversationsMosaic kind={streamTab} category={category} />
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <SubscribedFeed />
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold tracking-tight text-foreground/80 uppercase tracking-wider text-[11px]">
-                Fresh on Rhozeland
-              </h3>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <h3 className="font-display text-xs font-semibold tracking-[0.18em] uppercase text-foreground/70 shrink-0">
+                  Fresh on Rhozeland
+                </h3>
+                <div className="h-px flex-1 bg-border" />
+              </div>
               <CompactFlowFeed />
               <ConversationsMosaic kind="all" />
             </div>
           </div>
+
         )}
       </section>
 
