@@ -1651,59 +1651,6 @@ const DashboardPage = () => {
       )}
       </>)}
 
-      {/* Guests stop here (preview shown above already covers the personal view) */}
-      {!user && <GuestDashboardPreview />}
-
-      {/* ─── Personal stat strip + sections (auth only) ─────────────── */}
-      {user && (
-        <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-[1px] bg-border rounded-2xl overflow-hidden">
-            {/* Active Projects → Conversations / Projects tab */}
-            <Link to="/messages?tab=projects" className="bg-card p-5 hover:bg-muted/50 transition-colors group">
-              <FolderKanban className="h-4 w-4 text-muted-foreground mb-3 group-hover:text-foreground transition-colors" />
-              <p className="font-display text-3xl text-foreground tabular-nums">{activeProjects}</p>
-              <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">Active Projects</p>
-            </Link>
-
-            {/* Latest Message — popover with condensed recent messages */}
-            <LatestMessagePopover
-              latestMessage={latestMessage}
-              unreadCount={unreadCount ?? 0}
-              recentMessages={recentMessages ?? []}
-              senderMap={senderMap}
-            />
-
-            {/* Upcoming Events — routes into Discover events */}
-            {(events?.length ?? 0) > 0 ? (
-              <Link to="/discover" className="bg-card p-5 hover:bg-muted/50 transition-colors group">
-                <Calendar className="h-4 w-4 text-muted-foreground mb-3 group-hover:text-foreground transition-colors" />
-                <p className="font-display text-3xl text-foreground tabular-nums">{events!.length}</p>
-                <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">Upcoming Events</p>
-              </Link>
-            ) : (
-              <div className="bg-card p-5 flex flex-col">
-                <Calendar className="h-4 w-4 text-muted-foreground mb-3" />
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-body mb-2">Upcoming</p>
-                <Link
-                  to="/discover"
-                  className="inline-flex items-center justify-center h-8 rounded-full border border-border hover:bg-muted text-xs font-medium font-body text-foreground transition-colors px-3 self-start"
-                >
-                  Find events →
-                </Link>
-              </div>
-            )}
-
-            {/* $RHOZE Earned */}
-            <Link to="/credits" className="bg-card p-5 hover:bg-muted/50 transition-colors group">
-              <Sparkles className="h-4 w-4 text-muted-foreground mb-3 group-hover:text-foreground transition-colors" />
-              <p className="font-display text-3xl text-foreground tabular-nums">
-                {Math.round(rhozeBalance).toLocaleString()}
-              </p>
-              <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">$RHOZE Earned</p>
-            </Link>
-          </div>
-        </>
-      )}
     </div>
   );
 };
