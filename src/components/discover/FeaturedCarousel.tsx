@@ -192,22 +192,41 @@ const FeaturedCarousel = ({ slides }: FeaturedCarouselProps) => {
         </motion.div>
       </AnimatePresence>
 
-      {/* Dot indicators */}
+      {/* Manual navigation — prev/next chevrons + dot bulletins */}
       {slides.length > 1 && (
-        <div className="absolute bottom-3 right-4 flex items-center gap-1.5 z-10">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setIndex(i)}
-              className={cn(
-                "h-1.5 rounded-full transition-all",
-                i === index ? "w-6 bg-foreground" : "w-1.5 bg-foreground/40 hover:bg-foreground/70",
-              )}
-              aria-label={`Show slide ${i + 1}`}
-            />
-          ))}
-        </div>
+        <>
+          <button
+            type="button"
+            onClick={() => go(-1)}
+            aria-label="Previous slide"
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full bg-background/70 backdrop-blur border border-border flex items-center justify-center text-foreground hover:bg-background transition-all opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => go(1)}
+            aria-label="Next slide"
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full bg-background/70 backdrop-blur border border-border flex items-center justify-center text-foreground hover:bg-background transition-all opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+          <div className="absolute bottom-3 right-4 flex items-center gap-1.5 z-10">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setIndex(i)}
+                className={cn(
+                  "h-1.5 rounded-full transition-all",
+                  i === index ? "w-6 bg-foreground" : "w-1.5 bg-foreground/40 hover:bg-foreground/70",
+                )}
+                aria-label={`Show slide ${i + 1}`}
+              />
+            ))}
+          </div>
+        </>
       )}
+
     </div>
   );
 };
