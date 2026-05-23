@@ -149,27 +149,9 @@ const ListingsBoard = () => {
         </Select>
       </div>
 
-      {/* Type tabs */}
-      <div className="flex flex-wrap gap-1.5">
-        {TYPE_TABS.map((t) => {
-          const active = typeFilter === t.id;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTypeFilter(t.id)}
-              className={cn(
-                "rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors",
-                active
-                  ? "bg-foreground text-background border-foreground"
-                  : "border-border bg-background/60 text-muted-foreground hover:text-foreground hover:border-foreground/30",
-              )}
-            >
-              {t.label}
-            </button>
-          );
-        })}
-        <span className="ml-auto self-center text-[11px] text-muted-foreground tabular-nums">
+      {/* Result count (type filter retired in v11.1 — unified listing feed) */}
+      <div className="flex justify-end">
+        <span className="text-[11px] text-muted-foreground tabular-nums">
           {filtered.length} result{filtered.length === 1 ? "" : "s"}
         </span>
       </div>
