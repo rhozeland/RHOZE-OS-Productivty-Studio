@@ -402,7 +402,7 @@ const AppLayout = () => {
               </button>
 
               {user && <PostMenuButton />}
-              {/* v10.3: top-bar Inbox sibling removed — inbox now lives as the left rail of /messages (Conversations sidebar tab). */}
+              {user && <InboxDrawer />}
               {user && <NotificationBell />}
               {user && <WalletButton />}
 
