@@ -429,14 +429,11 @@ const FlowModePage = () => {
         setFeedScope(finalScope);
         setSelectedCategories(finalScope === "all" ? CATEGORIES : finalPrefs);
 
-        const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${calibrationKey}`);
-        if (!tutorialSeen) {
-          setShowTutorialOverlay(true);
-          tutorialTimerRef.current = setTimeout(() => {
-            setShowTutorialOverlay(false);
-            localStorage.setItem(`flow-tutorial-seen-${calibrationKey}`, "true");
-          }, 8000);
-        }
+        // v10.3 — always show the swipe tutorial on Flow entry. Users
+        // expanding into Flow from Discover get an immediate refresher
+        // on the gesture grammar; tap-to-dismiss handles itself.
+        setShowTutorialOverlay(true);
+
       } else if (!user) {
         // Guests skip calibration entirely — show the full global feed immediately.
         setPreferredCategories(CATEGORIES);
