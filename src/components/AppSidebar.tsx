@@ -54,20 +54,8 @@ const AppSidebar = () => {
   const collapsed = state === "collapsed";
   const { data: xp } = useCreatorXP();
 
-  // Pending inquiry count for the My Work nav badge (creator mode).
-  const { data: pendingInquiries = 0 } = useQuery({
-    queryKey: ["sidebar-pending-inquiries", user?.id],
-    enabled: !!user?.id,
-    queryFn: async () => {
-      const { count } = await supabase
-        .from("listing_inquiries")
-        .select("id", { count: "exact", head: true })
-        .eq("receiver_id", user!.id)
-        .eq("status", "pending");
-      return count ?? 0;
-    },
-  });
-  const badgeCounts: Record<string, number> = { pendingInquiries: Number(pendingInquiries) };
+  // (pending-inquiries badge moved into InboxDrawer along with the Conversations entry.)
+  const badgeCounts: Record<string, number> = {};
 
 
   const handleNavClick = () => {
