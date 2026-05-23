@@ -411,58 +411,8 @@ const CreatorPassCard = () => {
       </motion.div>
       </Tilt3D>
 
-      {/* ── Studio activity (relocated from My Studio) ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="grid grid-cols-3 gap-[1px] bg-border rounded-2xl overflow-hidden"
-      >
-        {/* Active projects — always shown */}
-        <Link to="/projects" className="bg-card p-4 hover:bg-muted/50 transition-colors group">
-          <FolderKanban className="h-4 w-4 text-muted-foreground mb-2 group-hover:text-foreground transition-colors" />
-          <p className="font-display text-2xl text-foreground">{studioStats?.activeProjects ?? 0}</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider font-body">Active Projects</p>
-        </Link>
+      {/* Studio activity strip relocated to Home (DashboardPage) in v10.3. */}
 
-        {/* Unread → Latest message preview when 0 */}
-        <Link to="/messages" className="bg-card p-4 hover:bg-muted/50 transition-colors group">
-          <MessageSquare className="h-4 w-4 text-muted-foreground mb-2 group-hover:text-foreground transition-colors" />
-          {(studioStats?.unread ?? 0) > 0 ? (
-            <>
-              <p className="font-display text-2xl text-foreground">{studioStats?.unread}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider font-body">Unread</p>
-            </>
-          ) : (
-            <>
-              <p className="font-body text-sm text-foreground line-clamp-2 leading-snug">
-                {prettifyMessagePreview(studioStats?.latestMessage)}
-              </p>
-              <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">Latest message</p>
-            </>
-          )}
-        </Link>
-
-        {/* Upcoming → Find events button when 0 */}
-        {(studioStats?.upcoming ?? 0) > 0 ? (
-          <Link to="/calendar" className="bg-card p-4 hover:bg-muted/50 transition-colors group">
-            <Calendar className="h-4 w-4 text-muted-foreground mb-2 group-hover:text-foreground transition-colors" />
-            <p className="font-display text-2xl text-foreground">{studioStats?.upcoming}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider font-body">Upcoming</p>
-          </Link>
-        ) : (
-          <div className="bg-card p-4 flex flex-col">
-            <Calendar className="h-4 w-4 text-muted-foreground mb-2" />
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-body mb-2">Upcoming</p>
-            <Link
-              to="/events"
-              className="inline-flex items-center justify-center h-8 rounded-full border border-border hover:bg-muted text-xs font-medium font-body text-foreground transition-colors px-3"
-            >
-              Find events →
-            </Link>
-          </div>
-        )}
-      </motion.div>
 
       {/* ── In-app $RHOZE Balance + Claim ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
