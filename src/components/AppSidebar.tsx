@@ -39,8 +39,8 @@ import rhozelandLogo from "@/assets/rhozeland-logo.png";
 //   Conversations → DMs + inbox as left rail (MessagesPage)
 //   Creator Pass  → badges, rank, $RHOZE portfolio
 const pillarItems = [
-  { icon: Home, label: "Feed", path: "/home" },
   { icon: Compass, label: "Discover", path: "/discover" },
+  { icon: Home, label: "Feed", path: "/dashboard" },
   { icon: Briefcase, label: "Portfolio", path: "/portfolio" },
   { icon: Trophy, label: "Creator Pass", path: "/credits" },
 ];

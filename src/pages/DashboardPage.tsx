@@ -50,6 +50,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import GuestDashboardPreview from "@/components/guest/GuestDashboardPreview";
 import FirstRunChecklist from "@/components/dashboard/FirstRunChecklist";
 import CreatorHomeStatsStrip from "@/components/dashboard/CreatorHomeStatsStrip";
@@ -702,9 +703,11 @@ const DashboardPage = () => {
         animate={{ opacity: 1 }}
         className="pt-2"
       >
-        <p className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-2">
-          {user ? "Your Feed" : "Get discovered. Get supported. On-chain."}
-        </p>
+        {!user && (
+          <p className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-2">
+            Get discovered. Get supported. On-chain.
+          </p>
+        )}
         <h1 className="font-display text-3xl sm:text-4xl md:text-5xl leading-[1.1] text-foreground">
           {(() => {
             const grad = todayGradient();
@@ -1354,36 +1357,24 @@ const DashboardPage = () => {
       {user && (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-[1px] bg-border rounded-2xl overflow-hidden">
-            {/* Active Projects */}
-            <Link to="/my-work?tab=projects" className="bg-card p-5 hover:bg-muted/50 transition-colors group">
+            {/* Active Projects → Conversations / Projects tab */}
+            <Link to="/messages?tab=projects" className="bg-card p-5 hover:bg-muted/50 transition-colors group">
               <FolderKanban className="h-4 w-4 text-muted-foreground mb-3 group-hover:text-foreground transition-colors" />
               <p className="font-display text-3xl text-foreground tabular-nums">{activeProjects}</p>
               <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">Active Projects</p>
             </Link>
 
-            {/* Latest Message — snippet preferred, falls back to unread count or empty state */}
-            <Link to="/messages" className="bg-card p-5 hover:bg-muted/50 transition-colors group flex flex-col">
-              <MessageSquare className="h-4 w-4 text-muted-foreground mb-3 group-hover:text-foreground transition-colors" />
-              {latestMessage ? (
-                <>
-                  <p className="font-body text-sm text-foreground line-clamp-2 leading-snug">
-                    {prettifyMessagePreview(latestMessage)}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">
-                    {(unreadCount ?? 0) > 0 ? `${unreadCount} unread` : "Latest Message"}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="font-display text-3xl text-foreground tabular-nums">{unreadCount ?? 0}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">Unread Messages</p>
-                </>
-              )}
-            </Link>
+            {/* Latest Message — popover with condensed recent messages */}
+            <LatestMessagePopover
+              latestMessage={latestMessage}
+              unreadCount={unreadCount ?? 0}
+              recentMessages={recentMessages ?? []}
+              senderMap={senderMap}
+            />
 
-            {/* Upcoming Events — count when present, Find events CTA when zero */}
+            {/* Upcoming Events — routes into Discover events */}
             {(events?.length ?? 0) > 0 ? (
-              <Link to="/calendar" className="bg-card p-5 hover:bg-muted/50 transition-colors group">
+              <Link to="/discover" className="bg-card p-5 hover:bg-muted/50 transition-colors group">
                 <Calendar className="h-4 w-4 text-muted-foreground mb-3 group-hover:text-foreground transition-colors" />
                 <p className="font-display text-3xl text-foreground tabular-nums">{events!.length}</p>
                 <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">Upcoming Events</p>
@@ -1393,7 +1384,7 @@ const DashboardPage = () => {
                 <Calendar className="h-4 w-4 text-muted-foreground mb-3" />
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-body mb-2">Upcoming</p>
                 <Link
-                  to="/events"
+                  to="/discover"
                   className="inline-flex items-center justify-center h-8 rounded-full border border-border hover:bg-muted text-xs font-medium font-body text-foreground transition-colors px-3 self-start"
                 >
                   Find events →
@@ -1410,111 +1401,95 @@ const DashboardPage = () => {
               <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">$RHOZE Earned</p>
             </Link>
           </div>
-
-
-          {/* Studio sessions */}
-          {studioBookings && studioBookings.length > 0 && (
-            <section>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-display text-xl text-foreground">Upcoming Sessions</h2>
-                <Link
-                  to="/studios"
-                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-body transition-colors"
-                >
-                  View all <ArrowRight className="h-3 w-3" />
-                </Link>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-[1px] bg-border rounded-lg overflow-hidden">
-                {studioBookings.map((booking: any) => (
-                  <Link
-                    key={booking.id}
-                    to={`/studios/${booking.studio_id}`}
-                    className="bg-card p-5 hover:bg-muted/50 transition-colors group"
-                  >
-                    <Building2 className="h-5 w-5 text-muted-foreground mb-3" />
-                    <p className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors truncate font-body">
-                      {booking.studios?.name || "Studio"}
-                    </p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1 font-body">
-                      <Clock className="h-3 w-3" />
-                      {format(new Date(booking.start_time), "MMM d · h:mm a")}
-                    </p>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Customizer toggle */}
-          <div className="flex items-center justify-end">
-            <button
-              onClick={() => setShowCustomizer(!showCustomizer)}
-              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 font-body transition-colors"
-            >
-              <Settings2 className="h-3.5 w-3.5" />
-              Customize sections
-            </button>
-          </div>
-
-          <AnimatePresence>
-            {showCustomizer && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="p-4 rounded-lg border border-border bg-card overflow-hidden"
-              >
-                <p className="text-sm font-medium text-foreground mb-1 font-body">
-                  Customize personal sections
-                </p>
-                <p className="text-xs text-muted-foreground mb-4 font-body">
-                  Drag to reorder · Toggle visibility
-                </p>
-                <Reorder.Group
-                  axis="y"
-                  values={sectionOrder}
-                  onReorder={handleReorder}
-                  className="space-y-2"
-                >
-                  {sectionOrder.map((section) => {
-                    const meta = SECTION_META[section];
-                    if (!meta) return null;
-                    const isHidden = hiddenSections.includes(section);
-                    const SectionIcon = meta.icon;
-                    return (
-                      <Reorder.Item
-                        key={section}
-                        value={section}
-                        className="flex items-center gap-3 p-3 rounded-md border border-border bg-background cursor-grab active:cursor-grabbing"
-                      >
-                        <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <SectionIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <span className="text-sm font-body font-medium text-foreground flex-1">
-                          {meta.label}
-                        </span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleSection(section);
-                          }}
-                          className="text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          {isHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </Reorder.Item>
-                    );
-                  })}
-                </Reorder.Group>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {visibleSections.map((key) => sectionMap[key]?.())}
-          </div>
         </>
       )}
     </div>
+  );
+};
+
+/** Condensed Latest Message tile — opens a popover with recent unread messages. */
+const LatestMessagePopover = ({
+  latestMessage,
+  unreadCount,
+  recentMessages,
+  senderMap,
+}: {
+  latestMessage: string | null;
+  unreadCount: number;
+  recentMessages: any[];
+  senderMap: Map<string, any>;
+}) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="bg-card p-5 hover:bg-muted/50 transition-colors group flex flex-col text-left w-full"
+        >
+          <MessageSquare className="h-4 w-4 text-muted-foreground mb-3 group-hover:text-foreground transition-colors" />
+          {latestMessage ? (
+            <>
+              <p className="font-body text-sm text-foreground line-clamp-2 leading-snug">
+                {prettifyMessagePreview(latestMessage)}
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">
+                {unreadCount > 0 ? `${unreadCount} unread` : "Latest Message"}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-display text-3xl text-foreground tabular-nums">{unreadCount}</p>
+              <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">Messages</p>
+            </>
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-80 p-0 overflow-hidden">
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+          <span className="text-xs font-semibold text-foreground uppercase tracking-wider">Messages</span>
+          <Link to="/messages" onClick={() => setOpen(false)} className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+            View all <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+        {recentMessages.length === 0 ? (
+          <div className="p-6 text-center">
+            <p className="text-xs text-muted-foreground">No new messages</p>
+          </div>
+        ) : (
+          <div className="max-h-80 overflow-y-auto divide-y divide-border">
+            {recentMessages.map((msg) => {
+              const sender = senderMap.get(msg.sender_id);
+              return (
+                <Link
+                  key={msg.id}
+                  to="/messages"
+                  onClick={() => setOpen(false)}
+                  className="flex items-start gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                    {sender?.avatar_url ? (
+                      <img src={sender.avatar_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <User className="h-4 w-4 text-primary" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-foreground truncate">{sender?.display_name || "Creator"}</span>
+                      <span className="text-[10px] text-muted-foreground shrink-0">{format(new Date(msg.created_at), "MMM d")}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                      {prettifyMessagePreview(msg.content)}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 };
 
