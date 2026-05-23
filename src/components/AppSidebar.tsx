@@ -5,11 +5,11 @@ import {
   UserPlus,
   Home,
   Compass,
-  MessageSquare,
   Trophy,
   ShieldCheck,
   Flame,
   Briefcase,
+
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -41,7 +41,6 @@ import rhozelandLogo from "@/assets/rhozeland-logo.png";
 const pillarItems = [
   { icon: Home, label: "Home", path: "/home" },
   { icon: Compass, label: "Discover", path: "/discover" },
-  { icon: MessageSquare, label: "Conversations", path: "/messages", badgeKey: "pendingInquiries" as const },
   { icon: Briefcase, label: "Portfolio", path: "/portfolio" },
   { icon: Trophy, label: "Creator Pass", path: "/credits" },
 ];
