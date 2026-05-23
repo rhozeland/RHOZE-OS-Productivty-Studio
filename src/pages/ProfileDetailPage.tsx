@@ -23,7 +23,7 @@ import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import VerifiedProBadge from "@/components/profile/VerifiedProBadge";
 import ProfileTierBadge from "@/components/profile/ProfileTierBadge";
 import ArchetypeChip from "@/components/profile/ArchetypeChip";
-import RegionChip from "@/components/profile/RegionChip";
+// RegionChip retired from header (v10.4) — location + region are combined inline.
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
@@ -39,7 +39,7 @@ import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import SaveButton from "@/components/saved/SaveButton";
 import { cn } from "@/lib/utils";
-import { ROLE_BY_ID } from "@/lib/creator-roles";
+// ROLE_BY_ID retired from header chips (v10.4) — role labels removed for visual clarity.
 import { archetypeBannerGradient } from "@/lib/archetypes";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import FlowPostOwnerMenu from "@/components/profile/FlowPostOwnerMenu";
@@ -726,7 +726,7 @@ const ProfileDetailPage = () => {
               </h2>
             </div>
             {flowPosts && flowPosts.length > 0 ? (
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-1 sm:gap-1.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
                 {flowPosts.map((post: any) => {
                   const cat = (post.category || "").toLowerCase();
                   const CatIcon =
