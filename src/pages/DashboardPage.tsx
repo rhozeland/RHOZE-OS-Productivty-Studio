@@ -229,6 +229,20 @@ const DashboardPage = () => {
       return count ?? 0;
     },
   });
+  const { data: latestMessage } = useQuery({
+    queryKey: ["dashboard-latest-message", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("messages")
+        .select("content, created_at")
+        .or(`sender_id.eq.${user!.id},receiver_id.eq.${user!.id}`)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return ((data as any)?.content as string | null) ?? null;
+    },
+  });
 
 
   const { data: recentMessages } = useQuery({
