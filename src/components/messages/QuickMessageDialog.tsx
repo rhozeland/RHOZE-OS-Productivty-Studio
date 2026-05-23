@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2, User, Lock, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useCanDm } from "@/hooks/useCanDm";
-import SubscribeToCreatorSheet from "@/components/profile/SubscribeToCreatorSheet";
+import SupportSheet from "@/components/profile/SupportSheet";
 
 interface QuickMessageDialogProps {
   open: boolean;
@@ -127,11 +127,12 @@ const QuickMessageDialog = ({
           </form>
         )}
       </DialogContent>
-      <SubscribeToCreatorSheet
+      <SupportSheet
         open={subSheetOpen}
         onOpenChange={setSubSheetOpen}
         creatorId={recipientId}
         creatorName={recipientName}
+        initialTab="subscribe"
       />
     </Dialog>
   );

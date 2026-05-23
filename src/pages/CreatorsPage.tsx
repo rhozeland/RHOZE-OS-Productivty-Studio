@@ -5,7 +5,7 @@ import { Search, Calendar, Flame, Activity, ArrowLeft, Heart, X, Sparkles, Messa
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import SubscribeToCreatorSheet from "@/components/profile/SubscribeToCreatorSheet";
+import SupportSheet from "@/components/profile/SupportSheet";
 import { supabase } from "@/integrations/supabase/client";
 
 
@@ -192,7 +192,7 @@ const CreatorCard = ({ creator }: { creator: Creator }) => {
         </Button>
       </div>
 
-      <SubscribeToCreatorSheet
+      <SupportSheet
         open={backOpen}
         onOpenChange={setBackOpen}
         creatorId={creator.user_id}
