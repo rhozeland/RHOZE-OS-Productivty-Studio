@@ -5247,6 +5247,8 @@ export type Database = {
       get_my_private_profile_fields: {
         Args: never
         Returns: {
+          ics_last_synced_at: string
+          luma_ics_url: string
           shipping_address_line1: string
           shipping_address_line2: string
           shipping_city: string
