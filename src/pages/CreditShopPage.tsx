@@ -127,12 +127,9 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
       <Tabs value={activeTab} onValueChange={setTab}>
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="pass" className="gap-1.5"><Award className="h-3.5 w-3.5" /> My Pass</TabsTrigger>
-          <TabsTrigger value="earnings" className="gap-1.5"><TrendingUp className="h-3.5 w-3.5" /> Earnings</TabsTrigger>
-          <TabsTrigger value="portfolio" className="gap-1.5"><Briefcase className="h-3.5 w-3.5" /> Portfolio</TabsTrigger>
-          <TabsTrigger value="passport" className="gap-1.5"><TicketIcon className="h-3.5 w-3.5" /> Passport</TabsTrigger>
-          <TabsTrigger value="works" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Verified IP</TabsTrigger>
           <TabsTrigger value="topup" className="gap-1.5"><Wallet className="h-3.5 w-3.5" /> Top up</TabsTrigger>
         </TabsList>
+
 
         {/* ═══════ My Pass — now also surfaces the full tier matrix ═══════ */}
         <TabsContent value="pass" className="mt-4 space-y-4">
