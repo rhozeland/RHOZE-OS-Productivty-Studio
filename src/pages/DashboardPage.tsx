@@ -1353,76 +1353,64 @@ const DashboardPage = () => {
       {/* ─── Personal stat strip + sections (auth only) ─────────────── */}
       {user && (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-[1px] bg-border rounded-lg overflow-hidden">
-            {(isFan
-              ? [
-                  {
-                    icon: Users,
-                    label: "Creators Backed",
-                    value: creatorsBacked,
-                    path: "/portfolio",
-                  },
-                  {
-                    icon: MessageSquare,
-                    label: "Unread Messages",
-                    value: unreadCount ?? 0,
-                    path: "/messages",
-                  },
-                  {
-                    icon: Calendar,
-                    label: "Upcoming Events",
-                    value: events?.length ?? 0,
-                    path: "/calendar",
-                  },
-                  {
-                    icon: Sparkles,
-                    label: "$RHOZE Earned",
-                    value: Math.round(rhozeBalance).toLocaleString(),
-                    path: "/fan/rewards",
-                  },
-                ]
-              : [
-                  {
-                    icon: FolderKanban,
-                    label: "Active Projects",
-                    value: activeProjects,
-                    path: "/projects",
-                  },
-                  {
-                    icon: MessageSquare,
-                    label: "Unread Messages",
-                    value: unreadCount ?? 0,
-                    path: "/messages",
-                  },
-                  {
-                    icon: Calendar,
-                    label: "Upcoming Events",
-                    value: events?.length ?? 0,
-                    path: "/calendar",
-                  },
-                  {
-                    icon: Zap,
-                    label: "Tasks Completed",
-                    value: `${completedTasks}/${totalTasks}`,
-                    path: "/projects",
-                  },
-                ]).map((stat, i) => (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-[1px] bg-border rounded-2xl overflow-hidden">
+            {/* Active Projects */}
+            <Link to="/my-work?tab=projects" className="bg-card p-5 hover:bg-muted/50 transition-colors group">
+              <FolderKanban className="h-4 w-4 text-muted-foreground mb-3 group-hover:text-foreground transition-colors" />
+              <p className="font-display text-3xl text-foreground tabular-nums">{activeProjects}</p>
+              <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">Active Projects</p>
+            </Link>
 
-              <Link key={stat.label} to={stat.path}>
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.05 * i }}
-                  className="bg-card p-6 hover:bg-muted/50 transition-colors cursor-pointer group"
-                >
-                  <stat.icon className="h-5 w-5 text-muted-foreground mb-4 group-hover:text-foreground transition-colors" />
-                  <p className="font-display text-3xl text-foreground">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground mt-1 font-body">{stat.label}</p>
-                </motion.div>
+            {/* Latest Message — snippet preferred, falls back to unread count or empty state */}
+            <Link to="/messages" className="bg-card p-5 hover:bg-muted/50 transition-colors group flex flex-col">
+              <MessageSquare className="h-4 w-4 text-muted-foreground mb-3 group-hover:text-foreground transition-colors" />
+              {latestMessage ? (
+                <>
+                  <p className="font-body text-sm text-foreground line-clamp-2 leading-snug">
+                    {prettifyMessagePreview(latestMessage)}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">
+                    {(unreadCount ?? 0) > 0 ? `${unreadCount} unread` : "Latest Message"}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-display text-3xl text-foreground tabular-nums">{unreadCount ?? 0}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">Unread Messages</p>
+                </>
+              )}
+            </Link>
+
+            {/* Upcoming Events — count when present, Find events CTA when zero */}
+            {(events?.length ?? 0) > 0 ? (
+              <Link to="/calendar" className="bg-card p-5 hover:bg-muted/50 transition-colors group">
+                <Calendar className="h-4 w-4 text-muted-foreground mb-3 group-hover:text-foreground transition-colors" />
+                <p className="font-display text-3xl text-foreground tabular-nums">{events!.length}</p>
+                <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">Upcoming Events</p>
               </Link>
-            ))}
+            ) : (
+              <div className="bg-card p-5 flex flex-col">
+                <Calendar className="h-4 w-4 text-muted-foreground mb-3" />
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-body mb-2">Upcoming</p>
+                <Link
+                  to="/events"
+                  className="inline-flex items-center justify-center h-8 rounded-full border border-border hover:bg-muted text-xs font-medium font-body text-foreground transition-colors px-3 self-start"
+                >
+                  Find events →
+                </Link>
+              </div>
+            )}
+
+            {/* $RHOZE Earned */}
+            <Link to="/credits" className="bg-card p-5 hover:bg-muted/50 transition-colors group">
+              <Sparkles className="h-4 w-4 text-muted-foreground mb-3 group-hover:text-foreground transition-colors" />
+              <p className="font-display text-3xl text-foreground tabular-nums">
+                {Math.round(rhozeBalance).toLocaleString()}
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">$RHOZE Earned</p>
+            </Link>
           </div>
+
 
           {/* Studio sessions */}
           {studioBookings && studioBookings.length > 0 && (
