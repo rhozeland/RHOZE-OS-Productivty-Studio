@@ -107,13 +107,13 @@ const CreatorHomeStatsStrip = () => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       <StatCard
-        to="/my-work?tab=projects"
+        to="/messages?tab=projects"
         label="Active Projects"
         value={activeProjects}
         icon={FolderKanban}
       />
       <StatCard
-        to="/my-work?tab=inquiries"
+        to="/messages?tab=inquiries"
         label="Pending Inquiries"
         value={pendingInquiries}
         icon={Inbox}
