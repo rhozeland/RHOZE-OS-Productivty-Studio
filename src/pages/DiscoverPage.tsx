@@ -30,6 +30,7 @@ import CompactFlowFeed from "@/components/hub/CompactFlowFeed";
 import PostMenuButton from "@/components/PostMenuButton";
 import DiscoverTable from "@/components/discover/DiscoverTable";
 import SubscribedFeed from "@/components/discover/SubscribedFeed";
+import ListingsLane from "@/components/discover/ListingsLane";
 
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
 // TrendingTokensLane removed from Discover — token discovery now lives on the Connect page.
@@ -395,6 +396,9 @@ const DiscoverPage = () => {
 
       {/* ─── Trending artists (self-gated by liquidity) ───────────── */}
       <TrendingArtistsLane marketFilter={marketFilter} />
+
+      {/* ─── Open calls & listings — funnels into Projects ──────── */}
+      <ListingsLane />
 
       {/* Trending creator tokens lane removed — discovery of tokens now lives on the Connect (Find collaborators) page only. */}
 
