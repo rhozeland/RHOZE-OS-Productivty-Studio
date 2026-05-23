@@ -639,6 +639,18 @@ const NewProjectDialog = ({
   const [title, setTitle] = useState("");
   const [coverColor, setCoverColor] = useState(COVER_COLORS[0]);
 
+  // v10.3 — pick up prefill stashed by ListingLightbox / SupportSheet "Commission" flow.
+  useEffect(() => {
+    if (!open) return;
+    try {
+      const raw = sessionStorage.getItem("newProjectPrefill");
+      if (!raw) return;
+      const pref = JSON.parse(raw);
+      if (pref?.title) setTitle(pref.title);
+      sessionStorage.removeItem("newProjectPrefill");
+    } catch { /* ignore */ }
+  }, [open]);
+
   const create = useMutation({
     mutationFn: async () => {
       if (!title.trim()) throw new Error("Title required.");
