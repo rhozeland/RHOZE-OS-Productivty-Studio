@@ -35,28 +35,11 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const TYPE_META: Record<string, { label: string; icon: any; accent: string }> = {
-  service:           { label: "Offering",  icon: Briefcase, accent: "hsl(var(--primary))" },
-  digital_product:   { label: "Offering",  icon: Briefcase, accent: "hsl(var(--primary))" },
-  physical_product:  { label: "Offering",  icon: Briefcase, accent: "hsl(var(--primary))" },
-  project_request:   { label: "Open call", icon: Search,    accent: "hsl(38 92% 55%)" },
-  collaboration:     { label: "Collab",    icon: Users,     accent: "hsl(292 84% 61%)" },
-};
-
-type TypeFilter = "all" | "project_request" | "service" | "collaboration";
-
-const TYPE_TABS: { id: TypeFilter; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "project_request", label: "Open calls" },
-  { id: "service", label: "Offerings" },
-  { id: "collaboration", label: "Collabs" },
-];
+import { listingMeta } from "@/lib/listing-types";
 
 const ListingsBoard = () => {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [category, setCategory] = useState<string>("all");
   const [sort, setSort] = useState<"newest" | "title">("newest");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -84,11 +67,6 @@ const ListingsBoard = () => {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     let rows = listings.filter((l: any) => {
-      if (typeFilter !== "all") {
-        if (typeFilter === "service") {
-          if (!["service", "digital_product", "physical_product"].includes(l.listing_type)) return false;
-        } else if (l.listing_type !== typeFilter) return false;
-      }
       if (category !== "all" && l.category !== category) return false;
       if (q) {
         const hay = `${l.title} ${l.description ?? ""} ${(l.tags ?? []).join(" ")}`.toLowerCase();
@@ -100,7 +78,7 @@ const ListingsBoard = () => {
       rows = [...rows].sort((a: any, b: any) => a.title.localeCompare(b.title));
     }
     return rows;
-  }, [listings, query, typeFilter, category, sort]);
+  }, [listings, query, category, sort]);
 
   const selected = useMemo(
     () => filtered.find((l: any) => l.id === selectedId) ?? filtered[0] ?? null,
@@ -171,27 +149,9 @@ const ListingsBoard = () => {
         </Select>
       </div>
 
-      {/* Type tabs */}
-      <div className="flex flex-wrap gap-1.5">
-        {TYPE_TABS.map((t) => {
-          const active = typeFilter === t.id;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTypeFilter(t.id)}
-              className={cn(
-                "rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors",
-                active
-                  ? "bg-foreground text-background border-foreground"
-                  : "border-border bg-background/60 text-muted-foreground hover:text-foreground hover:border-foreground/30",
-              )}
-            >
-              {t.label}
-            </button>
-          );
-        })}
-        <span className="ml-auto self-center text-[11px] text-muted-foreground tabular-nums">
+      {/* Result count (type filter retired in v11.1 — unified listing feed) */}
+      <div className="flex justify-end">
+        <span className="text-[11px] text-muted-foreground tabular-nums">
           {filtered.length} result{filtered.length === 1 ? "" : "s"}
         </span>
       </div>
@@ -209,7 +169,7 @@ const ListingsBoard = () => {
             </div>
           )}
           {filtered.map((l: any) => {
-            const meta = TYPE_META[l.listing_type] ?? { label: l.listing_type, icon: Sparkles, accent: "hsl(var(--primary))" };
+            const meta = listingMeta(l.listing_type);
             const Icon = meta.icon;
             const isActive = selected?.id === l.id;
             return (
@@ -227,21 +187,15 @@ const ListingsBoard = () => {
                     {l.cover_url ? (
                       <img src={l.cover_url} alt="" className="w-full h-full object-cover" loading="lazy" />
                     ) : (
-                      <div
-                        className="w-full h-full flex items-center justify-center"
-                        style={{ background: `linear-gradient(135deg, ${meta.accent}22, transparent 75%)` }}
-                      >
-                        <Icon className="h-5 w-5" style={{ color: meta.accent, opacity: 0.6 }} />
+                      <div className={cn("w-full h-full flex items-center justify-center", meta.chip)}>
+                        <Icon className="h-5 w-5 opacity-60" />
                       </div>
                     )}
                   </div>
                   <div className="min-w-0 flex-1 space-y-1">
                     <p className="text-sm font-semibold text-foreground line-clamp-2 leading-snug">{l.title}</p>
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px]">
-                      <span
-                        className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-medium"
-                        style={{ background: `${meta.accent}1f`, color: meta.accent }}
-                      >
+                      <span className={cn("inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-medium", meta.chip)}>
                         <Icon className="h-2.5 w-2.5" /> {meta.label}
                       </span>
                       {l.category && (
@@ -276,10 +230,10 @@ const ListingsBoard = () => {
                 {/* Meta row */}
                 <div className="flex flex-wrap items-center gap-2">
                   {(() => {
-                    const meta = TYPE_META[selected.listing_type] ?? { label: selected.listing_type, icon: Sparkles, accent: "hsl(var(--primary))" };
+                    const meta = listingMeta(selected.listing_type);
                     const Icon = meta.icon;
                     return (
-                      <Badge variant="secondary" className="gap-1 text-[10px]" style={{ background: `${meta.accent}1f`, color: meta.accent }}>
+                      <Badge variant="secondary" className={cn("gap-1 text-[10px]", meta.chip)}>
                         <Icon className="h-3 w-3" /> {meta.label}
                       </Badge>
                     );

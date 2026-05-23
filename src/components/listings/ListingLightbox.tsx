@@ -81,9 +81,16 @@ const ListingLightbox = ({ open, onOpenChange, listing }: Props) => {
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {/* Type + Category */}
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary" className="text-[10px]">
-              {listing.listing_type === "project_request" ? "Open call" : listing.listing_type === "collaboration" ? "Collab" : "Offering"}
-            </Badge>
+            {(() => {
+              const { listingMeta } = require("@/lib/listing-types");
+              const meta = listingMeta(listing.listing_type);
+              const Icon = meta.icon;
+              return (
+                <Badge variant="secondary" className={`gap-1 text-[10px] ${meta.chip}`}>
+                  <Icon className="h-3 w-3" /> {meta.label}
+                </Badge>
+              );
+            })()}
             {listing.category && (
               <Badge variant="outline" className="text-[10px] capitalize">{listing.category}</Badge>
             )}

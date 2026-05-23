@@ -24,22 +24,15 @@ import {
   Upload,
   X,
   Plus,
-  Briefcase,
-  Search,
   ImageIcon,
   Music,
   Video,
   FileText,
-  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import RhozeRewardBadge from "@/components/RhozeRewardBadge";
-
-const LISTING_TYPES = [
-  { key: "service", label: "Offering a Service", desc: "I can do this for you", icon: Briefcase },
-  { key: "project_request", label: "Looking for Help", desc: "I need someone to do this", icon: Search },
-  { key: "collaboration", label: "Seeking Collaborators", desc: "Let's work on this together", icon: Users },
-];
+import { COMPOSER_TYPES, LISTING_TYPE_META, type ListingType } from "@/lib/listing-types";
+import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
   { value: "audio", label: "🎵 Audio / Music" },
@@ -78,9 +71,8 @@ const CreateListingDialog = ({ open, onOpenChange, prefill, editListing }: Creat
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isEdit = !!editListing;
-  // Skip the type picker (step 0) when caller provided a listing_type via prefill.
-  const skipPicker = !!prefill?.listing_type;
-  const [step, setStep] = useState(isEdit || skipPicker ? 1 : 0);
+  // v11.1: no more separate type-picker step. Composer is 2 steps: Details → Media.
+  const [step, setStep] = useState(1);
 
   // Form
   const [listingType, setListingType] = useState(editListing?.listing_type ?? prefill?.listing_type ?? "service");
@@ -104,7 +96,7 @@ const CreateListingDialog = ({ open, onOpenChange, prefill, editListing }: Creat
   };
 
   const reset = () => {
-    setStep(isEdit || skipPicker ? 1 : 0);
+    setStep(1);
     if (isEdit) return;
     setListingType(prefill?.listing_type ?? "service");
     setTitle(prefill?.title ?? "");
@@ -217,36 +209,9 @@ const CreateListingDialog = ({ open, onOpenChange, prefill, editListing }: Creat
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display">
-            {isEdit ? "Edit listing" : step === 0 ? "What are you posting?" : step === 1 ? "Listing Details" : "Add Media"}
+            {isEdit ? "Edit listing" : step === 1 ? "New listing" : "Add media"}
           </DialogTitle>
         </DialogHeader>
-
-        {/* Step 0: Choose type */}
-        {step === 0 && !isEdit && (
-          <div className="space-y-3">
-            {LISTING_TYPES.map((t) => {
-              const Icon = t.icon;
-              const selected = listingType === t.key;
-              return (
-                <button
-                  key={t.key}
-                  onClick={() => { setListingType(t.key); setStep(1); }}
-                  className={`flex items-center gap-4 w-full p-4 rounded-xl border-2 transition-all text-left hover:border-primary/50 hover:bg-primary/5 ${
-                    selected ? "border-primary bg-primary/5" : "border-border"
-                  }`}
-                >
-                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <Icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-display font-semibold text-sm text-foreground">{t.label}</p>
-                    <p className="text-xs text-muted-foreground">{t.desc}</p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
 
         {/* Step 1: Details */}
         {step === 1 && (
@@ -254,6 +219,36 @@ const CreateListingDialog = ({ open, onOpenChange, prefill, editListing }: Creat
             onSubmit={(e) => { e.preventDefault(); if (!title.trim()) return; if (isEdit) updateListing.mutate(); else setStep(2); }}
             className="space-y-4"
           >
+            {/* Compact intent toggle — replaces the old full-screen type picker */}
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground font-semibold mb-1.5">
+                This listing is…
+              </p>
+              <div className="grid grid-cols-3 gap-1.5">
+                {COMPOSER_TYPES.map((key) => {
+                  const meta = LISTING_TYPE_META[key];
+                  const Icon = meta.icon;
+                  const selected = listingType === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setListingType(key)}
+                      className={cn(
+                        "flex flex-col items-center gap-1 rounded-lg border px-2 py-2.5 text-center transition-all",
+                        selected
+                          ? "border-foreground bg-foreground/5 text-foreground"
+                          : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/40",
+                      )}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      <span className="text-[11px] font-semibold leading-tight">{meta.longLabel.replace(/^(Offering a |Looking for |Seeking )/, "")}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <Input
               placeholder={isOffering ? "What service are you offering? *" : isRequest ? "What do you need done? *" : "What's the project? *"}
               value={title}
@@ -332,11 +327,6 @@ const CreateListingDialog = ({ open, onOpenChange, prefill, editListing }: Creat
             </div>
 
             <div className="flex gap-2">
-              {!isEdit && (
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(0)}>
-                  Back
-                </Button>
-              )}
               <Button type="submit" className="flex-1" disabled={!title.trim() || updateListing.isPending}>
                 {isEdit ? (updateListing.isPending ? "Saving..." : "Save changes") : "Next: Add Media"}
               </Button>

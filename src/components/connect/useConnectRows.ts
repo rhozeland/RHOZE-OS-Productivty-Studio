@@ -127,42 +127,42 @@ export const useSpaceRows = (enabled = true) =>
 export const useCallRows = (enabled = true) =>
   useQuery({
     enabled,
-    queryKey: ["connect", "call"],
+    queryKey: ["connect", "call", "all-listings-v11"],
     queryFn: async (): Promise<ConnectRow[]> => {
+      // v11.1: unified listings feed — no more listing_type restriction.
+      // All active marketplace_listings surface here regardless of intent.
       const { data, error } = await supabase
         .from("marketplace_listings")
         .select("id,title,description,category,price,currency,credits_price,delivery_days,cover_url,user_id,listing_type")
         .eq("is_active", true)
-        .in("listing_type", ["project_request", "collaboration"])
         .order("created_at", { ascending: false })
-        .limit(60);
+        .limit(80);
       if (error) throw error;
       const profs = await fetchProfiles((data ?? []).map((d) => d.user_id));
       return (data ?? []).map((l: any) => {
         const p = profs.get(l.user_id);
         const price =
           l.price != null
-            ? `Budget ${l.currency || "USD"} ${Number(l.price).toLocaleString()}`
+            ? `${l.currency || "USD"} ${Number(l.price).toLocaleString()}`
             : null;
+        const typeLabel =
+          l.listing_type === "collaboration" ? "Collab"
+          : l.listing_type === "project_request" ? "Open call"
+          : "Offering";
         return {
           id: l.id,
           kind: "call" as const,
           title: l.title,
           subtitle: p?.display_name || p?.username || "Creator",
           priceLabel: price,
-          metaLabel:
-            l.listing_type === "collaboration"
-              ? "Collab"
-              : l.delivery_days
-                ? `${l.delivery_days}d deadline`
-                : "Open call",
+          metaLabel: typeLabel,
           ownerId: l.user_id,
           ownerName: p?.display_name || p?.username || null,
           ownerAvatar: p?.avatar_url || null,
           isPro: !!p?.verified_pro_at,
           category: l.category,
           description: l.description,
-          detailHref: `/marketplace/${l.id}`,
+          detailHref: `/listings/${l.id}`,
           coverUrl: l.cover_url,
         };
       });
