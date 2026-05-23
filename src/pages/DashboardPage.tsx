@@ -50,6 +50,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import GuestDashboardPreview from "@/components/guest/GuestDashboardPreview";
 import FirstRunChecklist from "@/components/dashboard/FirstRunChecklist";
 import CreatorHomeStatsStrip from "@/components/dashboard/CreatorHomeStatsStrip";
