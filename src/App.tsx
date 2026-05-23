@@ -324,6 +324,7 @@ const App = () => (
                 {/* Marketplace — unified mosaic with a Flow shortcut */}
                 <Route path="/marketplace" element={<MarketplacePage />} />
                 <Route path="/marketplace/:id" element={<ListingDetailPage />} />
+                <Route path="/listings/:id" element={<ListingDetailPage />} />
                 <Route path="/seller" element={<Navigate to="/settings" replace />} />
                 <Route path="/inquiries" element={<Navigate to="/messages" replace />} />
                 <Route path="/profiles" element={<ProfilesPage />} />
