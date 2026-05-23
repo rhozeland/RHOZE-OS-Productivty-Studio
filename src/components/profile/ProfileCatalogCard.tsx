@@ -53,8 +53,8 @@ const ProfileCatalogCard = ({ listings = [], events = [], spaces = [] }: Props) 
               type="button"
               onClick={() => setActive(t.id)}
               className={cn(
-                "flex-1 py-2 px-2 text-[11px] font-black uppercase tracking-wider rounded-lg transition-all",
-                "flex items-center justify-center gap-1.5",
+                "flex-1 py-2 px-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all",
+                "flex items-center justify-center gap-1 min-w-0",
                 isActive
                   ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground",
