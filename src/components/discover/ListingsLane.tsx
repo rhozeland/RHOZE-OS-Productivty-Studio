@@ -12,17 +12,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, Search, Briefcase, Users, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import ListingLightbox from "@/components/listings/ListingLightbox";
-import { cn } from "@/lib/utils";
-
-const TYPE_META: Record<string, { label: string; icon: any; accent: string }> = {
-  service: { label: "Offering", icon: Briefcase, accent: "hsl(var(--primary))" },
-  digital_product: { label: "Offering", icon: Briefcase, accent: "hsl(var(--primary))" },
-  physical_product: { label: "Offering", icon: Briefcase, accent: "hsl(var(--primary))" },
-  project_request: { label: "Open call", icon: Search, accent: "hsl(38 92% 55%)" },
-  collaboration: { label: "Collab", icon: Users, accent: "hsl(292 84% 61%)" },
-};
+import { listingMeta } from "@/lib/listing-types";
 
 const ListingsLane = () => {
   const [activeListing, setActiveListing] = useState<any | null>(null);
