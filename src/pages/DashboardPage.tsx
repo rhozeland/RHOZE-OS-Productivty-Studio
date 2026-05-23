@@ -785,7 +785,7 @@ const DashboardPage = () => {
           >
             {/* LEFT: greeting + 2 anchor stat tiles */}
             <div className="col-span-12 lg:col-span-5 flex flex-col justify-end">
-              <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl xl:text-8xl leading-[0.88] tracking-tight text-foreground">
+              <h1 className="font-display text-4xl sm:text-5xl lg:text-5xl xl:text-6xl 2xl:text-7xl leading-[0.92] tracking-tight text-foreground">
                 {greeting()},
                 <br />
                 {(() => {
