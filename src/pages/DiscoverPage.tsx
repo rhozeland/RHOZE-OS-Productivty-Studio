@@ -394,7 +394,62 @@ const DiscoverPage = () => {
       </motion.section>
 
 
+      {/* ─── Guest unlock strip — what joining gets you ─── */}
+      {!user && (
+        <motion.section
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="rounded-3xl border border-border/60 bg-card/40 backdrop-blur-sm p-5 sm:p-6"
+        >
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 mb-1">
+                Members only
+              </p>
+              <h2 className="font-display text-xl sm:text-2xl text-foreground tracking-tight">
+                What you'll unlock
+              </h2>
+            </div>
+            <Link to="/auth" className="shrink-0">
+              <Button size="sm" className="rounded-full gap-1.5 text-xs">
+                Join free <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              {
+                icon: Sparkles,
+                title: "Back creators",
+                blurb: "Subscribe from $5/mo to unlock private works, behind-the-scenes drops, and gated posts.",
+              },
+              {
+                icon: MessageSquare,
+                title: "Direct messages",
+                blurb: "DM verified artists, hire them on commission, or start a project together.",
+              },
+              {
+                icon: CalendarDays,
+                title: "Events & spaces",
+                blurb: "Book studios, RSVP to live drops, and join open calls across the network.",
+              },
+            ].map(({ icon: Icon, title, blurb }) => (
+              <div
+                key={title}
+                className="rounded-2xl border border-border/50 bg-background/60 p-4 hover:border-foreground/20 hover:bg-background transition-colors"
+              >
+                <Icon className="h-4 w-4 text-foreground/70 mb-2.5" />
+                <h3 className="text-sm font-semibold text-foreground mb-1">{title}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">{blurb}</p>
+              </div>
+            ))}
+          </div>
+        </motion.section>
+      )}
+
       {/* ─── Trending artists (self-gated by liquidity) ───────────── */}
+
       <TrendingArtistsLane marketFilter={marketFilter} />
 
       {/* Listings now live as a dedicated tab inside the Feed below. */}
