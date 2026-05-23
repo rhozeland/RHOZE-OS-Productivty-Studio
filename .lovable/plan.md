@@ -1,112 +1,109 @@
-# v10.3 — Simplify & Re-anchor
+## Goal
 
-The product has drifted into too many surfaces. This loop cuts pages, collapses CTAs into one "Support" story, makes Discover scannable instead of visual-heavy, and turns Luma events into a revenue + on-chain proof funnel.
-
----
-
-## 1. Money story — one CTA, layered
-
-Every profile gets a single primary **Support {Name}** button. Two smaller chips sit beside it: **Book a call** and **Trade $TICKER** (only if creator has a token).
-
-- **Support** opens a sheet with three rails, Subscribe is default and visually dominant:
-  1. **Subscribe** — $5 / $10 / $25 monthly via Stripe (existing flow, 85/15 split). Unlocks gated works + DMs.
-  2. **One-off support** — Tip $5 / $10 / custom via Stripe one-time. New flow.
-  3. **Trade their coin** — Link out to pump.fun with read-only Jupiter price chip.
-- **Book a call** — existing `StudioBookingModal`, 10–15% platform fee
-- **Trade $TICKER** — existing `TokenDiscoveryChip` deeplink
-
-Result: one revenue narrative on every profile. No more BackCreatorSheet vs SubscribeSheet vs ProfileCoinTab competing.
-
-## 2. Nav — kill, merge, move
-
-Sidebar becomes 4 tabs:
-
-```
-Home          → merged Home + Flow feed (subscribed creators first, Fresh rail below)
-Discover      → dense Riipen × Dexscreener table (see §3)
-Conversations → DMs + Inbox as left rail inside this page
-Creator Pass  → unchanged
-```
-
-- **Kill Portfolio page** — `/portfolio` redirects to `/profile`. Works grid already lives on profile.
-- **Kill Fan/Creator role switcher** — same UI for everyone, creator tools appear contextually when you have works/events.
-- **Move Inbox under Conversations** — top-bar Inbox sibling removed. Inbox lives as left rail of `/messages`.
-- **Merge Home + Flow** — `/home` shows subscribed creators' posts first, then a "Fresh on Rhozeland" rail. `/flow` stays as the fullscreen swipe surface, entered from a Home button.
-
-## 3. Discover — Riipen × Dexscreener
-
-`/discover` becomes a dense, scannable table by default. Columns:
-
-```
-Creator (avatar 32px + name + archetype dot)
-Region
-Subs (count)
-Token ($TICKER · 24h ±%) — null if no token
-Open listings (count)
-Last active
-[Support] button
-```
-
-- **Top 3 editorial cards** float above the table for taste (existing FeaturedCarousel, trimmed)
-- **Kill blurry thumbnail cards**. If a row needs a visual, use a 40px archetype-gradient chip instead of a 400px void.
-- Filter chips stay: Artist · Builder · Influencer · region · "Has token"
-- Listings, open calls, events render as rows in the same table with a type pill (no separate `/market` page — that route redirects to `/discover?kind=listing`)
-
-## 4. Luma embed + on-chain attendance
-
-Calendar sync (ICS import/export) is out. Replace with a thinner, sharper play:
-
-- **Profile field**: "Luma URL" (single input). Saved to `profiles.luma_url`.
-- **Event embed**: when a Luma URL is on a profile, we embed the Luma event card via iframe on a new section of the profile + on `/events`. Zero scraping, zero ticket checkout (phase 1).
-- **On-chain attendance** (phase 1 minimum):
-  - After event end time, attendee taps "Claim attendance" on the event embed
-  - We mint a Solana memo TX with `{event_url, attendee_wallet, claim_ts}` via existing memo-tx infra
-  - Records to new `event_attendance_claims` table → drops $RHOZE reward → counts toward creator's "engagement score" on Discover
-  - Honor system in phase 1 (no QR check-in). If abused, we add Luma OAuth in phase 2 to verify the RSVP.
-- Kill `IcsImportCard`, `sync-ics-events` edge fn, `events.external_source/external_uid` cols are kept but unused.
-
-## 5. What stays the same
-
-- Stripe subscriptions, `creator_subscriptions` table, `is_subscribed_to()`, gated works
-- Token chip + pump.fun deeplink
-- Creator Pass / $RHOZE rewards mechanics
-- Spaces booking + platform fee (10–15%)
-- Archetypes, gradient system, onboarding
+Tie everything back to one revenue spine: **subscriptions = recurring**, **transactional fees = bookings + events + projects**. Replace the current "Subscribe-only" sheet with a unified support hub, make the Trade panel feel like real on-chain data (not a casino), simplify the feed CTA, and bring Listings back to Discover as a lane that funnels into Projects.
 
 ---
 
-## Technical details
+## 1. Unified `SupportCreatorSheet` (replaces `SubscribeToCreatorSheet`)
 
-- **DB migration**: `profiles.luma_url text null`. New table `event_attendance_claims (id, user_id, luma_url, profile_id, memo_tx_signature, claimed_at)` with RLS (user_id = auth.uid()).
-- **Edge fns**: new `claim-event-attendance` (writes memo + row + rewards). New `create-tip-checkout` (one-off Stripe Checkout, uses existing `payments-webhook` with a `tip` mode branch).
-- **Components**:
-  - New `<SupportSheet />` (3-rail tabbed sheet) — replaces `<BackCreatorSheet />` + `<SubscribeToCreatorSheet />` usage
-  - New `<DiscoverTable />` — replaces `<CreatorsGrid />` as the Discover default
-  - New `<LumaEventEmbed />` + new `<ClaimAttendanceButton />`
-- **Routes deleted/redirected**:
-  - `/portfolio` → `/profile`
-  - `/market` → `/discover`
-  - `/settings#calendar` removed
-- **Files to retire** (kept on disk for revert):
-  - `BackCreatorSheet.tsx`, `SubscribeToCreatorSheet.tsx` (callers updated to SupportSheet)
-  - `IcsImportCard.tsx`, `sync-ics-events/`
-  - `ConnectMatchDeck.tsx` (Match mode goes with /market)
+New 3-tab sheet, opened by every "support/back" entry point. Order chosen to lead with transactional value (what you said sub/tip are less hot right now):
 
-## Build order (so we can stop anywhere and still have a working app)
+**Tab 1 — Work together** (default)
+Three stacked cards, all rendered only if the creator has them:
+- **Commission a project** → opens `NewProjectDialog` prefilled with this creator as collaborator. Fee badge: "Platform fee {tier}%".
+- **Book a space** → if creator owns ≥1 `studios` row, lists them inline → routes to `StudioDetailPage` booking modal.
+- **Attend an event** → if creator has upcoming `events`, shows the next 1–2 with date + price → `EventDetailPage`.
+Empty state for each tells the fan "this creator doesn't offer X yet" instead of hiding silently — so the tab never looks empty.
 
-1. ✅ Nav cuts + redirects
-2. ✅ SupportSheet + profile CTA collapse
-3. ✅ Discover table
-4. ✅ Home + Flow merge
-5. ✅ One-off tip checkout
-6. ✅ Luma embed on profile
-7. ✅ On-chain attendance claim — `event_attendance_claims` + `claim-event-attendance` edge fn + `<ClaimAttendanceButton />`
+**Tab 2 — Subscribe & Tip**
+- Top: the existing 3-tier subscribe cards (Basic/Standard/Premium) — kept verbatim, just compacted.
+- Bottom: one-tap Tip row ($1 / $5 / $20 / custom) → `create-tip-checkout` (already exists).
+- Footer line: "Creator keeps 85% · Rhozeland 15%."
 
-Each step is independently shippable.
+**Tab 3 — Trade** (only if `profiles.token_mint_address` is set)
+Rebuilt as `<CreatorTokenPanel />` — see §2.
 
-## What this does NOT include
+Files:
+- New: `src/components/profile/SupportCreatorSheet.tsx` (wraps existing Subscribe + new tabs).
+- Keep `SubscribeToCreatorSheet.tsx` on disk; re-export from new sheet for back-compat.
+- Wire every current `<SubscribeToCreatorSheet />` call site to `<SupportCreatorSheet defaultTab="…" />`: `ProfileDetailPage`, `FlowCreatorPeek`, profile cards, etc.
 
-- Luma OAuth / verified RSVP (phase 2 if abused)
-- QR check-in
-- Paid Luma ticket reselling through Stripe (you picked embed-only)
-- Any change to projects, smartboards, drop rooms, dashboard
+---
+
+## 2. `<CreatorTokenPanel />` — real on-chain data, not degenerate
+
+Replaces the current `<TokenDiscoveryChip />` inside Trade tab (chip stays as a tiny header summary on profile only).
+
+Data sources (server-side hook `useCreatorTokenMetrics(mint)`):
+- **Birdeye public API** (`/defi/token_overview`, `/defi/price_history`) — primary, no key needed for basic fields. Falls back to **pump.fun frontend API** (`https://frontend-api.pump.fun/coins/{mint}`) for holders + MC pre-migration, then Jupiter price v3 as last resort.
+- Returns: `priceUsd`, `change24h`, `marketCap`, `liquidityUsd`, `holderCount`, `topHolderPct`, `sparkline7d[]`.
+
+Panel layout (editorial, mono numerics, no neon):
+```text
+┌───────────────────────────────────────────────┐
+│ $TICKER   $0.00042  ▲ 12.4% (24h)             │
+│ ────────── 7d sparkline (svg, 60px tall) ──── │
+│                                               │
+│ Market cap   Liquidity    Holders   Top wallet│
+│ $128.4k      $42.1k       312       8.2%      │
+│                                               │
+│ [ Trade on pump.fun ↗ ]                       │
+│                                               │
+│ Data: Birdeye · Updated 14s ago               │
+└───────────────────────────────────────────────┘
+```
+- Top-wallet pct turns amber ≥30%, red ≥50% (trust signal, not alarmism).
+- Sparkline = pure SVG polyline, no library.
+- No swap UI, ever. Trade button is a `pump.fun/coin/{mint}` deeplink.
+
+Files:
+- New: `src/hooks/useCreatorTokenMetrics.ts`
+- New: `src/components/profile/CreatorTokenPanel.tsx`
+- Update: `src/components/profile/TokenDiscoveryChip.tsx` → keep as compact 1-line summary, gains `onOpenTrade` prop that pops `SupportCreatorSheet` with `defaultTab="trade"`.
+
+---
+
+## 3. Feed CTA — clickable creator, not a column
+
+Today some feed components render a wide "Support" column next to the post. Remove it.
+
+- In flow cards / feed rows / `FlowCreatorPeek`: the avatar + display name become a single button → opens `SupportCreatorSheet`.
+- A small ♡ icon sits inline next to the name as a visual affordance ("this opens support, not the profile").
+- "View profile →" moves to a secondary link inside the sheet header.
+- Profile page itself keeps a real Profile route; only the **feed** retargets the avatar.
+
+Files touched: `FlowCard`, `FlowCreatorPeek`, `DiscoverTable` creator cell, any "Back this creator" column wrappers. (Will read exact components during implementation.)
+
+---
+
+## 4. Listings return to Discover + funnel into Projects
+
+- Re-mount a "Open calls & listings" lane on `DiscoverPage` between Featured creators and Trending tokens.
+- Source: existing `listings` table (Hire/Collab/Project request types).
+- Click a tile → `<ListingLightbox />` (new Dialog) with: title, creator chip, budget range, scope summary, attachments thumbnails, "Message creator" + **primary** "Start a project from this listing" → opens `NewProjectDialog` prefilled (name = listing title, accent + collaborator from listing, scope text imported as the first roadmap note).
+- Standalone `/listings/:id` page stays mounted for owners managing their listing (and as a permalink), but Discover never routes there directly — lightbox first.
+
+Files:
+- New: `src/components/discover/ListingsLane.tsx`
+- New: `src/components/listings/ListingLightbox.tsx`
+- Update: `src/pages/DiscoverPage.tsx` to render the lane.
+- Update: `NewProjectDialog` to accept `prefillFromListing?: ListingRow`.
+
+---
+
+## 5. Technical notes
+
+- All Birdeye/pump.fun fetches run client-side from React Query hooks (CORS-friendly endpoints only). No new edge function needed.
+- No DB migration this loop — `creator_subscription_tiers`, `listings`, `studios`, `events`, `profiles.token_mint_address` all already exist.
+- `SupportCreatorSheet` is the new single entry point; legacy `BackCreatorSheet` / `SubscribeToCreatorSheet` callsites get swapped, files stay on disk for revert.
+- Memory update at the end: replace v10.2 framing line with v10.3 "Unified Support hub + Birdeye-backed Trade panel + Listings lane → Projects funnel."
+
+---
+
+## What I'm NOT touching this loop
+
+- No changes to Stripe products, tiers, or platform-fee math.
+- No DB migration.
+- No edge functions added or modified.
+- DM gating, RLS, auth — untouched.
+- Creator Pass page, Portfolio page, sidebar nav — untouched (last loop's work stands).
