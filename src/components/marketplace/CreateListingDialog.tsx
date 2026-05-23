@@ -24,22 +24,15 @@ import {
   Upload,
   X,
   Plus,
-  Briefcase,
-  Search,
   ImageIcon,
   Music,
   Video,
   FileText,
-  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import RhozeRewardBadge from "@/components/RhozeRewardBadge";
-
-const LISTING_TYPES = [
-  { key: "service", label: "Offering a Service", desc: "I can do this for you", icon: Briefcase },
-  { key: "project_request", label: "Looking for Help", desc: "I need someone to do this", icon: Search },
-  { key: "collaboration", label: "Seeking Collaborators", desc: "Let's work on this together", icon: Users },
-];
+import { COMPOSER_TYPES, LISTING_TYPE_META, type ListingType } from "@/lib/listing-types";
+import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
   { value: "audio", label: "🎵 Audio / Music" },
