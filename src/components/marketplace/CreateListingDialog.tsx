@@ -209,36 +209,9 @@ const CreateListingDialog = ({ open, onOpenChange, prefill, editListing }: Creat
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display">
-            {isEdit ? "Edit listing" : step === 0 ? "What are you posting?" : step === 1 ? "Listing Details" : "Add Media"}
+            {isEdit ? "Edit listing" : step === 1 ? "New listing" : "Add media"}
           </DialogTitle>
         </DialogHeader>
-
-        {/* Step 0: Choose type */}
-        {step === 0 && !isEdit && (
-          <div className="space-y-3">
-            {LISTING_TYPES.map((t) => {
-              const Icon = t.icon;
-              const selected = listingType === t.key;
-              return (
-                <button
-                  key={t.key}
-                  onClick={() => { setListingType(t.key); setStep(1); }}
-                  className={`flex items-center gap-4 w-full p-4 rounded-xl border-2 transition-all text-left hover:border-primary/50 hover:bg-primary/5 ${
-                    selected ? "border-primary bg-primary/5" : "border-border"
-                  }`}
-                >
-                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <Icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-display font-semibold text-sm text-foreground">{t.label}</p>
-                    <p className="text-xs text-muted-foreground">{t.desc}</p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
 
         {/* Step 1: Details */}
         {step === 1 && (
@@ -246,6 +219,36 @@ const CreateListingDialog = ({ open, onOpenChange, prefill, editListing }: Creat
             onSubmit={(e) => { e.preventDefault(); if (!title.trim()) return; if (isEdit) updateListing.mutate(); else setStep(2); }}
             className="space-y-4"
           >
+            {/* Compact intent toggle — replaces the old full-screen type picker */}
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground font-semibold mb-1.5">
+                This listing is…
+              </p>
+              <div className="grid grid-cols-3 gap-1.5">
+                {COMPOSER_TYPES.map((key) => {
+                  const meta = LISTING_TYPE_META[key];
+                  const Icon = meta.icon;
+                  const selected = listingType === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setListingType(key)}
+                      className={cn(
+                        "flex flex-col items-center gap-1 rounded-lg border px-2 py-2.5 text-center transition-all",
+                        selected
+                          ? "border-foreground bg-foreground/5 text-foreground"
+                          : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/40",
+                      )}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      <span className="text-[11px] font-semibold leading-tight">{meta.longLabel.replace(/^(Offering a |Looking for |Seeking )/, "")}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <Input
               placeholder={isOffering ? "What service are you offering? *" : isRequest ? "What do you need done? *" : "What's the project? *"}
               value={title}
