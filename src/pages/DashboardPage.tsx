@@ -54,6 +54,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import GuestDashboardPreview from "@/components/guest/GuestDashboardPreview";
 import FirstRunChecklist from "@/components/dashboard/FirstRunChecklist";
 import CreatorHomeStatsStrip from "@/components/dashboard/CreatorHomeStatsStrip";
+import FeedMetrics from "@/components/dashboard/FeedMetrics";
 import { useActiveRole } from "@/hooks/useActiveRole";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { format } from "date-fns";
