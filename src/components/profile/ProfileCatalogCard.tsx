@@ -83,7 +83,12 @@ const ProfileCatalogCard = ({ listings = [], events = [], spaces = [] }: Props) 
               : l.price
               ? `${l.currency || "$"}${l.price}`
               : null;
-            const typeLabel = l.listing_type === "project_request" ? "Open call" : "Offering";
+            const typeLabel =
+              l.listing_type === "project_request"
+                ? "Open call"
+                : l.listing_type === "collaboration"
+                ? "Collab"
+                : "Offering";
             return (
               <button
                 key={l.id}
