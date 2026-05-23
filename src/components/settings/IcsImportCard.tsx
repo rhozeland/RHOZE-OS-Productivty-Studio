@@ -25,13 +25,10 @@ export default function IcsImportCard() {
     enabled: !!user,
     queryKey: ["profile-ics", user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("luma_ics_url, ics_last_synced_at")
-        .eq("user_id", user!.id)
-        .maybeSingle();
-      if (data?.luma_ics_url) setUrl(data.luma_ics_url);
-      return data;
+      const { data } = await supabase.rpc("get_my_private_profile_fields");
+      const row = Array.isArray(data) ? data[0] : data;
+      if (row?.luma_ics_url) setUrl(row.luma_ics_url as string);
+      return row as { luma_ics_url: string | null; ics_last_synced_at: string | null } | null;
     },
   });
 
