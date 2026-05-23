@@ -160,45 +160,9 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
           </details>
         </TabsContent>
 
-        {/* ═══════ Earnings — creator subscription dashboard ═══════ */}
-        <TabsContent value="earnings" className="mt-4">
-          <CreatorEarningsTab userId={user.id} />
-        </TabsContent>
+        {/* Earnings / Portfolio / Passport / Verified IP moved to /portfolio (v10.4). */}
 
-        {/* ═══════ Portfolio ═══════ */}
-        <TabsContent value="portfolio" className="mt-4 space-y-4">
-          <div className="space-y-1.5">
-            <h2 className="font-display text-xl font-bold text-foreground">Portfolio</h2>
-            <p className="text-sm text-muted-foreground max-w-2xl">
-              Every artist coin you hold. Tap a row to trade, top up, or view the artist.
-            </p>
-          </div>
-          <CoinPortfolio />
-        </TabsContent>
 
-        {/* ═══════ Passport — event tickets + spaces visited ═══════ */}
-        <TabsContent value="passport" className="mt-4 space-y-6">
-          <button
-            type="button"
-            onClick={() => setTab("pass")}
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" /> Back to My Pass
-          </button>
-          <div className="space-y-1.5">
-            <h2 className="font-display text-xl font-bold text-foreground">Passport</h2>
-            <p className="text-sm text-muted-foreground max-w-2xl">
-              Every event you've registered for and every space you've visited — your portfolio of places and moments.
-            </p>
-          </div>
-          <TicketCollection userId={user.id} />
-          <SpacesPassportSection userId={user.id} />
-        </TabsContent>
-
-        {/* ═══════ Verified IP ═══════ */}
-        <TabsContent value="works" className="mt-4 space-y-6">
-          <VerifiedIPHub userId={user?.id ?? null} />
-        </TabsContent>
 
         {/* ═══════ Activity — pure ledger, no buy module ═══════ */}
         <TabsContent value="activity" className="mt-4 space-y-4">
