@@ -230,10 +230,10 @@ const ListingsBoard = () => {
                 {/* Meta row */}
                 <div className="flex flex-wrap items-center gap-2">
                   {(() => {
-                    const meta = TYPE_META[selected.listing_type] ?? { label: selected.listing_type, icon: Sparkles, accent: "hsl(var(--primary))" };
+                    const meta = listingMeta(selected.listing_type);
                     const Icon = meta.icon;
                     return (
-                      <Badge variant="secondary" className="gap-1 text-[10px]" style={{ background: `${meta.accent}1f`, color: meta.accent }}>
+                      <Badge variant="secondary" className={cn("gap-1 text-[10px]", meta.chip)}>
                         <Icon className="h-3 w-3" /> {meta.label}
                       </Badge>
                     );
