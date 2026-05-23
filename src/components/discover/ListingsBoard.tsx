@@ -40,7 +40,6 @@ import { listingMeta } from "@/lib/listing-types";
 const ListingsBoard = () => {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [category, setCategory] = useState<string>("all");
   const [sort, setSort] = useState<"newest" | "title">("newest");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -68,11 +67,6 @@ const ListingsBoard = () => {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     let rows = listings.filter((l: any) => {
-      if (typeFilter !== "all") {
-        if (typeFilter === "service") {
-          if (!["service", "digital_product", "physical_product"].includes(l.listing_type)) return false;
-        } else if (l.listing_type !== typeFilter) return false;
-      }
       if (category !== "all" && l.category !== category) return false;
       if (q) {
         const hay = `${l.title} ${l.description ?? ""} ${(l.tags ?? []).join(" ")}`.toLowerCase();
