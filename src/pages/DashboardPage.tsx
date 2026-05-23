@@ -703,7 +703,7 @@ const DashboardPage = () => {
         className="pt-2"
       >
         <p className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-2">
-          {user ? (isFan ? "Your Feed" : "Your Studio") : "Get discovered. Get supported. On-chain."}
+          {user ? "Your Feed" : "Get discovered. Get supported. On-chain."}
         </p>
         <h1 className="font-display text-3xl sm:text-4xl md:text-5xl leading-[1.1] text-foreground">
           {(() => {
