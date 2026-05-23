@@ -169,7 +169,7 @@ const ListingsBoard = () => {
             </div>
           )}
           {filtered.map((l: any) => {
-            const meta = TYPE_META[l.listing_type] ?? { label: l.listing_type, icon: Sparkles, accent: "hsl(var(--primary))" };
+            const meta = listingMeta(l.listing_type);
             const Icon = meta.icon;
             const isActive = selected?.id === l.id;
             return (
@@ -187,21 +187,15 @@ const ListingsBoard = () => {
                     {l.cover_url ? (
                       <img src={l.cover_url} alt="" className="w-full h-full object-cover" loading="lazy" />
                     ) : (
-                      <div
-                        className="w-full h-full flex items-center justify-center"
-                        style={{ background: `linear-gradient(135deg, ${meta.accent}22, transparent 75%)` }}
-                      >
-                        <Icon className="h-5 w-5" style={{ color: meta.accent, opacity: 0.6 }} />
+                      <div className={cn("w-full h-full flex items-center justify-center", meta.chip)}>
+                        <Icon className="h-5 w-5 opacity-60" />
                       </div>
                     )}
                   </div>
                   <div className="min-w-0 flex-1 space-y-1">
                     <p className="text-sm font-semibold text-foreground line-clamp-2 leading-snug">{l.title}</p>
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px]">
-                      <span
-                        className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-medium"
-                        style={{ background: `${meta.accent}1f`, color: meta.accent }}
-                      >
+                      <span className={cn("inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-medium", meta.chip)}>
                         <Icon className="h-2.5 w-2.5" /> {meta.label}
                       </span>
                       {l.category && (
