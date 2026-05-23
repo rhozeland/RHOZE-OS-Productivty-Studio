@@ -30,7 +30,7 @@ import CompactFlowFeed from "@/components/hub/CompactFlowFeed";
 import PostMenuButton from "@/components/PostMenuButton";
 import DiscoverTable from "@/components/discover/DiscoverTable";
 import SubscribedFeed from "@/components/discover/SubscribedFeed";
-import ListingsLane from "@/components/discover/ListingsLane";
+import ListingsBoard from "@/components/discover/ListingsBoard";
 
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
 // TrendingTokensLane removed from Discover — token discovery now lives on the Connect page.
@@ -187,11 +187,11 @@ const DiscoverPage = () => {
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // ─── Stream tabs (All / Creators / Events / Spaces) + archetype sub-filter ───
-  type StreamTab = "all" | "creators" | "event" | "space";
+  // ─── Stream tabs (All / Creators / Listings / Events / Spaces) ───
+  type StreamTab = "all" | "creators" | "listings" | "event" | "space";
   const initialTab = (searchParams.get("view") as StreamTab) || "all";
   const [streamTab, setStreamTab] = useState<StreamTab>(
-    ["all", "creators", "event", "space"].includes(initialTab) ? initialTab : "all",
+    ["all", "creators", "listings", "event", "space"].includes(initialTab) ? initialTab : "all",
   );
   // Optional archetype filter — applied only when user clicks an archetype
   // chip on a creator tile. Default null = show all creators across branches.
@@ -397,10 +397,7 @@ const DiscoverPage = () => {
       {/* ─── Trending artists (self-gated by liquidity) ───────────── */}
       <TrendingArtistsLane marketFilter={marketFilter} />
 
-      {/* ─── Open calls & listings — funnels into Projects ──────── */}
-      <ListingsLane />
-
-      {/* Trending creator tokens lane removed — discovery of tokens now lives on the Connect (Find collaborators) page only. */}
+      {/* Listings now live as a dedicated tab inside the Feed below. */}
 
 
 
@@ -434,6 +431,7 @@ const DiscoverPage = () => {
           {([
             { id: "all", label: "All" },
             { id: "creators", label: "Creators" },
+            { id: "listings", label: "Listings" },
             { id: "event", label: "Events" },
             { id: "space", label: "Spaces" },
           ] as { id: StreamTab; label: string }[]).map((t) => {
@@ -473,6 +471,8 @@ const DiscoverPage = () => {
             )}
             <DiscoverTable archetype={archetype} onArchetypeClick={handleArchetype} />
           </div>
+        ) : streamTab === "listings" ? (
+          <ListingsBoard />
         ) : streamTab === "event" || streamTab === "space" ? (
           <div className="space-y-4">
             <StreamCategorySection
