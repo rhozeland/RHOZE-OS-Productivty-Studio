@@ -69,12 +69,24 @@ const CreditShopPage = () => {
 
 const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<typeof useAuth>["user"]> }) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const rawTab = searchParams.get("tab");
-  // Legacy redirects: `tiers` → My Pass; `tickets` → new Passport tab.
-  const activeTab =
-    rawTab === "tiers" ? "pass"
-    : rawTab === "tickets" ? "passport"
-    : (rawTab || "pass");
+
+  // v10.4: Portfolio / Passport / Verified IP / Earnings moved out to /portfolio.
+  // Redirect any deep links that still target those tabs.
+  if (rawTab && ["portfolio", "passport", "tickets", "works", "earnings"].includes(rawTab)) {
+    const map: Record<string, string> = {
+      portfolio: "tokens",
+      passport: "passport",
+      tickets: "passport",
+      works: "works",
+      earnings: "earnings",
+    };
+    navigate(`/portfolio?tab=${map[rawTab]}`, { replace: true });
+  }
+
+  // Legacy redirect: `tiers` → My Pass.
+  const activeTab = rawTab === "tiers" ? "pass" : (rawTab || "pass");
 
   const { data: userCredits } = useQuery({
     queryKey: ["user-credits", user?.id],
