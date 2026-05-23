@@ -58,7 +58,7 @@ const ListingCard = ({
 }: ListingCardProps) => {
   const catMeta = CATEGORIES[listing.category] || { label: listing.category, icon: Sparkles, color: "hsl(var(--primary))" };
   const CatIcon = catMeta.icon;
-  const typeMeta = TYPE_META[listing.listing_type] || TYPE_META.service;
+  const typeMeta = listingMeta(listing.listing_type);
   const TypeIcon = typeMeta.icon;
 
   const isRequest = listing.listing_type === "project_request";
