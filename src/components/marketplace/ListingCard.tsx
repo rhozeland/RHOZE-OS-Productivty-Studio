@@ -32,13 +32,7 @@ const CATEGORIES: Record<string, { label: string; icon: any; color: string }> = 
   talent: { label: "Talent", icon: Theater, color: "hsl(50, 80%, 50%)" },
 };
 
-const TYPE_META: Record<string, { label: string; icon: any }> = {
-  service: { label: "Offering", icon: Briefcase },
-  project_request: { label: "Looking For", icon: Search },
-  collaboration: { label: "Collab", icon: Users },
-  digital_product: { label: "Offering", icon: Briefcase },
-  physical_product: { label: "Offering", icon: Briefcase },
-};
+import { listingMeta } from "@/lib/listing-types";
 
 interface ListingCardProps {
   listing: any;
