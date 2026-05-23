@@ -219,7 +219,7 @@ const DiscoverTable = ({
   return (
     <>
       <div className="rounded-xl border border-border bg-card/40 overflow-hidden">
-        <Table>
+        <Table className="table-fixed w-full">
           <TableHeader>
             <TableRow className="border-border/60 hover:bg-transparent">
               <TableHead className="w-[34%]">Creator</TableHead>
@@ -280,7 +280,7 @@ const DiscoverTable = ({
                           )}
                         </div>
                         {r.bio && (
-                          <p className="text-[11px] text-muted-foreground truncate">
+                          <p className="text-[11px] text-muted-foreground line-clamp-1 break-words">
                             {r.bio.split("\n")[0]}
                           </p>
                         )}
