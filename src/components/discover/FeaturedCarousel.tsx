@@ -29,20 +29,21 @@ interface FeaturedCarouselProps {
 
 const FeaturedCarousel = ({ slides }: FeaturedCarouselProps) => {
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
 
-  useEffect(() => {
-    if (paused || slides.length < 2) return;
-    // 9s dwell — long enough to actually read the slogan + role tags
-    // before it shuffles. Was 6s; felt jumpy.
-    const t = setTimeout(() => setIndex((i) => (i + 1) % slides.length), 9000);
-    return () => clearTimeout(t);
-  }, [index, paused, slides.length]);
+  // v10.3 — auto-advance removed. Slides were rotating under the user's
+  // cursor and a click intended for another element on Discover would land
+  // on whatever artist had just rotated in (most often "Lush"), causing a
+  // surprise navigation that felt like a page refresh. Navigation is now
+  // fully manual: prev/next chevrons + dot indicators.
 
   // Keep index in bounds when slides change.
   useEffect(() => {
     if (index >= slides.length) setIndex(0);
   }, [slides.length, index]);
+
+  const go = (dir: 1 | -1) =>
+    setIndex((i) => (i + dir + slides.length) % slides.length);
+
 
   if (slides.length === 0) {
     return (
