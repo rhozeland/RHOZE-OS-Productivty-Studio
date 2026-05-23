@@ -429,14 +429,11 @@ const FlowModePage = () => {
         setFeedScope(finalScope);
         setSelectedCategories(finalScope === "all" ? CATEGORIES : finalPrefs);
 
-        const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${calibrationKey}`);
-        if (!tutorialSeen) {
-          setShowTutorialOverlay(true);
-          tutorialTimerRef.current = setTimeout(() => {
-            setShowTutorialOverlay(false);
-            localStorage.setItem(`flow-tutorial-seen-${calibrationKey}`, "true");
-          }, 8000);
-        }
+        // v10.3 — always show the swipe tutorial on Flow entry. Users
+        // expanding into Flow from Discover get an immediate refresher
+        // on the gesture grammar; tap-to-dismiss handles itself.
+        setShowTutorialOverlay(true);
+
       } else if (!user) {
         // Guests skip calibration entirely — show the full global feed immediately.
         setPreferredCategories(CATEGORIES);
@@ -455,11 +452,14 @@ const FlowModePage = () => {
       setSelectedCategories(CATEGORIES);
       setFeedScope("all");
       setCalibrated(true);
+      // v10.3 — show tutorial on deep-link entry too.
+      setShowTutorialOverlay(true);
       return () => {
         cancelled = true;
         if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
       };
     }
+
 
     // Read local cache first so the UI hydrates without waiting on the network.
     const cachedRaw = localStorage.getItem(`flow-calibrated-${calibrationKey}`);
@@ -1099,15 +1099,9 @@ const FlowModePage = () => {
     void persistFlowPrefs({ scope: "preferred", preferred: cats });
     setCalibrated(true);
 
-    // Show tutorial for first-time users after calibration
-    const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${calibrationKey}`);
-    if (!tutorialSeen) {
-      setShowTutorialOverlay(true);
-      tutorialTimerRef.current = setTimeout(() => {
-        setShowTutorialOverlay(false);
-        localStorage.setItem(`flow-tutorial-seen-${calibrationKey}`, "true");
-      }, 8000);
-    }
+    // v10.3 — always show the swipe tutorial after calibration finishes.
+    setShowTutorialOverlay(true);
+
   };
 
   // Switch the feed between the user's preferred categories and the global "All" view.

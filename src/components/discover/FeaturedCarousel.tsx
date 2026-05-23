@@ -9,7 +9,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Calendar, MapPin, Sparkles, Users, Coins, Heart, FileText } from "lucide-react";
+import { ArrowRight, Calendar, MapPin, Sparkles, Users, Heart, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import RegionChip from "@/components/profile/RegionChip";
@@ -29,20 +29,21 @@ interface FeaturedCarouselProps {
 
 const FeaturedCarousel = ({ slides }: FeaturedCarouselProps) => {
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
 
-  useEffect(() => {
-    if (paused || slides.length < 2) return;
-    // 9s dwell — long enough to actually read the slogan + role tags
-    // before it shuffles. Was 6s; felt jumpy.
-    const t = setTimeout(() => setIndex((i) => (i + 1) % slides.length), 9000);
-    return () => clearTimeout(t);
-  }, [index, paused, slides.length]);
+  // v10.3 — auto-advance removed. Slides were rotating under the user's
+  // cursor and a click intended for another element on Discover would land
+  // on whatever artist had just rotated in (most often "Lush"), causing a
+  // surprise navigation that felt like a page refresh. Navigation is now
+  // fully manual: prev/next chevrons + dot indicators.
 
   // Keep index in bounds when slides change.
   useEffect(() => {
     if (index >= slides.length) setIndex(0);
   }, [slides.length, index]);
+
+  const go = (dir: 1 | -1) =>
+    setIndex((i) => (i + dir + slides.length) % slides.length);
+
 
   if (slides.length === 0) {
     return (
@@ -56,10 +57,9 @@ const FeaturedCarousel = ({ slides }: FeaturedCarouselProps) => {
 
   return (
     <div
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
       className="relative h-[440px] rounded-3xl overflow-hidden border border-border/60 bg-card group"
     >
+
       {/* Crossfade (no `mode="wait"` so the next slide fades in over the
           previous one — eliminates the brief blank flash). */}
       <AnimatePresence initial={false}>
@@ -192,22 +192,41 @@ const FeaturedCarousel = ({ slides }: FeaturedCarouselProps) => {
         </motion.div>
       </AnimatePresence>
 
-      {/* Dot indicators */}
+      {/* Manual navigation — prev/next chevrons + dot bulletins */}
       {slides.length > 1 && (
-        <div className="absolute bottom-3 right-4 flex items-center gap-1.5 z-10">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setIndex(i)}
-              className={cn(
-                "h-1.5 rounded-full transition-all",
-                i === index ? "w-6 bg-foreground" : "w-1.5 bg-foreground/40 hover:bg-foreground/70",
-              )}
-              aria-label={`Show slide ${i + 1}`}
-            />
-          ))}
-        </div>
+        <>
+          <button
+            type="button"
+            onClick={() => go(-1)}
+            aria-label="Previous slide"
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full bg-background/70 backdrop-blur border border-border flex items-center justify-center text-foreground hover:bg-background transition-all opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => go(1)}
+            aria-label="Next slide"
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full bg-background/70 backdrop-blur border border-border flex items-center justify-center text-foreground hover:bg-background transition-all opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+          <div className="absolute bottom-3 right-4 flex items-center gap-1.5 z-10">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setIndex(i)}
+                className={cn(
+                  "h-1.5 rounded-full transition-all",
+                  i === index ? "w-6 bg-foreground" : "w-1.5 bg-foreground/40 hover:bg-foreground/70",
+                )}
+                aria-label={`Show slide ${i + 1}`}
+              />
+            ))}
+          </div>
+        </>
       )}
+
     </div>
   );
 };
