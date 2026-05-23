@@ -38,7 +38,7 @@ type FilterKey = "all" | "hire" | "call" | "space" | "event" | "foryou";
 const FILTERS: { key: FilterKey; label: string; kinds: ConnectKind[] | "all" | "foryou" }[] = [
   { key: "all", label: "All", kinds: "all" },
   { key: "hire", label: "Find Creators", kinds: ["hire"] },
-  { key: "call", label: "Opportunities", kinds: ["call"] },
+  { key: "call", label: "Listings", kinds: ["call"] },
   { key: "space", label: "Spaces", kinds: ["space"] },
   { key: "event", label: "Events", kinds: ["event"] },
   { key: "foryou", label: "For You", kinds: "foryou" },
@@ -53,7 +53,7 @@ const KIND_TAG_COLOR: Record<ConnectKind, string> = {
 
 const KIND_TAG_LABEL: Record<ConnectKind, string> = {
   hire: "Creator",
-  call: "Open Call",
+  call: "Listing",
   space: "Space",
   event: "Event",
 };
