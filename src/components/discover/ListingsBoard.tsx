@@ -78,7 +78,7 @@ const ListingsBoard = () => {
       rows = [...rows].sort((a: any, b: any) => a.title.localeCompare(b.title));
     }
     return rows;
-  }, [listings, query, typeFilter, category, sort]);
+  }, [listings, query, category, sort]);
 
   const selected = useMemo(
     () => filtered.find((l: any) => l.id === selectedId) ?? filtered[0] ?? null,
