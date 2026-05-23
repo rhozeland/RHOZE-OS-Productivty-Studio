@@ -69,12 +69,24 @@ const CreditShopPage = () => {
 
 const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<typeof useAuth>["user"]> }) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const rawTab = searchParams.get("tab");
-  // Legacy redirects: `tiers` → My Pass; `tickets` → new Passport tab.
-  const activeTab =
-    rawTab === "tiers" ? "pass"
-    : rawTab === "tickets" ? "passport"
-    : (rawTab || "pass");
+
+  // v10.4: Portfolio / Passport / Verified IP / Earnings moved out to /portfolio.
+  // Redirect any deep links that still target those tabs.
+  if (rawTab && ["portfolio", "passport", "tickets", "works", "earnings"].includes(rawTab)) {
+    const map: Record<string, string> = {
+      portfolio: "tokens",
+      passport: "passport",
+      tickets: "passport",
+      works: "works",
+      earnings: "earnings",
+    };
+    navigate(`/portfolio?tab=${map[rawTab]}`, { replace: true });
+  }
+
+  // Legacy redirect: `tiers` → My Pass.
+  const activeTab = rawTab === "tiers" ? "pass" : (rawTab || "pass");
 
   const { data: userCredits } = useQuery({
     queryKey: ["user-credits", user?.id],
@@ -115,12 +127,9 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
       <Tabs value={activeTab} onValueChange={setTab}>
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="pass" className="gap-1.5"><Award className="h-3.5 w-3.5" /> My Pass</TabsTrigger>
-          <TabsTrigger value="earnings" className="gap-1.5"><TrendingUp className="h-3.5 w-3.5" /> Earnings</TabsTrigger>
-          <TabsTrigger value="portfolio" className="gap-1.5"><Briefcase className="h-3.5 w-3.5" /> Portfolio</TabsTrigger>
-          <TabsTrigger value="passport" className="gap-1.5"><TicketIcon className="h-3.5 w-3.5" /> Passport</TabsTrigger>
-          <TabsTrigger value="works" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Verified IP</TabsTrigger>
           <TabsTrigger value="topup" className="gap-1.5"><Wallet className="h-3.5 w-3.5" /> Top up</TabsTrigger>
         </TabsList>
+
 
         {/* ═══════ My Pass — now also surfaces the full tier matrix ═══════ */}
         <TabsContent value="pass" className="mt-4 space-y-4">
@@ -151,45 +160,9 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
           </details>
         </TabsContent>
 
-        {/* ═══════ Earnings — creator subscription dashboard ═══════ */}
-        <TabsContent value="earnings" className="mt-4">
-          <CreatorEarningsTab userId={user.id} />
-        </TabsContent>
+        {/* Earnings / Portfolio / Passport / Verified IP moved to /portfolio (v10.4). */}
 
-        {/* ═══════ Portfolio ═══════ */}
-        <TabsContent value="portfolio" className="mt-4 space-y-4">
-          <div className="space-y-1.5">
-            <h2 className="font-display text-xl font-bold text-foreground">Portfolio</h2>
-            <p className="text-sm text-muted-foreground max-w-2xl">
-              Every artist coin you hold. Tap a row to trade, top up, or view the artist.
-            </p>
-          </div>
-          <CoinPortfolio />
-        </TabsContent>
 
-        {/* ═══════ Passport — event tickets + spaces visited ═══════ */}
-        <TabsContent value="passport" className="mt-4 space-y-6">
-          <button
-            type="button"
-            onClick={() => setTab("pass")}
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" /> Back to My Pass
-          </button>
-          <div className="space-y-1.5">
-            <h2 className="font-display text-xl font-bold text-foreground">Passport</h2>
-            <p className="text-sm text-muted-foreground max-w-2xl">
-              Every event you've registered for and every space you've visited — your portfolio of places and moments.
-            </p>
-          </div>
-          <TicketCollection userId={user.id} />
-          <SpacesPassportSection userId={user.id} />
-        </TabsContent>
-
-        {/* ═══════ Verified IP ═══════ */}
-        <TabsContent value="works" className="mt-4 space-y-6">
-          <VerifiedIPHub userId={user?.id ?? null} />
-        </TabsContent>
 
         {/* ═══════ Activity — pure ledger, no buy module ═══════ */}
         <TabsContent value="activity" className="mt-4 space-y-4">
