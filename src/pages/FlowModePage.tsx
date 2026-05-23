@@ -1096,15 +1096,9 @@ const FlowModePage = () => {
     void persistFlowPrefs({ scope: "preferred", preferred: cats });
     setCalibrated(true);
 
-    // Show tutorial for first-time users after calibration
-    const tutorialSeen = localStorage.getItem(`flow-tutorial-seen-${calibrationKey}`);
-    if (!tutorialSeen) {
-      setShowTutorialOverlay(true);
-      tutorialTimerRef.current = setTimeout(() => {
-        setShowTutorialOverlay(false);
-        localStorage.setItem(`flow-tutorial-seen-${calibrationKey}`, "true");
-      }, 8000);
-    }
+    // v10.3 — always show the swipe tutorial after calibration finishes.
+    setShowTutorialOverlay(true);
+
   };
 
   // Switch the feed between the user's preferred categories and the global "All" view.
