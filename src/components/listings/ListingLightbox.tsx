@@ -83,7 +83,6 @@ const ListingLightbox = ({ open, onOpenChange, listing }: Props) => {
           {/* Type + Category */}
           <div className="flex flex-wrap items-center gap-2">
             {(() => {
-              const { listingMeta } = require("@/lib/listing-types");
               const meta = listingMeta(listing.listing_type);
               const Icon = meta.icon;
               return (
