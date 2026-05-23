@@ -266,7 +266,7 @@ const AuthedMyWorkPage = ({ userId }: { userId: string }) => {
       type: "listing" as const,
       id: l.id,
       name: l.title || "Listing",
-      sub: l.listing_type === "project_request" || l.listing_type === "collab" ? "Open call" : "Listing",
+      sub: l.listing_type === "project_request" ? "Open call" : l.listing_type === "collaboration" ? "Collab" : "Listing",
       avatar: null,
       href: `/creators/${l.id}`,
     }))),
