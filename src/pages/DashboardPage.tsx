@@ -290,6 +290,50 @@ const DashboardPage = () => {
     enabled: !!recentMessages && recentMessages.length > 0,
   });
   const senderMap = new Map(messageSenders?.map((p) => [p.user_id, p]) ?? []);
+
+  // Subscribed creators' latest works (powers the "From your creators" lane)
+  const { data: subscribedCreatorIds } = useQuery({
+    queryKey: ["dash-subscribed-creator-ids", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const sb: any = supabase;
+      const { data } = await sb
+        .from("creator_subscriptions")
+        .select("creator_id")
+        .eq("subscriber_id", user!.id)
+        .eq("status", "active");
+      return (data ?? []).map((r: any) => r.creator_id as string);
+    },
+  });
+  const { data: subscribedWorks } = useQuery({
+    queryKey: ["dash-subscribed-works", subscribedCreatorIds],
+    enabled: !!subscribedCreatorIds && subscribedCreatorIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("works")
+        .select("id, title, kind, thumbnail_url, file_url, created_at, user_id")
+        .in("user_id", subscribedCreatorIds!)
+        .is("archived_at", null)
+        .order("created_at", { ascending: false })
+        .limit(6);
+      if (!data?.length) return [];
+      const ids = [...new Set(data.map((w: any) => w.user_id))];
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, username, avatar_url")
+        .in("user_id", ids);
+      const pm = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
+      return data.map((w: any) => ({ ...w, creator: pm.get(w.user_id) }));
+    },
+  });
+
+  // Top featured work as the magazine hero image
+  const heroWork = subscribedWorks?.find((w: any) => w.thumbnail_url || w.file_url) ?? null;
+  // Next upcoming event (for the floating "Coming Up" card)
+  const nextEvent = events?.[0] ?? null;
+  // Most recent unread message (for the floating "Latest Message" card)
+  const heroLatestMsg = recentMessages?.[0] ?? null;
+  const heroLatestSender = heroLatestMsg ? senderMap.get(heroLatestMsg.sender_id) : null;
   const { data: collaborators } = useQuery({
     queryKey: ["project-collaborator-counts"],
     queryFn: async () => {
@@ -696,73 +740,330 @@ const DashboardPage = () => {
   const visibleSections = sectionOrder.filter((s) => !hiddenSections.includes(s));
 
   return (
-    <div className="max-w-5xl mx-auto pb-24 space-y-12">
-      {/* ─── Greeting strip ─────────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="pt-2"
-      >
-        {!user && (
-          <p className="text-[10px] font-body font-medium text-muted-foreground uppercase tracking-[0.2em] mb-2">
-            Get discovered. Get supported. On-chain.
-          </p>
-        )}
-        <h1 className="font-display text-3xl sm:text-4xl md:text-5xl leading-[1.1] text-foreground">
-          {(() => {
-            const grad = todayGradient();
-            const gradStyle = {
-              backgroundImage: grad.text,
-              WebkitBackgroundClip: "text" as const,
-              backgroundClip: "text" as const,
-              WebkitTextFillColor: "transparent" as const,
-              color: "transparent",
-            };
-            return user ? (
-              <>
-                {greeting()},{" "}
-                <span className="inline-block" style={gradStyle} data-rhoze-gradient={grad.id}>
-                  {firstName}.
+    <div className="max-w-6xl mx-auto pb-24 space-y-16 px-1">
+      {/* Guests stop here (preview shown above already covers the personal view) */}
+      {!user && (
+        <div className="pt-2">
+          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl leading-[1.05] text-foreground">
+            {(() => {
+              const grad = todayGradient();
+              const gradStyle = {
+                backgroundImage: grad.text,
+                WebkitBackgroundClip: "text" as const,
+                backgroundClip: "text" as const,
+                WebkitTextFillColor: "transparent" as const,
+                color: "transparent",
+              };
+              return (
+                <>
+                  Two networks.{" "}
+                  <span className="inline-block italic" style={gradStyle} data-rhoze-gradient={grad.id}>
+                    One creative space.
+                  </span>
+                </>
+              );
+            })()}
+          </h1>
+          <GuestDashboardPreview />
+        </div>
+      )}
+
+      {user && (
+        <>
+          {/* First-run + creator strips */}
+          <div className="space-y-4">
+            <FirstRunChecklist />
+            <CreatorModeStrip />
+          </div>
+
+          {/* ═══ MAGAZINE HERO ═══════════════════════════════════════════ */}
+          <motion.section
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="grid grid-cols-12 gap-6 lg:gap-10"
+          >
+            {/* LEFT: greeting + 2 anchor stat tiles */}
+            <div className="col-span-12 lg:col-span-5 flex flex-col justify-end">
+              <h1 className="font-display text-4xl sm:text-5xl lg:text-5xl xl:text-6xl 2xl:text-7xl leading-[0.92] tracking-tight text-foreground">
+                {greeting()},
+                <br />
+                {(() => {
+                  const grad = todayGradient();
+                  const gradStyle = {
+                    backgroundImage: grad.text,
+                    WebkitBackgroundClip: "text" as const,
+                    backgroundClip: "text" as const,
+                    WebkitTextFillColor: "transparent" as const,
+                    color: "transparent",
+                  };
+                  return (
+                    <span className="inline-block italic" style={gradStyle} data-rhoze-gradient={grad.id}>
+                      {firstName}.
+                    </span>
+                  );
+                })()}
+              </h1>
+              <p className="mt-8 text-base lg:text-lg text-muted-foreground max-w-sm leading-relaxed font-light">
+                {activeProjects > 0
+                  ? `The current state of your creative ecosystem. ${activeProjects} active ${activeProjects === 1 ? "collaboration" : "collaborations"} need your eye today.`
+                  : "Your personal magazine — published fresh every day. Start a project or back a creator to fill these pages."}
+              </p>
+
+              {/* Anchor stats: Active Projects + $RHOZE */}
+              <div className="mt-10 lg:mt-14 grid grid-cols-2 gap-px bg-border border border-border overflow-hidden rounded-sm">
+                <Link
+                  to="/messages?tab=projects"
+                  className="bg-card p-6 lg:p-8 group hover:bg-muted/40 transition-colors"
+                >
+                  <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground mb-4 font-body">
+                    Active Projects
+                  </p>
+                  <div className="flex items-end justify-between">
+                    <span className="font-display text-4xl lg:text-5xl text-foreground tabular-nums leading-none">
+                      {String(activeProjects).padStart(2, "0")}
+                    </span>
+                    <div className="h-8 w-8 rounded-full border border-border flex items-center justify-center group-hover:bg-foreground group-hover:text-background transition-all">
+                      <ArrowRight className="h-3 w-3" />
+                    </div>
+                  </div>
+                </Link>
+                <Link
+                  to="/credits"
+                  className="bg-card p-6 lg:p-8 group hover:bg-muted/40 transition-colors"
+                >
+                  <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground mb-4 font-body">
+                    $RHOZE Earned
+                  </p>
+                  <div className="flex flex-col">
+                    <span className="font-display text-3xl lg:text-4xl text-foreground tabular-nums tracking-tight">
+                      {Math.round(rhozeBalance).toLocaleString()}
+                    </span>
+                    <span
+                      className="text-[10px] font-bold mt-2 font-body"
+                      style={{
+                        backgroundImage: todayGradient().text,
+                        WebkitBackgroundClip: "text",
+                        backgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        color: "transparent",
+                      }}
+                    >
+                      VIEW BALANCE →
+                    </span>
+                  </div>
+                </Link>
+              </div>
+            </div>
+
+            {/* RIGHT: featured image with floating overlays */}
+            <div className="col-span-12 lg:col-span-7 relative">
+              <div className="aspect-[4/5] w-full bg-muted overflow-hidden rounded-sm relative">
+                {heroWork?.thumbnail_url || heroWork?.file_url ? (
+                  <Link to={`/profile/${heroWork.creator?.username ?? heroWork.user_id}`}>
+                    <img
+                      src={heroWork.thumbnail_url || heroWork.file_url}
+                      alt={heroWork.title || "Featured work"}
+                      className="w-full h-full object-cover"
+                    />
+                  </Link>
+                ) : (
+                  <div
+                    className="w-full h-full"
+                    style={{ backgroundImage: todayGradient().surface }}
+                  />
+                )}
+
+                {/* Editorial overlay */}
+                <div className="absolute inset-0 p-5 lg:p-10 flex flex-col justify-between pointer-events-none">
+                  {/* Top-left: Latest Message */}
+                  <div className="flex justify-between items-start">
+                    {heroLatestMsg ? (
+                      <Link
+                        to="/messages"
+                        className="bg-background/90 backdrop-blur p-5 pointer-events-auto border border-border/40 shadow-xl max-w-[240px] hover:bg-background transition-colors"
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <div
+                            className="w-1.5 h-1.5 rounded-full animate-pulse"
+                            style={{ background: todayGradient().halo }}
+                          />
+                          <span className="text-[9px] font-bold tracking-[0.2em] uppercase text-muted-foreground font-body">
+                            Latest Message
+                          </span>
+                        </div>
+                        <p className="text-sm italic text-foreground leading-snug font-display line-clamp-3">
+                          “{prettifyMessagePreview(heroLatestMsg.content)}”
+                        </p>
+                        <p className="mt-3 text-[9px] font-bold text-foreground uppercase tracking-widest font-body">
+                          {heroLatestSender?.display_name || "Creator"}
+                        </p>
+                      </Link>
+                    ) : (
+                      <Link
+                        to="/messages"
+                        className="bg-background/90 backdrop-blur p-5 pointer-events-auto border border-border/40 shadow-xl max-w-[240px]"
+                      >
+                        <span className="text-[9px] font-bold tracking-[0.2em] uppercase text-muted-foreground font-body">
+                          Messages
+                        </span>
+                        <p className="text-sm text-foreground mt-2 font-body">No new messages</p>
+                      </Link>
+                    )}
+                  </div>
+
+                  {/* Bottom-right: Coming Up */}
+                  <div className="flex justify-end">
+                    <Link
+                      to="/discover"
+                      className="bg-foreground text-background p-6 lg:p-8 pointer-events-auto shadow-2xl max-w-[220px] hover:opacity-90 transition-opacity"
+                    >
+                      <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground block mb-2 font-body">
+                        Coming Up
+                      </span>
+                      {nextEvent ? (
+                        <>
+                          <p className="font-display text-2xl lg:text-3xl italic leading-tight">
+                            {nextEvent.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-3 font-body">
+                            {format(new Date(nextEvent.start_time), "EEE, MMM d · h:mma").toUpperCase()}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="font-display text-2xl lg:text-3xl italic leading-tight">
+                            Nothing
+                            <br />
+                            scheduled
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-3 font-body">
+                            Discover what's happening
+                          </p>
+                        </>
+                      )}
+                      <span className="inline-block mt-4 text-[10px] font-bold border-b border-muted-foreground/40 pb-1 tracking-widest uppercase font-body">
+                        {nextEvent ? "View event" : "Find events"} →
+                      </span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.section>
+
+          {/* ═══ THE COLLECTIVE — subscribed creator works ════════════════ */}
+          <section className="pt-12 border-t border-border">
+            <div className="flex items-end justify-between mb-10">
+              <div className="max-w-md">
+                <h3 className="text-[10px] font-bold tracking-[0.4em] uppercase text-muted-foreground mb-4 font-body">
+                  The Collective
+                </h3>
+                <h4 className="font-display text-3xl lg:text-5xl italic text-foreground">
+                  From your creators
+                </h4>
+              </div>
+              <Link
+                to="/discover"
+                className="hidden md:inline-flex text-[11px] font-bold tracking-widest uppercase text-muted-foreground hover:text-foreground border-b border-foreground pb-2 transition-colors font-body"
+              >
+                Discover more
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
+              {(subscribedWorks ?? []).slice(0, 2).map((w: any, i: number) => {
+                const accent =
+                  i === 0
+                    ? "from-rose-400 to-fuchsia-400"
+                    : "from-amber-400 to-orange-400";
+                return (
+                  <Link
+                    key={w.id}
+                    to={`/profile/${w.creator?.username ?? w.user_id}`}
+                    className="group"
+                  >
+                    <div className="aspect-square bg-muted overflow-hidden mb-5">
+                      {w.thumbnail_url || w.file_url ? (
+                        <img
+                          src={w.thumbnail_url || w.file_url}
+                          alt={w.title}
+                          className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
+                        />
+                      ) : (
+                        <div
+                          className="w-full h-full"
+                          style={{ backgroundImage: todayGradient().surface }}
+                        />
+                      )}
+                    </div>
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="min-w-0">
+                        <p
+                          className={`text-[10px] font-bold uppercase tracking-widest mb-1 bg-gradient-to-r ${accent} bg-clip-text text-transparent font-body`}
+                        >
+                          {w.kind === "video" ? "New Drop" : "New Work"}
+                        </p>
+                        <h5 className="text-lg font-medium tracking-tight text-foreground line-clamp-1 font-display">
+                          {w.title}
+                        </h5>
+                        <p className="text-sm text-muted-foreground mt-1 font-light truncate font-body">
+                          by {w.creator?.display_name || w.creator?.username || "Creator"}
+                        </p>
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground/60 shrink-0 font-body">
+                        {format(new Date(w.created_at), "MMM d")}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+
+              {/* Always-on promo / suggested action card (3rd slot) */}
+              <Link
+                to="/credits"
+                className="bg-foreground text-background p-8 lg:p-10 flex flex-col group hover:opacity-95 transition-opacity"
+              >
+                <div className="flex-1">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.3em] mb-6 font-body">
+                    Rhozeland Boost
+                  </p>
+                  <h5 className="font-display text-3xl lg:text-4xl italic leading-tight">
+                    Get your work seen by more fans.
+                  </h5>
+                  <p className="mt-6 text-sm text-muted-foreground font-light leading-relaxed font-body">
+                    Boost your profile to the top of Discover for 24 hours — starting at 500 Credits.
+                  </p>
+                </div>
+                <span className="mt-10 w-full py-4 bg-background text-foreground text-[10px] font-bold tracking-[0.2em] uppercase text-center group-hover:bg-muted transition-colors font-body">
+                  Boost profile →
                 </span>
-              </>
-            ) : (
-              <>
-                Two networks.{" "}
-                <span className="inline-block" style={gradStyle} data-rhoze-gradient={grad.id}>
-                  One creative space.
-                </span>
-              </>
-            );
-          })()}
-        </h1>
-        <p className="text-sm text-muted-foreground mt-3 max-w-xl">
-          {user
-            ? (unreadCount ?? 0) > 0
-              ? `${unreadCount} unread.`
-              : isFan
-                ? "Posts and updates from creators you follow and support."
-                : "Your workspace. Drafts, drops, bookings, and what's next."
-            : isFan
-              ? "Posts and updates from creators you follow and support."
-              : "Your workspace. Drafts, drops, bookings, and what's next."}
-        </p>
+              </Link>
 
-      </motion.div>
+              {/* If user has no subscribed-creator works, fill remaining slots
+                  with a quiet "follow more creators" prompt instead of empties. */}
+              {(subscribedWorks?.length ?? 0) < 2 && (
+                <Link
+                  to="/discover"
+                  className="border border-dashed border-border p-8 lg:p-10 flex flex-col items-start justify-center hover:bg-muted/30 transition-colors group"
+                >
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.3em] mb-4 font-body">
+                    Empty Page
+                  </p>
+                  <h5 className="font-display text-2xl lg:text-3xl italic text-foreground leading-tight">
+                    Back a creator to fill your feed.
+                  </h5>
+                  <span className="mt-6 text-[10px] font-bold tracking-[0.2em] uppercase text-foreground border-b border-foreground pb-1 font-body">
+                    Find creators →
+                  </span>
+                </Link>
+              )}
+            </div>
+          </section>
+        </>
+      )}
 
-      {/* ─── First-run checklist ─────────────────────────────────────────
-          Slim onboarding card. Only renders for users who look new
-          (missing avatar/bio, no Flow posts). Auto-hides once they
-          have a profile + at least one post, or on dismiss. */}
-      {user && <FirstRunChecklist />}
-      {user && <CreatorModeStrip />}
-
-      {/* ════════════════════════════════════════════════════════════════
-          v7 (post phase-2): Studio is now "My Studio" — the artist's
-          private workspace. Public discovery (Spaces grid, Hub pulse,
-          People, City lists) lives in /discover and /hub now. The four
-          ACT sections below are unmounted via SHOW_PUBLIC_NETWORK to
-          keep the code on disk for revert.
-          ════════════════════════════════════════════════════════════════ */}
+      {/* Legacy public-network acts (kept on disk, gated false) */}
       {SHOW_PUBLIC_NETWORK && (<>
       <section>
         <form onSubmit={handleNetworkSearch} className="relative max-w-2xl mx-auto mb-6">
@@ -1350,59 +1651,6 @@ const DashboardPage = () => {
       )}
       </>)}
 
-      {/* Guests stop here (preview shown above already covers the personal view) */}
-      {!user && <GuestDashboardPreview />}
-
-      {/* ─── Personal stat strip + sections (auth only) ─────────────── */}
-      {user && (
-        <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-[1px] bg-border rounded-2xl overflow-hidden">
-            {/* Active Projects → Conversations / Projects tab */}
-            <Link to="/messages?tab=projects" className="bg-card p-5 hover:bg-muted/50 transition-colors group">
-              <FolderKanban className="h-4 w-4 text-muted-foreground mb-3 group-hover:text-foreground transition-colors" />
-              <p className="font-display text-3xl text-foreground tabular-nums">{activeProjects}</p>
-              <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">Active Projects</p>
-            </Link>
-
-            {/* Latest Message — popover with condensed recent messages */}
-            <LatestMessagePopover
-              latestMessage={latestMessage}
-              unreadCount={unreadCount ?? 0}
-              recentMessages={recentMessages ?? []}
-              senderMap={senderMap}
-            />
-
-            {/* Upcoming Events — routes into Discover events */}
-            {(events?.length ?? 0) > 0 ? (
-              <Link to="/discover" className="bg-card p-5 hover:bg-muted/50 transition-colors group">
-                <Calendar className="h-4 w-4 text-muted-foreground mb-3 group-hover:text-foreground transition-colors" />
-                <p className="font-display text-3xl text-foreground tabular-nums">{events!.length}</p>
-                <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">Upcoming Events</p>
-              </Link>
-            ) : (
-              <div className="bg-card p-5 flex flex-col">
-                <Calendar className="h-4 w-4 text-muted-foreground mb-3" />
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-body mb-2">Upcoming</p>
-                <Link
-                  to="/discover"
-                  className="inline-flex items-center justify-center h-8 rounded-full border border-border hover:bg-muted text-xs font-medium font-body text-foreground transition-colors px-3 self-start"
-                >
-                  Find events →
-                </Link>
-              </div>
-            )}
-
-            {/* $RHOZE Earned */}
-            <Link to="/credits" className="bg-card p-5 hover:bg-muted/50 transition-colors group">
-              <Sparkles className="h-4 w-4 text-muted-foreground mb-3 group-hover:text-foreground transition-colors" />
-              <p className="font-display text-3xl text-foreground tabular-nums">
-                {Math.round(rhozeBalance).toLocaleString()}
-              </p>
-              <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-body">$RHOZE Earned</p>
-            </Link>
-          </div>
-        </>
-      )}
     </div>
   );
 };
