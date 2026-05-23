@@ -23,13 +23,15 @@ import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import VerifiedProBadge from "@/components/profile/VerifiedProBadge";
 import ProfileTierBadge from "@/components/profile/ProfileTierBadge";
 import ArchetypeChip from "@/components/profile/ArchetypeChip";
-import RegionChip from "@/components/profile/RegionChip";
+// RegionChip retired from header (v10.4) — location + region are combined inline.
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import SupportSheet from "@/components/profile/SupportSheet";
-import TokenDiscoveryChip from "@/components/profile/TokenDiscoveryChip";
+import ProjectTokenCard from "@/components/profile/ProjectTokenCard";
+import ProfileCatalogCard from "@/components/profile/ProfileCatalogCard";
+import { getRegion } from "@/lib/regions";
 import { LumaEventEmbed } from "@/components/profile/LumaEventEmbed";
 import { BoostProfileSheet } from "@/components/profile/BoostProfileSheet";
 import CreatorDropsCatalog from "@/components/profile/CreatorDropsCatalog";
@@ -37,7 +39,7 @@ import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import SaveButton from "@/components/saved/SaveButton";
 import { cn } from "@/lib/utils";
-import { ROLE_BY_ID } from "@/lib/creator-roles";
+// ROLE_BY_ID retired from header chips (v10.4) — role labels removed for visual clarity.
 import { archetypeBannerGradient } from "@/lib/archetypes";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import FlowPostOwnerMenu from "@/components/profile/FlowPostOwnerMenu";
@@ -440,32 +442,32 @@ const ProfileDetailPage = () => {
                 </p>
               )}
 
-              {/* Structural metadata tags — immediate context before bio */}
-              {(p.location || p.archetype || p.region_code || (p.creator_roles?.length > 0) || (p.skills?.length > 0)) && (
-                <div className="mt-2.5 flex items-center gap-1.5 flex-wrap">
-                  {p.location && (
-                    <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground bg-muted/50 rounded-full px-2 py-0.5">
-                      <MapPin className="h-2.5 w-2.5" /> {p.location}
-                    </span>
-                  )}
-                  {p.archetype && <ArchetypeChip archetype={p.archetype} size="xs" />}
-                  {p.region_code && <RegionChip code={p.region_code} size="xs" />}
-                  {p.creator_roles?.slice(0, 2).map((roleId: string) => {
-                    const role = ROLE_BY_ID.get(roleId);
-                    if (!role) return null;
-                    return (
-                      <span key={roleId} className="inline-flex items-center gap-1 text-[11px] bg-primary/10 text-primary rounded-full px-2 py-0.5 font-medium">
-                        {role.label}
+              {/* Structural metadata — single combined location chip + archetype.
+                  Creator-role labels and skill hashtags retired (v10.4) — they
+                  cluttered the header without adding signal. */}
+              {(() => {
+                const region = getRegion(p.region_code);
+                const cityPart = (p.location || "").trim();
+                const locationLabel = cityPart && region
+                  ? `${cityPart}, ${region.code}`
+                  : cityPart || region?.label || null;
+                if (!locationLabel && !p.archetype) return null;
+                return (
+                  <div className="mt-2.5 flex items-center gap-1.5 flex-wrap">
+                    {locationLabel && (
+                      <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground bg-muted/50 rounded-full px-2.5 py-0.5">
+                        {region ? (
+                          <span aria-hidden>{region.flag}</span>
+                        ) : (
+                          <MapPin className="h-2.5 w-2.5" />
+                        )}
+                        {locationLabel}
                       </span>
-                    );
-                  })}
-                  {p.skills?.slice(0, 3).map((skill: string) => (
-                    <span key={skill} className="text-[11px] text-muted-foreground font-medium">
-                      #{skill.replace(/\s/g, "")}
-                    </span>
-                  ))}
-                </div>
-              )}
+                    )}
+                    {p.archetype && <ArchetypeChip archetype={p.archetype} size="xs" />}
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
@@ -612,10 +614,13 @@ const ProfileDetailPage = () => {
               </motion.div>
             )}
 
-            {/* v10 — read-only token discovery chip (renders only if coin has a mint).
-                Use p.id (profiles.id) — the URL param can be either user_id or profile id. */}
+            {/* v10.4 — prominent fundraising project card (renders only if creator
+                has linked a pump.fun token). Replaces the tiny TokenDiscoveryChip. */}
             {p?.id && (
-              <TokenDiscoveryChip creatorId={p.id} className="self-start" />
+              <ProjectTokenCard
+                creatorId={p.id}
+                creatorName={p.display_name || p.username}
+              />
             )}
 
             {/* v10.3 — Luma event embed (when creator has linked a lu.ma URL) */}
@@ -705,123 +710,12 @@ const ProfileDetailPage = () => {
             {/* v10.2 — "Launches" card removed. Tokens now surface as the read-only
                 TokenDiscoveryChip in the profile header (deeplinks to pump.fun). */}
 
-            {/* Listings card */}
-            {(sellerListings?.length ?? 0) > 0 && (
-              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5 space-y-3">
-                <div className="flex items-center gap-2">
-                  <ShoppingBag className="h-4 w-4 text-primary" />
-                  <h3 className="text-sm font-semibold text-foreground">Listings</h3>
-                  <span className="text-[10px] text-muted-foreground">{sellerListings!.length}</span>
-                </div>
-                <div className="space-y-2">
-                  {sellerListings!.map((l: any) => {
-                    const priceLabel = l.credits_price
-                      ? `${l.credits_price} $RHOZE`
-                      : l.price
-                      ? `${l.currency || "$"}${l.price}`
-                      : null;
-                    const typeLabel = l.listing_type === "project_request" ? "Open call" : "Offering";
-                    return (
-                      <button
-                        key={l.id}
-                        onClick={() => navigate(`/marketplace/${l.id}`)}
-                        className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
-                      >
-                        <div className="h-10 w-10 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
-                          <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{l.title}</p>
-                          <p className="text-[11px] text-muted-foreground truncate">
-                            {typeLabel}
-                            {priceLabel ? ` · ${priceLabel}` : ""}
-                          </p>
-                        </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Events card */}
-            {(allHostedEvents?.length ?? 0) > 0 && (
-              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5 space-y-3">
-                <div className="flex items-center gap-2">
-                  <CalendarIcon className="h-4 w-4 text-primary" />
-                  <h3 className="text-sm font-semibold text-foreground">Events</h3>
-                  <span className="text-[10px] text-muted-foreground">{allHostedEvents!.length}</span>
-                </div>
-                <div className="space-y-2">
-                  {allHostedEvents!.map((e: any) => {
-                    const isPast = new Date(e.starts_at) < new Date();
-                    return (
-                      <button
-                        key={e.id}
-                        onClick={() => navigate(`/events/${e.slug || e.id}`)}
-                        className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
-                      >
-                        {e.cover_url ? (
-                          <img src={e.cover_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
-                        ) : (
-                          <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
-                            <CalendarIcon className="h-5 w-5 text-muted-foreground/40" />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-sm font-medium text-foreground truncate">{e.title}</p>
-                            {isPast && <Badge variant="outline" className="text-[8px] shrink-0">Past</Badge>}
-                          </div>
-                          <p className="text-[11px] text-muted-foreground truncate">
-                            {format(new Date(e.starts_at), "MMM d · h:mm a")}
-                            {e.is_online ? " · Online" : e.venue_name ? ` · ${e.venue_name}` : ""}
-                          </p>
-                        </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Spaces card */}
-            {(hostedSpaces?.length ?? 0) > 0 && (
-              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-primary" />
-                  <h3 className="text-sm font-semibold text-foreground">Spaces</h3>
-                  <span className="text-[10px] text-muted-foreground">{hostedSpaces!.length}</span>
-                </div>
-                <div className="space-y-2">
-                  {hostedSpaces!.map((s: any) => (
-                    <button
-                      key={s.id}
-                      onClick={() => navigate(`/studios/${s.id}`)}
-                      className="group w-full text-left flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:border-foreground/30 transition-colors"
-                    >
-                      {s.cover_image_url ? (
-                        <img src={s.cover_image_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
-                      ) : (
-                        <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0">
-                          <Building2 className="h-5 w-5 text-muted-foreground/40" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{s.name}</p>
-                        <p className="text-[11px] text-muted-foreground truncate">
-                          {[s.city, s.state].filter(Boolean).join(" · ") || "Space"}
-                          {s.hourly_rate ? ` · ${s.currency || "$"}${s.hourly_rate}/hr` : ""}
-                        </p>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* v10.4 — Unified Catalog card (Listings · Events · Spaces) */}
+            <ProfileCatalogCard
+              listings={sellerListings ?? []}
+              events={allHostedEvents ?? []}
+              spaces={hostedSpaces ?? []}
+            />
           </aside>
 
           {/* ─── RIGHT: Social Feed — posts grid ─── */}
@@ -832,7 +726,7 @@ const ProfileDetailPage = () => {
               </h2>
             </div>
             {flowPosts && flowPosts.length > 0 ? (
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-1 sm:gap-1.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
                 {flowPosts.map((post: any) => {
                   const cat = (post.category || "").toLowerCase();
                   const CatIcon =
