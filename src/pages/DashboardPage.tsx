@@ -290,6 +290,50 @@ const DashboardPage = () => {
     enabled: !!recentMessages && recentMessages.length > 0,
   });
   const senderMap = new Map(messageSenders?.map((p) => [p.user_id, p]) ?? []);
+
+  // Subscribed creators' latest works (powers the "From your creators" lane)
+  const { data: subscribedCreatorIds } = useQuery({
+    queryKey: ["dash-subscribed-creator-ids", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const sb: any = supabase;
+      const { data } = await sb
+        .from("creator_subscriptions")
+        .select("creator_id")
+        .eq("subscriber_id", user!.id)
+        .eq("status", "active");
+      return (data ?? []).map((r: any) => r.creator_id as string);
+    },
+  });
+  const { data: subscribedWorks } = useQuery({
+    queryKey: ["dash-subscribed-works", subscribedCreatorIds],
+    enabled: !!subscribedCreatorIds && subscribedCreatorIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("works")
+        .select("id, title, kind, thumbnail_url, file_url, created_at, user_id")
+        .in("user_id", subscribedCreatorIds!)
+        .is("archived_at", null)
+        .order("created_at", { ascending: false })
+        .limit(6);
+      if (!data?.length) return [];
+      const ids = [...new Set(data.map((w: any) => w.user_id))];
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, username, avatar_url")
+        .in("user_id", ids);
+      const pm = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
+      return data.map((w: any) => ({ ...w, creator: pm.get(w.user_id) }));
+    },
+  });
+
+  // Top featured work as the magazine hero image
+  const heroWork = subscribedWorks?.find((w: any) => w.thumbnail_url || w.file_url) ?? null;
+  // Next upcoming event (for the floating "Coming Up" card)
+  const nextEvent = events?.[0] ?? null;
+  // Most recent unread message (for the floating "Latest Message" card)
+  const heroLatestMsg = recentMessages?.[0] ?? null;
+  const heroLatestSender = heroLatestMsg ? senderMap.get(heroLatestMsg.sender_id) : null;
   const { data: collaborators } = useQuery({
     queryKey: ["project-collaborator-counts"],
     queryFn: async () => {
