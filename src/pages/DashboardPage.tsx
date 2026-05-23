@@ -974,8 +974,8 @@ const DashboardPage = () => {
                 <div className="space-y-1.5 mt-5">
                   {[
                     { label: "Conversations", icon: MessageSquare, color: "text-pink-500" },
-                    { label: "Offerings", icon: Briefcase, color: "text-amber-500" },
-                    { label: "Opportunities", icon: Megaphone, color: "text-fuchsia-500" },
+                    { label: "Listings", icon: Briefcase, color: "text-amber-500" },
+                    { label: "Projects", icon: Megaphone, color: "text-fuchsia-500" },
                     { label: "Works", icon: Sparkles, color: "text-emerald-500" },
                   ].map((lane) => {
                     const Icon = lane.icon;
