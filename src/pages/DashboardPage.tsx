@@ -776,180 +776,176 @@ const DashboardPage = () => {
             <CreatorModeStrip />
           </div>
 
-          {/* ═══ MAGAZINE HERO ═══════════════════════════════════════════ */}
+          {/* ═══ SOFT CARDS SPREAD HERO ═══════════════════════════════════ */}
           <motion.section
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="grid grid-cols-12 gap-6 lg:gap-10"
+            className="space-y-10 lg:space-y-14"
           >
-            {/* LEFT: greeting + 2 anchor stat tiles */}
-            <div className="col-span-12 lg:col-span-5 flex flex-col justify-end">
-              <h1 className="font-display text-4xl sm:text-5xl lg:text-5xl xl:text-6xl 2xl:text-7xl leading-[0.92] tracking-tight text-foreground">
-                {greeting()},
-                <br />
-                {(() => {
-                  const grad = todayGradient();
-                  const gradStyle = {
-                    backgroundImage: grad.text,
-                    WebkitBackgroundClip: "text" as const,
-                    backgroundClip: "text" as const,
-                    WebkitTextFillColor: "transparent" as const,
-                    color: "transparent",
-                  };
-                  return (
-                    <span className="inline-block italic" style={gradStyle} data-rhoze-gradient={grad.id}>
-                      {firstName}.
-                    </span>
-                  );
-                })()}
-              </h1>
-              <p className="mt-8 text-base lg:text-lg text-muted-foreground max-w-sm leading-relaxed font-light">
-                {activeProjects > 0
-                  ? `The current state of your creative ecosystem. ${activeProjects} active ${activeProjects === 1 ? "collaboration" : "collaborations"} need your eye today.`
-                  : "Your personal magazine — published fresh every day. Start a project or back a creator to fill these pages."}
-              </p>
-
-              {/* Anchor stats: Active Projects + $RHOZE */}
-              <div className="mt-10 lg:mt-14 grid grid-cols-2 gap-px bg-border border border-border overflow-hidden rounded-sm">
-                <Link
-                  to="/messages?tab=projects"
-                  className="bg-card p-6 lg:p-8 group hover:bg-muted/40 transition-colors"
-                >
-                  <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground mb-4 font-body">
-                    Active Projects
-                  </p>
-                  <div className="flex items-end justify-between">
-                    <span className="font-display text-4xl lg:text-5xl text-foreground tabular-nums leading-none">
-                      {String(activeProjects).padStart(2, "0")}
-                    </span>
-                    <div className="h-8 w-8 rounded-full border border-border flex items-center justify-center group-hover:bg-foreground group-hover:text-background transition-all">
-                      <ArrowRight className="h-3 w-3" />
-                    </div>
-                  </div>
-                </Link>
-                <Link
-                  to="/credits"
-                  className="bg-card p-6 lg:p-8 group hover:bg-muted/40 transition-colors"
-                >
-                  <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground mb-4 font-body">
-                    $RHOZE Earned
-                  </p>
-                  <div className="flex flex-col">
-                    <span className="font-display text-3xl lg:text-4xl text-foreground tabular-nums tracking-tight">
-                      {Math.round(rhozeBalance).toLocaleString()}
-                    </span>
-                    <span
-                      className="text-[10px] font-bold mt-2 font-body"
-                      style={{
-                        backgroundImage: todayGradient().text,
-                        WebkitBackgroundClip: "text",
-                        backgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        color: "transparent",
-                      }}
-                    >
-                      VIEW BALANCE →
-                    </span>
-                  </div>
-                </Link>
+            {/* Header: greeting + tilted editorial image */}
+            <header className="relative grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-end">
+              <div className="lg:col-span-8 z-10">
+                <h1 className="font-display text-6xl sm:text-7xl md:text-8xl lg:text-8xl xl:text-9xl leading-[0.85] tracking-tight text-foreground">
+                  {greeting()},
+                  <br />
+                  {(() => {
+                    const grad = todayGradient();
+                    return (
+                      <span
+                        className="inline-block italic pb-2"
+                        style={{
+                          backgroundImage: grad.text,
+                          WebkitBackgroundClip: "text",
+                          backgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
+                          color: "transparent",
+                        }}
+                        data-rhoze-gradient={grad.id}
+                      >
+                        {firstName}.
+                      </span>
+                    );
+                  })()}
+                </h1>
+                <p className="mt-8 text-lg md:text-xl text-muted-foreground max-w-md font-medium leading-relaxed font-body">
+                  Your personal dashboard for everything happening across Rhozeland today.
+                </p>
               </div>
-            </div>
 
-            {/* RIGHT: featured image with floating overlays */}
-            <div className="col-span-12 lg:col-span-7 relative">
-              <div className="aspect-[4/5] w-full bg-muted overflow-hidden rounded-sm relative">
-                {heroWork?.thumbnail_url || heroWork?.file_url ? (
-                  <Link to={`/profile/${heroWork.creator?.username ?? heroWork.user_id}`}>
+              <div className="lg:col-span-4 relative flex justify-end">
+                <Link
+                  to={
+                    heroWork
+                      ? `/profile/${heroWork.creator?.username ?? heroWork.user_id}`
+                      : "/discover"
+                  }
+                  className="w-full aspect-[3/4] max-w-[320px] rounded-2xl overflow-hidden shadow-2xl rotate-2 hover:rotate-0 transition-transform duration-500 block bg-muted"
+                >
+                  {heroWork?.thumbnail_url || heroWork?.file_url ? (
                     <img
                       src={heroWork.thumbnail_url || heroWork.file_url}
                       alt={heroWork.title || "Featured work"}
                       className="w-full h-full object-cover"
                     />
-                  </Link>
-                ) : (
-                  <div
-                    className="w-full h-full"
-                    style={{ backgroundImage: todayGradient().surface }}
-                  />
-                )}
+                  ) : (
+                    <div
+                      className="w-full h-full"
+                      style={{ backgroundImage: todayGradient().surface }}
+                    />
+                  )}
+                </Link>
+                {/* Floating accent */}
+                <div
+                  className="absolute -bottom-6 -left-6 w-24 h-24 bg-background/40 backdrop-blur-md rounded-full border border-background/50 pointer-events-none"
+                  style={{ backgroundImage: todayGradient().halo }}
+                />
+              </div>
+            </header>
 
-                {/* Editorial overlay */}
-                <div className="absolute inset-0 p-5 lg:p-10 flex flex-col justify-between pointer-events-none">
-                  {/* Top-left: Latest Message */}
-                  <div className="flex justify-between items-start">
-                    {heroLatestMsg ? (
-                      <Link
-                        to="/messages"
-                        className="bg-background/90 backdrop-blur p-5 pointer-events-auto border border-border/40 shadow-xl max-w-[240px] hover:bg-background transition-colors"
-                      >
-                        <div className="flex items-center gap-2 mb-2">
-                          <div
-                            className="w-1.5 h-1.5 rounded-full animate-pulse"
-                            style={{ background: todayGradient().halo }}
-                          />
-                          <span className="text-[9px] font-bold tracking-[0.2em] uppercase text-muted-foreground font-body">
-                            Latest Message
-                          </span>
-                        </div>
-                        <p className="text-sm italic text-foreground leading-snug font-display line-clamp-3">
-                          “{prettifyMessagePreview(heroLatestMsg.content)}”
-                        </p>
-                        <p className="mt-3 text-[9px] font-bold text-foreground uppercase tracking-widest font-body">
-                          {heroLatestSender?.display_name || "Creator"}
-                        </p>
-                      </Link>
-                    ) : (
-                      <Link
-                        to="/messages"
-                        className="bg-background/90 backdrop-blur p-5 pointer-events-auto border border-border/40 shadow-xl max-w-[240px]"
-                      >
-                        <span className="text-[9px] font-bold tracking-[0.2em] uppercase text-muted-foreground font-body">
-                          Messages
-                        </span>
-                        <p className="text-sm text-foreground mt-2 font-body">No new messages</p>
-                      </Link>
-                    )}
+            {/* Stat tiles */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Active Projects */}
+              <Link
+                to="/messages?tab=projects"
+                className="group bg-card border border-border p-8 rounded-3xl hover:shadow-xl hover:shadow-foreground/5 transition-all duration-300 block"
+              >
+                <div className="flex justify-between items-start mb-6">
+                  <div className="p-2 bg-muted rounded-lg">
+                    <FolderKanban className="w-5 h-5 text-muted-foreground" />
                   </div>
+                  {activeProjects > 0 && (
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 font-body">
+                      Live
+                    </span>
+                  )}
+                </div>
+                <div className="font-display text-5xl text-foreground tabular-nums leading-none group-hover:scale-105 transition-transform origin-left">
+                  {activeProjects}
+                </div>
+                <div className="mt-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground font-body">
+                  Active Projects
+                </div>
+              </Link>
 
-                  {/* Bottom-right: Coming Up */}
-                  <div className="flex justify-end">
-                    <Link
-                      to="/discover"
-                      className="bg-foreground text-background p-6 lg:p-8 pointer-events-auto shadow-2xl max-w-[220px] hover:opacity-90 transition-opacity"
-                    >
-                      <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground block mb-2 font-body">
-                        Coming Up
-                      </span>
-                      {nextEvent ? (
-                        <>
-                          <p className="font-display text-2xl lg:text-3xl italic leading-tight">
-                            {nextEvent.title}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-3 font-body">
-                            {format(new Date(nextEvent.start_time), "EEE, MMM d · h:mma").toUpperCase()}
-                          </p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="font-display text-2xl lg:text-3xl italic leading-tight">
-                            Nothing
-                            <br />
-                            scheduled
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-3 font-body">
-                            Discover what's happening
-                          </p>
-                        </>
-                      )}
-                      <span className="inline-block mt-4 text-[10px] font-bold border-b border-muted-foreground/40 pb-1 tracking-widest uppercase font-body">
-                        {nextEvent ? "View event" : "Find events"} →
-                      </span>
-                    </Link>
+              {/* Latest Message */}
+              <Link
+                to="/messages"
+                className="group bg-card border border-border p-8 rounded-3xl hover:shadow-xl hover:shadow-foreground/5 transition-all duration-300 block"
+              >
+                <div className="flex justify-between items-start mb-6">
+                  <div className="p-2 bg-muted rounded-lg">
+                    <MessageSquare className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  {heroLatestSender && (
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 font-body truncate max-w-[80px]">
+                      {(heroLatestSender.display_name || "").split(" ")[0]}
+                    </span>
+                  )}
+                </div>
+                <div className="text-base font-medium text-foreground leading-snug h-[3.5rem] overflow-hidden line-clamp-2 font-body">
+                  {heroLatestMsg
+                    ? prettifyMessagePreview(heroLatestMsg.content)
+                    : "No new messages yet."}
+                </div>
+                <div className="mt-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground font-body">
+                  Latest Message
+                </div>
+              </Link>
+
+              {/* Upcoming */}
+              <Link
+                to={nextEvent ? `/events/${nextEvent.id}` : "/discover"}
+                className="group bg-foreground text-background p-8 rounded-3xl hover:shadow-xl transition-all duration-300 flex flex-col justify-between min-h-[200px]"
+              >
+                <div className="flex justify-between items-start">
+                  <div className="p-2 bg-background/10 rounded-lg">
+                    <Calendar className="w-5 h-5 text-background/60" />
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-background/40 font-body">
+                    Calendar
+                  </span>
+                </div>
+                <div className="mt-6">
+                  {nextEvent ? (
+                    <p className="text-sm font-medium leading-snug line-clamp-2 mb-4 font-body">
+                      {nextEvent.title}
+                    </p>
+                  ) : null}
+                  <span className="w-full flex items-center justify-between px-5 py-3 bg-background text-foreground rounded-xl font-semibold text-sm group-hover:bg-muted transition-colors font-body">
+                    {nextEvent ? "View event" : "Find events"}
+                    <ArrowRight className="w-4 h-4" />
+                  </span>
+                  <div className="mt-3 text-xs font-semibold uppercase tracking-wider text-background/40 font-body">
+                    Upcoming
                   </div>
                 </div>
-              </div>
+              </Link>
+
+              {/* $RHOZE Earned */}
+              <Link
+                to="/credits"
+                className="group bg-card border border-border p-8 rounded-3xl hover:shadow-xl hover:shadow-foreground/5 transition-all duration-300 block"
+              >
+                <div className="flex justify-between items-start mb-6">
+                  <div className="p-2 bg-muted rounded-lg">
+                    <Sparkles className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <div className="font-display text-5xl text-foreground tabular-nums">
+                    {Math.round(rhozeBalance).toLocaleString()}
+                  </div>
+                  <div className="text-sm font-bold text-muted-foreground font-body">$</div>
+                </div>
+                <div className="mt-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground font-body">
+                  $RHOZE Earned
+                </div>
+              </Link>
             </div>
+
+            {/* Hairline spacer */}
+            <div className="w-full h-px bg-gradient-to-r from-transparent via-border to-transparent" />
           </motion.section>
 
           {/* ═══ THE COLLECTIVE — subscribed creator works ════════════════ */}
