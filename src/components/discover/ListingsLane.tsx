@@ -12,17 +12,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, Search, Briefcase, Users, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import ListingLightbox from "@/components/listings/ListingLightbox";
-import { cn } from "@/lib/utils";
-
-const TYPE_META: Record<string, { label: string; icon: any; accent: string }> = {
-  service: { label: "Offering", icon: Briefcase, accent: "hsl(var(--primary))" },
-  digital_product: { label: "Offering", icon: Briefcase, accent: "hsl(var(--primary))" },
-  physical_product: { label: "Offering", icon: Briefcase, accent: "hsl(var(--primary))" },
-  project_request: { label: "Open call", icon: Search, accent: "hsl(38 92% 55%)" },
-  collaboration: { label: "Collab", icon: Users, accent: "hsl(292 84% 61%)" },
-};
+import { listingMeta } from "@/lib/listing-types";
 
 const ListingsLane = () => {
   const [activeListing, setActiveListing] = useState<any | null>(null);
@@ -65,7 +57,7 @@ const ListingsLane = () => {
       <div className="-mx-4 px-4 overflow-x-auto scroll-smooth scrollbar-none">
         <div className="flex gap-3 pb-2 min-w-min">
           {listings.map((l: any) => {
-            const meta = TYPE_META[l.listing_type] ?? { label: l.listing_type, icon: Sparkles, accent: "hsl(var(--primary))" };
+            const meta = listingMeta(l.listing_type);
             const Icon = meta.icon;
             return (
               <button
@@ -84,21 +76,13 @@ const ListingsLane = () => {
                     />
                   </div>
                 ) : (
-                  <div
-                    className="aspect-[16/9] flex items-end p-3"
-                    style={{ background: `linear-gradient(135deg, ${meta.accent}22, transparent 75%)` }}
-                  >
-                    <Icon className="h-7 w-7" style={{ color: meta.accent, opacity: 0.5 }} />
+                  <div className="aspect-[16/9] flex items-end p-3 bg-gradient-to-br from-primary/15 via-transparent to-transparent">
+                    <Icon className="h-7 w-7 text-primary/50" />
                   </div>
                 )}
                 <div className="p-3 space-y-1.5">
                   <div className="flex items-center gap-1.5">
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
-                      )}
-                      style={{ background: `${meta.accent}1f`, color: meta.accent }}
-                    >
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${meta.chip}`}>
                       <Icon className="h-3 w-3" /> {meta.label}
                     </span>
                     {l.contact_info && (

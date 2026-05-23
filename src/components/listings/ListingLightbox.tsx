@@ -18,6 +18,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ExternalLink, MessageCircle, Plus, Clock, DollarSign } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { listingMeta } from "@/lib/listing-types";
 
 interface Props {
   open: boolean;
@@ -82,7 +83,6 @@ const ListingLightbox = ({ open, onOpenChange, listing }: Props) => {
           {/* Type + Category */}
           <div className="flex flex-wrap items-center gap-2">
             {(() => {
-              const { listingMeta } = require("@/lib/listing-types");
               const meta = listingMeta(listing.listing_type);
               const Icon = meta.icon;
               return (
