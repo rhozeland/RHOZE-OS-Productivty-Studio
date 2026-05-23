@@ -129,11 +129,16 @@ const MarketRoomPage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <RoomHero variant="connect" eyebrow="Connect" title="Find your next collaborator." />
 
       {/* Matchmaking HUD — pinned regardless of filter */}
       <ConnectMatchDeck />
+
+      {/* Dex-screener-style trending creator tokens — self-gated by liquidity */}
+      <TrendingTokensLane />
+
+
 
       {/* Filter pills + search */}
       <div className="space-y-3">
