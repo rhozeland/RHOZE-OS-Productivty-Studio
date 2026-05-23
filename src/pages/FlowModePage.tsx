@@ -452,11 +452,14 @@ const FlowModePage = () => {
       setSelectedCategories(CATEGORIES);
       setFeedScope("all");
       setCalibrated(true);
+      // v10.3 — show tutorial on deep-link entry too.
+      setShowTutorialOverlay(true);
       return () => {
         cancelled = true;
         if (tutorialTimerRef.current) clearTimeout(tutorialTimerRef.current);
       };
     }
+
 
     // Read local cache first so the UI hydrates without waiting on the network.
     const cachedRaw = localStorage.getItem(`flow-calibrated-${calibrationKey}`);
