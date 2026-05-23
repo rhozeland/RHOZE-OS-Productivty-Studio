@@ -396,8 +396,9 @@ const DiscoverPage = () => {
       {/* ─── Trending artists (self-gated by liquidity) ───────────── */}
       <TrendingArtistsLane marketFilter={marketFilter} />
 
-      {/* ─── Trending creator tokens (Dexscreener-style, self-gated) ─ */}
-      <TrendingTokensLane />
+      {/* Trending creator tokens lane removed — discovery of tokens now lives on the Connect (Find collaborators) page only. */}
+
+
 
 
       {/* ─── Feed ───────────────────────────────────────────────────── */}
