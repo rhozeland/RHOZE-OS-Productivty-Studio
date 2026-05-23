@@ -259,8 +259,10 @@ const ListingsTab = ({ userId }: { userId: string }) => {
                           {l.category}
                         </span>
                       )}
-                      {l.listing_type === "project_request" && (
-                        <Badge variant="outline" className="text-[10px]">Open Call</Badge>
+                      {(l.listing_type === "project_request" || l.listing_type === "collaboration") && (
+                        <Badge variant="outline" className="text-[10px]">
+                          {l.listing_type === "collaboration" ? "Collab" : "Open call"}
+                        </Badge>
                       )}
                     </div>
                     <Link
