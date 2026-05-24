@@ -209,6 +209,7 @@ export default function AdminConciergeRequests({ canConvert = true }: AdminConci
               onSetStatus={(s) => setStatus(active.id, s)}
               onSaveProposal={(p) => saveProposal(active.id, p)}
               onConvert={() => convertToProject(active.id)}
+              onClaim={() => claimRequest(active.id)}
             />
 
           )}
