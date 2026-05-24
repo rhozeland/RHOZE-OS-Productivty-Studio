@@ -22,6 +22,7 @@ import {
   ArrowRight,
   X,
 } from "lucide-react";
+import { todayGradient } from "@/lib/rhoze-gradients";
 import type { User } from "@supabase/supabase-js";
 
 type Tile = "projects" | "messages" | "events" | "rhoze";
@@ -50,6 +51,8 @@ interface FeedMetricsProps {
   events: any[];
   rhozeBalance: number;
   getProjectProgress: (projectId: string) => number;
+  subscribedCreatorIds?: string[];
+  subscribedWorks?: any[];
 }
 
 const TileShell = ({
@@ -153,8 +156,11 @@ const FeedMetrics = ({
   events,
   rhozeBalance,
   getProjectProgress,
+  subscribedCreatorIds,
+  subscribedWorks,
 }: FeedMetricsProps) => {
   const [expanded, setExpanded] = useState<Tile | null>(null);
+  const [mode, setMode] = useState<"public" | "private">("public");
   const toggle = (t: Tile) => setExpanded((prev) => (prev === t ? null : t));
 
   const heroLatestMsg = recentMessages?.[0] ?? null;
@@ -181,19 +187,107 @@ const FeedMetrics = ({
     },
   });
 
+  const hasSubs = (subscribedCreatorIds?.length ?? 0) > 0;
+  const privateWorks = subscribedWorks ?? [];
+
   return (
     <section className="space-y-6">
-      {/* Section label */}
-      <header className="flex items-end justify-between">
-        <div>
-          <h2 className="text-[11px] font-bold uppercase tracking-[0.3em] text-muted-foreground font-body">
-            Feed
-          </h2>
-          <p className="mt-2 font-display text-3xl sm:text-4xl tracking-tight text-foreground">
-            What's moving today
-          </p>
+      {/* Section label + Public / Private toggle */}
+      <header className="flex items-end justify-between gap-4">
+        <h2 className="font-display font-bold text-3xl sm:text-4xl tracking-tight text-foreground">
+          Feed
+        </h2>
+        <div className="inline-flex rounded-full border border-border bg-card p-1 text-xs font-semibold font-body shrink-0">
+          {(["public", "private"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              className={[
+                "px-3 py-1.5 rounded-full transition-colors capitalize",
+                mode === m
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:text-foreground",
+              ].join(" ")}
+            >
+              {m}
+            </button>
+          ))}
         </div>
       </header>
+
+      {mode === "private" ? (
+        !hasSubs ? (
+          <div
+            className="rounded-2xl border border-dashed border-border/60 p-5 flex items-start gap-4 relative overflow-hidden"
+          >
+            <div
+              aria-hidden
+              className="absolute inset-0 opacity-70 pointer-events-none"
+              style={{ background: todayGradient().surface }}
+            />
+            <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div className="relative flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground">
+                Your private feed is empty
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground max-w-md">
+                Back a creator from $5/mo and their behind-the-scenes works, drops,
+                and DMs land here first.
+              </p>
+              <Link
+                to="/profiles"
+                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-foreground hover:gap-1.5 transition-all"
+              >
+                Find creators to back <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+          </div>
+        ) : privateWorks.length === 0 ? (
+          <p className="text-sm text-muted-foreground font-body">
+            No new posts from creators you back yet.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {privateWorks.map((w: any) => {
+              const c = w.creator;
+              const name = c?.display_name ?? c?.username ?? "Creator";
+              const cover = w.thumbnail_url || w.file_url;
+              return (
+                <Link
+                  key={w.id}
+                  to={c ? `/profiles/${c.user_id}` : "/discover"}
+                  className="group relative aspect-[3/4] rounded-2xl overflow-hidden border border-border bg-card hover:border-foreground/40 transition-colors"
+                >
+                  {cover ? (
+                    <img
+                      src={cover}
+                      alt={w.title ?? ""}
+                      className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-muted to-background" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 p-3 text-white">
+                    <p className="text-[11px] font-medium truncate opacity-80">{name}</p>
+                    {w.title && (
+                      <p className="text-xs font-semibold leading-tight line-clamp-2">
+                        {w.title}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )
+      ) : (
+        <>
+
 
       {/* 4 tiles */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -447,6 +541,8 @@ const FeedMetrics = ({
           </ExpandedPanel>
         )}
       </AnimatePresence>
+        </>
+      )}
     </section>
   );
 };

@@ -778,38 +778,7 @@ const DashboardPage = () => {
             <CreatorModeStrip />
           </div>
 
-          {/* Private feed empty-state — moved here from Discover so it sits
-              next to other "your stuff" surfaces and stays out of public
-              browsing. Only render when the viewer hasn't subscribed yet. */}
-          {subscribedCreatorIds && subscribedCreatorIds.length === 0 && (
-            <section className="rounded-2xl border border-dashed border-border/60 p-5 flex items-start gap-4 relative overflow-hidden">
-              <div
-                aria-hidden
-                className="absolute inset-0 opacity-70 pointer-events-none"
-                style={{ background: todayGradient().surface }}
-              />
-              <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
-                <Sparkles className="h-5 w-5" />
-              </div>
-              <div className="relative flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">
-                  Your private feed is empty
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground max-w-md">
-                  Back a creator from $5/mo and their behind-the-scenes works, drops,
-                  and DMs land here first.
-                </p>
-                <Link
-                  to="/profiles"
-                  className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-foreground hover:gap-1.5 transition-all"
-                >
-                  Find creators to back <ArrowRight className="h-3 w-3" />
-                </Link>
-              </div>
-            </section>
-          )}
-
-          {/* ═══ FEED — 4 real metrics, click to expand ═════════════════ */}
+          {/* ═══ FEED — public metrics or private subscribed-creator works ═══ */}
           <FeedMetrics
             user={user}
             activeProjects={activeProjects}
@@ -819,6 +788,8 @@ const DashboardPage = () => {
             events={events ?? []}
             rhozeBalance={rhozeBalance}
             getProjectProgress={getProjectProgress}
+            subscribedCreatorIds={subscribedCreatorIds}
+            subscribedWorks={subscribedWorks}
           />
 
         </>
