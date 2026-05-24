@@ -79,6 +79,16 @@ export default function AdminConciergeRequests() {
     qc.invalidateQueries({ queryKey: ["admin-concierge-requests"] });
   };
 
+  const convertToProject = async (id: string) => {
+    const { data, error } = await supabase.rpc("convert_concierge_request", {
+      _request_id: id,
+    });
+    if (error) return toast.error(error.message);
+    toast.success("Project created — 25% Concierge fee locked.");
+    qc.invalidateQueries({ queryKey: ["admin-concierge-requests"] });
+    return data as string;
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
