@@ -400,7 +400,9 @@ function RequestDetail({
             </p>
           )}
         </div>
+        )}
       </div>
+
     </>
 
   );
