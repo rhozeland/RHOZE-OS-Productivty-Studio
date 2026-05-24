@@ -5396,6 +5396,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin_or_curator: { Args: { _user_id: string }; Returns: boolean }
       is_contract_party: {
         Args: { _contract_id: string; _user_id: string }
         Returns: boolean
@@ -5628,7 +5629,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "moderator" | "user" | "curator"
       buddy_status: "pending" | "accepted" | "blocked"
       capital_advance_status:
         | "submitted"
@@ -5783,7 +5784,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "curator"],
       buddy_status: ["pending", "accepted", "blocked"],
       capital_advance_status: [
         "submitted",
