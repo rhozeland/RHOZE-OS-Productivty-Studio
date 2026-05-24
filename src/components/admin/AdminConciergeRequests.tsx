@@ -186,7 +186,9 @@ export default function AdminConciergeRequests() {
               row={active}
               onSetStatus={(s) => setStatus(active.id, s)}
               onSaveProposal={(p) => saveProposal(active.id, p)}
+              onConvert={() => convertToProject(active.id)}
             />
+
           )}
         </SheetContent>
       </Sheet>
