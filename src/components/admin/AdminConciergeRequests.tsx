@@ -225,13 +225,16 @@ function RequestDetail({
   onSetStatus,
   onSaveProposal,
   onConvert,
+  onClaim,
 }: {
   row: any;
   canConvert: boolean;
   onSetStatus: (s: Status) => void;
   onSaveProposal: (p: { proposal_notes?: string; scoped_budget_cents?: number | null }) => void;
   onConvert: () => Promise<string | undefined>;
+  onClaim: () => Promise<void>;
 }) {
+  const { user } = useAuth();
   const [notes, setNotes] = useState<string>(row.proposal_notes ?? "");
   const [budgetUsd, setBudgetUsd] = useState<string>(
     row.scoped_budget_cents != null ? String(row.scoped_budget_cents / 100) : "",
