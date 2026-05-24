@@ -45,6 +45,7 @@ export default function CuratorPage() {
           admin for project conversion.
         </p>
       </header>
+      <CuratorEarningsCard />
       <AdminConciergeRequests canConvert={isAdmin} />
     </div>
   );
