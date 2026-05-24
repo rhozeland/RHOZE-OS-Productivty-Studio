@@ -35,10 +35,16 @@ const STATUS_META: Record<Status, { label: string; tone: string }> = {
   closed: { label: "Closed", tone: "bg-muted text-muted-foreground border-border" },
 };
 
-export default function AdminConciergeRequests() {
+interface AdminConciergeRequestsProps {
+  /** When false, hides the "Convert to project" panel (curator-only mode). */
+  canConvert?: boolean;
+}
+
+export default function AdminConciergeRequests({ canConvert = true }: AdminConciergeRequestsProps = {}) {
   const qc = useQueryClient();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
+
 
   const { data: rows, isLoading } = useQuery({
     queryKey: ["admin-concierge-requests", statusFilter],
@@ -187,6 +193,7 @@ export default function AdminConciergeRequests() {
             <RequestDetail
               key={active.id}
               row={active}
+              canConvert={canConvert}
               onSetStatus={(s) => setStatus(active.id, s)}
               onSaveProposal={(p) => saveProposal(active.id, p)}
               onConvert={() => convertToProject(active.id)}
@@ -201,11 +208,13 @@ export default function AdminConciergeRequests() {
 
 function RequestDetail({
   row,
+  canConvert: canConvertProp,
   onSetStatus,
   onSaveProposal,
   onConvert,
 }: {
   row: any;
+  canConvert: boolean;
   onSetStatus: (s: Status) => void;
   onSaveProposal: (p: { proposal_notes?: string; scoped_budget_cents?: number | null }) => void;
   onConvert: () => Promise<string | undefined>;
@@ -217,9 +226,11 @@ function RequestDetail({
   const [converting, setConverting] = useState(false);
   const meta = STATUS_META[row.status as Status];
   const canConvert =
+    canConvertProp &&
     row.status !== "converted" &&
     row.scoped_budget_cents != null &&
     row.scoped_budget_cents >= 100000;
+
 
   return (
     <>
