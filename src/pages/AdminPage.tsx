@@ -109,6 +109,9 @@ const AdminPage = () => {
           <TabsTrigger value="fees" className="gap-1.5 text-xs shrink-0">
             <Percent className="h-3.5 w-3.5" /> Fees
           </TabsTrigger>
+          <TabsTrigger value="concierge" className="gap-1.5 text-xs shrink-0">
+            <Wand2 className="h-3.5 w-3.5" /> Concierge
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview"><AdminOverview /></TabsContent>
