@@ -86,7 +86,7 @@ export default function AdminConciergeRequests() {
     if (error) return toast.error(error.message);
     toast.success("Project created — 25% Concierge fee locked.");
     qc.invalidateQueries({ queryKey: ["admin-concierge-requests"] });
-    return data as string;
+    return data as unknown as string;
   };
 
   return (
