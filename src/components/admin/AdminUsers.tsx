@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   ShieldCheck, ShieldOff, Ban, UserCheck, MoreVertical,
-  Search, Loader2, Trash2, AlertTriangle,
+  Search, Loader2, Trash2, AlertTriangle, Wand2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
