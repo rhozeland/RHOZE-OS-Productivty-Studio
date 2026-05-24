@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { listingMeta } from "@/lib/listing-types";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const ListingsBoard = () => {
   const navigate = useNavigate();
