@@ -257,19 +257,36 @@ const PortfolioPage = () => {
     );
   }
 
+  const grad = todayGradient();
+
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
-      <header className="space-y-3">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground flex items-center gap-2">
-            <Briefcase className="h-7 w-7" /> Portfolio
+      <header className="relative overflow-hidden rounded-3xl border border-border/50 p-6 sm:p-8 space-y-5">
+        {/* Today's gradient wash — keeps Portfolio feeling alive */}
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-80 pointer-events-none"
+          style={{ background: grad.surface }}
+        />
+        <div className="relative space-y-1">
+          <h1 className="font-display text-3xl font-bold flex items-center gap-2">
+            <Briefcase className="h-7 w-7" />
+            <span
+              className="bg-clip-text text-transparent"
+              style={{ backgroundImage: grad.text }}
+            >
+              Portfolio
+            </span>
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground max-w-xl">
             Your passport, verified IP, earnings, and creator-token holdings — all in one place.
           </p>
         </div>
-        <BackedStrip />
+        <div className="relative">
+          <BackedStrip />
+        </div>
       </header>
+
 
       <Tabs value={activeTab} onValueChange={setTab}>
         <TabsList className="flex-wrap h-auto">
