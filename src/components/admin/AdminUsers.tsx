@@ -47,7 +47,7 @@ const AdminUsers = () => {
   const [roles, setRoles] = useState<Record<string, UserRole[]>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | "active" | "banned" | "admin">("all");
+  const [filter, setFilter] = useState<"all" | "active" | "banned" | "admin" | "curator">("all");
 
   // Ban dialog
   const [banTarget, setBanTarget] = useState<Profile | null>(null);
