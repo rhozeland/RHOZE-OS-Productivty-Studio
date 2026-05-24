@@ -289,6 +289,44 @@ function RequestDetail({
           <Field label="Contact" value={row.contact_email ?? "—"} />
         </div>
 
+        {/* Phase 4: claim + curator status */}
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card p-3">
+          <div className="text-xs">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Curator
+            </p>
+            <p className="text-foreground">
+              {row.curator_id
+                ? row.curator_id === user?.id
+                  ? "You own this brief"
+                  : "Claimed by another curator"
+                : "Unclaimed"}
+            </p>
+          </div>
+          {!row.curator_id && row.status !== "converted" && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="rounded-full gap-1.5 text-xs"
+              onClick={() => onClaim()}
+            >
+              <Hand className="h-3.5 w-3.5" /> Claim
+            </Button>
+          )}
+        </div>
+
+        {/* Phase 4: auto-match suggestions */}
+        <ConciergeMatchSuggestions
+          category={row.category}
+          summary={row.summary}
+          outcome={row.outcome}
+          onAddToProposal={(handle, name) => {
+            const line = `• @${handle} (${name})`;
+            setNotes((prev) => (prev ? `${prev}\n${line}` : line));
+          }}
+        />
+
+
         <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
             Scoped proposal
