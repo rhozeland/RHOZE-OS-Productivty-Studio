@@ -107,6 +107,8 @@ const AdminUsers = () => {
 
   const isUserAdmin = (userId: string) =>
     roles[userId]?.some((r) => r.role === "admin") ?? false;
+  const isUserCurator = (userId: string) =>
+    roles[userId]?.some((r) => r.role === "curator") ?? false;
 
   const handleGrantAdmin = async (profile: Profile) => {
     const { error } = await supabase.from("user_roles").insert({
@@ -132,6 +134,28 @@ const AdminUsers = () => {
     const { error } = await supabase.from("user_roles").delete().eq("id", adminRole.id);
     if (error) toast.error(error.message);
     else { toast.success("Admin role revoked"); fetchData(); }
+  };
+
+  const handleGrantCurator = async (profile: Profile) => {
+    const { error } = await supabase.from("user_roles").insert({
+      user_id: profile.user_id,
+      role: "curator" as any,
+    });
+    if (error) {
+      if (error.code === "23505") toast.error("User is already a curator");
+      else toast.error(error.message);
+    } else {
+      toast.success(`${profile.display_name || "User"} is now a curator`);
+      fetchData();
+    }
+  };
+
+  const handleRevokeCurator = async (profile: Profile) => {
+    const curatorRole = roles[profile.user_id]?.find((r) => r.role === "curator");
+    if (!curatorRole) return;
+    const { error } = await supabase.from("user_roles").delete().eq("id", curatorRole.id);
+    if (error) toast.error(error.message);
+    else { toast.success("Curator role revoked"); fetchData(); }
   };
 
   const handleBan = async () => {
