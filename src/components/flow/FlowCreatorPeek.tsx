@@ -146,7 +146,7 @@ const FlowCreatorPeek = ({ open, onOpenChange, creatorId, initial }: Props) => {
 
             <div className="overflow-y-auto px-5 pb-8 pt-3">
               {/* Header — avatar + name + headline */}
-              <div className="flex items-start gap-3 mb-4">
+              <div className="flex items-start gap-3 mb-3">
                 <Avatar className="h-14 w-14 border border-border/40">
                   <AvatarImage src={avatar} />
                   <AvatarFallback>{name.charAt(0).toUpperCase()}</AvatarFallback>
@@ -155,6 +155,7 @@ const FlowCreatorPeek = ({ open, onOpenChange, creatorId, initial }: Props) => {
                   <div className="flex items-center gap-2 flex-wrap">
                     <h2 className="font-display text-xl font-bold text-foreground truncate">{name}</h2>
                     {isVerified && <VerifiedArtistBadge />}
+                    {profile?.verified_pro_at && <VerifiedProBadge />}
                   </div>
                   {headline && (
                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{headline}</p>
@@ -165,18 +166,38 @@ const FlowCreatorPeek = ({ open, onOpenChange, creatorId, initial }: Props) => {
                 </div>
               </div>
 
+              {/* Identity chips row — archetype + region + tenure */}
+              {(profile?.archetype || profile?.region_code || profile?.created_at) && (
+                <div className="flex items-center gap-1.5 flex-wrap mb-4">
+                  {profile?.archetype && <ArchetypeChip archetype={profile.archetype} size="xs" />}
+                  {profile?.region_code && <RegionChip code={profile.region_code} size="xs" showLabel />}
+                  {profile?.created_at && (
+                    <span className="text-[10px] text-muted-foreground/70 px-1.5">
+                      Member since {new Date(profile.created_at).toLocaleDateString(undefined, { month: "short", year: "numeric" })}
+                    </span>
+                  )}
+                </div>
+              )}
+
               {profile?.bio && (
                 <p className="text-sm text-muted-foreground leading-relaxed mb-5 line-clamp-3">
                   {profile.bio}
                 </p>
               )}
 
-              {/* v10.2 — investor-signal card removed. Token discovery chip below carries the on-chain info. */}
+              {/* Investor signal — verified IP, events, contributions, activity */}
+              <div className="mb-5">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 mb-2">
+                  Investor signal
+                </p>
+                <CreatorReadinessCard creatorId={creatorId} memberSince={profile?.created_at} />
+              </div>
 
-              {/* v10 — read-only token discovery chip (no swap, deeplinks to pump.fun) */}
+              {/* Read-only token discovery chip (no swap, deeplinks to pump.fun) */}
               <div className="mb-6">
                 <TokenDiscoveryChip creatorId={creatorId} />
               </div>
+
 
               {/* More works */}
               {works && works.length > 0 && (
