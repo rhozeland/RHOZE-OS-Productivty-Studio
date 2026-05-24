@@ -1,7 +1,7 @@
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Users, Award, Building2, Coins, AlertTriangle, Wallet, Eye, Sliders, ShieldCheck, Percent, Film } from "lucide-react";
+import { BarChart3, Users, Award, Building2, Coins, AlertTriangle, Wallet, Eye, Sliders, ShieldCheck, Percent, Film, Wand2 } from "lucide-react";
 import AdminOverview from "@/components/admin/AdminOverview";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminBadges from "@/components/admin/AdminBadges";
@@ -17,10 +17,11 @@ import AdminWorkVerifications from "@/components/admin/AdminWorkVerifications";
 import AdminArtistVerifications from "@/components/admin/AdminArtistVerifications";
 import AdminRewardCaps from "@/components/admin/AdminRewardCaps";
 import AdminPlatformFees from "@/components/admin/AdminPlatformFees";
+import AdminConciergeRequests from "@/components/admin/AdminConciergeRequests";
 
 const VALID_TABS = new Set([
   "overview", "rewards", "caps", "users", "badges", "studios", "ip",
-  "artists", "disputes", "withdrawals", "moderation", "flow", "capital", "fees",
+  "artists", "disputes", "withdrawals", "moderation", "flow", "capital", "fees", "concierge",
 ]);
 
 const AdminPage = () => {
@@ -108,6 +109,9 @@ const AdminPage = () => {
           <TabsTrigger value="fees" className="gap-1.5 text-xs shrink-0">
             <Percent className="h-3.5 w-3.5" /> Fees
           </TabsTrigger>
+          <TabsTrigger value="concierge" className="gap-1.5 text-xs shrink-0">
+            <Wand2 className="h-3.5 w-3.5" /> Concierge
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview"><AdminOverview /></TabsContent>
@@ -127,6 +131,7 @@ const AdminPage = () => {
           <AdminUnderwritingRulesAudit />
         </TabsContent>
         <TabsContent value="fees"><AdminPlatformFees /></TabsContent>
+        <TabsContent value="concierge"><AdminConciergeRequests /></TabsContent>
       </Tabs>
     </div>
   );

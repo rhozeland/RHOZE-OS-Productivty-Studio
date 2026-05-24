@@ -791,6 +791,66 @@ export type Database = {
           },
         ]
       }
+      concierge_requests: {
+        Row: {
+          attachments: Json
+          budget_range: string | null
+          category: string | null
+          client_id: string
+          contact_email: string | null
+          converted_project_id: string | null
+          created_at: string
+          deadline: string | null
+          id: string
+          outcome: string | null
+          proposal_notes: string | null
+          scoped_budget_cents: number | null
+          scoped_by: string | null
+          scoped_team_ids: string[]
+          status: Database["public"]["Enums"]["concierge_status"]
+          summary: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json
+          budget_range?: string | null
+          category?: string | null
+          client_id: string
+          contact_email?: string | null
+          converted_project_id?: string | null
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          outcome?: string | null
+          proposal_notes?: string | null
+          scoped_budget_cents?: number | null
+          scoped_by?: string | null
+          scoped_team_ids?: string[]
+          status?: Database["public"]["Enums"]["concierge_status"]
+          summary: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json
+          budget_range?: string | null
+          category?: string | null
+          client_id?: string
+          contact_email?: string | null
+          converted_project_id?: string | null
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          outcome?: string | null
+          proposal_notes?: string | null
+          scoped_budget_cents?: number | null
+          scoped_by?: string | null
+          scoped_team_ids?: string[]
+          status?: Database["public"]["Enums"]["concierge_status"]
+          summary?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       connections: {
         Row: {
           created_at: string
@@ -3340,10 +3400,13 @@ export type Database = {
           client_name: string | null
           cover_color: string | null
           created_at: string
+          curator_id: string | null
           currency: string
           description: string | null
           id: string
+          intake_tier: Database["public"]["Enums"]["project_intake_tier"]
           is_estimate: boolean
+          platform_fee_bps_override: number | null
           project_type: string | null
           runtime_notes: string | null
           scope_of_work: string | null
@@ -3359,10 +3422,13 @@ export type Database = {
           client_name?: string | null
           cover_color?: string | null
           created_at?: string
+          curator_id?: string | null
           currency?: string
           description?: string | null
           id?: string
+          intake_tier?: Database["public"]["Enums"]["project_intake_tier"]
           is_estimate?: boolean
+          platform_fee_bps_override?: number | null
           project_type?: string | null
           runtime_notes?: string | null
           scope_of_work?: string | null
@@ -3378,10 +3444,13 @@ export type Database = {
           client_name?: string | null
           cover_color?: string | null
           created_at?: string
+          curator_id?: string | null
           currency?: string
           description?: string | null
           id?: string
+          intake_tier?: Database["public"]["Enums"]["project_intake_tier"]
           is_estimate?: boolean
+          platform_fee_bps_override?: number | null
           project_type?: string | null
           runtime_notes?: string | null
           scope_of_work?: string | null
@@ -5167,10 +5236,13 @@ export type Database = {
           client_name: string | null
           cover_color: string | null
           created_at: string
+          curator_id: string | null
           currency: string
           description: string | null
           id: string
+          intake_tier: Database["public"]["Enums"]["project_intake_tier"]
           is_estimate: boolean
+          platform_fee_bps_override: number | null
           project_type: string | null
           runtime_notes: string | null
           scope_of_work: string | null
@@ -5557,6 +5629,13 @@ export type Database = {
         | "funded"
         | "rejected"
         | "cancelled"
+      concierge_status:
+        | "new"
+        | "reviewing"
+        | "scoped"
+        | "converted"
+        | "declined"
+        | "closed"
       event_collaborator_role: "co_host" | "manager"
       event_collaborator_status: "pending" | "accepted" | "declined"
       event_purchase_currency: "usd" | "rhoze" | "free"
@@ -5568,6 +5647,7 @@ export type Database = {
         | "cancelled"
         | "pending_approval"
         | "declined"
+      project_intake_tier: "self_serve" | "matched" | "concierge"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -5705,6 +5785,14 @@ export const Constants = {
         "rejected",
         "cancelled",
       ],
+      concierge_status: [
+        "new",
+        "reviewing",
+        "scoped",
+        "converted",
+        "declined",
+        "closed",
+      ],
       event_collaborator_role: ["co_host", "manager"],
       event_collaborator_status: ["pending", "accepted", "declined"],
       event_purchase_currency: ["usd", "rhoze", "free"],
@@ -5717,6 +5805,7 @@ export const Constants = {
         "pending_approval",
         "declined",
       ],
+      project_intake_tier: ["self_serve", "matched", "concierge"],
     },
   },
 } as const
