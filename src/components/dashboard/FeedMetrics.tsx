@@ -22,6 +22,7 @@ import {
   ArrowRight,
   X,
 } from "lucide-react";
+import { todayGradient } from "@/lib/rhoze-gradients";
 import type { User } from "@supabase/supabase-js";
 
 type Tile = "projects" | "messages" | "events" | "rhoze";
