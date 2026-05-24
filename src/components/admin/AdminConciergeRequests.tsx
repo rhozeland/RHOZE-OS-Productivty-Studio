@@ -19,7 +19,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Sparkles, Mail, Calendar, DollarSign, Tag } from "lucide-react";
+import { Sparkles, Mail, Calendar, DollarSign, Tag, ArrowRight, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -76,6 +77,19 @@ export default function AdminConciergeRequests() {
     if (error) return toast.error(error.message);
     toast.success("Proposal saved");
     qc.invalidateQueries({ queryKey: ["admin-concierge-requests"] });
+  };
+
+  const convertToProject = async (id: string): Promise<string | undefined> => {
+    const { data, error } = await supabase.rpc("convert_concierge_request", {
+      _request_id: id,
+    });
+    if (error) {
+      toast.error(error.message);
+      return undefined;
+    }
+    toast.success("Project created — 25% Concierge fee locked.");
+    qc.invalidateQueries({ queryKey: ["admin-concierge-requests"] });
+    return data as unknown as string;
   };
 
   return (
@@ -175,7 +189,9 @@ export default function AdminConciergeRequests() {
               row={active}
               onSetStatus={(s) => setStatus(active.id, s)}
               onSaveProposal={(p) => saveProposal(active.id, p)}
+              onConvert={() => convertToProject(active.id)}
             />
+
           )}
         </SheetContent>
       </Sheet>
@@ -187,16 +203,23 @@ function RequestDetail({
   row,
   onSetStatus,
   onSaveProposal,
+  onConvert,
 }: {
   row: any;
   onSetStatus: (s: Status) => void;
   onSaveProposal: (p: { proposal_notes?: string; scoped_budget_cents?: number | null }) => void;
+  onConvert: () => Promise<string | undefined>;
 }) {
   const [notes, setNotes] = useState<string>(row.proposal_notes ?? "");
   const [budgetUsd, setBudgetUsd] = useState<string>(
     row.scoped_budget_cents != null ? String(row.scoped_budget_cents / 100) : "",
   );
+  const [converting, setConverting] = useState(false);
   const meta = STATUS_META[row.status as Status];
+  const canConvert =
+    row.status !== "converted" &&
+    row.scoped_budget_cents != null &&
+    row.scoped_budget_cents >= 100000;
 
   return (
     <>
@@ -281,7 +304,7 @@ function RequestDetail({
         </div>
 
         <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
-          {(["reviewing", "scoped", "converted", "declined", "closed"] as Status[]).map((s) => (
+          {(["reviewing", "scoped", "declined", "closed"] as Status[]).map((s) => (
             <Button
               key={s}
               size="sm"
@@ -294,12 +317,56 @@ function RequestDetail({
           ))}
         </div>
 
-        <p className="text-[10px] text-muted-foreground">
-          Phase 2 will add a one-click "Convert to project" that creates a
-          project with intake_tier='concierge' and a 25% fee override.
-        </p>
+        {/* Convert to project — Phase 2 */}
+        <div className="rounded-xl border border-foreground/20 bg-gradient-to-br from-foreground/5 to-primary/5 p-4 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-foreground">
+              Convert to project
+            </p>
+            <span className="text-[10px] uppercase tracking-widest bg-foreground text-background px-1.5 py-0.5 rounded-full">
+              25% fee
+            </span>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Creates a paid project owned by the client, tags it
+            <code className="text-foreground"> intake_tier='concierge'</code>,
+            assigns you as curator, and locks a 25% platform fee. Requires a
+            scoped budget ≥ $1,000 so the fee yields ≥ $250.
+          </p>
+          {row.converted_project_id ? (
+            <Link
+              to={`/projects/${row.converted_project_id}`}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground hover:underline"
+            >
+              Open project <ExternalLink className="h-3 w-3" />
+            </Link>
+          ) : (
+            <Button
+              size="sm"
+              className="rounded-full gap-1.5"
+              disabled={!canConvert || converting}
+              onClick={async () => {
+                setConverting(true);
+                const id = await onConvert();
+                setConverting(false);
+                if (id) {
+                  // optional: navigate
+                  window.open(`/projects/${id}`, "_blank");
+                }
+              }}
+            >
+              {converting ? "Creating…" : "Convert now"} <ArrowRight className="h-3 w-3" />
+            </Button>
+          )}
+          {!canConvert && !row.converted_project_id && (
+            <p className="text-[10px] text-amber-600">
+              Save a scoped budget of $1,000 or more to enable conversion.
+            </p>
+          )}
+        </div>
       </div>
     </>
+
   );
 }
 

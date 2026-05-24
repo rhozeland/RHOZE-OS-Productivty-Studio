@@ -5170,6 +5170,10 @@ export type Database = {
         Args: { _contract_id: string; _reason?: string; _requester_id: string }
         Returns: undefined
       }
+      convert_concierge_request: {
+        Args: { _request_id: string }
+        Returns: string
+      }
       convert_inquiry_to_project: {
         Args: {
           _inquiry_id: string
@@ -5339,6 +5343,10 @@ export type Database = {
           display_name: string
           user_id: string
         }[]
+      }
+      get_project_platform_fee_bps: {
+        Args: { _project_id: string }
+        Returns: number
       }
       get_public_profile: {
         Args: { _user_id: string }
