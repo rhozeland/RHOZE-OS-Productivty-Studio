@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { listingMeta } from "@/lib/listing-types";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const ListingsBoard = () => {
   const navigate = useNavigate();
@@ -164,9 +165,29 @@ const ListingsBoard = () => {
             <div className="text-xs text-muted-foreground py-8 text-center">Loading…</div>
           )}
           {!isLoading && filtered.length === 0 && (
-            <div className="text-xs text-muted-foreground py-8 text-center rounded-2xl border border-dashed border-border">
-              No listings match those filters.
-            </div>
+            listings.length === 0 ? (
+              <EmptyState
+                icon={Briefcase}
+                title="No listings yet"
+                description="Listings are how creators announce what they're hiring for, collaborating on, or selling. Be the first to post one."
+                cta={{ label: "Post a listing", to: "/discover#discover-composer" }}
+                size="md"
+              />
+            ) : (
+              <EmptyState
+                icon={Search}
+                title="Nothing matches those filters"
+                description="Try a different keyword or clear the category filter."
+                cta={{
+                  label: "Clear filters",
+                  onClick: () => {
+                    setQuery("");
+                    setCategory("all");
+                  },
+                }}
+                size="sm"
+              />
+            )
           )}
           {filtered.map((l: any) => {
             const meta = listingMeta(l.listing_type);
