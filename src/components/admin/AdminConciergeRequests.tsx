@@ -303,6 +303,20 @@ function RequestDetail({
           </Button>
         </div>
 
+        <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
+          {(["reviewing", "scoped", "declined", "closed"] as Status[]).map((s) => (
+            <Button
+              key={s}
+              size="sm"
+              variant={row.status === s ? "default" : "outline"}
+              className="rounded-full text-xs"
+              onClick={() => onSetStatus(s)}
+            >
+              Mark {STATUS_META[s].label}
+            </Button>
+          ))}
+        </div>
+
         {/* Convert to project — Phase 2 */}
         <div className="rounded-xl border border-foreground/20 bg-gradient-to-br from-foreground/5 to-primary/5 p-4 space-y-3">
           <div className="flex items-center justify-between gap-2">
