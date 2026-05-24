@@ -460,9 +460,9 @@ const DiscoverPage = () => {
       {/* ─── Stream ───────────────────────────────────────────────── */}
       <section id="discover-stream" className="space-y-5 scroll-mt-20">
         {/* Sticky filter bar: chips left, Post right */}
-        <div className="sticky top-14 z-20 -mx-4 px-4 py-3 bg-background/80 backdrop-blur-md border-b border-border/60">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2 min-w-0">
+        <div className="sticky top-14 z-20 -mx-4 px-4 py-3 bg-background/85 backdrop-blur-md border-b border-border/60">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none -mx-1 px-1 min-w-0 flex-1">
               {([
                 { id: "all", label: "All" },
                 { id: "creators", label: "Creators" },
@@ -477,7 +477,7 @@ const DiscoverPage = () => {
                     type="button"
                     onClick={() => handleStreamTab(t.id)}
                     className={cn(
-                      "rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all",
+                      "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap",
                       active
                         ? "bg-foreground text-background border-foreground shadow-sm"
                         : "border-border bg-card/60 text-muted-foreground hover:text-foreground hover:border-foreground/30 hover:bg-card",
@@ -494,10 +494,10 @@ const DiscoverPage = () => {
                 trigger={
                   <button
                     type="button"
-                    className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-foreground text-background px-4 py-2 text-xs font-semibold hover:opacity-90 transition-opacity shadow-sm"
+                    className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-foreground text-background px-3 sm:px-4 py-2 text-xs font-semibold hover:opacity-90 transition-opacity shadow-sm"
                   >
                     <Sparkles className="h-3.5 w-3.5" />
-                    Post
+                    <span className="hidden sm:inline">Post</span>
                   </button>
                 }
               />
