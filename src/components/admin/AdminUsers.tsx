@@ -240,7 +240,7 @@ const AdminUsers = () => {
           Users ({profiles.length})
         </h2>
         <div className="flex items-center gap-2">
-          {(["all", "active", "banned", "admin"] as const).map((f) => (
+          {(["all", "active", "banned", "admin", "curator"] as const).map((f) => (
             <Button
               key={f}
               variant={filter === f ? "default" : "outline"}
