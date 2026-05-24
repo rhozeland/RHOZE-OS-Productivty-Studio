@@ -19,10 +19,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Sparkles, Mail, Calendar, DollarSign, Tag, ArrowRight, ExternalLink } from "lucide-react";
+import { Sparkles, Mail, Calendar, DollarSign, Tag, ArrowRight, ExternalLink, Hand } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import ConciergeMatchSuggestions from "@/components/concierge/ConciergeMatchSuggestions";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Status = "new" | "reviewing" | "scoped" | "converted" | "declined" | "closed";
 
