@@ -20,11 +20,11 @@ export default function CuratorEarningsCard() {
     enabled: !!user?.id,
     queryFn: async () => {
       const [claimedRes, convertedRes] = await Promise.all([
-        supabase
+        (supabase as any)
           .from("concierge_requests")
-          .select("id, status", { count: "exact", head: false })
+          .select("id, status")
           .eq("curator_id", user!.id),
-        supabase
+        (supabase as any)
           .from("projects")
           .select("id, total_budget")
           .eq("curator_id", user!.id)
