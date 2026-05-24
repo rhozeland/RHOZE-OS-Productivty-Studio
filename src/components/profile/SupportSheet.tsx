@@ -312,7 +312,36 @@ export default function SupportSheet({
                   </div>
                 </button>
 
-                {/* Spaces */}
+                {/* Concierge — Rhozeland scopes & runs it for you */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    onOpenChange(false);
+                    setTimeout(() => setConciergeOpen(true), 200);
+                  }}
+                  className="w-full text-left rounded-xl border border-foreground/20 bg-gradient-to-br from-foreground/5 to-primary/5 hover:border-foreground/40 p-4 transition-all"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-foreground text-background flex items-center justify-center shrink-0">
+                      <Wand2 className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground flex items-center justify-between gap-2">
+                        <span className="flex items-center gap-1.5">
+                          Have Rhozeland scope it
+                          <span className="text-[9px] uppercase tracking-widest bg-foreground text-background px-1.5 py-0.5 rounded-full">
+                            Concierge
+                          </span>
+                        </span>
+                        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Tell us the outcome. We scope it, pick the creators, run it end-to-end. 25% fee · 48hr response.
+                      </p>
+                    </div>
+                  </div>
+                </button>
+
                 {spaces.length > 0 ? (
                   <div className="rounded-xl border border-border bg-card/60 p-4">
                     <div className="flex items-center gap-2 mb-2">
