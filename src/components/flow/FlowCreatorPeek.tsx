@@ -75,10 +75,29 @@ const FlowCreatorPeek = ({ open, onOpenChange, creatorId, initial }: Props) => {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles_public")
-        .select("user_id, display_name, username, avatar_url, bio, headline, creator_roles, verification_status")
+        .select("user_id, display_name, username, avatar_url, bio, headline, creator_roles, verification_status, verified_pro_at, archetype, region_code, created_at")
         .eq("user_id", creatorId)
         .maybeSingle();
       return data as any;
+    },
+  });
+
+  const { data: socialCounts } = useQuery({
+    queryKey: ["flow-peek-social", creatorId],
+    enabled: open && !!creatorId,
+    queryFn: async () => {
+      const [subs, followers] = await Promise.all([
+        supabase
+          .from("creator_subscriptions")
+          .select("id", { count: "exact", head: true })
+          .eq("creator_id", creatorId)
+          .eq("status", "active"),
+        supabase
+          .from("subscriber_relationships")
+          .select("id", { count: "exact", head: true })
+          .eq("creator_id", creatorId),
+      ]);
+      return { subscribers: subs.count ?? 0, followers: followers.count ?? 0 };
     },
   });
 
