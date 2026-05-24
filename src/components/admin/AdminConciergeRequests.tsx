@@ -100,11 +100,14 @@ export default function AdminConciergeRequests({ canConvert = true }: AdminConci
     return data as unknown as string;
   };
 
-  const claimRequest = async (id: string) => {
+  const claimRequest = async (id: string): Promise<void> => {
     const { error } = await supabase.rpc("claim_concierge_request", {
       _request_id: id,
     });
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Claimed — you'll get curator credit on conversion.");
     qc.invalidateQueries({ queryKey: ["admin-concierge-requests"] });
   };
