@@ -19,7 +19,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Sparkles, Mail, Calendar, DollarSign, Tag } from "lucide-react";
+import { Sparkles, Mail, Calendar, DollarSign, Tag, ArrowRight, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
