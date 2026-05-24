@@ -19,10 +19,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Sparkles, Mail, Calendar, DollarSign, Tag, ArrowRight, ExternalLink } from "lucide-react";
+import { Sparkles, Mail, Calendar, DollarSign, Tag, ArrowRight, ExternalLink, Hand } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import ConciergeMatchSuggestions from "@/components/concierge/ConciergeMatchSuggestions";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Status = "new" | "reviewing" | "scoped" | "converted" | "declined" | "closed";
 
@@ -97,6 +99,19 @@ export default function AdminConciergeRequests({ canConvert = true }: AdminConci
     qc.invalidateQueries({ queryKey: ["admin-concierge-requests"] });
     return data as unknown as string;
   };
+
+  const claimRequest = async (id: string): Promise<void> => {
+    const { error } = await supabase.rpc("claim_concierge_request", {
+      _request_id: id,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Claimed — you'll get curator credit on conversion.");
+    qc.invalidateQueries({ queryKey: ["admin-concierge-requests"] });
+  };
+
 
   return (
     <div className="space-y-4">
@@ -197,6 +212,7 @@ export default function AdminConciergeRequests({ canConvert = true }: AdminConci
               onSetStatus={(s) => setStatus(active.id, s)}
               onSaveProposal={(p) => saveProposal(active.id, p)}
               onConvert={() => convertToProject(active.id)}
+              onClaim={() => claimRequest(active.id)}
             />
 
           )}
@@ -212,13 +228,16 @@ function RequestDetail({
   onSetStatus,
   onSaveProposal,
   onConvert,
+  onClaim,
 }: {
   row: any;
   canConvert: boolean;
   onSetStatus: (s: Status) => void;
   onSaveProposal: (p: { proposal_notes?: string; scoped_budget_cents?: number | null }) => void;
   onConvert: () => Promise<string | undefined>;
+  onClaim: () => Promise<void>;
 }) {
+  const { user } = useAuth();
   const [notes, setNotes] = useState<string>(row.proposal_notes ?? "");
   const [budgetUsd, setBudgetUsd] = useState<string>(
     row.scoped_budget_cents != null ? String(row.scoped_budget_cents / 100) : "",
@@ -269,6 +288,44 @@ function RequestDetail({
           <Field label="Deadline" value={row.deadline ?? "—"} />
           <Field label="Contact" value={row.contact_email ?? "—"} />
         </div>
+
+        {/* Phase 4: claim + curator status */}
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card p-3">
+          <div className="text-xs">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Curator
+            </p>
+            <p className="text-foreground">
+              {row.curator_id
+                ? row.curator_id === user?.id
+                  ? "You own this brief"
+                  : "Claimed by another curator"
+                : "Unclaimed"}
+            </p>
+          </div>
+          {!row.curator_id && row.status !== "converted" && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="rounded-full gap-1.5 text-xs"
+              onClick={() => onClaim()}
+            >
+              <Hand className="h-3.5 w-3.5" /> Claim
+            </Button>
+          )}
+        </div>
+
+        {/* Phase 4: auto-match suggestions */}
+        <ConciergeMatchSuggestions
+          category={row.category}
+          summary={row.summary}
+          outcome={row.outcome}
+          onAddToProposal={(handle, name) => {
+            const line = `• @${handle} (${name})`;
+            setNotes((prev) => (prev ? `${prev}\n${line}` : line));
+          }}
+        />
+
 
         <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground">

@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useCuratorCheck } from "@/hooks/useCuratorCheck";
 import AdminConciergeRequests from "@/components/admin/AdminConciergeRequests";
+import CuratorEarningsCard from "@/components/concierge/CuratorEarningsCard";
 import { Sparkles } from "lucide-react";
 
 export default function CuratorPage() {
@@ -44,6 +45,7 @@ export default function CuratorPage() {
           admin for project conversion.
         </p>
       </header>
+      <CuratorEarningsCard />
       <AdminConciergeRequests canConvert={isAdmin} />
     </div>
   );

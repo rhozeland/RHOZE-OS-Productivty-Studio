@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   ShieldCheck, ShieldOff, Ban, UserCheck, MoreVertical,
-  Search, Loader2, Trash2, AlertTriangle,
+  Search, Loader2, Trash2, AlertTriangle, Wand2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -47,7 +47,7 @@ const AdminUsers = () => {
   const [roles, setRoles] = useState<Record<string, UserRole[]>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | "active" | "banned" | "admin">("all");
+  const [filter, setFilter] = useState<"all" | "active" | "banned" | "admin" | "curator">("all");
 
   // Ban dialog
   const [banTarget, setBanTarget] = useState<Profile | null>(null);
@@ -107,6 +107,8 @@ const AdminUsers = () => {
 
   const isUserAdmin = (userId: string) =>
     roles[userId]?.some((r) => r.role === "admin") ?? false;
+  const isUserCurator = (userId: string) =>
+    roles[userId]?.some((r) => r.role === "curator") ?? false;
 
   const handleGrantAdmin = async (profile: Profile) => {
     const { error } = await supabase.from("user_roles").insert({
@@ -132,6 +134,28 @@ const AdminUsers = () => {
     const { error } = await supabase.from("user_roles").delete().eq("id", adminRole.id);
     if (error) toast.error(error.message);
     else { toast.success("Admin role revoked"); fetchData(); }
+  };
+
+  const handleGrantCurator = async (profile: Profile) => {
+    const { error } = await supabase.from("user_roles").insert({
+      user_id: profile.user_id,
+      role: "curator" as any,
+    });
+    if (error) {
+      if (error.code === "23505") toast.error("User is already a curator");
+      else toast.error(error.message);
+    } else {
+      toast.success(`${profile.display_name || "User"} is now a curator`);
+      fetchData();
+    }
+  };
+
+  const handleRevokeCurator = async (profile: Profile) => {
+    const curatorRole = roles[profile.user_id]?.find((r) => r.role === "curator");
+    if (!curatorRole) return;
+    const { error } = await supabase.from("user_roles").delete().eq("id", curatorRole.id);
+    if (error) toast.error(error.message);
+    else { toast.success("Curator role revoked"); fetchData(); }
   };
 
   const handleBan = async () => {
@@ -196,6 +220,7 @@ const AdminUsers = () => {
     if (filter === "active") return (p.ban_status || "active") === "active";
     if (filter === "banned") return p.ban_status === "banned";
     if (filter === "admin") return isUserAdmin(p.user_id);
+    if (filter === "curator") return isUserCurator(p.user_id);
     return true;
   });
 
@@ -215,7 +240,7 @@ const AdminUsers = () => {
           Users ({profiles.length})
         </h2>
         <div className="flex items-center gap-2">
-          {(["all", "active", "banned", "admin"] as const).map((f) => (
+          {(["all", "active", "banned", "admin", "curator"] as const).map((f) => (
             <Button
               key={f}
               variant={filter === f ? "default" : "outline"}
@@ -245,6 +270,7 @@ const AdminUsers = () => {
         {filtered.map((p) => {
           const credit = credits[p.user_id];
           const admin = isUserAdmin(p.user_id);
+          const curator = isUserCurator(p.user_id);
           const banned = p.ban_status === "banned";
           const isSelf = p.user_id === user?.id;
 
@@ -283,6 +309,11 @@ const AdminUsers = () => {
                         <ShieldCheck className="h-2.5 w-2.5 mr-0.5" /> Admin
                       </Badge>
                     )}
+                    {curator && (
+                      <Badge className="text-[9px] bg-violet-500/10 text-violet-600 border-violet-500/20">
+                        <Wand2 className="h-2.5 w-2.5 mr-0.5" /> Curator
+                      </Badge>
+                    )}
                     {banned && (
                       <Badge variant="destructive" className="text-[9px]">
                         <Ban className="h-2.5 w-2.5 mr-0.5" /> Banned
@@ -311,6 +342,16 @@ const AdminUsers = () => {
                       {admin && !isSelf && (
                         <DropdownMenuItem onClick={() => handleRevokeAdmin(p)}>
                           <ShieldOff className="h-3.5 w-3.5 mr-2" /> Revoke Admin
+                        </DropdownMenuItem>
+                      )}
+                      {!curator && !banned && (
+                        <DropdownMenuItem onClick={() => handleGrantCurator(p)}>
+                          <Wand2 className="h-3.5 w-3.5 mr-2" /> Make Curator
+                        </DropdownMenuItem>
+                      )}
+                      {curator && (
+                        <DropdownMenuItem onClick={() => handleRevokeCurator(p)}>
+                          <ShieldOff className="h-3.5 w-3.5 mr-2" /> Revoke Curator
                         </DropdownMenuItem>
                       )}
                       {!banned && !isSelf && (
