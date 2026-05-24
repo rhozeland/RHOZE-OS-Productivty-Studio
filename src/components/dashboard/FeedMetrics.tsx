@@ -541,6 +541,8 @@ const FeedMetrics = ({
           </ExpandedPanel>
         )}
       </AnimatePresence>
+        </>
+      )}
     </section>
   );
 };
