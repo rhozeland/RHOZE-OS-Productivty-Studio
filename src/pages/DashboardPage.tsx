@@ -263,6 +263,8 @@ const DashboardPage = () => {
   });
 
 
+  // Latest DMs from inbox — show real recent messages regardless of read state
+  // so the Feed tile mirrors what's actually on top of /messages.
   const { data: recentMessages } = useQuery({
     queryKey: ["recent-messages-dashboard", user?.id],
     queryFn: async () => {
@@ -270,7 +272,6 @@ const DashboardPage = () => {
         .from("messages")
         .select("*")
         .eq("receiver_id", user!.id)
-        .eq("read", false)
         .order("created_at", { ascending: false })
         .limit(4);
       return data ?? [];
