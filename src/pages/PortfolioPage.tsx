@@ -30,6 +30,7 @@ import TicketCollection from "@/components/credits/TicketCollection";
 import VerifiedIPHub from "@/components/credits/VerifiedIPHub";
 import CreatorEarningsTab from "@/components/credits/CreatorEarningsTab";
 import WalletButton from "@/components/WalletButton";
+import { todayGradient } from "@/lib/rhoze-gradients";
 
 /* ─────────────── Passport · Spaces visited ─────────────── */
 const SpacesPassportSection = ({ userId }: { userId: string }) => {
