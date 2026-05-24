@@ -328,8 +328,33 @@ function RequestDetail({
           ))}
         </div>
 
-        {/* Convert to project — Phase 2 */}
+        {/* Convert to project — Phase 2 (admin-only; curators see scoped status + hand-off note) */}
+        {!canConvertProp ? (
+          row.converted_project_id ? (
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+              <p className="text-xs font-semibold text-foreground mb-2">Converted to project</p>
+              <Link
+                to={`/projects/${row.converted_project_id}`}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground hover:underline"
+              >
+                Open project <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-border bg-muted/20 p-4">
+              <p className="text-xs font-semibold text-foreground mb-1">
+                Mark Scoped to hand off
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                Save a scoped budget (≥ $1,000) and proposal notes, then mark
+                this request <strong>Scoped</strong>. An admin will convert it
+                into a paid project and lock the 25% Concierge fee.
+              </p>
+            </div>
+          )
+        ) : (
         <div className="rounded-xl border border-foreground/20 bg-gradient-to-br from-foreground/5 to-primary/5 p-4 space-y-3">
+
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-semibold text-foreground">
               Convert to project
