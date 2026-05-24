@@ -100,6 +100,16 @@ export default function AdminConciergeRequests({ canConvert = true }: AdminConci
     return data as unknown as string;
   };
 
+  const claimRequest = async (id: string) => {
+    const { error } = await supabase.rpc("claim_concierge_request", {
+      _request_id: id,
+    });
+    if (error) return toast.error(error.message);
+    toast.success("Claimed — you'll get curator credit on conversion.");
+    qc.invalidateQueries({ queryKey: ["admin-concierge-requests"] });
+  };
+
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
