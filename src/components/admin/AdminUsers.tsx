@@ -220,6 +220,7 @@ const AdminUsers = () => {
     if (filter === "active") return (p.ban_status || "active") === "active";
     if (filter === "banned") return p.ban_status === "banned";
     if (filter === "admin") return isUserAdmin(p.user_id);
+    if (filter === "curator") return isUserCurator(p.user_id);
     return true;
   });
 
