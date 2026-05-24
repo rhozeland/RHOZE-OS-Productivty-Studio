@@ -270,6 +270,7 @@ const AdminUsers = () => {
         {filtered.map((p) => {
           const credit = credits[p.user_id];
           const admin = isUserAdmin(p.user_id);
+          const curator = isUserCurator(p.user_id);
           const banned = p.ban_status === "banned";
           const isSelf = p.user_id === user?.id;
 
@@ -308,6 +309,11 @@ const AdminUsers = () => {
                         <ShieldCheck className="h-2.5 w-2.5 mr-0.5" /> Admin
                       </Badge>
                     )}
+                    {curator && (
+                      <Badge className="text-[9px] bg-violet-500/10 text-violet-600 border-violet-500/20">
+                        <Wand2 className="h-2.5 w-2.5 mr-0.5" /> Curator
+                      </Badge>
+                    )}
                     {banned && (
                       <Badge variant="destructive" className="text-[9px]">
                         <Ban className="h-2.5 w-2.5 mr-0.5" /> Banned
@@ -336,6 +342,16 @@ const AdminUsers = () => {
                       {admin && !isSelf && (
                         <DropdownMenuItem onClick={() => handleRevokeAdmin(p)}>
                           <ShieldOff className="h-3.5 w-3.5 mr-2" /> Revoke Admin
+                        </DropdownMenuItem>
+                      )}
+                      {!curator && !banned && (
+                        <DropdownMenuItem onClick={() => handleGrantCurator(p)}>
+                          <Wand2 className="h-3.5 w-3.5 mr-2" /> Make Curator
+                        </DropdownMenuItem>
+                      )}
+                      {curator && (
+                        <DropdownMenuItem onClick={() => handleRevokeCurator(p)}>
+                          <ShieldOff className="h-3.5 w-3.5 mr-2" /> Revoke Curator
                         </DropdownMenuItem>
                       )}
                       {!banned && !isSelf && (
