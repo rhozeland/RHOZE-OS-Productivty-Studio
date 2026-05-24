@@ -34,6 +34,8 @@ import { LegacyAliasRedirect } from "@/components/LegacyAliasRedirect";
 import { NAV_ALIASES } from "@/config/navigation";
 import DropRoomDetailPage from "@/pages/DropRoomDetailPage";
 import AdminPage from "@/pages/AdminPage";
+import CuratorPage from "@/pages/CuratorPage";
+import ConciergePage from "@/pages/ConciergePage";
 import StudiosPage from "@/pages/StudiosPage";
 import StudioDetailPage from "@/pages/StudioDetailPage";
 import StudioApplicationPage from "@/pages/StudioApplicationPage";
@@ -350,6 +352,8 @@ const App = () => (
                 <Route path="/fan/rewards" element={<Navigate to="/credits" replace />} />
                 <Route path="/settings/verification" element={<VerificationPage />} />
                 <Route path="/admin" element={<AdminPage />} />
+                <Route path="/curator" element={<CuratorPage />} />
+                <Route path="/concierge" element={<ConciergePage />} />
               </Route>
               <Route path="/boards/:id" element={<SmartboardPresentationPage />} />
               <Route path="*" element={<NotFound />} />
