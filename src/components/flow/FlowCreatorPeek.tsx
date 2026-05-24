@@ -82,24 +82,6 @@ const FlowCreatorPeek = ({ open, onOpenChange, creatorId, initial }: Props) => {
     },
   });
 
-  const { data: socialCounts } = useQuery({
-    queryKey: ["flow-peek-social", creatorId],
-    enabled: open && !!creatorId,
-    queryFn: async () => {
-      const [subs, followers] = await Promise.all([
-        supabase
-          .from("creator_subscriptions")
-          .select("id", { count: "exact", head: true })
-          .eq("creator_id", creatorId)
-          .eq("status", "active"),
-        supabase
-          .from("subscriber_relationships")
-          .select("id", { count: "exact", head: true })
-          .eq("creator_id", creatorId),
-      ]);
-      return { subscribers: subs.count ?? 0, followers: followers.count ?? 0 };
-    },
-  });
 
   const { data: works } = useQuery({
     queryKey: ["flow-peek-works", creatorId],
