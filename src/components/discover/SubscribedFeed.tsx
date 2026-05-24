@@ -65,32 +65,10 @@ const SubscribedFeed = () => {
   // Guests have a dedicated "members get" strip above — stay silent here.
   if (!user) return null;
 
-  // Signed-in but no subs yet: show a soft prompt instead of vanishing,
-  // so people understand what subscribing unlocks on /discover.
-  if (!works || works.length === 0) {
-    return (
-      <section className="rounded-2xl border border-dashed border-border/60 bg-gradient-to-br from-primary/[0.04] via-background to-accent/[0.04] p-5 flex items-start gap-4">
-        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
-          <Sparkles className="h-5 w-5" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-foreground">
-            Your private feed is empty
-          </p>
-          <p className="mt-0.5 text-xs text-muted-foreground max-w-md">
-            Back a creator from $5/mo and their behind-the-scenes works, drops, and
-            DMs land here first.
-          </p>
-          <Link
-            to="/profiles"
-            className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-foreground hover:gap-1.5 transition-all"
-          >
-            Find creators to back <ArrowRight className="h-3 w-3" />
-          </Link>
-        </div>
-      </section>
-    );
-  }
+  // Signed-in but no subs yet: stay silent on Discover. The empty-state
+  // prompt has moved to the dashboard /feed surface where it's more
+  // actionable (above the Feed metric tiles).
+  if (!works || works.length === 0) return null;
 
   return (
     <section className="space-y-3">
