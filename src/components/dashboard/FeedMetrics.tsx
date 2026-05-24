@@ -51,6 +51,8 @@ interface FeedMetricsProps {
   events: any[];
   rhozeBalance: number;
   getProjectProgress: (projectId: string) => number;
+  subscribedCreatorIds?: string[];
+  subscribedWorks?: any[];
 }
 
 const TileShell = ({
