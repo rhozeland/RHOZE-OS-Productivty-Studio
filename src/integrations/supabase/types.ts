@@ -5165,6 +5165,10 @@ export type Database = {
         Args: { _username: string }
         Returns: boolean
       }
+      claim_concierge_request: {
+        Args: { _request_id: string }
+        Returns: undefined
+      }
       cleanup_old_notifications: { Args: never; Returns: undefined }
       complete_project_early: {
         Args: { _contract_id: string; _reason?: string; _requester_id: string }
