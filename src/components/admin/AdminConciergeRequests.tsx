@@ -200,16 +200,23 @@ function RequestDetail({
   row,
   onSetStatus,
   onSaveProposal,
+  onConvert,
 }: {
   row: any;
   onSetStatus: (s: Status) => void;
   onSaveProposal: (p: { proposal_notes?: string; scoped_budget_cents?: number | null }) => void;
+  onConvert: () => Promise<string | undefined>;
 }) {
   const [notes, setNotes] = useState<string>(row.proposal_notes ?? "");
   const [budgetUsd, setBudgetUsd] = useState<string>(
     row.scoped_budget_cents != null ? String(row.scoped_budget_cents / 100) : "",
   );
+  const [converting, setConverting] = useState(false);
   const meta = STATUS_META[row.status as Status];
+  const canConvert =
+    row.status !== "converted" &&
+    row.scoped_budget_cents != null &&
+    row.scoped_budget_cents >= 100000;
 
   return (
     <>
