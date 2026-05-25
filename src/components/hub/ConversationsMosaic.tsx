@@ -194,11 +194,14 @@ const ConversationsMosaic = ({
       const term = search.trim();
       const ilike = term ? term.toLowerCase() : null;
 
-      const drops = supabase
-        .from("flow_items")
-        .select("id, title, description, category, file_url, link_url, created_at, user_id, solana_signature")
-        .order("created_at", { ascending: false })
-        .limit(16);
+      // Drops route through the SHARED loader so the mosaic, the hero
+      // CompactFlowFeed, the HubFlowWidget, and FlowModePage itself all
+      // read from one source — same provenance tiering, same per-day
+      // shuffle. Clicking any tile (`/flow?item=<id>`) drops you into
+      // the same loop you were previewing.
+      const dropsP = loadFlowFeed(supabase, [], { shuffleSeed: dailySeed() })
+        .then((items) => ({ data: items.slice(0, 16) }))
+        .catch(() => ({ data: [] as any[] }));
 
       const events = supabase
         .from("events")
@@ -215,7 +218,7 @@ const ConversationsMosaic = ({
         .order("created_at", { ascending: false })
         .limit(6);
 
-      const [dr, ev, sp] = await Promise.all([drops, events, spaces]);
+      const [dr, ev, sp] = await Promise.all([dropsP, events, spaces]);
 
       const tiles: MosaicTile[] = [];
 
