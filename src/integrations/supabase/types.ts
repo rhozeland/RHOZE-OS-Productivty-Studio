@@ -5522,6 +5522,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      record_contribution_proof: {
+        Args: { _action_type: string; _metadata?: Json; _reference_id: string }
+        Returns: string
+      }
       record_rhoze_topup: {
         Args: {
           p_amount_cents: number
