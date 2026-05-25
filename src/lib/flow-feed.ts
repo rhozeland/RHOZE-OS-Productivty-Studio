@@ -58,9 +58,34 @@ export function _getFlowProfileCacheSize(): number {
   return profileCache.size;
 }
 
+/**
+ * Loader options.
+ *
+ * `shuffleSeed` — when provided, items within each provenance tier are
+ * shuffled deterministically by this seed. Lets discovery surfaces
+ * (mosaic, hero, widget) feel fresh from session to session without
+ * destabilising the FlowModePage swipe stack, which calls with no seed
+ * and gets the stable time-desc order.
+ */
+export interface LoadFlowFeedOptions {
+  shuffleSeed?: number;
+}
+
+const seededShuffle = <T,>(arr: T[], seed: number): T[] => {
+  const a = arr.slice();
+  let s = seed || 1;
+  for (let i = a.length - 1; i > 0; i--) {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    const j = s % (i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
 export async function loadFlowFeed(
   supabase: FlowSupabase,
   selectedCategories: string[],
+  opts: LoadFlowFeedOptions = {},
 ): Promise<FlowItemWithProfile[]> {
   const { data, error } = await supabase
     .from("flow_items")
@@ -82,11 +107,11 @@ export async function loadFlowFeed(
     items = [...preferred, ...rest];
   }
 
-  // Provenance bias: surface verified-IP items first, then fingerprinted,
-  // then everything else. Stable within each tier so the time-desc order
-  // from the SQL query is preserved. This makes Flow feel like a feed of
-  // creative IP people can actually speculate on, while keeping the
-  // "nothing is hidden" contract.
+  // Provenance bias: verified-IP first, fingerprinted next, then the rest.
+  // When `shuffleSeed` is supplied, we shuffle *within* each tier so
+  // discovery surfaces still surface verified work first but the order
+  // inside each tier varies. Without a seed (FlowModePage swipe stack),
+  // order stays stable so the loop is predictable.
   const tierOf = (i: FlowItem) => {
     const status = (i as any).verification_status as string | undefined;
     if (status === "verified") return 0;
@@ -94,7 +119,15 @@ export async function loadFlowFeed(
     if ((i as any).content_hash) return 2;
     return 3;
   };
-  items = [...items].sort((a, b) => tierOf(a) - tierOf(b));
+  if (typeof opts.shuffleSeed === "number") {
+    const tiers: FlowItem[][] = [[], [], [], []];
+    for (const it of items) tiers[tierOf(it)].push(it);
+    items = tiers
+      .map((tier, idx) => seededShuffle(tier, opts.shuffleSeed! + idx * 7919))
+      .flat();
+  } else {
+    items = [...items].sort((a, b) => tierOf(a) - tierOf(b));
+  }
 
   const userIds = [...new Set(items.map((i) => i.user_id).filter(Boolean))];
   const now = Date.now();
