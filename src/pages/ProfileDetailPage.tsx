@@ -95,11 +95,20 @@ const ProfileDetailPage = () => {
 
 
   // ─── Data fetching ───
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ["profile", id],
+  // NOTE: retry kept low so a missing/private profile or a transient RLS
+  // error surfaces the "not found" UI in ~2 seconds instead of stalling on a
+  // spinner for up to a minute (React Query's default 3-retry, exponential
+  // backoff). `maybeSingle` makes a 0-row result resolve to `null` instead
+  // of throwing PGRST116 / 406, which would otherwise trigger retries.
+  const { data: profile, isLoading, error: profileError } = useQuery({
+    queryKey: ["profile", id, isOwnProfile],
     queryFn: async () => {
       if (isOwnProfile) {
-        const { data, error } = await supabase.from("profiles").select("*").eq("user_id", id!).single();
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", id!)
+          .maybeSingle();
         if (error) throw error;
         return data;
       }
@@ -108,6 +117,8 @@ const ProfileDetailPage = () => {
       return data?.[0] ?? null;
     },
     enabled: !!id,
+    retry: 1,
+    staleTime: 30_000,
   });
 
   const { data: connectionStatus } = useQuery({
@@ -308,10 +319,20 @@ const ProfileDetailPage = () => {
   }
 
   if (!profile) {
+    const errored = !!profileError;
     return (
       <div className="text-center py-20">
-        <p className="text-muted-foreground">Profile not found</p>
-        <Button variant="outline" className="mt-4" onClick={() => navigate(-1)}>Back</Button>
+        <p className="text-muted-foreground">
+          {errored ? "Couldn't load this profile. Please try again." : "Profile not found"}
+        </p>
+        <div className="mt-4 flex items-center justify-center gap-2">
+          {errored && (
+            <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ["profile", id] })}>
+              Retry
+            </Button>
+          )}
+          <Button variant="outline" onClick={() => navigate(-1)}>Back</Button>
+        </div>
       </div>
     );
   }
