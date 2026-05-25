@@ -19,9 +19,8 @@ import {
   Loader2,
   ShieldCheck,
   Hourglass,
-  CalendarPlus,
+  Wallet,
 } from "lucide-react";
-import { downloadIcs } from "@/lib/ics-export";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -106,32 +105,43 @@ const TicketDetailPage = () => {
       });
   }, [ticketId, ticketStatus, ticketSig, refetch]);
 
-  // Add to calendar (.ics) — works on iOS (Apple Calendar/Wallet), Android, desktop.
-  const addToCalendar = () => {
-    if (!ticket?.event) return;
-    const ev = ticket.event as any;
-    const starts = ev.starts_at as string | null;
-    const ends = (ev.ends_at as string | null) ?? (starts ? new Date(new Date(starts).getTime() + 60 * 60 * 1000).toISOString() : null);
-    if (!starts || !ends) {
-      toast.error("Event time not available yet.");
-      return;
-    }
+  // Apple Wallet
+  const [walletLoading, setWalletLoading] = useState(false);
+  const addToAppleWallet = async () => {
+    if (!ticketId) return;
+    setWalletLoading(true);
     try {
-      downloadIcs({
-        uid: `ticket-${ticket.id}`,
-        title: ev.title ?? "Rhozeland event",
-        description: ev.description ?? `Your Rhozeland ticket #${String(ticket.id).slice(0, 8)}`,
-        starts_at: starts,
-        ends_at: ends,
-        url: ev.external_url ?? `${window.location.origin}/spaces/events/${ev.id}`,
-        location: ev.venue_name ?? (ev.is_online ? "Online" : null),
-      });
-      toast.success("Calendar invite downloaded — open it to add to your calendar.");
-    } catch {
-      toast.error("Couldn't generate calendar invite.");
+      const { data, error } = await supabase.functions.invoke(
+        "generate-apple-wallet-pass",
+        { body: { ticket_id: ticketId } },
+      );
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else if (data?.pkpass_base64) {
+        const blob = new Blob(
+          [Uint8Array.from(atob(data.pkpass_base64), (c) => c.charCodeAt(0))],
+          { type: "application/vnd.apple.pkpass" },
+        );
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `rhozeland-ticket-${ticketId}.pkpass`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        toast.error("Apple Wallet pass not ready yet — try again shortly.");
+      }
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Couldn't generate Apple Wallet pass.",
+      );
+    } finally {
+      setWalletLoading(false);
     }
   };
-
 
   if (isLoading) {
     return (
@@ -261,12 +271,16 @@ const TicketDetailPage = () => {
       <Button
         variant="outline"
         className="rounded-full w-full gap-1.5"
-        onClick={addToCalendar}
+        onClick={addToAppleWallet}
+        disabled={walletLoading}
       >
-        <CalendarPlus className="h-4 w-4" />
-        Add to calendar
+        {walletLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Wallet className="h-4 w-4" />
+        )}
+        Add to Apple Wallet
       </Button>
-
 
 
       {/* Proof of attendance — host-anchored, fees paid by Rhozeland */}
