@@ -5297,6 +5297,15 @@ export type Database = {
           tenure_full_months: number
         }[]
       }
+      get_admin_user_ban_info: {
+        Args: { _user_id?: string }
+        Returns: {
+          ban_reason: string
+          ban_status: string
+          banned_at: string
+          user_id: string
+        }[]
+      }
       get_coin_trades_public: {
         Args: { _launch_id: string; _limit?: number; _since?: string }
         Returns: {
