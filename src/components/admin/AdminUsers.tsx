@@ -82,13 +82,24 @@ const AdminUsers = () => {
   };
 
   const fetchData = async () => {
-    const [{ data: profileData }, { data: creditData }, { data: roleData }] = await Promise.all([
-      supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+    const profileCols = [
+      "id","user_id","display_name","avatar_url","bio","skills","available",
+      "ban_status","banned_at","username","created_at",
+    ].join(",");
+    const [{ data: profileData }, { data: creditData }, { data: roleData }, { data: banInfo }] = await Promise.all([
+      supabase.from("profiles").select(profileCols).order("created_at", { ascending: false }),
       supabase.from("user_credits").select("user_id, balance, tier"),
       supabase.from("user_roles").select("*"),
+      (supabase as any).rpc("get_admin_user_ban_info"),
     ]);
 
-    setProfiles((profileData as Profile[]) || []);
+    const banMap: Record<string, string | null> = {};
+    ((banInfo as any[]) || []).forEach((b) => { banMap[b.user_id] = b.ban_reason; });
+
+    setProfiles(((profileData as any[]) || []).map((p) => ({
+      ...p,
+      ban_reason: banMap[p.user_id] ?? null,
+    })) as Profile[]);
 
     const creditMap: Record<string, UserCredit> = {};
     (creditData || []).forEach((c) => { creditMap[c.user_id] = c; });
