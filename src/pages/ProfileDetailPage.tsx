@@ -319,10 +319,20 @@ const ProfileDetailPage = () => {
   }
 
   if (!profile) {
+    const errored = !!profileError;
     return (
       <div className="text-center py-20">
-        <p className="text-muted-foreground">Profile not found</p>
-        <Button variant="outline" className="mt-4" onClick={() => navigate(-1)}>Back</Button>
+        <p className="text-muted-foreground">
+          {errored ? "Couldn't load this profile. Please try again." : "Profile not found"}
+        </p>
+        <div className="mt-4 flex items-center justify-center gap-2">
+          {errored && (
+            <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ["profile", id] })}>
+              Retry
+            </Button>
+          )}
+          <Button variant="outline" onClick={() => navigate(-1)}>Back</Button>
+        </div>
       </div>
     );
   }
