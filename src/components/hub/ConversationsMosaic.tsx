@@ -44,6 +44,15 @@ import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
+import { loadFlowFeed } from "@/lib/flow-feed";
+
+// Shared per-day seed so the mosaic, hero, and HubFlowWidget all rotate
+// in lockstep — clicking any tile lands you back in the same FlowModePage
+// loop. Day-of-year keeps it stable within a session but fresh tomorrow.
+const dailySeed = () => {
+  const d = new Date();
+  return d.getUTCFullYear() * 1000 + Math.floor((d.getTime() - Date.UTC(d.getUTCFullYear(), 0, 0)) / 86_400_000);
+};
 
 const FallbackTrendingArtists = () => <TrendingArtistsLane marketFilter="All" />;
 
