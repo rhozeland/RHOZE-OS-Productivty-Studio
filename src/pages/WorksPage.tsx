@@ -402,23 +402,23 @@ function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
       // 1) Create a contribution_proof row pointing at this work.
       //    Re-uses the existing anchor-contribution edge function with no
       //    backend changes — `action_type` is a free-form text field.
-      const { data: proof, error: proofErr } = await supabase
-        .from("contribution_proofs")
-        .insert({
-          user_id: work.user_id,
-          action_type: "work_register",
-          reference_id: work.id,
-          metadata: {
+      const { data: proofId, error: proofErr } = await supabase.rpc(
+        "record_contribution_proof",
+        {
+          _action_type: "work_register",
+          _reference_id: work.id,
+          _metadata: {
             content_hash: work.content_hash,
             title: work.title,
             kind: work.kind,
             mime_type: work.mime_type,
             file_size: work.file_size,
           },
-        })
-        .select()
-        .single();
+        },
+      );
       if (proofErr) throw proofErr;
+      const proof = { id: proofId as unknown as string };
+
 
       // 2) Call the existing edge function which signs a Solana memo.
       const { data, error } = await supabase.functions.invoke(
