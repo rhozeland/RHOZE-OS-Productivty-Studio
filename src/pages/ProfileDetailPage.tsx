@@ -645,6 +645,18 @@ const ProfileDetailPage = () => {
               />
             )}
 
+            {/* Creator Activity — recent on-platform actions that feed the
+                Signal score (and, by extension, demand for the linked token). */}
+            {p?.id && p?.user_id && (
+              <CreatorActivityCard
+                creatorProfileId={p.id}
+                creatorUserId={p.user_id}
+                creatorName={p.display_name || p.username || "this creator"}
+                tokenTicker={(p as any).token_ticker}
+              />
+            )}
+
+
             {/* v10.3 — Luma event embed (when creator has linked a lu.ma URL) */}
             {(p as any).luma_url && (
               <LumaEventEmbed
