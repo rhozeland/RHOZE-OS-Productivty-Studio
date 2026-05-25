@@ -30,6 +30,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import SupportSheet from "@/components/profile/SupportSheet";
 import ProjectTokenCard from "@/components/profile/ProjectTokenCard";
+import CreatorActivityCard from "@/components/profile/CreatorActivityCard";
 import ProfileCatalogCard from "@/components/profile/ProfileCatalogCard";
 import { getRegion } from "@/lib/regions";
 import { LumaEventEmbed } from "@/components/profile/LumaEventEmbed";
@@ -643,6 +644,18 @@ const ProfileDetailPage = () => {
                 creatorName={p.display_name || p.username}
               />
             )}
+
+            {/* Creator Activity — recent on-platform actions that feed the
+                Signal score (and, by extension, demand for the linked token). */}
+            {p?.id && p?.user_id && (
+              <CreatorActivityCard
+                creatorProfileId={p.id}
+                creatorUserId={p.user_id}
+                creatorName={p.display_name || p.username || "this creator"}
+                tokenTicker={(p as any).token_ticker}
+              />
+            )}
+
 
             {/* v10.3 — Luma event embed (when creator has linked a lu.ma URL) */}
             {(p as any).luma_url && (
