@@ -415,9 +415,15 @@ const CreatorsPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select(
+          "user_id, username, display_name, avatar_url, banner_gradient, headline, bio, location, mediums, skills, creator_roles, is_public, created_at"
+        )
+        .eq("is_public", true)
         .order("created_at", { ascending: false });
-      if (error) throw error;
+      if (error) {
+        console.error("[CreatorsPage] profiles fetch failed", error);
+        return [];
+      }
       return data ?? [];
     },
   });
