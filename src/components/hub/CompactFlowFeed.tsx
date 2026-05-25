@@ -26,6 +26,13 @@ import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import AudioPreview from "@/components/marketplace/AudioPreview";
 import { loadFlowFeed, type FlowItemWithProfile } from "@/lib/flow-feed";
 
+// Shared per-day seed — keeps hero/mosaic/widget in lockstep so clicking
+// any drop always loops back into the same FlowModePage rotation.
+const dailyFlowSeed = () => {
+  const d = new Date();
+  return d.getUTCFullYear() * 1000 + Math.floor((d.getTime() - Date.UTC(d.getUTCFullYear(), 0, 0)) / 86_400_000);
+};
+
 const CATEGORIES = ["design", "music", "photo", "video", "writing"];
 
 const AUDIO_EXT = /\.(mp3|wav|flac|aac|m4a|ogg|opus|aiff)(\?|$)/i;
