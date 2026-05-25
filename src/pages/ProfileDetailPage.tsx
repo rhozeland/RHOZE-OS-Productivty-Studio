@@ -102,17 +102,12 @@ const ProfileDetailPage = () => {
   // backoff). `maybeSingle` makes a 0-row result resolve to `null` instead
   // of throwing PGRST116 / 406, which would otherwise trigger retries.
   const { data: profile, isLoading, error: profileError } = useQuery({
-    queryKey: ["profile", id, isOwnProfile],
+    queryKey: ["profile", id],
     queryFn: async () => {
-      if (isOwnProfile) {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("user_id", id!)
-          .maybeSingle();
-        if (error) throw error;
-        return data;
-      }
+      // Always go through get_public_profile — column-level grants on the
+      // profiles table block direct `select *` (even for own row) since the
+      // PII lockdown migration. Private fields (shipping/wallet/etc.) are
+      // fetched separately via get_my_private_profile_fields.
       const { data, error } = await supabase.rpc("get_public_profile", { _user_id: id! });
       if (error) throw error;
       return data?.[0] ?? null;
