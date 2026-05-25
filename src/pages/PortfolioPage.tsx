@@ -330,8 +330,9 @@ const PortfolioPage = () => {
         </TabsContent>
 
         <TabsContent value="tokens" className="mt-4 space-y-6">
-          <TokenHoldingsSection />
+          <CreatorTokenHoldings />
         </TabsContent>
+
       </Tabs>
     </div>
   );
