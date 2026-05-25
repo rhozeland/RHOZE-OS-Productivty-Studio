@@ -124,7 +124,7 @@ const CompactFlowFeed = () => {
 
   const { data: items = [], isFetching } = useQuery({
     queryKey: ["compact-flow-feed", feedScope, selectedCategories],
-    queryFn: () => loadFlowFeed(supabase, selectedCategories),
+    queryFn: () => loadFlowFeed(supabase, selectedCategories, { shuffleSeed: dailyFlowSeed() }),
     enabled: ready,
     staleTime: 60_000,
     retry: 1,
