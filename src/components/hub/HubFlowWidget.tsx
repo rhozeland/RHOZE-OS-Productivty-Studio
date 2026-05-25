@@ -33,8 +33,12 @@ const HubFlowWidget = ({ expanded = false, hideHeading = false }: { expanded?: b
   const { data: items, isLoading } = useQuery({
     queryKey: ["hub-flow-widget", expanded ? "expanded" : "compact"],
     queryFn: async () => {
-      // Empty preferences → global feed, sorted by Flow's tier rules.
-      const all = await loadFlowFeed(supabase as any, []);
+      // Same shared loader + per-day seed used by CompactFlowFeed and
+      // ConversationsMosaic — every Flow surface rotates in lockstep so
+      // clicking any drop loops back into the same FlowModePage stack.
+      const d = new Date();
+      const seed = d.getUTCFullYear() * 1000 + Math.floor((d.getTime() - Date.UTC(d.getUTCFullYear(), 0, 0)) / 86_400_000);
+      const all = await loadFlowFeed(supabase as any, [], { shuffleSeed: seed });
       return all.slice(0, expanded ? 9 : 3);
     },
     staleTime: 60_000,

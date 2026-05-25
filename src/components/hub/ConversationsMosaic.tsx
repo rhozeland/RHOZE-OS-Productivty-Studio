@@ -44,6 +44,15 @@ import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
+import { loadFlowFeed } from "@/lib/flow-feed";
+
+// Shared per-day seed so the mosaic, hero, and HubFlowWidget all rotate
+// in lockstep — clicking any tile lands you back in the same FlowModePage
+// loop. Day-of-year keeps it stable within a session but fresh tomorrow.
+const dailySeed = () => {
+  const d = new Date();
+  return d.getUTCFullYear() * 1000 + Math.floor((d.getTime() - Date.UTC(d.getUTCFullYear(), 0, 0)) / 86_400_000);
+};
 
 const FallbackTrendingArtists = () => <TrendingArtistsLane marketFilter="All" />;
 
@@ -185,11 +194,14 @@ const ConversationsMosaic = ({
       const term = search.trim();
       const ilike = term ? term.toLowerCase() : null;
 
-      const drops = supabase
-        .from("flow_items")
-        .select("id, title, description, category, file_url, link_url, created_at, user_id, solana_signature")
-        .order("created_at", { ascending: false })
-        .limit(16);
+      // Drops route through the SHARED loader so the mosaic, the hero
+      // CompactFlowFeed, the HubFlowWidget, and FlowModePage itself all
+      // read from one source — same provenance tiering, same per-day
+      // shuffle. Clicking any tile (`/flow?item=<id>`) drops you into
+      // the same loop you were previewing.
+      const dropsP = loadFlowFeed(supabase, [], { shuffleSeed: dailySeed() })
+        .then((items) => ({ data: items.slice(0, 16) }))
+        .catch(() => ({ data: [] as any[] }));
 
       const events = supabase
         .from("events")
@@ -206,7 +218,7 @@ const ConversationsMosaic = ({
         .order("created_at", { ascending: false })
         .limit(6);
 
-      const [dr, ev, sp] = await Promise.all([drops, events, spaces]);
+      const [dr, ev, sp] = await Promise.all([dropsP, events, spaces]);
 
       const tiles: MosaicTile[] = [];
 
