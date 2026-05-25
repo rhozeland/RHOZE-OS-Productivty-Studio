@@ -30,6 +30,7 @@ import TicketCollection from "@/components/credits/TicketCollection";
 import VerifiedIPHub from "@/components/credits/VerifiedIPHub";
 import CreatorEarningsTab from "@/components/credits/CreatorEarningsTab";
 import WalletButton from "@/components/WalletButton";
+import CreatorTokenHoldings from "@/components/portfolio/CreatorTokenHoldings";
 import { todayGradient } from "@/lib/rhoze-gradients";
 
 /* ─────────────── Passport · Spaces visited ─────────────── */
@@ -288,6 +289,10 @@ const PortfolioPage = () => {
         </div>
       </header>
 
+      <CreatorTokenHoldings />
+
+
+
 
       <Tabs value={activeTab} onValueChange={setTab}>
         <TabsList className="flex-wrap h-auto">
@@ -325,8 +330,9 @@ const PortfolioPage = () => {
         </TabsContent>
 
         <TabsContent value="tokens" className="mt-4 space-y-6">
-          <TokenHoldingsSection />
+          <CreatorTokenHoldings />
         </TabsContent>
+
       </Tabs>
     </div>
   );
