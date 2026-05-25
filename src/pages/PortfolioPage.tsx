@@ -289,6 +289,10 @@ const PortfolioPage = () => {
         </div>
       </header>
 
+      <CreatorTokenHoldings />
+
+
+
 
       <Tabs value={activeTab} onValueChange={setTab}>
         <TabsList className="flex-wrap h-auto">
