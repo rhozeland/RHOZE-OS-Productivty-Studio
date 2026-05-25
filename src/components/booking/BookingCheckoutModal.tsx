@@ -195,26 +195,11 @@ const BookingCheckoutModal = ({ open, onOpenChange, service, userCredits }: Book
         .single();
       if (bookingError) throw bookingError;
 
-      // Record an immutable ledger entry for $RHOZE-paid bookings
-      if (paymentMethod === "rhoze" && rhozeContext) {
-        await supabase.from("rhoze_booking_ledger").insert({
-          user_id: user.id,
-          booking_id: bookingRow?.id ?? null,
-          service_id: service.id,
-          entry_kind: "booking_payment",
-          rhoze_amount: rhozePrice,
-          usd_value: usdPrice,
-          rate_rhoze_per_usd: RHOZE_PER_USD,
-          solana_signature: rhozeContext.signature,
-          payer_wallet: rhozeContext.payerWallet,
-          description: `Booking: ${service.title}`,
-          metadata: {
-            duration_hours: service.duration_hours,
-            staff_member_id: selectedStaffId,
-            start_time: startTime.toISOString(),
-          },
-        });
-      }
+      // $RHOZE booking ledger entries are now written server-side by the
+      // payment-verification edge function (using the service role). Client
+      // writes were removed for security — users could otherwise fabricate
+      // ledger amounts.
+
 
       // Auto-create calendar event
       await supabase.from("calendar_events").insert({

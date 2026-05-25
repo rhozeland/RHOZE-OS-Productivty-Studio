@@ -210,22 +210,22 @@ const EventCreatePage = () => {
       // 3) If publishing, write a contribution_proof + anchor on Solana
       let signature: string | null = null;
       if (publish) {
-        const { data: proof, error: proofErr } = await supabase
-          .from("contribution_proofs")
-          .insert({
-            user_id: user.id,
-            action_type: "event_manifest",
-            reference_id: ev.id,
-            metadata: {
+        const { data: proofId, error: proofErr } = await supabase.rpc(
+          "record_contribution_proof",
+          {
+            _action_type: "event_manifest",
+            _reference_id: ev.id,
+            _metadata: {
               event_id: ev.id,
               manifest_hash,
               title,
               starts_at: startsAt,
             },
-          })
-          .select()
-          .single();
+          },
+        );
         if (proofErr) throw proofErr;
+        const proof = { id: proofId as unknown as string };
+
 
         const { data: anchorRes, error: anchorErr } =
           await supabase.functions.invoke("anchor-contribution", {

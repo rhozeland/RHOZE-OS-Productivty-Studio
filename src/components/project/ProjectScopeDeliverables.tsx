@@ -224,13 +224,12 @@ const ProjectScopeDeliverables = ({
       if (!deliverable.content_hash) throw new Error("No fingerprint to anchor");
 
       // 1) Create a contribution proof row pointing at this deliverable.
-      const { data: proof, error: proofErr } = await supabase
-        .from("contribution_proofs")
-        .insert({
-          user_id: user.id,
-          action_type: "deliverable_anchor",
-          reference_id: deliverable.id,
-          metadata: {
+      const { data: proofId, error: proofErr } = await supabase.rpc(
+        "record_contribution_proof",
+        {
+          _action_type: "deliverable_anchor",
+          _reference_id: deliverable.id,
+          _metadata: {
             project_id: deliverable.project_id,
             deliverable_id: deliverable.id,
             title: deliverable.title,
@@ -239,10 +238,11 @@ const ProjectScopeDeliverables = ({
             mime_type: deliverable.mime_type,
             file_size: deliverable.file_size,
           },
-        })
-        .select()
-        .single();
+        },
+      );
       if (proofErr) throw proofErr;
+      const proof = { id: proofId as unknown as string };
+
 
       // 2) Ask the edge function to sign + send a Solana memo.
       const { data, error } = await supabase.functions.invoke(
