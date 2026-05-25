@@ -261,16 +261,12 @@ const TicketDetailPage = () => {
       <Button
         variant="outline"
         className="rounded-full w-full gap-1.5"
-        onClick={addToAppleWallet}
-        disabled={walletLoading}
+        onClick={addToCalendar}
       >
-        {walletLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Wallet className="h-4 w-4" />
-        )}
-        Add to Apple Wallet
+        <CalendarPlus className="h-4 w-4" />
+        Add to calendar
       </Button>
+
 
 
       {/* Proof of attendance — host-anchored, fees paid by Rhozeland */}
