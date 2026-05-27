@@ -176,7 +176,10 @@ const SettingsPage = () => {
         "creator_roles","archetype","skills","mediums","location","region_code",
         "available","is_public","avatar_url","banner_gradient","banner_url",
         "profile_background","instagram_url","tiktok_url","twitter_url","youtube_url",
-        "token_mint_address","token_ticker","email_notif_messages","email_notif_inquiries",
+        "token_mint_address","token_ticker",
+        "token_mint_address_pending","token_ticker_pending","token_submission_status",
+        "token_submitted_at","token_reviewed_at","token_review_note",
+        "email_notif_messages","email_notif_inquiries",
         "email_notif_purchases","email_notif_reviews",
       ].join(",");
       const [{ data, error }, { data: priv }] = await Promise.all([
