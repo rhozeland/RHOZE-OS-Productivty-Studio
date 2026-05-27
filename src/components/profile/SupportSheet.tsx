@@ -211,15 +211,10 @@ export default function SupportSheet({
   };
 
   const handleCommission = () => {
-    try {
-      sessionStorage.setItem("newProjectPrefill", JSON.stringify({
-        title: `Project with ${creatorName}`,
-        collaboratorId: creatorId,
-      }));
-    } catch { /* ignore */ }
-    onOpenChange(false);
-    navigate(`/messages?tab=projects&new=1`);
+    if (!user) { toast.error("Sign in to commission a project"); return; }
+    setProposalOpen(true);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
