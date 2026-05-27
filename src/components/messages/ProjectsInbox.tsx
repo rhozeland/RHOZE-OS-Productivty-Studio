@@ -93,6 +93,8 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
   const [params, setParams] = useSearchParams();
   const selectedId = params.get("p");
   const showNew = params.get("new") === "1";
+  const [openProposalId, setOpenProposalId] = useState<string | null>(null);
+  const { data: proposals } = useProposals();
 
   // ─── Owned + collaborator-joined projects ─────────────────────────
   // Two queries (owned + collab-ids) merged client-side — Supabase
