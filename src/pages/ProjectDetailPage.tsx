@@ -36,6 +36,7 @@ import ProjectTools from "@/components/project/ProjectTools";
 import DropRoomLauncher from "@/components/project/DropRoomLauncher";
 import { useProjectRole } from "@/hooks/useProjectRole";
 import { getHoldTier } from "@/lib/tier-matrix";
+import BackedByRhozelandBadge from "@/components/concierge/BackedByRhozelandBadge";
 
 // Tier-based cap on smartboards per project. Play tier is unlimited.
 const SMARTBOARD_CAP_BY_TIER: Record<string, number> = {
