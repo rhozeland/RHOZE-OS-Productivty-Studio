@@ -18,10 +18,11 @@ import AdminArtistVerifications from "@/components/admin/AdminArtistVerification
 import AdminRewardCaps from "@/components/admin/AdminRewardCaps";
 import AdminPlatformFees from "@/components/admin/AdminPlatformFees";
 import AdminConciergeRequests from "@/components/admin/AdminConciergeRequests";
+import AdminTokenSubmissions from "@/components/admin/AdminTokenSubmissions";
 
 const VALID_TABS = new Set([
   "overview", "rewards", "caps", "users", "badges", "studios", "ip",
-  "artists", "disputes", "withdrawals", "moderation", "flow", "capital", "fees", "concierge",
+  "artists", "disputes", "withdrawals", "moderation", "flow", "capital", "fees", "concierge", "tokens",
 ]);
 
 const AdminPage = () => {
