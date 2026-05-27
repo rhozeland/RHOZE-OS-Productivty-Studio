@@ -135,7 +135,10 @@ const AdminPage = () => {
           <AdminUnderwritingRulesAudit />
         </TabsContent>
         <TabsContent value="fees"><AdminPlatformFees /></TabsContent>
-        <TabsContent value="concierge"><AdminConciergeRequests /></TabsContent>
+        <TabsContent value="concierge" className="space-y-4">
+          <ConciergeProgramDashboard />
+          <AdminConciergeRequests />
+        </TabsContent>
         <TabsContent value="tokens"><AdminTokenSubmissions /></TabsContent>
       </Tabs>
     </div>
