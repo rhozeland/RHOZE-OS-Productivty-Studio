@@ -18,6 +18,7 @@ import AdminArtistVerifications from "@/components/admin/AdminArtistVerification
 import AdminRewardCaps from "@/components/admin/AdminRewardCaps";
 import AdminPlatformFees from "@/components/admin/AdminPlatformFees";
 import AdminConciergeRequests from "@/components/admin/AdminConciergeRequests";
+import ConciergeProgramDashboard from "@/components/concierge/ConciergeProgramDashboard";
 import AdminTokenSubmissions from "@/components/admin/AdminTokenSubmissions";
 
 const VALID_TABS = new Set([
@@ -135,7 +136,10 @@ const AdminPage = () => {
           <AdminUnderwritingRulesAudit />
         </TabsContent>
         <TabsContent value="fees"><AdminPlatformFees /></TabsContent>
-        <TabsContent value="concierge"><AdminConciergeRequests /></TabsContent>
+        <TabsContent value="concierge" className="space-y-4">
+          <ConciergeProgramDashboard />
+          <AdminConciergeRequests />
+        </TabsContent>
         <TabsContent value="tokens"><AdminTokenSubmissions /></TabsContent>
       </Tabs>
     </div>

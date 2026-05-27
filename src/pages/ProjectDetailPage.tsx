@@ -36,6 +36,7 @@ import ProjectTools from "@/components/project/ProjectTools";
 import DropRoomLauncher from "@/components/project/DropRoomLauncher";
 import { useProjectRole } from "@/hooks/useProjectRole";
 import { getHoldTier } from "@/lib/tier-matrix";
+import BackedByRhozelandBadge from "@/components/concierge/BackedByRhozelandBadge";
 
 // Tier-based cap on smartboards per project. Play tier is unlimited.
 const SMARTBOARD_CAP_BY_TIER: Record<string, number> = {
@@ -311,6 +312,7 @@ const ProjectDetailPage = () => {
                     <Lock className="h-3 w-3" /> Locked
                   </Badge>
                 )}
+                {project.intake_tier === "concierge" && <BackedByRhozelandBadge />}
                 <Pencil className={"h-4 w-4 text-muted-foreground transition-opacity " + (canManageProject ? "opacity-0 group-hover:opacity-100" : "hidden")} />
               </div>
               <p className="mt-1 text-muted-foreground pl-7">
