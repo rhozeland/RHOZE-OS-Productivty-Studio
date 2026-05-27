@@ -506,7 +506,17 @@ export default function SupportSheet({
         )}
       </DialogContent>
       <ConciergeIntakeSheet open={conciergeOpen} onOpenChange={setConciergeOpen} />
+      <ProposalSheet
+        open={proposalOpen}
+        onOpenChange={setProposalOpen}
+        newProposal={{
+          counterpartyId: creatorId,
+          role: "client",
+          title: `Project with ${creatorName}`,
+        }}
+      />
     </Dialog>
+
   );
 }
 
