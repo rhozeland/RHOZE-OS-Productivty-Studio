@@ -559,38 +559,71 @@ const SettingsPage = () => {
         </div>
       </div>
 
-      {/* Linked Solana token (pump.fun discovery overlay) */}
-      <div className="space-y-2 rounded-xl border border-border/60 bg-muted/20 p-4">
-        <Label className="flex items-center gap-2 text-sm">
-          🪙 Linked token <span className="text-[10px] uppercase tracking-wider text-muted-foreground">optional</span>
-        </Label>
-        <p className="text-[11px] text-muted-foreground">
-          Paste your pump.fun mint address — we'll surface a read-only price chip on your profile and Discover. Rhozeland never custodies or trades tokens.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-2">
-          <Input
-            value={tokenMint}
-            onChange={(e) => {
-              // Accept either a raw mint or a full pump.fun URL — auto-extract the mint.
-              const raw = e.target.value.trim();
-              const match = raw.match(/pump\.fun\/(?:coin\/)?([1-9A-HJ-NP-Za-km-z]{32,44})/i);
-              setTokenMint(match ? match[1] : raw);
-            }}
-            placeholder="pump.fun URL or mint address"
-            className="font-mono text-xs"
-          />
-          <Input
-            value={tokenTicker}
-            onChange={(e) => setTokenTicker(e.target.value)}
-            placeholder="TICKER"
-            maxLength={10}
-            className="uppercase font-mono"
-          />
-        </div>
-        <p className="text-[10px] text-muted-foreground">
-          Tip: just paste the full <code className="px-1 rounded bg-muted">pump.fun/coin/...</code> URL — we'll grab the mint for you. Add the ticker (e.g. <code className="px-1 rounded bg-muted">INDO</code>) so fans see it on your profile.
-        </p>
-      </div>
+      {/* Linked Solana token (pump.fun discovery overlay) — admin review gated */}
+      {(() => {
+        const p = (profile as any) ?? {};
+        const status: "none" | "pending" | "approved" | "rejected" = p.token_submission_status ?? "none";
+        const pendingMint: string | null = p.token_mint_address_pending ?? null;
+        const pendingTicker: string | null = p.token_ticker_pending ?? null;
+        const reviewNote: string | null = p.token_review_note ?? null;
+        const statusMeta = {
+          none: { label: "Not submitted", tone: "bg-muted text-muted-foreground" },
+          pending: { label: "Pending review", tone: "bg-amber-500/15 text-amber-700 dark:text-amber-300" },
+          approved: { label: "Approved · live", tone: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" },
+          rejected: { label: "Rejected", tone: "bg-rose-500/15 text-rose-700 dark:text-rose-300" },
+        }[status];
+        return (
+          <div className="space-y-2 rounded-xl border border-border/60 bg-muted/20 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="flex items-center gap-2 text-sm">
+                🪙 Linked token <span className="text-[10px] uppercase tracking-wider text-muted-foreground">optional</span>
+              </Label>
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusMeta.tone}`}>
+                {statusMeta.label}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Paste your pump.fun mint — once submitted, Rhozeland admins review and approve so the network stays high-signal. We never custody or trade tokens.
+            </p>
+            {status === "pending" && (pendingMint || pendingTicker) && (
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2 text-[11px]">
+                <div className="font-medium text-amber-700 dark:text-amber-300 mb-0.5">In review</div>
+                <div className="font-mono text-muted-foreground break-all">
+                  {pendingTicker ? `$${pendingTicker} · ` : ""}{pendingMint}
+                </div>
+              </div>
+            )}
+            {status === "rejected" && reviewNote && (
+              <div className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-2 text-[11px] text-rose-700 dark:text-rose-300">
+                <div className="font-medium mb-0.5">Reviewer note</div>
+                <div>{reviewNote}</div>
+              </div>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-2">
+              <Input
+                value={tokenMint}
+                onChange={(e) => {
+                  const raw = e.target.value.trim();
+                  const match = raw.match(/pump\.fun\/(?:coin\/)?([1-9A-HJ-NP-Za-km-z]{32,44})/i);
+                  setTokenMint(match ? match[1] : raw);
+                }}
+                placeholder="pump.fun URL or mint address"
+                className="font-mono text-xs"
+              />
+              <Input
+                value={tokenTicker}
+                onChange={(e) => setTokenTicker(e.target.value)}
+                placeholder="TICKER"
+                maxLength={10}
+                className="uppercase font-mono"
+              />
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Submitting a new mint or ticker queues it for admin review — your current live token stays visible until the new one is approved. Clearing both fields removes the token immediately.
+            </p>
+          </div>
+        );
+      })()}
 
       <Button type="submit" disabled={updateProfile.isPending}>
         {updateProfile.isPending ? "Saving..." : "Save Changes"}
