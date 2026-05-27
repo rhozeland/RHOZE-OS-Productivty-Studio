@@ -18,10 +18,11 @@ import AdminArtistVerifications from "@/components/admin/AdminArtistVerification
 import AdminRewardCaps from "@/components/admin/AdminRewardCaps";
 import AdminPlatformFees from "@/components/admin/AdminPlatformFees";
 import AdminConciergeRequests from "@/components/admin/AdminConciergeRequests";
+import AdminTokenSubmissions from "@/components/admin/AdminTokenSubmissions";
 
 const VALID_TABS = new Set([
   "overview", "rewards", "caps", "users", "badges", "studios", "ip",
-  "artists", "disputes", "withdrawals", "moderation", "flow", "capital", "fees", "concierge",
+  "artists", "disputes", "withdrawals", "moderation", "flow", "capital", "fees", "concierge", "tokens",
 ]);
 
 const AdminPage = () => {
@@ -112,6 +113,9 @@ const AdminPage = () => {
           <TabsTrigger value="concierge" className="gap-1.5 text-xs shrink-0">
             <Wand2 className="h-3.5 w-3.5" /> Concierge
           </TabsTrigger>
+          <TabsTrigger value="tokens" className="gap-1.5 text-xs shrink-0">
+            <Coins className="h-3.5 w-3.5" /> Tokens
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview"><AdminOverview /></TabsContent>
@@ -132,6 +136,7 @@ const AdminPage = () => {
         </TabsContent>
         <TabsContent value="fees"><AdminPlatformFees /></TabsContent>
         <TabsContent value="concierge"><AdminConciergeRequests /></TabsContent>
+        <TabsContent value="tokens"><AdminTokenSubmissions /></TabsContent>
       </Tabs>
     </div>
   );

@@ -55,6 +55,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useProposals, proposalTurn, type ProposalRow } from "@/components/proposals/useProposals";
+import ProposalSheet from "@/components/proposals/ProposalSheet";
 
 type Project = {
   id: string;
@@ -91,6 +93,8 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
   const [params, setParams] = useSearchParams();
   const selectedId = params.get("p");
   const showNew = params.get("new") === "1";
+  const [openProposalId, setOpenProposalId] = useState<string | null>(null);
+  const { data: proposals } = useProposals();
 
   // ─── Owned + collaborator-joined projects ─────────────────────────
   // Two queries (owned + collab-ids) merged client-side — Supabase
@@ -208,7 +212,7 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
             selectedProject ? "hidden md:flex md:w-80" : "w-full md:w-80",
           )}
         >
-          <div className="p-3">
+          <div className="p-3 space-y-2">
             <Button
               variant="outline"
               size="sm"
@@ -223,6 +227,56 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
               <Plus className="h-3.5 w-3.5" /> New project
             </Button>
           </div>
+
+          {proposals && proposals.length > 0 && (
+            <div className="border-y border-border/60 bg-muted/30 px-3 py-2">
+              <div className="flex items-center gap-1.5 px-1 pb-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                <Sparkles className="h-3 w-3" />
+                Proposals · {proposals.length}
+              </div>
+              <div className="space-y-1">
+                {proposals.slice(0, 4).map((p) => {
+                  const turn = proposalTurn(p, userId);
+                  const turnLabel =
+                    turn === "you" ? "Your turn" : turn === "them" ? "Waiting" : "Both signed";
+                  const turnTone =
+                    turn === "you"
+                      ? "bg-foreground text-background"
+                      : "bg-muted text-muted-foreground";
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => setOpenProposalId(p.id)}
+                      className="group w-full rounded-md px-2 py-1.5 text-left transition-colors hover:bg-background"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-foreground truncate flex-1">
+                          {p.title || "Untitled proposal"}
+                        </span>
+                        <span
+                          className={cn(
+                            "text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0",
+                            turnTone,
+                          )}
+                        >
+                          {turnLabel}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground truncate">
+                        {p.budget_credits > 0
+                          ? `${p.budget_credits.toLocaleString()} credits`
+                          : "No budget set"}
+                        {" · "}
+                        {format(new Date(p.updated_at), "MMM d")}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+
 
           <ScrollArea className="flex-1">
             {projects.length === 0 ? (
@@ -328,6 +382,12 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
           setSelected(id);
           toast.success("Project created.");
         }}
+      />
+
+      <ProposalSheet
+        open={!!openProposalId}
+        onOpenChange={(o) => { if (!o) setOpenProposalId(null); }}
+        proposalId={openProposalId}
       />
     </>
   );

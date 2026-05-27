@@ -2786,7 +2786,13 @@ export type Database = {
           skills: string[] | null
           tiktok_url: string | null
           token_mint_address: string | null
+          token_mint_address_pending: string | null
+          token_review_note: string | null
+          token_reviewed_at: string | null
+          token_submission_status: string
+          token_submitted_at: string | null
           token_ticker: string | null
+          token_ticker_pending: string | null
           twitter_url: string | null
           updated_at: string
           user_id: string
@@ -2851,7 +2857,13 @@ export type Database = {
           skills?: string[] | null
           tiktok_url?: string | null
           token_mint_address?: string | null
+          token_mint_address_pending?: string | null
+          token_review_note?: string | null
+          token_reviewed_at?: string | null
+          token_submission_status?: string
+          token_submitted_at?: string | null
           token_ticker?: string | null
+          token_ticker_pending?: string | null
           twitter_url?: string | null
           updated_at?: string
           user_id: string
@@ -2916,7 +2928,13 @@ export type Database = {
           skills?: string[] | null
           tiktok_url?: string | null
           token_mint_address?: string | null
+          token_mint_address_pending?: string | null
+          token_review_note?: string | null
+          token_reviewed_at?: string | null
+          token_submission_status?: string
+          token_submitted_at?: string | null
           token_ticker?: string | null
+          token_ticker_pending?: string | null
           twitter_url?: string | null
           updated_at?: string
           user_id?: string
@@ -5707,6 +5725,10 @@ export type Database = {
         Returns: string
       }
       request_work_unlock: { Args: { _work_id: string }; Returns: Json }
+      review_token_submission: {
+        Args: { _approve: boolean; _note?: string; _user_id: string }
+        Returns: undefined
+      }
       reward_already_granted: {
         Args: { _action_type: string; _reference_id?: string; _user_id: string }
         Returns: boolean
