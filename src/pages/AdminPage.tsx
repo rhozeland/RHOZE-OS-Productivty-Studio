@@ -18,6 +18,7 @@ import AdminArtistVerifications from "@/components/admin/AdminArtistVerification
 import AdminRewardCaps from "@/components/admin/AdminRewardCaps";
 import AdminPlatformFees from "@/components/admin/AdminPlatformFees";
 import AdminConciergeRequests from "@/components/admin/AdminConciergeRequests";
+import ConciergeProgramDashboard from "@/components/concierge/ConciergeProgramDashboard";
 import AdminTokenSubmissions from "@/components/admin/AdminTokenSubmissions";
 
 const VALID_TABS = new Set([
