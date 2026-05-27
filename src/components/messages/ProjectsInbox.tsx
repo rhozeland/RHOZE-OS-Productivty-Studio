@@ -55,6 +55,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useProposals, proposalTurn, type ProposalRow } from "@/components/proposals/useProposals";
+import ProposalSheet from "@/components/proposals/ProposalSheet";
 
 type Project = {
   id: string;
