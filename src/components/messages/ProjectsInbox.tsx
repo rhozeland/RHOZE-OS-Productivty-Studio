@@ -383,6 +383,12 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
           toast.success("Project created.");
         }}
       />
+
+      <ProposalSheet
+        open={!!openProposalId}
+        onOpenChange={(o) => { if (!o) setOpenProposalId(null); }}
+        proposalId={openProposalId}
+      />
     </>
   );
 };
