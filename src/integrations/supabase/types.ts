@@ -3355,6 +3355,125 @@ export type Database = {
           },
         ]
       }
+      project_proposal_milestones: {
+        Row: {
+          created_at: string
+          credit_amount: number
+          description: string | null
+          due_date: string | null
+          id: string
+          proposal_id: string
+          proposed_by: string
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          credit_amount?: number
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          proposal_id: string
+          proposed_by: string
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          credit_amount?: number
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          proposal_id?: string
+          proposed_by?: string
+          sort_order?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_proposal_milestones_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "project_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_proposals: {
+        Row: {
+          budget_credits: number
+          client_id: string
+          client_signed_at: string | null
+          contract_id: string | null
+          created_at: string
+          created_by: string
+          currency: string
+          decline_reason: string | null
+          id: string
+          source_listing_id: string | null
+          source_message_id: string | null
+          specialist_id: string
+          specialist_signed_at: string | null
+          status: string
+          summary: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          budget_credits?: number
+          client_id: string
+          client_signed_at?: string | null
+          contract_id?: string | null
+          created_at?: string
+          created_by: string
+          currency?: string
+          decline_reason?: string | null
+          id?: string
+          source_listing_id?: string | null
+          source_message_id?: string | null
+          specialist_id: string
+          specialist_signed_at?: string | null
+          status?: string
+          summary?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          budget_credits?: number
+          client_id?: string
+          client_signed_at?: string | null
+          contract_id?: string | null
+          created_at?: string
+          created_by?: string
+          currency?: string
+          decline_reason?: string | null
+          id?: string
+          source_listing_id?: string | null
+          source_message_id?: string | null
+          specialist_id?: string
+          specialist_signed_at?: string | null
+          status?: string
+          summary?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_proposals_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "project_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_proposals_source_listing_id_fkey"
+            columns: ["source_listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_smartboards: {
         Row: {
           created_at: string
@@ -5268,6 +5387,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      decline_project_proposal: {
+        Args: { _proposal_id: string; _reason?: string }
+        Returns: undefined
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -5424,6 +5547,10 @@ export type Database = {
       }
       is_project_member: {
         Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_proposal_party: {
+        Args: { _proposal_id: string; _user_id: string }
         Returns: boolean
       }
       is_split_collaborator: {
@@ -5592,6 +5719,7 @@ export type Database = {
         Args: { _action_type: string; _cap: number; _user_id: string }
         Returns: boolean
       }
+      sign_project_proposal: { Args: { _proposal_id: string }; Returns: Json }
       simulate_coin_trade: {
         Args: { _amount: number; _launch_id: string; _side: string }
         Returns: Json

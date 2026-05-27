@@ -10,6 +10,7 @@
  * Owner-management heavy-lifting still lives on /listings/:id; this dialog
  * is the friction-light entry point Discover now funnels through.
  */
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,8 @@ import { ExternalLink, MessageCircle, Plus, Clock, DollarSign } from "lucide-rea
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { listingMeta } from "@/lib/listing-types";
+import ProposalSheet from "@/components/proposals/ProposalSheet";
+
 
 interface Props {
   open: boolean;
@@ -28,6 +31,8 @@ interface Props {
 
 const ListingLightbox = ({ open, onOpenChange, listing }: Props) => {
   const navigate = useNavigate();
+  const [proposalOpen, setProposalOpen] = useState(false);
+
 
   const { data: creator } = useQuery({
     queryKey: ["listing-lightbox-creator", listing?.user_id],
@@ -45,22 +50,9 @@ const ListingLightbox = ({ open, onOpenChange, listing }: Props) => {
   if (!listing) return null;
 
   const handleStartProject = () => {
-    try {
-      sessionStorage.setItem(
-        "newProjectPrefill",
-        JSON.stringify({
-          title: listing.title,
-          listingId: listing.id,
-          collaboratorId: listing.user_id,
-          scope: listing.description ?? null,
-        }),
-      );
-    } catch {
-      /* ignore */
-    }
-    onOpenChange(false);
-    navigate(`/messages?tab=projects&new=1`);
+    setProposalOpen(true);
   };
+
 
   const handleMessage = () => {
     onOpenChange(false);
@@ -161,8 +153,22 @@ const ListingLightbox = ({ open, onOpenChange, listing }: Props) => {
           </Button>
         </div>
       </DialogContent>
+
+      <ProposalSheet
+        open={proposalOpen}
+        onOpenChange={setProposalOpen}
+        newProposal={{
+          counterpartyId: listing.user_id,
+          role: "client",
+          title: listing.title,
+          summary: listing.description ?? undefined,
+          listingId: listing.id,
+          budgetCredits: Number(listing.credits_price ?? 0),
+        }}
+      />
     </Dialog>
   );
 };
+
 
 export default ListingLightbox;

@@ -1,109 +1,104 @@
-## Goal
+# Plan — Inquiry-to-Roadmap & Token Approval Gate
 
-Tie everything back to one revenue spine: **subscriptions = recurring**, **transactional fees = bookings + events + projects**. Replace the current "Subscribe-only" sheet with a unified support hub, make the Trade panel feel like real on-chain data (not a casino), simplify the feed CTA, and bring Listings back to Discover as a lane that funnels into Projects.
-
----
-
-## 1. Unified `SupportCreatorSheet` (replaces `SubscribeToCreatorSheet`)
-
-New 3-tab sheet, opened by every "support/back" entry point. Order chosen to lead with transactional value (what you said sub/tip are less hot right now):
-
-**Tab 1 — Work together** (default)
-Three stacked cards, all rendered only if the creator has them:
-- **Commission a project** → opens `NewProjectDialog` prefilled with this creator as collaborator. Fee badge: "Platform fee {tier}%".
-- **Book a space** → if creator owns ≥1 `studios` row, lists them inline → routes to `StudioDetailPage` booking modal.
-- **Attend an event** → if creator has upcoming `events`, shows the next 1–2 with date + price → `EventDetailPage`.
-Empty state for each tells the fan "this creator doesn't offer X yet" instead of hiding silently — so the tab never looks empty.
-
-**Tab 2 — Subscribe & Tip**
-- Top: the existing 3-tier subscribe cards (Basic/Standard/Premium) — kept verbatim, just compacted.
-- Bottom: one-tap Tip row ($1 / $5 / $20 / custom) → `create-tip-checkout` (already exists).
-- Footer line: "Creator keeps 85% · Rhozeland 15%."
-
-**Tab 3 — Trade** (only if `profiles.token_mint_address` is set)
-Rebuilt as `<CreatorTokenPanel />` — see §2.
-
-Files:
-- New: `src/components/profile/SupportCreatorSheet.tsx` (wraps existing Subscribe + new tabs).
-- Keep `SubscribeToCreatorSheet.tsx` on disk; re-export from new sheet for back-compat.
-- Wire every current `<SubscribeToCreatorSheet />` call site to `<SupportCreatorSheet defaultTab="…" />`: `ProfileDetailPage`, `FlowCreatorPeek`, profile cards, etc.
+Two coordinated changes that tighten the business model into one rail.
 
 ---
 
-## 2. `<CreatorTokenPanel />` — real on-chain data, not degenerate
+## Part A — Inquiry → Shared Roadmap → Sign
 
-Replaces the current `<TokenDiscoveryChip />` inside Trade tab (chip stays as a tiny header summary on profile only).
+**The problem today.** A listing inquiry lands in DMs as plain text. The creator has to manually open the project tool, build a roadmap alone, then convince the fan it matches what they asked for. There's no shared draft, no two-sided sign.
 
-Data sources (server-side hook `useCreatorTokenMetrics(mint)`):
-- **Birdeye public API** (`/defi/token_overview`, `/defi/price_history`) — primary, no key needed for basic fields. Falls back to **pump.fun frontend API** (`https://frontend-api.pump.fun/coins/{mint}`) for holders + MC pre-migration, then Jupiter price v3 as last resort.
-- Returns: `priceUsd`, `change24h`, `marketCap`, `liquidityUsd`, `holderCount`, `topHolderPct`, `sparkline7d[]`.
+**The fix.** Introduce a `project_proposals` object that *either party* can edit until both sign, then converts into a real `project_contracts` row using the existing milestone/escrow pipeline. Nothing about milestone release or payouts changes — we're only adding the negotiation layer in front of it.
 
-Panel layout (editorial, mono numerics, no neon):
-```text
-┌───────────────────────────────────────────────┐
-│ $TICKER   $0.00042  ▲ 12.4% (24h)             │
-│ ────────── 7d sparkline (svg, 60px tall) ──── │
-│                                               │
-│ Market cap   Liquidity    Holders   Top wallet│
-│ $128.4k      $42.1k       312       8.2%      │
-│                                               │
-│ [ Trade on pump.fun ↗ ]                       │
-│                                               │
-│ Data: Birdeye · Updated 14s ago               │
-└───────────────────────────────────────────────┘
-```
-- Top-wallet pct turns amber ≥30%, red ≥50% (trust signal, not alarmism).
-- Sparkline = pure SVG polyline, no library.
-- No swap UI, ever. Trade button is a `pump.fun/coin/{mint}` deeplink.
+### Database
 
-Files:
-- New: `src/hooks/useCreatorTokenMetrics.ts`
-- New: `src/components/profile/CreatorTokenPanel.tsx`
-- Update: `src/components/profile/TokenDiscoveryChip.tsx` → keep as compact 1-line summary, gains `onOpenTrade` prop that pops `SupportCreatorSheet` with `defaultTab="trade"`.
+New table `project_proposals`:
+- `id`, `created_by`, `client_id`, `specialist_id`, `title`, `summary`, `budget_credits` (nullable for free collabs), `currency` (`credits` | `usd`)
+- `status`: `draft` | `awaiting_creator` | `awaiting_client` | `signed` | `declined` | `expired`
+- `client_signed_at`, `specialist_signed_at`
+- `source_listing_id` (nullable) → `marketplace_listings.id`
+- `source_message_id` (nullable) → `messages.id`
+- `contract_id` (nullable) → `project_contracts.id` once converted
 
----
+New table `project_proposal_milestones` — same shape as `project_milestones` minus contract_id (uses `proposal_id`). Drafted by either side; locked on sign.
 
-## 3. Feed CTA — clickable creator, not a column
+RPC `sign_project_proposal(_proposal_id)`:
+- Marks the caller's side signed.
+- When both sides signed → creates `project_contracts` row + clones milestones into `project_milestones` (pending) + nulls out the proposal's editability + writes contract_id back.
 
-Today some feed components render a wide "Support" column next to the post. Remove it.
+RLS: only client + specialist can read/write their proposal. Both `GRANT`s and policies included.
 
-- In flow cards / feed rows / `FlowCreatorPeek`: the avatar + display name become a single button → opens `SupportCreatorSheet`.
-- A small ♡ icon sits inline next to the name as a visual affordance ("this opens support, not the profile").
-- "View profile →" moves to a secondary link inside the sheet header.
-- Profile page itself keeps a real Profile route; only the **feed** retargets the avatar.
+### UI
 
-Files touched: `FlowCard`, `FlowCreatorPeek`, `DiscoverTable` creator cell, any "Back this creator" column wrappers. (Will read exact components during implementation.)
+1. **`<ProposalSheet />`** — single sheet used everywhere. Two columns on desktop, stacked on mobile:
+   - Left: editable title/summary/budget + milestone list (add/remove/edit rows).
+   - Right: live preview + "Sign & send" button.
+   - Header shows whose turn it is ("Waiting on Jane to review" / "Your turn to sign").
+   - Once signed by both, sheet flips to a success state with a "Open project" link.
 
----
+2. **Entry points** (all open `<ProposalSheet />`):
+   - **Listing lightbox** — replace today's "Start a project from this listing" → opens proposal pre-filled with listing title/price + the listing owner as `specialist_id`.
+   - **DM thread** — new "Propose a project" button in `MessagesPage` composer; pre-fills the other participant as counterparty.
+   - **SupportSheet "Work together" tab** — Commission action opens proposal (replaces the current `sessionStorage.newProjectPrefill` → NewProjectDialog hack).
+   - **`/concierge` page** — concierge requests stay as their own intake; unchanged.
 
-## 4. Listings return to Discover + funnel into Projects
+3. **Inbox surface** — `MessagesPage` Projects tab gets a "Proposals" group above active projects: rows show "Awaiting your signature" / "Awaiting their signature" with one-tap open.
 
-- Re-mount a "Open calls & listings" lane on `DiscoverPage` between Featured creators and Trending tokens.
-- Source: existing `listings` table (Hire/Collab/Project request types).
-- Click a tile → `<ListingLightbox />` (new Dialog) with: title, creator chip, budget range, scope summary, attachments thumbnails, "Message creator" + **primary** "Start a project from this listing" → opens `NewProjectDialog` prefilled (name = listing title, accent + collaborator from listing, scope text imported as the first roadmap note).
-- Standalone `/listings/:id` page stays mounted for owners managing their listing (and as a permalink), but Discover never routes there directly — lightbox first.
+### Notifications
 
-Files:
-- New: `src/components/discover/ListingsLane.tsx`
-- New: `src/components/listings/ListingLightbox.tsx`
-- Update: `src/pages/DiscoverPage.tsx` to render the lane.
-- Update: `NewProjectDialog` to accept `prefillFromListing?: ListingRow`.
+On status change, insert into `notifications` (already exists): "Jane sent you a project proposal", "Mark signed your proposal — your turn", "Project locked — work starts now".
 
 ---
 
-## 5. Technical notes
+## Part B — Token Approval Gate
 
-- All Birdeye/pump.fun fetches run client-side from React Query hooks (CORS-friendly endpoints only). No new edge function needed.
-- No DB migration this loop — `creator_subscription_tiers`, `listings`, `studios`, `events`, `profiles.token_mint_address` all already exist.
-- `SupportCreatorSheet` is the new single entry point; legacy `BackCreatorSheet` / `SubscribeToCreatorSheet` callsites get swapped, files stay on disk for revert.
-- Memory update at the end: replace v10.2 framing line with v10.3 "Unified Support hub + Birdeye-backed Trade panel + Listings lane → Projects funnel."
+Today any Verified Artist can paste a `token_mint_address` into Settings and it instantly shows on their profile. You want a one-click admin approval in between.
+
+### Database
+
+Add to `profiles`:
+- `token_submission_status`: `none` | `pending` | `approved` | `rejected`
+- `token_submitted_at`, `token_reviewed_at`, `token_review_note`
+
+Trigger `enforce_token_approval`:
+- When `token_mint_address` is set/changed by a non-admin, status flips to `pending` and the new value is stored in a shadow column `token_mint_address_pending` (not on `token_mint_address` until approved).
+- Admin RPC `approve_token_submission(_user_id, _approve bool, _note)` moves it to live or rejects.
+
+### UI
+
+1. **Settings → Verified IP** — token field now shows status pill ("Pending review" / "Approved" / "Rejected — {note}"). Submit button text becomes "Submit for review".
+2. **`/admin?tab=tokens`** — new `<AdminTokenSubmissions />` table: pending rows with creator card, ticker, mint address (copy button), "Approve" / "Reject with reason" buttons.
+3. **Profile `<TokenDiscoveryChip />`** — only renders when `token_submission_status === 'approved'`. Verified Artists with pending submissions see a private "Awaiting review" badge in their own Settings only.
 
 ---
 
-## What I'm NOT touching this loop
+## Sequencing
 
-- No changes to Stripe products, tiers, or platform-fee math.
-- No DB migration.
-- No edge functions added or modified.
-- DM gating, RLS, auth — untouched.
-- Creator Pass page, Portfolio page, sidebar nav — untouched (last loop's work stands).
+Ship in this order so each step is reviewable:
+
+1. Migration: `project_proposals` + `project_proposal_milestones` + RLS + RPC.
+2. `<ProposalSheet />` component + wire into ListingLightbox + DM composer + SupportSheet.
+3. Inbox proposals group in MessagesPage.
+4. Migration: token approval columns + trigger + admin RPC.
+5. Settings status pill + AdminTokenSubmissions tab.
+6. Memory update (v10.4 framing).
+
+---
+
+## Out of scope (intentionally)
+
+- Public projects + backers (next round, will reuse the same contract/milestone primitives).
+- Reframing Concierge as headline offer (next round).
+- Changes to milestone release, escrow, payouts, or platform fee — all stay as-is.
+- DM gating, subscription tiers, gradient system — untouched.
+
+---
+
+## Technical notes
+
+- `project_proposals` uses the same role split as `project_contracts` (client = funder, specialist = creator) so conversion is trivial.
+- The signed proposal becomes immutable; further changes happen on the resulting `project_contracts` like today.
+- Token shadow column lets the trigger be additive — no risk to existing approved tokens.
+- All new tables ship with explicit `GRANT`s to `authenticated` + `service_role` (no `anon` — proposals are auth-only).
+
+Want me to start with step 1 (migration), or revise the plan first?

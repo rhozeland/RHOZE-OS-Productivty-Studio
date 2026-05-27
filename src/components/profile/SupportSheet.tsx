@@ -32,6 +32,8 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import CreatorTokenPanel from "@/components/profile/CreatorTokenPanel";
+import ProposalSheet from "@/components/proposals/ProposalSheet";
+
 
 interface Props {
   open: boolean;
@@ -74,6 +76,8 @@ export default function SupportSheet({
   const [tipMessage, setTipMessage] = useState<string>("");
   const [tipCheckoutOpen, setTipCheckoutOpen] = useState(false);
   const [conciergeOpen, setConciergeOpen] = useState(false);
+  const [proposalOpen, setProposalOpen] = useState(false);
+
 
   useEffect(() => {
     if (!open) {
@@ -207,15 +211,10 @@ export default function SupportSheet({
   };
 
   const handleCommission = () => {
-    try {
-      sessionStorage.setItem("newProjectPrefill", JSON.stringify({
-        title: `Project with ${creatorName}`,
-        collaboratorId: creatorId,
-      }));
-    } catch { /* ignore */ }
-    onOpenChange(false);
-    navigate(`/messages?tab=projects&new=1`);
+    if (!user) { toast.error("Sign in to commission a project"); return; }
+    setProposalOpen(true);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -507,7 +506,17 @@ export default function SupportSheet({
         )}
       </DialogContent>
       <ConciergeIntakeSheet open={conciergeOpen} onOpenChange={setConciergeOpen} />
+      <ProposalSheet
+        open={proposalOpen}
+        onOpenChange={setProposalOpen}
+        newProposal={{
+          counterpartyId: creatorId,
+          role: "client",
+          title: `Project with ${creatorName}`,
+        }}
+      />
     </Dialog>
+
   );
 }
 
