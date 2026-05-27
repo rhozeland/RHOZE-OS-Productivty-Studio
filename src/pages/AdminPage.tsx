@@ -113,6 +113,9 @@ const AdminPage = () => {
           <TabsTrigger value="concierge" className="gap-1.5 text-xs shrink-0">
             <Wand2 className="h-3.5 w-3.5" /> Concierge
           </TabsTrigger>
+          <TabsTrigger value="tokens" className="gap-1.5 text-xs shrink-0">
+            <Coins className="h-3.5 w-3.5" /> Tokens
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview"><AdminOverview /></TabsContent>
