@@ -31,6 +31,8 @@ interface Props {
 
 const ListingLightbox = ({ open, onOpenChange, listing }: Props) => {
   const navigate = useNavigate();
+  const [proposalOpen, setProposalOpen] = useState(false);
+
 
   const { data: creator } = useQuery({
     queryKey: ["listing-lightbox-creator", listing?.user_id],
