@@ -32,6 +32,8 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import CreatorTokenPanel from "@/components/profile/CreatorTokenPanel";
+import ProposalSheet from "@/components/proposals/ProposalSheet";
+
 
 interface Props {
   open: boolean;
