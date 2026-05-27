@@ -50,22 +50,9 @@ const ListingLightbox = ({ open, onOpenChange, listing }: Props) => {
   if (!listing) return null;
 
   const handleStartProject = () => {
-    try {
-      sessionStorage.setItem(
-        "newProjectPrefill",
-        JSON.stringify({
-          title: listing.title,
-          listingId: listing.id,
-          collaboratorId: listing.user_id,
-          scope: listing.description ?? null,
-        }),
-      );
-    } catch {
-      /* ignore */
-    }
-    onOpenChange(false);
-    navigate(`/messages?tab=projects&new=1`);
+    setProposalOpen(true);
   };
+
 
   const handleMessage = () => {
     onOpenChange(false);
