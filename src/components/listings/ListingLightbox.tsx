@@ -153,8 +153,22 @@ const ListingLightbox = ({ open, onOpenChange, listing }: Props) => {
           </Button>
         </div>
       </DialogContent>
+
+      <ProposalSheet
+        open={proposalOpen}
+        onOpenChange={setProposalOpen}
+        newProposal={{
+          counterpartyId: listing.user_id,
+          role: "client",
+          title: listing.title,
+          summary: listing.description ?? undefined,
+          listingId: listing.id,
+          budgetCredits: Number(listing.credits_price ?? 0),
+        }}
+      />
     </Dialog>
   );
 };
+
 
 export default ListingLightbox;
