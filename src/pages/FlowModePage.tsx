@@ -1653,7 +1653,59 @@ const FlowModePage = () => {
         </div>
       </div>
 
+      {/* Surface filter chips — centered glass bar, pushed below the top bar
+          so it sits closer to the content it filters. Reorganizes the feed
+          client-side; never navigates away from Flow Mode. */}
+      <div className="relative z-10 flex justify-center px-4 pt-2 pb-1 md:pt-4">
+        <div
+          role="tablist"
+          aria-label="Filter feed"
+          className="inline-flex items-center gap-1 rounded-full border border-border/40 bg-background/70 backdrop-blur-xl px-1.5 py-1.5 shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.25)] max-w-full overflow-x-auto no-scrollbar"
+        >
+          {([
+            { label: "All", id: "all" },
+            { label: "Creators", id: "creators" },
+            { label: "Listings", id: "listings" },
+            { label: "Events", id: "events" },
+            { label: "Spaces", id: "spaces" },
+          ] as { label: string; id: SurfaceFilter }[]).map((chip) => {
+            const active = surfaceFilter === chip.id;
+            return (
+              <button
+                key={chip.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setSurfaceFilter(chip.id)}
+                className={cn(
+                  "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium tracking-tight transition-all duration-200",
+                  active
+                    ? "bg-foreground text-background shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
+                )}
+              >
+                {chip.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Non-creator-works surfaces render inline over the deck. Keeps the
+          deck mounted (state preserved) but visually swaps the content area. */}
+      {surfaceFilter !== "all" && surfaceFilter !== "creators" && (
+        <div className="relative z-20 flex-1 overflow-y-auto bg-background/95 backdrop-blur-sm">
+          <FlowSurfaceGrid surface={surfaceFilter} />
+        </div>
+      )}
+      {surfaceFilter === "creators" && (
+        <div className="relative z-20 flex-1 overflow-y-auto bg-background/95 backdrop-blur-sm">
+          <FlowSurfaceGrid surface="creators" />
+        </div>
+      )}
+
       {/* ═══ SWIPE VIEW ═══ */}
+
       {viewMode === "swipe" && (
         <div className="relative z-10 flex flex-1 items-center justify-center px-4 pb-36 pt-2 md:pb-40">
           {/*
