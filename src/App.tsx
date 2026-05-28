@@ -51,6 +51,8 @@ import HomePage from "@/pages/HomePage";
 import DiscoverPage from "@/pages/DiscoverPage";
 import ChartsPage from "@/pages/ChartsPage";
 import TreasuryPage from "@/pages/TreasuryPage";
+import CardPage from "@/pages/CardPage";
+
 import InfrastructurePage from "@/pages/InfrastructurePage";
 
 // WorksPage is no longer routed here — it's mounted inside SettingsPage
@@ -253,6 +255,10 @@ const App = () => (
               <Route path="/explore/studios/:id" element={<ExploreStudiosPage />} />
               <Route path="/explore/creators" element={<ExploreCreatorsPage />} />
               <Route path="/explore/creators/:id" element={<ExploreCreatorsPage />} />
+
+              {/* Public share-card page — surfaces creator's Backed by Rhozeland card */}
+              <Route path="/card/:creatorId" element={<CardPage />} />
+
 
               {/* Public root — guests see HomePage, authed users redirect to /dashboard */}
               <Route path="/" element={<RootEntry />} />

@@ -50,6 +50,8 @@ import { useUserNote } from "@/hooks/useNotes";
 import { EmptyState } from "@/components/ui/empty-state";
 import PostMenuButton from "@/components/PostMenuButton";
 import { Plus } from "lucide-react";
+import ShareCardModal from "@/components/share/ShareCardModal";
+
 
 
 // Human-readable labels + destinations for on-chain reputation tiles.
@@ -78,6 +80,8 @@ const ProfileDetailPage = () => {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [reputationOpen, setReputationOpen] = useState(false);
   const [boostOpen, setBoostOpen] = useState(false);
+  const [shareCardOpen, setShareCardOpen] = useState(false);
+
   // v10: `?back=1` legacy deeplinks redirect to the Subscribe sheet.
   const [subscribeOpen, setSubscribeOpen] = useState(
     searchParams.get("subscribe") === "1" || searchParams.get("back") === "1",
@@ -587,6 +591,10 @@ const ProfileDetailPage = () => {
                   <Button variant="outline" size="sm" onClick={() => navigate(`/messages?to=${id}`)}>
                     <MessageSquare className="mr-1.5 h-4 w-4" /> Message
                   </Button>
+                  <Button variant="outline" size="sm" onClick={() => setShareCardOpen(true)}>
+                    Share your card
+                  </Button>
+
                 </div>
               </div>
             )}
@@ -839,6 +847,16 @@ const ProfileDetailPage = () => {
             creatorName={p.display_name || p.username || "this artist"}
           />
         )}
+
+        {/* Backed by Rhozeland — shareable creator card */}
+        {id && (
+          <ShareCardModal
+            open={shareCardOpen}
+            onOpenChange={setShareCardOpen}
+            creatorId={id}
+          />
+        )}
+
 
         {/* Phase B2 — self-serve profile boost (owner only) */}
         {isOwnProfile && (
