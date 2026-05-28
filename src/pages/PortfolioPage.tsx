@@ -335,6 +335,11 @@ const PortfolioPage = () => {
         </TabsContent>
 
       </Tabs>
+
+      {/* Merged Feed — full Dashboard content lives at the bottom of Portfolio. */}
+      <section aria-label="Feed" className="pt-6 border-t border-border/40">
+        <DashboardPage />
+      </section>
     </div>
   );
 };
