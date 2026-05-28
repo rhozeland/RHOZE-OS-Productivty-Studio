@@ -460,8 +460,9 @@ const AppLayout = () => {
 
               {!user && (
                 <button
-                  onClick={() => navigate("/landing")}
-                  className="text-xs font-body text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5"
+                  type="button"
+                  onClick={() => navigate("/auth")}
+                  className="text-xs font-body text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 cursor-pointer"
                 >
                   Sign in
                 </button>
