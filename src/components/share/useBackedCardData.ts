@@ -57,18 +57,19 @@ export function useBackedCardData(creatorId: string | null | undefined) {
 
       const ownerUserId = (profile as any).user_id ?? creatorId;
 
+      const sb = supabase as any;
       const [backersRes, projectsRes, earnedRes] = await Promise.all([
-        supabase
+        sb
           .from("creator_subscriptions")
           .select("id", { count: "exact", head: true })
           .eq("creator_id", creatorId)
           .eq("status", "active"),
-        supabase
+        sb
           .from("projects")
           .select("id", { count: "exact", head: true })
           .eq("owner_id", ownerUserId)
           .eq("status", "completed"),
-        supabase
+        sb
           .from("credit_transactions")
           .select("amount")
           .eq("user_id", ownerUserId)
