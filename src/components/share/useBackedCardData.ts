@@ -55,7 +55,6 @@ export function useBackedCardData(creatorId: string | null | undefined) {
 
       if (!profile) return null;
 
-      const [{ count: backers }, { count: projectsCompleted }, earned] =
       const ownerUserId = (profile as any).user_id ?? creatorId;
 
       const [backersRes, projectsRes, earnedRes] = await Promise.all([
@@ -81,6 +80,9 @@ export function useBackedCardData(creatorId: string | null | undefined) {
         0,
       );
 
+      return {
+        id: profile.id as string,
+        displayName:
           (profile as any).display_name ||
           (profile as any).username ||
           "Creator",
@@ -89,10 +91,11 @@ export function useBackedCardData(creatorId: string | null | undefined) {
         archetype: (profile as any).archetype ?? null,
         regionCode: (profile as any).region_code ?? null,
         roles: ((profile as any).creator_roles ?? []) as string[],
-        backers: backers ?? 0,
-        rhozeEarned: Number(earned ?? 0),
-        projectsCompleted: projectsCompleted ?? 0,
+        backers: backersRes.count ?? 0,
+        rhozeEarned: Number(rhozeEarned ?? 0),
+        projectsCompleted: projectsRes.count ?? 0,
       };
     },
   });
 }
+
