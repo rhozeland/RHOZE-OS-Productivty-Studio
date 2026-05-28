@@ -9,8 +9,9 @@ import {
   ShieldCheck,
   Flame,
   Briefcase,
-
+  LineChart,
 } from "lucide-react";
+
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,10 +41,12 @@ import rhozelandLogo from "@/assets/rhozeland-logo.png";
 //   Creator Pass  → badges, rank, $RHOZE portfolio
 const pillarItems = [
   { icon: Compass, label: "Discover", path: "/discover" },
+  { icon: LineChart, label: "Charts", path: "/charts" },
   { icon: Home, label: "Feed", path: "/dashboard" },
   { icon: Briefcase, label: "Portfolio", path: "/portfolio" },
   { icon: Trophy, label: "Creator Pass", path: "/credits" },
 ];
+
 
 const AppSidebar = () => {
   const location = useLocation();
