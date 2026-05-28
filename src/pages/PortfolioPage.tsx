@@ -31,6 +31,7 @@ import VerifiedIPHub from "@/components/credits/VerifiedIPHub";
 import CreatorEarningsTab from "@/components/credits/CreatorEarningsTab";
 import WalletButton from "@/components/WalletButton";
 import CreatorTokenHoldings from "@/components/portfolio/CreatorTokenHoldings";
+import DashboardPage from "@/pages/DashboardPage";
 import { todayGradient } from "@/lib/rhoze-gradients";
 
 /* ─────────────── Passport · Spaces visited ─────────────── */
