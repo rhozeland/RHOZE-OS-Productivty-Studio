@@ -1430,39 +1430,7 @@ const FlowModePage = () => {
           arrived through. Renders nothing for signed-in users. */}
       <FlowGuestCTA variant="floating" />
 
-      {/* Surface filter chips — centered, in-page filter. Reorganizes the
-          flow deck client-side; never navigates away from Flow Mode. */}
-      <div className="relative z-10 px-4 pt-3 md:px-6">
-        <div className="flex flex-wrap items-center justify-center gap-1.5">
-          {([
-            { label: "All", id: "all" },
-            { label: "Creators", id: "creators" },
-            { label: "Listings", id: "listings" },
-            { label: "Events", id: "events" },
-            { label: "Spaces", id: "spaces" },
-          ] as { label: string; id: SurfaceFilter }[]).map((chip) => {
-            const active = surfaceFilter === chip.id;
-            return (
-              <button
-                key={chip.id}
-                type="button"
-                onClick={() => setSurfaceFilter(chip.id)}
-                aria-pressed={active}
-                className={cn(
-                  "shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors border",
-                  active
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-card/60 backdrop-blur-sm border-border/30 text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {chip.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-
+      {/* Surface chips render lower, after the top bar — see below. */}
 
       {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between gap-3 px-4 py-3 md:px-6">
