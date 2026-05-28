@@ -31,6 +31,7 @@ import VerifiedIPHub from "@/components/credits/VerifiedIPHub";
 import CreatorEarningsTab from "@/components/credits/CreatorEarningsTab";
 import WalletButton from "@/components/WalletButton";
 import CreatorTokenHoldings from "@/components/portfolio/CreatorTokenHoldings";
+import DashboardPage from "@/pages/DashboardPage";
 import { todayGradient } from "@/lib/rhoze-gradients";
 
 /* ─────────────── Passport · Spaces visited ─────────────── */
@@ -334,6 +335,11 @@ const PortfolioPage = () => {
         </TabsContent>
 
       </Tabs>
+
+      {/* Merged Feed — full Dashboard content lives at the bottom of Portfolio. */}
+      <section aria-label="Feed" className="pt-6 border-t border-border/40">
+        <DashboardPage />
+      </section>
     </div>
   );
 };

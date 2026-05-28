@@ -42,7 +42,7 @@ import rhozelandLogo from "@/assets/rhozeland-logo.png";
 const pillarItems = [
   { icon: Compass, label: "Discover", path: "/discover" },
   { icon: LineChart, label: "Charts", path: "/charts" },
-  { icon: Home, label: "Feed", path: "/dashboard" },
+  { icon: Home, label: "Feed", path: "/flow" },
   { icon: Briefcase, label: "Portfolio", path: "/portfolio" },
   { icon: Trophy, label: "Creator Pass", path: "/credits" },
 ];
