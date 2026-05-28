@@ -78,6 +78,7 @@ import FlowCreatorPeek from "@/components/flow/FlowCreatorPeek";
 import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
 import SignUpToPostPrompt from "@/components/flow/SignUpToPostPrompt";
 import FlowFeedErrorState from "@/components/flow/FlowFeedErrorState";
+import FlowSurfaceGrid from "@/components/flow/FlowSurfaceGrid";
 import { useFlowCoinsByCreator } from "@/hooks/useFlowCoinsByWork";
 import { awardEngagementReward } from "@/lib/award-engagement-reward";
 
@@ -1430,39 +1431,7 @@ const FlowModePage = () => {
           arrived through. Renders nothing for signed-in users. */}
       <FlowGuestCTA variant="floating" />
 
-      {/* Surface filter chips — centered, in-page filter. Reorganizes the
-          flow deck client-side; never navigates away from Flow Mode. */}
-      <div className="relative z-10 px-4 pt-3 md:px-6">
-        <div className="flex flex-wrap items-center justify-center gap-1.5">
-          {([
-            { label: "All", id: "all" },
-            { label: "Creators", id: "creators" },
-            { label: "Listings", id: "listings" },
-            { label: "Events", id: "events" },
-            { label: "Spaces", id: "spaces" },
-          ] as { label: string; id: SurfaceFilter }[]).map((chip) => {
-            const active = surfaceFilter === chip.id;
-            return (
-              <button
-                key={chip.id}
-                type="button"
-                onClick={() => setSurfaceFilter(chip.id)}
-                aria-pressed={active}
-                className={cn(
-                  "shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors border",
-                  active
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-card/60 backdrop-blur-sm border-border/30 text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {chip.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-
+      {/* Surface chips render lower, after the top bar — see below. */}
 
       {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between gap-3 px-4 py-3 md:px-6">
@@ -1685,7 +1654,55 @@ const FlowModePage = () => {
         </div>
       </div>
 
+      {/* Surface filter chips — centered glass bar, pushed below the top bar
+          so it sits closer to the content it filters. Reorganizes the feed
+          client-side; never navigates away from Flow Mode. */}
+      <div className="relative z-10 flex justify-center px-4 pt-2 pb-1 md:pt-4">
+        <div
+          role="tablist"
+          aria-label="Filter feed"
+          className="inline-flex items-center gap-1 rounded-full border border-border/40 bg-background/70 backdrop-blur-xl px-1.5 py-1.5 shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.25)] max-w-full overflow-x-auto no-scrollbar"
+        >
+          {([
+            { label: "All", id: "all" },
+            { label: "Creators", id: "creators" },
+            { label: "Listings", id: "listings" },
+            { label: "Events", id: "events" },
+            { label: "Spaces", id: "spaces" },
+          ] as { label: string; id: SurfaceFilter }[]).map((chip) => {
+            const active = surfaceFilter === chip.id;
+            return (
+              <button
+                key={chip.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setSurfaceFilter(chip.id)}
+                className={cn(
+                  "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium tracking-tight transition-all duration-200",
+                  active
+                    ? "bg-foreground text-background shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
+                )}
+              >
+                {chip.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Non-"All" surfaces render as an absolutely-positioned overlay above
+          the swipe/browse deck so the deck state stays intact underneath. */}
+      {surfaceFilter !== "all" && (
+        <div className="absolute inset-x-0 top-[7rem] bottom-0 z-30 overflow-y-auto bg-background">
+          <FlowSurfaceGrid surface={surfaceFilter as Exclude<SurfaceFilter, "all">} />
+        </div>
+      )}
+
+
       {/* ═══ SWIPE VIEW ═══ */}
+
       {viewMode === "swipe" && (
         <div className="relative z-10 flex flex-1 items-center justify-center px-4 pb-36 pt-2 md:pb-40">
           {/*
