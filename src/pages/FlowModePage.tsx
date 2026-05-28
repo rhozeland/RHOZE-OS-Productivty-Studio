@@ -869,7 +869,22 @@ const FlowModePage = () => {
   // after a scope toggle, treat the list as empty so the swipe view doesn't
   // briefly render a card from the previous scope (which would "mix" the
   // sequence the user sees). The skeleton/empty state below renders instead.
-  const baseItems = flowItemsFetching ? [] : flowItems ?? [];
+  const rawBaseItems = flowItemsFetching ? [] : flowItems ?? [];
+  // Surface filter — driven by the centered chip row above the deck. All flow
+  // feed items today are creator works, so "All" and "Creators" pass through;
+  // Listings / Events / Spaces narrow by matching content_type/category and
+  // gracefully render the existing empty state when nothing matches.
+  const baseItems = (() => {
+    if (surfaceFilter === "all" || surfaceFilter === "creators") return rawBaseItems;
+    return rawBaseItems.filter((i: any) => {
+      const t = String(i?.content_type ?? "").toLowerCase();
+      const c = String(i?.category ?? "").toLowerCase();
+      if (surfaceFilter === "listings") return t.includes("listing") || c.includes("listing");
+      if (surfaceFilter === "events") return t.includes("event") || c.includes("event");
+      if (surfaceFilter === "spaces") return t.includes("space") || c.includes("space") || t.includes("studio");
+      return true;
+    });
+  })();
 
   // Deep-link fallback: when ?item=<id> points to an item that's outside the
   // current feed (different category, hidden by RLS, etc.), fetch it directly
