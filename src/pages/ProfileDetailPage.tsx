@@ -848,6 +848,16 @@ const ProfileDetailPage = () => {
           />
         )}
 
+        {/* Backed by Rhozeland — shareable creator card */}
+        {id && (
+          <ShareCardModal
+            open={shareCardOpen}
+            onOpenChange={setShareCardOpen}
+            creatorId={id}
+          />
+        )}
+
+
         {/* Phase B2 — self-serve profile boost (owner only) */}
         {isOwnProfile && (
           <BoostProfileSheet open={boostOpen} onOpenChange={setBoostOpen} />
