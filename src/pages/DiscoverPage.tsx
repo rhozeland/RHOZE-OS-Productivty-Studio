@@ -24,6 +24,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import RegionPromptBanner from "@/components/discover/RegionPromptBanner";
+import PositioningPillars from "@/components/discover/PositioningPillars";
 import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import ConversationsMosaic from "@/components/hub/ConversationsMosaic";
 import CompactFlowFeed from "@/components/hub/CompactFlowFeed";
@@ -369,6 +370,8 @@ const DiscoverPage = () => {
       )}
 
       <RegionPromptBanner />
+
+      <PositioningPillars />
 
       {/* ─── Globe-led featured orbit ──────────────────────────────── */}
       <motion.section
