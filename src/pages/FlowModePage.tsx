@@ -1412,6 +1412,41 @@ const FlowModePage = () => {
           arrived through. Renders nothing for signed-in users. */}
       <FlowGuestCTA variant="floating" />
 
+      {/* Surface filter chips — mirror the Zora-style nav so fans can jump
+          from the Flow feed straight into Creators / Listings / Events / Spaces.
+          "All" keeps the user inside Flow Mode. */}
+      <div className="relative z-10 px-4 pt-3 md:px-6">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          {[
+            { label: "All", to: "/flow" },
+            { label: "Creators", to: "/profiles" },
+            { label: "Listings", to: "/discover?kind=offering" },
+            { label: "Events", to: "/discover?kind=event" },
+            { label: "Spaces", to: "/discover?kind=space" },
+          ].map((chip) => {
+            const active = chip.label === "All";
+            return (
+              <button
+                key={chip.label}
+                type="button"
+                onClick={() => {
+                  if (!active) navigate(chip.to);
+                }}
+                className={cn(
+                  "shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors border",
+                  active
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card/60 backdrop-blur-sm border-border/30 text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {chip.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+
       {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between gap-3 px-4 py-3 md:px-6">
         <div className="flex items-center gap-0.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/30 p-0.5">
