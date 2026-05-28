@@ -50,6 +50,8 @@ import { useUserNote } from "@/hooks/useNotes";
 import { EmptyState } from "@/components/ui/empty-state";
 import PostMenuButton from "@/components/PostMenuButton";
 import { Plus } from "lucide-react";
+import ShareCardModal from "@/components/share/ShareCardModal";
+
 
 
 // Human-readable labels + destinations for on-chain reputation tiles.
