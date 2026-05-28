@@ -1692,13 +1692,15 @@ const FlowModePage = () => {
         </div>
       </div>
 
-      {/* Non-"All" surfaces render as an absolutely-positioned overlay above
-          the swipe/browse deck so the deck state stays intact underneath. */}
+      {/* Non-"All" surfaces render the same full-bleed Flow card aesthetic
+          as the works deck — overlaid above the swipe/browse state so it
+          stays intact underneath. */}
       {surfaceFilter !== "all" && (
-        <div className="absolute inset-x-0 top-[7rem] bottom-0 z-30 overflow-y-auto bg-background">
+        <div className="absolute inset-x-0 top-[7rem] bottom-0 z-30 flex items-stretch justify-center bg-background">
           <FlowSurfaceGrid surface={surfaceFilter as Exclude<SurfaceFilter, "all">} />
         </div>
       )}
+
 
 
       {/* ═══ SWIPE VIEW ═══ */}
