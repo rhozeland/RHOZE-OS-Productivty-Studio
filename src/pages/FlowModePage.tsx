@@ -113,6 +113,9 @@ const FlowModePage = () => {
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tutorialTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flowContentRef = useRef<HTMLDivElement | null>(null);
+  // Surface chip filter — drives the centered chip row above the deck.
+  type SurfaceFilter = "all" | "creators" | "listings" | "events" | "spaces";
+  const [surfaceFilter, setSurfaceFilter] = useState<SurfaceFilter>("all");
   // Categories currently driving the feed sort. When `feedScope === "all"`, this
   // is the full CATEGORIES list (no preference applied → pure global feed).
   // When `feedScope === "preferred"`, this reflects the user's saved picks.
@@ -869,7 +872,22 @@ const FlowModePage = () => {
   // after a scope toggle, treat the list as empty so the swipe view doesn't
   // briefly render a card from the previous scope (which would "mix" the
   // sequence the user sees). The skeleton/empty state below renders instead.
-  const baseItems = flowItemsFetching ? [] : flowItems ?? [];
+  const rawBaseItems = flowItemsFetching ? [] : flowItems ?? [];
+  // Surface filter — driven by the centered chip row above the deck. All flow
+  // feed items today are creator works, so "All" and "Creators" pass through;
+  // Listings / Events / Spaces narrow by matching content_type/category and
+  // gracefully render the existing empty state when nothing matches.
+  const baseItems = (() => {
+    if (surfaceFilter === "all" || surfaceFilter === "creators") return rawBaseItems;
+    return rawBaseItems.filter((i: any) => {
+      const t = String(i?.content_type ?? "").toLowerCase();
+      const c = String(i?.category ?? "").toLowerCase();
+      if (surfaceFilter === "listings") return t.includes("listing") || c.includes("listing");
+      if (surfaceFilter === "events") return t.includes("event") || c.includes("event");
+      if (surfaceFilter === "spaces") return t.includes("space") || c.includes("space") || t.includes("studio");
+      return true;
+    });
+  })();
 
   // Deep-link fallback: when ?item=<id> points to an item that's outside the
   // current feed (different category, hidden by RLS, etc.), fetch it directly
@@ -1412,26 +1430,24 @@ const FlowModePage = () => {
           arrived through. Renders nothing for signed-in users. */}
       <FlowGuestCTA variant="floating" />
 
-      {/* Surface filter chips — mirror the Zora-style nav so fans can jump
-          from the Flow feed straight into Creators / Listings / Events / Spaces.
-          "All" keeps the user inside Flow Mode. */}
+      {/* Surface filter chips — centered, in-page filter. Reorganizes the
+          flow deck client-side; never navigates away from Flow Mode. */}
       <div className="relative z-10 px-4 pt-3 md:px-6">
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-          {[
-            { label: "All", to: "/flow" },
-            { label: "Creators", to: "/profiles" },
-            { label: "Listings", to: "/discover?kind=offering" },
-            { label: "Events", to: "/discover?kind=event" },
-            { label: "Spaces", to: "/discover?kind=space" },
-          ].map((chip) => {
-            const active = chip.label === "All";
+        <div className="flex flex-wrap items-center justify-center gap-1.5">
+          {([
+            { label: "All", id: "all" },
+            { label: "Creators", id: "creators" },
+            { label: "Listings", id: "listings" },
+            { label: "Events", id: "events" },
+            { label: "Spaces", id: "spaces" },
+          ] as { label: string; id: SurfaceFilter }[]).map((chip) => {
+            const active = surfaceFilter === chip.id;
             return (
               <button
-                key={chip.label}
+                key={chip.id}
                 type="button"
-                onClick={() => {
-                  if (!active) navigate(chip.to);
-                }}
+                onClick={() => setSurfaceFilter(chip.id)}
+                aria-pressed={active}
                 className={cn(
                   "shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors border",
                   active
@@ -1445,6 +1461,7 @@ const FlowModePage = () => {
           })}
         </div>
       </div>
+
 
 
       {/* Top bar */}
