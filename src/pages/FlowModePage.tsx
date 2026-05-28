@@ -79,6 +79,13 @@ import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
 import SignUpToPostPrompt from "@/components/flow/SignUpToPostPrompt";
 import FlowFeedErrorState from "@/components/flow/FlowFeedErrorState";
 import FlowSurfaceGrid from "@/components/flow/FlowSurfaceGrid";
+import {
+  useHireRows,
+  useCallRows,
+  useEventRows,
+  useSpaceRows,
+  type ConnectRow,
+} from "@/components/connect/useConnectRows";
 import { useFlowCoinsByCreator } from "@/hooks/useFlowCoinsByWork";
 import { awardEngagementReward } from "@/lib/award-engagement-reward";
 
@@ -874,20 +881,51 @@ const FlowModePage = () => {
   // briefly render a card from the previous scope (which would "mix" the
   // sequence the user sees). The skeleton/empty state below renders instead.
   const rawBaseItems = flowItemsFetching ? [] : flowItems ?? [];
-  // Surface filter — driven by the centered chip row above the deck. All flow
-  // feed items today are creator works, so "All" and "Creators" pass through;
-  // Listings / Events / Spaces narrow by matching content_type/category and
-  // gracefully render the existing empty state when nothing matches.
+  // Surface filter — driven by the centered chip row above the deck.
+  //   • "all"       → the raw flow feed (creator works)
+  //   • "creators"  → hire/services rows mapped into FlowCard shape
+  //   • "listings"  → open-call rows mapped into FlowCard shape
+  //   • "events"    → upcoming event rows mapped into FlowCard shape
+  //   • "spaces"    → studios/spaces rows mapped into FlowCard shape
+  // For non-"all" filters we feed mapped Connect rows into the SAME swipe
+  // deck so the UI stays identical — only the underlying items change.
+  const hireRowsQ  = useHireRows(surfaceFilter === "creators");
+  const callRowsQ  = useCallRows(surfaceFilter === "listings");
+  const eventRowsQ = useEventRows(surfaceFilter === "events");
+  const spaceRowsQ = useSpaceRows(surfaceFilter === "spaces");
+
+  // Map a ConnectRow into the minimal flow_items-compatible shape FlowCard
+  // consumes. Cover image → file_url (rendered via the image branch); detail
+  // page → link_url so the existing "Open" affordances jump to the source.
+  const connectRowToFlowItem = useCallback((r: ConnectRow) => ({
+    id: `${r.kind}-${r.id}`,
+    user_id: r.ownerId ?? null,
+    creator_name: r.ownerName ?? null,
+    profiles: r.ownerId
+      ? { display_name: r.ownerName ?? null, avatar_url: r.ownerAvatar ?? null }
+      : null,
+    title: r.title,
+    description: r.subtitle ?? r.description ?? r.priceLabel ?? r.metaLabel ?? null,
+    file_url: r.coverUrl ?? null,
+    link_url: r.detailHref,
+    content_type: "image" as const,
+    category: "design" as const,
+    tags: [r.kind],
+    verification_status: null,
+    created_at: new Date().toISOString(),
+    likes_count: 0,
+    comments_count: 0,
+  }), []);
+
   const baseItems = (() => {
-    if (surfaceFilter === "all" || surfaceFilter === "creators") return rawBaseItems;
-    return rawBaseItems.filter((i: any) => {
-      const t = String(i?.content_type ?? "").toLowerCase();
-      const c = String(i?.category ?? "").toLowerCase();
-      if (surfaceFilter === "listings") return t.includes("listing") || c.includes("listing");
-      if (surfaceFilter === "events") return t.includes("event") || c.includes("event");
-      if (surfaceFilter === "spaces") return t.includes("space") || c.includes("space") || t.includes("studio");
-      return true;
-    });
+    if (surfaceFilter === "all") return rawBaseItems;
+    const src: ConnectRow[] =
+      surfaceFilter === "creators" ? (hireRowsQ.data ?? []) :
+      surfaceFilter === "listings" ? (callRowsQ.data ?? []) :
+      surfaceFilter === "events"   ? (eventRowsQ.data ?? []) :
+      surfaceFilter === "spaces"   ? (spaceRowsQ.data ?? []) :
+      [];
+    return src.map(connectRowToFlowItem);
   })();
 
   // Deep-link fallback: when ?item=<id> points to an item that's outside the
@@ -898,6 +936,7 @@ const FlowModePage = () => {
   const { data: deepLinkItem } = useQuery({
     queryKey: ["flow-deep-link-item", deepLinkId],
     enabled: !!deepLinkId && !inFeed && !flowItemsFetching,
+
     queryFn: async () => {
       const { data } = await supabase
         .from("flow_items")
@@ -1692,14 +1731,9 @@ const FlowModePage = () => {
         </div>
       </div>
 
-      {/* Non-"All" surfaces render the same full-bleed Flow card aesthetic
-          as the works deck — overlaid above the swipe/browse state so it
-          stays intact underneath. */}
-      {surfaceFilter !== "all" && (
-        <div className="absolute inset-x-0 top-[7rem] bottom-0 z-30 flex items-stretch justify-center bg-background">
-          <FlowSurfaceGrid surface={surfaceFilter as Exclude<SurfaceFilter, "all">} />
-        </div>
-      )}
+      {/* Non-"All" filters are handled by feeding mapped Connect rows into
+          the existing FlowCard deck (see baseItems). No separate overlay UI. */}
+
 
 
 
