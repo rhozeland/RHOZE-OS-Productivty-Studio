@@ -1692,18 +1692,14 @@ const FlowModePage = () => {
         </div>
       </div>
 
-      {/* Non-creator-works surfaces render inline over the deck. Keeps the
-          deck mounted (state preserved) but visually swaps the content area. */}
-      {surfaceFilter !== "all" && surfaceFilter !== "creators" && (
-        <div className="relative z-20 flex-1 overflow-y-auto bg-background/95 backdrop-blur-sm">
-          <FlowSurfaceGrid surface={surfaceFilter} />
+      {/* Non-"All" surfaces render as an absolutely-positioned overlay above
+          the swipe/browse deck so the deck state stays intact underneath. */}
+      {surfaceFilter !== "all" && (
+        <div className="absolute inset-x-0 top-[7rem] bottom-0 z-30 overflow-y-auto bg-background">
+          <FlowSurfaceGrid surface={surfaceFilter as Exclude<SurfaceFilter, "all">} />
         </div>
       )}
-      {surfaceFilter === "creators" && (
-        <div className="relative z-20 flex-1 overflow-y-auto bg-background/95 backdrop-blur-sm">
-          <FlowSurfaceGrid surface="creators" />
-        </div>
-      )}
+
 
       {/* ═══ SWIPE VIEW ═══ */}
 
