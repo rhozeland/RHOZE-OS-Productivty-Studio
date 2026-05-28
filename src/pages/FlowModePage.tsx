@@ -78,6 +78,7 @@ import FlowCreatorPeek from "@/components/flow/FlowCreatorPeek";
 import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
 import SignUpToPostPrompt from "@/components/flow/SignUpToPostPrompt";
 import FlowFeedErrorState from "@/components/flow/FlowFeedErrorState";
+import FlowSurfaceGrid from "@/components/flow/FlowSurfaceGrid";
 import { useFlowCoinsByCreator } from "@/hooks/useFlowCoinsByWork";
 import { awardEngagementReward } from "@/lib/award-engagement-reward";
 
