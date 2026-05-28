@@ -68,48 +68,133 @@ const num = (v: unknown): number | null => {
   const n = typeof v === "string" ? parseFloat(v) : (v as number);
   return Number.isFinite(n) ? n : null;
 };
-
 const fetchPumpData = async (mint: string): Promise<PumpData> => {
+  // Pump.fun's /coins/{mint} returns market cap + timestamps reliably, but
+  // `num_holders`, `trades_24h`, and `price_change_24h` are frequently null
+  // (especially for tokens that haven't graduated). We fan out to two more
+  // endpoints to backfill: /coins/holders for holder count, and we derive
+  // 24h change from /trades/all when pump itself doesn't report it.
+  const [coinRes, holdersRes, tradesRes] = await Promise.all([
+    fetch(`https://frontend-api-v3.pump.fun/coins/${mint}`).catch(() => null),
+    fetch(`https://frontend-api-v3.pump.fun/coins/holders/${mint}`).catch(() => null),
+    fetch(
+      `https://frontend-api-v3.pump.fun/trades/all/${mint}?limit=200&offset=0&minimumSize=0`,
+    ).catch(() => null),
+  ]);
+
+  let coin: any = null;
   try {
-    const res = await fetch(`https://frontend-api-v3.pump.fun/coins/${mint}`);
-    if (!res.ok) throw new Error("pump.fun bad status");
-    const j = await res.json();
-    return {
-      marketCapUsd: num(j?.usd_market_cap),
-      change24h: num(j?.price_change_24h ?? j?.priceChange24h),
-      holderCount: num(j?.num_holders ?? j?.holder_count),
-      trades24h: num(j?.trades_24h ?? j?.txns_24h),
-      createdTimestamp: num(j?.created_timestamp),
-      lastTradeTimestamp: num(j?.last_trade_timestamp),
-    };
+    if (coinRes?.ok) coin = await coinRes.json();
   } catch {
-    return {
-      marketCapUsd: null,
-      change24h: null,
-      holderCount: null,
-      trades24h: null,
-      createdTimestamp: null,
-      lastTradeTimestamp: null,
-    };
+    /* noop */
   }
+
+  let holderCount: number | null = num(coin?.num_holders ?? coin?.holder_count);
+  try {
+    if (holdersRes?.ok) {
+      const hj = await holdersRes.json();
+      const arr = Array.isArray(hj?.holders) ? hj.holders : Array.isArray(hj) ? hj : [];
+      if (arr.length) holderCount = arr.length;
+    }
+  } catch {
+    /* noop */
+  }
+
+  let trades24h: number | null = num(coin?.trades_24h ?? coin?.txns_24h);
+  let change24h: number | null = num(coin?.price_change_24h ?? coin?.priceChange24h);
+  try {
+    if (tradesRes?.ok) {
+      const tj = await tradesRes.json();
+      const arr: any[] = Array.isArray(tj) ? tj : Array.isArray(tj?.trades) ? tj.trades : [];
+      if (arr.length) {
+        const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+        const recent = arr.filter((t) => {
+          const ts = Number(t?.timestamp ?? t?.created_timestamp ?? 0);
+          // pump returns seconds OR milliseconds; normalize
+          const ms = ts > 10 ** 12 ? ts : ts * 1000;
+          return ms >= cutoff;
+        });
+        if (trades24h == null) trades24h = recent.length;
+        if (change24h == null && recent.length >= 2) {
+          // pump trade rows expose sol_amount + token_amount; price = sol/token
+          const priceOf = (t: any) => {
+            const sol = Number(t?.sol_amount ?? 0);
+            const tok = Number(t?.token_amount ?? 0);
+            return tok > 0 ? sol / tok : null;
+          };
+          const oldest = priceOf(recent[recent.length - 1]);
+          const newest = priceOf(recent[0]);
+          if (oldest && newest && oldest > 0) {
+            change24h = ((newest - oldest) / oldest) * 100;
+          }
+        }
+      }
+    }
+  } catch {
+    /* noop */
+  }
+
+  // If pump didn't return usd_market_cap (rare), derive from virtual reserves.
+  let marketCapUsd = num(coin?.usd_market_cap);
+  if (marketCapUsd == null && coin?.virtual_sol_reserves && coin?.virtual_token_reserves) {
+    try {
+      const solRes = await fetch(
+        "https://lite-api.jup.ag/price/v3?ids=So11111111111111111111111111111111111111112",
+      );
+      const sj = await solRes.json();
+      const solUsd = num(sj?.So11111111111111111111111111111111111111112?.usdPrice);
+      if (solUsd) {
+        const supply = 1_000_000_000; // pump.fun standard
+        const priceSol =
+          Number(coin.virtual_sol_reserves) / 1e9 /
+          (Number(coin.virtual_token_reserves) / 1e6);
+        marketCapUsd = priceSol * solUsd * supply;
+      }
+    } catch {
+      /* noop */
+    }
+  }
+
+  return {
+    marketCapUsd,
+    change24h,
+    holderCount,
+    trades24h,
+    createdTimestamp: num(coin?.created_timestamp),
+    lastTradeTimestamp: num(coin?.last_trade_timestamp),
+  };
 };
 
 const fetchSparkline7d = async (mint: string): Promise<number[]> => {
+  // Pump.fun trades — derive a 24h price walk from the last ~200 trades.
+  // Birdeye public history_price requires an API key, so we skip it.
   try {
-    const now = Math.floor(Date.now() / 1000);
-    const from = now - 60 * 60 * 24;
     const res = await fetch(
-      `https://public-api.birdeye.so/defi/history_price?address=${mint}&address_type=token&type=15m&time_from=${from}&time_to=${now}`,
-      { headers: { "x-chain": "solana" } },
+      `https://frontend-api-v3.pump.fun/trades/all/${mint}?limit=200&offset=0&minimumSize=0`,
     );
     if (!res.ok) return [];
     const j = await res.json();
-    const items: any[] = j?.data?.items ?? [];
-    return items.map((it) => Number(it?.value)).filter((n) => Number.isFinite(n));
+    const arr: any[] = Array.isArray(j) ? j : Array.isArray(j?.trades) ? j.trades : [];
+    if (!arr.length) return [];
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+    const points = arr
+      .map((t) => {
+        const ts = Number(t?.timestamp ?? t?.created_timestamp ?? 0);
+        const ms = ts > 10 ** 12 ? ts : ts * 1000;
+        const sol = Number(t?.sol_amount ?? 0);
+        const tok = Number(t?.token_amount ?? 0);
+        const price = tok > 0 ? sol / tok : null;
+        return { ms, price };
+      })
+      .filter((p) => p.ms >= cutoff && p.price != null)
+      .sort((a, b) => a.ms - b.ms)
+      .map((p) => p.price as number);
+    return points;
   } catch {
     return [];
   }
 };
+
 
 const HolderAvatars = ({ count }: { count: number }) => {
   // 3 deterministic placeholder dots whose hue derives from the count so two
