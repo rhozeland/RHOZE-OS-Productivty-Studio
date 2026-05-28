@@ -78,6 +78,8 @@ const ProfileDetailPage = () => {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [reputationOpen, setReputationOpen] = useState(false);
   const [boostOpen, setBoostOpen] = useState(false);
+  const [shareCardOpen, setShareCardOpen] = useState(false);
+
   // v10: `?back=1` legacy deeplinks redirect to the Subscribe sheet.
   const [subscribeOpen, setSubscribeOpen] = useState(
     searchParams.get("subscribe") === "1" || searchParams.get("back") === "1",
