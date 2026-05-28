@@ -113,6 +113,9 @@ const FlowModePage = () => {
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tutorialTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flowContentRef = useRef<HTMLDivElement | null>(null);
+  // Surface chip filter — drives the centered chip row above the deck.
+  type SurfaceFilter = "all" | "creators" | "listings" | "events" | "spaces";
+  const [surfaceFilter, setSurfaceFilter] = useState<SurfaceFilter>("all");
   // Categories currently driving the feed sort. When `feedScope === "all"`, this
   // is the full CATEGORIES list (no preference applied → pure global feed).
   // When `feedScope === "preferred"`, this reflects the user's saved picks.
