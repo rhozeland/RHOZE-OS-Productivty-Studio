@@ -49,7 +49,10 @@ import MarketplacePage from "@/pages/MarketplacePage";
 import CreatorsPage from "@/pages/CreatorsPage";
 import HomePage from "@/pages/HomePage";
 import DiscoverPage from "@/pages/DiscoverPage";
+import ChartsPage from "@/pages/ChartsPage";
+import TreasuryPage from "@/pages/TreasuryPage";
 import InfrastructurePage from "@/pages/InfrastructurePage";
+
 // WorksPage is no longer routed here — it's mounted inside SettingsPage
 // (Provenance section). /works redirects to /settings#provenance below.
 // /spaces and /events browse pages retired (v9.8) — both redirect into the
@@ -125,6 +128,9 @@ export const REGISTERED_ROUTE_PATHS: string[] = [
   "/market",
   "/vault",
   "/discover",
+  "/charts",
+  "/treasury",
+
   "/stream",
   "/hub",
   "/profile",
@@ -263,6 +269,9 @@ const App = () => (
                 <Route path="/connect/match" element={<ConnectMatchPage />} />
                 <Route path="/vault" element={<ProtectedRoute><VaultRoomPage /></ProtectedRoute>} />
                 <Route path="/discover" element={<DiscoverPage />} />
+                <Route path="/charts" element={<ChartsPage />} />
+                <Route path="/treasury" element={<TreasuryPage />} />
+
                 {/* v8: Hub/Stream retired — Discover is the unified front
                     door. Mosaic + composer + flow toggle all live there.
                     Legacy roots redirect; sub-routes stay live. */}
