@@ -1430,26 +1430,24 @@ const FlowModePage = () => {
           arrived through. Renders nothing for signed-in users. */}
       <FlowGuestCTA variant="floating" />
 
-      {/* Surface filter chips — mirror the Zora-style nav so fans can jump
-          from the Flow feed straight into Creators / Listings / Events / Spaces.
-          "All" keeps the user inside Flow Mode. */}
+      {/* Surface filter chips — centered, in-page filter. Reorganizes the
+          flow deck client-side; never navigates away from Flow Mode. */}
       <div className="relative z-10 px-4 pt-3 md:px-6">
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-          {[
-            { label: "All", to: "/flow" },
-            { label: "Creators", to: "/profiles" },
-            { label: "Listings", to: "/discover?kind=offering" },
-            { label: "Events", to: "/discover?kind=event" },
-            { label: "Spaces", to: "/discover?kind=space" },
-          ].map((chip) => {
-            const active = chip.label === "All";
+        <div className="flex flex-wrap items-center justify-center gap-1.5">
+          {([
+            { label: "All", id: "all" },
+            { label: "Creators", id: "creators" },
+            { label: "Listings", id: "listings" },
+            { label: "Events", id: "events" },
+            { label: "Spaces", id: "spaces" },
+          ] as { label: string; id: SurfaceFilter }[]).map((chip) => {
+            const active = surfaceFilter === chip.id;
             return (
               <button
-                key={chip.label}
+                key={chip.id}
                 type="button"
-                onClick={() => {
-                  if (!active) navigate(chip.to);
-                }}
+                onClick={() => setSurfaceFilter(chip.id)}
+                aria-pressed={active}
                 className={cn(
                   "shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors border",
                   active
@@ -1463,6 +1461,7 @@ const FlowModePage = () => {
           })}
         </div>
       </div>
+
 
 
       {/* Top bar */}
