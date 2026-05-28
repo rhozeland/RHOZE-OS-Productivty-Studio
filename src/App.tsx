@@ -253,7 +253,11 @@ const App = () => (
               {/* Explore pages — fully public */}
               <Route path="/explore/studios" element={<ExploreStudiosPage />} />
               <Route path="/explore/studios/:id" element={<ExploreStudiosPage />} />
-              <Route path="/explore/creators" element={<ExploreCreatorsPage />} />
+              <Route path="/explore/creators/:id" element={<ExploreCreatorsPage />} />
+
+              {/* Public share-card page — surfaces creator's Backed by Rhozeland card */}
+              <Route path="/card/:creatorId" element={<CardPage />} />
+
               <Route path="/explore/creators/:id" element={<ExploreCreatorsPage />} />
 
               {/* Public root — guests see HomePage, authed users redirect to /dashboard */}
