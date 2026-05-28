@@ -5623,6 +5623,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      lookup_referral_code: {
+        Args: { _code: string }
+        Returns: {
+          code: string
+          reward_rhoze: number
+          valid: boolean
+        }[]
+      }
       lookup_user_by_display_name: {
         Args: { _name: string }
         Returns: {
