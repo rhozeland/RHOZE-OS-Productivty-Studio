@@ -3,21 +3,24 @@
  * token (linked via `profiles.token_mint_address`) currently held in the
  * connected Solana wallet. Read-only, no swap UI.
  *
- *  • Wallet disconnected → connect-wallet card.
- *  • Wallet connected, no matches → empty state w/ Discover link.
- *  • Wallet connected, matches → one row per token: ticker, creator, amount,
- *    USD value (live price via Birdeye public endpoint, Jupiter fallback),
- *    24h change %, "View Creator" link.
+ *  • Wallet disconnected → "Connect Wallet" prompt card (uses existing
+ *    Phantom connect flow via <WalletButton />).
+ *  • Wallet connected, no matching tokens → empty state w/ "Go to Charts".
+ *  • Wallet connected, matches → summary strip (Tokens Held · Portfolio
+ *    Value · Best Performer) + one row per token with avatar, ticker,
+ *    amount, live USD value (Birdeye → Jupiter), 24h change %, "View
+ *    Creator →" link.
  */
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
-import { Wallet as WalletIcon, ArrowRight, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowRight, TrendingUp, TrendingDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import WalletButton from "@/components/WalletButton";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 const TOKEN_2022_PROGRAM_ID = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
@@ -33,6 +36,7 @@ interface CreatorMatch {
   creatorId: string;
   username: string | null;
   displayName: string | null;
+  avatarUrl: string | null;
   ticker: string | null;
   priceUsd: number | null;
   change24h: number | null;
@@ -44,7 +48,6 @@ const num = (v: unknown): number | null => {
 };
 
 async function fetchPriceForMint(mint: string): Promise<{ priceUsd: number | null; change24h: number | null }> {
-  // Birdeye public price first (gives 24h change)
   try {
     const res = await fetch(`https://public-api.birdeye.so/defi/price?address=${mint}&include_liquidity=false`, {
       headers: { "x-chain": "solana" },
@@ -60,7 +63,6 @@ async function fetchPriceForMint(mint: string): Promise<{ priceUsd: number | nul
   } catch {
     /* noop */
   }
-  // Jupiter fallback (no 24h)
   try {
     const res = await fetch(`https://lite-api.jup.ag/price/v3?ids=${mint}`);
     if (res.ok) {
@@ -89,6 +91,15 @@ const fmtAmount = (n: number): string => {
   return n.toLocaleString(undefined, { maximumFractionDigits: 6 });
 };
 
+const initials = (name: string | null) =>
+  (name || "?")
+    .split(/\s+/)
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
 const CreatorTokenHoldings = () => {
   const { connected, publicKey } = useWallet();
   const { connection } = useConnection();
@@ -100,7 +111,6 @@ const CreatorTokenHoldings = () => {
     queryFn: async () => {
       if (!publicKey) return [];
 
-      // 1. SPL token holdings from the wallet (both Token + Token-2022 programs)
       const [tk, tk22] = await Promise.all([
         connection.getParsedTokenAccountsByOwner(publicKey, { programId: TOKEN_PROGRAM_ID }),
         connection
@@ -116,11 +126,10 @@ const CreatorTokenHoldings = () => {
       }
       if (holdings.length === 0) return [];
 
-      // 2. Match against Rhozeland creators
       const mints = Array.from(new Set(holdings.map((h) => h.mint)));
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, username, display_name, token_mint_address, token_ticker")
+        .select("id, username, display_name, avatar_url, token_mint_address, token_ticker")
         .in("token_mint_address", mints);
 
       const profByMint = new Map<string, any>();
@@ -131,7 +140,6 @@ const CreatorTokenHoldings = () => {
       const matched = holdings.filter((h) => profByMint.has(h.mint));
       if (matched.length === 0) return [];
 
-      // 3. Fetch live prices in parallel
       const prices = await Promise.all(matched.map((m) => fetchPriceForMint(m.mint)));
 
       return matched.map((m, i): CreatorMatch => {
@@ -142,6 +150,7 @@ const CreatorTokenHoldings = () => {
           creatorId: p.id,
           username: p.username,
           displayName: p.display_name,
+          avatarUrl: p.avatar_url,
           ticker: p.token_ticker,
           priceUsd: prices[i].priceUsd,
           change24h: prices[i].change24h,
@@ -159,20 +168,26 @@ const CreatorTokenHoldings = () => {
     [rows],
   );
 
+  const bestPerformer = useMemo(() => {
+    const withChange = (rows ?? []).filter((r) => r.change24h != null);
+    if (withChange.length === 0) return null;
+    return withChange.reduce((best, r) =>
+      (r.change24h ?? -Infinity) > (best.change24h ?? -Infinity) ? r : best,
+    );
+  }, [rows]);
+
   /* ───── Disconnected ───── */
   if (!connected) {
     return (
       <section className="space-y-3">
-        <div className="space-y-1">
-          <h2 className="font-display text-xl font-bold text-foreground">Your Token Holdings</h2>
-          <p className="text-sm text-muted-foreground">Creator coins in your wallet</p>
-        </div>
-        <div className="rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-8 text-center space-y-4">
-          <WalletIcon className="h-8 w-8 text-muted-foreground mx-auto" />
+        <div className="surface-card px-5 py-6 text-center space-y-3">
+          <h3 className="font-display text-lg font-semibold text-foreground">
+            See your token holdings
+          </h3>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Connect your wallet to see your token holdings.
+            Connect your Solana wallet to see the creator coins you hold and their current value.
           </p>
-          <div className="flex justify-center">
+          <div className="flex justify-center pt-1">
             <WalletButton />
           </div>
         </div>
@@ -181,86 +196,110 @@ const CreatorTokenHoldings = () => {
   }
 
   return (
-    <section className="space-y-3">
-      <div className="flex items-end justify-between gap-3 flex-wrap">
-        <div className="space-y-1">
-          <h2 className="font-display text-xl font-bold text-foreground">Your Token Holdings</h2>
-          <p className="text-sm text-muted-foreground">Creator coins in your wallet</p>
-        </div>
-        {rows && rows.length > 0 && (
-          <div className="text-right">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Total value</p>
-            <p className="font-display text-lg font-bold text-foreground">{fmtUsd(totalValue)}</p>
-          </div>
-        )}
+    <section className="space-y-4">
+      {/* Section title */}
+      <div className="space-y-1">
+        <h2 className="font-display text-xl font-bold text-foreground">Token Holdings</h2>
+        <p className="text-sm text-muted-foreground">Creator coins in your wallet</p>
       </div>
 
+      {/* Summary strip — mirrors BackedStrip style */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="surface-card px-4 py-3">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Tokens Held</p>
+          <p className="font-display text-2xl font-bold text-foreground">
+            {isLoading ? "—" : (rows?.length ?? 0)}
+          </p>
+          <p className="text-[11px] text-muted-foreground">Unique creator coins</p>
+        </div>
+        <div className="surface-card px-4 py-3">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Portfolio Value</p>
+          <p className="font-display text-2xl font-bold text-foreground">
+            {isLoading ? "—" : fmtUsd(totalValue)}
+          </p>
+          <p className="text-[11px] text-muted-foreground">Live USD total</p>
+        </div>
+        <div className="surface-card px-4 py-3 col-span-2 md:col-span-1">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Best Performer</p>
+          <p className="font-display text-2xl font-bold text-foreground">
+            {bestPerformer?.ticker ? `$${bestPerformer.ticker}` : "—"}
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            {bestPerformer?.change24h != null
+              ? `${bestPerformer.change24h >= 0 ? "+" : ""}${bestPerformer.change24h.toFixed(2)}% 24h`
+              : "No gain data yet"}
+          </p>
+        </div>
+      </div>
+
+      {/* List */}
       {isLoading ? (
         <div className="space-y-2">
           <div className="h-16 rounded-2xl bg-muted/40 animate-pulse" />
           <div className="h-16 rounded-2xl bg-muted/40 animate-pulse" />
         </div>
       ) : !rows || rows.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-8 text-center space-y-4">
-          <p className="text-sm text-muted-foreground">No creator tokens in your wallet yet</p>
-          <Link to="/discover">
-            <Button size="sm" variant="outline">
-              Discover Creators
-            </Button>
-          </Link>
+        <div className="rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-8 text-center space-y-3">
+          <h3 className="font-display text-base font-semibold text-foreground">
+            No creator tokens yet
+          </h3>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Find a creator with a live token and back them early.
+          </p>
+          <div className="flex justify-center pt-1">
+            <Link to="/charts">
+              <Button size="sm" variant="outline">
+                Go to Charts
+              </Button>
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="rounded-2xl border border-border bg-card overflow-hidden divide-y divide-border">
           {rows.map((r) => {
             const value = r.priceUsd != null ? r.priceUsd * r.amount : null;
             const up = r.change24h != null && r.change24h >= 0;
+            const name = r.displayName || r.username || "Creator";
             return (
               <div
                 key={r.mint}
                 className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors"
               >
-                {/* Ticker pill */}
-                <div className="shrink-0 h-10 w-10 rounded-full bg-foreground/10 flex items-center justify-center">
-                  <span className="font-mono text-[11px] font-bold text-foreground">
-                    ${(r.ticker || "?").slice(0, 4).toUpperCase()}
-                  </span>
-                </div>
-                {/* Identity */}
+                <Avatar className="h-10 w-10 shrink-0">
+                  {r.avatarUrl ? <AvatarImage src={r.avatarUrl} alt={name} /> : null}
+                  <AvatarFallback className="text-[11px] font-semibold">
+                    {initials(name)}
+                  </AvatarFallback>
+                </Avatar>
+
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-foreground truncate">
-                      ${r.ticker || "—"}
-                    </p>
-                    {r.change24h != null && (
-                      <span
-                        className={`inline-flex items-center gap-0.5 text-[10px] font-medium ${
-                          up ? "text-emerald-500" : "text-rose-500"
-                        }`}
-                      >
-                        {up ? (
-                          <TrendingUp className="h-3 w-3" />
-                        ) : (
-                          <TrendingDown className="h-3 w-3" />
-                        )}
-                        {up ? "+" : ""}
-                        {r.change24h.toFixed(2)}%
-                      </span>
-                    )}
-                  </div>
+                  <p className="text-sm font-semibold text-foreground truncate">{name}</p>
                   <p className="text-[11px] text-muted-foreground truncate">
-                    {r.displayName || r.username || "Creator"}
+                    ${r.ticker || "—"}
                   </p>
                 </div>
-                {/* Amount + value */}
+
                 <div className="text-right shrink-0 hidden sm:block">
                   <p className="text-sm font-medium text-foreground tabular-nums">
-                    {fmtAmount(r.amount)}
+                    {fmtAmount(r.amount)} ${r.ticker || ""}
                   </p>
                   <p className="text-[11px] text-muted-foreground tabular-nums">
                     {fmtUsd(value)}
                   </p>
                 </div>
-                {/* CTA */}
+
+                {r.change24h != null && (
+                  <span
+                    className={`hidden md:inline-flex items-center gap-0.5 text-xs font-medium tabular-nums shrink-0 ${
+                      up ? "text-emerald-500" : "text-rose-500"
+                    }`}
+                  >
+                    {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                    {up ? "+" : ""}
+                    {r.change24h.toFixed(2)}%
+                  </span>
+                )}
+
                 <Link
                   to={`/profiles/${r.creatorId}`}
                   className="shrink-0 inline-flex items-center gap-1 text-xs font-medium text-foreground hover:underline"
