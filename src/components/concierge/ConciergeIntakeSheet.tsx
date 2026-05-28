@@ -260,6 +260,8 @@ export function ConciergeIntakeSheet({ open, onOpenChange }: Props) {
             <p className="text-[10px] text-muted-foreground text-center">
               No scoping fee. 25% platform fee on the final project (min $250).
               You approve the proposal before anything moves.
+              <br />
+              Settled in minutes, not months.
             </p>
           </div>
         )}

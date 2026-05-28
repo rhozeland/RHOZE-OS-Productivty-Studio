@@ -102,6 +102,9 @@ const BuyRhozeSection = () => {
           credits land in your in-app balance instantly. The amount of $RHOZE you
           receive tracks the live market price.
         </p>
+        <p className="text-[11px] text-muted-foreground mt-2">
+          Instant settlement · Powered by Solana · USDC-ready
+        </p>
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

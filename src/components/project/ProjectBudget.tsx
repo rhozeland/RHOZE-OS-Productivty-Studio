@@ -245,6 +245,9 @@ const ProjectBudget = ({ project, goals, milestones }: ProjectBudgetProps) => {
                   Leave empty to auto-sum from stages ({currencySymbol}{stageTotal.toLocaleString()})
                 </p>
               )}
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Paid out instantly via USDC when milestones are approved.
+              </p>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Currency</Label>

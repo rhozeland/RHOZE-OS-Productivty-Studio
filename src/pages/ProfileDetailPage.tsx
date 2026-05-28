@@ -564,6 +564,8 @@ const ProfileDetailPage = () => {
                   </Button>
                   <span className="text-[11px] text-muted-foreground max-w-[280px] leading-snug">
                     Subscribe, tip, or trade their token — all in one place.
+                    <br />
+                    All payments settle instantly.
                   </span>
                 </div>
 
