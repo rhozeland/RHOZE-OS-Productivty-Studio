@@ -51,6 +51,8 @@ import HomePage from "@/pages/HomePage";
 import DiscoverPage from "@/pages/DiscoverPage";
 import ChartsPage from "@/pages/ChartsPage";
 import TreasuryPage from "@/pages/TreasuryPage";
+import CardPage from "@/pages/CardPage";
+
 import InfrastructurePage from "@/pages/InfrastructurePage";
 
 // WorksPage is no longer routed here — it's mounted inside SettingsPage
