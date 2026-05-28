@@ -1706,9 +1706,8 @@ const FlowModePage = () => {
             { label: "All", id: "all" },
             { label: "Creators", id: "creators" },
             { label: "Listings", id: "listings" },
-            { label: "Events", id: "events" },
-            { label: "Spaces", id: "spaces" },
           ] as { label: string; id: SurfaceFilter }[]).map((chip) => {
+
             const active = surfaceFilter === chip.id;
             return (
               <button
