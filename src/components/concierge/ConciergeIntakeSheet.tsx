@@ -250,10 +250,12 @@ export function ConciergeIntakeSheet({ open, onOpenChange }: Props) {
 
             <Button
               onClick={submit}
-              disabled={submitting || summary.trim().length < 20}
-              className="rounded-full w-full gap-2"
-            >
-              {submitting ? "Sending…" : "Send to Concierge"}
+            <p className="text-[10px] text-muted-foreground text-center">
+              No scoping fee. 25% platform fee on the final project (min $250).
+              You approve the proposal before anything moves.
+              <br />
+              Settled in minutes, not months.
+            </p>
               <Send className="h-3.5 w-3.5" />
             </Button>
 
