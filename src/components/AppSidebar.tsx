@@ -9,8 +9,9 @@ import {
   ShieldCheck,
   Flame,
   Briefcase,
-
+  LineChart,
 } from "lucide-react";
+
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,10 +41,12 @@ import rhozelandLogo from "@/assets/rhozeland-logo.png";
 //   Creator Pass  → badges, rank, $RHOZE portfolio
 const pillarItems = [
   { icon: Compass, label: "Discover", path: "/discover" },
+  { icon: LineChart, label: "Charts", path: "/charts" },
   { icon: Home, label: "Feed", path: "/dashboard" },
   { icon: Briefcase, label: "Portfolio", path: "/portfolio" },
   { icon: Trophy, label: "Creator Pass", path: "/credits" },
 ];
+
 
 const AppSidebar = () => {
   const location = useLocation();
@@ -266,7 +269,21 @@ const AppSidebar = () => {
             </SidebarMenu>
           </div>
         )}
+
+        {/* Public Treasury link — sits at the very bottom of the sidebar */}
+        {!collapsed && (
+          <div className="px-4 pt-3 pb-1">
+            <Link
+              to="/treasury"
+              onClick={handleNavClick}
+              className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline transition-colors"
+            >
+              Treasury
+            </Link>
+          </div>
+        )}
       </SidebarFooter>
+
     </Sidebar>
   );
 };
