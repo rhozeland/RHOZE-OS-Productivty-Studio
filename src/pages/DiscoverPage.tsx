@@ -370,6 +370,8 @@ const DiscoverPage = () => {
 
       <RegionPromptBanner />
 
+      <PositioningPillars />
+
       {/* ─── Globe-led featured orbit ──────────────────────────────── */}
       <motion.section
         initial={{ opacity: 0, y: 12 }}
