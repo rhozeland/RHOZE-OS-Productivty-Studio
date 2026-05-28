@@ -591,6 +591,10 @@ const ProfileDetailPage = () => {
                   <Button variant="outline" size="sm" onClick={() => navigate(`/messages?to=${id}`)}>
                     <MessageSquare className="mr-1.5 h-4 w-4" /> Message
                   </Button>
+                  <Button variant="outline" size="sm" onClick={() => setShareCardOpen(true)}>
+                    Share your card
+                  </Button>
+
                 </div>
               </div>
             )}
