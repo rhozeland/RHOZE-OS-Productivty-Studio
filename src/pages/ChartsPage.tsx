@@ -70,16 +70,13 @@ const num = (v: unknown): number | null => {
 };
 const fetchPumpData = async (mint: string): Promise<PumpData> => {
   // Pump.fun's /coins/{mint} returns market cap + timestamps reliably, but
-  // `num_holders`, `trades_24h`, and `price_change_24h` are frequently null
-  // (especially for tokens that haven't graduated). We fan out to two more
-  // endpoints to backfill: /coins/holders for holder count, and we derive
-  // 24h change from /trades/all when pump itself doesn't report it.
-  const [coinRes, holdersRes, tradesRes] = await Promise.all([
+  // `num_holders`, `trades_24h`, and `price_change_24h` are frequently null.
+  // We backfill holder count from /coins/holders/{mint} (still public).
+  // Trades + candlesticks endpoints have been removed from pump's public API,
+  // so trades_24h / change_24h will fall back to whatever /coins reports.
+  const [coinRes, holdersRes] = await Promise.all([
     fetch(`https://frontend-api-v3.pump.fun/coins/${mint}`).catch(() => null),
     fetch(`https://frontend-api-v3.pump.fun/coins/holders/${mint}`).catch(() => null),
-    fetch(
-      `https://frontend-api-v3.pump.fun/trades/all/${mint}?limit=200&offset=0&minimumSize=0`,
-    ).catch(() => null),
   ]);
 
   let coin: any = null;
@@ -100,49 +97,21 @@ const fetchPumpData = async (mint: string): Promise<PumpData> => {
     /* noop */
   }
 
-  let trades24h: number | null = num(coin?.trades_24h ?? coin?.txns_24h);
-  let change24h: number | null = num(coin?.price_change_24h ?? coin?.priceChange24h);
-  try {
-    if (tradesRes?.ok) {
-      const tj = await tradesRes.json();
-      const arr: any[] = Array.isArray(tj) ? tj : Array.isArray(tj?.trades) ? tj.trades : [];
-      if (arr.length) {
-        const cutoff = Date.now() - 24 * 60 * 60 * 1000;
-        const recent = arr.filter((t) => {
-          const ts = Number(t?.timestamp ?? t?.created_timestamp ?? 0);
-          // pump returns seconds OR milliseconds; normalize
-          const ms = ts > 10 ** 12 ? ts : ts * 1000;
-          return ms >= cutoff;
-        });
-        if (trades24h == null) trades24h = recent.length;
-        if (change24h == null && recent.length >= 2) {
-          // pump trade rows expose sol_amount + token_amount; price = sol/token
-          const priceOf = (t: any) => {
-            const sol = Number(t?.sol_amount ?? 0);
-            const tok = Number(t?.token_amount ?? 0);
-            return tok > 0 ? sol / tok : null;
-          };
-          const oldest = priceOf(recent[recent.length - 1]);
-          const newest = priceOf(recent[0]);
-          if (oldest && newest && oldest > 0) {
-            change24h = ((newest - oldest) / oldest) * 100;
-          }
-        }
-      }
-    }
-  } catch {
-    /* noop */
-  }
-
   // If pump didn't return usd_market_cap (rare), derive from virtual reserves.
   let marketCapUsd = num(coin?.usd_market_cap);
-  if (marketCapUsd == null && coin?.virtual_sol_reserves && coin?.virtual_token_reserves) {
+  if (
+    marketCapUsd == null &&
+    coin?.virtual_sol_reserves &&
+    coin?.virtual_token_reserves
+  ) {
     try {
       const solRes = await fetch(
         "https://lite-api.jup.ag/price/v3?ids=So11111111111111111111111111111111111111112",
       );
       const sj = await solRes.json();
-      const solUsd = num(sj?.So11111111111111111111111111111111111111112?.usdPrice);
+      const solUsd = num(
+        sj?.So11111111111111111111111111111111111111112?.usdPrice,
+      );
       if (solUsd) {
         const supply = 1_000_000_000; // pump.fun standard
         const priceSol =
@@ -157,44 +126,20 @@ const fetchPumpData = async (mint: string): Promise<PumpData> => {
 
   return {
     marketCapUsd,
-    change24h,
+    change24h: num(coin?.price_change_24h ?? coin?.priceChange24h),
     holderCount,
-    trades24h,
+    trades24h: num(coin?.trades_24h ?? coin?.txns_24h),
     createdTimestamp: num(coin?.created_timestamp),
     lastTradeTimestamp: num(coin?.last_trade_timestamp),
   };
 };
 
-const fetchSparkline7d = async (mint: string): Promise<number[]> => {
-  // Pump.fun trades — derive a 24h price walk from the last ~200 trades.
-  // Birdeye public history_price requires an API key, so we skip it.
-  try {
-    const res = await fetch(
-      `https://frontend-api-v3.pump.fun/trades/all/${mint}?limit=200&offset=0&minimumSize=0`,
-    );
-    if (!res.ok) return [];
-    const j = await res.json();
-    const arr: any[] = Array.isArray(j) ? j : Array.isArray(j?.trades) ? j.trades : [];
-    if (!arr.length) return [];
-    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
-    const points = arr
-      .map((t) => {
-        const ts = Number(t?.timestamp ?? t?.created_timestamp ?? 0);
-        const ms = ts > 10 ** 12 ? ts : ts * 1000;
-        const sol = Number(t?.sol_amount ?? 0);
-        const tok = Number(t?.token_amount ?? 0);
-        const price = tok > 0 ? sol / tok : null;
-        return { ms, price };
-      })
-      .filter((p) => p.ms >= cutoff && p.price != null)
-      .sort((a, b) => a.ms - b.ms)
-      .map((p) => p.price as number);
-    return points;
-  } catch {
-    return [];
-  }
+const fetchSparkline7d = async (_mint: string): Promise<number[]> => {
+  // Birdeye public history_price requires an API key, and pump.fun removed
+  // its public candlesticks endpoint. Returning [] makes <Sparkline /> render
+  // a flat placeholder rather than show stale/fake data.
+  return [];
 };
-
 
 const HolderAvatars = ({ count }: { count: number }) => {
   // 3 deterministic placeholder dots whose hue derives from the count so two
