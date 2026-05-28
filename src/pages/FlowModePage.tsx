@@ -79,6 +79,13 @@ import FlowGuestCTA from "@/components/flow/FlowGuestCTA";
 import SignUpToPostPrompt from "@/components/flow/SignUpToPostPrompt";
 import FlowFeedErrorState from "@/components/flow/FlowFeedErrorState";
 import FlowSurfaceGrid from "@/components/flow/FlowSurfaceGrid";
+import {
+  useHireRows,
+  useCallRows,
+  useEventRows,
+  useSpaceRows,
+  type ConnectRow,
+} from "@/components/connect/useConnectRows";
 import { useFlowCoinsByCreator } from "@/hooks/useFlowCoinsByWork";
 import { awardEngagementReward } from "@/lib/award-engagement-reward";
 
