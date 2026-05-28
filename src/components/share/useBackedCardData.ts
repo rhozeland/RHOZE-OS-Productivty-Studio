@@ -56,35 +56,31 @@ export function useBackedCardData(creatorId: string | null | undefined) {
       if (!profile) return null;
 
       const [{ count: backers }, { count: projectsCompleted }, earned] =
-        await Promise.all([
-          supabase
-            .from("creator_subscriptions")
-            .select("id", { count: "exact", head: true })
-            .eq("creator_id", creatorId)
-            .eq("status", "active"),
-          supabase
-            .from("projects")
-            .select("id", { count: "exact", head: true })
-            .eq("owner_id", (profile as any).user_id ?? creatorId)
-            .eq("status", "completed"),
-          supabase
-            .from("credit_transactions")
-            .select("amount")
-            .eq("user_id", (profile as any).user_id ?? creatorId)
-            .gt("amount", 0)
-            .then(({ data }) => {
-              if (!data) return 0;
-              return data.reduce(
-                (s: number, r: any) => s + Number(r.amount || 0),
-                0,
-              );
-            })
-            .catch(() => 0),
-        ]);
+      const ownerUserId = (profile as any).user_id ?? creatorId;
 
-      return {
-        id: profile.id as string,
-        displayName:
+      const [backersRes, projectsRes, earnedRes] = await Promise.all([
+        supabase
+          .from("creator_subscriptions")
+          .select("id", { count: "exact", head: true })
+          .eq("creator_id", creatorId)
+          .eq("status", "active"),
+        supabase
+          .from("projects")
+          .select("id", { count: "exact", head: true })
+          .eq("owner_id", ownerUserId)
+          .eq("status", "completed"),
+        supabase
+          .from("credit_transactions")
+          .select("amount")
+          .eq("user_id", ownerUserId)
+          .gt("amount", 0),
+      ]);
+
+      const rhozeEarned = (earnedRes.data ?? []).reduce(
+        (s: number, r: any) => s + Number(r.amount || 0),
+        0,
+      );
+
           (profile as any).display_name ||
           (profile as any).username ||
           "Creator",
