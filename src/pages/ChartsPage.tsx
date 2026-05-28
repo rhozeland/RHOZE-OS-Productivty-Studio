@@ -68,47 +68,77 @@ const num = (v: unknown): number | null => {
   const n = typeof v === "string" ? parseFloat(v) : (v as number);
   return Number.isFinite(n) ? n : null;
 };
-
 const fetchPumpData = async (mint: string): Promise<PumpData> => {
+  // Pump.fun's /coins/{mint} returns market cap + timestamps reliably, but
+  // `num_holders`, `trades_24h`, and `price_change_24h` are frequently null.
+  // We backfill holder count from /coins/holders/{mint} (still public).
+  // Trades + candlesticks endpoints have been removed from pump's public API,
+  // so trades_24h / change_24h will fall back to whatever /coins reports.
+  const [coinRes, holdersRes] = await Promise.all([
+    fetch(`https://frontend-api-v3.pump.fun/coins/${mint}`).catch(() => null),
+    fetch(`https://frontend-api-v3.pump.fun/coins/holders/${mint}`).catch(() => null),
+  ]);
+
+  let coin: any = null;
   try {
-    const res = await fetch(`https://frontend-api-v3.pump.fun/coins/${mint}`);
-    if (!res.ok) throw new Error("pump.fun bad status");
-    const j = await res.json();
-    return {
-      marketCapUsd: num(j?.usd_market_cap),
-      change24h: num(j?.price_change_24h ?? j?.priceChange24h),
-      holderCount: num(j?.num_holders ?? j?.holder_count),
-      trades24h: num(j?.trades_24h ?? j?.txns_24h),
-      createdTimestamp: num(j?.created_timestamp),
-      lastTradeTimestamp: num(j?.last_trade_timestamp),
-    };
+    if (coinRes?.ok) coin = await coinRes.json();
   } catch {
-    return {
-      marketCapUsd: null,
-      change24h: null,
-      holderCount: null,
-      trades24h: null,
-      createdTimestamp: null,
-      lastTradeTimestamp: null,
-    };
+    /* noop */
   }
+
+  let holderCount: number | null = num(coin?.num_holders ?? coin?.holder_count);
+  try {
+    if (holdersRes?.ok) {
+      const hj = await holdersRes.json();
+      const arr = Array.isArray(hj?.holders) ? hj.holders : Array.isArray(hj) ? hj : [];
+      if (arr.length) holderCount = arr.length;
+    }
+  } catch {
+    /* noop */
+  }
+
+  // If pump didn't return usd_market_cap (rare), derive from virtual reserves.
+  let marketCapUsd = num(coin?.usd_market_cap);
+  if (
+    marketCapUsd == null &&
+    coin?.virtual_sol_reserves &&
+    coin?.virtual_token_reserves
+  ) {
+    try {
+      const solRes = await fetch(
+        "https://lite-api.jup.ag/price/v3?ids=So11111111111111111111111111111111111111112",
+      );
+      const sj = await solRes.json();
+      const solUsd = num(
+        sj?.So11111111111111111111111111111111111111112?.usdPrice,
+      );
+      if (solUsd) {
+        const supply = 1_000_000_000; // pump.fun standard
+        const priceSol =
+          Number(coin.virtual_sol_reserves) / 1e9 /
+          (Number(coin.virtual_token_reserves) / 1e6);
+        marketCapUsd = priceSol * solUsd * supply;
+      }
+    } catch {
+      /* noop */
+    }
+  }
+
+  return {
+    marketCapUsd,
+    change24h: num(coin?.price_change_24h ?? coin?.priceChange24h),
+    holderCount,
+    trades24h: num(coin?.trades_24h ?? coin?.txns_24h),
+    createdTimestamp: num(coin?.created_timestamp),
+    lastTradeTimestamp: num(coin?.last_trade_timestamp),
+  };
 };
 
-const fetchSparkline7d = async (mint: string): Promise<number[]> => {
-  try {
-    const now = Math.floor(Date.now() / 1000);
-    const from = now - 60 * 60 * 24;
-    const res = await fetch(
-      `https://public-api.birdeye.so/defi/history_price?address=${mint}&address_type=token&type=15m&time_from=${from}&time_to=${now}`,
-      { headers: { "x-chain": "solana" } },
-    );
-    if (!res.ok) return [];
-    const j = await res.json();
-    const items: any[] = j?.data?.items ?? [];
-    return items.map((it) => Number(it?.value)).filter((n) => Number.isFinite(n));
-  } catch {
-    return [];
-  }
+const fetchSparkline7d = async (_mint: string): Promise<number[]> => {
+  // Birdeye public history_price requires an API key, and pump.fun removed
+  // its public candlesticks endpoint. Returning [] makes <Sparkline /> render
+  // a flat placeholder rather than show stale/fake data.
+  return [];
 };
 
 const HolderAvatars = ({ count }: { count: number }) => {
