@@ -269,7 +269,21 @@ const AppSidebar = () => {
             </SidebarMenu>
           </div>
         )}
+
+        {/* Public Treasury link — sits at the very bottom of the sidebar */}
+        {!collapsed && (
+          <div className="px-4 pt-3 pb-1">
+            <Link
+              to="/treasury"
+              onClick={handleNavClick}
+              className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline transition-colors"
+            >
+              Treasury
+            </Link>
+          </div>
+        )}
       </SidebarFooter>
+
     </Sidebar>
   );
 };
