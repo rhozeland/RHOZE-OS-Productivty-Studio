@@ -369,7 +369,9 @@ const App = () => (
                 <Route path="/settings/verification" element={<VerificationPage />} />
                 <Route path="/admin" element={<AdminPage />} />
                 <Route path="/curator" element={<CuratorPage />} />
-                <Route path="/concierge" element={<ConciergePage />} />
+                {/* v11 — Concierge rebranded to A&R / Label Services. Old URL redirects. */}
+                <Route path="/concierge" element={<Navigate to="/label-services" replace />} />
+                <Route path="/label-services" element={<ConciergePage />} />
               </Route>
               <Route path="/boards/:id" element={<SmartboardPresentationPage />} />
               <Route path="*" element={<NotFound />} />
