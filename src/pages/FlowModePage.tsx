@@ -43,7 +43,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FlowScopeToggle } from "@/components/flow/FlowScopeToggle";
 import {
   Sheet,
   SheetContent,
