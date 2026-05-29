@@ -113,16 +113,16 @@ export function ConciergeIntakeSheet({ open, onOpenChange }: Props) {
               <Sparkles className="h-4 w-4" />
             </div>
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Rhozeland Concierge
+              Rhozeland A&R
             </span>
           </div>
           <SheetTitle className="font-display text-2xl">
-            Have Rhozeland scope it for you.
+            Have Rhozeland scope your release.
           </SheetTitle>
           <SheetDescription className="text-sm">
-            Tell us the outcome you want. We'll scope it, pick the right
-            creators, and run the project end-to-end. 25% platform fee
-            ($250 min). Response within 48 hours.
+            Tell us the release you want to ship. We'll scope it, pick the
+            right artists & collaborators, and run the project end-to-end.
+            25% platform fee ($250 min). Response within 48 hours.
           </SheetDescription>
         </SheetHeader>
 
