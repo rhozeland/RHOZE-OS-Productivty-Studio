@@ -164,7 +164,7 @@ const HolderAvatars = ({ count }: { count: number }) => {
   );
 };
 
-const ChartsPage = () => {
+const ChartsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
   // 1) creators with linked tokens
   const { data: creators = [], isLoading: creatorsLoading } = useQuery({
     queryKey: ["charts-creators"],
@@ -436,6 +436,35 @@ const ChartsPage = () => {
     );
   };
 
+  const body = (
+    <Tabs defaultValue="trending" className="space-y-4">
+      <TabsList>
+        <TabsTrigger value="trending">Trending</TabsTrigger>
+        <TabsTrigger value="new">New</TabsTrigger>
+        <TabsTrigger value="holders">Top Holders</TabsTrigger>
+        <TabsTrigger value="traded">Last Traded</TabsTrigger>
+      </TabsList>
+      <TabsContent value="trending">{renderTable(sortFor("trending"))}</TabsContent>
+      <TabsContent value="new">{renderTable(sortFor("new"))}</TabsContent>
+      <TabsContent value="holders">{renderTable(sortFor("holders"))}</TabsContent>
+      <TabsContent value="traded">{renderTable(sortFor("traded"))}</TabsContent>
+    </Tabs>
+  );
+
+  if (embedded) {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <h3 className="font-display text-xs font-semibold tracking-[0.18em] uppercase text-foreground/70 shrink-0 flex items-center gap-1.5">
+            <LineChart className="h-3.5 w-3.5" /> Coin momentum
+          </h3>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+        {body}
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto max-w-6xl px-4 py-6 md:py-8 space-y-6">
       <header className="space-y-1">
@@ -447,19 +476,7 @@ const ChartsPage = () => {
           Creator coins ranked by momentum.
         </p>
       </header>
-
-      <Tabs defaultValue="trending" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="trending">Trending</TabsTrigger>
-          <TabsTrigger value="new">New</TabsTrigger>
-          <TabsTrigger value="holders">Top Holders</TabsTrigger>
-          <TabsTrigger value="traded">Last Traded</TabsTrigger>
-        </TabsList>
-        <TabsContent value="trending">{renderTable(sortFor("trending"))}</TabsContent>
-        <TabsContent value="new">{renderTable(sortFor("new"))}</TabsContent>
-        <TabsContent value="holders">{renderTable(sortFor("holders"))}</TabsContent>
-        <TabsContent value="traded">{renderTable(sortFor("traded"))}</TabsContent>
-      </Tabs>
+      {body}
     </div>
   );
 };

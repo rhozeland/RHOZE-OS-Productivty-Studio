@@ -520,7 +520,7 @@ const DiscoverPage = () => {
 
 
         {streamTab === "creators" ? (
-          <div className="space-y-3">
+          <div className="space-y-8">
             {archetype && (
               <div className="flex items-center gap-2 text-xs">
                 <span className="text-muted-foreground">Filtered by</span>
@@ -535,6 +535,7 @@ const DiscoverPage = () => {
               </div>
             )}
             <DiscoverTable archetype={archetype} onArchetypeClick={handleArchetype} />
+            <ChartsPage embedded />
           </div>
         ) : streamTab === "listings" ? (
           <ListingsBoard />
