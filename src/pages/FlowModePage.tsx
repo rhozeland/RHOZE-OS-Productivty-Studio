@@ -43,7 +43,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FlowScopeToggle } from "@/components/flow/FlowScopeToggle";
 import {
   Sheet,
   SheetContent,
@@ -1483,17 +1482,10 @@ const FlowModePage = () => {
           </button>
         </div>
 
-        {/* Feed scope toggle: All categories ↔ user's preferred picks. Hidden when
-            the user has no saved preferences (preferred would equal All anyway).
-            Extracted into <FlowScopeToggle /> so it can be unit-tested in isolation. */}
-        <FlowScopeToggle
-          scope={feedScope}
-          onScopeChange={setScope}
-          visible={
-            preferredCategories.length > 0 &&
-            preferredCategories.length < CATEGORIES.length
-          }
-        />
+        {/* Feed scope + surface filter are unified into a single segmented
+            control rendered below the top bar (see further down). Keeping
+            this slot empty preserves the top-bar flex layout. */}
+        <div className="hidden sm:block" />
 
         {/* Inline scope-refresh pill — sits next to the scope toggle so the
             user sees a localized "feed is updating" affordance the moment
@@ -1681,39 +1673,73 @@ const FlowModePage = () => {
         </div>
       </div>
 
-      {/* Surface filter chips — centered glass bar, pushed below the top bar
-          so it sits closer to the content it filters. Reorganizes the feed
-          client-side; never navigates away from Flow Mode. */}
+      {/* Unified feed control — merges the old "For You / All" scope toggle
+          with the surface filter ("Creators") into a single segmented pill so
+          the user sees one source of truth for what's in the deck. "For You"
+          is hidden when the user has no saved preferences (it would equal
+          "All" anyway). Each tab sets both surface + scope in one click. */}
       <div className="relative z-10 flex justify-center px-4 pt-2 pb-1 md:pt-4">
         <div
           role="tablist"
           aria-label="Filter feed"
           className="inline-flex items-center gap-1 rounded-full border border-border/40 bg-background/70 backdrop-blur-xl px-1.5 py-1.5 shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.25)] max-w-full overflow-x-auto no-scrollbar"
         >
-          {([
-            { label: "All", id: "all" },
-            { label: "Creators", id: "creators" },
-          ] as { label: string; id: SurfaceFilter }[]).map((chip) => {
-
-            const active = surfaceFilter === chip.id;
-            return (
+          {(() => {
+            const showForYou =
+              preferredCategories.length > 0 &&
+              preferredCategories.length < CATEGORIES.length;
+            const tabs: {
+              id: string;
+              label: string;
+              active: boolean;
+              onClick: () => void;
+            }[] = [];
+            if (showForYou) {
+              tabs.push({
+                id: "foryou",
+                label: "For You",
+                active: surfaceFilter === "all" && feedScope === "preferred",
+                onClick: () => {
+                  setSurfaceFilter("all");
+                  setScope("preferred");
+                },
+              });
+            }
+            tabs.push({
+              id: "all",
+              label: "All",
+              active:
+                surfaceFilter === "all" &&
+                (feedScope === "all" || !showForYou),
+              onClick: () => {
+                setSurfaceFilter("all");
+                setScope("all");
+              },
+            });
+            tabs.push({
+              id: "creators",
+              label: "Creators",
+              active: surfaceFilter === "creators",
+              onClick: () => setSurfaceFilter("creators"),
+            });
+            return tabs.map((tab) => (
               <button
-                key={chip.id}
+                key={tab.id}
                 type="button"
                 role="tab"
-                aria-selected={active}
-                onClick={() => setSurfaceFilter(chip.id)}
+                aria-selected={tab.active}
+                onClick={tab.onClick}
                 className={cn(
                   "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium tracking-tight transition-all duration-200",
-                  active
+                  tab.active
                     ? "bg-foreground text-background shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
                 )}
               >
-                {chip.label}
+                {tab.label}
               </button>
-            );
-          })}
+            ));
+          })()}
         </div>
       </div>
 
