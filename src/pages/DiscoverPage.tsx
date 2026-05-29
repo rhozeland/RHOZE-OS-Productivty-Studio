@@ -453,6 +453,9 @@ const DiscoverPage = () => {
 
       {/* ─── Trending artists (self-gated by liquidity) ───────────── */}
 
+      {/* ─── v11: Coins in motion (pump.fun discovery layer) ───────── */}
+      <CoinsInMotionLane />
+
       <TrendingArtistsLane marketFilter={marketFilter} />
 
       {/* Listings now live as a dedicated tab inside the Feed below. */}
