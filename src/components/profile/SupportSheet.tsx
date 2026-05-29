@@ -329,13 +329,13 @@ export default function SupportSheet({
                         <span className="flex items-center gap-1.5">
                           Have Rhozeland scope it
                           <span className="text-[9px] uppercase tracking-widest bg-foreground text-background px-1.5 py-0.5 rounded-full">
-                            Concierge
+                            A&R
                           </span>
                         </span>
                         <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Tell us the outcome. We scope it, pick the creators, run it end-to-end. 25% fee · 48hr response.
+                        Tell us the release. We scope it, pick the artists, run it end-to-end. 25% fee · 48hr response.
                       </p>
                     </div>
                   </div>
