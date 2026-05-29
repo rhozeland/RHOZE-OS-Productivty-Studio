@@ -35,7 +35,7 @@ import SubscribedFeed from "@/components/discover/SubscribedFeed";
 import ListingsBoard from "@/components/discover/ListingsBoard";
 
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
-// TrendingTokensLane removed from Discover — token discovery now lives on the Connect page.
+import CoinsInMotionLane from "@/components/discover/CoinsInMotionLane";
 import DiscoverEventsGrid from "@/components/discover/DiscoverEventsGrid";
 import EventCategoryPills from "@/components/discover/EventCategoryPills";
 import {
