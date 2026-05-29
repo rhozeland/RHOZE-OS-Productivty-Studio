@@ -81,9 +81,6 @@ import FlowFeedErrorState from "@/components/flow/FlowFeedErrorState";
 import FlowSurfaceGrid from "@/components/flow/FlowSurfaceGrid";
 import {
   useHireRows,
-  useCallRows,
-  useEventRows,
-  useSpaceRows,
   type ConnectRow,
 } from "@/components/connect/useConnectRows";
 import { useFlowCoinsByCreator } from "@/hooks/useFlowCoinsByWork";
