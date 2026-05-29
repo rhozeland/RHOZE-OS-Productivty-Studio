@@ -480,18 +480,18 @@ export default function SupportSheet({
           </Tabs>
         )}
       </DialogContent>
-      
-      <ProposalSheet
-        open={proposalOpen}
-        onOpenChange={setProposalOpen}
-        newProposal={{
-          counterpartyId: creatorId,
-          role: "client",
-          title: `Project with ${creatorName}`,
-        }}
-      />
     </Dialog>
 
+    <ProposalSheet
+      open={proposalOpen}
+      onOpenChange={setProposalOpen}
+      newProposal={{
+        counterpartyId: creatorId,
+        role: "client",
+        title: `Project with ${creatorName}`,
+      }}
+    />
+    </>
   );
 }
 
