@@ -30,6 +30,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import SupportSheet from "@/components/profile/SupportSheet";
 import ProjectTokenCard from "@/components/profile/ProjectTokenCard";
+import StartCoinCta from "@/components/profile/StartCoinCta";
 import CreatorActivityCard from "@/components/profile/CreatorActivityCard";
 import ProfileCatalogCard from "@/components/profile/ProfileCatalogCard";
 import { getRegion } from "@/lib/regions";
