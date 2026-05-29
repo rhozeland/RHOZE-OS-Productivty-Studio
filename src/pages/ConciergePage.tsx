@@ -63,9 +63,9 @@ export default function ConciergePage() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    document.title = "Rhozeland Concierge — managed creative projects on Solana";
+    document.title = "Rhozeland A&R — Artist Development & managed releases";
     const desc =
-      "Tell us the outcome. We scope, staff, and run the project end-to-end with Verified creators. 25% platform fee, $250 min. 48-hour response.";
+      "Tell us the release. We scope it, staff it with Verified artists, and run it end-to-end. 25% platform fee, $250 min. 48-hour response.";
     let meta = document.querySelector('meta[name="description"]');
     if (!meta) {
       meta = document.createElement("meta");
@@ -81,7 +81,7 @@ export default function ConciergePage() {
       canon.setAttribute("rel", "canonical");
       document.head.appendChild(canon);
     }
-    canon.setAttribute("href", `${window.location.origin}/concierge`);
+    canon.setAttribute("href", `${window.location.origin}/label-services`);
 
     // JSON-LD Service schema
     const ldId = "concierge-jsonld";
@@ -92,14 +92,14 @@ export default function ConciergePage() {
     ld.text = JSON.stringify({
       "@context": "https://schema.org",
       "@type": "Service",
-      name: "Rhozeland Concierge",
+      name: "Rhozeland A&R",
       provider: {
         "@type": "Organization",
         name: "Rhozeland",
         url: "https://rhozeland.app",
       },
       areaServed: "Global",
-      serviceType: "Managed creative production",
+      serviceType: "Artist development & managed releases",
       description: desc,
       offers: {
         "@type": "Offer",
@@ -123,18 +123,18 @@ export default function ConciergePage() {
       {/* Hero */}
       <section className="text-center space-y-6">
         <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground border border-border rounded-full px-3 py-1">
-          <Sparkles className="h-3 w-3" /> Rhozeland Concierge
+          <Sparkles className="h-3 w-3" /> Rhozeland A&R
         </div>
         <h1 className="font-display text-4xl md:text-6xl font-semibold tracking-tight text-foreground">
-          Tell us the outcome.
+          Tell us the release.
           <br />
           <span className="text-muted-foreground">We'll run it.</span>
         </h1>
         <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-          Skip the briefs, the back-and-forth, the chasing freelancers. Hand us
-          the result you want — campaign, launch, identity, film. A Rhozeland
-          curator scopes it, staffs it with Verified creators, and runs it
-          end-to-end.
+          Skip the briefs, the back-and-forth, the chasing collaborators. Hand
+          us the release you want — single, EP, music video, tour, identity.
+          A Rhozeland A&R scopes it, staffs it with Verified artists, and runs
+          it end-to-end.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
           <Button
