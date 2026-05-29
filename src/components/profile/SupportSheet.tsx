@@ -21,9 +21,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
   Check, Loader2, Lock, MessageSquare, Sparkles, Coins, Heart, Briefcase,
-  CalendarDays, Building2, ArrowRight, ExternalLink, Wand2,
+  CalendarDays, Building2, ArrowRight, ExternalLink,
 } from "lucide-react";
-import { ConciergeIntakeSheet } from "@/components/concierge/ConciergeIntakeSheet";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { supabase } from "@/integrations/supabase/client";
