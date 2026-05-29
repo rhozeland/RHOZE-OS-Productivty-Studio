@@ -474,7 +474,7 @@ export default function SupportSheet({
           </Tabs>
         )}
       </DialogContent>
-      <ConciergeIntakeSheet open={conciergeOpen} onOpenChange={setConciergeOpen} />
+      
       <ProposalSheet
         open={proposalOpen}
         onOpenChange={setProposalOpen}
