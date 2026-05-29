@@ -2997,6 +2997,35 @@ export type Database = {
           },
         ]
       }
+      project_cheers: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_cheers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_collaborators: {
         Row: {
           created_at: string
@@ -3534,6 +3563,7 @@ export type Database = {
       projects: {
         Row: {
           categories: string[] | null
+          cheer_count: number
           client_name: string | null
           cover_color: string | null
           created_at: string
@@ -3543,12 +3573,15 @@ export type Database = {
           id: string
           intake_tier: Database["public"]["Enums"]["project_intake_tier"]
           is_estimate: boolean
+          is_public: boolean
           platform_fee_bps_override: number | null
           project_type: string | null
+          public_slug: string | null
           runtime_notes: string | null
           scope_of_work: string | null
           status: string
           title: string
+          tokenize_ready: boolean
           total_budget: number
           updated_at: string
           user_id: string
@@ -3556,6 +3589,7 @@ export type Database = {
         }
         Insert: {
           categories?: string[] | null
+          cheer_count?: number
           client_name?: string | null
           cover_color?: string | null
           created_at?: string
@@ -3565,12 +3599,15 @@ export type Database = {
           id?: string
           intake_tier?: Database["public"]["Enums"]["project_intake_tier"]
           is_estimate?: boolean
+          is_public?: boolean
           platform_fee_bps_override?: number | null
           project_type?: string | null
+          public_slug?: string | null
           runtime_notes?: string | null
           scope_of_work?: string | null
           status?: string
           title: string
+          tokenize_ready?: boolean
           total_budget?: number
           updated_at?: string
           user_id: string
@@ -3578,6 +3615,7 @@ export type Database = {
         }
         Update: {
           categories?: string[] | null
+          cheer_count?: number
           client_name?: string | null
           cover_color?: string | null
           created_at?: string
@@ -3587,12 +3625,15 @@ export type Database = {
           id?: string
           intake_tier?: Database["public"]["Enums"]["project_intake_tier"]
           is_estimate?: boolean
+          is_public?: boolean
           platform_fee_bps_override?: number | null
           project_type?: string | null
+          public_slug?: string | null
           runtime_notes?: string | null
           scope_of_work?: string | null
           status?: string
           title?: string
+          tokenize_ready?: boolean
           total_budget?: number
           updated_at?: string
           user_id?: string
@@ -5378,6 +5419,7 @@ export type Database = {
         }
         Returns: {
           categories: string[] | null
+          cheer_count: number
           client_name: string | null
           cover_color: string | null
           created_at: string
@@ -5387,12 +5429,15 @@ export type Database = {
           id: string
           intake_tier: Database["public"]["Enums"]["project_intake_tier"]
           is_estimate: boolean
+          is_public: boolean
           platform_fee_bps_override: number | null
           project_type: string | null
+          public_slug: string | null
           runtime_notes: string | null
           scope_of_work: string | null
           status: string
           title: string
+          tokenize_ready: boolean
           total_budget: number
           updated_at: string
           user_id: string
