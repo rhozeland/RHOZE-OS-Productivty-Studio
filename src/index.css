@@ -50,10 +50,16 @@
     --chart-grid: 0 0% 84%;
     --chart-volume: 0 0% 62%;
 
-    /* Creator archetypes — branches under the "creator" umbrella */
-    --archetype-artist: 330 78% 56%;     /* rose / magenta — makes the work */
-    --archetype-builder: 230 85% 60%;    /* electric indigo — ships the thing */
-    --archetype-influencer: 36 95% 52%;  /* amber — amplifies, brings audience */
+    /* Music archetypes (v11) — roles inside a musician's orbit */
+    --archetype-musician: 330 78% 56%;   /* rose — the artist */
+    --archetype-producer: 268 78% 60%;   /* violet — beats / production */
+    --archetype-engineer: 178 72% 42%;   /* teal — mix / master */
+    --archetype-visual: 36 95% 52%;      /* amber — video / photo / design */
+    --archetype-promoter: 152 62% 44%;   /* emerald — manager / promo / curator */
+    /* Legacy aliases (kept for any stragglers — safe to remove later) */
+    --archetype-artist: var(--archetype-musician);
+    --archetype-builder: var(--archetype-producer);
+    --archetype-influencer: var(--archetype-visual);
 
     --gradient-hero: linear-gradient(135deg, hsl(280 35% 85%), hsl(320 30% 82%), hsl(30 40% 85%), hsl(175 35% 82%));
     --gradient-hero-accent: linear-gradient(135deg, hsl(280 30% 78%), hsl(320 30% 75%));
@@ -107,10 +113,15 @@
     --chart-grid: 0 0% 18%;
     --chart-volume: 0 0% 34%;
 
-    /* Creator archetypes — slightly brighter on dark for legibility */
-    --archetype-artist: 330 85% 68%;
-    --archetype-builder: 230 90% 72%;
-    --archetype-influencer: 36 95% 62%;
+    /* Music archetypes (v11) — brighter on dark for legibility */
+    --archetype-musician: 330 85% 68%;
+    --archetype-producer: 268 85% 72%;
+    --archetype-engineer: 178 78% 56%;
+    --archetype-visual: 36 95% 62%;
+    --archetype-promoter: 152 72% 58%;
+    --archetype-artist: var(--archetype-musician);
+    --archetype-builder: var(--archetype-producer);
+    --archetype-influencer: var(--archetype-visual);
 
     --gradient-hero: linear-gradient(135deg, hsl(280 50% 25%), hsl(320 50% 20%), hsl(30 50% 20%), hsl(175 40% 20%));
     --gradient-hero-accent: linear-gradient(135deg, hsl(280 50% 40%), hsl(320 50% 35%));

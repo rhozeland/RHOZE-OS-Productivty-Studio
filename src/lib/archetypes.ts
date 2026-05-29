@@ -1,27 +1,27 @@
 /**
- * Creator archetypes (v9.2)
+ * Music archetypes (v11)
  *
- * Everyone on Rhozeland is a **creator** — that's the umbrella. The branches
- * tell other creators *how* you create:
+ * Rhozeland's atomic unit is a musician. The five archetypes describe how
+ * someone shows up around music:
  *
- *   - Artist     — makes the work (music, art, design, writing)
- *   - Builder    — ships the product / space / event (devs, producers, hosts)
- *   - Influencer — amplifies, curates, brings audience
+ *   - Musician  — singer, rapper, producer-of-records, band, DJ (the artist)
+ *   - Producer  — beats, production, composition
+ *   - Engineer  — mix / master / live sound
+ *   - Visual    — videographer, photographer, designer, AD
+ *   - Promoter  — manager, promoter, curator, A&R, label
  *
- * Color coding is used as a real design primitive — a single hue per branch
- * surfaces as a subtle dot, border tint, and filter pill across Discover and
- * profile cards. Hues live as CSS tokens in `index.css` so dark / light mode
- * stay consistent.
+ * Color coding flows through Discover filters, profile chips, and banner
+ * fallbacks via CSS tokens defined in `index.css`.
  */
 import type { LucideIcon } from "lucide-react";
-import { Palette, Wrench, Megaphone, Users } from "lucide-react";
+import { Mic, Music4, SlidersHorizontal, Camera, Megaphone, Users } from "lucide-react";
 
-export type Archetype = "artist" | "builder" | "influencer";
+export type Archetype = "musician" | "producer" | "engineer" | "visual" | "promoter";
 
 export interface ArchetypeMeta {
   id: Archetype;
   label: string;
-  /** Plural noun for filter pills ("Artists") */
+  /** Plural noun for filter pills ("Musicians") */
   plural: string;
   /** One-liner shown in tooltips / settings picker */
   tagline: string;
@@ -34,49 +34,53 @@ export interface ArchetypeMeta {
   token: string;
 }
 
+const meta = (
+  id: Archetype,
+  label: string,
+  plural: string,
+  tagline: string,
+  icon: LucideIcon,
+): ArchetypeMeta => {
+  const token = `archetype-${id}`;
+  return {
+    id,
+    label,
+    plural,
+    tagline,
+    icon,
+    chipClass: `bg-[hsl(var(--${token})/0.16)] text-[hsl(var(--${token}))] border-[hsl(var(--${token})/0.35)]`,
+    dotClass: `bg-[hsl(var(--${token}))]`,
+    token,
+  };
+};
+
 export const ARCHETYPES: ArchetypeMeta[] = [
-  {
-    id: "artist",
-    label: "Artist",
-    plural: "Artists",
-    tagline: "Makes the work — music, art, design, writing.",
-    icon: Palette,
-    chipClass:
-      "bg-[hsl(var(--archetype-artist)/0.16)] text-[hsl(var(--archetype-artist))] border-[hsl(var(--archetype-artist)/0.35)]",
-    dotClass: "bg-[hsl(var(--archetype-artist))]",
-    token: "archetype-artist",
-  },
-  {
-    id: "builder",
-    label: "Builder",
-    plural: "Builders",
-    tagline: "Ships the product, the space, the event.",
-    icon: Wrench,
-    chipClass:
-      "bg-[hsl(var(--archetype-builder)/0.16)] text-[hsl(var(--archetype-builder))] border-[hsl(var(--archetype-builder)/0.35)]",
-    dotClass: "bg-[hsl(var(--archetype-builder))]",
-    token: "archetype-builder",
-  },
-  {
-    id: "influencer",
-    label: "Influencer",
-    plural: "Influencers",
-    tagline: "Amplifies, curates, brings the audience.",
-    icon: Megaphone,
-    chipClass:
-      "bg-[hsl(var(--archetype-influencer)/0.16)] text-[hsl(var(--archetype-influencer))] border-[hsl(var(--archetype-influencer)/0.35)]",
-    dotClass: "bg-[hsl(var(--archetype-influencer))]",
-    token: "archetype-influencer",
-  },
+  meta("musician", "Musician", "Musicians", "Singer, rapper, band, DJ — the artist.", Mic),
+  meta("producer", "Producer", "Producers", "Beats, production, composition.", Music4),
+  meta("engineer", "Engineer", "Engineers", "Mix, master, live sound.", SlidersHorizontal),
+  meta("visual", "Visual", "Visuals", "Video, photo, design, art direction.", Camera),
+  meta("promoter", "Promoter", "Promoters", "Manager, promoter, curator, A&R.", Megaphone),
 ];
 
 export const ARCHETYPE_BY_ID = new Map<Archetype, ArchetypeMeta>(
   ARCHETYPES.map((a) => [a.id, a]),
 );
 
+/** Legacy v9 → v11 migration helper for any client-side data still using old keys. */
+const LEGACY_MAP: Record<string, Archetype> = {
+  artist: "musician",
+  builder: "producer",
+  influencer: "promoter",
+};
+export const normalizeArchetype = (raw?: string | null): Archetype | null => {
+  if (!raw) return null;
+  if (raw in LEGACY_MAP) return LEGACY_MAP[raw];
+  return ARCHETYPE_BY_ID.has(raw as Archetype) ? (raw as Archetype) : null;
+};
+
 export const CREATOR_UMBRELLA = {
-  label: "Creator",
-  plural: "Creators",
+  label: "Music",
+  plural: "Artists",
   icon: Users,
 };
 
@@ -86,14 +90,14 @@ export const CREATOR_UMBRELLA = {
  * Used as the *default* banner whenever a creator hasn't picked a custom one,
  * so even minimum-effort profiles look intentional instead of falling back to
  * the generic gray. Seed (usually `user_id`) decides the secondary hue offset
- * so two artists don't end up with identical banners.
+ * so two creators don't end up with identical banners.
  */
 export function archetypeBannerGradient(
-  archetype: Archetype | null | undefined,
+  archetype: Archetype | string | null | undefined,
   seed?: string | null,
 ): string {
-  const token = archetype ? `archetype-${archetype}` : "primary";
-  // Cheap deterministic hash → 0..359
+  const id = normalizeArchetype(archetype ?? null);
+  const token = id ? `archetype-${id}` : "primary";
   const s = seed ?? "";
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
