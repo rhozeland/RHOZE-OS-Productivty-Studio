@@ -31,6 +31,7 @@ import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilit
 import SupportSheet from "@/components/profile/SupportSheet";
 import ProjectTokenCard from "@/components/profile/ProjectTokenCard";
 import StartCoinCta from "@/components/profile/StartCoinCta";
+import TokenDiscoveryChip from "@/components/profile/TokenDiscoveryChip";
 import CreatorActivityCard from "@/components/profile/CreatorActivityCard";
 import ProfileCatalogCard from "@/components/profile/ProfileCatalogCard";
 import { getRegion } from "@/lib/regions";
@@ -505,6 +506,9 @@ const ProfileDetailPage = () => {
               {!isOwnProfile && id && (
                 <SaveButton type="creator" id={id} variant="chip" />
               )}
+              {/* v11 Tier 2 — promote token discovery above the fold.
+                  Returns null if creator hasn't linked a pump.fun token. */}
+              {id && <TokenDiscoveryChip creatorId={id} />}
             </div>
 
             <div className="mt-3 space-y-2.5">
