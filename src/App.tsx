@@ -82,6 +82,7 @@ import VaultRoomPage from "@/pages/VaultRoomPage";
 import NotFound from "./pages/NotFound";
 import CheckoutReturn from "@/pages/CheckoutReturn";
 import SubscriptionsPage from "@/pages/SubscriptionsPage";
+import ReleasePage from "@/pages/ReleasePage";
 import { useParams, Navigate as NavigateAlias } from "react-router-dom";
 import { EventNotFound } from "@/components/events/EventNotFound";
 
@@ -308,6 +309,9 @@ const App = () => (
                 <Route path="/projects" element={<Navigate to="/messages?tab=projects" replace />} />
                 <Route path="/my-projects" element={<ProjectsPage />} />
                 <Route path="/projects/:id" element={<ProjectDetailPage />} />
+                {/* v11 Tier 3: public "build in public" release page. Owner
+                    flips is_public on the project to surface this URL. */}
+                <Route path="/release/:slug" element={<ReleasePage />} />
                 {/* Works is now the personal vault under Settings → Provenance.
                     /works keeps working as a deep link via redirect. */}
                 <Route path="/works" element={<Navigate to="/settings#provenance" replace />} />

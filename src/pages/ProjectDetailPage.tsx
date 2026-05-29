@@ -37,6 +37,7 @@ import DropRoomLauncher from "@/components/project/DropRoomLauncher";
 import { useProjectRole } from "@/hooks/useProjectRole";
 import { getHoldTier } from "@/lib/tier-matrix";
 import BackedByRhozelandBadge from "@/components/concierge/BackedByRhozelandBadge";
+import PublishReleaseCard from "@/components/project/PublishReleaseCard";
 
 // Tier-based cap on smartboards per project. Play tier is unlimited.
 const SMARTBOARD_CAP_BY_TIER: Record<string, number> = {
@@ -333,6 +334,17 @@ const ProjectDetailPage = () => {
           <DropRoomLauncher projectId={id!} projectTitle={project.title} />
         }
       />
+
+      {/* v11 Tier 3: owner-only "build in public" toggle. */}
+      {canManageProject && (
+        <PublishReleaseCard
+          projectId={project.id}
+          isPublic={(project as any).is_public ?? false}
+          publicSlug={(project as any).public_slug ?? null}
+          cheerCount={(project as any).cheer_count ?? 0}
+          tokenizeReady={(project as any).tokenize_ready ?? false}
+        />
+      )}
 
       <Tabs defaultValue="roadmap" className="w-full">
         <TabsList className="mb-4 w-full justify-start overflow-x-auto flex-nowrap shrink-0">
