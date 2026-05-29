@@ -75,7 +75,6 @@ export default function SupportSheet({
   const [tipMessage, setTipMessage] = useState<string>("");
   const [tipCheckoutOpen, setTipCheckoutOpen] = useState(false);
   const [proposalOpen, setProposalOpen] = useState(false);
-  const [proposalOpen, setProposalOpen] = useState(false);
 
 
   useEffect(() => {
