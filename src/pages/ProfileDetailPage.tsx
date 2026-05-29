@@ -31,6 +31,7 @@ import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilit
 import SupportSheet from "@/components/profile/SupportSheet";
 import ProjectTokenCard from "@/components/profile/ProjectTokenCard";
 import StartCoinCta from "@/components/profile/StartCoinCta";
+import TokenDiscoveryChip from "@/components/profile/TokenDiscoveryChip";
 import CreatorActivityCard from "@/components/profile/CreatorActivityCard";
 import ProfileCatalogCard from "@/components/profile/ProfileCatalogCard";
 import { getRegion } from "@/lib/regions";
