@@ -210,11 +210,17 @@ export default function SupportSheet({
 
   const handleCommission = () => {
     if (!user) { toast.error("Sign in to commission a project"); return; }
-    setProposalOpen(true);
+    // Close the Support sheet first so the proposal dialog isn't stacked
+    // under it (nested Radix dialogs swallow the click and look like nothing
+    // happened). Defer opening to the next tick so the close animation
+    // releases focus before the new dialog mounts.
+    onOpenChange(false);
+    setTimeout(() => setProposalOpen(true), 60);
   };
 
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg p-0 overflow-hidden max-h-[92vh] flex flex-col">
         <DialogHeader className="px-6 pt-6 pb-3 shrink-0">
@@ -474,18 +480,18 @@ export default function SupportSheet({
           </Tabs>
         )}
       </DialogContent>
-      
-      <ProposalSheet
-        open={proposalOpen}
-        onOpenChange={setProposalOpen}
-        newProposal={{
-          counterpartyId: creatorId,
-          role: "client",
-          title: `Project with ${creatorName}`,
-        }}
-      />
     </Dialog>
 
+    <ProposalSheet
+      open={proposalOpen}
+      onOpenChange={setProposalOpen}
+      newProposal={{
+        counterpartyId: creatorId,
+        role: "client",
+        title: `Project with ${creatorName}`,
+      }}
+    />
+    </>
   );
 }
 
