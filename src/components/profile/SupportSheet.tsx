@@ -220,6 +220,7 @@ export default function SupportSheet({
 
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg p-0 overflow-hidden max-h-[92vh] flex flex-col">
         <DialogHeader className="px-6 pt-6 pb-3 shrink-0">
