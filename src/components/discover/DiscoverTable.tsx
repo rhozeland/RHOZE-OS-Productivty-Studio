@@ -88,8 +88,8 @@ const DiscoverTable = ({
         )
         .neq("is_public", false)
         .limit(200);
-      if (archetype === "artist") {
-        q = q.or("archetype.eq.artist,archetype.is.null");
+      if (archetype === "musician") {
+        q = q.or("archetype.eq.musician,archetype.is.null");
       } else if (archetype) {
         q = q.eq("archetype", archetype);
       }

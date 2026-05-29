@@ -198,10 +198,17 @@ const DiscoverPage = () => {
   // Optional archetype filter — applied only when user clicks an archetype
   // chip on a creator tile. Default null = show all creators across branches.
   const initialArchetype = searchParams.get("archetype");
-  const validArchetype = (a: string | null): import("@/lib/archetypes").Archetype | null =>
-    a && ["artist", "builder", "influencer"].includes(a)
-      ? (a as import("@/lib/archetypes").Archetype)
+  const validArchetype = (a: string | null): import("@/lib/archetypes").Archetype | null => {
+    if (!a) return null;
+    // Backwards-compat: old v9 keys redirect to new music archetypes.
+    const map: Record<string, import("@/lib/archetypes").Archetype> = {
+      artist: "musician", builder: "producer", influencer: "promoter",
+    };
+    const mapped = map[a] ?? a;
+    return ["musician", "producer", "engineer", "visual", "promoter"].includes(mapped)
+      ? (mapped as import("@/lib/archetypes").Archetype)
       : null;
+  };
   const [archetype, setArchetype] = useState<import("@/lib/archetypes").Archetype | null>(
     validArchetype(initialArchetype),
   );

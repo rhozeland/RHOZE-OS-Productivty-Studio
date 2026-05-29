@@ -88,9 +88,9 @@ const CreatorsGrid = ({
         )
         .neq("is_public", false)
         .limit(200);
-      if (archetype === "artist") {
-        // Backward-compat: profiles without archetype default to artist.
-        query = query.or("archetype.eq.artist,archetype.is.null");
+      if (archetype === "musician") {
+        // Backward-compat: profiles without archetype default to musician.
+        query = query.or("archetype.eq.musician,archetype.is.null");
       } else if (archetype) {
         query = query.eq("archetype", archetype);
       }
