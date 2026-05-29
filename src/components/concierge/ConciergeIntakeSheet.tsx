@@ -253,7 +253,7 @@ export function ConciergeIntakeSheet({ open, onOpenChange }: Props) {
               disabled={submitting || summary.trim().length < 20}
               className="rounded-full w-full gap-2"
             >
-              {submitting ? "Sending…" : "Send to Concierge"}
+              {submitting ? "Sending…" : "Send to A&R"}
               <Send className="h-3.5 w-3.5" />
             </Button>
 
