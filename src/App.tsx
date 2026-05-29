@@ -272,7 +272,8 @@ const App = () => (
                     organize existing routes without removing any. */}
                 <Route path="/scene" element={<SceneRoomPage />} />
                 <Route path="/market" element={<MarketRoomPage />} />
-                <Route path="/connect/match" element={<ConnectMatchPage />} />
+                {/* v11 — Match Made retired; deeplink redirects into /market. */}
+                <Route path="/connect/match" element={<Navigate to="/market" replace />} />
                 <Route path="/vault" element={<ProtectedRoute><VaultRoomPage /></ProtectedRoute>} />
                 <Route path="/discover" element={<DiscoverPage />} />
                 <Route path="/charts" element={<ChartsPage />} />
