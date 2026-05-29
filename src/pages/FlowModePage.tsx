@@ -81,9 +81,6 @@ import FlowFeedErrorState from "@/components/flow/FlowFeedErrorState";
 import FlowSurfaceGrid from "@/components/flow/FlowSurfaceGrid";
 import {
   useHireRows,
-  useCallRows,
-  useEventRows,
-  useSpaceRows,
   type ConnectRow,
 } from "@/components/connect/useConnectRows";
 import { useFlowCoinsByCreator } from "@/hooks/useFlowCoinsByWork";
@@ -122,7 +119,9 @@ const FlowModePage = () => {
   const tutorialTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flowContentRef = useRef<HTMLDivElement | null>(null);
   // Surface chip filter — drives the centered chip row above the deck.
-  type SurfaceFilter = "all" | "creators" | "listings" | "events" | "spaces";
+  // Surfaces narrowed v11.x: only "all" + "creators" remain. Listings/Events/Spaces
+  // pulled from Flow — those live on Discover/Market now.
+  type SurfaceFilter = "all" | "creators";
   const [surfaceFilter, setSurfaceFilter] = useState<SurfaceFilter>("all");
   // Categories currently driving the feed sort. When `feedScope === "all"`, this
   // is the full CATEGORIES list (no preference applied → pure global feed).
@@ -884,15 +883,9 @@ const FlowModePage = () => {
   // Surface filter — driven by the centered chip row above the deck.
   //   • "all"       → the raw flow feed (creator works)
   //   • "creators"  → hire/services rows mapped into FlowCard shape
-  //   • "listings"  → open-call rows mapped into FlowCard shape
-  //   • "events"    → upcoming event rows mapped into FlowCard shape
-  //   • "spaces"    → studios/spaces rows mapped into FlowCard shape
   // For non-"all" filters we feed mapped Connect rows into the SAME swipe
   // deck so the UI stays identical — only the underlying items change.
   const hireRowsQ  = useHireRows(surfaceFilter === "creators");
-  const callRowsQ  = useCallRows(surfaceFilter === "listings");
-  const eventRowsQ = useEventRows(surfaceFilter === "events");
-  const spaceRowsQ = useSpaceRows(surfaceFilter === "spaces");
 
   // Map a ConnectRow into the minimal flow_items-compatible shape FlowCard
   // consumes. Cover image → file_url (rendered via the image branch); detail
@@ -919,12 +912,7 @@ const FlowModePage = () => {
 
   const baseItems = (() => {
     if (surfaceFilter === "all") return rawBaseItems;
-    const src: ConnectRow[] =
-      surfaceFilter === "creators" ? (hireRowsQ.data ?? []) :
-      surfaceFilter === "listings" ? (callRowsQ.data ?? []) :
-      surfaceFilter === "events"   ? (eventRowsQ.data ?? []) :
-      surfaceFilter === "spaces"   ? (spaceRowsQ.data ?? []) :
-      [];
+    const src: ConnectRow[] = surfaceFilter === "creators" ? (hireRowsQ.data ?? []) : [];
     return src.map(connectRowToFlowItem);
   })();
 
@@ -1705,7 +1693,6 @@ const FlowModePage = () => {
           {([
             { label: "All", id: "all" },
             { label: "Creators", id: "creators" },
-            { label: "Listings", id: "listings" },
           ] as { label: string; id: SurfaceFilter }[]).map((chip) => {
 
             const active = surfaceFilter === chip.id;

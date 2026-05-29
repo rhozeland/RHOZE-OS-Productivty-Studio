@@ -35,7 +35,7 @@ import SubscribedFeed from "@/components/discover/SubscribedFeed";
 import ListingsBoard from "@/components/discover/ListingsBoard";
 
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
-import CoinsInMotionLane from "@/components/discover/CoinsInMotionLane";
+
 import DiscoverEventsGrid from "@/components/discover/DiscoverEventsGrid";
 import EventCategoryPills from "@/components/discover/EventCategoryPills";
 import {
@@ -460,8 +460,8 @@ const DiscoverPage = () => {
 
       {/* ─── Trending artists (self-gated by liquidity) ───────────── */}
 
-      {/* ─── v11: Coins in motion (pump.fun discovery layer) ───────── */}
-      <CoinsInMotionLane />
+      {/* v11: Coins in motion lane removed per product call — pump.fun discovery
+          now lives only on individual profiles via TokenDiscoveryChip. */}
 
       <TrendingArtistsLane marketFilter={marketFilter} />
 
