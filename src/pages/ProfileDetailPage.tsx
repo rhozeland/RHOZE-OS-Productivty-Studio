@@ -30,6 +30,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import SupportSheet from "@/components/profile/SupportSheet";
 import ProjectTokenCard from "@/components/profile/ProjectTokenCard";
+import StartCoinCta from "@/components/profile/StartCoinCta";
 import CreatorActivityCard from "@/components/profile/CreatorActivityCard";
 import ProfileCatalogCard from "@/components/profile/ProfileCatalogCard";
 import { getRegion } from "@/lib/regions";
@@ -639,6 +640,12 @@ const ProfileDetailPage = () => {
                   Cancel anytime. {p.display_name || "Creator"} keeps 85%.
                 </p>
               </motion.div>
+            )}
+
+            {/* v11 Tier 1 — owner-only "Start a coin" CTA when no pump.fun
+                token is linked yet. Once linked, ProjectTokenCard takes over. */}
+            {isOwnProfile && !(p as any).token_mint_address && (
+              <StartCoinCta creatorName={p.display_name || p.username} />
             )}
 
             {/* v10.4 — prominent fundraising project card (renders only if creator

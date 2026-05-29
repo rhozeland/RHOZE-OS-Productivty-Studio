@@ -78,7 +78,7 @@ import VerificationPage from "@/pages/VerificationPage";
 import SceneRoomPage from "@/pages/SceneRoomPage";
 import MarketRoomPage from "@/pages/MarketRoomPage";
 import VaultRoomPage from "@/pages/VaultRoomPage";
-import ConnectMatchPage from "@/pages/ConnectMatchPage";
+// v11 — ConnectMatchPage retired; /connect/match now redirects to /market.
 import NotFound from "./pages/NotFound";
 import CheckoutReturn from "@/pages/CheckoutReturn";
 import SubscriptionsPage from "@/pages/SubscriptionsPage";
@@ -272,7 +272,8 @@ const App = () => (
                     organize existing routes without removing any. */}
                 <Route path="/scene" element={<SceneRoomPage />} />
                 <Route path="/market" element={<MarketRoomPage />} />
-                <Route path="/connect/match" element={<ConnectMatchPage />} />
+                {/* v11 — Match Made retired; deeplink redirects into /market. */}
+                <Route path="/connect/match" element={<Navigate to="/market" replace />} />
                 <Route path="/vault" element={<ProtectedRoute><VaultRoomPage /></ProtectedRoute>} />
                 <Route path="/discover" element={<DiscoverPage />} />
                 <Route path="/charts" element={<ChartsPage />} />
@@ -283,8 +284,8 @@ const App = () => (
                     Legacy roots redirect; sub-routes stay live. */}
                 <Route path="/stream" element={<Navigate to="/discover" replace />} />
                 <Route path="/hub" element={<Navigate to="/discover" replace />} />
-                <Route path="/spaces" element={<Navigate to="/market?kind=space" replace />} />
-                <Route path="/events" element={<Navigate to="/market?kind=event" replace />} />
+                <Route path="/spaces" element={<Navigate to="/market?kind=live" replace />} />
+                <Route path="/events" element={<Navigate to="/market?kind=live" replace />} />
                 <Route path="/events/new" element={<Navigate to="/spaces/events/new" replace />} />
                 <Route path="/events/:id" element={<LegacyEventRedirect />} />
                 <Route path="/events/:id/manage" element={<LegacyEventRedirect manage />} />
@@ -368,7 +369,9 @@ const App = () => (
                 <Route path="/settings/verification" element={<VerificationPage />} />
                 <Route path="/admin" element={<AdminPage />} />
                 <Route path="/curator" element={<CuratorPage />} />
-                <Route path="/concierge" element={<ConciergePage />} />
+                {/* v11 — Concierge rebranded to A&R / Label Services. Old URL redirects. */}
+                <Route path="/concierge" element={<Navigate to="/label-services" replace />} />
+                <Route path="/label-services" element={<ConciergePage />} />
               </Route>
               <Route path="/boards/:id" element={<SmartboardPresentationPage />} />
               <Route path="*" element={<NotFound />} />

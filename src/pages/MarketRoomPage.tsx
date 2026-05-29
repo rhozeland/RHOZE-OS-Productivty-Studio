@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { avatarGradientFor } from "@/lib/avatar-gradient";
-import ConnectMatchDeck from "@/components/connect/ConnectMatchDeck";
 import TrendingTokensLane from "@/components/discover/TrendingTokensLane";
 import SaveButton from "@/components/saved/SaveButton";
 import RoomHero from "@/components/rooms/RoomHero";
@@ -20,7 +19,6 @@ import {
   useSpaceRows,
   useCallRows,
   useEventRows,
-  KIND_META,
   type ConnectKind,
   type ConnectRow,
 } from "@/components/connect/useConnectRows";
@@ -28,19 +26,17 @@ import {
 /**
  * CONNECT — Discover marketplace.
  *
- * v9.9.2: Instagram Explore–style single-surface feed. Filter pills
- * ("All · Find Creators · Opportunities · Spaces · Events · For You") refilter
- * the unified feed inline — no navigation. Match deck stays pinned at the top.
+ * v11 Tier 1: Match Made deck removed; Events + Spaces collapse into one
+ * "Live" filter. Filters are now: All · Find Artists · Listings · Live · For You.
  */
 
-type FilterKey = "all" | "hire" | "call" | "space" | "event" | "foryou";
+type FilterKey = "all" | "hire" | "call" | "live" | "foryou";
 
 const FILTERS: { key: FilterKey; label: string; kinds: ConnectKind[] | "all" | "foryou" }[] = [
   { key: "all", label: "All", kinds: "all" },
-  { key: "hire", label: "Find Creators", kinds: ["hire"] },
+  { key: "hire", label: "Find Artists", kinds: ["hire"] },
   { key: "call", label: "Listings", kinds: ["call"] },
-  { key: "space", label: "Spaces", kinds: ["space"] },
-  { key: "event", label: "Events", kinds: ["event"] },
+  { key: "live", label: "Live", kinds: ["space", "event"] },
   { key: "foryou", label: "For You", kinds: "foryou" },
 ];
 
@@ -52,21 +48,23 @@ const KIND_TAG_COLOR: Record<ConnectKind, string> = {
 };
 
 const KIND_TAG_LABEL: Record<ConnectKind, string> = {
-  hire: "Creator",
+  hire: "Artist",
   call: "Listing",
   space: "Space",
   event: "Event",
 };
 
-// URL ?kind= back-compat → map onto new filter keys
+// URL ?kind= back-compat → map onto new filter keys.
+// Old `space`/`event` deeplinks now resolve into the merged "Live" filter.
 const URL_TO_FILTER: Record<string, FilterKey> = {
   hire: "hire",
-  space: "space",
-  spaces: "space",
+  space: "live",
+  spaces: "live",
   call: "call",
   calls: "call",
-  event: "event",
-  events: "event",
+  event: "live",
+  events: "live",
+  live: "live",
   foryou: "foryou",
   all: "all",
 };
@@ -132,11 +130,9 @@ const MarketRoomPage = () => {
     <div className="space-y-8">
       <RoomHero variant="connect" eyebrow="Connect" title="Find your next collaborator." />
 
-      {/* Matchmaking HUD — pinned regardless of filter */}
-      <ConnectMatchDeck />
-
-      {/* Dex-screener-style trending creator tokens — self-gated by liquidity */}
+      {/* Dex-screener-style trending artist tokens — self-gated by liquidity */}
       <TrendingTokensLane />
+
 
 
 

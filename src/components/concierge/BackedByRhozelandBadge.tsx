@@ -25,7 +25,7 @@ interface Props {
 }
 
 const TOOLTIP_COPY =
-  "Scoped and curated by Rhozeland. Concierge projects are matched by our team and protected by escrowed milestones.";
+  "On the Rhozeland Roster — scoped and managed by our A&R team, with escrowed milestones and on-chain proof of work.";
 
 export default function BackedByRhozelandBadge({
   variant = "pill",
@@ -43,11 +43,11 @@ export default function BackedByRhozelandBadge({
                 "text-foreground shadow-sm",
                 className,
               )}
-              aria-label="Backed by Rhozeland"
+              aria-label="On the Rhozeland Roster"
             >
               <Sparkles className="h-3.5 w-3.5 mb-0.5 opacity-70" />
               <span className="text-[8px] font-semibold uppercase tracking-widest leading-tight text-center px-1">
-                Backed by<br />Rhozeland
+                Rhozeland<br />Roster
               </span>
             </div>
           </TooltipTrigger>
@@ -73,7 +73,7 @@ export default function BackedByRhozelandBadge({
             )}
           >
             <Sparkles className="h-3 w-3 opacity-70" />
-            Backed by Rhozeland
+            On the Rhozeland Roster
           </span>
         </TooltipTrigger>
         <TooltipContent className="max-w-xs text-xs">
