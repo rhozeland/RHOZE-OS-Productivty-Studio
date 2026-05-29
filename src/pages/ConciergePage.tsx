@@ -23,15 +23,15 @@ import {
 const STEPS = [
   {
     n: "01",
-    title: "Tell us the outcome",
+    title: "Tell us the release",
     body:
-      "One paragraph. Describe the result you want — campaign, launch, identity, film, app. Skip the spec; we'll figure that out.",
+      "One paragraph. Describe what you want to ship — single, EP, music video, tour, identity. Skip the spec; we'll figure that out.",
   },
   {
     n: "02",
     title: "We scope it within 48h",
     body:
-      "A Rhozeland curator returns a scoped proposal: budget, timeline, and the 1-3 Verified creators we'd staff it with. No scoping fee, no obligation.",
+      "A Rhozeland A&R returns a scoped proposal: budget, timeline, and the 1-3 Verified artists & collaborators we'd staff it with. No scoping fee, no obligation.",
   },
   {
     n: "03",
