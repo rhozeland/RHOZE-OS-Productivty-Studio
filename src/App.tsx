@@ -78,7 +78,7 @@ import VerificationPage from "@/pages/VerificationPage";
 import SceneRoomPage from "@/pages/SceneRoomPage";
 import MarketRoomPage from "@/pages/MarketRoomPage";
 import VaultRoomPage from "@/pages/VaultRoomPage";
-import ConnectMatchPage from "@/pages/ConnectMatchPage";
+// v11 — ConnectMatchPage retired; /connect/match now redirects to /market.
 import NotFound from "./pages/NotFound";
 import CheckoutReturn from "@/pages/CheckoutReturn";
 import SubscriptionsPage from "@/pages/SubscriptionsPage";
