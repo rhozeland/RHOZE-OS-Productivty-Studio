@@ -506,6 +506,9 @@ const ProfileDetailPage = () => {
               {!isOwnProfile && id && (
                 <SaveButton type="creator" id={id} variant="chip" />
               )}
+              {/* v11 Tier 2 — promote token discovery above the fold.
+                  Returns null if creator hasn't linked a pump.fun token. */}
+              {id && <TokenDiscoveryChip creatorId={id} />}
             </div>
 
             <div className="mt-3 space-y-2.5">
