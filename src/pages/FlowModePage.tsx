@@ -122,7 +122,9 @@ const FlowModePage = () => {
   const tutorialTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flowContentRef = useRef<HTMLDivElement | null>(null);
   // Surface chip filter — drives the centered chip row above the deck.
-  type SurfaceFilter = "all" | "creators" | "listings" | "events" | "spaces";
+  // Surfaces narrowed v11.x: only "all" + "creators" remain. Listings/Events/Spaces
+  // pulled from Flow — those live on Discover/Market now.
+  type SurfaceFilter = "all" | "creators";
   const [surfaceFilter, setSurfaceFilter] = useState<SurfaceFilter>("all");
   // Categories currently driving the feed sort. When `feedScope === "all"`, this
   // is the full CATEGORIES list (no preference applied → pure global feed).
@@ -1705,7 +1707,6 @@ const FlowModePage = () => {
           {([
             { label: "All", id: "all" },
             { label: "Creators", id: "creators" },
-            { label: "Listings", id: "listings" },
           ] as { label: string; id: SurfaceFilter }[]).map((chip) => {
 
             const active = surfaceFilter === chip.id;
