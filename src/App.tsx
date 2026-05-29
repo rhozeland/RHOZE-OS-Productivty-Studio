@@ -284,8 +284,8 @@ const App = () => (
                     Legacy roots redirect; sub-routes stay live. */}
                 <Route path="/stream" element={<Navigate to="/discover" replace />} />
                 <Route path="/hub" element={<Navigate to="/discover" replace />} />
-                <Route path="/spaces" element={<Navigate to="/market?kind=space" replace />} />
-                <Route path="/events" element={<Navigate to="/market?kind=event" replace />} />
+                <Route path="/spaces" element={<Navigate to="/market?kind=live" replace />} />
+                <Route path="/events" element={<Navigate to="/market?kind=live" replace />} />
                 <Route path="/events/new" element={<Navigate to="/spaces/events/new" replace />} />
                 <Route path="/events/:id" element={<LegacyEventRedirect />} />
                 <Route path="/events/:id/manage" element={<LegacyEventRedirect manage />} />
