@@ -1483,17 +1483,10 @@ const FlowModePage = () => {
           </button>
         </div>
 
-        {/* Feed scope toggle: All categories ↔ user's preferred picks. Hidden when
-            the user has no saved preferences (preferred would equal All anyway).
-            Extracted into <FlowScopeToggle /> so it can be unit-tested in isolation. */}
-        <FlowScopeToggle
-          scope={feedScope}
-          onScopeChange={setScope}
-          visible={
-            preferredCategories.length > 0 &&
-            preferredCategories.length < CATEGORIES.length
-          }
-        />
+        {/* Feed scope + surface filter are unified into a single segmented
+            control rendered below the top bar (see further down). Keeping
+            this slot empty preserves the top-bar flex layout. */}
+        <div className="hidden sm:block" />
 
         {/* Inline scope-refresh pill — sits next to the scope toggle so the
             user sees a localized "feed is updating" affordance the moment
