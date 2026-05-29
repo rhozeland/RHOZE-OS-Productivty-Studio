@@ -237,12 +237,21 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
               <div className="space-y-1">
                 {proposals.slice(0, 4).map((p) => {
                   const turn = proposalTurn(p, userId);
-                  const turnLabel =
-                    turn === "you" ? "Your turn" : turn === "them" ? "Waiting" : "Both signed";
-                  const turnTone =
-                    turn === "you"
+                  const isDraft = p.status === "draft";
+                  const turnLabel = isDraft
+                    ? "Roadmap drafting"
+                    : turn === "you"
+                      ? "Your turn to sign"
+                      : turn === "them"
+                        ? "Waiting on them"
+                        : "Both signed";
+                  const turnTone = isDraft
+                    ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                    : turn === "you"
                       ? "bg-foreground text-background"
-                      : "bg-muted text-muted-foreground";
+                      : turn === "them"
+                        ? "bg-muted text-muted-foreground"
+                        : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300";
                   return (
                     <button
                       key={p.id}
@@ -255,7 +264,7 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
                         </span>
                         <span
                           className={cn(
-                            "text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0",
+                            "text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap",
                             turnTone,
                           )}
                         >
