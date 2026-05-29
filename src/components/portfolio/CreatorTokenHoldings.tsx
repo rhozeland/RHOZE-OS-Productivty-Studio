@@ -247,7 +247,7 @@ const CreatorTokenHoldings = () => {
             Find a creator with a live token and back them early.
           </p>
           <div className="flex justify-center pt-1">
-            <Link to="/charts">
+            <Link to="/discover?view=creators">
               <Button size="sm" variant="outline">
                 Go to Charts
               </Button>
