@@ -188,8 +188,8 @@ const ReleasePage = () => {
                   <img src={owner.avatar_url} alt="" className="h-6 w-6 rounded-full object-cover" />
                 )}
                 <span className="text-sm font-medium">{owner.display_name ?? owner.username}</span>
-                {owner.token_ticker && (
-                  <Badge variant="outline" className="text-[10px]">${owner.token_ticker}</Badge>
+                {linkedToken?.ticker && (
+                  <Badge variant="outline" className="text-[10px]">${linkedToken.ticker}</Badge>
                 )}
               </Link>
             )}
