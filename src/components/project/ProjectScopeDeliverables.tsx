@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { computeContentHash, formatFileSize, shortHash } from "@/lib/content-hash";
+import { GoogleDriveAttachButton, type DrivePickedFile } from "@/components/integrations/GoogleDriveAttachButton";
 
 const SCOPE_CATEGORIES = [
   { value: "Sound", icon: "🎵" },
