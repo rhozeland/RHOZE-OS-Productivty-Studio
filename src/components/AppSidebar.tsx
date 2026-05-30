@@ -8,6 +8,8 @@ import {
   Trophy,
   ShieldCheck,
   Flame,
+  Users,
+  MessageCircle,
 } from "lucide-react";
 
 import { motion } from "framer-motion";
@@ -31,14 +33,17 @@ import {
 } from "@/components/ui/sidebar";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-// v11 Pillar 6 — Sidebar trimmed to 3 destinations. Portfolio is no longer a
-// primary tab (still reachable from Creator Pass), so the nav reads as a
-// straight line: Discover artists → watch the feed → manage your pass.
+// v11 Pillar 7 — Sidebar = 5 destinations. Discover (artists) and Feed (Flow)
+// are distinct surfaces, not merged. Connect = creators/listings/events
+// marketplace. Messages and Creator Pass round it out.
 const pillarItems = [
   { icon: Compass, label: "Discover", path: "/discover" },
   { icon: Home, label: "Feed", path: "/flow" },
+  { icon: Users, label: "Connect", path: "/market" },
+  { icon: MessageCircle, label: "Messages", path: "/messages" },
   { icon: Trophy, label: "Creator Pass", path: "/credits" },
 ];
+
 
 
 const AppSidebar = () => {

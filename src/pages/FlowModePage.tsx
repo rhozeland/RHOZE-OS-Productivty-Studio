@@ -85,23 +85,23 @@ import {
 import { useFlowCoinsByCreator } from "@/hooks/useFlowCoinsByWork";
 import { awardEngagementReward } from "@/lib/award-engagement-reward";
 
-const CATEGORIES = ["design", "music", "photo", "video", "writing"];
+// v11 Pillar 7 — Share to Flow collapsed to 3 vibes: music · video · photo.
+// "Design" and "Writing" removed (visuals can still be uploaded under photo
+// or layered onto music). Default vibe = music.
+const CATEGORIES = ["music", "video", "photo"];
 
 const CATEGORY_ICONS: Record<string, { Icon: typeof Palette; label: string; tint: string }> = {
-  design: { Icon: Palette, label: "Design", tint: "from-fuchsia-500/20 to-pink-500/20 text-fuchsia-500" },
   music: { Icon: Music, label: "Music", tint: "from-violet-500/20 to-indigo-500/20 text-violet-500" },
-  photo: { Icon: Camera, label: "Photo", tint: "from-amber-500/20 to-orange-500/20 text-amber-500" },
   video: { Icon: Video, label: "Video", tint: "from-rose-500/20 to-red-500/20 text-rose-500" },
-  writing: { Icon: PenLine, label: "Writing", tint: "from-emerald-500/20 to-teal-500/20 text-emerald-500" },
+  photo: { Icon: Camera, label: "Photo", tint: "from-amber-500/20 to-orange-500/20 text-amber-500" },
 };
 
 const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; linkHint: string }> = {
-  design: { accept: "image/*,.pdf,.ai,.psd,.fig", hint: "JPG, PNG, PDF, or design files", linkHint: "Paste a link (optional)" },
   music: { accept: "audio/*,.mp3,.wav,.flac,.aac", hint: "MP3, WAV, FLAC, or audio files", linkHint: "Paste a link (optional)" },
-  photo: { accept: "image/*,.raw,.cr2,.nef", hint: "JPG, PNG, TIFF, or RAW files", linkHint: "Paste a link (optional)" },
   video: { accept: "video/*,.mp4,.mov,.webm", hint: "MP4, MOV, WebM, or video files", linkHint: "Paste a link (optional)" },
-  writing: { accept: ".txt,.md,.pdf,.doc,.docx", hint: "TXT, PDF, DOC, or text files", linkHint: "Paste a link (optional)" },
+  photo: { accept: "image/*,.raw,.cr2,.nef", hint: "JPG, PNG, TIFF, or RAW files", linkHint: "Paste a link (optional)" },
 };
+
 
 const FlowModePage = () => {
   const { user } = useAuth();
@@ -210,7 +210,7 @@ const FlowModePage = () => {
   const [shareItem, setShareItem] = useState<any>(null);
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
-  const [newCategory, setNewCategory] = useState("design");
+  const [newCategory, setNewCategory] = useState("music");
   const [newLink, setNewLink] = useState("");
   const [newFile, setNewFile] = useState<File | null>(null); // legacy single-file (unused, kept for type-stability if any)
   const [fileError, setFileError] = useState<string | null>(null);
