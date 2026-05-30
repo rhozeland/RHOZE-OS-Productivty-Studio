@@ -68,9 +68,6 @@ const EMPTY_COPY: Record<BoardKind, { title: string; description: string }> = {
   space: { title: "No spaces yet", description: "Studios, venues, and shared rooms hosted by creators land here." },
 };
 
-const SearchIconWrap = ({ className }: { className?: string }) => (
-  <SearchIcon className={className} />
-);
 
 interface Props {
   kind: BoardKind;
