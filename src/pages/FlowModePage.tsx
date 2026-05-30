@@ -96,10 +96,10 @@ const CATEGORY_ICONS: Record<string, { Icon: typeof Palette; label: string; tint
   photo: { Icon: Camera, label: "Photo", tint: "from-amber-500/20 to-orange-500/20 text-amber-500" },
 };
 
-const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; linkHint: string }> = {
-  music: { accept: "audio/*,.mp3,.wav,.flac,.aac", hint: "MP3, WAV, FLAC, or audio files", linkHint: "Paste a link (optional)" },
-  video: { accept: "video/*,.mp4,.mov,.webm", hint: "MP4, MOV, WebM, or video files", linkHint: "Paste a link (optional)" },
-  photo: { accept: "image/*,.raw,.cr2,.nef", hint: "JPG, PNG, TIFF, or RAW files", linkHint: "Paste a link (optional)" },
+const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; linkPlaceholder: string }> = {
+  music: { accept: "audio/*,.mp3,.wav,.flac,.aac", hint: "Drop an audio file",        linkPlaceholder: "Or paste Spotify, Apple Music, or SoundCloud link" },
+  video: { accept: "video/*,.mp4,.mov,.webm",      hint: "Drop a video file",         linkPlaceholder: "Or paste a YouTube or Vimeo link" },
+  photo: { accept: "image/*,.raw,.cr2,.nef",       hint: "Drop a photo",              linkPlaceholder: "Or paste an Instagram or Pinterest link" },
 };
 
 
