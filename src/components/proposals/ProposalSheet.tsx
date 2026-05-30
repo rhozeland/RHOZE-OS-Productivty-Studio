@@ -35,7 +35,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, PenLine, Plus, Trash2, CheckCircle2, X, Coins } from "lucide-react";
+import { Loader2, PenLine, Plus, Trash2, CheckCircle2, X, DollarSign } from "lucide-react";
+import BudgetSplitViz from "@/components/project/BudgetSplitViz";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -366,21 +367,27 @@ const ProposalEditor = ({ proposalId, onClose, onConverted }: EditorProps) => {
 
         <div className="space-y-2">
           <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-            Overall budget (credits) — optional
+            Total budget (USD)
           </label>
-          <Input
-            type="number"
-            min={0}
-            disabled={!editable}
-            value={localBudget}
-            onChange={(e) => setLocalBudget(Number(e.target.value || 0))}
-          />
-          <p className="text-[11px] text-muted-foreground">
-            Milestone total: <span className="font-mono">{milestoneTotal} cr</span>
-            {localBudget > 0 && milestoneTotal !== localBudget && (
-              <span className="ml-1 text-amber-600">— doesn't match budget</span>
-            )}
-          </p>
+          <div className="relative">
+            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="number"
+              min={0}
+              step="any"
+              disabled={!editable}
+              value={localBudget || ""}
+              onChange={(e) => setLocalBudget(Number(e.target.value || 0))}
+              placeholder="e.g. 2500"
+              className="pl-9 text-lg font-medium"
+            />
+          </div>
+          <BudgetSplitViz budget={localBudget} />
+          {milestoneTotal > 0 && Math.abs(milestoneTotal - localBudget) > 0.5 && (
+            <p className="text-[11px] text-amber-600">
+              Milestones add up to {milestoneTotal.toLocaleString("en-US", { style: "currency", currency: "USD" })} — doesn't match budget.
+            </p>
+          )}
         </div>
 
         <Separator />
@@ -408,7 +415,7 @@ const ProposalEditor = ({ proposalId, onClose, onConverted }: EditorProps) => {
                     onChange={(e) => updateMilestone.mutate({ id: m.id, title: e.target.value })}
                   />
                   <div className="relative w-28 shrink-0">
-                    <Coins className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                     <Input
                       type="number"
                       min={0}
