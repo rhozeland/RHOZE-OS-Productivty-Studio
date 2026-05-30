@@ -64,7 +64,7 @@ const ReleasePage = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, username, avatar_url, token_mint_address, token_ticker")
+        .select("display_name, username, avatar_url")
         .eq("user_id", project!.user_id)
         .maybeSingle();
       return data;
