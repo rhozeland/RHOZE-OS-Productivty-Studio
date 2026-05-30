@@ -189,14 +189,19 @@ const FlowModePage = () => {
   const [addOpen, setAddOpen] = useState(false);
   // Open the Share-to-Flow composer when navigated to with ?share=1
   // (used by the dock "+" button and PostMenuButton's "Post Work" option).
+  // Optionally accept ?vibe=music|video|photo to pre-select the upload vibe.
   useEffect(() => {
     if (searchParams.get("share") === "1") {
       setAddOpen(true);
+      const vibe = searchParams.get("vibe");
+      if (vibe && CATEGORIES.includes(vibe)) setNewCategory(vibe);
       const next = new URLSearchParams(searchParams);
       next.delete("share");
+      next.delete("vibe");
       setSearchParams(next, { replace: true });
     }
   }, [searchParams, setSearchParams]);
+
   const [viewMode, setViewMode] = useState<"swipe" | "browse">(
     searchParams.get("view") === "browse" ? "browse" : "swipe",
   );
