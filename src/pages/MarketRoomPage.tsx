@@ -140,7 +140,7 @@ const MarketRoomPage = () => {
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-none -mx-1 px-1 pb-1">
           {FILTERS.map(({ key, label }) => {
             const active = filter === key;
-            const Icon = key === "all" ? LayoutGrid : key === "foryou" ? Sparkles : null;
+            const Icon = key === "all" ? LayoutGrid : null;
             return (
               <button
                 key={key}
