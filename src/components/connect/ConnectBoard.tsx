@@ -218,9 +218,24 @@ const ConnectBoard = ({ kind, search = "" }: Props) => {
           );
         })}
       </div>
+
+      {/* Roadmap-first proposal sheet — every "Start a project" path opens here.
+          Project only materializes once both parties sign (DB handles it). */}
+      <ProposalSheet
+        open={!!proposalSeed}
+        onOpenChange={(v) => { if (!v) setProposalSeed(null); }}
+        newProposal={proposalSeed ? {
+          counterpartyId: proposalSeed.counterpartyId,
+          role: "client",
+          title: proposalSeed.title,
+          summary: proposalSeed.summary ?? undefined,
+          listingId: proposalSeed.listingId,
+        } : null}
+      />
     </div>
   );
 };
+
 
 const HeroPreview = ({
   row,
