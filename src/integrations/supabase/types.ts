@@ -3502,8 +3502,11 @@ export type Database = {
       }
       project_proposals: {
         Row: {
+          anchored_at: string | null
           budget_credits: number
           client_id: string
+          client_signature_hash: string | null
+          client_signature_tx: string | null
           client_signed_at: string | null
           contract_id: string | null
           created_at: string
@@ -3514,15 +3517,23 @@ export type Database = {
           source_listing_id: string | null
           source_message_id: string | null
           specialist_id: string
+          specialist_signature_hash: string | null
+          specialist_signature_tx: string | null
           specialist_signed_at: string | null
           status: string
           summary: string | null
+          terms_hash: string | null
+          terms_text: string | null
+          terms_version: string
           title: string
           updated_at: string
         }
         Insert: {
+          anchored_at?: string | null
           budget_credits?: number
           client_id: string
+          client_signature_hash?: string | null
+          client_signature_tx?: string | null
           client_signed_at?: string | null
           contract_id?: string | null
           created_at?: string
@@ -3533,15 +3544,23 @@ export type Database = {
           source_listing_id?: string | null
           source_message_id?: string | null
           specialist_id: string
+          specialist_signature_hash?: string | null
+          specialist_signature_tx?: string | null
           specialist_signed_at?: string | null
           status?: string
           summary?: string | null
+          terms_hash?: string | null
+          terms_text?: string | null
+          terms_version?: string
           title: string
           updated_at?: string
         }
         Update: {
+          anchored_at?: string | null
           budget_credits?: number
           client_id?: string
+          client_signature_hash?: string | null
+          client_signature_tx?: string | null
           client_signed_at?: string | null
           contract_id?: string | null
           created_at?: string
@@ -3552,9 +3571,14 @@ export type Database = {
           source_listing_id?: string | null
           source_message_id?: string | null
           specialist_id?: string
+          specialist_signature_hash?: string | null
+          specialist_signature_tx?: string | null
           specialist_signed_at?: string | null
           status?: string
           summary?: string | null
+          terms_hash?: string | null
+          terms_text?: string | null
+          terms_version?: string
           title?: string
           updated_at?: string
         }
@@ -5409,6 +5433,10 @@ export type Database = {
         Args: { _contract_id: string; _reason?: string; _requester_id: string }
         Returns: undefined
       }
+      compute_proposal_terms_hash: {
+        Args: { _proposal_id: string }
+        Returns: string
+      }
       convert_concierge_request: {
         Args: { _request_id: string }
         Returns: string
@@ -5790,6 +5818,10 @@ export type Database = {
       record_contribution_proof: {
         Args: { _action_type: string; _metadata?: Json; _reference_id: string }
         Returns: string
+      }
+      record_proposal_signature_anchor: {
+        Args: { _proposal_id: string; _side: string; _tx_signature: string }
+        Returns: undefined
       }
       record_rhoze_topup: {
         Args: {
