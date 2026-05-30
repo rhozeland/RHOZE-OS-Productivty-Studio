@@ -860,36 +860,41 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
         </TabsContent>
 
         <TabsContent value="projects" className="mt-4 space-y-6">
-          {/* Pipeline: live listings + the inquiries they generate.
-              Sits above active projects so the social → contract flow reads
-              top-down: someone inquires on a listing → convert to project. */}
-          <details
-            id="listings-pipeline"
-            className="surface-card p-4 group [&_summary::-webkit-details-marker]:hidden"
-            open={pendingCount > 0}
-          >
-            <summary className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-foreground list-none">
-              <Store className="h-4 w-4 text-primary" /> Listings & inquiries
-              {pendingCount > 0 && (
-                <span className="ml-1 h-5 px-2 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-medium">
-                  {pendingCount} pending
-                </span>
-              )}
-              <span className="ml-auto text-[11px] text-muted-foreground font-normal">
-                Inquiries convert into projects below.
-              </span>
-              <ArrowRight className="ml-2 h-4 w-4 text-muted-foreground transition-transform rotate-90 group-open:-rotate-90" />
-            </summary>
-            <div className="mt-4 space-y-5">
-              <LiveInquiriesFeed userId={user.id} />
-              {!!allInquiries?.length && (
-                <div id="inquiries-section" className="space-y-3 scroll-mt-24">
-                  {allInquiries.map((i) => renderInquiry(i))}
+          <section className="surface-card p-4 sm:p-5 space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Store className="h-4 w-4 text-primary" /> Interest inbox
+                  {pendingCount > 0 && (
+                    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-medium text-primary-foreground">
+                      {pendingCount}
+                    </span>
+                  )}
                 </div>
-              )}
-              <ListingsTab userId={user.id} />
+                <p className="text-xs text-muted-foreground">
+                  Keep this simple: interest comes in here, then you turn the right fit into a project roadmap.
+                </p>
+              </div>
+              <div className="shrink-0">
+                <ListingsTab userId={user.id} />
+              </div>
             </div>
-          </details>
+
+            <LiveInquiriesFeed userId={user.id} />
+
+            {!!allInquiries?.length ? (
+              <div id="inquiries-section" className="space-y-3 scroll-mt-24">
+                {allInquiries.map((i) => renderInquiry(i))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-8 text-center">
+                <p className="text-sm font-medium text-foreground">No interest yet</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Post a listing, event, or space from Connect and the replies will land here.
+                </p>
+              </div>
+            )}
+          </section>
 
           {/* Active project threads — chat, roadmap, vault, splits. */}
           <div>
