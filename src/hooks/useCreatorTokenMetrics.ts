@@ -41,17 +41,16 @@ async function fetchPumpFun(mint: string): Promise<Partial<CreatorTokenMetrics>>
     const res = await fetch(`https://frontend-api-v3.pump.fun/coins/${mint}`);
     if (!res.ok) return {};
     const j = await res.json();
+    const ath = num(j?.ath_market_cap ?? j?.market_cap_ath ?? null);
+    const mc = num(j?.usd_market_cap);
     return {
-      marketCapUsd: num(j?.usd_market_cap),
+      marketCapUsd: mc,
+      athMarketCapUsd: ath,
       holderCount: num(j?.num_holders ?? j?.holder_count),
-      // pump.fun returns virtual reserves pre-migration; use sol reserves * sol price ≈ liquidity proxy
       liquidityUsd: num(j?.virtual_sol_reserves) != null && num(j?.virtual_token_reserves) != null
-        ? (num(j?.virtual_sol_reserves)! / 1e9) * 150 // rough SOL≈$150 fallback
+        ? (num(j?.virtual_sol_reserves)! / 1e9) * 150
         : null,
-      // pump.fun coin response exposes the creator wallet — used to deeplink
-      // the artist into their own pump.fun rewards dashboard.
       creatorWallet: typeof j?.creator === "string" ? j.creator : null,
-      // approximate cumulative USD volume from `usd_volume` when present
       volumeUsd: num(j?.usd_volume ?? j?.volume_usd ?? null),
       source: "pump.fun",
     };
