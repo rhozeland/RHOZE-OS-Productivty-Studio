@@ -1727,67 +1727,8 @@ const FlowModePage = () => {
         </div>
       </div>
 
-      {/* v11 Pillar 7 — Feed tabs: All · Following. "Following" only appears
-          when the user has saved category preferences (it would equal "All"
-          otherwise). The "Creators" surface filter was retired in this pass;
-          surfaceFilter stays "all". Tabs sit at the top of the feed so users
-          flip scopes without losing the active card. */}
-      <div className="relative z-10 flex justify-center px-4 pt-2 pb-1 md:pt-3">
-        <div
-          role="tablist"
-          aria-label="Filter feed"
-          className="inline-flex items-center gap-1 rounded-full border border-border/40 bg-background/80 backdrop-blur-xl px-1.5 py-1.5 shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.25)]"
-        >
-          {(() => {
-            const showFollowing =
-              preferredCategories.length > 0 &&
-              preferredCategories.length < CATEGORIES.length;
-            const tabs: {
-              id: string;
-              label: string;
-              active: boolean;
-              onClick: () => void;
-            }[] = [];
-            tabs.push({
-              id: "all",
-              label: "All",
-              active: feedScope === "all" || !showFollowing,
-              onClick: () => {
-                setSurfaceFilter("all");
-                setScope("all");
-              },
-            });
-            if (showFollowing) {
-              tabs.push({
-                id: "following",
-                label: "Following",
-                active: feedScope === "preferred",
-                onClick: () => {
-                  setSurfaceFilter("all");
-                  setScope("preferred");
-                },
-              });
-            }
-            return tabs.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={tab.active}
-                onClick={tab.onClick}
-                className={cn(
-                  "shrink-0 rounded-full px-4 py-1.5 text-xs font-medium tracking-tight transition-all duration-200",
-                  tab.active
-                    ? "bg-foreground text-background shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
-                )}
-              >
-                {tab.label}
-              </button>
-            ));
-          })()}
-        </div>
-      </div>
+      {/* Feed tabs (All · Following) moved into the top bar above. */}
+
 
 
       {/* Non-"All" filters are handled by feeding mapped Connect rows into
