@@ -2109,6 +2109,11 @@ const FlowModePage = () => {
         onOpenChange={(o) => { setCommentSheetOpen(o); if (!o) setCommentItem(null); }}
         flowItemId={commentItem?.id ?? null}
         itemTitle={commentItem?.title}
+        liked={commentItem ? engagement?.liked.has(commentItem.id) : undefined}
+        likeCount={commentItem ? (engagement?.likes.get(commentItem.id) ?? 0) : undefined}
+        commentCount={commentItem ? (engagement?.comments.get(commentItem.id) ?? 0) : undefined}
+        onLike={commentItem ? () => performAction("like", undefined, commentItem) : undefined}
+        onShare={commentItem ? () => performAction("share", undefined, commentItem) : undefined}
       />
 
       {/* Creator peek sheet (up-swipe / avatar tap). */}
