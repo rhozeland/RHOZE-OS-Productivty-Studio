@@ -88,6 +88,15 @@ const COVER_COLORS = [
   "#1f2937",
 ];
 
+type ProjectPrefill = {
+  title?: string;
+  listingId?: string;
+  collaboratorId?: string | null;
+  scope?: string | null;
+  sourceKind?: "hire" | "space" | "call" | "event";
+  sourceId?: string;
+};
+
 const ProjectsInbox = ({ userId }: { userId: string }) => {
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
@@ -707,6 +716,7 @@ const NewProjectDialog = ({
 }) => {
   const [title, setTitle] = useState("");
   const [coverColor, setCoverColor] = useState(COVER_COLORS[0]);
+  const [prefill, setPrefill] = useState<ProjectPrefill | null>(null);
 
   // v10.3 — pick up prefill stashed by ListingLightbox / SupportSheet "Commission" flow.
   useEffect(() => {
@@ -716,6 +726,7 @@ const NewProjectDialog = ({
       if (!raw) return;
       const pref = JSON.parse(raw);
       if (pref?.title) setTitle(pref.title);
+      setPrefill(pref);
       sessionStorage.removeItem("newProjectPrefill");
     } catch { /* ignore */ }
   }, [open]);
@@ -727,7 +738,7 @@ const NewProjectDialog = ({
         _title: title.trim(),
         _description: null,
         _vision: null,
-        _scope_of_work: null,
+        _scope_of_work: prefill?.scope ?? null,
         _project_type: "collaborative",
         _status: "active",
         _cover_color: coverColor,
@@ -735,11 +746,24 @@ const NewProjectDialog = ({
       if (error) throw error;
       const project = Array.isArray(data) ? data[0] : data;
       if (!project?.id) throw new Error("Project creation returned no project.");
+
+      if (prefill?.collaboratorId) {
+        const { error: collabError } = await supabase
+          .from("project_collaborators")
+          .upsert({
+            project_id: project.id,
+            user_id: prefill.collaboratorId,
+            role: "member",
+          }, { onConflict: "project_id,user_id" });
+        if (collabError) throw collabError;
+      }
+
       return project;
     },
     onSuccess: (p: any) => {
       setTitle("");
       setCoverColor(COVER_COLORS[0]);
+       setPrefill(null);
       onOpenChange(false);
       onCreated(p.id);
     },
@@ -752,7 +776,7 @@ const NewProjectDialog = ({
         <DialogHeader>
           <DialogTitle className="font-display">New project</DialogTitle>
           <DialogDescription>
-            Just a name and a color. Everything else lives inside the workspace.
+              Start the roadmap cleanly, then shape scope, milestones, and terms inside the workspace.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -762,6 +786,18 @@ const NewProjectDialog = ({
           }}
           className="space-y-5 pt-2"
         >
+          {prefill?.sourceKind && (
+            <div className="rounded-2xl border border-border bg-muted/35 px-4 py-3">
+              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                Project source
+              </p>
+              <p className="mt-1 text-sm font-medium text-foreground">{title || "Untitled source"}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                This will create the project, add the other person when available, and drop you into the roadmap workspace.
+              </p>
+            </div>
+          )}
+
           <div className="space-y-2">
             <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
               Project name
