@@ -189,12 +189,31 @@ const ProposalEditor = ({ proposalId, onClose, onConverted }: EditorProps) => {
   const [localTitle, setLocalTitle] = useState("");
   const [localSummary, setLocalSummary] = useState("");
   const [localBudget, setLocalBudget] = useState<number>(0);
+  const [localTerms, setLocalTerms] = useState<string>("");
+  const [termsOpen, setTermsOpen] = useState(false);
+  const [termsEdited, setTermsEdited] = useState(false);
+
+  // Pull own profile name so we can fill the agreement template.
+  const { data: selfProfile } = useQuery({
+    queryKey: ["proposal-self-profile", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, username")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data ?? { display_name: null, username: null };
+    },
+  });
 
   useEffect(() => {
     if (!proposal) return;
     setLocalTitle(proposal.title ?? "");
     setLocalSummary(proposal.summary ?? "");
     setLocalBudget(Number(proposal.budget_credits ?? 0));
+    setLocalTerms(proposal.terms_text ?? "");
+    setTermsEdited(!!proposal.terms_text);
   }, [proposal]);
 
   const isMine = !!user && !!proposal &&
