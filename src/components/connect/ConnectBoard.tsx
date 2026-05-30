@@ -63,10 +63,10 @@ const KIND_CHIP: Record<ConnectKind, { label: string; cls: string; Icon: typeof 
 };
 
 const EMPTY_COPY: Record<BoardKind, { title: string; description: string }> = {
-  all:      { title: "Nothing here yet", description: "Be the first to post a listing, event, or space." },
+  all:      { title: "Nothing here yet", description: "Be the first to start a project — it shows up here for collaborators to join." },
   hire:     { title: "No creators available", description: "Verified creators show up here as they sign up." },
-  call:     { title: "No listings yet", description: "Listings are how creators announce work, collabs, and briefs." },
-  listings: { title: "No listings yet", description: "Spaces to book, events to attend, and open calls all live here." },
+  call:     { title: "No open projects yet", description: "Start a project from the button above and invite collaborators." },
+  listings: { title: "No open projects yet", description: "Start a project from the button above and invite collaborators." },
   event:    { title: "No upcoming events", description: "Be the first to host — Rhozeland surfaces your event the moment it's published." },
   space:    { title: "No spaces yet", description: "Studios, venues, and shared rooms hosted by creators land here." },
 };

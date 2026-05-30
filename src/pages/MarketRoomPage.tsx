@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, LayoutGrid, ChevronDown, Sparkles } from "lucide-react";
+import { Search, LayoutGrid, ChevronDown, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
@@ -17,27 +17,39 @@ import ConnectBoard, { type BoardKind } from "@/components/connect/ConnectBoard"
 /**
  * CONNECT — `/market`
  *
- * v11 Pillar 9: 3 filters only — All · Creators · Listings. "Listings" is
- * the catch-all where creators surface anything they offer or need (events,
- * spaces, open calls, collabs). Two header CTAs:
- *   • + Listing  → opens CreateListingDialog (its own flow → projects)
- *   • + Post     → standard Share-to-Flow composer
+ * v11 Pillar 8: 3 filters — All · Creators · Projects.
+ * The header has ONE primary CTA: "Start a Project" → opens the listing
+ * intake (PostMenuButton intent="listing"), which is the single front door
+ * to authoring work, collabs, or open calls. Posting events / spaces still
+ * lives on their dedicated create pages — Connect is a discovery + start
+ * surface only.
  */
 
-type FilterKey = "all" | "hire" | "listings";
+type FilterKey = "all" | "hire" | "projects";
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "all",      label: "All" },
   { key: "hire",     label: "Creators" },
-  { key: "listings", label: "Listings" },
+  { key: "projects", label: "Projects" },
 ];
 
 const URL_TO_FILTER: Record<string, FilterKey> = {
   hire: "hire", creator: "hire", creators: "hire",
-  space: "listings", spaces: "listings",
-  call: "listings", calls: "listings", listing: "listings", listings: "listings",
-  event: "listings", events: "listings", live: "listings",
+  space: "projects", spaces: "projects",
+  call: "projects", calls: "projects",
+  listing: "projects", listings: "projects",
+  project: "projects", projects: "projects",
+  event: "projects", events: "projects", live: "projects",
   all: "all", foryou: "all",
+};
+
+// Map our UI filter to the underlying ConnectBoard kind. "Projects" still
+// rides the listings rows (open calls + service offers) under the hood —
+// we just renamed the chip.
+const FILTER_TO_BOARD: Record<FilterKey, BoardKind> = {
+  all: "all",
+  hire: "hire",
+  projects: "listings",
 };
 
 const MarketRoomPage = () => {
@@ -63,7 +75,7 @@ const MarketRoomPage = () => {
     <div className="space-y-6">
       <RoomHero variant="connect" eyebrow="Connect" title="Find your next collaborator." />
 
-      {/* Filter chips + Post on the right */}
+      {/* Filter chips + single "Start a Project" CTA on the right */}
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-none -mx-1 px-1 min-w-0 flex-1">
           {FILTERS.map(({ key, label }) => {
@@ -92,25 +104,14 @@ const MarketRoomPage = () => {
           trigger={
             <button
               type="button"
-              className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-foreground/30 bg-card px-3 sm:px-4 py-2 text-xs font-semibold text-foreground hover:bg-foreground hover:text-background transition-colors"
-            >
-              <LayoutGrid className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Listing</span>
-            </button>
-          }
-        />
-        <PostMenuButton
-          trigger={
-            <button
-              type="button"
               className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-foreground text-background px-3 sm:px-4 py-2 text-xs font-semibold hover:opacity-90 transition-opacity shadow-sm"
             >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Post</span>
+              <Plus className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Start a Project</span>
+              <span className="sm:hidden">Start</span>
             </button>
           }
         />
-
       </div>
 
       {/* Search + sort */}
@@ -139,7 +140,7 @@ const MarketRoomPage = () => {
         </div>
       </div>
 
-      <ConnectBoard kind={filter as BoardKind} search={search} />
+      <ConnectBoard kind={FILTER_TO_BOARD[filter]} search={search} />
     </div>
   );
 };
