@@ -108,10 +108,12 @@ const ListingsBoard = () => {
           listingId: l.id,
           collaboratorId: l.user_id,
           scope: l.description ?? null,
+          sourceKind: "call",
+          sourceId: l.id,
         }),
       );
     } catch {}
-    navigate(`/messages?tab=projects&new=1`);
+    navigate(`/messages?tab=projects&new=1&source=call`);
   };
 
   return (
