@@ -38,7 +38,7 @@ type PostIntent = {
   title: string;
   description: string;
   cta: string;
-  Icon: typeof Flame;
+  Icon: typeof Shield;
 };
 
 // Pillar 6: dropped "Update" (notes are accessible from DMs/profile only) — the
@@ -198,8 +198,6 @@ const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
           </div>
         </DialogContent>
       </Dialog>
-
-      <NoteComposer open={noteOpen} onOpenChange={setNoteOpen} />
 
       <CreateListingDialog
         open={createListingOpen}
