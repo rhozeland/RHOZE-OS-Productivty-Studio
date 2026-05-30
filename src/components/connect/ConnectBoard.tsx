@@ -51,6 +51,7 @@ import {
   type ConnectRow,
 } from "@/components/connect/useConnectRows";
 import DiscoverTable from "@/components/discover/DiscoverTable";
+import ProposalSheet from "@/components/proposals/ProposalSheet";
 
 export type BoardKind = ConnectKind | "all" | "listings";
 
