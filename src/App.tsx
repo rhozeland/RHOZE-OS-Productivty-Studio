@@ -377,6 +377,9 @@ const App = () => (
                 {/* v11 — Concierge rebranded to A&R / Label Services. Old URL redirects. */}
                 <Route path="/concierge" element={<Navigate to="/label-services" replace />} />
                 <Route path="/label-services" element={<ConciergePage />} />
+                {/* v11 Pillar 3 — "why launch a coin?" education hub. */}
+                <Route path="/why-coin" element={<WhyLaunchCoinPage />} />
+                <Route path="/launch-coin" element={<Navigate to="/why-coin" replace />} />
               </Route>
               <Route path="/boards/:id" element={<SmartboardPresentationPage />} />
               <Route path="*" element={<NotFound />} />
