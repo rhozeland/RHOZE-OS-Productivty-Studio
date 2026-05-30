@@ -295,15 +295,59 @@ const ProposalEditor = ({ proposalId, onClose, onConverted }: EditorProps) => {
     onError: (e: any) => toast.error(e.message),
   });
 
+  // Computed canonical agreement text — what the user actually sees + signs.
+  const counterpartyName =
+    counterpartyProfile?.display_name || counterpartyProfile?.username || "Counterparty";
+  const myName = selfProfile?.display_name || selfProfile?.username || (user?.email?.split("@")[0] ?? "You");
+  const clientName = myRole === "client" ? myName : counterpartyName;
+  const creatorName = myRole === "specialist" ? myName : counterpartyName;
+
+  const renderedTerms = useMemo(() => {
+    if (termsEdited && localTerms.trim().length > 0) return localTerms;
+    return buildDefaultAgreement({
+      clientName,
+      creatorName,
+      title: localTitle || "Untitled project",
+      summary: localSummary,
+      totalBudget: Number(localBudget || 0),
+      currency: (proposal?.currency as string) || "usd",
+      milestones: (milestones ?? []).map((m: any) => ({
+        title: m.title,
+        credit_amount: Number(m.credit_amount ?? 0),
+      })),
+    });
+  }, [termsEdited, localTerms, clientName, creatorName, localTitle, localSummary, localBudget, proposal?.currency, milestones]);
+
+  const anchorSignature = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("anchor-proposal-signature", {
+        body: { proposal_id: proposalId },
+      });
+      if (error) throw new Error(error.message);
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data as { signature: string; explorer: string; side: string };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["project-proposal", proposalId] });
+    },
+    onError: (e: any) => {
+      // Non-fatal — off-chain signature is already valid, anchor can retry.
+      console.warn("anchor failed", e);
+      toast.error("Anchor on-chain failed — you can retry from the proposal.");
+    },
+  });
+
   const sign = useMutation({
     mutationFn: async () => {
-      // Save pending text edits first so the signed snapshot is current.
+      // Persist the agreement snapshot before signing so the RPC hashes the
+      // exact text the user is looking at.
       await supabase
         .from("project_proposals")
         .update({
           title: localTitle.trim() || "Untitled project",
           summary: localSummary.trim() || null,
           budget_credits: Number.isFinite(localBudget) ? localBudget : 0,
+          terms_text: renderedTerms,
         })
         .eq("id", proposalId);
 
@@ -311,12 +355,23 @@ const ProposalEditor = ({ proposalId, onClose, onConverted }: EditorProps) => {
       if (error) throw error;
       return data as { status: string; contract_id: string | null; project_id: string | null };
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       qc.invalidateQueries({ queryKey: ["project-proposal", proposalId] });
       qc.invalidateQueries({ queryKey: ["project-proposals"] });
+
+      // Anchor my newly-recorded signature on-chain (non-blocking UX).
+      anchorSignature.mutate(undefined, {
+        onSuccess: (res) => {
+          toast.success("Signature anchored on Solana");
+        },
+      });
+
       if (data?.status === "signed" && data.project_id) {
-        toast.success("Project locked — work starts now");
-        onConverted(data.project_id);
+        // Give the anchor call a beat then redirect to the project workspace.
+        setTimeout(() => {
+          toast.success("Project locked — work starts now");
+          onConverted(data.project_id!);
+        }, 600);
       } else {
         toast.success("Signed — waiting on the other side");
       }
