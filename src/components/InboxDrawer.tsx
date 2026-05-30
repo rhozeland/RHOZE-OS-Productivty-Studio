@@ -180,8 +180,10 @@ const InboxDrawer = () => {
             </TabsList>
           </div>
 
-          <TabsContent value="messages" className="flex-1 overflow-y-auto mt-0 px-3 pb-4">
-            <MessagesPage />
+          <TabsContent value="messages" className="flex-1 overflow-y-auto mt-0 pb-4 [&_h1]:hidden [&>div>div>div:first-child]:hidden">
+            <div className="px-2">
+              <MessagesPage />
+            </div>
           </TabsContent>
 
           <TabsContent value="notifications" className="flex-1 flex flex-col min-h-0 mt-0">
