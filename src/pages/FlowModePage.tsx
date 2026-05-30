@@ -1673,19 +1673,19 @@ const FlowModePage = () => {
         </div>
       </div>
 
-      {/* Unified feed control — merges the old "For You / All" scope toggle
-          with the surface filter ("Creators") into a single segmented pill so
-          the user sees one source of truth for what's in the deck. "For You"
-          is hidden when the user has no saved preferences (it would equal
-          "All" anyway). Each tab sets both surface + scope in one click. */}
-      <div className="relative z-10 flex justify-center px-4 pt-2 pb-1 md:pt-4">
+      {/* v11 Pillar 7 — Feed tabs: All · Following. "Following" only appears
+          when the user has saved category preferences (it would equal "All"
+          otherwise). The "Creators" surface filter was retired in this pass;
+          surfaceFilter stays "all". Tabs sit at the top of the feed so users
+          flip scopes without losing the active card. */}
+      <div className="relative z-10 flex justify-center px-4 pt-2 pb-1 md:pt-3">
         <div
           role="tablist"
           aria-label="Filter feed"
-          className="inline-flex items-center gap-1 rounded-full border border-border/40 bg-background/70 backdrop-blur-xl px-1.5 py-1.5 shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.25)] max-w-full overflow-x-auto no-scrollbar"
+          className="inline-flex items-center gap-1 rounded-full border border-border/40 bg-background/80 backdrop-blur-xl px-1.5 py-1.5 shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.25)]"
         >
           {(() => {
-            const showForYou =
+            const showFollowing =
               preferredCategories.length > 0 &&
               preferredCategories.length < CATEGORIES.length;
             const tabs: {
@@ -1694,34 +1694,26 @@ const FlowModePage = () => {
               active: boolean;
               onClick: () => void;
             }[] = [];
-            if (showForYou) {
+            tabs.push({
+              id: "all",
+              label: "All",
+              active: feedScope === "all" || !showFollowing,
+              onClick: () => {
+                setSurfaceFilter("all");
+                setScope("all");
+              },
+            });
+            if (showFollowing) {
               tabs.push({
-                id: "foryou",
-                label: "For You",
-                active: surfaceFilter === "all" && feedScope === "preferred",
+                id: "following",
+                label: "Following",
+                active: feedScope === "preferred",
                 onClick: () => {
                   setSurfaceFilter("all");
                   setScope("preferred");
                 },
               });
             }
-            tabs.push({
-              id: "all",
-              label: "All",
-              active:
-                surfaceFilter === "all" &&
-                (feedScope === "all" || !showForYou),
-              onClick: () => {
-                setSurfaceFilter("all");
-                setScope("all");
-              },
-            });
-            tabs.push({
-              id: "creators",
-              label: "Creators",
-              active: surfaceFilter === "creators",
-              onClick: () => setSurfaceFilter("creators"),
-            });
             return tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -1730,7 +1722,7 @@ const FlowModePage = () => {
                 aria-selected={tab.active}
                 onClick={tab.onClick}
                 className={cn(
-                  "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium tracking-tight transition-all duration-200",
+                  "shrink-0 rounded-full px-4 py-1.5 text-xs font-medium tracking-tight transition-all duration-200",
                   tab.active
                     ? "bg-foreground text-background shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
@@ -1742,6 +1734,7 @@ const FlowModePage = () => {
           })()}
         </div>
       </div>
+
 
       {/* Non-"All" filters are handled by feeding mapped Connect rows into
           the existing FlowCard deck (see baseItems). No separate overlay UI. */}
