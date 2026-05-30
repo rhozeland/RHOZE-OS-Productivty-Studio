@@ -145,6 +145,15 @@ const WorksPage = ({ embedded = false }: WorksPageProps = {}) => {
   const initialTab = searchParams.get("tab") === "registry" ? "registry" : "mine";
   const [tab, setTab] = useState<"mine" | "registry">(initialTab as any);
 
+  // Pillar 6: deep-link from StreamComposer / PostMenuButton.
+  // /works?upload=audio|visual|photo auto-opens the upload dialog with
+  // the file picker constrained to that media kind.
+  const uploadHint = searchParams.get("upload");
+  const uploadKind: "audio" | "visual" | "photo" | null =
+    uploadHint === "audio" || uploadHint === "visual" || uploadHint === "photo"
+      ? (uploadHint as any)
+      : null;
+
   const handleTabChange = (v: string) => {
     setTab(v as "mine" | "registry");
     const next = new URLSearchParams(searchParams);
