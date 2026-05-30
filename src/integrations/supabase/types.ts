@@ -1179,6 +1179,51 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_tokens: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          id: string
+          is_primary: boolean
+          mint_address: string
+          name: string | null
+          reject_reason: string | null
+          status: string
+          ticker: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          mint_address: string
+          name?: string | null
+          reject_reason?: string | null
+          status?: string
+          ticker: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          mint_address?: string
+          name?: string | null
+          reject_reason?: string | null
+          status?: string
+          ticker?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           amount: number
@@ -5868,6 +5913,29 @@ export type Database = {
         Returns: string
       }
       request_work_unlock: { Args: { _work_id: string }; Returns: Json }
+      review_creator_token: {
+        Args: { _decision: string; _reason?: string; _token_id: string }
+        Returns: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          id: string
+          is_primary: boolean
+          mint_address: string
+          name: string | null
+          reject_reason: string | null
+          status: string
+          ticker: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "creator_tokens"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       review_token_submission: {
         Args: { _approve: boolean; _note?: string; _user_id: string }
         Returns: undefined
