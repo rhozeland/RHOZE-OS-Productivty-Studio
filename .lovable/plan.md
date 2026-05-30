@@ -1,57 +1,106 @@
-# Pillar 7 — Ship the cleanup, then upgrade the roadmap
+# Profile + Connect cleanup
 
-Splitting this into **two waves** so you actually see progress instead of one giant batch.
-
----
-
-## Wave 1 — Visible cleanup (ships in this turn)
-
-### 1. Sidebar = 5 tabs, not 3
-`Discover · Feed · Connect · Messages · Creator Pass`
-
-- **Discover** (`/discover`) — featured creators, Coins in Motion, lanes. Stays as-is.
-- **Feed** (`/flow`) — Flow Mode is the Feed. Direct link from sidebar.
-- **Connect** (`/market`) — Creators · Listings · Events (3 chips). Spaces gone from nav.
-- **Messages** (`/messages`)
-- **Creator Pass** (`/credits`)
-
-### 2. Flow tabs moved up
-On `/flow`, the `All / Following` (renamed from "For You / All") toggle moves into the top header strip, above the deck — not floating mid-card. "For You" → **Following** (= creators you follow).
-
-### 3. Post button = direct upload, no settings detour
-The `+ Post` dropdown stops being a router. It opens a **single inline "Share to Flow" sheet** (your screenshot 3 layout, but cleaner):
-- **3 vibes only**: Music · Video · Photo. Design + Writing gone.
-- File picker constrained per vibe (`audio/*`, `video/*`, `image/*`).
-- One screen, vertical flow: vibe → file → optional title/caption → Post. No 3-step wizard, no settings redirect, no verification gate (verification only blocks the *Verified IP anchor* checkbox, not posting).
-- Hashes in-browser, uploads to the existing `works` table, posts straight to Flow.
-- Listing / Event / Space stay on the `+ Post` menu but as a secondary row below the upload sheet — not the primary path.
-
-### 4. Connect page = 3 chips
-`MarketRoomPage` chips collapse to **Creators · Listings · Events**. "Spaces" + "Live" filters removed (Spaces becomes a roadmap milestone category later).
+Two surfaces, three waves. Roadmap polish is parked for a follow-up turn (you flagged it last).
 
 ---
 
-## Wave 2 — Roadmap upgrades (next turn, after you confirm Wave 1 looks right)
+## Wave A — Multi-coin schema
 
-These are bigger, and I want your sign-off on direction before I touch them:
+New table so a creator can link **>1 pump.fun token**.
 
-### 5. Voice-to-roadmap
-"Describe your project" button on the New Project dialog → opens a voice recorder → transcribes via Lovable AI (Gemini supports audio input directly) → feeds the transcript into the existing `draft-project-roadmap` edge fn as the brief. No new model needed.
+```text
+public.creator_tokens
+  id uuid pk
+  user_id uuid → profiles.user_id
+  mint_address text unique
+  ticker text
+  name text
+  is_primary bool         -- one per user
+  status text             -- 'pending' | 'approved' | 'rejected'
+  created_at timestamptz
+```
 
-### 6. Concierge CTA after AI draft
-Right after `draft-project-roadmap` returns, show a banner on the roadmap: **"Want us to A&R this with you? Book a call →"** that opens the existing `<ConciergeIntakeSheet />` pre-filled with the project name + drafted milestones. One click to escalate from AI-drafted to human-managed.
-
-### 7. On-chain proposal signatures
-Today `project_proposals.sign_project_proposal` is a DB RPC — purely off-chain. Upgrade: when both parties sign, hash the proposal JSON (same SHA-256 path Verified IP uses) and anchor it via the existing `anchor-contribution` edge fn (Solana memo tx). Store `proposal_tx_signature` + `proposal_content_hash` on `project_proposals`. The "Both signed" pill becomes "Signed on-chain" with a Solscan link. Reuses the Verified IP plumbing exactly as you said.
-
-### 8. Google Drive attach
-Add Google Drive connector → "Attach from Drive" button on the upload sheet + project Vault. Picks a file, copies into our storage bucket, hashes it the same way as a direct upload. Standard OAuth picker flow — not hard, ~half a day of work.
+- Backfill from existing `profiles.token_mint_address` / `token_ticker` (one row each, `is_primary=true`, `status=approved`).
+- Keep `profiles.token_*` cols populated to the primary token for back-compat (a trigger mirrors `is_primary` row → profile).
+- RLS: public read on `status='approved'`; owner can insert as pending; admin approves (reuses existing `review_token_submission` pattern — extended to accept a `creator_token_id`).
+- Admin queue (`/admin?tab=tokens`) keeps working; queries `creator_tokens` instead of pending-shadow cols.
 
 ---
 
-## What I need from you
+## Wave B — Profile shell rewrite
 
-- **OK to ship Wave 1 now** as described?
-- **For Wave 2** — any of the 4 items you want me to skip, reorder, or change?
+### Header (above tabs)
+1. Existing hero (banner, avatar, name, location, tier, bio, links) — unchanged.
+2. **NEW compact `<InvestorSignalStrip />`** directly under links: one row, 4 inline stats (Readiness `58/100` · Verified IP `0/5` · Contributions `54` · Tenure `2mo`) + tiny "Verify (5)" pill on the right when owner. Collapses from the current 230-px card to ~56 px.
+3. **NEW `<CreatorActivityTicker />`** just below: 3 most-recent activity rows in a slim card, fades in/out on a 6 s rotation (framer-motion `AnimatePresence`). Same data source as the existing `CreatorActivityCard`.
 
-(I'm doing Wave 1 immediately on approval. Wave 2 is the follow-up turn.)
+### Tabs (replaces current Overview/Posts split)
+```text
+Overview · Works · Verified · Projects
+```
+- **Overview**: bio expanded · coin gallery (see Wave C) · recent posts strip · backers/subscribers · spaces.
+- **Works**: full grid of all posts (current Posts tab content, full-bleed).
+- **Verified**: `VerifiedIPHub` for this creator — only anchored/IP-verified works. (Reuses existing `<VerifiedIPBadge />` filter; new query: `works.verification_status='approved'`.)
+- **Projects**: existing public `projects` (was the "Building" surface) — published releases + ongoing.
+
+### Removed from profile
+- `<StartCoinCta />` "Start Indoléstic's artist coin" card → moved into the **Coins gallery empty state** (only renders when zero tokens).
+- `<CreatorRewardsCard />` is folded into each gallery tile (per-coin rewards estimate) rather than a separate card.
+- Standalone "LIVE PROJECT $INDO" card → replaced by gallery.
+
+---
+
+## Wave C — Coin gallery
+
+New `<CreatorCoinsGallery />` (src/components/profile/coins/).
+
+- Lists all `creator_tokens` where `user_id=profile.user_id AND status='approved'`, primary first.
+- Per-tile (`<CoinGalleryTile />`):
+  - Ticker + mint short + `is_primary` chip.
+  - **Birdeye-enriched stats**: Market Cap · **All-Time High** · **% from ATH** · 24h vol · Holders · **Est. creator rewards** (`volumeUsd × 5 bps`).
+  - 7-day sparkline (reuses existing `useCreatorTokenMetrics`).
+  - CTAs: "Trade on pump.fun" (primary) + owner-only "Open my rewards" → `pump.fun/profile/<wallet>`.
+- `useCreatorTokenMetrics` extended to also pull **ATH** from Birdeye's `/defi/token_overview` (`history24hPrice`, `priceChange24hPercent` already there; add `priceAth` field — public endpoint).
+- Owner-only **"+ Add another coin"** button at bottom → opens `<LinkPumpFunTokenSheet />` (reuses existing settings flow, just inline).
+- Empty state (no tokens) → renders `<StartCoinCta />` inside the gallery slot.
+
+---
+
+## Wave D — Connect → Project flow fix
+
+**Bug today:** "Start a Project" on Connect → instantly inserts a row in `projects`, navigates to Inbox, but the recipient's RLS hides the unsigned project → "project link isn't available."
+
+**Fix:** Route every Connect "Start a Project" CTA through the existing **`<ProposalSheet />`** (roadmap-first proposal system you already have).
+
+1. **Audit `ConnectBoard` + `MarketRoomPage`** — every "Start a Project" / "Hire" / "Work together" button now opens `<ProposalSheet />` instead of `NewProjectDialog`.
+2. **Proposal sheet flow** (already built, just re-wired):
+   - Step 1: brief + scope.
+   - Step 2: **AI roadmap drafter runs automatically** (`useAiRoadmapDraft`) — owner reviews/edits milestones.
+   - Step 3: terms preview + signature (anchored via `anchor-proposal-signature`).
+   - Step 4: send → recipient sees a **Proposal** card in Inbox (`ProjectsInbox` proposals strip already supports "Your turn to sign").
+3. **Project only materializes** when both sides sign (existing `sign_project_proposal` RPC) → at that moment it appears in Inbox as a real project thread, no "not available" error possible.
+4. Kill the old `NewProjectDialog` path from Connect entry points (`NewProjectDialog` stays for owner-internal use inside Projects page).
+5. `ProjectsInbox` proposal-strip empty state gets a "Start your first proposal →" CTA pointing to `/market?kind=hire`.
+
+---
+
+## Technical notes
+
+- Migration is **additive** — old `profiles.token_*` cols stay populated so legacy components don't break during the swap.
+- `<TokenDiscoveryChip />`, `<CoinsInMotionLane />`, `<CreatorTokenPanel />` keep reading `profiles.token_mint_address` (primary token) — no change.
+- `useCreatorTokenMetrics` gains an optional `includeAth` flag; default off to avoid extra fetches on Discover.
+- All profile mounts read from `creator_tokens` via new `useCreatorTokens(userId)` hook.
+- Roadmap-tab cleanup (the "messy" part you mentioned) is **deferred** to a follow-up turn — flagging it here so I don't conflate scope.
+
+---
+
+## Sequence
+
+1. Migration → `creator_tokens` table + backfill + RLS + GRANTs.
+2. `useCreatorTokens` hook + extend `useCreatorTokenMetrics` w/ ATH.
+3. Build `<InvestorSignalStrip />`, `<CreatorActivityTicker />`, `<CreatorCoinsGallery />`, `<CoinGalleryTile />`.
+4. Rewrite `ProfileDetailPage` header + tab set; remove `StartCoinCta` / `LIVE PROJECT` card mounts.
+5. Rewire `ConnectBoard` + every "Start a Project" entry → `<ProposalSheet />`.
+6. Smoke check: build, console-error sweep, verify profile loads with 0 / 1 / 2 tokens, verify proposal flow lands in inbox correctly.
+
+Confirm and I'll start with the migration.
