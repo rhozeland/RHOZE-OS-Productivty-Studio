@@ -398,22 +398,16 @@ const ProjectDetailPage = () => {
                 />
               )}
 
-              {/* AI roadmap drafter — only when roadmap is sparse and not yet locked */}
+              {/* AI roadmap drafter (voice + concierge CTA) — only when not yet locked */}
               {!isLocked && (goals?.filter((g: any) => !g.parent_id).length ?? 0) < 2 && (
-                <div className="flex items-center justify-between rounded-xl border border-dashed border-primary/30 bg-primary/5 px-4 py-3">
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">Empty roadmap?</p>
-                    <p className="text-xs text-muted-foreground">Let Rhozeland A&R draft milestones based on the brief and budget.</p>
-                  </div>
-                  <AiRoadmapDraftButton
-                    projectId={id!}
-                    projectTitle={project.title}
-                    totalBudget={Number(project.total_budget ?? 0)}
-                    clientId={(collaborators as any)?.find?.((c: any) => c.project_role === "client")?.user_id ?? null}
-                    specialistId={(collaborators as any)?.find?.((c: any) => c.project_role === "specialist")?.user_id ?? project.user_id}
-                    existingGoalCount={goals?.filter((g: any) => !g.parent_id).length ?? 0}
-                  />
-                </div>
+                <AiRoadmapDraftButton
+                  projectId={id!}
+                  projectTitle={project.title}
+                  totalBudget={Number(project.total_budget ?? 0)}
+                  clientId={(collaborators as any)?.find?.((c: any) => c.project_role === "client")?.user_id ?? null}
+                  specialistId={(collaborators as any)?.find?.((c: any) => c.project_role === "specialist")?.user_id ?? project.user_id}
+                  existingGoalCount={goals?.filter((g: any) => !g.parent_id).length ?? 0}
+                />
               )}
 
               <div className="grid gap-6 lg:grid-cols-3">
