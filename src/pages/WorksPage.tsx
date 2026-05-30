@@ -697,7 +697,21 @@ function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
 
 /* ────────────────────────────────────────────────────────────────────── */
 
-function UploadDialog({ onCreated }: { onCreated: () => void }) {
+function UploadDialog({
+  onCreated,
+  defaultKindHint = null,
+}: {
+  onCreated: () => void;
+  defaultKindHint?: "audio" | "visual" | "photo" | null;
+}) {
+  const acceptForHint =
+    defaultKindHint === "audio"
+      ? "audio/*"
+      : defaultKindHint === "visual"
+      ? "video/*"
+      : defaultKindHint === "photo"
+      ? "image/*"
+      : undefined;
   const { user } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
@@ -840,7 +854,7 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="work-file">File</Label>
-          <Input id="work-file" type="file" onChange={handleFileChange} />
+          <Input id="work-file" type="file" accept={acceptForHint} onChange={handleFileChange} />
           {file && (
             <div className="text-xs text-muted-foreground flex items-center gap-2 pt-1">
               <span>{KIND_LABEL[inferredKind]}</span>
