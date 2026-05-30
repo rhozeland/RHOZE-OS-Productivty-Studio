@@ -136,6 +136,8 @@ export const useCreatorTokenMetrics = (mint: string | null | undefined) => {
         holderCount: merged.holderCount ?? null,
         topHolderPct: null, // not available from these public endpoints; reserved for future
         sparkline7d: sparkline,
+        creatorWallet: merged.creatorWallet ?? null,
+        volumeUsd: merged.volumeUsd ?? null,
         source: merged.source ?? "—",
         fetchedAt: Date.now(),
       };
