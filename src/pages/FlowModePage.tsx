@@ -96,10 +96,10 @@ const CATEGORY_ICONS: Record<string, { Icon: typeof Palette; label: string; tint
   photo: { Icon: Camera, label: "Photo", tint: "from-amber-500/20 to-orange-500/20 text-amber-500" },
 };
 
-const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; linkHint: string }> = {
-  music: { accept: "audio/*,.mp3,.wav,.flac,.aac", hint: "MP3, WAV, FLAC, or audio files", linkHint: "Paste a link (optional)" },
-  video: { accept: "video/*,.mp4,.mov,.webm", hint: "MP4, MOV, WebM, or video files", linkHint: "Paste a link (optional)" },
-  photo: { accept: "image/*,.raw,.cr2,.nef", hint: "JPG, PNG, TIFF, or RAW files", linkHint: "Paste a link (optional)" },
+const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; linkPlaceholder: string }> = {
+  music: { accept: "audio/*,.mp3,.wav,.flac,.aac", hint: "Drop an audio file",        linkPlaceholder: "Or paste Spotify, Apple Music, or SoundCloud link" },
+  video: { accept: "video/*,.mp4,.mov,.webm",      hint: "Drop a video file",         linkPlaceholder: "Or paste a YouTube or Vimeo link" },
+  photo: { accept: "image/*,.raw,.cr2,.nef",       hint: "Drop a photo",              linkPlaceholder: "Or paste an Instagram or Pinterest link" },
 };
 
 
@@ -258,6 +258,14 @@ const FlowModePage = () => {
   const [newCreatorName, setNewCreatorName] = useState("");
   const [shareStep, setShareStep] = useState<"pick" | "caption" | "confirm">("pick");
   const [showLinkField, setShowLinkField] = useState(false);
+  // v11 Pillar 8 — IG-style polish for Share-to-Flow.
+  // Free-text collaborators (comma- or space-separated handles). Appended to
+  // the post description on publish as a "with @handle" footer line.
+  const [collaborators, setCollaborators] = useState("");
+  // Optional Verified-IP request — when on, the row publishes with
+  // verification_status='pending' instead of 'none' so it lands in the admin
+  // queue and earns the on-chain anchor once approved.
+  const [requestVerify, setRequestVerify] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
   const CAPTION_LIMIT = 240;
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -795,13 +803,29 @@ const FlowModePage = () => {
 
       // Build one flow_items row per file. If there are no files, still publish a single
       // row carrying just the link/text content (preserves prior behavior).
+      // Append collaborator @mentions to the description as a "with" footer.
+      // Pure frontend until we ship a proper collaborators table — keeps the
+      // attribution visible on the card without a schema change.
+      const collabHandles = collaborators
+        .split(/[\s,]+/)
+        .map((h) => h.trim().replace(/^@+/, ""))
+        .filter(Boolean)
+        .slice(0, 5);
+      const collabFooter = collabHandles.length
+        ? `\n\nwith ${collabHandles.map((h) => `@${h}`).join(" ")}`
+        : "";
+
       const baseRow = {
         user_id: user!.id,
         title: newTitle,
-        description: newDesc || null,
+        description: newDesc ? `${newDesc}${collabFooter}` : (collabFooter ? collabFooter.trim() : null),
         category: newCategory,
         link_url: newLink || null,
         creator_name: newCreatorName || null,
+        // Opt-in Verified-IP submission. Rows with content_hash + 'pending'
+        // status land in the admin verification queue; non-opted rows stay
+        // 'none' and only carry the local fingerprint.
+        verification_status: requestVerify ? "pending" : "none",
       };
 
       const rows = latest.length === 0
@@ -858,6 +882,8 @@ const FlowModePage = () => {
         setNewLink("");
         setNewCreatorName("");
         setShowLinkField(false);
+        setCollaborators("");
+        setRequestVerify(false);
         setShareStep("pick");
         setCelebrating(false);
         resetPendingFiles();
@@ -2134,13 +2160,9 @@ const FlowModePage = () => {
               <DialogTitle className="text-lg">
                 {shareStep === "pick" && "Share to Flow"}
                 {shareStep === "caption" && "Title & caption"}
-                {shareStep === "confirm" && "Review & publish"}
+                {shareStep === "confirm" && "Review"}
               </DialogTitle>
-              <DialogDescription className="text-xs">
-                {shareStep === "pick" && "Pick a vibe and drop your work."}
-                {shareStep === "caption" && "Name your post. Your caption posts as the first comment."}
-                {shareStep === "confirm" && "One last look before it hits the feed."}
-              </DialogDescription>
+              <DialogDescription className="sr-only">Share a work to your Flow feed.</DialogDescription>
             </DialogHeader>
             {/* 3-dot stepper */}
             <div className="flex items-center gap-1.5 mt-3" role="tablist" aria-label="Share progress">
@@ -2591,6 +2613,21 @@ const FlowModePage = () => {
                         </button>
                       </div>
                     )}
+
+                    {/* Collaborators — comma- or space-separated @handles.
+                        Appended to the description as "with @x @y" at publish time. */}
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+                        Collaborators
+                      </label>
+                      <Input
+                        placeholder="@handle, @handle"
+                        value={collaborators}
+                        onChange={(e) => setCollaborators(e.target.value)}
+                        className="rounded-xl text-sm"
+                      />
+                      <span className="text-[10px] text-muted-foreground">Optional · up to 5 · they're credited on the post</span>
+                    </div>
                   </div>
                 )}
 
@@ -2630,6 +2667,28 @@ const FlowModePage = () => {
                           <span className="text-foreground break-all">{newLink.trim()}</span>
                         </div>
                       )}
+                    </div>
+
+                    {/* Verified IP opt-in — toggling this publishes the row
+                        with verification_status='pending' so an admin can
+                        review + anchor it on Solana. Keeping the toggle here
+                        (vs. forcing it on every post) keeps the share UX one-click. */}
+                    <div className="mt-3 flex items-start gap-3 rounded-xl border border-border bg-muted/20 p-3">
+                      <Switch
+                        id="request-verify"
+                        checked={requestVerify}
+                        onCheckedChange={setRequestVerify}
+                        className="mt-0.5"
+                      />
+                      <Label htmlFor="request-verify" className="flex-1 cursor-pointer space-y-0.5">
+                        <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                          <Check className="h-3.5 w-3.5 text-emerald-500" />
+                          Anchor as Verified IP
+                        </span>
+                        <span className="block text-[11px] leading-snug text-muted-foreground">
+                          Submits this work for admin review. Once approved it's hashed and recorded on Solana so you can prove authorship publicly.
+                        </span>
+                      </Label>
                     </div>
                   </div>
                 )}
