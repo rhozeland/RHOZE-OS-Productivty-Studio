@@ -803,13 +803,29 @@ const FlowModePage = () => {
 
       // Build one flow_items row per file. If there are no files, still publish a single
       // row carrying just the link/text content (preserves prior behavior).
+      // Append collaborator @mentions to the description as a "with" footer.
+      // Pure frontend until we ship a proper collaborators table — keeps the
+      // attribution visible on the card without a schema change.
+      const collabHandles = collaborators
+        .split(/[\s,]+/)
+        .map((h) => h.trim().replace(/^@+/, ""))
+        .filter(Boolean)
+        .slice(0, 5);
+      const collabFooter = collabHandles.length
+        ? `\n\nwith ${collabHandles.map((h) => `@${h}`).join(" ")}`
+        : "";
+
       const baseRow = {
         user_id: user!.id,
         title: newTitle,
-        description: newDesc || null,
+        description: newDesc ? `${newDesc}${collabFooter}` : (collabFooter ? collabFooter.trim() : null),
         category: newCategory,
         link_url: newLink || null,
         creator_name: newCreatorName || null,
+        // Opt-in Verified-IP submission. Rows with content_hash + 'pending'
+        // status land in the admin verification queue; non-opted rows stay
+        // 'none' and only carry the local fingerprint.
+        verification_status: requestVerify ? "pending" : "none",
       };
 
       const rows = latest.length === 0
