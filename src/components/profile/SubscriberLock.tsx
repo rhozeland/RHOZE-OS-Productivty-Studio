@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
-import { Lock, Sparkles } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Lock, Sparkles, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import SubscribeToCreatorSheet from "@/components/profile/SubscribeToCreatorSheet";
+import TokenGateConnectSheet from "@/components/profile/TokenGateConnectSheet";
+import { useTokenGateAccess } from "@/hooks/useTokenGateAccess";
 
 interface SubscriberLockProps {
   /** The creator whose subscription is required to unlock the content. */
@@ -23,15 +26,15 @@ interface SubscriberLockProps {
 }
 
 /**
- * Subscriber-only content gate.
+ * Subscriber-or-token-holder content gate.
  *
- * v10: subscriptions are the spine. Wrap any private feed post, DM thread,
- * behind-the-scenes work, etc. with `<SubscriberLock creatorId={...}>` and
- * non-subscribers see a tasteful upsell that opens `<SubscribeToCreatorSheet />`.
+ * Access granted if:
+ *   - viewer is the owner (bypassForOwner), or
+ *   - viewer has an active subscription to the creator (is_subscribed_to RPC), or
+ *   - viewer holds the creator's pump.fun token (creator_token_grants, Pillar 2).
  *
- * Access check uses the `is_subscribed_to(_creator_id, _min_tier)` RPC which
- * honors Stripe's `cancel_at_period_end=true` rule — canceled subscribers keep
- * access until `current_period_end`.
+ * When locked AND the creator has an approved pump.fun token linked, the
+ * upsell card surfaces two paths: subscribe ($5/mo) or hold $TICKER.
  */
 export function SubscriberLock({
   creatorId,
@@ -44,22 +47,45 @@ export function SubscriberLock({
   bypassForOwner = true,
 }: SubscriberLockProps) {
   const { user } = useAuth();
-  const [status, setStatus] = useState<"loading" | "subscribed" | "locked">("loading");
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [subStatus, setSubStatus] = useState<"loading" | "subscribed" | "locked">("loading");
+  const [subSheetOpen, setSubSheetOpen] = useState(false);
+  const [tokenSheetOpen, setTokenSheetOpen] = useState(false);
 
   const isOwner = bypassForOwner && user?.id === creatorId;
+
+  const { hasAccess: holdsToken, isLoading: tokenLoading } = useTokenGateAccess(
+    isOwner ? null : creatorId,
+  );
+
+  // Look up creator's approved pump.fun token (if any) to offer the
+  // token-holder unlock path inside the upsell card.
+  const { data: creatorToken } = useQuery({
+    queryKey: ["subscriber-lock-creator-token", creatorId],
+    enabled: !isOwner,
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("token_mint_address, token_ticker, token_submission_status")
+        .eq("id", creatorId)
+        .maybeSingle();
+      if (!data?.token_mint_address) return null;
+      if (data.token_submission_status && data.token_submission_status !== "approved") return null;
+      return { mint: data.token_mint_address, ticker: data.token_ticker as string | null };
+    },
+  });
 
   useEffect(() => {
     let cancelled = false;
     if (!user?.id) {
-      setStatus("locked");
+      setSubStatus("locked");
       return;
     }
     if (isOwner) {
-      setStatus("subscribed");
+      setSubStatus("subscribed");
       return;
     }
-    setStatus("loading");
+    setSubStatus("loading");
     supabase
       .rpc("is_subscribed_to", {
         _creator_id: creatorId,
@@ -69,17 +95,17 @@ export function SubscriberLock({
         if (cancelled) return;
         if (error) {
           console.error("[SubscriberLock] is_subscribed_to failed", error);
-          setStatus("locked");
+          setSubStatus("locked");
           return;
         }
-        setStatus(data === true ? "subscribed" : "locked");
+        setSubStatus(data === true ? "subscribed" : "locked");
       });
     return () => {
       cancelled = true;
     };
   }, [creatorId, minTier, user?.id, isOwner]);
 
-  if (status === "loading") {
+  if (subStatus === "loading" || tokenLoading) {
     return (
       <div className="rounded-xl border border-border/40 bg-muted/20 p-6 animate-pulse">
         <div className="h-4 w-24 rounded bg-muted/40" />
@@ -87,9 +113,22 @@ export function SubscriberLock({
     );
   }
 
-  if (status === "subscribed") return <>{children}</>;
+  if (subStatus === "subscribed" || holdsToken) {
+    return (
+      <>
+        {holdsToken && subStatus !== "subscribed" && (
+          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+            <Coins className="h-3 w-3" />
+            Unlocked by holding ${creatorToken?.ticker || "TOKEN"}
+          </div>
+        )}
+        {children}
+      </>
+    );
+  }
 
   const displayName = creatorName || creatorUsername || "this creator";
+  const hasTokenPath = !!creatorToken;
 
   return (
     <>
@@ -104,27 +143,57 @@ export function SubscriberLock({
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
               Subscribe to <span className="font-medium text-foreground">{displayName}</span>{" "}
-              from $5/mo to unlock this and everything else behind their paywall.
+              from $5/mo
+              {hasTokenPath ? ", or unlock for free by holding " : " to unlock this"}
+              {hasTokenPath && (
+                <span className="font-medium text-foreground">
+                  ${creatorToken?.ticker || "their token"}
+                </span>
+              )}
+              {hasTokenPath ? " in your wallet." : "."}
             </p>
-            <Button
-              size="sm"
-              className="mt-4 gap-1.5"
-              onClick={() => setSheetOpen(true)}
-              disabled={!user?.id}
-            >
-              <Sparkles className="h-4 w-4" />
-              {user?.id ? "Subscribe to unlock" : "Sign in to subscribe"}
-            </Button>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                className="gap-1.5"
+                onClick={() => setSubSheetOpen(true)}
+                disabled={!user?.id}
+              >
+                <Sparkles className="h-4 w-4" />
+                {user?.id ? "Subscribe to unlock" : "Sign in to subscribe"}
+              </Button>
+              {hasTokenPath && user?.id && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5"
+                  onClick={() => setTokenSheetOpen(true)}
+                >
+                  <Coins className="h-4 w-4" />
+                  Hold ${creatorToken?.ticker || "TOKEN"}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       <SubscribeToCreatorSheet
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
+        open={subSheetOpen}
+        onOpenChange={setSubSheetOpen}
         creatorId={creatorId}
         creatorName={creatorName ?? creatorUsername ?? undefined}
       />
+
+      {hasTokenPath && (
+        <TokenGateConnectSheet
+          open={tokenSheetOpen}
+          onOpenChange={setTokenSheetOpen}
+          creatorId={creatorId}
+          creatorName={creatorName ?? creatorUsername ?? undefined}
+          ticker={creatorToken?.ticker}
+        />
+      )}
     </>
   );
 }
