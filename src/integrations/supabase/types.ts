@@ -2838,6 +2838,7 @@ export type Database = {
           token_ticker: string | null
           token_ticker_pending: string | null
           twitter_url: string | null
+          upcoming_links: Json
           updated_at: string
           user_id: string
           user_type: string | null
@@ -2911,6 +2912,7 @@ export type Database = {
           token_ticker?: string | null
           token_ticker_pending?: string | null
           twitter_url?: string | null
+          upcoming_links?: Json
           updated_at?: string
           user_id: string
           user_type?: string | null
@@ -2984,6 +2986,7 @@ export type Database = {
           token_ticker?: string | null
           token_ticker_pending?: string | null
           twitter_url?: string | null
+          upcoming_links?: Json
           updated_at?: string
           user_id?: string
           user_type?: string | null

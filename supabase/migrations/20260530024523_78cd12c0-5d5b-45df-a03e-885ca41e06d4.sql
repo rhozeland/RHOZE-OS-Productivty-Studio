@@ -1,0 +1,2 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS upcoming_links jsonb NOT NULL DEFAULT '[]'::jsonb;
+COMMENT ON COLUMN public.profiles.upcoming_links IS 'Pillar 6: array of {url, label?, date?} pointing at external event pages (Luma, Eventbrite, RA, Bandsintown, etc.). Free-form, no iframe.';
