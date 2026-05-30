@@ -35,11 +35,20 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, PenLine, Plus, Trash2, CheckCircle2, X, DollarSign } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  Loader2, PenLine, Plus, Trash2, CheckCircle2, X, DollarSign,
+  FileText, ChevronDown, ShieldCheck, ExternalLink, Anchor,
+} from "lucide-react";
 import BudgetSplitViz from "@/components/project/BudgetSplitViz";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { buildDefaultAgreement, TERMS_VERSION } from "@/lib/project-agreement";
 
 type NewProposalInput = {
   counterpartyId: string;
