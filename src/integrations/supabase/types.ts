@@ -3226,6 +3226,44 @@ export type Database = {
           },
         ]
       }
+      project_copilot_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          project_id: string
+          proposed_changes: Json | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          project_id: string
+          proposed_changes?: Json | null
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          proposed_changes?: Json | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_copilot_messages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_deliverables: {
         Row: {
           anchored_at: string | null
@@ -3697,6 +3735,7 @@ export type Database = {
           intake_tier: Database["public"]["Enums"]["project_intake_tier"]
           is_estimate: boolean
           is_public: boolean
+          linked_token_id: string | null
           platform_fee_bps_override: number | null
           project_type: string | null
           public_slug: string | null
@@ -3723,6 +3762,7 @@ export type Database = {
           intake_tier?: Database["public"]["Enums"]["project_intake_tier"]
           is_estimate?: boolean
           is_public?: boolean
+          linked_token_id?: string | null
           platform_fee_bps_override?: number | null
           project_type?: string | null
           public_slug?: string | null
@@ -3749,6 +3789,7 @@ export type Database = {
           intake_tier?: Database["public"]["Enums"]["project_intake_tier"]
           is_estimate?: boolean
           is_public?: boolean
+          linked_token_id?: string | null
           platform_fee_bps_override?: number | null
           project_type?: string | null
           public_slug?: string | null
@@ -3762,7 +3803,15 @@ export type Database = {
           user_id?: string
           vision?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "projects_linked_token_id_fkey"
+            columns: ["linked_token_id"]
+            isOneToOne: false
+            referencedRelation: "creator_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       purchases: {
         Row: {
@@ -5560,6 +5609,7 @@ export type Database = {
           intake_tier: Database["public"]["Enums"]["project_intake_tier"]
           is_estimate: boolean
           is_public: boolean
+          linked_token_id: string | null
           platform_fee_bps_override: number | null
           project_type: string | null
           public_slug: string | null
