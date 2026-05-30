@@ -85,23 +85,23 @@ import {
 import { useFlowCoinsByCreator } from "@/hooks/useFlowCoinsByWork";
 import { awardEngagementReward } from "@/lib/award-engagement-reward";
 
-const CATEGORIES = ["design", "music", "photo", "video", "writing"];
+// v11 Pillar 7 — Share to Flow collapsed to 3 vibes: music · video · photo.
+// "Design" and "Writing" removed (visuals can still be uploaded under photo
+// or layered onto music). Default vibe = music.
+const CATEGORIES = ["music", "video", "photo"];
 
 const CATEGORY_ICONS: Record<string, { Icon: typeof Palette; label: string; tint: string }> = {
-  design: { Icon: Palette, label: "Design", tint: "from-fuchsia-500/20 to-pink-500/20 text-fuchsia-500" },
   music: { Icon: Music, label: "Music", tint: "from-violet-500/20 to-indigo-500/20 text-violet-500" },
-  photo: { Icon: Camera, label: "Photo", tint: "from-amber-500/20 to-orange-500/20 text-amber-500" },
   video: { Icon: Video, label: "Video", tint: "from-rose-500/20 to-red-500/20 text-rose-500" },
-  writing: { Icon: PenLine, label: "Writing", tint: "from-emerald-500/20 to-teal-500/20 text-emerald-500" },
+  photo: { Icon: Camera, label: "Photo", tint: "from-amber-500/20 to-orange-500/20 text-amber-500" },
 };
 
 const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; linkHint: string }> = {
-  design: { accept: "image/*,.pdf,.ai,.psd,.fig", hint: "JPG, PNG, PDF, or design files", linkHint: "Paste a link (optional)" },
   music: { accept: "audio/*,.mp3,.wav,.flac,.aac", hint: "MP3, WAV, FLAC, or audio files", linkHint: "Paste a link (optional)" },
-  photo: { accept: "image/*,.raw,.cr2,.nef", hint: "JPG, PNG, TIFF, or RAW files", linkHint: "Paste a link (optional)" },
   video: { accept: "video/*,.mp4,.mov,.webm", hint: "MP4, MOV, WebM, or video files", linkHint: "Paste a link (optional)" },
-  writing: { accept: ".txt,.md,.pdf,.doc,.docx", hint: "TXT, PDF, DOC, or text files", linkHint: "Paste a link (optional)" },
+  photo: { accept: "image/*,.raw,.cr2,.nef", hint: "JPG, PNG, TIFF, or RAW files", linkHint: "Paste a link (optional)" },
 };
+
 
 const FlowModePage = () => {
   const { user } = useAuth();
@@ -189,14 +189,19 @@ const FlowModePage = () => {
   const [addOpen, setAddOpen] = useState(false);
   // Open the Share-to-Flow composer when navigated to with ?share=1
   // (used by the dock "+" button and PostMenuButton's "Post Work" option).
+  // Optionally accept ?vibe=music|video|photo to pre-select the upload vibe.
   useEffect(() => {
     if (searchParams.get("share") === "1") {
       setAddOpen(true);
+      const vibe = searchParams.get("vibe");
+      if (vibe && CATEGORIES.includes(vibe)) setNewCategory(vibe);
       const next = new URLSearchParams(searchParams);
       next.delete("share");
+      next.delete("vibe");
       setSearchParams(next, { replace: true });
     }
   }, [searchParams, setSearchParams]);
+
   const [viewMode, setViewMode] = useState<"swipe" | "browse">(
     searchParams.get("view") === "browse" ? "browse" : "swipe",
   );
@@ -210,7 +215,7 @@ const FlowModePage = () => {
   const [shareItem, setShareItem] = useState<any>(null);
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
-  const [newCategory, setNewCategory] = useState("design");
+  const [newCategory, setNewCategory] = useState("music");
   const [newLink, setNewLink] = useState("");
   const [newFile, setNewFile] = useState<File | null>(null); // legacy single-file (unused, kept for type-stability if any)
   const [fileError, setFileError] = useState<string | null>(null);
@@ -1673,19 +1678,19 @@ const FlowModePage = () => {
         </div>
       </div>
 
-      {/* Unified feed control — merges the old "For You / All" scope toggle
-          with the surface filter ("Creators") into a single segmented pill so
-          the user sees one source of truth for what's in the deck. "For You"
-          is hidden when the user has no saved preferences (it would equal
-          "All" anyway). Each tab sets both surface + scope in one click. */}
-      <div className="relative z-10 flex justify-center px-4 pt-2 pb-1 md:pt-4">
+      {/* v11 Pillar 7 — Feed tabs: All · Following. "Following" only appears
+          when the user has saved category preferences (it would equal "All"
+          otherwise). The "Creators" surface filter was retired in this pass;
+          surfaceFilter stays "all". Tabs sit at the top of the feed so users
+          flip scopes without losing the active card. */}
+      <div className="relative z-10 flex justify-center px-4 pt-2 pb-1 md:pt-3">
         <div
           role="tablist"
           aria-label="Filter feed"
-          className="inline-flex items-center gap-1 rounded-full border border-border/40 bg-background/70 backdrop-blur-xl px-1.5 py-1.5 shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.25)] max-w-full overflow-x-auto no-scrollbar"
+          className="inline-flex items-center gap-1 rounded-full border border-border/40 bg-background/80 backdrop-blur-xl px-1.5 py-1.5 shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.25)]"
         >
           {(() => {
-            const showForYou =
+            const showFollowing =
               preferredCategories.length > 0 &&
               preferredCategories.length < CATEGORIES.length;
             const tabs: {
@@ -1694,34 +1699,26 @@ const FlowModePage = () => {
               active: boolean;
               onClick: () => void;
             }[] = [];
-            if (showForYou) {
+            tabs.push({
+              id: "all",
+              label: "All",
+              active: feedScope === "all" || !showFollowing,
+              onClick: () => {
+                setSurfaceFilter("all");
+                setScope("all");
+              },
+            });
+            if (showFollowing) {
               tabs.push({
-                id: "foryou",
-                label: "For You",
-                active: surfaceFilter === "all" && feedScope === "preferred",
+                id: "following",
+                label: "Following",
+                active: feedScope === "preferred",
                 onClick: () => {
                   setSurfaceFilter("all");
                   setScope("preferred");
                 },
               });
             }
-            tabs.push({
-              id: "all",
-              label: "All",
-              active:
-                surfaceFilter === "all" &&
-                (feedScope === "all" || !showForYou),
-              onClick: () => {
-                setSurfaceFilter("all");
-                setScope("all");
-              },
-            });
-            tabs.push({
-              id: "creators",
-              label: "Creators",
-              active: surfaceFilter === "creators",
-              onClick: () => setSurfaceFilter("creators"),
-            });
             return tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -1730,7 +1727,7 @@ const FlowModePage = () => {
                 aria-selected={tab.active}
                 onClick={tab.onClick}
                 className={cn(
-                  "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium tracking-tight transition-all duration-200",
+                  "shrink-0 rounded-full px-4 py-1.5 text-xs font-medium tracking-tight transition-all duration-200",
                   tab.active
                     ? "bg-foreground text-background shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
@@ -1742,6 +1739,7 @@ const FlowModePage = () => {
           })()}
         </div>
       </div>
+
 
       {/* Non-"All" filters are handled by feeding mapped Connect rows into
           the existing FlowCard deck (see baseItems). No separate overlay UI. */}

@@ -17,25 +17,29 @@ import RoomHero from "@/components/rooms/RoomHero";
 import {
   useHireRows,
   useCallRows,
+  useEventRows,
   type ConnectKind,
   type ConnectRow,
 } from "@/components/connect/useConnectRows";
 
 /**
- * CONNECT — Discover marketplace.
+ * CONNECT — `/market`
  *
- * v11 Pillar 6: events + spaces are no longer primary destinations. The
- * "Live" filter is removed; old deeplinks fall back to "All".
- * Filters: All · Find Artists · Listings · For You.
+ * v11 Pillar 7: Connect is the marketplace surface. Three primary chips:
+ *   • Creators — services / hire rows
+ *   • Listings — open calls + collaborations
+ *   • Events   — upcoming published events
+ * Spaces are no longer surfaced here (they become a roadmap milestone
+ * category instead). "All" sits as a convenience pill at the front.
  */
 
-type FilterKey = "all" | "hire" | "call" | "foryou";
+type FilterKey = "all" | "hire" | "call" | "event";
 
-const FILTERS: { key: FilterKey; label: string; kinds: ConnectKind[] | "all" | "foryou" }[] = [
-  { key: "all", label: "All", kinds: "all" },
-  { key: "hire", label: "Find Artists", kinds: ["hire"] },
-  { key: "call", label: "Listings", kinds: ["call"] },
-  { key: "foryou", label: "For You", kinds: "foryou" },
+const FILTERS: { key: FilterKey; label: string; kinds: ConnectKind[] | "all" }[] = [
+  { key: "all",   label: "All",      kinds: "all" },
+  { key: "hire",  label: "Creators", kinds: ["hire"] },
+  { key: "call",  label: "Listings", kinds: ["call"] },
+  { key: "event", label: "Events",   kinds: ["event"] },
 ];
 
 const KIND_TAG_COLOR: Record<ConnectKind, string> = {
@@ -46,25 +50,31 @@ const KIND_TAG_COLOR: Record<ConnectKind, string> = {
 };
 
 const KIND_TAG_LABEL: Record<ConnectKind, string> = {
-  hire: "Artist",
+  hire: "Creator",
   call: "Listing",
   space: "Space",
   event: "Event",
 };
 
-// URL ?kind= back-compat → all live/space/event deeplinks now fall through to All.
+// URL ?kind= back-compat. Spaces deeplinks fall through to All.
 const URL_TO_FILTER: Record<string, FilterKey> = {
   hire: "hire",
+  creator: "hire",
+  creators: "hire",
   space: "all",
   spaces: "all",
   call: "call",
   calls: "call",
-  event: "all",
-  events: "all",
-  live: "all",
-  foryou: "foryou",
+  call_: "call",
+  listing: "call",
+  listings: "call",
+  event: "event",
+  events: "event",
+  live: "event",
+  foryou: "all",
   all: "all",
 };
+
 
 const MarketRoomPage = () => {
   const navigate = useNavigate();
@@ -78,24 +88,22 @@ const MarketRoomPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlFilter]);
 
-  // Pillar 6 — only hire + call are surfaced. Spaces/events stay in the DB
-  // but are no longer queried for Discover.
+  // Pillar 7 — hire + call + event are surfaced. Spaces stay in the DB
+  // but are no longer queried for Connect.
   const hire = useHireRows(true);
   const calls = useCallRows(true);
+  const events = useEventRows(true);
 
-  const isLoading = hire.isLoading && calls.isLoading;
+  const isLoading = hire.isLoading && calls.isLoading && events.isLoading;
 
   const all: ConnectRow[] = useMemo(() => {
-    return interleave([hire.data ?? [], calls.data ?? []]);
-  }, [hire.data, calls.data]);
+    return interleave([hire.data ?? [], calls.data ?? [], events.data ?? []]);
+  }, [hire.data, calls.data, events.data]);
 
   const filtered = useMemo(() => {
     let rows = all;
     const def = FILTERS.find((f) => f.key === filter);
-    if (def?.kinds === "foryou") {
-      // Simple heuristic: Verified Pro creators first, then newest mixed.
-      rows = [...all.filter((r) => r.isPro), ...all.filter((r) => !r.isPro)];
-    } else if (Array.isArray(def?.kinds)) {
+    if (Array.isArray(def?.kinds)) {
       rows = all.filter((r) => (def!.kinds as ConnectKind[]).includes(r.kind));
     }
     const q = search.trim().toLowerCase();
@@ -116,6 +124,7 @@ const MarketRoomPage = () => {
     setSearchParams(params, { replace: true });
   };
 
+
   return (
     <div className="space-y-8">
       <RoomHero variant="connect" eyebrow="Connect" title="Find your next collaborator." />
@@ -131,7 +140,7 @@ const MarketRoomPage = () => {
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-none -mx-1 px-1 pb-1">
           {FILTERS.map(({ key, label }) => {
             const active = filter === key;
-            const Icon = key === "all" ? LayoutGrid : key === "foryou" ? Sparkles : null;
+            const Icon = key === "all" ? LayoutGrid : null;
             return (
               <button
                 key={key}
