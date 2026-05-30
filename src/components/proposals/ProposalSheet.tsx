@@ -642,4 +642,41 @@ const ProposalEditor = ({ proposalId, onClose, onConverted }: EditorProps) => {
   );
 };
 
+interface SignatureRowProps {
+  label: string;
+  signedAt: string | null;
+  hash: string | null;
+  tx: string | null;
+}
+
+const SignatureRow = ({ label, signedAt, hash, tx }: SignatureRowProps) => {
+  const signed = !!signedAt;
+  return (
+    <div className="space-y-0.5">
+      <div className="flex items-center gap-2">
+        {signed
+          ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+          : <span className="h-3.5 w-3.5 rounded-full border border-muted-foreground/50" />}
+        <span className="font-medium text-foreground">{label}</span>
+        <span className="text-muted-foreground">
+          {signed ? `signed ${new Date(signedAt!).toLocaleDateString()}` : "not yet signed"}
+        </span>
+        {tx && (
+          <a
+            href={`https://solscan.io/tx/${tx}`}
+            target="_blank"
+            rel="noreferrer"
+            className="ml-auto inline-flex items-center gap-0.5 text-[10px] text-emerald-700 hover:underline"
+          >
+            <ShieldCheck className="h-3 w-3" /> on-chain <ExternalLink className="h-2.5 w-2.5" />
+          </a>
+        )}
+      </div>
+      {signed && hash && !tx && (
+        <p className="pl-5 text-[10px] text-amber-600">awaiting Solana anchor…</p>
+      )}
+    </div>
+  );
+};
+
 export default ProposalSheet;
