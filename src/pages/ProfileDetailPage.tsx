@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-// Tabs removed — profile no longer hides content behind tab toggles.
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -13,37 +13,31 @@ import {
   EyeOff, Loader2, Settings, Store, Star, ExternalLink, ShoppingBag,
   Sparkles, Image as ImageIcon, Play, Music, FileText, Award, Shield,
   Zap, Coins, Calendar as CalendarIcon, User as UserIcon, FolderKanban,
-  Heart, ArrowRight, Search, Building2, BadgeCheck,
+  Heart, ArrowRight, Search, Building2, BadgeCheck, ShieldCheck,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import ProfileBadges from "@/components/profile/ProfileBadges";
-import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import VerifiedProBadge from "@/components/profile/VerifiedProBadge";
 import ProfileTierBadge from "@/components/profile/ProfileTierBadge";
 import ArchetypeChip from "@/components/profile/ArchetypeChip";
-// RegionChip retired from header (v10.4) — location + region are combined inline.
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import SupportSheet from "@/components/profile/SupportSheet";
-import ProjectTokenCard from "@/components/profile/ProjectTokenCard";
 import StartCoinCta from "@/components/profile/StartCoinCta";
-import CreatorRewardsCard from "@/components/profile/CreatorRewardsCard";
 import TokenDiscoveryChip from "@/components/profile/TokenDiscoveryChip";
 import CreatorActivityCard from "@/components/profile/CreatorActivityCard";
 import ProfileCatalogCard from "@/components/profile/ProfileCatalogCard";
+import InvestorSignalStrip from "@/components/profile/InvestorSignalStrip";
+import CreatorActivityTicker from "@/components/profile/CreatorActivityTicker";
+import CreatorCoinsGallery from "@/components/profile/coins/CreatorCoinsGallery";
 import { getRegion } from "@/lib/regions";
-import { LumaEventEmbed } from "@/components/profile/LumaEventEmbed";
 import { BoostProfileSheet } from "@/components/profile/BoostProfileSheet";
-import CreatorDropsCatalog from "@/components/profile/CreatorDropsCatalog";
-import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import SaveButton from "@/components/saved/SaveButton";
 import { cn } from "@/lib/utils";
-// ROLE_BY_ID retired from header chips (v10.4) — role labels removed for visual clarity.
 import { archetypeBannerGradient } from "@/lib/archetypes";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import FlowPostOwnerMenu from "@/components/profile/FlowPostOwnerMenu";
@@ -51,7 +45,6 @@ import NoteBubble from "@/components/notes/NoteBubble";
 import { useUserNote } from "@/hooks/useNotes";
 
 import { EmptyState } from "@/components/ui/empty-state";
-import PostMenuButton from "@/components/PostMenuButton";
 import { Plus } from "lucide-react";
 import ShareCardModal from "@/components/share/ShareCardModal";
 
@@ -600,7 +593,6 @@ const ProfileDetailPage = () => {
                   <Button variant="outline" size="sm" onClick={() => setShareCardOpen(true)}>
                     Share your card
                   </Button>
-
                 </div>
               </div>
             )}
@@ -608,11 +600,37 @@ const ProfileDetailPage = () => {
           </div>
         </motion.div>
 
-        {/* ─── Asymmetric grid: Storefront (left) · Social Feed (right) ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* ─── LEFT: Storefront — economic CTAs, sticky on desktop ─── */}
-          <aside className="lg:col-span-4 lg:sticky lg:top-6 flex flex-col gap-4">
-            {/* Subscribe to this creator card (v10 — replaces "Back them") */}
+
+        {/* ─── Investor signal + activity ticker — header-anchored, condensed ─── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="md:col-span-2">
+            <InvestorSignalStrip
+              creatorId={p.user_id}
+              memberSince={p.created_at}
+              isOwnProfile={isOwnProfile}
+            />
+          </div>
+          {p?.id && p?.user_id && (
+            <CreatorActivityTicker
+              creatorProfileId={p.id}
+              creatorUserId={p.user_id}
+              creatorName={p.display_name || p.username || "this creator"}
+              tokenTicker={(p as any).token_ticker}
+            />
+          )}
+        </div>
+
+        {/* ─── Tabs: Overview · Works · Verified · Projects ─── */}
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="bg-card/60 backdrop-blur-sm border border-border/50">
+            <TabsTrigger value="overview" className="gap-1.5"><Sparkles className="h-3.5 w-3.5" /> Overview</TabsTrigger>
+            <TabsTrigger value="works" className="gap-1.5"><ImageIcon className="h-3.5 w-3.5" /> Works</TabsTrigger>
+            <TabsTrigger value="verified" className="gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> Verified</TabsTrigger>
+            <TabsTrigger value="projects" className="gap-1.5"><FolderKanban className="h-3.5 w-3.5" /> Projects</TabsTrigger>
+          </TabsList>
+
+          {/* ─── OVERVIEW ─── */}
+          <TabsContent value="overview" className="mt-5 space-y-4">
             {!isOwnProfile && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
@@ -638,8 +656,7 @@ const ProfileDetailPage = () => {
                   size="lg"
                   className="gap-1.5 w-full mt-4"
                 >
-                  <Heart className="h-4 w-4" />
-                  Support {p.display_name || p.username || "creator"}
+                  <Heart className="h-4 w-4" /> Support {p.display_name || p.username || "creator"}
                 </Button>
                 <p className="mt-3 text-[11px] text-muted-foreground text-center">
                   Cancel anytime. {p.display_name || "Creator"} keeps 85%.
@@ -647,35 +664,15 @@ const ProfileDetailPage = () => {
               </motion.div>
             )}
 
-            {/* v11 Tier 1 — owner-only "Start a coin" CTA when no pump.fun
-                token is linked yet. Once linked, ProjectTokenCard takes over. */}
-            {isOwnProfile && !(p as any).token_mint_address && (
-              <StartCoinCta creatorName={p.display_name || p.username} />
-            )}
+            {/* Coins gallery — multiple pump.fun tokens; empty state = StartCoinCta for owner */}
+            <CreatorCoinsGallery
+              userId={p.user_id}
+              creatorName={p.display_name || p.username}
+              isOwner={isOwnProfile}
+              fallbackWallet={(p as any).solana_wallet ?? null}
+            />
 
-            {/* Pillar 3 — owner-only creator-rewards card when a token is
-                linked AND admin-approved. Surfaces estimated pump.fun
-                rewards stream + deeplink to the artist's pump.fun
-                dashboard. Hidden from visitors (rewards are personal). */}
-            {isOwnProfile && (p as any).token_mint_address && (
-              <CreatorRewardsCard
-                mint={(p as any).token_mint_address}
-                ticker={(p as any).token_ticker ?? "TOKEN"}
-                fallbackWallet={(p as any).solana_wallet ?? null}
-              />
-            )}
-
-            {/* v10.4 — prominent fundraising project card (renders only if creator
-                has linked a pump.fun token). Replaces the tiny TokenDiscoveryChip. */}
-            {p?.id && (
-              <ProjectTokenCard
-                creatorId={p.id}
-                creatorName={p.display_name || p.username}
-              />
-            )}
-
-            {/* Creator Activity — recent on-platform actions that feed the
-                Signal score (and, by extension, demand for the linked token). */}
+            {/* Creator Activity (full card) */}
             {p?.id && p?.user_id && (
               <CreatorActivityCard
                 creatorProfileId={p.id}
@@ -685,16 +682,14 @@ const ProfileDetailPage = () => {
               />
             )}
 
+            {/* Unified Catalog */}
+            <ProfileCatalogCard
+              listings={sellerListings ?? []}
+              events={allHostedEvents ?? []}
+              spaces={hostedSpaces ?? []}
+            />
 
-            {/* Pillar 6 — Luma iframe + Luma-specific upsell removed. Upcoming
-                events surface via the creator's roadmap milestones and (soon)
-                a free-form `profiles.upcoming_links` list. */}
-
-
-
-
-
-            {/* Verify this creator */}
+            {/* Verify creator — keep collapsible for proof anchoring */}
             <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 p-5">
               <Collapsible open={reputationOpen} onOpenChange={setReputationOpen}>
                 <CollapsibleTrigger asChild>
@@ -702,9 +697,9 @@ const ProfileDetailPage = () => {
                     <div className="flex items-center gap-2.5 min-w-0">
                       <Award className="h-4 w-4 text-primary shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-foreground">Verify this creator</p>
+                        <p className="text-sm font-semibold text-foreground">Proof of work</p>
                         <p className="text-[11px] text-muted-foreground truncate">
-                          On-chain reputation, investor signal & proof of work.
+                          On-chain anchors for every contribution.
                         </p>
                       </div>
                     </div>
@@ -716,10 +711,7 @@ const ProfileDetailPage = () => {
                     </div>
                   </button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4 space-y-4">
-                  {/* Rich investor signal — Verified IP, Events, Contributions, Active 30d, Tenure + readiness score */}
-                  <CreatorReadinessCard creatorId={p.user_id} memberSince={p.created_at} />
-
+                <CollapsibleContent className="mt-4 space-y-3">
                   {isOwnProfile && totalProofs > 0 && anchoredCount < totalProofs && (
                     <div className="flex justify-end">
                       <AnchorButton proofs={proofs!} />
@@ -739,100 +731,58 @@ const ProfileDetailPage = () => {
                     </div>
                   )}
                 </CollapsibleContent>
-
               </Collapsible>
             </div>
+          </TabsContent>
 
-            {/* v10.2 — "Launches" card removed. Tokens now surface as the read-only
-                TokenDiscoveryChip in the profile header (deeplinks to pump.fun). */}
+          {/* ─── WORKS ─── */}
+          <TabsContent value="works" className="mt-5">
+            <PostsGrid posts={flowPosts ?? []} isOwnProfile={isOwnProfile} navigate={navigate} />
+          </TabsContent>
 
-            {/* v10.4 — Unified Catalog card (Listings · Events · Spaces) */}
-            <ProfileCatalogCard
-              listings={sellerListings ?? []}
-              events={allHostedEvents ?? []}
-              spaces={hostedSpaces ?? []}
+          {/* ─── VERIFIED ─── */}
+          <TabsContent value="verified" className="mt-5">
+            <PostsGrid
+              posts={(flowPosts ?? []).filter((p: any) => !!p.solana_signature)}
+              isOwnProfile={isOwnProfile}
+              navigate={navigate}
+              emptyTitle="No verified works yet"
+              emptyDescription="Anchored works (Verified IP) show up here."
             />
-          </aside>
+          </TabsContent>
 
-          {/* ─── RIGHT: Social Feed — posts grid ─── */}
-          <section className="lg:col-span-8 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-                <ImageIcon className="h-4 w-4 text-primary" /> Posts
-              </h2>
-            </div>
-            {flowPosts && flowPosts.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
-                {flowPosts.map((post: any) => {
-                  const cat = (post.category || "").toLowerCase();
-                  const CatIcon =
-                    cat.includes("music") || cat.includes("audio") ? Music
-                    : cat.includes("video") ? Play
-                    : cat.includes("write") || cat.includes("text") ? FileText
-                    : cat.includes("link") ? ExternalLink
-                    : ImageIcon;
-                  return (
-                    <div
-                      key={post.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => navigate(`/flow?item=${post.id}`, { state: { from: location.pathname + location.search + location.hash } })}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          navigate(`/flow?item=${post.id}`, { state: { from: location.pathname + location.search + location.hash } });
-                        }
-                      }}
-                      className="group relative aspect-square overflow-hidden bg-muted rounded-md hover:opacity-90 transition-opacity cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/40"
-                      aria-label={post.title || "Open post"}
-                    >
-                      <FlowThumbnail
-                        fileUrl={post.file_url}
-                        linkUrl={post.link_url}
-                        title={post.title}
-                        description={post.description}
-                        category={post.category}
-                        hideCaption
-                        className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      {post.archived_at && (
-                        <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
-                          <span className="text-[10px] uppercase tracking-wider font-semibold text-white/90 bg-white/10 backdrop-blur-sm rounded-full px-2 py-0.5 border border-white/20">
-                            Archived
-                          </span>
-                        </div>
-                      )}
-                      <div className="absolute top-1.5 left-1.5 h-6 w-6 rounded-full bg-black/55 backdrop-blur-sm flex items-center justify-center">
-                        <CatIcon className="h-3 w-3 text-white" />
-                      </div>
-                      {post.solana_signature && (
-                        <div className="absolute top-1.5 right-1.5">
-                          <VerifiedIPBadge
-                            signature={post.solana_signature}
-                            size="xs"
-                            showLabel={false}
-                            className="shadow-sm"
-                          />
-                        </div>
-                      )}
-                      {isOwnProfile && <FlowPostOwnerMenu post={post} />}
+          {/* ─── PROJECTS ─── */}
+          <TabsContent value="projects" className="mt-5">
+            {(buildingProjects?.length ?? 0) > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {(buildingProjects ?? []).map((pr: any) => (
+                  <button
+                    key={pr.id}
+                    type="button"
+                    onClick={() => navigate(`/projects/${pr.id}`)}
+                    className="text-left rounded-2xl border border-border/50 bg-card/60 hover:bg-card transition-colors p-4 space-y-2"
+                  >
+                    <div className="h-1.5 rounded-full" style={{ background: pr.cover_color || "hsl(var(--primary))" }} />
+                    <p className="font-display text-base font-semibold text-foreground line-clamp-2">{pr.title}</p>
+                    {pr.description && <p className="text-xs text-muted-foreground line-clamp-2">{pr.description}</p>}
+                    <div className="flex items-center gap-2 pt-1">
+                      <Badge variant="outline" className="text-[10px] capitalize">{pr.status || "active"}</Badge>
+                      {pr.created_at && <span className="text-[10px] text-muted-foreground">{format(new Date(pr.created_at), "MMM d, yyyy")}</span>}
                     </div>
-                  );
-                })}
+                  </button>
+                ))}
               </div>
-            ) : isOwnProfile ? (
+            ) : (
               <EmptyState
-                icon={Sparkles}
-                title="No posts yet"
-                description="Use the post button on Discover to drop a work — it'll show up here."
-                cta={{ label: "Open post", to: "/discover?post=1", prominent: true }}
+                icon={FolderKanban}
+                title="No projects yet"
+                description={isOwnProfile ? "Releases and collaborations live here. Start one from a listing or proposal." : "This creator hasn't shipped any public projects yet."}
                 size="sm"
               />
-            ) : (
-              <p className="text-xs text-muted-foreground italic">No posts yet.</p>
             )}
-          </section>
-        </div>
+          </TabsContent>
+        </Tabs>
+
 
 
         {/* v10.3 — unified Support sheet (Subscribe / Tip / Trade) */}
@@ -881,6 +831,93 @@ const ProfileDetailPage = () => {
     </div>
   );
 };
+
+
+/* ─── PostsGrid sub-component — shared by Works + Verified tabs ─── */
+const PostsGrid = ({
+  posts,
+  isOwnProfile,
+  navigate,
+  emptyTitle = "No posts yet",
+  emptyDescription = "Use the post button on Discover to drop a work — it'll show up here.",
+}: {
+  posts: any[];
+  isOwnProfile: boolean;
+  navigate: (to: string, opts?: any) => void;
+  emptyTitle?: string;
+  emptyDescription?: string;
+}) => {
+  if (!posts || posts.length === 0) {
+    if (isOwnProfile) {
+      return (
+        <EmptyState
+          icon={Sparkles}
+          title={emptyTitle}
+          description={emptyDescription}
+          cta={{ label: "Open post", to: "/discover?post=1", prominent: true }}
+          size="sm"
+        />
+      );
+    }
+    return <p className="text-xs text-muted-foreground italic">{emptyTitle}.</p>;
+  }
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-2.5">
+      {posts.map((post: any) => {
+        const cat = (post.category || "").toLowerCase();
+        const CatIcon =
+          cat.includes("music") || cat.includes("audio") ? Music
+          : cat.includes("video") ? Play
+          : cat.includes("write") || cat.includes("text") ? FileText
+          : cat.includes("link") ? ExternalLink
+          : ImageIcon;
+        return (
+          <div
+            key={post.id}
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate(`/flow?item=${post.id}`, { state: { from: location.pathname + location.search + location.hash } })}
+            onKeyDown={(e: any) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                navigate(`/flow?item=${post.id}`, { state: { from: location.pathname + location.search + location.hash } });
+              }
+            }}
+            className="group relative aspect-square overflow-hidden bg-muted rounded-md hover:opacity-90 transition-opacity cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/40"
+            aria-label={post.title || "Open post"}
+          >
+            <FlowThumbnail
+              fileUrl={post.file_url}
+              linkUrl={post.link_url}
+              title={post.title}
+              description={post.description}
+              category={post.category}
+              hideCaption
+              className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+            {post.archived_at && (
+              <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-white/90 bg-white/10 backdrop-blur-sm rounded-full px-2 py-0.5 border border-white/20">
+                  Archived
+                </span>
+              </div>
+            )}
+            <div className="absolute top-1.5 left-1.5 h-6 w-6 rounded-full bg-black/55 backdrop-blur-sm flex items-center justify-center">
+              <CatIcon className="h-3 w-3 text-white" />
+            </div>
+            {post.solana_signature && (
+              <div className="absolute top-1.5 right-1.5">
+                <VerifiedIPBadge signature={post.solana_signature} size="xs" showLabel={false} className="shadow-sm" />
+              </div>
+            )}
+            {isOwnProfile && <FlowPostOwnerMenu post={post} />}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 
 /* ─── Anchor button sub-component ─── */
 const AnchorButton = ({ proofs }: { proofs: any[] }) => {
