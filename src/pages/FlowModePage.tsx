@@ -2889,6 +2889,38 @@ const FlowModePage = () => {
         onOpenChange={setShareDialogOpen}
         item={shareItem}
       />
+
+      {/* Discard-confirm — protects against accidentally losing an in-progress post */}
+      <AlertDialog open={confirmDiscardOpen} onOpenChange={setConfirmDiscardOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard this post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved files or text. If you close now, your draft will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                cancelUpload();
+                resetPendingFiles();
+                setNewTitle("");
+                setNewDesc("");
+                setNewLink("");
+                setShareStep("pick");
+                setShowLinkField(false);
+                setCelebrating(false);
+                setConfirmDiscardOpen(false);
+                setAddOpen(false);
+              }}
+            >
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
