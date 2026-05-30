@@ -8,8 +8,6 @@ import {
   Trophy,
   ShieldCheck,
   Flame,
-  Briefcase,
-  LineChart,
 } from "lucide-react";
 
 import { motion } from "framer-motion";
@@ -33,16 +31,12 @@ import {
 } from "@/components/ui/sidebar";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-// v10.3: 4-tab sidebar — no Fan/Creator switcher.
-//   Home          → personalized feed (subscribed creators + Fresh) — DashboardPage for now,
-//                   reshaped in step 4
-//   Discover      → dense Riipen × Dexscreener table (DiscoverPage)
-//   Conversations → DMs + inbox as left rail (MessagesPage)
-//   Creator Pass  → badges, rank, $RHOZE portfolio
+// v11 Pillar 6 — Sidebar trimmed to 3 destinations. Portfolio is no longer a
+// primary tab (still reachable from Creator Pass), so the nav reads as a
+// straight line: Discover artists → watch the feed → manage your pass.
 const pillarItems = [
   { icon: Compass, label: "Discover", path: "/discover" },
   { icon: Home, label: "Feed", path: "/flow" },
-  { icon: Briefcase, label: "Portfolio", path: "/portfolio" },
   { icon: Trophy, label: "Creator Pass", path: "/credits" },
 ];
 
@@ -269,18 +263,6 @@ const AppSidebar = () => {
           </div>
         )}
 
-        {/* Public Treasury link — sits at the very bottom of the sidebar */}
-        {!collapsed && (
-          <div className="px-4 pt-3 pb-1">
-            <Link
-              to="/treasury"
-              onClick={handleNavClick}
-              className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline transition-colors"
-            >
-              Treasury
-            </Link>
-          </div>
-        )}
       </SidebarFooter>
 
     </Sidebar>

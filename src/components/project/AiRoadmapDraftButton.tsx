@@ -1,12 +1,14 @@
 /**
- * AiRoadmapDraftButton — "Draft with AI" entry point shown at the top of an
- * empty (or near-empty) project roadmap. Calls the `draft-project-roadmap`
- * edge function and writes the returned milestones into `project_goals` as
- * top-level stages the user can then edit, reorder, or delete inline.
+ * AiRoadmapDraftButton — "Draft a roadmap" entry point at the top of an empty
+ * project roadmap.
+ *
+ * v11 Pillar 6: copy no longer brands this as "AI-powered" — the
+ * intelligence is implicit, the button just gets you suggested milestones to
+ * edit. (Backing model is still the music-native draft-project-roadmap fn.)
  */
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Wand2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,14 +41,11 @@ export const AiRoadmapDraftButton = ({
   const generate = useMutation({
     mutationFn: async () => {
       setBusy(true);
-      // Pillar 5 — pull rich context (profile + recent works + linked coin)
-      // for both sides so the AI tailors strategy to the artist.
       const [clientCtx, specialistCtx] = await Promise.all([
         fetchCreatorContext(clientId, "Client"),
         fetchCreatorContext(specialistId, "Creator"),
       ]);
 
-      // Tokenize intent inferred from the specialist having an approved coin.
       const tokenize_intent = !!specialistCtx.token_mint;
 
       const milestones = await draft.mutateAsync({
@@ -58,10 +57,8 @@ export const AiRoadmapDraftButton = ({
         specialistProfile: specialistCtx,
       });
 
-      if (!milestones.length) throw new Error("AI returned no milestones");
+      if (!milestones.length) throw new Error("No milestones returned");
 
-      // Insert as top-level project_goals. Compose strategy + metric into
-      // the description so the rich AI output renders without a schema change.
       const rows = milestones.map((m, i) => ({
         project_id: projectId,
         user_id: user!.id,
@@ -77,7 +74,7 @@ export const AiRoadmapDraftButton = ({
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["project-goals", projectId] });
       qc.invalidateQueries({ queryKey: ["project", projectId] });
-      toast.success("Rhozeland AI drafted your roadmap — edit anything you want.");
+      toast.success("Roadmap drafted — edit anything you want.");
     },
     onError: (e: any) => toast.error(e.message ?? "Couldn't draft roadmap"),
     onSettled: () => setBusy(false),
@@ -88,14 +85,14 @@ export const AiRoadmapDraftButton = ({
       type="button"
       size="sm"
       variant="outline"
-      className="gap-2 border-primary/40 bg-primary/5 hover:bg-primary/10"
+      className="gap-2"
       disabled={busy || generate.isPending}
       onClick={() => generate.mutate()}
     >
       {busy || generate.isPending
         ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        : <Sparkles className="h-3.5 w-3.5 text-primary" />}
-      {existingGoalCount > 0 ? "Add AI milestones" : "Draft roadmap with AI"}
+        : <Wand2 className="h-3.5 w-3.5" />}
+      {existingGoalCount > 0 ? "Suggest more milestones" : "Draft a roadmap"}
     </Button>
   );
 };
