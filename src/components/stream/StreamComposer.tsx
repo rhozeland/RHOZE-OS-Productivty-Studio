@@ -13,13 +13,14 @@ import { useNavigate } from "react-router-dom";
 import { useAuthGate } from "@/components/AuthGateDialog";
 import { Headphones, Film, Image as ImageIcon, ArrowRight } from "lucide-react";
 
-type WorkKind = "audio" | "visual" | "photo";
+type WorkKind = "music" | "video" | "photo";
 
 const KINDS: { key: WorkKind; label: string; hint: string; Icon: typeof Headphones }[] = [
-  { key: "audio",  label: "Audio",  hint: "Track, demo, voice memo",       Icon: Headphones },
-  { key: "visual", label: "Visual", hint: "Video, motion, performance",    Icon: Film },
-  { key: "photo",  label: "Photo",  hint: "Cover art, BTS, press shot",    Icon: ImageIcon },
+  { key: "music", label: "Music", hint: "Track, demo, voice memo",    Icon: Headphones },
+  { key: "video", label: "Video", hint: "Performance, motion, BTS",   Icon: Film },
+  { key: "photo", label: "Photo", hint: "Cover art, press, stills",   Icon: ImageIcon },
 ];
+
 
 interface Props {
   /** Optional: kept for backward compat with HubPage props. Unused. */
@@ -33,8 +34,10 @@ const StreamComposer = (_: Props = {}) => {
 
   const handlePick = (kind: WorkKind) => {
     if (!requireAuth("Sign up to post your work.")) return;
-    navigate(`/settings?upload=${kind}#provenance`);
+    // v11 Pillar 7 — Share to Flow is the single upload surface. Vibe pre-selected.
+    navigate(`/flow?share=1&vibe=${kind}`);
   };
+
 
   return (
     <div

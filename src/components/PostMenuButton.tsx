@@ -47,10 +47,11 @@ const POST_OPTIONS: PostIntent[] = [
   {
     key: "work",
     title: "Work",
-    description: "Post audio, visual, or photo work. Hashed in your browser.",
-    cta: "Post work",
+    description: "Drop music, video, or photo. Hashed in your browser.",
+    cta: "Share to Flow",
     Icon: Shield,
   },
+
   {
     key: "listing",
     title: "Listing",
@@ -115,9 +116,12 @@ const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
 
   const handleContinue = () => {
     if (selected === "work") {
-      closeAndNavigate("/settings#provenance");
+      // v11 Pillar 7 — straight into the Share-to-Flow composer. No settings
+      // detour; verification is only required for the on-chain anchor toggle.
+      closeAndNavigate("/flow?share=1");
       return;
     }
+
 
     if (selected === "listing") {
       setOpen(false);
