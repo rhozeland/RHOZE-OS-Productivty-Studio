@@ -131,6 +131,7 @@ const ConnectBoard = ({ kind, search = "" }: Props) => {
     (kind === "all" && hire.isLoading && calls.isLoading && events.isLoading && spaces.isLoading);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [proposalSeed, setProposalSeed] = useState<ProposalSeed | null>(null);
   // Reset selection when the data set changes (filter/kind switch).
   useEffect(() => { setSelectedId(null); }, [kind]);
 
@@ -140,17 +141,16 @@ const ConnectBoard = ({ kind, search = "" }: Props) => {
   );
 
   const handleStartProject = (r: ConnectRow) => {
-    stashProjectSeed({
+    if (!r.ownerId) return;
+    setProposalSeed({
+      counterpartyId: r.ownerId,
       title: r.title,
+      summary: r.description ?? null,
       listingId: r.kind === "call" ? r.id : undefined,
-      collaboratorId: r.ownerId,
-      scope: r.description ?? null,
-      sourceKind: r.kind,
-      sourceId: r.id,
     });
-    navigate(`/messages?tab=projects&new=1&source=${r.kind}`);
   };
   if (kind === "hire") return <DiscoverTable />;
+
 
   return (
     <div className="space-y-4">
