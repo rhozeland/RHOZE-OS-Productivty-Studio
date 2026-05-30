@@ -85,7 +85,6 @@ const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { requireAuth } = useAuthGate();
   const [open, setOpen] = useState(false);
-  const [noteOpen, setNoteOpen] = useState(false);
   const [createListingOpen, setCreateListingOpen] = useState(false);
   const [selected, setSelected] = useState<PostIntent["key"]>("work");
 
@@ -157,11 +156,10 @@ const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-4xl overflow-hidden border border-border/80 bg-card/95 p-0 backdrop-blur-xl">
-          <div className="space-y-6 p-5 sm:p-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="space-y-4">
-                <div className="flex flex-wrap gap-2">
+        <DialogContent className="sm:max-w-2xl overflow-hidden border border-border/80 bg-card p-0 backdrop-blur-xl">
+          <div className="space-y-5 p-4 sm:p-5">
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
                   {POST_OPTIONS.map((option) => {
                     const active = selected === option.key;
                     const Icon = option.Icon;
@@ -172,7 +170,7 @@ const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
                         type="button"
                         onClick={() => setSelected(option.key)}
                         className={cn(
-                          "inline-flex items-center gap-2 rounded-full border px-4 py-3 text-sm font-medium transition-all",
+                          "inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-all",
                           active
                             ? "border-primary bg-primary text-primary-foreground shadow-sm"
                             : "border-border bg-secondary/55 text-muted-foreground hover:border-foreground/20 hover:bg-secondary hover:text-foreground",
@@ -183,18 +181,13 @@ const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
                       </button>
                     );
                   })}
-                </div>
-
-                <p className="text-sm text-muted-foreground max-w-2xl">
-                  {selectedOption.description}
-                </p>
               </div>
 
-              <Button
-                type="button"
-                onClick={handleContinue}
-                className="rounded-full px-6 py-6 text-base font-semibold"
-              >
+              <p className="text-sm text-muted-foreground pr-8">
+                {selectedOption.description}
+              </p>
+
+              <Button type="button" onClick={handleContinue} className="h-14 w-full rounded-full text-base font-semibold">
                 <Plus className="mr-2 h-4 w-4" />
                 {selectedOption.cta}
               </Button>
