@@ -37,7 +37,9 @@ import ConnectBoard from "@/components/connect/ConnectBoard";
 import ChartsPage from "@/pages/ChartsPage";
 
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
-import PublicReleasesLane from "@/components/discover/PublicReleasesLane";
+// v11 Pillar 8: PublicReleasesLane removed — it was auto-attaching profile
+// tokens to releases the owner never linked, plus it duplicated profile
+// surfaces. Public release pages still exist at /release/:slug.
 
 import DiscoverEventsGrid from "@/components/discover/DiscoverEventsGrid";
 import EventCategoryPills from "@/components/discover/EventCategoryPills";
@@ -372,8 +374,7 @@ const DiscoverPage = () => {
         </motion.section>
       )}
 
-      {/* ─── v11 Pillar 4: Public Releases (hero unit on Discover) ── */}
-      <PublicReleasesLane />
+      {/* Public Releases lane removed — see import comment above. */}
 
       {/* ─── Trending artists (self-gated by liquidity) ───────────── */}
 

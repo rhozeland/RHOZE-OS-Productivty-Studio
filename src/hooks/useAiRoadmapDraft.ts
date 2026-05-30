@@ -67,10 +67,10 @@ export const useAiRoadmapDraft = () => {
 export const composeMilestoneDescription = (m: DraftedMilestone): string => {
   const parts: string[] = [m.deliverables.trim()];
   if (m.marketing_strategy?.trim()) {
-    parts.push(`\n\n🎯 Strategy — ${m.marketing_strategy.trim()}`);
+    parts.push(`\n\nStrategy — ${m.marketing_strategy.trim()}`);
   }
   if (m.target_metric?.name && m.target_metric?.value) {
-    parts.push(`\n📈 Target — ${m.target_metric.name}: ${m.target_metric.value}`);
+    parts.push(`\nTarget — ${m.target_metric.name}: ${m.target_metric.value}`);
   }
   return parts.join("");
 };
