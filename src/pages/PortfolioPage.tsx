@@ -117,49 +117,6 @@ const SpacesPassportSection = ({ userId }: { userId: string }) => {
   );
 };
 
-/* ─────────────── Token Holdings (wallet-gated) ─────────────── */
-const TokenHoldingsSection = () => {
-  const { connected, publicKey } = useWallet();
-
-  if (!connected) {
-    return (
-      <section className="space-y-3">
-        <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
-          <WalletIcon className="h-4 w-4 text-muted-foreground" /> Creator token holdings
-        </h3>
-        <div className="rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-6 text-center space-y-3">
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Connect a Solana wallet to surface every creator token you hold,
-            with live prices from pump.fun.
-          </p>
-          <div className="flex justify-center">
-            <WalletButton />
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="space-y-3">
-      <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
-        <WalletIcon className="h-4 w-4 text-muted-foreground" /> Creator token holdings
-      </h3>
-      <div className="rounded-2xl border border-border bg-card p-4 space-y-2">
-        <p className="text-xs text-muted-foreground">
-          Connected as{" "}
-          <span className="font-mono text-foreground">
-            {publicKey?.toBase58().slice(0, 4)}…{publicKey?.toBase58().slice(-4)}
-          </span>
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Live holdings sync is rolling out — your pump.fun-linked creator
-          tokens will appear here next.
-        </p>
-      </div>
-    </section>
-  );
-};
 
 /* ─────────────── Page ─────────────── */
 const PortfolioPage = () => {
