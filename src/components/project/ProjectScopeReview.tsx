@@ -103,11 +103,12 @@ export const ProjectScopeReview = ({
         .is("goal_id", null)
         .maybeSingle();
 
-      if (existing?.id) {
+      const existingId = (existing as any)?.id as string | undefined;
+      if (existingId) {
         const { error } = await supabase
           .from("project_approvals" as any)
           .update({ scope_accepted_at: new Date().toISOString() })
-          .eq("id", existing.id);
+          .eq("id", existingId);
         if (error) throw error;
       } else {
         const { error } = await supabase
