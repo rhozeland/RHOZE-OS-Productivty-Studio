@@ -49,12 +49,9 @@ const SignedAgreementCard = ({ projectId, contractId }: SignedAgreementCardProps
       const { data, error } = await supabase
         .from("project_proposals")
         .select(
-          "id, title, status, terms_text, terms_version, terms_hash, " +
-            "client_id, specialist_id, " +
-            "client_signed_at, specialist_signed_at, " +
-            "client_signature_tx, specialist_signature_tx, " +
-            "anchored_at",
+          "id, title, status, terms_text, terms_version, terms_hash, client_id, specialist_id, client_signed_at, specialist_signed_at, client_signature_tx, specialist_signature_tx, anchored_at",
         )
+
         .eq("contract_id", contractId!)
         .maybeSingle();
       if (error) throw error;
