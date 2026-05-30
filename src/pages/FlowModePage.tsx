@@ -2160,13 +2160,9 @@ const FlowModePage = () => {
               <DialogTitle className="text-lg">
                 {shareStep === "pick" && "Share to Flow"}
                 {shareStep === "caption" && "Title & caption"}
-                {shareStep === "confirm" && "Review & publish"}
+                {shareStep === "confirm" && "Review"}
               </DialogTitle>
-              <DialogDescription className="text-xs">
-                {shareStep === "pick" && "Pick a vibe and drop your work."}
-                {shareStep === "caption" && "Name your post. Your caption posts as the first comment."}
-                {shareStep === "confirm" && "One last look before it hits the feed."}
-              </DialogDescription>
+              <DialogDescription className="sr-only">Share a work to your Flow feed.</DialogDescription>
             </DialogHeader>
             {/* 3-dot stepper */}
             <div className="flex items-center gap-1.5 mt-3" role="tablist" aria-label="Share progress">
