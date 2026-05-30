@@ -17,6 +17,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, CalendarDays, Sparkles, Loader2, ImagePlus, X, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useArtistVerification } from "@/hooks/useArtistVerification";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +50,10 @@ const CATEGORIES = [
 const EventCreatePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  // Pillar 6 — gate event creation behind Verified Artist status.
+  const { data: verif, isLoading: verifLoading } = useArtistVerification(user?.id);
+  const isVerifiedHost = !!verif?.verified;
+
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -279,15 +284,40 @@ const EventCreatePage = () => {
     );
   }
 
+  // Pillar 6 — hosting events on Rhozeland is a Verified Artist (or Pro)
+  // privilege. Unverified users can still link out to Luma / Eventbrite from
+  // their profile's upcoming-links list, but can't create native events here.
+  if (!verifLoading && !isVerifiedHost) {
+    return (
+      <div className="max-w-xl mx-auto py-16 space-y-4 text-center">
+        <h1 className="font-display text-2xl font-bold">Verified artists can host events</h1>
+        <p className="text-muted-foreground text-sm">
+          Hosting native events on Rhozeland is reserved for Verified Artists —
+          it keeps the calendar trustworthy for fans. Already have shows on
+          Luma, Eventbrite, or RA? Paste those links straight onto your profile
+          instead.
+        </p>
+        <div className="flex items-center justify-center gap-2 pt-2">
+          <Link to="/settings/verification">
+            <Button className="rounded-full">Apply to be verified</Button>
+          </Link>
+          <Link to="/profile">
+            <Button variant="outline" className="rounded-full">Back to profile</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const isSubmitting = submitMutation.isPending;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <Link
-        to="/market?kind=event"
+        to="/discover"
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to Events
+        <ArrowLeft className="h-4 w-4" /> Back
       </Link>
 
       <div>
@@ -303,20 +333,7 @@ const EventCreatePage = () => {
         </p>
       </div>
 
-      {/* Luma promo banner */}
-      <Link
-        to="/settings#calendar"
-        className="flex items-center gap-3 rounded-xl border border-dashed border-border/70 bg-muted/30 p-3 hover:bg-muted/50 transition-colors"
-      >
-        <CalendarDays className="h-4 w-4 text-primary shrink-0" />
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-foreground">Already use Luma?</p>
-          <p className="text-[11px] text-muted-foreground">
-            Connect your calendar once and your events appear here automatically — paid or free.
-          </p>
-        </div>
-        <span className="text-[10px] text-primary font-semibold uppercase tracking-wider shrink-0">Connect</span>
-      </Link>
+
 
 
       <motion.div

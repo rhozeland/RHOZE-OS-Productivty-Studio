@@ -686,38 +686,11 @@ const ProfileDetailPage = () => {
             )}
 
 
-            {/* v10.3 — Luma event embed (when creator has linked a lu.ma URL) */}
-            {(p as any).luma_url && (
-              <LumaEventEmbed
-                url={(p as any).luma_url}
-                title={`${p.display_name || p.username || "Creator"}'s upcoming events`}
-                profileId={p.id}
-                profileUserId={p.user_id}
-              />
-            )}
-            {isOwnProfile && !(p as any).luma_url && (
-              <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-4">
-                <div className="flex items-start gap-3">
-                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <CalendarIcon className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-foreground">Add your Luma link</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      Paste a lu.ma URL — your events embed straight on your profile.
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-3 h-8 text-xs"
-                      onClick={() => navigate("/settings#calendar")}
-                    >
-                      Add Luma URL
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Pillar 6 — Luma iframe + Luma-specific upsell removed. Upcoming
+                events surface via the creator's roadmap milestones and (soon)
+                a free-form `profiles.upcoming_links` list. */}
+
+
 
 
 

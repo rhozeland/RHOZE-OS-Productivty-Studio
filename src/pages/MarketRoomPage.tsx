@@ -16,9 +16,7 @@ import SaveButton from "@/components/saved/SaveButton";
 import RoomHero from "@/components/rooms/RoomHero";
 import {
   useHireRows,
-  useSpaceRows,
   useCallRows,
-  useEventRows,
   type ConnectKind,
   type ConnectRow,
 } from "@/components/connect/useConnectRows";
@@ -26,17 +24,17 @@ import {
 /**
  * CONNECT — Discover marketplace.
  *
- * v11 Tier 1: Match Made deck removed; Events + Spaces collapse into one
- * "Live" filter. Filters are now: All · Find Artists · Listings · Live · For You.
+ * v11 Pillar 6: events + spaces are no longer primary destinations. The
+ * "Live" filter is removed; old deeplinks fall back to "All".
+ * Filters: All · Find Artists · Listings · For You.
  */
 
-type FilterKey = "all" | "hire" | "call" | "live" | "foryou";
+type FilterKey = "all" | "hire" | "call" | "foryou";
 
 const FILTERS: { key: FilterKey; label: string; kinds: ConnectKind[] | "all" | "foryou" }[] = [
   { key: "all", label: "All", kinds: "all" },
   { key: "hire", label: "Find Artists", kinds: ["hire"] },
   { key: "call", label: "Listings", kinds: ["call"] },
-  { key: "live", label: "Live", kinds: ["space", "event"] },
   { key: "foryou", label: "For You", kinds: "foryou" },
 ];
 
@@ -54,17 +52,16 @@ const KIND_TAG_LABEL: Record<ConnectKind, string> = {
   event: "Event",
 };
 
-// URL ?kind= back-compat → map onto new filter keys.
-// Old `space`/`event` deeplinks now resolve into the merged "Live" filter.
+// URL ?kind= back-compat → all live/space/event deeplinks now fall through to All.
 const URL_TO_FILTER: Record<string, FilterKey> = {
   hire: "hire",
-  space: "live",
-  spaces: "live",
+  space: "all",
+  spaces: "all",
   call: "call",
   calls: "call",
-  event: "live",
-  events: "live",
-  live: "live",
+  event: "all",
+  events: "all",
+  live: "all",
   foryou: "foryou",
   all: "all",
 };
@@ -81,23 +78,16 @@ const MarketRoomPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlFilter]);
 
-  // Always fetch all kinds so filter switches are instant.
+  // Pillar 6 — only hire + call are surfaced. Spaces/events stay in the DB
+  // but are no longer queried for Discover.
   const hire = useHireRows(true);
-  const spaces = useSpaceRows(true);
   const calls = useCallRows(true);
-  const events = useEventRows(true);
 
-  const isLoading =
-    hire.isLoading && spaces.isLoading && calls.isLoading && events.isLoading;
+  const isLoading = hire.isLoading && calls.isLoading;
 
   const all: ConnectRow[] = useMemo(() => {
-    return interleave([
-      hire.data ?? [],
-      spaces.data ?? [],
-      calls.data ?? [],
-      events.data ?? [],
-    ]);
-  }, [hire.data, spaces.data, calls.data, events.data]);
+    return interleave([hire.data ?? [], calls.data ?? []]);
+  }, [hire.data, calls.data]);
 
   const filtered = useMemo(() => {
     let rows = all;
