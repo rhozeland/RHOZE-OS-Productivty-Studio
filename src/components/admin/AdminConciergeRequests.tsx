@@ -162,9 +162,16 @@ export default function AdminConciergeRequests({ canConvert = true }: AdminConci
               className="w-full text-left rounded-xl border border-border bg-card p-4 hover:border-foreground/30 transition-colors"
             >
               <div className="flex items-start justify-between gap-3 mb-2">
-                <Badge variant="outline" className={`${meta.tone} text-[10px]`}>
-                  {meta.label}
-                </Badge>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <Badge variant="outline" className={`${meta.tone} text-[10px]`}>
+                    {meta.label}
+                  </Badge>
+                  {r.tier && (
+                    <Badge variant="outline" className="text-[10px] bg-foreground/5 border-foreground/20 capitalize">
+                      {r.tier}
+                    </Badge>
+                  )}
+                </div>
                 <span className="text-[10px] text-muted-foreground">
                   {formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}
                 </span>
@@ -283,10 +290,12 @@ function RequestDetail({
         )}
 
         <div className="grid grid-cols-2 gap-3 text-xs">
+          <Field label="Tier" value={row.tier ? String(row.tier).replace(/^./, (c: string) => c.toUpperCase()) : "Curated"} />
           <Field label="Category" value={row.category ?? "—"} />
           <Field label="Budget range" value={row.budget_range ?? "—"} />
           <Field label="Deadline" value={row.deadline ?? "—"} />
           <Field label="Contact" value={row.contact_email ?? "—"} />
+          <Field label="Splitter wallet" value={row.splitter_address ? `${row.splitter_address.slice(0, 6)}…${row.splitter_address.slice(-4)}` : "—"} />
         </div>
 
         {/* Phase 4: claim + curator status */}

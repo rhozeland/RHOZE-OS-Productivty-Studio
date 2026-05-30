@@ -91,3 +91,32 @@ TIER 3 — Full Rhozeland Roster
 
 ## Suggested execution order
 1 → 5 → 6 → 4 → 3 → 2 (token plumbing first so other surfaces can render the chip; A&R last since it's mostly docs).
+
+---
+
+## v11 Pillar 4 — shipped (May 30 2026)
+All six items above are now live. Mounts completed in this loop:
+- `<PublicReleasesLane />` mounted at the top of `DiscoverPage` (above TrendingArtistsLane).
+- `<WorkTokenChip />` + `<AttachCoinToWorkButton />` mounted inside `WorksLightbox` tiles (chip top-left when linked, attach button bottom-right when owner).
+- `AdminConciergeRequests` now surfaces `tier` (list pill + detail field) and `splitter_address` (detail field, truncated).
+
+## Pillar 5 — AI roadmap enrichment (NOT YET BUILT, captured for next loop)
+User vision: when a creator/client starts a tokenized project, the AI roadmap shouldn't just be a generic 3-5 milestone list. It should feel like a **wow moment**, on par with the lovable first-project experience:
+
+1. **Prompted intake up-front, not during draft.** Capture rich creator context during onboarding + project intake so the AI doesn't have to interrogate the user mid-flow. New onboarding fields to consider: art style, references, role specifics, target audience, success metric. Project intake adds: vibe, target release window, release type (single/EP/album/visual), comparable artists.
+2. **AI listens + reads.** The drafter should pull in:
+   - creator's profile (archetype, bio, roles, region, slogan)
+   - their last N uploaded works (titles + descriptions; later: audio analysis / image vibe analysis)
+   - linked token metrics if any (market cap, holders, recent volume)
+3. **Market-aware roadmap.** Each milestone should reference live pump.fun realities — # of coins launching daily, typical liquidity windows, what makes a launch succeed (KOLs, livestream, art drops, holder utilities). Include a "Launch readiness" stage with concrete deliverables (artwork pack, teaser, KOL list, livestream script, holder utility).
+4. **Realistic metrics + outcomes per stage.** "Stage 3 — Launch day: target 200 holders / $25k MC in 24h" — calibrated from market data + creator's follower base.
+5. **Unique marketing strategy.** Output a strategy paragraph per milestone tying back to the creator's archetype + art style (e.g. "Visual" archetype gets art-drop centric launch; "Producer" gets beat-pack + collab-stream centric launch).
+6. **PumpFun-native deliverables.** Roadmap milestones explicitly map to pump.fun primitives: coin creation, livestream activation, bonding curve graduation, Raydium handoff, creator reward claims.
+
+Implementation sketch (for next loop):
+- Extend `draft-project-roadmap` edge fn input: `tokenize_intent: boolean`, `release_type`, `target_window`, `recent_works[]`, `token_metrics?`.
+- New "Pillar 5 launch playbook" system prompt + few-shot examples.
+- Onboarding step: add 3 optional questions (art style / references / target audience).
+- Project intake: add the same fields when `tokenize_intent=true`.
+- Output schema: each milestone gets `marketing_strategy: string` + `target_metric: { name, value }` in addition to `title/deliverables/suggested_amount/est_days`.
+- UI: roadmap card renders the strategy paragraph + metric pill below the milestone description.
