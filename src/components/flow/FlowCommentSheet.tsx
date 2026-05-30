@@ -10,18 +10,28 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Send, Trash2 } from "lucide-react";
+import { Loader2, Send, Trash2, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import SaveButton from "@/components/saved/SaveButton";
+import { cn } from "@/lib/utils";
 
 interface FlowCommentSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   flowItemId: string | null;
   itemTitle?: string | null;
+  /** Optional engagement controls — when present, the sheet surfaces a
+   *  Like / Send / Save row in the header so the swipe-down gesture is
+   *  the single discoverable hub for all post engagement, not just comments. */
+  liked?: boolean;
+  likeCount?: number;
+  commentCount?: number;
+  onLike?: () => void;
+  onShare?: () => void;
 }
 
 const initials = (n?: string | null) =>
