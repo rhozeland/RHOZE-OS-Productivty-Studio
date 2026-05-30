@@ -49,6 +49,7 @@ const MarketplacePage = () => {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <PostMenuButton
+            intent="listing"
             trigger={
               <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
                 <Button className="rounded-full shadow-md" size="lg" asChild>
