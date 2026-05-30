@@ -203,29 +203,29 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         {item.verification_status === "verified" && (
           <div
             className={cn(
-              "pointer-events-none absolute z-10",
-              // Responsive offset — hugs the corner tighter on small cards,
-              // breathes more on large desktop tiles. Avoids colliding with
-              // the Maximize2 enlarge button which sits at top-3/right-3.
-              "top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4",
-              // For image-led cards (photo / design), nudge the watermark
-              // down-left so it stamps onto the artwork rather than the
-              // empty corner. For media-embed cards (YouTube/Spotify) the
-              // top-right corner is fine since iframes own that area.
-              isImage && "sm:top-4 sm:right-4",
+              "pointer-events-none absolute z-10 select-none",
+              // Bottom-right corner — reads as a "stamp of authenticity"
+              // on the artwork itself, closer to how a digital fingerprint
+              // would be applied. Sized larger for video/visual cards
+              // where there's more real estate to fill.
+              "bottom-2 right-2 sm:bottom-3 sm:right-3 md:bottom-4 md:right-4",
             )}
             title="Verified IP — fingerprinted & anchored on Solana"
             aria-label="Verified IP"
           >
-            <Fingerprint
-              className={cn(
-                // Scales with the card: snug on phones, prominent on desktop.
-                "h-7 w-7 sm:h-9 sm:w-9 md:h-11 md:w-11 lg:h-12 lg:w-12",
-                "text-white/80 mix-blend-overlay",
-                "drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]",
-              )}
-              strokeWidth={1.5}
-            />
+            <div className="relative">
+              {/* Soft halo behind the fingerprint so it stays legible on
+                  bright artwork without dimming the image with a chip. */}
+              <div className="absolute inset-0 rounded-full bg-black/30 blur-md scale-110" aria-hidden />
+              <Fingerprint
+                className={cn(
+                  "relative h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 lg:h-16 lg:w-16",
+                  "text-emerald-300/95 mix-blend-screen",
+                  "drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]",
+                )}
+                strokeWidth={1.6}
+              />
+            </div>
           </div>
         )}
         {/* ═══ PHOTO / DESIGN — Full image with click to enlarge ═══ */}
