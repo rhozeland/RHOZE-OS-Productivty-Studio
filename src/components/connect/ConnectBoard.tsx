@@ -144,7 +144,7 @@ const ConnectBoard = ({ kind, search = "" }: Props) => {
         <HeroPreview row={selected} onStartProject={handleStartProject} />
       ) : !isLoading ? (
         <EmptyState
-          icon={SearchIconWrap}
+          icon={SearchIcon}
           title={EMPTY_COPY[kind].title}
           description={EMPTY_COPY[kind].description}
           size="md"
