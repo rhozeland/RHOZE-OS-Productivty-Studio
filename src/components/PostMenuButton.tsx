@@ -43,18 +43,13 @@ type PostIntent = {
   Icon: typeof Flame;
 };
 
+// Pillar 6: dropped "Update" (notes are accessible from DMs/profile only) — the
+// public Post menu is now about durable artifacts: works, listings, events, spaces.
 const POST_OPTIONS: PostIntent[] = [
-  {
-    key: "note",
-    title: "Update",
-    description: "A short note for your profile and messages.",
-    cta: "Leave a note",
-    Icon: Flame,
-  },
   {
     key: "work",
     title: "Work",
-    description: "Post music, visuals, video, or writing to Flow.",
+    description: "Post audio, visual, or photo work. Hashed in your browser.",
     cta: "Post work",
     Icon: Shield,
   },
