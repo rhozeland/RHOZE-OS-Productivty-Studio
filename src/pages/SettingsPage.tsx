@@ -1167,10 +1167,8 @@ const SettingsPage = () => {
       </div>
     ),
     shipping: renderShipping,
-    // Pillar 6 — Luma URL field retired. Use the free-form upcoming links UI
-    // on your profile instead. Kept the key so /settings#calendar deeplinks
-    // don't 404; renders nothing.
-    calendar: () => null,
+    // Pillar 6 — Calendar Sync (Luma .ics import) retired.
+
     notifications: renderNotifications,
     security: renderSecurity,
     account: renderAccount,
