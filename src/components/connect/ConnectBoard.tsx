@@ -236,9 +236,9 @@ const HeroPreview = ({
       {/* Slim gradient strip — keeps the hero light, no giant cover */}
       <div className="h-1.5 bg-gradient-to-r from-rose-300 via-violet-300 to-sky-300" />
 
-      <div className="p-5 sm:p-6 space-y-4">
+      <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
         {/* Chips */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           <Badge variant="secondary" className={cn("gap-1 text-[10px]", meta.cls)}>
             <Icon className="h-3 w-3" /> {meta.label}
           </Badge>
@@ -254,14 +254,14 @@ const HeroPreview = ({
             </span>
           )}
           {row.kind === "space" && row.subtitle && (
-            <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-              <MapPin className="h-3 w-3" /> {row.subtitle}
+            <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground truncate max-w-full">
+              <MapPin className="h-3 w-3 shrink-0" /> <span className="truncate">{row.subtitle}</span>
             </span>
           )}
         </div>
 
         {/* Title */}
-        <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight leading-tight text-foreground">
+        <h2 className="font-display text-xl sm:text-3xl font-semibold tracking-tight leading-tight text-foreground break-words">
           {row.title}
         </h2>
 
@@ -269,40 +269,45 @@ const HeroPreview = ({
         {row.ownerId && (
           <Link
             to={`/profiles/${row.ownerId}`}
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors min-w-0"
           >
-            <Avatar className="h-7 w-7">
+            <Avatar className="h-7 w-7 shrink-0">
               <AvatarImage src={row.ownerAvatar || ""} />
               <AvatarFallback className="text-[10px]">{ownerName.charAt(0)}</AvatarFallback>
             </Avatar>
-            <span>by <span className="font-medium text-foreground">{ownerName}</span></span>
+            <span className="truncate">by <span className="font-medium text-foreground">{ownerName}</span></span>
           </Link>
         )}
 
-        {/* CTAs */}
-        <div className="border-t border-border/60 pt-4 flex flex-wrap items-center gap-2">
-          <Button onClick={() => onStartProject(row)} className="gap-1.5">
+        {/* CTAs — stack on mobile, inline on sm+ */}
+        <div className="border-t border-border/60 pt-3 sm:pt-4 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2">
+          <Button
+            onClick={() => onStartProject(row)}
+            className="gap-1.5 w-full sm:w-auto justify-center"
+          >
             <Plus className="h-4 w-4" /> Start a project from this
           </Button>
-          {row.ownerId && (
-            <Button
-              variant="outline"
-              onClick={() => navigate(`/messages?with=${row.ownerId}&${row.kind}=${row.id}`)}
-              className="gap-1.5"
-            >
-              <MessageCircle className="h-4 w-4" /> Message
+          <div className="flex items-center gap-2 sm:contents">
+            {row.ownerId && (
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/messages?with=${row.ownerId}&${row.kind}=${row.id}`)}
+                className="gap-1.5 flex-1 sm:flex-none justify-center"
+              >
+                <MessageCircle className="h-4 w-4" /> Message
+              </Button>
+            )}
+            <Button variant="ghost" asChild className="gap-1.5 flex-1 sm:flex-none justify-center">
+              <Link to={row.detailHref}>
+                Full page <ExternalLink className="h-3.5 w-3.5" />
+              </Link>
             </Button>
-          )}
-          <Button variant="ghost" asChild className="gap-1.5">
-            <Link to={row.detailHref}>
-              Full page <ExternalLink className="h-3.5 w-3.5" />
-            </Link>
-          </Button>
-          {(row.kind === "call" || row.kind === "hire") && (
-            <div className="ml-auto">
-              <SaveButton type="listing" id={row.id} size="sm" />
-            </div>
-          )}
+            {(row.kind === "call" || row.kind === "hire") && (
+              <div className="sm:ml-auto shrink-0">
+                <SaveButton type="listing" id={row.id} size="sm" />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
