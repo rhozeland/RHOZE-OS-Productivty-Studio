@@ -93,11 +93,51 @@ const FlowCommentSheet = ({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="max-h-[75vh] rounded-t-3xl bg-card/95 backdrop-blur-xl border-t border-border/60 flex flex-col">
-        <SheetHeader className="text-left">
+        <SheetHeader className="text-left space-y-3">
           <SheetTitle className="font-display text-base">
             Comments {itemTitle && <span className="text-muted-foreground font-body font-normal">· {itemTitle}</span>}
           </SheetTitle>
+          {(onLike || onShare || flowItemId) && (
+            <div className="flex items-center gap-1 -mx-1">
+              {onLike && (
+                <button
+                  type="button"
+                  onClick={onLike}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                    liked
+                      ? "text-rose-500 bg-rose-500/10"
+                      : "text-muted-foreground hover:text-rose-500 hover:bg-rose-500/5",
+                  )}
+                  aria-pressed={!!liked}
+                >
+                  <Heart className={cn("h-4 w-4", liked && "fill-current")} />
+                  {likeCount ? likeCount : liked ? "Liked" : "Like"}
+                </button>
+              )}
+              {onShare && (
+                <button
+                  type="button"
+                  onClick={onShare}
+                  className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                >
+                  <Send className="h-4 w-4" /> Send
+                </button>
+              )}
+              {flowItemId && (
+                <div className="ml-1">
+                  <SaveButton type="work" id={flowItemId} variant="icon" size="sm" />
+                </div>
+              )}
+              {commentCount != null && commentCount > 0 && (
+                <span className="ml-auto text-[10px] text-muted-foreground tabular-nums">
+                  {commentCount} comment{commentCount === 1 ? "" : "s"}
+                </span>
+              )}
+            </div>
+          )}
         </SheetHeader>
+
 
         <div className="flex-1 overflow-y-auto -mx-6 px-6 py-3 space-y-3 min-h-[120px]">
           {isLoading && (
