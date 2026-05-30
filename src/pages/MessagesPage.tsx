@@ -31,12 +31,11 @@ import CirclesTab from "@/components/messages/CirclesTab";
 import BuddyNotesRow from "@/components/notes/BuddyNotesRow";
 import GuestMessagesPreview from "@/components/guest/GuestMessagesPreview";
 import ProjectsInbox from "@/components/messages/ProjectsInbox";
-import ListingsTab from "@/components/messages/ListingsTab";
 import HubFlowWidget from "@/components/hub/HubFlowWidget";
 import FollowingPickerDialog from "@/components/messages/FollowingPickerDialog";
+import PostMenuButton from "@/components/PostMenuButton";
 
 import InquiryThreadBanner from "@/components/messages/InquiryThreadBanner";
-import LiveInquiriesFeed from "@/components/messages/LiveInquiriesFeed";
 
 import ConversationsEventsBrowser from "@/components/messages/ConversationsEventsBrowser";
 import { useSubscriberRelationships } from "@/hooks/useSubscriberRelationships";
@@ -876,11 +875,15 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                 </p>
               </div>
               <div className="shrink-0">
-                <ListingsTab userId={user.id} />
+                <PostMenuButton
+                  trigger={
+                    <Button size="sm" className="rounded-full gap-1.5">
+                      <Plus className="h-3.5 w-3.5" /> Post
+                    </Button>
+                  }
+                />
               </div>
             </div>
-
-            <LiveInquiriesFeed userId={user.id} />
 
             {!!allInquiries?.length ? (
               <div id="inquiries-section" className="space-y-3 scroll-mt-24">
