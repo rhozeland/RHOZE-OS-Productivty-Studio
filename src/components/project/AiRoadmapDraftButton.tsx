@@ -20,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAiRoadmapDraft, composeMilestoneDescription } from "@/hooks/useAiRoadmapDraft";
 import { fetchCreatorContext } from "@/lib/creator-context";
 import { ConciergeIntakeSheet } from "@/components/concierge/ConciergeIntakeSheet";
+import { trackConciergeCta } from "@/lib/concierge-analytics";
 
 interface Props {
   projectId: string;
