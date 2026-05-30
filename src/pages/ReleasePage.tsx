@@ -32,7 +32,7 @@ const ReleasePage = () => {
       const { data, error } = await supabase
         .from("projects")
         .select(
-          "id, title, description, vision, scope_of_work, cover_color, cheer_count, tokenize_ready, user_id, public_slug",
+          "id, title, description, vision, scope_of_work, cover_color, cheer_count, tokenize_ready, user_id, public_slug, linked_token_id",
         )
         .eq("public_slug", slug!)
         .eq("is_public", true)
@@ -41,6 +41,22 @@ const ReleasePage = () => {
       return data;
     },
     enabled: !!slug,
+  });
+
+  // Linked coin — ONLY shows when owner explicitly attached an approved token
+  // to this project (no more auto-pull of the profile's primary token).
+  const { data: linkedToken } = useQuery({
+    queryKey: ["release-linked-token", (project as any)?.linked_token_id],
+    enabled: !!(project as any)?.linked_token_id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("creator_tokens")
+        .select("ticker, name, mint_address")
+        .eq("id", (project as any).linked_token_id)
+        .eq("status", "approved")
+        .maybeSingle();
+      return data;
+    },
   });
 
   const { data: owner } = useQuery({
