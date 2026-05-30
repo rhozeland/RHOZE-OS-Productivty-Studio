@@ -88,7 +88,7 @@ const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
   const [open, setOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [createListingOpen, setCreateListingOpen] = useState(false);
-  const [selected, setSelected] = useState<PostIntent["key"]>("note");
+  const [selected, setSelected] = useState<PostIntent["key"]>("work");
 
   const handleOpen = () => {
     if (!requireAuth("post")) return;
@@ -99,7 +99,7 @@ const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
     if (searchParams.get("post") !== "1") return;
 
     if (requireAuth("post")) {
-      setSelected("note");
+      setSelected("work");
       setOpen(true);
     }
 
@@ -116,14 +116,8 @@ const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
   const selectedOption = POST_OPTIONS.find((option) => option.key === selected) ?? POST_OPTIONS[0];
 
   const handleContinue = () => {
-    if (selected === "note") {
-      setOpen(false);
-      requestAnimationFrame(() => setNoteOpen(true));
-      return;
-    }
-
     if (selected === "work") {
-      closeAndNavigate("/flow?share=1");
+      closeAndNavigate("/settings#provenance");
       return;
     }
 
