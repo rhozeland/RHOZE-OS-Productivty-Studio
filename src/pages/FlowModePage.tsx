@@ -2163,7 +2163,22 @@ const FlowModePage = () => {
       />
 
       {/* Add content dialog */}
-      <Dialog open={addOpen} onOpenChange={(open) => { if (!open) { cancelUpload(); resetPendingFiles(); setShareStep("pick"); setShowLinkField(false); setCelebrating(false); } setAddOpen(open); }}>
+      <Dialog open={addOpen} onOpenChange={(open) => {
+        if (!open) {
+          // If there's unsaved work, confirm before discarding.
+          const hasDraft = pendingFiles.length > 0 || newTitle.trim() || newDesc.trim() || newLink.trim();
+          if (hasDraft && !createFlowItem.isPending && !celebrating) {
+            setConfirmDiscardOpen(true);
+            return;
+          }
+          cancelUpload();
+          resetPendingFiles();
+          setShareStep("pick");
+          setShowLinkField(false);
+          setCelebrating(false);
+        }
+        setAddOpen(open);
+      }}>
         <DialogContent className="w-[calc(100vw-1rem)] max-w-[640px] max-h-[90vh] overflow-hidden p-0 gap-0 !flex flex-col">
           <div className="flex min-h-0 flex-1 flex-col bg-background">
           {/* Sticky header with stepper */}
