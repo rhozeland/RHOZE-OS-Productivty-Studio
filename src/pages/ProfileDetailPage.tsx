@@ -653,6 +653,18 @@ const ProfileDetailPage = () => {
               <StartCoinCta creatorName={p.display_name || p.username} />
             )}
 
+            {/* Pillar 3 — owner-only creator-rewards card when a token is
+                linked AND admin-approved. Surfaces estimated pump.fun
+                rewards stream + deeplink to the artist's pump.fun
+                dashboard. Hidden from visitors (rewards are personal). */}
+            {isOwnProfile && (p as any).token_mint_address && (
+              <CreatorRewardsCard
+                mint={(p as any).token_mint_address}
+                ticker={(p as any).token_ticker ?? "TOKEN"}
+                fallbackWallet={(p as any).solana_wallet ?? null}
+              />
+            )}
+
             {/* v10.4 — prominent fundraising project card (renders only if creator
                 has linked a pump.fun token). Replaces the tiny TokenDiscoveryChip. */}
             {p?.id && (
