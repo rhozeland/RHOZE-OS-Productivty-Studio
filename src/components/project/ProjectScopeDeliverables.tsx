@@ -560,7 +560,8 @@ const ProjectScopeDeliverables = ({
                         <X className="h-3 w-3" />
                       </button>
                     </div>
-                  )}
+                    );
+                  })()}
                 </motion.div>
               );
             })}
