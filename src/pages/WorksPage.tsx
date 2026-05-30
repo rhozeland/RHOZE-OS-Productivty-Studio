@@ -833,6 +833,12 @@ function UploadDialog({
   };
 
   const [open, setOpen] = useState(false);
+
+  // Auto-open when StreamComposer or PostMenuButton deep-link with ?upload=<kind>.
+  useEffect(() => {
+    if (defaultKindHint && !open) setOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultKindHint]);
   const canSubmit =
     !!file && !!contentHash && !!title.trim() && !hashing && !submitting;
 
