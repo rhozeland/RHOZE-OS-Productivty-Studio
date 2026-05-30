@@ -381,6 +381,18 @@ const ProjectDetailPage = () => {
             isCreating={createSmartboard.isPending}
           />
 
+          {/* Owner-only: link an approved coin so it surfaces on the public release page. */}
+          {canManageProject && (
+            <AttachCoinToProjectCard
+              projectId={project.id}
+              linkedTokenId={(project as any).linked_token_id ?? null}
+            />
+          )}
+
+          {/* AI Copilot — chat with Gemini about this roadmap (sequencing, marketing, holder utility). */}
+          <RoadmapCopilot projectId={id!} />
+
+
           <Tabs defaultValue="stages" className="w-full">
             <TabsList className="h-9">
               <TabsTrigger value="stages" className="gap-1.5 text-xs">
