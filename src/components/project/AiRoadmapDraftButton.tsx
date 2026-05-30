@@ -147,6 +147,7 @@ export const AiRoadmapDraftButton = ({
       qc.invalidateQueries({ queryKey: ["project", projectId] });
       toast.success("Roadmap drafted — edit anything you want.");
       setShowConcierge(true);
+      trackConciergeCta("impression", { projectId, source: "ai-draft-button" });
       setTranscript("");
     },
     onError: (e: any) => toast.error(e.message ?? "Couldn't draft roadmap"),
