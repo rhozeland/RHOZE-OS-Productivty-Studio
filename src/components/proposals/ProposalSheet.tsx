@@ -525,16 +525,93 @@ const ProposalEditor = ({ proposalId, onClose, onConverted }: EditorProps) => {
           )}
         </div>
 
-        {/* Signature summary */}
-        <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs space-y-1">
-          <div className="flex items-center gap-2">
-            {proposal.client_signed_at ? <CheckCircle2 className="h-3.5 w-3.5 text-green-600" /> : <span className="h-3.5 w-3.5 rounded-full border border-muted-foreground/50" />}
-            <span>Client {proposal.client_signed_at ? "signed" : "not yet signed"}</span>
+        <Separator />
+
+        {/* Agreement — collapsible. Shows the standard Rhozeland terms by
+            default; editable by either party until both sides have signed. */}
+        <Collapsible open={termsOpen} onOpenChange={setTermsOpen}>
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold flex items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5 text-primary" />
+              Agreement
+              <Badge variant="outline" className="ml-1 text-[9px] font-mono uppercase">
+                {TERMS_VERSION}
+              </Badge>
+            </h4>
+            <div className="flex items-center gap-2">
+              {editable && termsEdited && (
+                <Button
+                  size="sm" variant="ghost" className="h-7 text-[11px]"
+                  onClick={() => { setLocalTerms(""); setTermsEdited(false); }}
+                >
+                  Reset to standard
+                </Button>
+              )}
+              <CollapsibleTrigger asChild>
+                <Button size="sm" variant="outline" className="h-7 gap-1 text-xs">
+                  {termsOpen ? "Hide" : "Read & sign"}
+                  <ChevronDown className={`h-3 w-3 transition-transform ${termsOpen ? "rotate-180" : ""}`} />
+                </Button>
+              </CollapsibleTrigger>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            {proposal.specialist_signed_at ? <CheckCircle2 className="h-3.5 w-3.5 text-green-600" /> : <span className="h-3.5 w-3.5 rounded-full border border-muted-foreground/50" />}
-            <span>Creator {proposal.specialist_signed_at ? "signed" : "not yet signed"}</span>
-          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Both parties sign these exact terms. The full document + milestones
+            are hashed (SHA-256) and anchored on Solana on sign.
+          </p>
+
+          <CollapsibleContent className="mt-2">
+            <Textarea
+              value={renderedTerms}
+              disabled={!editable}
+              rows={14}
+              spellCheck={false}
+              onChange={(e) => { setLocalTerms(e.target.value); setTermsEdited(true); }}
+              className="font-mono text-[11px] leading-relaxed"
+            />
+            {editable && (
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                {termsEdited
+                  ? "Custom terms — saved with this proposal."
+                  : "Using the standard Rhozeland agreement template."}
+              </p>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
+
+        {/* Signature + on-chain anchor summary */}
+        <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs space-y-2">
+          <SignatureRow
+            label="Client"
+            signedAt={proposal.client_signed_at}
+            hash={proposal.client_signature_hash}
+            tx={proposal.client_signature_tx}
+          />
+          <SignatureRow
+            label="Creator"
+            signedAt={proposal.specialist_signed_at}
+            hash={proposal.specialist_signature_hash}
+            tx={proposal.specialist_signature_tx}
+          />
+          {proposal.terms_hash && (
+            <div className="pt-1 mt-1 border-t border-border/40 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <ShieldCheck className="h-3 w-3" />
+              <span className="font-mono truncate">hash: {proposal.terms_hash.slice(0, 24)}…</span>
+            </div>
+          )}
+          {/* Manual re-anchor when sign succeeded off-chain but tx failed */}
+          {mySigned && !(myRole === "client" ? proposal.client_signature_tx : proposal.specialist_signature_tx) && (
+            <Button
+              size="sm" variant="outline" className="h-7 gap-1.5 text-[11px] w-full"
+              onClick={() => anchorSignature.mutate()}
+              disabled={anchorSignature.isPending}
+            >
+              {anchorSignature.isPending
+                ? <Loader2 className="h-3 w-3 animate-spin" />
+                : <Anchor className="h-3 w-3" />}
+              Anchor my signature on Solana
+            </Button>
+          )}
         </div>
       </div>
 
