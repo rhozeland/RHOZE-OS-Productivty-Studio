@@ -345,6 +345,8 @@ const ProjectDetailPage = () => {
           publicSlug={(project as any).public_slug ?? null}
           cheerCount={(project as any).cheer_count ?? 0}
           tokenizeReady={(project as any).tokenize_ready ?? false}
+          title={project.title}
+          description={(project as any).vision ?? project.description ?? null}
         />
       )}
 

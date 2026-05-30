@@ -84,7 +84,7 @@ const ProjectsPage = () => {
       return data;
     },
     // Optimistic update so the new project appears instantly without a refresh
-    onSuccess: (newProject) => {
+    onSuccess: async (newProject) => {
       queryClient.setQueryData(["projects"], (old: any[] | undefined) =>
         old ? [newProject, ...old] : [newProject]
       );
@@ -93,6 +93,43 @@ const ProjectsPage = () => {
       setTitle("");
       setDescription("");
       toast.success("Project created!");
+
+      // v11 Pillar 4: auto-fire AI roadmap draft so milestones feel native.
+      // Background — failure here doesn't surface as an error to the user.
+      try {
+        const toastId = toast.loading("✨ Drafting your roadmap…");
+        const { data: drafted, error: draftErr } = await supabase.functions.invoke(
+          "draft-project-roadmap",
+          {
+            body: {
+              projectName: newProject.title,
+              totalBudget: 0,
+              brief: { what: newProject.description ?? undefined },
+            },
+          },
+        );
+        if (draftErr) throw draftErr;
+        const milestones = ((drafted as any)?.milestones ?? []) as Array<{
+          title: string;
+          deliverables: string;
+          suggested_amount: number;
+        }>;
+        if (milestones.length) {
+          const rows = milestones.map((m, i) => ({
+            project_id: newProject.id,
+            user_id: user!.id,
+            title: m.title,
+            description: m.deliverables,
+            budget_amount: m.suggested_amount,
+            sort_order: i,
+            parent_id: null,
+          })) as any;
+          await supabase.from("project_goals" as any).insert(rows);
+        }
+        toast.success("Roadmap ready — review it on your project page.", { id: toastId });
+      } catch {
+        // Silent — owner can still click "Draft with AI" inside the project.
+      }
     },
     onError: (e: any) => {
       console.error("Create project failed:", e);
