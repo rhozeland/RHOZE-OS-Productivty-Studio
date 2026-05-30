@@ -41,6 +41,8 @@ import PublishReleaseCard from "@/components/project/PublishReleaseCard";
 import SignedAgreementCard from "@/components/proposals/SignedAgreementCard";
 import ProjectScopeReview from "@/components/project/ProjectScopeReview";
 import AiRoadmapDraftButton from "@/components/project/AiRoadmapDraftButton";
+import AttachCoinToProjectCard from "@/components/project/AttachCoinToProjectCard";
+import RoadmapCopilot from "@/components/project/RoadmapCopilot";
 
 // Tier-based cap on smartboards per project. Play tier is unlimited.
 const SMARTBOARD_CAP_BY_TIER: Record<string, number> = {
@@ -378,6 +380,18 @@ const ProjectDetailPage = () => {
             smartboardCap={smartboardCap}
             isCreating={createSmartboard.isPending}
           />
+
+          {/* Owner-only: link an approved coin so it surfaces on the public release page. */}
+          {canManageProject && (
+            <AttachCoinToProjectCard
+              projectId={project.id}
+              linkedTokenId={(project as any).linked_token_id ?? null}
+            />
+          )}
+
+          {/* AI Copilot — chat with Gemini about this roadmap (sequencing, marketing, holder utility). */}
+          <RoadmapCopilot projectId={id!} />
+
 
           <Tabs defaultValue="stages" className="w-full">
             <TabsList className="h-9">

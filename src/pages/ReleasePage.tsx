@@ -32,7 +32,7 @@ const ReleasePage = () => {
       const { data, error } = await supabase
         .from("projects")
         .select(
-          "id, title, description, vision, scope_of_work, cover_color, cheer_count, tokenize_ready, user_id, public_slug",
+          "id, title, description, vision, scope_of_work, cover_color, cheer_count, tokenize_ready, user_id, public_slug, linked_token_id",
         )
         .eq("public_slug", slug!)
         .eq("is_public", true)
@@ -43,12 +43,28 @@ const ReleasePage = () => {
     enabled: !!slug,
   });
 
+  // Linked coin — ONLY shows when owner explicitly attached an approved token
+  // to this project (no more auto-pull of the profile's primary token).
+  const { data: linkedToken } = useQuery({
+    queryKey: ["release-linked-token", (project as any)?.linked_token_id],
+    enabled: !!(project as any)?.linked_token_id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("creator_tokens")
+        .select("ticker, name, mint_address")
+        .eq("id", (project as any).linked_token_id)
+        .eq("status", "approved")
+        .maybeSingle();
+      return data;
+    },
+  });
+
   const { data: owner } = useQuery({
     queryKey: ["release-owner", project?.user_id],
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, username, avatar_url, token_mint_address, token_ticker")
+        .select("display_name, username, avatar_url")
         .eq("user_id", project!.user_id)
         .maybeSingle();
       return data;
@@ -172,8 +188,8 @@ const ReleasePage = () => {
                   <img src={owner.avatar_url} alt="" className="h-6 w-6 rounded-full object-cover" />
                 )}
                 <span className="text-sm font-medium">{owner.display_name ?? owner.username}</span>
-                {owner.token_ticker && (
-                  <Badge variant="outline" className="text-[10px]">${owner.token_ticker}</Badge>
+                {linkedToken?.ticker && (
+                  <Badge variant="outline" className="text-[10px]">${linkedToken.ticker}</Badge>
                 )}
               </Link>
             )}
