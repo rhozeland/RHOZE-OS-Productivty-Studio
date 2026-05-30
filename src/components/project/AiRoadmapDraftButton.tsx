@@ -11,7 +11,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAiRoadmapDraft } from "@/hooks/useAiRoadmapDraft";
+import { useAiRoadmapDraft, composeMilestoneDescription } from "@/hooks/useAiRoadmapDraft";
+import { fetchCreatorContext } from "@/lib/creator-context";
 
 interface Props {
   projectId: string;
@@ -38,41 +39,34 @@ export const AiRoadmapDraftButton = ({
   const generate = useMutation({
     mutationFn: async () => {
       setBusy(true);
-      // Fetch both profiles for richer context.
-      const ids = [clientId, specialistId].filter(Boolean) as string[];
-      const { data: profiles } = ids.length
-        ? await supabase
-            .from("profiles")
-            .select("user_id, display_name, username, archetype, bio, creator_roles")
-            .in("user_id", ids)
-        : { data: [] as any[] };
+      // Pillar 5 — pull rich context (profile + recent works + linked coin)
+      // for both sides so the AI tailors strategy to the artist.
+      const [clientCtx, specialistCtx] = await Promise.all([
+        fetchCreatorContext(clientId, "Client"),
+        fetchCreatorContext(specialistId, "Creator"),
+      ]);
 
-      const findProfile = (id?: string | null) => profiles?.find((p: any) => p.user_id === id);
-      const c = findProfile(clientId);
-      const s = findProfile(specialistId);
+      // Tokenize intent inferred from the specialist having an approved coin.
+      const tokenize_intent = !!specialistCtx.token_mint;
 
       const milestones = await draft.mutateAsync({
         projectName: projectTitle,
         totalBudget,
-        clientProfile: c ? {
-          name: c.display_name || c.username || "Client",
-          archetype: c.archetype, bio: c.bio,
-        } : undefined,
-        specialistProfile: s ? {
-          name: s.display_name || s.username || "Creator",
-          archetype: s.archetype, bio: s.bio,
-          roles: (s.creator_roles ?? []) as string[],
-        } : undefined,
+        tokenize_intent,
+        release_type: "other",
+        clientProfile: clientCtx,
+        specialistProfile: specialistCtx,
       });
 
       if (!milestones.length) throw new Error("AI returned no milestones");
 
-      // Insert as top-level project_goals.
+      // Insert as top-level project_goals. Compose strategy + metric into
+      // the description so the rich AI output renders without a schema change.
       const rows = milestones.map((m, i) => ({
         project_id: projectId,
         user_id: user!.id,
         title: m.title,
-        description: m.deliverables,
+        description: composeMilestoneDescription(m),
         budget_amount: m.suggested_amount,
         sort_order: existingGoalCount + i,
         parent_id: null,

@@ -13,6 +13,8 @@ import { motion } from "framer-motion";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
+import { fetchCreatorContext } from "@/lib/creator-context";
+import { composeMilestoneDescription, type DraftedMilestone } from "@/hooks/useAiRoadmapDraft";
 
 const COLORS = ["#7c3aed", "#06b6d4", "#f59e0b", "#ef4444", "#10b981", "#ec4899"];
 
@@ -94,32 +96,35 @@ const ProjectsPage = () => {
       setDescription("");
       toast.success("Project created!");
 
-      // v11 Pillar 4: auto-fire AI roadmap draft so milestones feel native.
-      // Background — failure here doesn't surface as an error to the user.
+      // v11 Pillar 5: auto-fire AI roadmap draft enriched with the creator's
+      // profile + recent works + linked coin so the milestones feel hand-crafted
+      // to their style. Background — failure here doesn't surface as an error.
       try {
-        const toastId = toast.loading("✨ Drafting your roadmap…");
+        const toastId = toast.loading("✨ Drafting your roadmap — reading your works…");
+        const specialistCtx = await fetchCreatorContext(user!.id, "Creator");
+        const tokenize_intent = !!specialistCtx.token_mint;
+
         const { data: drafted, error: draftErr } = await supabase.functions.invoke(
           "draft-project-roadmap",
           {
             body: {
               projectName: newProject.title,
               totalBudget: 0,
+              tokenize_intent,
+              release_type: "other",
               brief: { what: newProject.description ?? undefined },
+              specialistProfile: specialistCtx,
             },
           },
         );
         if (draftErr) throw draftErr;
-        const milestones = ((drafted as any)?.milestones ?? []) as Array<{
-          title: string;
-          deliverables: string;
-          suggested_amount: number;
-        }>;
+        const milestones = ((drafted as any)?.milestones ?? []) as DraftedMilestone[];
         if (milestones.length) {
           const rows = milestones.map((m, i) => ({
             project_id: newProject.id,
             user_id: user!.id,
             title: m.title,
-            description: m.deliverables,
+            description: composeMilestoneDescription(m),
             budget_amount: m.suggested_amount,
             sort_order: i,
             parent_id: null,
