@@ -74,13 +74,22 @@ export default function StartCoinCta({ creatorName, className }: Props) {
               <ArrowUpRight className="h-4 w-4" />
             </a>
           </Button>
-          <button
-            type="button"
-            onClick={() => navigate("/settings#token")}
-            className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-4 hover:underline text-center"
-          >
-            Already have a coin? Link it &rarr;
-          </button>
+          <div className="flex flex-col gap-1.5">
+            <button
+              type="button"
+              onClick={() => navigate("/why-coin")}
+              className="text-[11px] text-foreground/80 hover:text-foreground underline-offset-4 hover:underline text-center font-medium"
+            >
+              Why launch a coin? See the full pitch &rarr;
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/settings#token")}
+              className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-4 hover:underline text-center"
+            >
+              Already have a coin? Link it &rarr;
+            </button>
+          </div>
         </div>
 
         <p className="text-[10px] text-muted-foreground/70 leading-relaxed pt-1">
