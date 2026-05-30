@@ -198,6 +198,7 @@ const FlowModePage = () => {
   const [isAdvancing, setIsAdvancing] = useState(false);
   const advancingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
   // Open the Share-to-Flow composer when navigated to with ?share=1
   // (used by the dock "+" button and PostMenuButton's "Post Work" option).
   // Optionally accept ?vibe=music|video|photo to pre-select the upload vibe.
