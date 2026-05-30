@@ -1,8 +1,9 @@
 /**
  * CoinGalleryTile — single coin card inside the profile coin gallery.
  *
- * Birdeye + pump.fun enriched: Market Cap · ATH · % from ATH · 24h vol
- * · Holders · Est. creator rewards. 7d sparkline + pump.fun deeplink.
+ * v11 Pillar 8.1 — trimmed to the stats people actually care about:
+ * Market Cap · ATH MC · From ATH · 24h Volume · Holders · Est. rewards.
+ * Liquidity dropped (noisy + confusing for bonding-curve coins).
  *
  * Owner-only: extra "Open my rewards" CTA deeplinks the artist into
  * their pump.fun creator dashboard.
@@ -28,7 +29,7 @@ const CREATOR_REWARDS_BPS = 5;
 
 const Sparkline = ({ points, up }: { points: number[]; up: boolean }) => {
   if (points.length < 2) {
-    return <div className="h-9 rounded-md bg-muted/30 animate-pulse" />;
+    return <div className="h-9 rounded-md bg-muted/30" />;
   }
   const min = Math.min(...points);
   const max = Math.max(...points);
@@ -89,7 +90,6 @@ const CoinGalleryTile = ({ mint, ticker: ttk, isPrimary, isOwner, fallbackWallet
       )}
 
       <div className="p-4 sm:p-5 space-y-4">
-        {/* Header */}
         <div className="flex items-start gap-3">
           <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500/15 to-fuchsia-500/15 flex items-center justify-center shrink-0">
             <Coins className="h-4 w-4 text-emerald-500" />
@@ -111,11 +111,9 @@ const CoinGalleryTile = ({ mint, ticker: ttk, isPrimary, isOwner, fallbackWallet
           )}
         </div>
 
-        {/* Sparkline */}
         <Sparkline points={m?.sparkline7d ?? []} up={up} />
 
-        {/* Stats — Birdeye + pump.fun enriched */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-x-3 gap-y-3">
           <Stat label="Market Cap" value={isLoading ? "…" : fmtUsdCompact(m?.marketCapUsd ?? null)} />
           <Stat label="ATH MC" value={isLoading ? "…" : fmtUsdCompact(m?.athMarketCapUsd ?? null)} />
           <Stat
@@ -124,7 +122,7 @@ const CoinGalleryTile = ({ mint, ticker: ttk, isPrimary, isOwner, fallbackWallet
             accent={athTone}
           />
           <Stat label="Holders" value={fmtCount(m?.holderCount ?? null)} />
-          <Stat label="Liquidity" value={fmtUsdCompact(m?.liquidityUsd ?? null)} />
+          <Stat label="Volume" value={fmtUsdCompact(m?.volumeUsd ?? null)} />
           <Stat
             label={isOwner ? "Rewards earned" : "Creator earned"}
             value={fmtUsdCompact(estRewardsUsd)}
@@ -132,7 +130,6 @@ const CoinGalleryTile = ({ mint, ticker: ttk, isPrimary, isOwner, fallbackWallet
           />
         </div>
 
-        {/* CTAs */}
         <div className="space-y-1.5">
           <a
             href={`https://pump.fun/coin/${mint}`}
@@ -144,12 +141,7 @@ const CoinGalleryTile = ({ mint, ticker: ttk, isPrimary, isOwner, fallbackWallet
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
           {isOwner && wallet && (
-            <Button
-              asChild
-              variant="outline"
-              size="sm"
-              className="w-full gap-1.5 rounded-xl"
-            >
+            <Button asChild variant="outline" size="sm" className="w-full gap-1.5 rounded-xl">
               <a href={`https://pump.fun/profile/${wallet}`} target="_blank" rel="noopener noreferrer">
                 <Award className="h-3.5 w-3.5" /> Open my rewards dashboard
               </a>

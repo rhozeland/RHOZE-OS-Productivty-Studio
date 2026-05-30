@@ -1,113 +1,34 @@
 /**
  * useCreatorTokenMetrics — read-only on-chain metrics for a creator's coin.
  *
- * Tries pump.fun frontend API first (covers pre-migration coins with holders +
- * market cap), then falls back to Birdeye public price endpoint, then Jupiter
- * Lite as a last resort. Adds a 7d price polyline pulled from Birdeye's
- * public history endpoint.
- *
- * Designed for the v10.3 Support sheet "Trade" tab — never used to execute
- * trades; we're a discovery overlay only.
+ * v11 Pillar 8.1 — calls the `creator-token-metrics` edge function which
+ * proxies pump.fun + Birdeye server-side (browser CORS made the direct
+ * calls fail silently for most users). Returns market cap, ATH, holders,
+ * 24h price change, volume, creator wallet, and a 7d sparkline.
  */
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface CreatorTokenMetrics {
   priceUsd: number | null;
   change24h: number | null;
   marketCapUsd: number | null;
-  liquidityUsd: number | null;
   holderCount: number | null;
-  topHolderPct: number | null;
   sparkline7d: number[];
-  /** All-time-high market cap from pump.fun (when available). */
   athMarketCapUsd: number | null;
-  /** % difference between current MC and ATH MC (negative = below ATH). */
   athChangePct: number | null;
-  /** Wallet that originally deployed the mint on pump.fun. */
   creatorWallet: string | null;
-  /** Cumulative USD volume reported by pump.fun (drives creator-rewards estimate). */
   volumeUsd: number | null;
+  /** @deprecated — no longer surfaced in UI. Always null. */
+  liquidityUsd: number | null;
+  /** @deprecated — no longer surfaced in UI. Always null. */
+  topHolderPct: number | null;
   source: string;
   fetchedAt: number;
 }
 
-const num = (v: unknown): number | null => {
-  const n = typeof v === "string" ? parseFloat(v) : (v as number);
-  return Number.isFinite(n) ? n : null;
-};
-
-async function fetchPumpFun(mint: string): Promise<Partial<CreatorTokenMetrics>> {
-  try {
-    const res = await fetch(`https://frontend-api-v3.pump.fun/coins/${mint}`);
-    if (!res.ok) return {};
-    const j = await res.json();
-    const ath = num(j?.ath_market_cap ?? j?.market_cap_ath ?? null);
-    const mc = num(j?.usd_market_cap);
-    return {
-      marketCapUsd: mc,
-      athMarketCapUsd: ath,
-      holderCount: num(j?.num_holders ?? j?.holder_count),
-      liquidityUsd: num(j?.virtual_sol_reserves) != null && num(j?.virtual_token_reserves) != null
-        ? (num(j?.virtual_sol_reserves)! / 1e9) * 150
-        : null,
-      creatorWallet: typeof j?.creator === "string" ? j.creator : null,
-      volumeUsd: num(j?.usd_volume ?? j?.volume_usd ?? null),
-      source: "pump.fun",
-    };
-  } catch {
-    return {};
-  }
-}
-
-async function fetchBirdeyePrice(mint: string): Promise<Partial<CreatorTokenMetrics>> {
-  try {
-    // Birdeye's public price endpoint allows unauthenticated CORS for SOL chain.
-    const res = await fetch(
-      `https://public-api.birdeye.so/defi/price?address=${mint}`,
-      { headers: { "x-chain": "solana" } },
-    );
-    if (!res.ok) return {};
-    const j = await res.json();
-    const v = j?.data;
-    return {
-      priceUsd: num(v?.value),
-      change24h: num(v?.priceChange24h),
-      liquidityUsd: num(v?.liquidity),
-      source: "Birdeye",
-    };
-  } catch {
-    return {};
-  }
-}
-
-async function fetchJupiterPrice(mint: string): Promise<Partial<CreatorTokenMetrics>> {
-  try {
-    const res = await fetch(`https://lite-api.jup.ag/price/v3?ids=${mint}`);
-    if (!res.ok) return {};
-    const j = await res.json();
-    return { priceUsd: num(j?.[mint]?.usdPrice), source: "Jupiter" };
-  } catch {
-    return {};
-  }
-}
-
-async function fetchSparkline(mint: string): Promise<number[]> {
-  try {
-    // 7-day, 4h candles from Birdeye public endpoint
-    const now = Math.floor(Date.now() / 1000);
-    const from = now - 60 * 60 * 24 * 7;
-    const res = await fetch(
-      `https://public-api.birdeye.so/defi/history_price?address=${mint}&address_type=token&type=4H&time_from=${from}&time_to=${now}`,
-      { headers: { "x-chain": "solana" } },
-    );
-    if (!res.ok) return [];
-    const j = await res.json();
-    const items: any[] = j?.data?.items ?? [];
-    return items.map((it) => Number(it?.value)).filter((n) => Number.isFinite(n));
-  } catch {
-    return [];
-  }
-}
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
 export const useCreatorTokenMetrics = (mint: string | null | undefined) => {
   return useQuery<CreatorTokenMetrics | null>({
@@ -118,33 +39,26 @@ export const useCreatorTokenMetrics = (mint: string | null | undefined) => {
     refetchOnWindowFocus: false,
     queryFn: async () => {
       if (!mint) return null;
-      const [pump, birdeye, sparkline] = await Promise.all([
-        fetchPumpFun(mint),
-        fetchBirdeyePrice(mint),
-        fetchSparkline(mint),
-      ]);
-      let merged: Partial<CreatorTokenMetrics> = { ...pump, ...birdeye };
-      if (merged.priceUsd == null) {
-        const jup = await fetchJupiterPrice(mint);
-        merged = { ...merged, ...jup };
-      }
-      const mc = merged.marketCapUsd ?? null;
-      const ath = merged.athMarketCapUsd ?? null;
-      const athChange = mc != null && ath != null && ath > 0 ? ((mc - ath) / ath) * 100 : null;
+      const res = await fetch(
+        `${SUPABASE_URL}/functions/v1/creator-token-metrics?mint=${encodeURIComponent(mint)}`,
+        { headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` } },
+      );
+      if (!res.ok) throw new Error(`token-metrics ${res.status}`);
+      const j = await res.json();
       return {
-        priceUsd: merged.priceUsd ?? null,
-        change24h: merged.change24h ?? null,
-        marketCapUsd: mc,
-        liquidityUsd: merged.liquidityUsd ?? null,
-        holderCount: merged.holderCount ?? null,
+        priceUsd: j.priceUsd ?? null,
+        change24h: j.change24h ?? null,
+        marketCapUsd: j.marketCapUsd ?? null,
+        holderCount: j.holderCount ?? null,
+        sparkline7d: Array.isArray(j.sparkline7d) ? j.sparkline7d : [],
+        athMarketCapUsd: j.athMarketCapUsd ?? null,
+        athChangePct: j.athChangePct ?? null,
+        creatorWallet: j.creatorWallet ?? null,
+        volumeUsd: j.volumeUsd ?? null,
+        liquidityUsd: null,
         topHolderPct: null,
-        sparkline7d: sparkline,
-        athMarketCapUsd: ath,
-        athChangePct: athChange,
-        creatorWallet: merged.creatorWallet ?? null,
-        volumeUsd: merged.volumeUsd ?? null,
-        source: merged.source ?? "—",
-        fetchedAt: Date.now(),
+        source: j.source ?? "—",
+        fetchedAt: j.fetchedAt ?? Date.now(),
       };
     },
   });
