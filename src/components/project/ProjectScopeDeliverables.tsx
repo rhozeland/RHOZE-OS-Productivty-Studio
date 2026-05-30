@@ -20,7 +20,14 @@ import {
   X,
   ShieldCheck,
   Anchor,
+  Info,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -445,7 +452,11 @@ const ProjectScopeDeliverables = ({
                   </div>
 
                   {/* Attached file row: name + sha256 + actions */}
-                  {hasFile && (
+                  {hasFile && (() => {
+                    const isDrive =
+                      !d.content_hash &&
+                      /(?:drive|docs)\.google\.com/.test(d.file_url ?? "");
+                    return (
                     <div className="ml-9 mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                       <a
                         href={d.file_url!}
@@ -460,6 +471,19 @@ const ProjectScopeDeliverables = ({
                       </a>
                       {d.file_size != null && (
                         <span>{formatFileSize(d.file_size)}</span>
+                      )}
+                      {isDrive && (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 px-2 py-0.5 text-muted-foreground">
+                          <svg viewBox="0 0 87.3 78" className="h-3 w-3" aria-hidden>
+                            <path fill="#0066da" d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z"/>
+                            <path fill="#00ac47" d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z"/>
+                            <path fill="#ea4335" d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.85 11.5z"/>
+                            <path fill="#00832d" d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z"/>
+                            <path fill="#2684fc" d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.6c1.6 0 3.15-.45 4.5-1.2z"/>
+                            <path fill="#ffba00" d="M73.4 26.5L60.75 4.5c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25l16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z"/>
+                          </svg>
+                          via Drive
+                        </span>
                       )}
                       {d.content_hash && (
                         <span
@@ -494,6 +518,24 @@ const ProjectScopeDeliverables = ({
                         </button>
                       )}
 
+                      {/* Drive files can't be anchored — explain why */}
+                      {isDrive && !d.solana_signature && (
+                        <TooltipProvider delayDuration={150}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2 py-0.5 text-muted-foreground/80 cursor-help">
+                                <Info className="h-3 w-3" />
+                                Not anchorable
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-[240px] text-xs leading-snug">
+                              Drive attachments are stored as references, not uploaded bytes — so we can't fingerprint them on Solana. Upload the file directly to anchor it.
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+
+
                       {/* Anchored badge + Solscan link */}
                       {d.solana_signature && (
                         <a
@@ -518,7 +560,8 @@ const ProjectScopeDeliverables = ({
                         <X className="h-3 w-3" />
                       </button>
                     </div>
-                  )}
+                    );
+                  })()}
                 </motion.div>
               );
             })}
