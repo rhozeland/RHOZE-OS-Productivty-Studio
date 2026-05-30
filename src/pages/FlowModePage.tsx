@@ -2243,47 +2243,10 @@ const FlowModePage = () => {
 
                 {/* Pre-publish checks moved below the preview as a collapsible reminder. */}
 
-                {/* Link/text live preview only after something exists to preview. */}
-                {shareStep !== "pick" && fileCount === 0 && (() => {
-                  const trimmedLink = newLink.trim();
-                  const linkLooksImage = /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(trimmedLink);
-                  const ytMatch = trimmedLink.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
-                  const vimeoMatch = trimmedLink.match(/vimeo\.com\/(\d+)/);
-
-                  if (!trimmedLink) return null;
-                  return (
-                    <div className="relative rounded-xl overflow-hidden border border-border bg-muted/30">
-                      {linkLooksImage && (
-                        <img src={trimmedLink} alt="link preview" className="w-full max-h-72 object-contain bg-background" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                      )}
-                      {!linkLooksImage && ytMatch && (
-                        <div className="aspect-video bg-background">
-                          <iframe
-                            src={`https://www.youtube.com/embed/${ytMatch[1]}`}
-                            title="YouTube preview"
-                            className="w-full h-full"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                          />
-                        </div>
-                      )}
-                      {!linkLooksImage && !ytMatch && vimeoMatch && (
-                        <div className="aspect-video bg-background">
-                          <iframe
-                            src={`https://player.vimeo.com/video/${vimeoMatch[1]}`}
-                            title="Vimeo preview"
-                            className="w-full h-full"
-                            allow="autoplay; fullscreen; picture-in-picture"
-                            allowFullScreen
-                          />
-                        </div>
-                      )}
-                      {!linkLooksImage && !ytMatch && !vimeoMatch && (
-                        <LinkPreviewCard url={trimmedLink} />
-                      )}
-                    </div>
-                  );
-                })()}
+                {/* Live embed preview for later steps when no file is attached. */}
+                {shareStep !== "pick" && fileCount === 0 && newLink.trim() && (
+                  <MediaLinkPreview url={newLink} />
+                )}
 
                 {/* Full-size media preview — used for later steps; step one has its own preview panel. */}
                 {shareStep !== "pick" && fileCount > 0 && (
