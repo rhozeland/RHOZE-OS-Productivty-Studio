@@ -161,6 +161,21 @@ export const FlowThumbnail = ({
           `linear-gradient(135deg, ${v.from} 0%, ${v.via} 55%, ${v.to} 100%)`,
       }}
     >
+      {/* Direct video file uploads: seek to 0.1s so the browser paints the
+          first frame as a poster (otherwise we get a black/empty rect). */}
+      {!showImage && !!fileUrl && VIDEO_EXT.test(fileUrl) && (
+        <video
+          src={`${fileUrl}#t=0.1`}
+          muted
+          playsInline
+          preload="metadata"
+          onLoadedData={() => setImageLoaded(true)}
+          className={cn(
+            "absolute inset-0 h-full w-full object-cover transition-[opacity,transform] duration-300",
+            imageLoaded ? "opacity-100 scale-[1.04]" : "opacity-0 scale-100",
+          )}
+        />
+      )}
       {showImage && (
         <img
           src={src}

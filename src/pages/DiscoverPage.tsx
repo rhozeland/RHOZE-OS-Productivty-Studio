@@ -192,57 +192,9 @@ const DiscoverPage = () => {
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // ─── Stream tabs (All / Creators / Listings / Events / Spaces) ───
-  type StreamTab = "all" | "creators" | "listings" | "event" | "space";
-  const initialTab = (searchParams.get("view") as StreamTab) || "all";
-  const [streamTab, setStreamTab] = useState<StreamTab>(
-    ["all", "creators", "listings", "event", "space"].includes(initialTab) ? initialTab : "all",
-  );
-  // Optional archetype filter — applied only when user clicks an archetype
-  // chip on a creator tile. Default null = show all creators across branches.
-  const initialArchetype = searchParams.get("archetype");
-  const validArchetype = (a: string | null): import("@/lib/archetypes").Archetype | null => {
-    if (!a) return null;
-    // Backwards-compat: old v9 keys redirect to new music archetypes.
-    const map: Record<string, import("@/lib/archetypes").Archetype> = {
-      artist: "musician", builder: "producer", influencer: "promoter",
-    };
-    const mapped = map[a] ?? a;
-    return ["musician", "producer", "engineer", "visual", "promoter"].includes(mapped)
-      ? (mapped as import("@/lib/archetypes").Archetype)
-      : null;
-  };
-  const [archetype, setArchetype] = useState<import("@/lib/archetypes").Archetype | null>(
-    validArchetype(initialArchetype),
-  );
-  const handleArchetype = (next: import("@/lib/archetypes").Archetype | null) => {
-    setArchetype(next);
-    const params = new URLSearchParams(searchParams);
-    if (next) params.set("archetype", next);
-    else params.delete("archetype");
-    setSearchParams(params, { replace: true });
-  };
-
-  // Sub-category filter (only meaningful when streamTab === "event" | "space").
-  const initialCategory = searchParams.get("category");
-  const [category, setCategory] = useState<string | null>(initialCategory);
-  const handleCategory = (next: string | null) => {
-    setCategory(next);
-    const params = new URLSearchParams(searchParams);
-    if (next) params.set("category", next);
-    else params.delete("category");
-    setSearchParams(params, { replace: true });
-  };
-
-  const handleStreamTab = (next: StreamTab) => {
-    setStreamTab(next);
-    const params = new URLSearchParams(searchParams);
-    params.set("view", next);
-    // Categories are tab-scoped — clear when switching tabs.
-    params.delete("category");
-    setCategory(null);
-    setSearchParams(params, { replace: true });
-  };
+  // v11 Pillar 9: stream tabs / archetype / category filters removed from
+  // Discover — those interactions live on /market (Connect) now. Discover
+  // keeps the editorial feed only.
 
   // ─── Personal greeting (signed-in only) ─────────────────────────
   const { data: profile } = useQuery({
@@ -267,47 +219,6 @@ const DiscoverPage = () => {
     return user?.email?.split("@")[0] || "Creator";
   })();
 
-  // v10.2 — "Coins moving today" lane removed. A new Trending Tokens lane
-  // (reading from profiles.token_mint_address + live Jupiter/Dexscreener
-  // prices) will replace it in the next loop.
-
-  // ─── Category counts (events + spaces) for the Luma-style tile picker ───
-  const { data: eventCategoryRows = [] } = useQuery({
-    queryKey: ["discover-event-cats"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("events")
-        .select("category")
-        .eq("status", "published")
-        .gte("starts_at", new Date().toISOString());
-      return (data ?? []) as { category: string | null }[];
-    },
-    enabled: streamTab === "event",
-    staleTime: 60_000,
-  });
-  const { data: spaceCategoryRows = [] } = useQuery({
-    queryKey: ["discover-space-cats"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("studios")
-        .select("category")
-        .eq("is_active", true);
-      return (data ?? []) as { category: string | null }[];
-    },
-    enabled: streamTab === "space",
-    staleTime: 60_000,
-  });
-
-  const categoryCounts = useMemo(() => {
-    const rows = streamTab === "event" ? eventCategoryRows : streamTab === "space" ? spaceCategoryRows : [];
-    const counts: Record<string, number> = {};
-    rows.forEach((r) => {
-      const slug = normalizeCategory(r.category);
-      if (!slug) return;
-      counts[slug] = (counts[slug] ?? 0) + 1;
-    });
-    return counts;
-  }, [streamTab, eventCategoryRows, spaceCategoryRows]);
 
   const todayGrad = todayGradient();
 
@@ -477,96 +388,41 @@ const DiscoverPage = () => {
 
 
       {/* ─── Stream ───────────────────────────────────────────────── */}
+      {/* v11 Pillar 9: Discover no longer hosts Creators/Listings/Events/
+          Spaces tabs — those live on /market (Connect). Discover stays
+          editorial: subscribed feed → fresh works → mosaic. */}
       <section id="discover-stream" className="space-y-5 scroll-mt-20">
-        {/* Sticky filter bar: chips left, Post right */}
-        <div className="sticky top-14 z-20 -mx-4 px-4 py-3 bg-background/85 backdrop-blur-md border-b border-border/60">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none -mx-1 px-1 min-w-0 flex-1">
-              {([
-                { id: "all", label: "All" },
-                { id: "creators", label: "Creators" },
-                { id: "listings", label: "Listings" },
-                { id: "event", label: "Events" },
-                { id: "space", label: "Spaces" },
-              ] as { id: StreamTab; label: string }[]).map((t) => {
-                const active = streamTab === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => handleStreamTab(t.id)}
-                    className={cn(
-                      "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap",
-                      active
-                        ? "bg-foreground text-background border-foreground shadow-sm"
-                        : "border-border bg-card/60 text-muted-foreground hover:text-foreground hover:border-foreground/30 hover:bg-card",
-                    )}
-                  >
-                    {t.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {user && (
-              <PostMenuButton
-                trigger={
-                  <button
-                    type="button"
-                    className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-foreground text-background px-3 sm:px-4 py-2 text-xs font-semibold hover:opacity-90 transition-opacity shadow-sm"
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Post</span>
-                  </button>
-                }
-              />
-            )}
-          </div>
-        </div>
-
-
-        {streamTab === "creators" ? (
-          <div className="space-y-8">
-            {archetype && (
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-muted-foreground">Filtered by</span>
+        {user && (
+          <div className="sticky top-14 z-20 -mx-4 px-4 py-3 bg-background/85 backdrop-blur-md border-b border-border/60 flex items-center justify-end">
+            <PostMenuButton
+              trigger={
                 <button
                   type="button"
-                  onClick={() => handleArchetype(null)}
-                  className="inline-flex items-center gap-1 rounded-full border border-foreground/20 bg-foreground text-background px-2.5 py-1 font-semibold capitalize"
+                  className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-foreground text-background px-3 sm:px-4 py-2 text-xs font-semibold hover:opacity-90 transition-opacity shadow-sm"
                 >
-                  {archetype}s <X className="h-3 w-3" />
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Post</span>
                 </button>
-                <span className="text-muted-foreground">— tap a chip on a card to filter again</span>
-              </div>
-            )}
-            <DiscoverTable archetype={archetype} onArchetypeClick={handleArchetype} />
-            <ChartsPage embedded />
+              }
+            />
           </div>
-        ) : streamTab === "listings" ? (
-          <ConnectBoard kind="call" />
-        ) : streamTab === "event" ? (
-          <ConnectBoard kind="event" />
-        ) : streamTab === "space" ? (
-          <ConnectBoard kind="space" />
-
-        ) : (
-          <div className="space-y-8">
-            <SubscribedFeed />
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <h3 className="font-display text-xs font-semibold tracking-[0.18em] uppercase text-foreground/70 shrink-0">
-                  Fresh on Rhozeland
-                </h3>
-                <div className="h-px flex-1 bg-border" />
-              </div>
-              <CompactFlowFeed />
-              <ConversationsMosaic kind="all" />
-            </div>
-          </div>
-
         )}
+
+        <div className="space-y-8">
+          <SubscribedFeed />
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <h3 className="font-display text-xs font-semibold tracking-[0.18em] uppercase text-foreground/70 shrink-0">
+                Fresh on Rhozeland
+              </h3>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <CompactFlowFeed />
+            <ConversationsMosaic kind="all" />
+          </div>
+        </div>
       </section>
+
 
       {/* v10.2 — "Coins moving today" lane removed; Trending Tokens lane lands next loop. */}
 

@@ -598,19 +598,9 @@ const MosaicTileCard = ({
               {tile.variant ?? label}
             </span>
           )}
-          {/* Drop category as an icon-only chip (no text label) */}
-          {tile.kind === "drop" && tile.category && (() => {
-            const CatIcon = getCategoryVisual(tile.category).Icon;
-            return (
-              <span
-                className="inline-grid place-items-center h-6 w-6 rounded-full bg-black/55 text-white backdrop-blur-md ring-1 ring-white/15"
-                aria-label={tile.category}
-                title={tile.category}
-              >
-                <CatIcon className="h-3 w-3" />
-              </span>
-            );
-          })()}
+          {/* Category overlay removed per design — the thumbnail itself
+              (vinyl for audio, video poster for video, image for photo)
+              already communicates the medium. */}
           {/* Verified IP shield on drops — replaces the standalone "Works" lane */}
           {tile.kind === "drop" && tile.verifiedSignature && (
             <VerifiedIPBadge signature={tile.verifiedSignature} size="xs" />

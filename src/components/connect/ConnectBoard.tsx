@@ -50,8 +50,9 @@ import {
   type ConnectKind,
   type ConnectRow,
 } from "@/components/connect/useConnectRows";
+import DiscoverTable from "@/components/discover/DiscoverTable";
 
-export type BoardKind = ConnectKind | "all";
+export type BoardKind = ConnectKind | "all" | "listings";
 
 const KIND_CHIP: Record<ConnectKind, { label: string; cls: string; Icon: typeof Users }> = {
   hire:  { label: "Creator", cls: "bg-rose-500/10 text-rose-700 dark:text-rose-300", Icon: Users },
@@ -61,11 +62,12 @@ const KIND_CHIP: Record<ConnectKind, { label: string; cls: string; Icon: typeof 
 };
 
 const EMPTY_COPY: Record<BoardKind, { title: string; description: string }> = {
-  all:   { title: "Nothing here yet", description: "Be the first to post a listing, event, or space." },
-  hire:  { title: "No creators available", description: "Verified creators show up here as they sign up." },
-  call:  { title: "No listings yet", description: "Listings are how creators announce work, collabs, and briefs." },
-  event: { title: "No upcoming events", description: "Be the first to host — Rhozeland surfaces your event the moment it's published." },
-  space: { title: "No spaces yet", description: "Studios, venues, and shared rooms hosted by creators land here." },
+  all:      { title: "Nothing here yet", description: "Be the first to post a listing, event, or space." },
+  hire:     { title: "No creators available", description: "Verified creators show up here as they sign up." },
+  call:     { title: "No listings yet", description: "Listings are how creators announce work, collabs, and briefs." },
+  listings: { title: "No listings yet", description: "Spaces to book, events to attend, and open calls all live here." },
+  event:    { title: "No upcoming events", description: "Be the first to host — Rhozeland surfaces your event the moment it's published." },
+  space:    { title: "No spaces yet", description: "Studios, venues, and shared rooms hosted by creators land here." },
 };
 
 
@@ -94,20 +96,29 @@ const stashProjectSeed = (seed: ProjectSeed) => {
 const ConnectBoard = ({ kind, search = "" }: Props) => {
   const navigate = useNavigate();
 
-  const hire = useHireRows(kind === "all" || kind === "hire");
-  const calls = useCallRows(kind === "all" || kind === "call");
-  const events = useEventRows(kind === "all" || kind === "event");
-  const spaces = useSpaceRows(kind === "all" || kind === "space");
+  // Pure Creators view = DiscoverTable (Region/Subs/Token/Support layout).
+  // Rendered after all hooks run below to keep hook order stable.
+
+
+  const wantsCall  = kind === "all" || kind === "listings" || kind === "call";
+  const wantsEvent = kind === "all" || kind === "listings" || kind === "event";
+  const wantsSpace = kind === "all" || kind === "listings" || kind === "space";
+  const wantsHire  = kind === "all";
+
+  const hire = useHireRows(wantsHire);
+  const calls = useCallRows(wantsCall);
+  const events = useEventRows(wantsEvent);
+  const spaces = useSpaceRows(wantsSpace);
 
   const rows: ConnectRow[] = useMemo(() => {
     const pick: ConnectRow[][] = [];
-    if (kind === "all" || kind === "hire") pick.push(hire.data ?? []);
-    if (kind === "all" || kind === "call") pick.push(calls.data ?? []);
-    if (kind === "all" || kind === "event") pick.push(events.data ?? []);
-    if (kind === "all" || kind === "space") pick.push(spaces.data ?? []);
-    if (kind === "all") return interleave(pick);
+    if (wantsHire) pick.push(hire.data ?? []);
+    if (wantsCall) pick.push(calls.data ?? []);
+    if (wantsEvent) pick.push(events.data ?? []);
+    if (wantsSpace) pick.push(spaces.data ?? []);
+    if (kind === "all" || kind === "listings") return interleave(pick);
     return pick.flat();
-  }, [kind, hire.data, calls.data, events.data, spaces.data]);
+  }, [kind, wantsHire, wantsCall, wantsEvent, wantsSpace, hire.data, calls.data, events.data, spaces.data]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -122,11 +133,11 @@ const ConnectBoard = ({ kind, search = "" }: Props) => {
   }, [rows, search]);
 
   const isLoading =
-    (kind === "hire"  && hire.isLoading) ||
     (kind === "call"  && calls.isLoading) ||
     (kind === "event" && events.isLoading) ||
     (kind === "space" && spaces.isLoading) ||
-    (kind === "all"   && hire.isLoading && calls.isLoading && events.isLoading && spaces.isLoading);
+    (kind === "listings" && calls.isLoading && events.isLoading && spaces.isLoading) ||
+    (kind === "all" && hire.isLoading && calls.isLoading && events.isLoading && spaces.isLoading);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Reset selection when the data set changes (filter/kind switch).
@@ -148,6 +159,7 @@ const ConnectBoard = ({ kind, search = "" }: Props) => {
     });
     navigate(`/messages?tab=projects&new=1&source=${r.kind}`);
   };
+  if (kind === "hire") return <DiscoverTable />;
 
   return (
     <div className="space-y-4">

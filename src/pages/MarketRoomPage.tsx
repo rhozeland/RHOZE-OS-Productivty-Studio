@@ -17,27 +17,26 @@ import ConnectBoard, { type BoardKind } from "@/components/connect/ConnectBoard"
 /**
  * CONNECT — `/market`
  *
- * v11 Pillar 7 (refresh): a single compact split-pane board.
- * Five filters — All · Creators · Listings · Events · Spaces — all share the
- * same hero-preview-plus-compact-list layout, and every row can "Start a
- * project from this." No more giant tile grids, no more token lanes.
+ * v11 Pillar 9: 3 filters only — All · Creators · Listings. "Listings" is
+ * the catch-all where creators surface anything they offer or need (events,
+ * spaces, open calls, collabs). Two header CTAs:
+ *   • + Listing  → opens CreateListingDialog (its own flow → projects)
+ *   • + Post     → standard Share-to-Flow composer
  */
 
-type FilterKey = "all" | "hire" | "call" | "event" | "space";
+type FilterKey = "all" | "hire" | "listings";
 
 const FILTERS: { key: FilterKey; label: string }[] = [
-  { key: "all",   label: "All" },
-  { key: "hire",  label: "Creators" },
-  { key: "call",  label: "Listings" },
-  { key: "event", label: "Events" },
-  { key: "space", label: "Spaces" },
+  { key: "all",      label: "All" },
+  { key: "hire",     label: "Creators" },
+  { key: "listings", label: "Listings" },
 ];
 
 const URL_TO_FILTER: Record<string, FilterKey> = {
   hire: "hire", creator: "hire", creators: "hire",
-  space: "space", spaces: "space",
-  call: "call", calls: "call", listing: "call", listings: "call",
-  event: "event", events: "event", live: "event",
+  space: "listings", spaces: "listings",
+  call: "listings", calls: "listings", listing: "listings", listings: "listings",
+  event: "listings", events: "listings", live: "listings",
   all: "all", foryou: "all",
 };
 
@@ -89,6 +88,18 @@ const MarketRoomPage = () => {
           })}
         </div>
         <PostMenuButton
+          intent="listing"
+          trigger={
+            <button
+              type="button"
+              className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-foreground/30 bg-card px-3 sm:px-4 py-2 text-xs font-semibold text-foreground hover:bg-foreground hover:text-background transition-colors"
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Listing</span>
+            </button>
+          }
+        />
+        <PostMenuButton
           trigger={
             <button
               type="button"
@@ -99,6 +110,7 @@ const MarketRoomPage = () => {
             </button>
           }
         />
+
       </div>
 
       {/* Search + sort */}
