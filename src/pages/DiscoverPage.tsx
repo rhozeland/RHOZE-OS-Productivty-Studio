@@ -477,96 +477,41 @@ const DiscoverPage = () => {
 
 
       {/* ─── Stream ───────────────────────────────────────────────── */}
+      {/* v11 Pillar 9: Discover no longer hosts Creators/Listings/Events/
+          Spaces tabs — those live on /market (Connect). Discover stays
+          editorial: subscribed feed → fresh works → mosaic. */}
       <section id="discover-stream" className="space-y-5 scroll-mt-20">
-        {/* Sticky filter bar: chips left, Post right */}
-        <div className="sticky top-14 z-20 -mx-4 px-4 py-3 bg-background/85 backdrop-blur-md border-b border-border/60">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none -mx-1 px-1 min-w-0 flex-1">
-              {([
-                { id: "all", label: "All" },
-                { id: "creators", label: "Creators" },
-                { id: "listings", label: "Listings" },
-                { id: "event", label: "Events" },
-                { id: "space", label: "Spaces" },
-              ] as { id: StreamTab; label: string }[]).map((t) => {
-                const active = streamTab === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => handleStreamTab(t.id)}
-                    className={cn(
-                      "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap",
-                      active
-                        ? "bg-foreground text-background border-foreground shadow-sm"
-                        : "border-border bg-card/60 text-muted-foreground hover:text-foreground hover:border-foreground/30 hover:bg-card",
-                    )}
-                  >
-                    {t.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {user && (
-              <PostMenuButton
-                trigger={
-                  <button
-                    type="button"
-                    className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-foreground text-background px-3 sm:px-4 py-2 text-xs font-semibold hover:opacity-90 transition-opacity shadow-sm"
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Post</span>
-                  </button>
-                }
-              />
-            )}
-          </div>
-        </div>
-
-
-        {streamTab === "creators" ? (
-          <div className="space-y-8">
-            {archetype && (
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-muted-foreground">Filtered by</span>
+        {user && (
+          <div className="sticky top-14 z-20 -mx-4 px-4 py-3 bg-background/85 backdrop-blur-md border-b border-border/60 flex items-center justify-end">
+            <PostMenuButton
+              trigger={
                 <button
                   type="button"
-                  onClick={() => handleArchetype(null)}
-                  className="inline-flex items-center gap-1 rounded-full border border-foreground/20 bg-foreground text-background px-2.5 py-1 font-semibold capitalize"
+                  className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-foreground text-background px-3 sm:px-4 py-2 text-xs font-semibold hover:opacity-90 transition-opacity shadow-sm"
                 >
-                  {archetype}s <X className="h-3 w-3" />
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Post</span>
                 </button>
-                <span className="text-muted-foreground">— tap a chip on a card to filter again</span>
-              </div>
-            )}
-            <DiscoverTable archetype={archetype} onArchetypeClick={handleArchetype} />
-            <ChartsPage embedded />
+              }
+            />
           </div>
-        ) : streamTab === "listings" ? (
-          <ConnectBoard kind="call" />
-        ) : streamTab === "event" ? (
-          <ConnectBoard kind="event" />
-        ) : streamTab === "space" ? (
-          <ConnectBoard kind="space" />
-
-        ) : (
-          <div className="space-y-8">
-            <SubscribedFeed />
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <h3 className="font-display text-xs font-semibold tracking-[0.18em] uppercase text-foreground/70 shrink-0">
-                  Fresh on Rhozeland
-                </h3>
-                <div className="h-px flex-1 bg-border" />
-              </div>
-              <CompactFlowFeed />
-              <ConversationsMosaic kind="all" />
-            </div>
-          </div>
-
         )}
+
+        <div className="space-y-8">
+          <SubscribedFeed />
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <h3 className="font-display text-xs font-semibold tracking-[0.18em] uppercase text-foreground/70 shrink-0">
+                Fresh on Rhozeland
+              </h3>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <CompactFlowFeed />
+            <ConversationsMosaic kind="all" />
+          </div>
+        </div>
       </section>
+
 
       {/* v10.2 — "Coins moving today" lane removed; Trending Tokens lane lands next loop. */}
 
