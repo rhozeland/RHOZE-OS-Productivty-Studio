@@ -35,11 +35,20 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, PenLine, Plus, Trash2, CheckCircle2, X, DollarSign } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  Loader2, PenLine, Plus, Trash2, CheckCircle2, X, DollarSign,
+  FileText, ChevronDown, ShieldCheck, ExternalLink, Anchor,
+} from "lucide-react";
 import BudgetSplitViz from "@/components/project/BudgetSplitViz";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { buildDefaultAgreement, TERMS_VERSION } from "@/lib/project-agreement";
 
 type NewProposalInput = {
   counterpartyId: string;
@@ -180,12 +189,31 @@ const ProposalEditor = ({ proposalId, onClose, onConverted }: EditorProps) => {
   const [localTitle, setLocalTitle] = useState("");
   const [localSummary, setLocalSummary] = useState("");
   const [localBudget, setLocalBudget] = useState<number>(0);
+  const [localTerms, setLocalTerms] = useState<string>("");
+  const [termsOpen, setTermsOpen] = useState(false);
+  const [termsEdited, setTermsEdited] = useState(false);
+
+  // Pull own profile name so we can fill the agreement template.
+  const { data: selfProfile } = useQuery({
+    queryKey: ["proposal-self-profile", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, username")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data ?? { display_name: null, username: null };
+    },
+  });
 
   useEffect(() => {
     if (!proposal) return;
     setLocalTitle(proposal.title ?? "");
     setLocalSummary(proposal.summary ?? "");
     setLocalBudget(Number(proposal.budget_credits ?? 0));
+    setLocalTerms(proposal.terms_text ?? "");
+    setTermsEdited(!!proposal.terms_text);
   }, [proposal]);
 
   const isMine = !!user && !!proposal &&
@@ -215,6 +243,7 @@ const ProposalEditor = ({ proposalId, onClose, onConverted }: EditorProps) => {
           title: localTitle.trim() || "Untitled project",
           summary: localSummary.trim() || null,
           budget_credits: Number.isFinite(localBudget) ? localBudget : 0,
+          terms_text: termsEdited ? localTerms : null,
         })
         .eq("id", proposalId);
       if (error) throw error;
@@ -267,15 +296,59 @@ const ProposalEditor = ({ proposalId, onClose, onConverted }: EditorProps) => {
     onError: (e: any) => toast.error(e.message),
   });
 
+  // Computed canonical agreement text — what the user actually sees + signs.
+  const counterpartyName =
+    counterpartyProfile?.display_name || counterpartyProfile?.username || "Counterparty";
+  const myName = selfProfile?.display_name || selfProfile?.username || (user?.email?.split("@")[0] ?? "You");
+  const clientName = myRole === "client" ? myName : counterpartyName;
+  const creatorName = myRole === "specialist" ? myName : counterpartyName;
+
+  const renderedTerms = useMemo(() => {
+    if (termsEdited && localTerms.trim().length > 0) return localTerms;
+    return buildDefaultAgreement({
+      clientName,
+      creatorName,
+      title: localTitle || "Untitled project",
+      summary: localSummary,
+      totalBudget: Number(localBudget || 0),
+      currency: (proposal?.currency as string) || "usd",
+      milestones: (milestones ?? []).map((m: any) => ({
+        title: m.title,
+        credit_amount: Number(m.credit_amount ?? 0),
+      })),
+    });
+  }, [termsEdited, localTerms, clientName, creatorName, localTitle, localSummary, localBudget, proposal?.currency, milestones]);
+
+  const anchorSignature = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("anchor-proposal-signature", {
+        body: { proposal_id: proposalId },
+      });
+      if (error) throw new Error(error.message);
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data as { signature: string; explorer: string; side: string };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["project-proposal", proposalId] });
+    },
+    onError: (e: any) => {
+      // Non-fatal — off-chain signature is already valid, anchor can retry.
+      console.warn("anchor failed", e);
+      toast.error("Anchor on-chain failed — you can retry from the proposal.");
+    },
+  });
+
   const sign = useMutation({
     mutationFn: async () => {
-      // Save pending text edits first so the signed snapshot is current.
+      // Persist the agreement snapshot before signing so the RPC hashes the
+      // exact text the user is looking at.
       await supabase
         .from("project_proposals")
         .update({
           title: localTitle.trim() || "Untitled project",
           summary: localSummary.trim() || null,
           budget_credits: Number.isFinite(localBudget) ? localBudget : 0,
+          terms_text: renderedTerms,
         })
         .eq("id", proposalId);
 
@@ -283,12 +356,23 @@ const ProposalEditor = ({ proposalId, onClose, onConverted }: EditorProps) => {
       if (error) throw error;
       return data as { status: string; contract_id: string | null; project_id: string | null };
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       qc.invalidateQueries({ queryKey: ["project-proposal", proposalId] });
       qc.invalidateQueries({ queryKey: ["project-proposals"] });
+
+      // Anchor my newly-recorded signature on-chain (non-blocking UX).
+      anchorSignature.mutate(undefined, {
+        onSuccess: (res) => {
+          toast.success("Signature anchored on Solana");
+        },
+      });
+
       if (data?.status === "signed" && data.project_id) {
-        toast.success("Project locked — work starts now");
-        onConverted(data.project_id);
+        // Give the anchor call a beat then redirect to the project workspace.
+        setTimeout(() => {
+          toast.success("Project locked — work starts now");
+          onConverted(data.project_id!);
+        }, 600);
       } else {
         toast.success("Signed — waiting on the other side");
       }
@@ -441,16 +525,93 @@ const ProposalEditor = ({ proposalId, onClose, onConverted }: EditorProps) => {
           )}
         </div>
 
-        {/* Signature summary */}
-        <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs space-y-1">
-          <div className="flex items-center gap-2">
-            {proposal.client_signed_at ? <CheckCircle2 className="h-3.5 w-3.5 text-green-600" /> : <span className="h-3.5 w-3.5 rounded-full border border-muted-foreground/50" />}
-            <span>Client {proposal.client_signed_at ? "signed" : "not yet signed"}</span>
+        <Separator />
+
+        {/* Agreement — collapsible. Shows the standard Rhozeland terms by
+            default; editable by either party until both sides have signed. */}
+        <Collapsible open={termsOpen} onOpenChange={setTermsOpen}>
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold flex items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5 text-primary" />
+              Agreement
+              <Badge variant="outline" className="ml-1 text-[9px] font-mono uppercase">
+                {TERMS_VERSION}
+              </Badge>
+            </h4>
+            <div className="flex items-center gap-2">
+              {editable && termsEdited && (
+                <Button
+                  size="sm" variant="ghost" className="h-7 text-[11px]"
+                  onClick={() => { setLocalTerms(""); setTermsEdited(false); }}
+                >
+                  Reset to standard
+                </Button>
+              )}
+              <CollapsibleTrigger asChild>
+                <Button size="sm" variant="outline" className="h-7 gap-1 text-xs">
+                  {termsOpen ? "Hide" : "Read & sign"}
+                  <ChevronDown className={`h-3 w-3 transition-transform ${termsOpen ? "rotate-180" : ""}`} />
+                </Button>
+              </CollapsibleTrigger>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            {proposal.specialist_signed_at ? <CheckCircle2 className="h-3.5 w-3.5 text-green-600" /> : <span className="h-3.5 w-3.5 rounded-full border border-muted-foreground/50" />}
-            <span>Creator {proposal.specialist_signed_at ? "signed" : "not yet signed"}</span>
-          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Both parties sign these exact terms. The full document + milestones
+            are hashed (SHA-256) and anchored on Solana on sign.
+          </p>
+
+          <CollapsibleContent className="mt-2">
+            <Textarea
+              value={renderedTerms}
+              disabled={!editable}
+              rows={14}
+              spellCheck={false}
+              onChange={(e) => { setLocalTerms(e.target.value); setTermsEdited(true); }}
+              className="font-mono text-[11px] leading-relaxed"
+            />
+            {editable && (
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                {termsEdited
+                  ? "Custom terms — saved with this proposal."
+                  : "Using the standard Rhozeland agreement template."}
+              </p>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
+
+        {/* Signature + on-chain anchor summary */}
+        <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs space-y-2">
+          <SignatureRow
+            label="Client"
+            signedAt={proposal.client_signed_at}
+            hash={proposal.client_signature_hash}
+            tx={proposal.client_signature_tx}
+          />
+          <SignatureRow
+            label="Creator"
+            signedAt={proposal.specialist_signed_at}
+            hash={proposal.specialist_signature_hash}
+            tx={proposal.specialist_signature_tx}
+          />
+          {proposal.terms_hash && (
+            <div className="pt-1 mt-1 border-t border-border/40 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <ShieldCheck className="h-3 w-3" />
+              <span className="font-mono truncate">hash: {proposal.terms_hash.slice(0, 24)}…</span>
+            </div>
+          )}
+          {/* Manual re-anchor when sign succeeded off-chain but tx failed */}
+          {mySigned && !(myRole === "client" ? proposal.client_signature_tx : proposal.specialist_signature_tx) && (
+            <Button
+              size="sm" variant="outline" className="h-7 gap-1.5 text-[11px] w-full"
+              onClick={() => anchorSignature.mutate()}
+              disabled={anchorSignature.isPending}
+            >
+              {anchorSignature.isPending
+                ? <Loader2 className="h-3 w-3 animate-spin" />
+                : <Anchor className="h-3 w-3" />}
+              Anchor my signature on Solana
+            </Button>
+          )}
         </div>
       </div>
 
@@ -478,6 +639,43 @@ const ProposalEditor = ({ proposalId, onClose, onConverted }: EditorProps) => {
         )}
       </div>
     </>
+  );
+};
+
+interface SignatureRowProps {
+  label: string;
+  signedAt: string | null;
+  hash: string | null;
+  tx: string | null;
+}
+
+const SignatureRow = ({ label, signedAt, hash, tx }: SignatureRowProps) => {
+  const signed = !!signedAt;
+  return (
+    <div className="space-y-0.5">
+      <div className="flex items-center gap-2">
+        {signed
+          ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+          : <span className="h-3.5 w-3.5 rounded-full border border-muted-foreground/50" />}
+        <span className="font-medium text-foreground">{label}</span>
+        <span className="text-muted-foreground">
+          {signed ? `signed ${new Date(signedAt!).toLocaleDateString()}` : "not yet signed"}
+        </span>
+        {tx && (
+          <a
+            href={`https://solscan.io/tx/${tx}`}
+            target="_blank"
+            rel="noreferrer"
+            className="ml-auto inline-flex items-center gap-0.5 text-[10px] text-emerald-700 hover:underline"
+          >
+            <ShieldCheck className="h-3 w-3" /> on-chain <ExternalLink className="h-2.5 w-2.5" />
+          </a>
+        )}
+      </div>
+      {signed && hash && !tx && (
+        <p className="pl-5 text-[10px] text-amber-600">awaiting Solana anchor…</p>
+      )}
+    </div>
   );
 };
 
