@@ -38,6 +38,7 @@ import { useProjectRole } from "@/hooks/useProjectRole";
 import { getHoldTier } from "@/lib/tier-matrix";
 import BackedByRhozelandBadge from "@/components/concierge/BackedByRhozelandBadge";
 import PublishReleaseCard from "@/components/project/PublishReleaseCard";
+import SignedAgreementCard from "@/components/proposals/SignedAgreementCard";
 import ProjectScopeReview from "@/components/project/ProjectScopeReview";
 import AiRoadmapDraftButton from "@/components/project/AiRoadmapDraftButton";
 
@@ -359,6 +360,12 @@ const ProjectDetailPage = () => {
         </TabsList>
 
         <TabsContent value="roadmap" className="space-y-6">
+          {/* Signed agreement — surfaces the locked rhozeland-agreement-v1-2026
+              terms + both signers + on-chain anchor links the moment the
+              proposal flips to status='signed'. Renders nothing for legacy
+              projects without a linked proposal. */}
+          <SignedAgreementCard projectId={id!} contractId={contract?.id} />
+
           {/* Drop Rooms + Smartboards live above the roadmap so they're one
               click away — anyone on the project can spin up a quick collab
               space or pin a moodboard without hunting for a separate tab. */}
