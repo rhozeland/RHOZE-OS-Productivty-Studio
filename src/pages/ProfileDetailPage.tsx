@@ -593,12 +593,13 @@ const ProfileDetailPage = () => {
                   <Button variant="outline" size="sm" onClick={() => setShareCardOpen(true)}>
                     Share your card
                   </Button>
-
+                </div>
               </div>
             )}
 {/* buddy-removed */}
           </div>
         </motion.div>
+
 
         {/* ─── Investor signal + activity ticker — header-anchored, condensed ─── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
