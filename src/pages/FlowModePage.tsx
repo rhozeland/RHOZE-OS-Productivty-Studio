@@ -2668,6 +2668,28 @@ const FlowModePage = () => {
                         </div>
                       )}
                     </div>
+
+                    {/* Verified IP opt-in — toggling this publishes the row
+                        with verification_status='pending' so an admin can
+                        review + anchor it on Solana. Keeping the toggle here
+                        (vs. forcing it on every post) keeps the share UX one-click. */}
+                    <div className="mt-3 flex items-start gap-3 rounded-xl border border-border bg-muted/20 p-3">
+                      <Switch
+                        id="request-verify"
+                        checked={requestVerify}
+                        onCheckedChange={setRequestVerify}
+                        className="mt-0.5"
+                      />
+                      <Label htmlFor="request-verify" className="flex-1 cursor-pointer space-y-0.5">
+                        <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                          <Check className="h-3.5 w-3.5 text-emerald-500" />
+                          Anchor as Verified IP
+                        </span>
+                        <span className="block text-[11px] leading-snug text-muted-foreground">
+                          Submits this work for admin review. Once approved it's hashed and recorded on Solana so you can prove authorship publicly.
+                        </span>
+                      </Label>
+                    </div>
                   </div>
                 )}
 
