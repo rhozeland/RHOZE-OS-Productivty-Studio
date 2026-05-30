@@ -832,6 +832,93 @@ const ProfileDetailPage = () => {
   );
 };
 
+
+/* ─── PostsGrid sub-component — shared by Works + Verified tabs ─── */
+const PostsGrid = ({
+  posts,
+  isOwnProfile,
+  navigate,
+  emptyTitle = "No posts yet",
+  emptyDescription = "Use the post button on Discover to drop a work — it'll show up here.",
+}: {
+  posts: any[];
+  isOwnProfile: boolean;
+  navigate: (to: string, opts?: any) => void;
+  emptyTitle?: string;
+  emptyDescription?: string;
+}) => {
+  if (!posts || posts.length === 0) {
+    if (isOwnProfile) {
+      return (
+        <EmptyState
+          icon={Sparkles}
+          title={emptyTitle}
+          description={emptyDescription}
+          cta={{ label: "Open post", to: "/discover?post=1", prominent: true }}
+          size="sm"
+        />
+      );
+    }
+    return <p className="text-xs text-muted-foreground italic">{emptyTitle}.</p>;
+  }
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-2.5">
+      {posts.map((post: any) => {
+        const cat = (post.category || "").toLowerCase();
+        const CatIcon =
+          cat.includes("music") || cat.includes("audio") ? Music
+          : cat.includes("video") ? Play
+          : cat.includes("write") || cat.includes("text") ? FileText
+          : cat.includes("link") ? ExternalLink
+          : ImageIcon;
+        return (
+          <div
+            key={post.id}
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate(`/flow?item=${post.id}`, { state: { from: location.pathname + location.search + location.hash } })}
+            onKeyDown={(e: any) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                navigate(`/flow?item=${post.id}`, { state: { from: location.pathname + location.search + location.hash } });
+              }
+            }}
+            className="group relative aspect-square overflow-hidden bg-muted rounded-md hover:opacity-90 transition-opacity cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/40"
+            aria-label={post.title || "Open post"}
+          >
+            <FlowThumbnail
+              fileUrl={post.file_url}
+              linkUrl={post.link_url}
+              title={post.title}
+              description={post.description}
+              category={post.category}
+              hideCaption
+              className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+            {post.archived_at && (
+              <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-white/90 bg-white/10 backdrop-blur-sm rounded-full px-2 py-0.5 border border-white/20">
+                  Archived
+                </span>
+              </div>
+            )}
+            <div className="absolute top-1.5 left-1.5 h-6 w-6 rounded-full bg-black/55 backdrop-blur-sm flex items-center justify-center">
+              <CatIcon className="h-3 w-3 text-white" />
+            </div>
+            {post.solana_signature && (
+              <div className="absolute top-1.5 right-1.5">
+                <VerifiedIPBadge signature={post.solana_signature} size="xs" showLabel={false} className="shadow-sm" />
+              </div>
+            )}
+            {isOwnProfile && <FlowPostOwnerMenu post={post} />}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+
 /* ─── Anchor button sub-component ─── */
 const AnchorButton = ({ proofs }: { proofs: any[] }) => {
   const [anchoring, setAnchoring] = useState(false);
