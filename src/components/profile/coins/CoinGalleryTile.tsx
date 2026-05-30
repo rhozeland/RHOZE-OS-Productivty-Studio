@@ -40,21 +40,21 @@ const Sparkline = ({ points, up }: { points: number[]; up: boolean }) => {
     .map((p, i) => `${i === 0 ? "M" : "L"} ${(i * stride).toFixed(1)} ${(h - ((p - min) / range) * h).toFixed(1)}`)
     .join(" ");
   const color = up ? "hsl(142 71% 45%)" : "hsl(0 70% 55%)";
+  const id = sparkId(points);
   return (
     <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="w-full h-9">
       <defs>
-        <linearGradient id={`spark-${ticker(points)}`} x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={`spark-${id}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity="0.25" />
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d={`${path} L ${w} ${h} L 0 ${h} Z`} fill={`url(#spark-${ticker(points)})`} />
+      <path d={`${path} L ${w} ${h} L 0 ${h} Z`} fill={`url(#spark-${id})`} />
       <path d={path} fill="none" stroke={color} strokeWidth="1.5" />
     </svg>
   );
 };
-// Quick stable ID from point array (avoid id collisions when multiple tiles render)
-const ticker = (arr: number[]) =>
+const sparkId = (arr: number[]) =>
   arr.length ? Math.abs(Math.round(arr[0] * 1e6 + arr.length * 7919)).toString(36) : "x";
 
 const Stat = ({ label, value, accent }: { label: string; value: string; accent?: string }) => (
