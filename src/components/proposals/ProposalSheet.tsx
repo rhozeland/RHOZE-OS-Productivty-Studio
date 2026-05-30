@@ -243,6 +243,7 @@ const ProposalEditor = ({ proposalId, onClose, onConverted }: EditorProps) => {
           title: localTitle.trim() || "Untitled project",
           summary: localSummary.trim() || null,
           budget_credits: Number.isFinite(localBudget) ? localBudget : 0,
+          terms_text: termsEdited ? localTerms : null,
         })
         .eq("id", proposalId);
       if (error) throw error;
