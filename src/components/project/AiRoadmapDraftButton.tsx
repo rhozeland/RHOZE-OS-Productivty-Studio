@@ -76,8 +76,7 @@ export const AiRoadmapDraftButton = ({
         budget_amount: m.suggested_amount,
         sort_order: existingGoalCount + i,
         parent_id: null,
-        status: "pending" as const,
-      }));
+      })) as any;
       const { error } = await supabase.from("project_goals" as any).insert(rows);
       if (error) throw error;
     },
