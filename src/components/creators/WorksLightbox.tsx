@@ -147,7 +147,10 @@ const WorksLightbox = ({ open, onOpenChange, userId }: Props) => {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-2">
             {filtered.map((w: any) => {
-              const isImage = (w.mime_type || "").startsWith("image/");
+              const mime = (w.mime_type || "").toLowerCase();
+              const isImage = mime.startsWith("image/");
+              const isVideo = mime.startsWith("video/");
+              const isAudio = mime.startsWith("audio/");
               const verified = w.is_unverified === false;
               return (
                 <Link
@@ -158,6 +161,14 @@ const WorksLightbox = ({ open, onOpenChange, userId }: Props) => {
                 >
                   {isImage && w.file_url ? (
                     <img src={w.file_url} alt={w.title} className="absolute inset-0 w-full h-full object-cover" />
+                  ) : isVideo && w.file_url ? (
+                    <video
+                      src={`${w.file_url}#t=0.1`}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      muted
+                      playsInline
+                      preload="metadata"
+                    />
                   ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-fuchsia-500/20 to-amber-400/20 flex items-center justify-center">
                       <FileText className="h-8 w-8 text-foreground/40" />
