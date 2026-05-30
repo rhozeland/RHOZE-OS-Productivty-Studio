@@ -18,7 +18,6 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Plus,
-  Flame,
   Shield,
   CalendarDays,
   Building2,
@@ -31,7 +30,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuthGate } from "@/components/AuthGateDialog";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
-import NoteComposer from "@/components/notes/NoteComposer";
 import { cn } from "@/lib/utils";
 import { todayGradient } from "@/lib/rhoze-gradients";
 
@@ -40,21 +38,16 @@ type PostIntent = {
   title: string;
   description: string;
   cta: string;
-  Icon: typeof Flame;
+  Icon: typeof Shield;
 };
 
+// Pillar 6: dropped "Update" (notes are accessible from DMs/profile only) — the
+// public Post menu is now about durable artifacts: works, listings, events, spaces.
 const POST_OPTIONS: PostIntent[] = [
-  {
-    key: "note",
-    title: "Update",
-    description: "A short note for your profile and messages.",
-    cta: "Leave a note",
-    Icon: Flame,
-  },
   {
     key: "work",
     title: "Work",
-    description: "Post music, visuals, video, or writing to Flow.",
+    description: "Post audio, visual, or photo work. Hashed in your browser.",
     cta: "Post work",
     Icon: Shield,
   },
@@ -93,7 +86,7 @@ const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
   const [open, setOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [createListingOpen, setCreateListingOpen] = useState(false);
-  const [selected, setSelected] = useState<PostIntent["key"]>("note");
+  const [selected, setSelected] = useState<PostIntent["key"]>("work");
 
   const handleOpen = () => {
     if (!requireAuth("post")) return;
@@ -104,7 +97,7 @@ const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
     if (searchParams.get("post") !== "1") return;
 
     if (requireAuth("post")) {
-      setSelected("note");
+      setSelected("work");
       setOpen(true);
     }
 
@@ -121,14 +114,8 @@ const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
   const selectedOption = POST_OPTIONS.find((option) => option.key === selected) ?? POST_OPTIONS[0];
 
   const handleContinue = () => {
-    if (selected === "note") {
-      setOpen(false);
-      requestAnimationFrame(() => setNoteOpen(true));
-      return;
-    }
-
     if (selected === "work") {
-      closeAndNavigate("/flow?share=1");
+      closeAndNavigate("/settings#provenance");
       return;
     }
 
@@ -211,8 +198,6 @@ const PostMenuButton = ({ trigger }: PostMenuButtonProps = {}) => {
           </div>
         </DialogContent>
       </Dialog>
-
-      <NoteComposer open={noteOpen} onOpenChange={setNoteOpen} />
 
       <CreateListingDialog
         open={createListingOpen}

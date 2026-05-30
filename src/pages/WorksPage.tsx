@@ -19,7 +19,7 @@
  * Guests see the public registry only and a sign-in CTA on the upload
  * action, matching the platform-wide guest-mode pattern.
  */
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -145,6 +145,15 @@ const WorksPage = ({ embedded = false }: WorksPageProps = {}) => {
   const initialTab = searchParams.get("tab") === "registry" ? "registry" : "mine";
   const [tab, setTab] = useState<"mine" | "registry">(initialTab as any);
 
+  // Pillar 6: deep-link from StreamComposer / PostMenuButton.
+  // /works?upload=audio|visual|photo auto-opens the upload dialog with
+  // the file picker constrained to that media kind.
+  const uploadHint = searchParams.get("upload");
+  const uploadKind: "audio" | "visual" | "photo" | null =
+    uploadHint === "audio" || uploadHint === "visual" || uploadHint === "photo"
+      ? (uploadHint as any)
+      : null;
+
   const handleTabChange = (v: string) => {
     setTab(v as "mine" | "registry");
     const next = new URLSearchParams(searchParams);
@@ -233,9 +242,16 @@ const WorksPage = ({ embedded = false }: WorksPageProps = {}) => {
       {user && (
         <div>
           <UploadDialog
+            defaultKindHint={uploadKind}
             onCreated={() => {
               queryClient.invalidateQueries({ queryKey: ["works-mine"] });
               queryClient.invalidateQueries({ queryKey: ["works-registry"] });
+              // clear the hint so re-opening Settings doesn't keep re-opening the dialog
+              if (uploadKind) {
+                const next = new URLSearchParams(searchParams);
+                next.delete("upload");
+                setSearchParams(next, { replace: true });
+              }
             }}
           />
         </div>
@@ -681,7 +697,21 @@ function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
 
 /* ────────────────────────────────────────────────────────────────────── */
 
-function UploadDialog({ onCreated }: { onCreated: () => void }) {
+function UploadDialog({
+  onCreated,
+  defaultKindHint = null,
+}: {
+  onCreated: () => void;
+  defaultKindHint?: "audio" | "visual" | "photo" | null;
+}) {
+  const acceptForHint =
+    defaultKindHint === "audio"
+      ? "audio/*"
+      : defaultKindHint === "visual"
+      ? "video/*"
+      : defaultKindHint === "photo"
+      ? "image/*"
+      : undefined;
   const { user } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
@@ -803,6 +833,12 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
   };
 
   const [open, setOpen] = useState(false);
+
+  // Auto-open when StreamComposer or PostMenuButton deep-link with ?upload=<kind>.
+  useEffect(() => {
+    if (defaultKindHint && !open) setOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultKindHint]);
   const canSubmit =
     !!file && !!contentHash && !!title.trim() && !hashing && !submitting;
 
@@ -824,7 +860,7 @@ function UploadDialog({ onCreated }: { onCreated: () => void }) {
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="work-file">File</Label>
-          <Input id="work-file" type="file" onChange={handleFileChange} />
+          <Input id="work-file" type="file" accept={acceptForHint} onChange={handleFileChange} />
           {file && (
             <div className="text-xs text-muted-foreground flex items-center gap-2 pt-1">
               <span>{KIND_LABEL[inferredKind]}</span>
