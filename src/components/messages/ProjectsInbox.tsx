@@ -750,11 +750,13 @@ const NewProjectDialog = ({
       if (prefill?.collaboratorId) {
         const { error: collabError } = await supabase
           .from("project_collaborators")
-          .upsert({
+          .insert({
             project_id: project.id,
             user_id: prefill.collaboratorId,
+            invited_by: userId,
             role: "member",
-          }, { onConflict: "project_id,user_id" });
+            project_role: "collaborator",
+          } as any);
         if (collabError) throw collabError;
       }
 
