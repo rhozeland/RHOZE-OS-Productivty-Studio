@@ -47,6 +47,11 @@ async function fetchPumpFun(mint: string): Promise<Partial<CreatorTokenMetrics>>
       liquidityUsd: num(j?.virtual_sol_reserves) != null && num(j?.virtual_token_reserves) != null
         ? (num(j?.virtual_sol_reserves)! / 1e9) * 150 // rough SOL≈$150 fallback
         : null,
+      // pump.fun coin response exposes the creator wallet — used to deeplink
+      // the artist into their own pump.fun rewards dashboard.
+      creatorWallet: typeof j?.creator === "string" ? j.creator : null,
+      // approximate cumulative USD volume from `usd_volume` when present
+      volumeUsd: num(j?.usd_volume ?? j?.volume_usd ?? null),
       source: "pump.fun",
     };
   } catch {
