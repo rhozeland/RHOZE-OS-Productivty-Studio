@@ -93,7 +93,16 @@ const FreshWorksGrid = () => {
             >
               <div className="aspect-square bg-muted overflow-hidden">
                 {isVideo ? (
-                  <video src={w.file_url} className="h-full w-full object-cover" muted preload="metadata" />
+                  // `#t=0.1` forces the browser to seek + paint the first
+                  // frame as the poster — without it most browsers leave
+                  // the element completely black until the user hits play.
+                  <video
+                    src={`${w.file_url}#t=0.1`}
+                    className="h-full w-full object-cover"
+                    muted
+                    playsInline
+                    preload="metadata"
+                  />
                 ) : (
                   <FlowThumbnail
                     fileUrl={w.file_url}
