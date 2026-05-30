@@ -19,6 +19,13 @@ export interface CreatorTokenMetrics {
   holderCount: number | null;
   topHolderPct: number | null;
   sparkline7d: number[];
+  /** Wallet that originally deployed the mint on pump.fun — deeplinks the
+   *  creator into their own pump.fun rewards dashboard (Pillar 3). */
+  creatorWallet: string | null;
+  /** Cumulative USD volume reported by pump.fun. Used to estimate the
+   *  creator-rewards stream (~0.05% of every trade routes to the mint
+   *  creator). */
+  volumeUsd: number | null;
   source: string;
   fetchedAt: number;
 }
@@ -40,6 +47,11 @@ async function fetchPumpFun(mint: string): Promise<Partial<CreatorTokenMetrics>>
       liquidityUsd: num(j?.virtual_sol_reserves) != null && num(j?.virtual_token_reserves) != null
         ? (num(j?.virtual_sol_reserves)! / 1e9) * 150 // rough SOL≈$150 fallback
         : null,
+      // pump.fun coin response exposes the creator wallet — used to deeplink
+      // the artist into their own pump.fun rewards dashboard.
+      creatorWallet: typeof j?.creator === "string" ? j.creator : null,
+      // approximate cumulative USD volume from `usd_volume` when present
+      volumeUsd: num(j?.usd_volume ?? j?.volume_usd ?? null),
       source: "pump.fun",
     };
   } catch {
@@ -124,6 +136,8 @@ export const useCreatorTokenMetrics = (mint: string | null | undefined) => {
         holderCount: merged.holderCount ?? null,
         topHolderPct: null, // not available from these public endpoints; reserved for future
         sparkline7d: sparkline,
+        creatorWallet: merged.creatorWallet ?? null,
+        volumeUsd: merged.volumeUsd ?? null,
         source: merged.source ?? "—",
         fetchedAt: Date.now(),
       };

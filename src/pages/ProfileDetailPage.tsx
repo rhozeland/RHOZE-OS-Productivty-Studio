@@ -31,6 +31,7 @@ import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilit
 import SupportSheet from "@/components/profile/SupportSheet";
 import ProjectTokenCard from "@/components/profile/ProjectTokenCard";
 import StartCoinCta from "@/components/profile/StartCoinCta";
+import CreatorRewardsCard from "@/components/profile/CreatorRewardsCard";
 import TokenDiscoveryChip from "@/components/profile/TokenDiscoveryChip";
 import CreatorActivityCard from "@/components/profile/CreatorActivityCard";
 import ProfileCatalogCard from "@/components/profile/ProfileCatalogCard";
@@ -650,6 +651,18 @@ const ProfileDetailPage = () => {
                 token is linked yet. Once linked, ProjectTokenCard takes over. */}
             {isOwnProfile && !(p as any).token_mint_address && (
               <StartCoinCta creatorName={p.display_name || p.username} />
+            )}
+
+            {/* Pillar 3 — owner-only creator-rewards card when a token is
+                linked AND admin-approved. Surfaces estimated pump.fun
+                rewards stream + deeplink to the artist's pump.fun
+                dashboard. Hidden from visitors (rewards are personal). */}
+            {isOwnProfile && (p as any).token_mint_address && (
+              <CreatorRewardsCard
+                mint={(p as any).token_mint_address}
+                ticker={(p as any).token_ticker ?? "TOKEN"}
+                fallbackWallet={(p as any).solana_wallet ?? null}
+              />
             )}
 
             {/* v10.4 — prominent fundraising project card (renders only if creator
