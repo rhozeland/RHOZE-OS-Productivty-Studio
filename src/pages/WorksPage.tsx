@@ -19,7 +19,7 @@
  * Guests see the public registry only and a sign-in CTA on the upload
  * action, matching the platform-wide guest-mode pattern.
  */
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
