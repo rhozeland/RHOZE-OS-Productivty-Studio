@@ -2613,6 +2613,21 @@ const FlowModePage = () => {
                         </button>
                       </div>
                     )}
+
+                    {/* Collaborators — comma- or space-separated @handles.
+                        Appended to the description as "with @x @y" at publish time. */}
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+                        Collaborators
+                      </label>
+                      <Input
+                        placeholder="@handle, @handle"
+                        value={collaborators}
+                        onChange={(e) => setCollaborators(e.target.value)}
+                        className="rounded-xl text-sm"
+                      />
+                      <span className="text-[10px] text-muted-foreground">Optional · up to 5 · they're credited on the post</span>
+                    </div>
                   </div>
                 )}
 
