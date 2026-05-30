@@ -49,6 +49,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { buildDefaultAgreement, TERMS_VERSION } from "@/lib/project-agreement";
+import VoiceDictateButton from "@/components/voice/VoiceDictateButton";
 
 type NewProposalInput = {
   counterpartyId: string;
@@ -439,12 +440,20 @@ const ProposalEditor = ({ proposalId, onClose, onConverted }: EditorProps) => {
         </div>
 
         <div className="space-y-2">
-          <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Summary</label>
+          <div className="flex items-center justify-between gap-2">
+            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Summary</label>
+            {editable && (
+              <VoiceDictateButton
+                label="Speak the brief"
+                onTranscript={(t) => setLocalSummary(t)}
+              />
+            )}
+          </div>
           <Textarea
             value={localSummary}
             disabled={!editable}
             onChange={(e) => setLocalSummary(e.target.value)}
-            placeholder="Scope, goals, deliverables…"
+            placeholder="Scope, goals, deliverables… or tap the mic to dictate."
             rows={4}
           />
         </div>
