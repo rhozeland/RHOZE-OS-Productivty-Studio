@@ -33,6 +33,7 @@ import PostMenuButton from "@/components/PostMenuButton";
 import DiscoverTable from "@/components/discover/DiscoverTable";
 import SubscribedFeed from "@/components/discover/SubscribedFeed";
 import ListingsBoard from "@/components/discover/ListingsBoard";
+import ConnectBoard from "@/components/connect/ConnectBoard";
 import ChartsPage from "@/pages/ChartsPage";
 
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
@@ -543,18 +544,12 @@ const DiscoverPage = () => {
             <ChartsPage embedded />
           </div>
         ) : streamTab === "listings" ? (
-          <ListingsBoard />
-        ) : streamTab === "event" || streamTab === "space" ? (
-          <div className="space-y-4">
-            <StreamCategorySection
-              defs={streamTab === "event" ? EVENT_CATEGORY_DEFS : SPACE_CATEGORY_DEFS}
-              noun={streamTab}
-              activeCategory={category}
-              counts={categoryCounts}
-              onSelect={handleCategory}
-            />
-            <ConversationsMosaic kind={streamTab} category={category} />
-          </div>
+          <ConnectBoard kind="call" />
+        ) : streamTab === "event" ? (
+          <ConnectBoard kind="event" />
+        ) : streamTab === "space" ? (
+          <ConnectBoard kind="space" />
+
         ) : (
           <div className="space-y-8">
             <SubscribedFeed />
