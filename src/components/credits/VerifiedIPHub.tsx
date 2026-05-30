@@ -285,6 +285,14 @@ const VerifiedIPHub = ({ userId }: { userId: string | null }) => {
                   <div className="aspect-square bg-muted/40 relative overflow-hidden">
                     {item.content_type === "image" && item.file_url ? (
                       <img src={item.file_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
+                    ) : item.content_type === "video" && item.file_url ? (
+                      <video
+                        src={`${item.file_url}#t=0.1`}
+                        className="h-full w-full object-cover"
+                        muted
+                        playsInline
+                        preload="metadata"
+                      />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center">
                         <Icon className="h-8 w-8 text-muted-foreground" />
