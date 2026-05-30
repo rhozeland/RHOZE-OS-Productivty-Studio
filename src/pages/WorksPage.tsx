@@ -242,9 +242,16 @@ const WorksPage = ({ embedded = false }: WorksPageProps = {}) => {
       {user && (
         <div>
           <UploadDialog
+            defaultKindHint={uploadKind}
             onCreated={() => {
               queryClient.invalidateQueries({ queryKey: ["works-mine"] });
               queryClient.invalidateQueries({ queryKey: ["works-registry"] });
+              // clear the hint so re-opening Settings doesn't keep re-opening the dialog
+              if (uploadKind) {
+                const next = new URLSearchParams(searchParams);
+                next.delete("upload");
+                setSearchParams(next, { replace: true });
+              }
             }}
           />
         </div>
