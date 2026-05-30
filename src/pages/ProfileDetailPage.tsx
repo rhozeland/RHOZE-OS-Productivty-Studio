@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-// Tabs removed — profile no longer hides content behind tab toggles.
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -13,37 +13,31 @@ import {
   EyeOff, Loader2, Settings, Store, Star, ExternalLink, ShoppingBag,
   Sparkles, Image as ImageIcon, Play, Music, FileText, Award, Shield,
   Zap, Coins, Calendar as CalendarIcon, User as UserIcon, FolderKanban,
-  Heart, ArrowRight, Search, Building2, BadgeCheck,
+  Heart, ArrowRight, Search, Building2, BadgeCheck, ShieldCheck,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import ProfileBadges from "@/components/profile/ProfileBadges";
-import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import VerifiedProBadge from "@/components/profile/VerifiedProBadge";
 import ProfileTierBadge from "@/components/profile/ProfileTierBadge";
 import ArchetypeChip from "@/components/profile/ArchetypeChip";
-// RegionChip retired from header (v10.4) — location + region are combined inline.
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import SupportSheet from "@/components/profile/SupportSheet";
-import ProjectTokenCard from "@/components/profile/ProjectTokenCard";
 import StartCoinCta from "@/components/profile/StartCoinCta";
-import CreatorRewardsCard from "@/components/profile/CreatorRewardsCard";
 import TokenDiscoveryChip from "@/components/profile/TokenDiscoveryChip";
 import CreatorActivityCard from "@/components/profile/CreatorActivityCard";
 import ProfileCatalogCard from "@/components/profile/ProfileCatalogCard";
+import InvestorSignalStrip from "@/components/profile/InvestorSignalStrip";
+import CreatorActivityTicker from "@/components/profile/CreatorActivityTicker";
+import CreatorCoinsGallery from "@/components/profile/coins/CreatorCoinsGallery";
 import { getRegion } from "@/lib/regions";
-import { LumaEventEmbed } from "@/components/profile/LumaEventEmbed";
 import { BoostProfileSheet } from "@/components/profile/BoostProfileSheet";
-import CreatorDropsCatalog from "@/components/profile/CreatorDropsCatalog";
-import CreatorReadinessCard from "@/components/profile/CreatorReadinessCard";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import SaveButton from "@/components/saved/SaveButton";
 import { cn } from "@/lib/utils";
-// ROLE_BY_ID retired from header chips (v10.4) — role labels removed for visual clarity.
 import { archetypeBannerGradient } from "@/lib/archetypes";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import FlowPostOwnerMenu from "@/components/profile/FlowPostOwnerMenu";
@@ -51,7 +45,6 @@ import NoteBubble from "@/components/notes/NoteBubble";
 import { useUserNote } from "@/hooks/useNotes";
 
 import { EmptyState } from "@/components/ui/empty-state";
-import PostMenuButton from "@/components/PostMenuButton";
 import { Plus } from "lucide-react";
 import ShareCardModal from "@/components/share/ShareCardModal";
 
