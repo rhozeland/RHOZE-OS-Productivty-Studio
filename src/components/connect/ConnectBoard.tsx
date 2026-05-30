@@ -74,6 +74,23 @@ interface Props {
   search?: string;
 }
 
+type ProjectSeed = {
+  title: string;
+  listingId?: string;
+  collaboratorId?: string | null;
+  scope?: string | null;
+  sourceKind: ConnectKind;
+  sourceId: string;
+};
+
+const stashProjectSeed = (seed: ProjectSeed) => {
+  try {
+    sessionStorage.setItem("newProjectPrefill", JSON.stringify(seed));
+  } catch {
+    // no-op
+  }
+};
+
 const ConnectBoard = ({ kind, search = "" }: Props) => {
   const navigate = useNavigate();
 
@@ -121,20 +138,15 @@ const ConnectBoard = ({ kind, search = "" }: Props) => {
   );
 
   const handleStartProject = (r: ConnectRow) => {
-    try {
-      sessionStorage.setItem(
-        "newProjectPrefill",
-        JSON.stringify({
-          title: r.title,
-          listingId: r.kind === "call" ? r.id : undefined,
-          collaboratorId: r.ownerId,
-          scope: r.description ?? null,
-          sourceKind: r.kind,
-          sourceId: r.id,
-        }),
-      );
-    } catch {}
-    navigate(`/messages?tab=projects&new=1`);
+    stashProjectSeed({
+      title: r.title,
+      listingId: r.kind === "call" ? r.id : undefined,
+      collaboratorId: r.ownerId,
+      scope: r.description ?? null,
+      sourceKind: r.kind,
+      sourceId: r.id,
+    });
+    navigate(`/messages?tab=projects&new=1&source=${r.kind}`);
   };
 
   return (
