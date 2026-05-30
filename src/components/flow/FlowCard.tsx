@@ -349,7 +349,13 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
               </div>
             ) : item.file_url ? (
               <div className="aspect-video overflow-hidden bg-foreground/5" onClick={(e) => e.stopPropagation()}>
-                <video src={item.file_url} controls playsInline preload="metadata" className="w-full h-full object-cover" />
+                <video
+                  src={`${item.file_url}#t=0.1`}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="w-full h-full object-cover"
+                />
               </div>
             ) : (
               <div className="aspect-video bg-gradient-to-br from-accent/15 via-muted to-primary/10 flex items-center justify-center">
