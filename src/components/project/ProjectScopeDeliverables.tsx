@@ -430,6 +430,11 @@ const ProjectScopeDeliverables = ({
                       )}
                     </button>
 
+                    <GoogleDriveAttachButton
+                      onPick={(picked) => attachDriveFile(d.id, picked)}
+                      title={hasFile ? "Replace with Drive file" : "Attach from Google Drive"}
+                    />
+
                     <button
                       type="button"
                       onClick={() => deleteDeliverable.mutate(d.id)}
