@@ -258,6 +258,14 @@ const FlowModePage = () => {
   const [newCreatorName, setNewCreatorName] = useState("");
   const [shareStep, setShareStep] = useState<"pick" | "caption" | "confirm">("pick");
   const [showLinkField, setShowLinkField] = useState(false);
+  // v11 Pillar 8 — IG-style polish for Share-to-Flow.
+  // Free-text collaborators (comma- or space-separated handles). Appended to
+  // the post description on publish as a "with @handle" footer line.
+  const [collaborators, setCollaborators] = useState("");
+  // Optional Verified-IP request — when on, the row publishes with
+  // verification_status='pending' instead of 'none' so it lands in the admin
+  // queue and earns the on-chain anchor once approved.
+  const [requestVerify, setRequestVerify] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
   const CAPTION_LIMIT = 240;
   const [settingsOpen, setSettingsOpen] = useState(false);
