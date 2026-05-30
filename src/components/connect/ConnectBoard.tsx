@@ -50,8 +50,9 @@ import {
   type ConnectKind,
   type ConnectRow,
 } from "@/components/connect/useConnectRows";
+import DiscoverTable from "@/components/discover/DiscoverTable";
 
-export type BoardKind = ConnectKind | "all";
+export type BoardKind = ConnectKind | "all" | "listings";
 
 const KIND_CHIP: Record<ConnectKind, { label: string; cls: string; Icon: typeof Users }> = {
   hire:  { label: "Creator", cls: "bg-rose-500/10 text-rose-700 dark:text-rose-300", Icon: Users },
@@ -61,11 +62,12 @@ const KIND_CHIP: Record<ConnectKind, { label: string; cls: string; Icon: typeof 
 };
 
 const EMPTY_COPY: Record<BoardKind, { title: string; description: string }> = {
-  all:   { title: "Nothing here yet", description: "Be the first to post a listing, event, or space." },
-  hire:  { title: "No creators available", description: "Verified creators show up here as they sign up." },
-  call:  { title: "No listings yet", description: "Listings are how creators announce work, collabs, and briefs." },
-  event: { title: "No upcoming events", description: "Be the first to host — Rhozeland surfaces your event the moment it's published." },
-  space: { title: "No spaces yet", description: "Studios, venues, and shared rooms hosted by creators land here." },
+  all:      { title: "Nothing here yet", description: "Be the first to post a listing, event, or space." },
+  hire:     { title: "No creators available", description: "Verified creators show up here as they sign up." },
+  call:     { title: "No listings yet", description: "Listings are how creators announce work, collabs, and briefs." },
+  listings: { title: "No listings yet", description: "Spaces to book, events to attend, and open calls all live here." },
+  event:    { title: "No upcoming events", description: "Be the first to host — Rhozeland surfaces your event the moment it's published." },
+  space:    { title: "No spaces yet", description: "Studios, venues, and shared rooms hosted by creators land here." },
 };
 
 
