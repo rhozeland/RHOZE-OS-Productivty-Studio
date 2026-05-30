@@ -36,6 +36,7 @@ import ListingsBoard from "@/components/discover/ListingsBoard";
 import ChartsPage from "@/pages/ChartsPage";
 
 import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
+import PublicReleasesLane from "@/components/discover/PublicReleasesLane";
 
 import DiscoverEventsGrid from "@/components/discover/DiscoverEventsGrid";
 import EventCategoryPills from "@/components/discover/EventCategoryPills";
@@ -458,6 +459,9 @@ const DiscoverPage = () => {
           </div>
         </motion.section>
       )}
+
+      {/* ─── v11 Pillar 4: Public Releases (hero unit on Discover) ── */}
+      <PublicReleasesLane />
 
       {/* ─── Trending artists (self-gated by liquidity) ───────────── */}
 

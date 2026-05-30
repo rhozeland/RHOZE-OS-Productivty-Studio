@@ -19,6 +19,8 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { SubscriberLock } from "@/components/profile/SubscriberLock";
+import WorkTokenChip from "@/components/works/WorkTokenChip";
+import AttachCoinToWorkButton from "@/components/works/AttachCoinToWorkButton";
 
 interface Props {
   open: boolean;
@@ -41,7 +43,7 @@ const WorksLightbox = ({ open, onOpenChange, userId }: Props) => {
       // automatically unlocks any private/subscriber-only rows on next fetch.
       const { data } = await supabase
         .from("works")
-        .select("id, title, file_url, mime_type, kind, visibility, is_unverified, anchored_at, created_at")
+        .select("id, title, file_url, mime_type, kind, visibility, is_unverified, anchored_at, created_at, user_id, linked_token_mint")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(120);
@@ -167,12 +169,29 @@ const WorksLightbox = ({ open, onOpenChange, userId }: Props) => {
                       <ShieldCheck className="h-2.5 w-2.5" /> Verified
                     </div>
                   )}
+                  {w.linked_token_mint && (
+                    <div className="absolute top-2 left-2" onClick={(e) => e.preventDefault()}>
+                      <WorkTokenChip mint={w.linked_token_mint} variant="compact" />
+                    </div>
+                  )}
                   <div className="absolute inset-x-2 bottom-2 text-white">
                     <p className="text-[11px] font-semibold leading-tight line-clamp-2 drop-shadow">{w.title}</p>
                     <p className="text-[9px] opacity-80 mt-0.5">
                       {format(new Date(w.created_at), "MMM d, yyyy")}
                     </p>
                   </div>
+                  {isOwner && (
+                    <div
+                      className="absolute bottom-2 right-2"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    >
+                      <AttachCoinToWorkButton
+                        workId={w.id}
+                        workOwnerId={w.user_id}
+                        currentMint={w.linked_token_mint}
+                      />
+                    </div>
+                  )}
                 </Link>
               );
             })}
