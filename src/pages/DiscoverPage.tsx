@@ -543,18 +543,12 @@ const DiscoverPage = () => {
             <ChartsPage embedded />
           </div>
         ) : streamTab === "listings" ? (
-          <ListingsBoard />
-        ) : streamTab === "event" || streamTab === "space" ? (
-          <div className="space-y-4">
-            <StreamCategorySection
-              defs={streamTab === "event" ? EVENT_CATEGORY_DEFS : SPACE_CATEGORY_DEFS}
-              noun={streamTab}
-              activeCategory={category}
-              counts={categoryCounts}
-              onSelect={handleCategory}
-            />
-            <ConversationsMosaic kind={streamTab} category={category} />
-          </div>
+          <ConnectBoard kind="call" />
+        ) : streamTab === "event" ? (
+          <ConnectBoard kind="event" />
+        ) : streamTab === "space" ? (
+          <ConnectBoard kind="space" />
+
         ) : (
           <div className="space-y-8">
             <SubscribedFeed />
