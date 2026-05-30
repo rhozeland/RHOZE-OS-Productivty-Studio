@@ -96,20 +96,30 @@ const stashProjectSeed = (seed: ProjectSeed) => {
 const ConnectBoard = ({ kind, search = "" }: Props) => {
   const navigate = useNavigate();
 
-  const hire = useHireRows(kind === "all" || kind === "hire");
-  const calls = useCallRows(kind === "all" || kind === "call");
-  const events = useEventRows(kind === "all" || kind === "event");
-  const spaces = useSpaceRows(kind === "all" || kind === "space");
+  // Pure Creators view = DiscoverTable (the Region/Subs/Token/Support layout).
+  if (kind === "hire") {
+    return <DiscoverTable />;
+  }
+
+  const wantsCall  = kind === "all" || kind === "listings" || kind === "call";
+  const wantsEvent = kind === "all" || kind === "listings" || kind === "event";
+  const wantsSpace = kind === "all" || kind === "listings" || kind === "space";
+  const wantsHire  = kind === "all";
+
+  const hire = useHireRows(wantsHire);
+  const calls = useCallRows(wantsCall);
+  const events = useEventRows(wantsEvent);
+  const spaces = useSpaceRows(wantsSpace);
 
   const rows: ConnectRow[] = useMemo(() => {
     const pick: ConnectRow[][] = [];
-    if (kind === "all" || kind === "hire") pick.push(hire.data ?? []);
-    if (kind === "all" || kind === "call") pick.push(calls.data ?? []);
-    if (kind === "all" || kind === "event") pick.push(events.data ?? []);
-    if (kind === "all" || kind === "space") pick.push(spaces.data ?? []);
-    if (kind === "all") return interleave(pick);
+    if (wantsHire) pick.push(hire.data ?? []);
+    if (wantsCall) pick.push(calls.data ?? []);
+    if (wantsEvent) pick.push(events.data ?? []);
+    if (wantsSpace) pick.push(spaces.data ?? []);
+    if (kind === "all" || kind === "listings") return interleave(pick);
     return pick.flat();
-  }, [kind, hire.data, calls.data, events.data, spaces.data]);
+  }, [kind, wantsHire, wantsCall, wantsEvent, wantsSpace, hire.data, calls.data, events.data, spaces.data]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -124,11 +134,11 @@ const ConnectBoard = ({ kind, search = "" }: Props) => {
   }, [rows, search]);
 
   const isLoading =
-    (kind === "hire"  && hire.isLoading) ||
     (kind === "call"  && calls.isLoading) ||
     (kind === "event" && events.isLoading) ||
     (kind === "space" && spaces.isLoading) ||
-    (kind === "all"   && hire.isLoading && calls.isLoading && events.isLoading && spaces.isLoading);
+    (kind === "listings" && calls.isLoading && events.isLoading && spaces.isLoading) ||
+    (kind === "all" && hire.isLoading && calls.isLoading && events.isLoading && spaces.isLoading);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Reset selection when the data set changes (filter/kind switch).
