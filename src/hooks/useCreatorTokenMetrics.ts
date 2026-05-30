@@ -19,12 +19,13 @@ export interface CreatorTokenMetrics {
   holderCount: number | null;
   topHolderPct: number | null;
   sparkline7d: number[];
-  /** Wallet that originally deployed the mint on pump.fun — deeplinks the
-   *  creator into their own pump.fun rewards dashboard (Pillar 3). */
+  /** All-time-high market cap from pump.fun (when available). */
+  athMarketCapUsd: number | null;
+  /** % difference between current MC and ATH MC (negative = below ATH). */
+  athChangePct: number | null;
+  /** Wallet that originally deployed the mint on pump.fun. */
   creatorWallet: string | null;
-  /** Cumulative USD volume reported by pump.fun. Used to estimate the
-   *  creator-rewards stream (~0.05% of every trade routes to the mint
-   *  creator). */
+  /** Cumulative USD volume reported by pump.fun (drives creator-rewards estimate). */
   volumeUsd: number | null;
   source: string;
   fetchedAt: number;
