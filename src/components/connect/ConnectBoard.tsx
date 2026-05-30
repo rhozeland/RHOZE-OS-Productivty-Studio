@@ -77,21 +77,11 @@ interface Props {
   search?: string;
 }
 
-type ProjectSeed = {
+type ProposalSeed = {
+  counterpartyId: string;
   title: string;
+  summary?: string | null;
   listingId?: string;
-  collaboratorId?: string | null;
-  scope?: string | null;
-  sourceKind: ConnectKind;
-  sourceId: string;
-};
-
-const stashProjectSeed = (seed: ProjectSeed) => {
-  try {
-    sessionStorage.setItem("newProjectPrefill", JSON.stringify(seed));
-  } catch {
-    // no-op
-  }
 };
 
 const ConnectBoard = ({ kind, search = "" }: Props) => {
