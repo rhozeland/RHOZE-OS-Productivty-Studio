@@ -212,6 +212,32 @@ const ProjectScopeDeliverables = ({
   });
 
   /**
+   * Attach a Google Drive file by reference: we save the Drive webViewLink
+   * + filename + mime + size onto the deliverable. We do NOT download the
+   * bytes, so there's no content_hash / Solana anchor for Drive items.
+   */
+  const attachDriveFile = async (deliverableId: string, picked: DrivePickedFile) => {
+    const { error } = await supabase
+      .from("project_deliverables" as any)
+      .update({
+        file_url: picked.url,
+        file_name: picked.name,
+        file_size: picked.sizeBytes,
+        mime_type: picked.mimeType,
+        file_uploaded_at: new Date().toISOString(),
+        // Drive-attached files are references, not fingerprinted bytes.
+        content_hash: null,
+        solana_signature: null,
+        anchored_at: null,
+        updated_at: new Date().toISOString(),
+      } as any)
+      .eq("id", deliverableId);
+    if (error) throw error;
+    queryClient.invalidateQueries({ queryKey: ["project-deliverables", projectId] });
+  };
+
+
+  /**
    * Anchor a deliverable's SHA-256 fingerprint on Solana.
    * Reuses the `anchor-contribution` edge function: we create a
    * `contribution_proofs` row referencing the deliverable, the function
