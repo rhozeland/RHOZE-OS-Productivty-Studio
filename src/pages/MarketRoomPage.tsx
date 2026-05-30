@@ -88,6 +88,18 @@ const MarketRoomPage = () => {
           })}
         </div>
         <PostMenuButton
+          intent="listing"
+          trigger={
+            <button
+              type="button"
+              className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-foreground/30 bg-card px-3 sm:px-4 py-2 text-xs font-semibold text-foreground hover:bg-foreground hover:text-background transition-colors"
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Listing</span>
+            </button>
+          }
+        />
+        <PostMenuButton
           trigger={
             <button
               type="button"
@@ -98,6 +110,7 @@ const MarketRoomPage = () => {
             </button>
           }
         />
+
       </div>
 
       {/* Search + sort */}
