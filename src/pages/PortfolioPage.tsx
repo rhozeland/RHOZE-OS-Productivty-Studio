@@ -1,15 +1,13 @@
 /**
  * PortfolioPage — `/portfolio`
  *
- * v10.4: Promoted to a top-level sidebar destination. Houses everything that
- * used to clutter the Creator Pass page — Passport (event tickets + spaces
- * visited), Verified IP, and Earnings — plus a lightweight wallet token
- * holdings panel for fans that have connected a Solana wallet.
- *
- * Creator Pass keeps only the "gem card" tier surface; this page is the
- * unified inventory of what a user has earned, held, and visited.
+ * Pillar 6 cleanup: dropped the BackedStrip hero (Backing/Monthly/Pass
+ * counters), the duplicate CreatorTokenHoldings panel above the tabs,
+ * the inline DashboardPage feed merge, and the wallet-gated "Token
+ * Holdings" section that was just a coming-soon message. The page is
+ * now a clean tabbed inventory: Passport · IP · Earnings · Holdings.
  */
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -23,16 +21,12 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TicketCollection from "@/components/credits/TicketCollection";
 import VerifiedIPHub from "@/components/credits/VerifiedIPHub";
 import CreatorEarningsTab from "@/components/credits/CreatorEarningsTab";
-import WalletButton from "@/components/WalletButton";
 import CreatorTokenHoldings from "@/components/portfolio/CreatorTokenHoldings";
-import DashboardPage from "@/pages/DashboardPage";
-import { todayGradient } from "@/lib/rhoze-gradients";
 
 /* ─────────────── Passport · Spaces visited ─────────────── */
 const SpacesPassportSection = ({ userId }: { userId: string }) => {
