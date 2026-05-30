@@ -128,14 +128,19 @@ export const useCreatorTokenMetrics = (mint: string | null | undefined) => {
         const jup = await fetchJupiterPrice(mint);
         merged = { ...merged, ...jup };
       }
+      const mc = merged.marketCapUsd ?? null;
+      const ath = merged.athMarketCapUsd ?? null;
+      const athChange = mc != null && ath != null && ath > 0 ? ((mc - ath) / ath) * 100 : null;
       return {
         priceUsd: merged.priceUsd ?? null,
         change24h: merged.change24h ?? null,
-        marketCapUsd: merged.marketCapUsd ?? null,
+        marketCapUsd: mc,
         liquidityUsd: merged.liquidityUsd ?? null,
         holderCount: merged.holderCount ?? null,
-        topHolderPct: null, // not available from these public endpoints; reserved for future
+        topHolderPct: null,
         sparkline7d: sparkline,
+        athMarketCapUsd: ath,
+        athChangePct: athChange,
         creatorWallet: merged.creatorWallet ?? null,
         volumeUsd: merged.volumeUsd ?? null,
         source: merged.source ?? "—",
