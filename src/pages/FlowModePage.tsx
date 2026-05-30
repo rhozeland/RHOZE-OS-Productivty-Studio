@@ -882,6 +882,8 @@ const FlowModePage = () => {
         setNewLink("");
         setNewCreatorName("");
         setShowLinkField(false);
+        setCollaborators("");
+        setRequestVerify(false);
         setShareStep("pick");
         setCelebrating(false);
         resetPendingFiles();
