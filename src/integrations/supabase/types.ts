@@ -1137,6 +1137,42 @@ export type Database = {
           },
         ]
       }
+      creator_token_grants: {
+        Row: {
+          balance: number
+          created_at: string
+          creator_id: string
+          expires_at: string
+          id: string
+          mint_address: string
+          updated_at: string
+          user_id: string
+          wallet_address: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          creator_id: string
+          expires_at: string
+          id?: string
+          mint_address: string
+          updated_at?: string
+          user_id: string
+          wallet_address: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          creator_id?: string
+          expires_at?: string
+          id?: string
+          mint_address?: string
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           amount: number
@@ -5598,6 +5634,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      holds_creator_token: { Args: { _creator_id: string }; Returns: boolean }
       is_admin_or_curator: { Args: { _user_id: string }; Returns: boolean }
       is_contract_party: {
         Args: { _contract_id: string; _user_id: string }
