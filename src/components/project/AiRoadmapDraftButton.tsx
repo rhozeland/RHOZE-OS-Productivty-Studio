@@ -225,9 +225,11 @@ export const AiRoadmapDraftButton = ({
           <div className="flex items-start gap-2 min-w-0">
             <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground">Want us to A&R this with you?</p>
+              <p className="text-sm font-semibold text-foreground">
+                Want our A&amp;R team to run this with you?
+              </p>
               <p className="text-xs text-muted-foreground">
-                Rhozeland Concierge takes the draft, refines the milestones, and project-manages the release end-to-end.
+                Rhozeland A&amp;R / Artist Development takes the draft, refines the milestones, and project-manages the release end-to-end.
               </p>
             </div>
           </div>
@@ -236,14 +238,20 @@ export const AiRoadmapDraftButton = ({
               type="button"
               size="sm"
               variant="ghost"
-              onClick={() => setShowConcierge(false)}
+              onClick={() => {
+                trackConciergeCta("dismissed", { projectId, source: "ai-draft-button" });
+                setShowConcierge(false);
+              }}
             >
               Not now
             </Button>
             <Button
               type="button"
               size="sm"
-              onClick={() => setConciergeOpen(true)}
+              onClick={() => {
+                trackConciergeCta("intake", { projectId, source: "ai-draft-button" });
+                setConciergeOpen(true);
+              }}
             >
               Book a call
             </Button>
