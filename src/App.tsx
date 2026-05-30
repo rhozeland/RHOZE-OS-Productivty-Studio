@@ -83,6 +83,7 @@ import NotFound from "./pages/NotFound";
 import CheckoutReturn from "@/pages/CheckoutReturn";
 import SubscriptionsPage from "@/pages/SubscriptionsPage";
 import ReleasePage from "@/pages/ReleasePage";
+import WhyLaunchCoinPage from "@/pages/WhyLaunchCoinPage";
 import { useParams, Navigate as NavigateAlias } from "react-router-dom";
 import { EventNotFound } from "@/components/events/EventNotFound";
 
