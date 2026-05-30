@@ -62,7 +62,7 @@ const SECTIONS = [
   // id stays "provenance" so existing /settings#provenance links keep working.
   { id: "provenance", label: "Verification", icon: BadgeCheck },
   { id: "shipping", label: "Shipping", icon: Truck },
-  { id: "calendar", label: "Calendar Sync", icon: CalendarSync },
+  // Pillar 6 — Calendar Sync (Luma .ics import) retired from the side rail.
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "security", label: "Security", icon: Lock },
   { id: "account", label: "Account", icon: AlertTriangle },
