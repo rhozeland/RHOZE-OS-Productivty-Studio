@@ -159,6 +159,7 @@ const ConnectBoard = ({ kind, search = "" }: Props) => {
     });
     navigate(`/messages?tab=projects&new=1&source=${r.kind}`);
   };
+  if (kind === "hire") return <DiscoverTable />;
 
   return (
     <div className="space-y-4">
