@@ -38,6 +38,7 @@ import { useProjectRole } from "@/hooks/useProjectRole";
 import { getHoldTier } from "@/lib/tier-matrix";
 import BackedByRhozelandBadge from "@/components/concierge/BackedByRhozelandBadge";
 import PublishReleaseCard from "@/components/project/PublishReleaseCard";
+import SignedAgreementCard from "@/components/proposals/SignedAgreementCard";
 import ProjectScopeReview from "@/components/project/ProjectScopeReview";
 import AiRoadmapDraftButton from "@/components/project/AiRoadmapDraftButton";
 
