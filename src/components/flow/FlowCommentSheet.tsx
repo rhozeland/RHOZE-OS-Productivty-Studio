@@ -37,7 +37,10 @@ interface FlowCommentSheetProps {
 const initials = (n?: string | null) =>
   (n ?? "·").split(/\s+/).map((s) => s[0]).join("").slice(0, 2).toUpperCase();
 
-const FlowCommentSheet = ({ open, onOpenChange, flowItemId, itemTitle }: FlowCommentSheetProps) => {
+const FlowCommentSheet = ({
+  open, onOpenChange, flowItemId, itemTitle,
+  liked, likeCount, commentCount, onLike, onShare,
+}: FlowCommentSheetProps) => {
   const { user } = useAuth();
   const { isAdmin } = useAdminCheck();
   const queryClient = useQueryClient();
