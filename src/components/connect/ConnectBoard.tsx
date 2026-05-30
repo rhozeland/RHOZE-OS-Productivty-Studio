@@ -96,10 +96,9 @@ const stashProjectSeed = (seed: ProjectSeed) => {
 const ConnectBoard = ({ kind, search = "" }: Props) => {
   const navigate = useNavigate();
 
-  // Pure Creators view = DiscoverTable (the Region/Subs/Token/Support layout).
-  if (kind === "hire") {
-    return <DiscoverTable />;
-  }
+  // Pure Creators view = DiscoverTable (Region/Subs/Token/Support layout).
+  // Rendered after all hooks run below to keep hook order stable.
+
 
   const wantsCall  = kind === "all" || kind === "listings" || kind === "call";
   const wantsEvent = kind === "all" || kind === "listings" || kind === "event";
