@@ -84,6 +84,7 @@ import CheckoutReturn from "@/pages/CheckoutReturn";
 import SubscriptionsPage from "@/pages/SubscriptionsPage";
 import ReleasePage from "@/pages/ReleasePage";
 import WhyLaunchCoinPage from "@/pages/WhyLaunchCoinPage";
+import ArSplitterGuidePage from "@/pages/ArSplitterGuidePage";
 import { useParams, Navigate as NavigateAlias } from "react-router-dom";
 import { EventNotFound } from "@/components/events/EventNotFound";
 
@@ -313,6 +314,9 @@ const App = () => (
                 {/* v11 Tier 3: public "build in public" release page. Owner
                     flips is_public on the project to surface this URL. */}
                 <Route path="/release/:slug" element={<ReleasePage />} />
+                {/* v11 Pillar 4: A&R splitter wallet setup guide (Roster tier). */}
+                <Route path="/ar-splitter" element={<ArSplitterGuidePage />} />
+                <Route path="/squads-splitter" element={<Navigate to="/ar-splitter" replace />} />
                 {/* Works is now the personal vault under Settings → Provenance.
                     /works keeps working as a deep link via redirect. */}
                 <Route path="/works" element={<Navigate to="/settings#provenance" replace />} />

@@ -11,13 +11,15 @@
  */
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Heart, Sparkles, ArrowLeft, Music4, Check } from "lucide-react";
+import { Heart, Sparkles, ArrowLeft, Music4, Check, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { pumpFunCreateUrl, pumpFunDetailsJson } from "@/lib/pump-fun";
+import { useState } from "react";
 
 const ReleasePage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -245,20 +247,44 @@ const ReleasePage = () => {
           </div>
 
           {project.tokenize_ready && (
-            <a
-              href="https://pump.fun/create"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 hover:bg-emerald-500/10 transition-colors"
-            >
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-3">
               <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
                 <Sparkles className="h-4 w-4" />
                 Tokenize this release
               </div>
-              <p className="text-xs text-muted-foreground mt-1.5">
-                A&R has flagged this release for tokenization. Launch a coin on pump.fun with Rhozeland support.
+              <p className="text-xs text-muted-foreground">
+                A&R flagged this for tokenization. Launch on pump.fun with the
+                release title, vision, and cover pre-filled — one motion.
               </p>
-            </a>
+              <Button asChild className="w-full gap-1.5" size="sm">
+                <a
+                  href={pumpFunCreateUrl({
+                    name: project.title,
+                    description: project.vision ?? project.description ?? undefined,
+                  })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Launch on pump.fun
+                </a>
+              </Button>
+              <button
+                type="button"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(
+                    pumpFunDetailsJson({
+                      name: project.title,
+                      description: project.vision ?? project.description ?? undefined,
+                    }),
+                  );
+                  toast.success("Coin details copied to clipboard");
+                }}
+                className="w-full inline-flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground"
+              >
+                <Copy className="h-2.5 w-2.5" /> Copy details (fallback)
+              </button>
+            </div>
           )}
         </aside>
       </div>

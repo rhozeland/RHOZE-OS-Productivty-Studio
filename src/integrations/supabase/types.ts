@@ -807,8 +807,10 @@ export type Database = {
           scoped_budget_cents: number | null
           scoped_by: string | null
           scoped_team_ids: string[]
+          splitter_address: string | null
           status: Database["public"]["Enums"]["concierge_status"]
           summary: string
+          tier: string
           updated_at: string
         }
         Insert: {
@@ -826,8 +828,10 @@ export type Database = {
           scoped_budget_cents?: number | null
           scoped_by?: string | null
           scoped_team_ids?: string[]
+          splitter_address?: string | null
           status?: Database["public"]["Enums"]["concierge_status"]
           summary: string
+          tier?: string
           updated_at?: string
         }
         Update: {
@@ -845,8 +849,10 @@ export type Database = {
           scoped_budget_cents?: number | null
           scoped_by?: string | null
           scoped_team_ids?: string[]
+          splitter_address?: string | null
           status?: Database["public"]["Enums"]["concierge_status"]
           summary?: string
+          tier?: string
           updated_at?: string
         }
         Relationships: []
@@ -2771,6 +2777,8 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ar_splitter_address: string | null
+          ar_splitter_share_bps: number | null
           archetype: string | null
           available: boolean | null
           avatar_url: string | null
@@ -2842,6 +2850,8 @@ export type Database = {
           youtube_url: string | null
         }
         Insert: {
+          ar_splitter_address?: string | null
+          ar_splitter_share_bps?: number | null
           archetype?: string | null
           available?: boolean | null
           avatar_url?: string | null
@@ -2913,6 +2923,8 @@ export type Database = {
           youtube_url?: string | null
         }
         Update: {
+          ar_splitter_address?: string | null
+          ar_splitter_share_bps?: number | null
           archetype?: string | null
           available?: boolean | null
           avatar_url?: string | null
@@ -5198,6 +5210,7 @@ export type Database = {
           id: string
           is_unverified: boolean
           kind: string
+          linked_token_mint: string | null
           mime_type: string | null
           solana_signature: string | null
           thumbnail_url: string | null
@@ -5219,6 +5232,7 @@ export type Database = {
           id?: string
           is_unverified?: boolean
           kind?: string
+          linked_token_mint?: string | null
           mime_type?: string | null
           solana_signature?: string | null
           thumbnail_url?: string | null
@@ -5240,6 +5254,7 @@ export type Database = {
           id?: string
           is_unverified?: boolean
           kind?: string
+          linked_token_mint?: string | null
           mime_type?: string | null
           solana_signature?: string | null
           thumbnail_url?: string | null

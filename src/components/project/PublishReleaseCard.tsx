@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { pumpFunCreateUrl } from "@/lib/pump-fun";
 
 interface Props {
   projectId: string;
@@ -22,6 +23,9 @@ interface Props {
   publicSlug: string | null;
   cheerCount: number;
   tokenizeReady: boolean;
+  /** Optional — used to pre-fill pump.fun's coin-create form. */
+  title?: string;
+  description?: string | null;
 }
 
 const PublishReleaseCard = ({
@@ -30,6 +34,8 @@ const PublishReleaseCard = ({
   publicSlug,
   cheerCount,
   tokenizeReady,
+  title,
+  description,
 }: Props) => {
   const qc = useQueryClient();
   const [copied, setCopied] = useState(false);
@@ -103,7 +109,7 @@ const PublishReleaseCard = ({
           <span>{cheerCount} cheer{cheerCount === 1 ? "" : "s"}</span>
           {tokenizeReady ? (
             <a
-              href="https://pump.fun/create"
+              href={pumpFunCreateUrl({ name: title, description })}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium hover:underline"

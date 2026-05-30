@@ -18,7 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Send, CheckCircle2, Clock } from "lucide-react";
+import { Sparkles, Send, CheckCircle2, Clock, ShieldCheck, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAuthGate } from "@/components/AuthGateDialog";
@@ -42,12 +43,16 @@ const BUDGET_RANGES = [
   "$50k+",
 ];
 
+type Tier = "curated" | "roster";
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Preselect a tier when opened from the LaunchLadder. */
+  initialTier?: Tier;
 }
 
-export function ConciergeIntakeSheet({ open, onOpenChange }: Props) {
+export function ConciergeIntakeSheet({ open, onOpenChange, initialTier }: Props) {
   const { user } = useAuth();
   const authGate = useAuthGate();
   const [submitting, setSubmitting] = useState(false);
@@ -59,6 +64,13 @@ export function ConciergeIntakeSheet({ open, onOpenChange }: Props) {
   const [budgetRange, setBudgetRange] = useState<string | null>(null);
   const [deadline, setDeadline] = useState("");
   const [contactEmail, setContactEmail] = useState("");
+  const [tier, setTier] = useState<Tier>(initialTier ?? "curated");
+  const [splitterAddress, setSplitterAddress] = useState("");
+
+  // Sync tier when the parent passes a new initialTier (sheet reopened with a different ladder rung).
+  useState(() => {
+    if (initialTier) setTier(initialTier);
+  });
 
   const reset = () => {
     setSummary("");
@@ -67,6 +79,8 @@ export function ConciergeIntakeSheet({ open, onOpenChange }: Props) {
     setBudgetRange(null);
     setDeadline("");
     setContactEmail("");
+    setTier(initialTier ?? "curated");
+    setSplitterAddress("");
     setSubmitted(false);
   };
 
@@ -88,6 +102,8 @@ export function ConciergeIntakeSheet({ open, onOpenChange }: Props) {
       budget_range: budgetRange,
       deadline: deadline || null,
       contact_email: contactEmail.trim() || user.email || null,
+      tier,
+      splitter_address: splitterAddress.trim() || null,
     });
     setSubmitting(false);
     if (error) {
@@ -95,7 +111,7 @@ export function ConciergeIntakeSheet({ open, onOpenChange }: Props) {
       return;
     }
     setSubmitted(true);
-    toast.success("Concierge request received.");
+    toast.success("Request received — we'll be in touch.");
   };
 
   return (
@@ -154,12 +170,39 @@ export function ConciergeIntakeSheet({ open, onOpenChange }: Props) {
           </div>
         ) : (
           <div className="mt-6 space-y-5">
+            {/* Tier picker — Curated (A&R lite) vs Roster (full A&R) */}
+            <div>
+              <label className="text-xs font-medium text-foreground mb-1.5 block">
+                Which tier?
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { id: "curated", label: "Curated match", hint: "A&R lite. You stay in control." },
+                  { id: "roster", label: "Full Roster", hint: "Co-piloted launch + A&R deal." },
+                ] as { id: Tier; label: string; hint: string }[]).map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTier(t.id)}
+                    className={`text-left p-3 rounded-xl border transition-all ${
+                      tier === t.id
+                        ? "border-foreground bg-foreground/[0.04]"
+                        : "border-border bg-card hover:border-foreground/30"
+                    }`}
+                  >
+                    <div className="text-xs font-semibold">{t.label}</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{t.hint}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div>
               <label className="text-xs font-medium text-foreground mb-1.5 block">
                 What's the outcome you want? *
               </label>
               <Textarea
-                placeholder="e.g. Launch a 4-piece beauty campaign across 3 micro-influencers in Korea, deliverables: short-form video + UGC."
+                placeholder="e.g. Drop a 4-track EP in Q3 with a coin launch the same day. Need a producer, a visual director, and a release roadmap."
                 value={summary}
                 onChange={(e) => setSummary(e.target.value)}
                 className="min-h-[110px]"
@@ -174,7 +217,7 @@ export function ConciergeIntakeSheet({ open, onOpenChange }: Props) {
                 How will you know it worked? (optional)
               </label>
               <Input
-                placeholder="e.g. 100k views, 3 finished assets, brand approval by Aug 1."
+                placeholder="e.g. EP released, 50k streams in 30d, coin liquidity $25k+."
                 value={outcome}
                 onChange={(e) => setOutcome(e.target.value)}
               />
@@ -248,12 +291,42 @@ export function ConciergeIntakeSheet({ open, onOpenChange }: Props) {
               </div>
             </div>
 
+            {/* Roster-only: splitter wallet field */}
+            {tier === "roster" && (
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.04] p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                  <label className="text-xs font-semibold text-foreground">
+                    A&R splitter wallet (optional now, required to sign)
+                  </label>
+                </div>
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  Roster artists route pump.fun creator rewards through a Squads multisig
+                  we both sign. Paste your multisig vault address if you've already deployed —
+                  otherwise we'll walk you through it on the kickoff call.
+                </p>
+                <Input
+                  placeholder="Squads vault address (Solana)"
+                  value={splitterAddress}
+                  onChange={(e) => setSplitterAddress(e.target.value)}
+                  className="font-mono text-xs"
+                />
+                <Link
+                  to="/ar-splitter"
+                  className="inline-flex items-center gap-1 text-[10px] text-emerald-700 dark:text-emerald-300 hover:underline"
+                >
+                  Read the 3-step setup guide
+                  <ExternalLink className="h-2.5 w-2.5" />
+                </Link>
+              </div>
+            )}
+
             <Button
               onClick={submit}
               disabled={submitting || summary.trim().length < 20}
               className="rounded-full w-full gap-2"
             >
-              {submitting ? "Sending…" : "Send to A&R"}
+              {submitting ? "Sending…" : tier === "roster" ? "Apply to Roster" : "Request a match"}
               <Send className="h-3.5 w-3.5" />
             </Button>
 

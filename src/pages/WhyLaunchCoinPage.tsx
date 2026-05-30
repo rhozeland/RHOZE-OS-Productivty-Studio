@@ -24,6 +24,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import LaunchLadder from "@/components/why-coin/LaunchLadder";
 
 const PUMP_FUN_CREATE_URL = "https://pump.fun/create";
 
@@ -241,37 +242,8 @@ export default function WhyLaunchCoinPage() {
           </div>
         </section>
 
-        {/* Footer CTA */}
-        <section className="rounded-2xl border border-border bg-card/40 p-6 sm:p-8 text-center space-y-4">
-          <h2 className="font-display text-2xl font-semibold">
-            Ready when you are
-          </h2>
-          <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-            Launch the coin on pump.fun, paste the mint into Settings, and our
-            team will approve it — usually same-day.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
-            <Button asChild size="lg" className="rounded-full gap-2">
-              <a
-                href={PUMP_FUN_CREATE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Coins className="h-4 w-4" />
-                Launch on pump.fun
-                <ArrowUpRight className="h-4 w-4" />
-              </a>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="rounded-full"
-            >
-              <a href="/settings#token">Link an existing coin</a>
-            </Button>
-          </div>
-        </section>
+        {/* Three-tier launch ladder (DIY · Curated · Roster) */}
+        <LaunchLadder />
       </div>
     </div>
   );
