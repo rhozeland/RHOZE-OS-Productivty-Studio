@@ -38,6 +38,8 @@ import { useProjectRole } from "@/hooks/useProjectRole";
 import { getHoldTier } from "@/lib/tier-matrix";
 import BackedByRhozelandBadge from "@/components/concierge/BackedByRhozelandBadge";
 import PublishReleaseCard from "@/components/project/PublishReleaseCard";
+import ProjectScopeReview from "@/components/project/ProjectScopeReview";
+import AiRoadmapDraftButton from "@/components/project/AiRoadmapDraftButton";
 
 // Tier-based cap on smartboards per project. Play tier is unlimited.
 const SMARTBOARD_CAP_BY_TIER: Record<string, number> = {
@@ -382,6 +384,36 @@ const ProjectDetailPage = () => {
             </TabsList>
 
             <TabsContent value="stages" className="space-y-6 mt-4">
+              {/* Square-style scope review — gates RoadmapLockFlow until both sides accept */}
+              {isPaid && (
+                <ProjectScopeReview
+                  projectId={id!}
+                  projectTitle={project.title}
+                  goals={goals as any}
+                  contract={contract as any}
+                  collaborators={collaborators as any}
+                  ownerId={project.user_id}
+                />
+              )}
+
+              {/* AI roadmap drafter — only when roadmap is sparse and not yet locked */}
+              {!isLocked && (goals?.filter((g: any) => !g.parent_id).length ?? 0) < 2 && (
+                <div className="flex items-center justify-between rounded-xl border border-dashed border-primary/30 bg-primary/5 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Empty roadmap?</p>
+                    <p className="text-xs text-muted-foreground">Let Rhozeland A&R draft milestones based on the brief and budget.</p>
+                  </div>
+                  <AiRoadmapDraftButton
+                    projectId={id!}
+                    projectTitle={project.title}
+                    totalBudget={Number(project.total_budget ?? 0)}
+                    clientId={(collaborators as any)?.find?.((c: any) => c.project_role === "client")?.user_id ?? null}
+                    specialistId={(collaborators as any)?.find?.((c: any) => c.project_role === "specialist")?.user_id ?? project.user_id}
+                    existingGoalCount={goals?.filter((g: any) => !g.parent_id).length ?? 0}
+                  />
+                </div>
+              )}
+
               <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2">
                   <StageRoadmap

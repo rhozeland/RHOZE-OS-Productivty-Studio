@@ -1,104 +1,74 @@
-# Plan — Inquiry-to-Roadmap & Token Approval Gate
+# Pillar 1 — Project Flow Rewrite
 
-Two coordinated changes that tighten the business model into one rail.
+Ship the new project creation + roadmap experience. Coin-gated fan club and education cards come in follow-up turns.
 
----
+## 1. Budget = plain number, no slider
 
-## Part A — Inquiry → Shared Roadmap → Sign
+In `ProposalSheet.tsx` (the "Start a project" surface):
 
-**The problem today.** A listing inquiry lands in DMs as plain text. The creator has to manually open the project tool, build a roadmap alone, then convince the fan it matches what they asked for. There's no shared draft, no two-sided sign.
+- Replace the credits/slider input with a single `<Input type="number">` for total budget in USD.
+- Below it, a live visual breakdown card:
+  ```text
+  ┌────────────────────────────────────────┐
+  │ $2,500  total budget                    │
+  │ ────────────────────────────────        │
+  │ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░               │
+  │ $2,250 to creator (90%)                 │
+  │ $250 Rhozeland fee (10%)                │
+  └────────────────────────────────────────┘
+  ```
+- No min, no max, no tier math. Flat 10% (A&R upgrade later switches to 25% inside the project).
+- "Credits" language removed from this surface entirely.
 
-**The fix.** Introduce a `project_proposals` object that *either party* can edit until both sign, then converts into a real `project_contracts` row using the existing milestone/escrow pipeline. Nothing about milestone release or payouts changes — we're only adding the negotiation layer in front of it.
+## 2. AI-drafted roadmap (Gemini Flash)
 
-### Database
+New edge function `draft-project-roadmap`:
+- Input: `{ projectName, budget, clientProfile, specialistProfile, briefAnswers }`
+- Calls Lovable AI Gateway with `google/gemini-3-flash-preview`, tool-calling for structured output.
+- Returns 3–5 milestones: `{ title, deliverables[], suggested_amount, est_days }`.
+- Wired into a new "Draft with AI" button at the top of the empty roadmap inside `ProjectDetailPage`.
 
-New table `project_proposals`:
-- `id`, `created_by`, `client_id`, `specialist_id`, `title`, `summary`, `budget_credits` (nullable for free collabs), `currency` (`credits` | `usd`)
-- `status`: `draft` | `awaiting_creator` | `awaiting_client` | `signed` | `declined` | `expired`
-- `client_signed_at`, `specialist_signed_at`
-- `source_listing_id` (nullable) → `marketplace_listings.id`
-- `source_message_id` (nullable) → `messages.id`
-- `contract_id` (nullable) → `project_contracts.id` once converted
+After creation, project lands on the workspace with the AI draft already populated as editable goals. User can edit titles, reorder, change amounts, delete, add — same Square-invoice line-item feel.
 
-New table `project_proposal_milestones` — same shape as `project_milestones` minus contract_id (uses `proposal_id`). Drafted by either side; locked on sign.
+## 3. Scope / accept screen (Square-style)
 
-RPC `sign_project_proposal(_proposal_id)`:
-- Marks the caller's side signed.
-- When both sides signed → creates `project_contracts` row + clones milestones into `project_milestones` (pending) + nulls out the proposal's editability + writes contract_id back.
+New component `<ProjectScopeReview />` mounted inside `ProjectDetailPage` above the roadmap when contract status is `draft`:
 
-RLS: only client + specialist can read/write their proposal. Both `GRANT`s and policies included.
+- Header: project title + service date
+- Line items table: each milestone = one line (title · deliverables description · amount)
+- Subtotal · Rhozeland fee · **Total**
+- Deposit / balance breakdown (50/50 default, editable)
+- Both parties must view + click "Accept scope" before the existing `RoadmapLockFlow` becomes available
+- Stores acceptance in `project_approvals` with a new `scope_accepted_at` flag
 
-### UI
+## 4. Simplified ProposalSheet
 
-1. **`<ProposalSheet />`** — single sheet used everywhere. Two columns on desktop, stacked on mobile:
-   - Left: editable title/summary/budget + milestone list (add/remove/edit rows).
-   - Right: live preview + "Sign & send" button.
-   - Header shows whose turn it is ("Waiting on Jane to review" / "Your turn to sign").
-   - Once signed by both, sheet flips to a success state with a "Open project" link.
+After the rewrite, ProposalSheet is just:
+1. **Name your project** (text)
+2. **Set budget** (number + fee viz)
+3. **Brief** (3 short prompts: what · when · vibe)
+4. **Create** → routes to `/projects/:id` with an AI-draft trigger queued
 
-2. **Entry points** (all open `<ProposalSheet />`):
-   - **Listing lightbox** — replace today's "Start a project from this listing" → opens proposal pre-filled with listing title/price + the listing owner as `specialist_id`.
-   - **DM thread** — new "Propose a project" button in `MessagesPage` composer; pre-fills the other participant as counterparty.
-   - **SupportSheet "Work together" tab** — Commission action opens proposal (replaces the current `sessionStorage.newProjectPrefill` → NewProjectDialog hack).
-   - **`/concierge` page** — concierge requests stay as their own intake; unchanged.
-
-3. **Inbox surface** — `MessagesPage` Projects tab gets a "Proposals" group above active projects: rows show "Awaiting your signature" / "Awaiting their signature" with one-tap open.
-
-### Notifications
-
-On status change, insert into `notifications` (already exists): "Jane sent you a project proposal", "Mark signed your proposal — your turn", "Project locked — work starts now".
-
----
-
-## Part B — Token Approval Gate
-
-Today any Verified Artist can paste a `token_mint_address` into Settings and it instantly shows on their profile. You want a one-click admin approval in between.
-
-### Database
-
-Add to `profiles`:
-- `token_submission_status`: `none` | `pending` | `approved` | `rejected`
-- `token_submitted_at`, `token_reviewed_at`, `token_review_note`
-
-Trigger `enforce_token_approval`:
-- When `token_mint_address` is set/changed by a non-admin, status flips to `pending` and the new value is stored in a shadow column `token_mint_address_pending` (not on `token_mint_address` until approved).
-- Admin RPC `approve_token_submission(_user_id, _approve bool, _note)` moves it to live or rejects.
-
-### UI
-
-1. **Settings → Verified IP** — token field now shows status pill ("Pending review" / "Approved" / "Rejected — {note}"). Submit button text becomes "Submit for review".
-2. **`/admin?tab=tokens`** — new `<AdminTokenSubmissions />` table: pending rows with creator card, ticker, mint address (copy button), "Approve" / "Reject with reason" buttons.
-3. **Profile `<TokenDiscoveryChip />`** — only renders when `token_submission_status === 'approved'`. Verified Artists with pending submissions see a private "Awaiting review" badge in their own Settings only.
-
----
-
-## Sequencing
-
-Ship in this order so each step is reviewable:
-
-1. Migration: `project_proposals` + `project_proposal_milestones` + RLS + RPC.
-2. `<ProposalSheet />` component + wire into ListingLightbox + DM composer + SupportSheet.
-3. Inbox proposals group in MessagesPage.
-4. Migration: token approval columns + trigger + admin RPC.
-5. Settings status pill + AdminTokenSubmissions tab.
-6. Memory update (v10.4 framing).
-
----
-
-## Out of scope (intentionally)
-
-- Public projects + backers (next round, will reuse the same contract/milestone primitives).
-- Reframing Concierge as headline offer (next round).
-- Changes to milestone release, escrow, payouts, or platform fee — all stay as-is.
-- DM gating, subscription tiers, gradient system — untouched.
-
----
+No more credit math, no more sliders, no more milestone inputs inside the sheet — everything heavy moves into the project workspace.
 
 ## Technical notes
 
-- `project_proposals` uses the same role split as `project_contracts` (client = funder, specialist = creator) so conversion is trivial.
-- The signed proposal becomes immutable; further changes happen on the resulting `project_contracts` like today.
-- Token shadow column lets the trigger be additive — no risk to existing approved tokens.
-- All new tables ship with explicit `GRANT`s to `authenticated` + `service_role` (no `anon` — proposals are auth-only).
+- DB: no schema changes needed. `projects.total_budget` already USD. Add `scope_accepted_at timestamptz` to `project_approvals` (nullable).
+- Edge function `draft-project-roadmap`: ~80 lines, Zod input, tool-calling output, 402/429 handled, CORS shared headers.
+- Client: `useAiRoadmapDraft()` hook wraps `supabase.functions.invoke`, returns `{ draft, isLoading, error, generate() }`.
+- Existing `RoadmapLockFlow` stays intact — `<ProjectScopeReview />` sits above it as a soft gate.
+- Platform fee read from existing `src/lib/platform-fee.ts` (already 10% baseline).
 
-Want me to start with step 1 (migration), or revise the plan first?
+## Out of scope (next turns)
+- Pillar 2: wallet-connect token gating for private feed
+- Pillar 3: "Why launch a coin?" education card + live pump.fun creator rewards readout
+- A&R in-project upsell card polish
+
+## Files touched
+- `src/components/proposals/ProposalSheet.tsx` — rewrite budget step
+- `src/components/project/ProjectScopeReview.tsx` — NEW
+- `src/components/project/AiRoadmapDraftButton.tsx` — NEW
+- `src/hooks/useAiRoadmapDraft.ts` — NEW
+- `src/pages/ProjectDetailPage.tsx` — mount scope review + AI draft button
+- `supabase/functions/draft-project-roadmap/index.ts` — NEW
+- Migration: add `scope_accepted_at` to `project_approvals`

@@ -2957,6 +2957,7 @@ export type Database = {
           printed_name: string
           project_id: string
           role: string
+          scope_accepted_at: string | null
           signed_at: string
           user_id: string
         }
@@ -2967,6 +2968,7 @@ export type Database = {
           printed_name: string
           project_id: string
           role?: string
+          scope_accepted_at?: string | null
           signed_at?: string
           user_id: string
         }
@@ -2977,6 +2979,7 @@ export type Database = {
           printed_name?: string
           project_id?: string
           role?: string
+          scope_accepted_at?: string | null
           signed_at?: string
           user_id?: string
         }
