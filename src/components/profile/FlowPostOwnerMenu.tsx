@@ -46,10 +46,14 @@ interface Props {
     title: string;
     description?: string | null;
     archived_at?: string | null;
+    solana_signature?: string | null;
   };
+  /** Override the trigger button's positioning classes (default: profile-tile bottom-right). */
+  triggerClassName?: string;
 }
 
-const FlowPostOwnerMenu = ({ post }: Props) => {
+const FlowPostOwnerMenu = ({ post, triggerClassName }: Props) => {
+  const isAnchored = !!post.solana_signature;
   const qc = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
