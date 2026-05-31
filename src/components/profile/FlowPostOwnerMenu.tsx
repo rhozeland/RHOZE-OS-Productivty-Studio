@@ -46,10 +46,14 @@ interface Props {
     title: string;
     description?: string | null;
     archived_at?: string | null;
+    solana_signature?: string | null;
   };
+  /** Override the trigger button's positioning classes (default: profile-tile bottom-right). */
+  triggerClassName?: string;
 }
 
-const FlowPostOwnerMenu = ({ post }: Props) => {
+const FlowPostOwnerMenu = ({ post, triggerClassName }: Props) => {
+  const isAnchored = !!post.solana_signature;
   const qc = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -124,7 +128,7 @@ const FlowPostOwnerMenu = ({ post }: Props) => {
             onClick={stop}
             onPointerDown={stop}
             aria-label="Post options"
-            className="absolute bottom-1.5 right-1.5 z-10 inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm hover:bg-black/75 transition-colors"
+            className={triggerClassName ?? "absolute bottom-1.5 right-1.5 z-10 inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm hover:bg-black/75 transition-colors"}
           >
             <MoreHorizontal className="h-4 w-4" />
           </button>
@@ -136,14 +140,20 @@ const FlowPostOwnerMenu = ({ post }: Props) => {
           className="w-44"
         >
           <DropdownMenuItem
+            disabled={isAnchored}
             onSelect={(e) => {
               e.preventDefault();
+              if (isAnchored) {
+                toast.info("Anchored posts can't be edited — their content hash is locked on-chain.");
+                return;
+              }
               setTitle(post.title ?? "");
               setDescription(post.description ?? "");
               setEditOpen(true);
             }}
           >
-            <Pencil className="mr-2 h-4 w-4" /> Edit
+            <Pencil className="mr-2 h-4 w-4" />
+            {isAnchored ? "Edit (locked — anchored)" : "Edit"}
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={(e) => {

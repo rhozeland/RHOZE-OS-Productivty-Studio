@@ -12,6 +12,7 @@ import FlowUnlockGate from "@/components/flow/FlowUnlockGate";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import { ShieldCheck } from "lucide-react";
 import SaveButton from "@/components/saved/SaveButton";
+import FlowPostOwnerMenu from "@/components/profile/FlowPostOwnerMenu";
 
 /* ─── Platform detection ─── */
 const detectPlatform = (url?: string | null) => {
@@ -467,7 +468,9 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             </button>
           )}
 
+          {!expanded && (
           <div className="ml-auto flex items-center gap-3">
+          {/* end owner-menu sentinel — closing brace below */}
             <motion.button
               type="button"
               aria-pressed={!!liked}
@@ -586,6 +589,19 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
               </a>
             )}
           </div>
+          )}
+          {isOwner && (
+            <FlowPostOwnerMenu
+              post={{
+                id: item.id,
+                title: item.title ?? "",
+                description: item.description ?? null,
+                archived_at: (item as any).archived_at ?? null,
+                solana_signature: (item as any).solana_signature ?? null,
+              }}
+              triggerClassName="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted/60 text-foreground hover:bg-muted transition-colors"
+            />
+          )}
         </div>
 
         {/* ═══ POSTER INFO ═══ */}
