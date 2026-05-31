@@ -140,14 +140,20 @@ const FlowPostOwnerMenu = ({ post, triggerClassName }: Props) => {
           className="w-44"
         >
           <DropdownMenuItem
+            disabled={isAnchored}
             onSelect={(e) => {
               e.preventDefault();
+              if (isAnchored) {
+                toast.info("Anchored posts can't be edited — their content hash is locked on-chain.");
+                return;
+              }
               setTitle(post.title ?? "");
               setDescription(post.description ?? "");
               setEditOpen(true);
             }}
           >
-            <Pencil className="mr-2 h-4 w-4" /> Edit
+            <Pencil className="mr-2 h-4 w-4" />
+            {isAnchored ? "Edit (locked — anchored)" : "Edit"}
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={(e) => {
