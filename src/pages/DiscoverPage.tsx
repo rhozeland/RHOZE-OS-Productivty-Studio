@@ -419,7 +419,8 @@ const DiscoverPage = () => {
               <div className="h-px flex-1 bg-border" />
             </div>
             <CompactFlowFeed />
-            <ConversationsMosaic kind="all" />
+            {/* Feed mosaic = content only (works/drops). Spaces & events live on their own pages. */}
+            <ConversationsMosaic kind="drop" />
           </div>
         </div>
       </section>
