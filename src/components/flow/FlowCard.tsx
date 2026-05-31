@@ -12,6 +12,7 @@ import FlowUnlockGate from "@/components/flow/FlowUnlockGate";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import { ShieldCheck } from "lucide-react";
 import SaveButton from "@/components/saved/SaveButton";
+import FlowPostOwnerMenu from "@/components/profile/FlowPostOwnerMenu";
 
 /* ─── Platform detection ─── */
 const detectPlatform = (url?: string | null) => {
