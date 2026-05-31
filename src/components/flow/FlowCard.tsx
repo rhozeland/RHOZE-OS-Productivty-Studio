@@ -468,7 +468,9 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             </button>
           )}
 
+          {!expanded && (
           <div className="ml-auto flex items-center gap-3">
+          {/* end owner-menu sentinel — closing brace below */}
             <motion.button
               type="button"
               aria-pressed={!!liked}
