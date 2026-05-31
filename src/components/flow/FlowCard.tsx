@@ -589,6 +589,19 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
               </a>
             )}
           </div>
+          )}
+          {isOwner && (
+            <FlowPostOwnerMenu
+              post={{
+                id: item.id,
+                title: item.title ?? "",
+                description: item.description ?? null,
+                archived_at: (item as any).archived_at ?? null,
+                solana_signature: (item as any).solana_signature ?? null,
+              }}
+              triggerClassName="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted/60 text-foreground hover:bg-muted transition-colors"
+            />
+          )}
         </div>
 
         {/* ═══ POSTER INFO ═══ */}
