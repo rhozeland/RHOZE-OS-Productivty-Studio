@@ -189,17 +189,28 @@ const AppLayout = () => {
   useEffect(() => {
     if (!user) return;
     const path = location.pathname;
-    if (path.startsWith("/welcome") || path.startsWith("/onboarding")) return;
+    if (
+      path.startsWith("/welcome") ||
+      path.startsWith("/onboarding")
+    )
+      return;
     let cancelled = false;
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("user_type")
+        .select("user_type, onboarding_completed_at")
         .eq("user_id", user.id)
         .maybeSingle();
       if (cancelled) return;
-      if (data && !(data as any).user_type) {
+      const row = data as any;
+      if (!row) return;
+      if (!row.user_type) {
         navigate("/welcome", { replace: true });
+        return;
+      }
+      if (!row.onboarding_completed_at) {
+        const dest = row.user_type === "musician" ? "/onboarding/musician" : "/onboarding/fan";
+        navigate(dest, { replace: true });
       }
     })();
     return () => { cancelled = true; };

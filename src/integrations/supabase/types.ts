@@ -2829,6 +2829,7 @@ export type Database = {
           avatar_url: string | null
           ban_reason: string | null
           ban_status: string
+          bandcamp_url: string | null
           banned_at: string | null
           banner_gradient: string | null
           banner_url: string | null
@@ -2856,6 +2857,7 @@ export type Database = {
           luma_ics_url: string | null
           luma_url: string | null
           mediums: string[] | null
+          onboarding_completed_at: string | null
           portfolio_url: string | null
           primary_role: string | null
           profile_background: string | null
@@ -2873,6 +2875,8 @@ export type Database = {
           show_seller_stats: boolean | null
           show_token_chip: boolean
           skills: string[] | null
+          soundcloud_url: string | null
+          spotify_url: string | null
           tiktok_url: string | null
           token_mint_address: string | null
           token_mint_address_pending: string | null
@@ -2903,6 +2907,7 @@ export type Database = {
           avatar_url?: string | null
           ban_reason?: string | null
           ban_status?: string
+          bandcamp_url?: string | null
           banned_at?: string | null
           banner_gradient?: string | null
           banner_url?: string | null
@@ -2930,6 +2935,7 @@ export type Database = {
           luma_ics_url?: string | null
           luma_url?: string | null
           mediums?: string[] | null
+          onboarding_completed_at?: string | null
           portfolio_url?: string | null
           primary_role?: string | null
           profile_background?: string | null
@@ -2947,6 +2953,8 @@ export type Database = {
           show_seller_stats?: boolean | null
           show_token_chip?: boolean
           skills?: string[] | null
+          soundcloud_url?: string | null
+          spotify_url?: string | null
           tiktok_url?: string | null
           token_mint_address?: string | null
           token_mint_address_pending?: string | null
@@ -2977,6 +2985,7 @@ export type Database = {
           avatar_url?: string | null
           ban_reason?: string | null
           ban_status?: string
+          bandcamp_url?: string | null
           banned_at?: string | null
           banner_gradient?: string | null
           banner_url?: string | null
@@ -3004,6 +3013,7 @@ export type Database = {
           luma_ics_url?: string | null
           luma_url?: string | null
           mediums?: string[] | null
+          onboarding_completed_at?: string | null
           portfolio_url?: string | null
           primary_role?: string | null
           profile_background?: string | null
@@ -3021,6 +3031,8 @@ export type Database = {
           show_seller_stats?: boolean | null
           show_token_chip?: boolean
           skills?: string[] | null
+          soundcloud_url?: string | null
+          spotify_url?: string | null
           tiktok_url?: string | null
           token_mint_address?: string | null
           token_mint_address_pending?: string | null
