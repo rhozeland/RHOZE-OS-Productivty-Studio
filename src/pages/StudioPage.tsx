@@ -931,9 +931,11 @@ const StudioPage = () => {
                           )}
                         </div>
                       </div>
-                    </li>
-                  );
-                })}
+                        </li>
+                      </div>
+                    );
+                  });
+                })()}
               </ol>
 
               <div className="flex items-center justify-between gap-2 pt-1">
