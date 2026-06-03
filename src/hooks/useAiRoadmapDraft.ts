@@ -15,8 +15,20 @@ export interface AssetRef {
   url?: string;
 }
 
+export type MilestonePhase = "pre_production" | "production" | "post_production" | "release";
+
+export const PHASE_ORDER: MilestonePhase[] = ["pre_production", "production", "post_production", "release"];
+
+export const PHASE_LABELS: Record<MilestonePhase, string> = {
+  pre_production: "Pre-production",
+  production: "Production",
+  post_production: "Post-production",
+  release: "Release",
+};
+
 export interface DraftedMilestone {
   title: string;
+  phase?: MilestonePhase;
   deliverables: string;
   suggested_amount: number;
   est_days: number;
