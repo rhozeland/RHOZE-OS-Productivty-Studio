@@ -571,7 +571,7 @@ const StudioPage = () => {
           )}
 
           {phase === "generating" && (
-            <div className="py-12 flex flex-col items-center text-center space-y-5">
+            <div className="py-10 flex flex-col items-center text-center space-y-6">
               <div className="relative">
                 <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl animate-pulse" />
                 <div className="relative h-16 w-16 rounded-full bg-foreground text-background flex items-center justify-center">
@@ -583,15 +583,22 @@ const StudioPage = () => {
                   Our AI is drafting your roadmap…
                 </h3>
                 <p className="text-sm text-muted-foreground max-w-sm">
-                  Reading your brief and shaping a custom release plan with milestones, marketing strategy, and target metrics. This takes about 10–20 seconds.
+                  Shaping a custom release plan with milestones, marketing strategy, and target metrics. This takes about 10–20 seconds.
                 </p>
               </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Composing milestones
+              <div className="w-full max-w-sm space-y-2">
+                <Progress value={genProgress} className="h-2" />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    {genStatus}
+                  </span>
+                  <span className="tabular-nums">{Math.round(genProgress)}%</span>
+                </div>
               </div>
             </div>
           )}
+
 
           {phase === "preview" && (
             <>
