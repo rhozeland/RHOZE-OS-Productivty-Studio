@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useActiveRole } from "@/hooks/useActiveRole";
 
 const FAN_TABS = [
-  { label: "Home", icon: Home, path: "/flow" },
+  { label: "Home", icon: Home, path: "/home" },
   { label: "Discover", icon: Compass, path: "/discover" },
   { label: "Charts", icon: TrendingUp, path: "/charts" },
   { label: "Network", icon: Users, path: "/market" },
@@ -12,7 +12,7 @@ const FAN_TABS = [
 ];
 
 const MUSICIAN_TABS = [
-  { label: "Home", icon: Home, path: "/flow" },
+  { label: "Home", icon: Home, path: "/home" },
   { label: "Studio", icon: Layers, path: "/my-projects" },
   { label: "Discover", icon: Compass, path: "/discover" },
   { label: "Network", icon: Users, path: "/market" },

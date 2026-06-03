@@ -50,6 +50,7 @@ import PortfolioPage from "@/pages/PortfolioPage"; // v10.4: restored as a top-l
 import MarketplacePage from "@/pages/MarketplacePage";
 import CreatorsPage from "@/pages/CreatorsPage";
 import HomePage from "@/pages/HomePage";
+import HomeFeedPage from "@/pages/HomeFeedPage";
 import DiscoverPage from "@/pages/DiscoverPage";
 // ChartsPage removed — coin momentum table now lives inline in Discover → Creators tab.
 import TreasuryPage from "@/pages/TreasuryPage";
@@ -276,7 +277,7 @@ const App = () => (
               <Route element={<AppLayout />}>
                 {/* v9.9: Home = personalized fan feed (DashboardPage). */}
                 <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-                <Route path="/home" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/home" element={<ProtectedRoute><HomeFeedPage /></ProtectedRoute>} />
                 {/* Three-Room front doors (Scene · Market · Vault) — additive,
                     organize existing routes without removing any. */}
                 <Route path="/scene" element={<SceneRoomPage />} />

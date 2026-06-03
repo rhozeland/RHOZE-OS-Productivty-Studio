@@ -45,7 +45,7 @@ type NavSpec = {
 };
 
 const FAN_NAV: NavSpec[] = [
-  { icon: Home, label: "Home", description: "Your feed and activity", path: "/flow" },
+  { icon: Home, label: "Home", description: "Your feed and activity", path: "/home" },
   { icon: Compass, label: "Discover", description: "Find musicians and coins", path: "/discover" },
   { icon: TrendingUp, label: "Charts", description: "Creator coins ranked live", path: "/charts" },
   { icon: Users, label: "Network", description: "Listings and open calls", path: "/market" },
@@ -53,7 +53,7 @@ const FAN_NAV: NavSpec[] = [
 ];
 
 const MUSICIAN_NAV: NavSpec[] = [
-  { icon: Home, label: "Home", description: "Your feed and activity", path: "/flow" },
+  { icon: Home, label: "Home", description: "Your feed and activity", path: "/home" },
   { icon: Layers, label: "Studio", description: "Projects and roadmaps", path: "/my-projects", badgeKey: "milestones_due" },
   { icon: Compass, label: "Discover", description: "Find creators and coins", path: "/discover" },
   { icon: Users, label: "Network", description: "Listings and inquiries", path: "/market", badgeKey: "pending_inquiries" },
