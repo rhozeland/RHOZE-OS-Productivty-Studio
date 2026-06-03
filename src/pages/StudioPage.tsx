@@ -56,7 +56,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { fetchCreatorContext } from "@/lib/creator-context";
-import { composeMilestoneDescription, type DraftedMilestone, type AssetRef } from "@/hooks/useAiRoadmapDraft";
+import { composeMilestoneDescription, type DraftedMilestone, type AssetRef, type MilestonePhase, PHASE_ORDER, PHASE_LABELS } from "@/hooks/useAiRoadmapDraft";
 
 interface ProjectRow {
   id: string;
@@ -646,58 +646,87 @@ const StudioPage = () => {
               </div>
 
               <ol className="space-y-4 max-h-[55vh] overflow-y-auto pr-1">
-                {draftedMilestones.map((m, i) => {
-                  const update = (patch: Partial<DraftedMilestone>) =>
-                    setDraftedMilestones((arr) =>
-                      arr.map((x, idx) => (idx === i ? { ...x, ...patch } : x)),
-                    );
-                  const updateTask = (ti: number, val: string) =>
-                    update({ tasks: (m.tasks ?? []).map((t, idx) => (idx === ti ? val : t)) });
-                  const removeTask = (ti: number) =>
-                    update({ tasks: (m.tasks ?? []).filter((_, idx) => idx !== ti) });
-                  const addTask = () =>
-                    update({ tasks: [...(m.tasks ?? []), ""] });
-                  const updateRef = (ri: number, patch: Partial<AssetRef>) =>
-                    update({
-                      asset_refs: (m.asset_refs ?? []).map((r, idx) =>
-                        idx === ri ? { ...r, ...patch } : r,
-                      ),
-                    });
-                  const removeRef = (ri: number) =>
-                    update({ asset_refs: (m.asset_refs ?? []).filter((_, idx) => idx !== ri) });
-                  const addRef = () =>
-                    update({
-                      asset_refs: [
-                        ...(m.asset_refs ?? []),
-                        { label: "Reference", kind: "other" as const, url: "" },
-                      ],
-                    });
+                {(() => {
+                  // Sort by phase order, then preserve original index for stable React keys + state ops.
+                  const indexed = draftedMilestones.map((m, originalIndex) => ({ m, originalIndex }));
+                  indexed.sort((a, b) => {
+                    const pa = PHASE_ORDER.indexOf((a.m.phase ?? "pre_production") as MilestonePhase);
+                    const pb = PHASE_ORDER.indexOf((b.m.phase ?? "pre_production") as MilestonePhase);
+                    return pa - pb;
+                  });
+                  let lastPhase: MilestonePhase | null = null;
+                  return indexed.map(({ m, originalIndex }, displayIdx) => {
+                    const i = originalIndex;
+                    const phase = (m.phase ?? "pre_production") as MilestonePhase;
+                    const showPhaseHeader = phase !== lastPhase;
+                    lastPhase = phase;
+                    const update = (patch: Partial<DraftedMilestone>) =>
+                      setDraftedMilestones((arr) =>
+                        arr.map((x, idx) => (idx === i ? { ...x, ...patch } : x)),
+                      );
+                    const updateTask = (ti: number, val: string) =>
+                      update({ tasks: (m.tasks ?? []).map((t, idx) => (idx === ti ? val : t)) });
+                    const removeTask = (ti: number) =>
+                      update({ tasks: (m.tasks ?? []).filter((_, idx) => idx !== ti) });
+                    const addTask = () =>
+                      update({ tasks: [...(m.tasks ?? []), ""] });
+                    const updateRef = (ri: number, patch: Partial<AssetRef>) =>
+                      update({
+                        asset_refs: (m.asset_refs ?? []).map((r, idx) =>
+                          idx === ri ? { ...r, ...patch } : r,
+                        ),
+                      });
+                    const removeRef = (ri: number) =>
+                      update({ asset_refs: (m.asset_refs ?? []).filter((_, idx) => idx !== ri) });
+                    const addRef = () =>
+                      update({
+                        asset_refs: [
+                          ...(m.asset_refs ?? []),
+                          { label: "Reference", kind: "other" as const, url: "" },
+                        ],
+                      });
 
-                  return (
-                    <li
-                      key={i}
-                      className="rounded-xl border border-border bg-card p-4 space-y-3"
-                    >
-                      <div className="flex items-start gap-3">
-                        <span className="mt-1.5 h-6 w-6 shrink-0 rounded-full bg-foreground text-background text-xs font-semibold flex items-center justify-center">
-                          {i + 1}
-                        </span>
-                        <Input
-                          value={m.title}
-                          onChange={(e) => update({ title: e.target.value })}
-                          className="font-semibold text-sm flex-1"
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 shrink-0"
-                          onClick={() =>
-                            setDraftedMilestones((arr) => arr.filter((_, idx) => idx !== i))
-                          }
-                        >
-                          <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
-                        </Button>
-                      </div>
+                    return (
+                      <div key={i}>
+                        {showPhaseHeader && (
+                          <div className="flex items-center gap-2 mt-2 mb-2">
+                            <span className="text-[10px] uppercase tracking-[0.22em] font-semibold text-foreground/70">
+                              {PHASE_LABELS[phase]}
+                            </span>
+                            <div className="h-px flex-1 bg-border" />
+                          </div>
+                        )}
+                        <li className="rounded-xl border border-border bg-card p-4 space-y-3 list-none">
+                          <div className="flex items-start gap-3">
+                            <span className="mt-1.5 h-6 w-6 shrink-0 rounded-full bg-foreground text-background text-xs font-semibold flex items-center justify-center">
+                              {displayIdx + 1}
+                            </span>
+                            <Input
+                              value={m.title}
+                              onChange={(e) => update({ title: e.target.value })}
+                              className="font-semibold text-sm flex-1"
+                            />
+                            <select
+                              value={phase}
+                              onChange={(e) => update({ phase: e.target.value as MilestonePhase })}
+                              className="h-8 rounded-md border border-input bg-background px-2 text-[11px]"
+                            >
+                              {PHASE_ORDER.map((p) => (
+                                <option key={p} value={p}>{PHASE_LABELS[p]}</option>
+                              ))}
+                            </select>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 shrink-0"
+                              onClick={() =>
+                                setDraftedMilestones((arr) => arr.filter((_, idx) => idx !== i))
+                              }
+                            >
+                              <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                            </Button>
+                          </div>
+
 
                       <div className="grid grid-cols-3 gap-2 pl-9">
                         <div className="space-y-1">
@@ -902,9 +931,11 @@ const StudioPage = () => {
                           )}
                         </div>
                       </div>
-                    </li>
-                  );
-                })}
+                        </li>
+                      </div>
+                    );
+                  });
+                })()}
               </ol>
 
               <div className="flex items-center justify-between gap-2 pt-1">

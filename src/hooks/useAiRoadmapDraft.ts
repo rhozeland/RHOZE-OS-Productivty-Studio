@@ -15,8 +15,20 @@ export interface AssetRef {
   url?: string;
 }
 
+export type MilestonePhase = "pre_production" | "production" | "post_production" | "release";
+
+export const PHASE_ORDER: MilestonePhase[] = ["pre_production", "production", "post_production", "release"];
+
+export const PHASE_LABELS: Record<MilestonePhase, string> = {
+  pre_production: "Pre-production",
+  production: "Production",
+  post_production: "Post-production",
+  release: "Release",
+};
+
 export interface DraftedMilestone {
   title: string;
+  phase?: MilestonePhase;
   deliverables: string;
   suggested_amount: number;
   est_days: number;
@@ -76,7 +88,11 @@ export const useAiRoadmapDraft = () => {
  * AI output survives even though `project_goals` has no dedicated columns.
  */
 export const composeMilestoneDescription = (m: DraftedMilestone): string => {
-  const parts: string[] = [m.deliverables.trim()];
+  const parts: string[] = [];
+  if (m.phase && PHASE_LABELS[m.phase]) {
+    parts.push(`Phase — ${PHASE_LABELS[m.phase]}\n\n`);
+  }
+  parts.push(m.deliverables.trim());
   if (m.timeline_window?.trim()) {
     parts.push(`\n\n🗓 ${m.timeline_window.trim()}`);
   }
