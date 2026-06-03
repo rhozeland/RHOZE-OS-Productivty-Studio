@@ -640,6 +640,60 @@ const HomeFeedPage = () => {
           )
         )}
       </section>
+
+      {/* ─── Discover content (merged from /discover) ─────────────────── */}
+      <RegionPromptBanner />
+
+      <section className="grid grid-cols-1">
+        <Suspense
+          fallback={
+            <div className="flex h-[400px] w-full items-center justify-center rounded-[2rem] border border-border/60 bg-card/40">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          }
+        >
+          <DiscoverGlobe
+            marketFilter={marketFilter}
+            onSelectMarket={setMarketFilter}
+            featuredSlides={creatorFeaturedSlides}
+            height={400}
+          />
+        </Suspense>
+      </section>
+
+      <TrendingArtistsLane marketFilter={marketFilter} />
+
+      <section id="discover-stream" className="space-y-5 scroll-mt-20">
+        {user && (
+          <div className="sticky top-14 z-20 -mx-4 px-4 py-3 bg-background/85 backdrop-blur-md border-b border-border/60 flex items-center justify-end">
+            <PostMenuButton
+              trigger={
+                <button
+                  type="button"
+                  className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-foreground text-background px-3 sm:px-4 py-2 text-xs font-semibold hover:opacity-90 transition-opacity shadow-sm"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Post</span>
+                </button>
+              }
+            />
+          </div>
+        )}
+
+        <div className="space-y-8">
+          <SubscribedFeed />
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <h3 className="font-display text-xs font-semibold tracking-[0.18em] uppercase text-foreground/70 shrink-0">
+                Fresh on Rhozeland
+              </h3>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <CompactFlowFeed />
+            <ConversationsMosaic kind="drop" />
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
