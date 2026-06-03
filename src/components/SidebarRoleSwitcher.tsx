@@ -32,6 +32,7 @@ const SidebarRoleSwitcher = ({ collapsed }: { collapsed: boolean }) => {
       >
         {(["fan", "creator"] as ActiveRole[]).map((r) => {
           const active = role === r;
+          const label = r === "creator" ? "Musician" : "Fan";
           return (
             <button
               key={r}
@@ -39,19 +40,19 @@ const SidebarRoleSwitcher = ({ collapsed }: { collapsed: boolean }) => {
               aria-selected={active}
               onClick={() => switchTo(r)}
               className={cn(
-                "rounded-lg px-3 py-1.5 text-xs font-semibold capitalize transition-all duration-200",
+                "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-200",
                 active
                   ? "sidebar-active-gradient text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {r}
+              {label}
             </button>
           );
         })}
       </div>
       <p className="mt-1.5 px-1 text-[10px] text-muted-foreground/70">
-        Viewing as {role === "creator" ? "Creator" : "Fan"}
+        Viewing as {role === "creator" ? "Musician" : "Fan"}
       </p>
     </div>
   );
