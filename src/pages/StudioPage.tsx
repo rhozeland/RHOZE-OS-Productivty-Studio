@@ -97,6 +97,18 @@ const StudioPage = () => {
   const [coinSheetOpen, setCoinSheetOpen] = useState(false);
   const [projectBrief, setProjectBrief] = useState("");
   const [creating, setCreating] = useState(false);
+  type Phase = "brief" | "generating" | "preview";
+  const [phase, setPhase] = useState<Phase>("brief");
+  const [draftedMilestones, setDraftedMilestones] = useState<DraftedMilestone[]>([]);
+  const [draftedTitle, setDraftedTitle] = useState("");
+
+  const resetDialog = () => {
+    setPhase("brief");
+    setDraftedMilestones([]);
+    setDraftedTitle("");
+    setProjectBrief("");
+    setCreating(false);
+  };
 
   // ── data ───────────────────────────────────────────────────────────
   const { data: projects, isLoading } = useQuery<ProjectRow[]>({
