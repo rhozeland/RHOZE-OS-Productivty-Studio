@@ -122,6 +122,8 @@ const queryClient = new QueryClient();
 export const REGISTERED_ROUTE_PATHS: string[] = [
   "/auth",
   "/onboarding",
+  "/onboarding/fan",
+  "/onboarding/musician",
   "/landing",
   "/infrastructure",
   "/works",
