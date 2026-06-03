@@ -88,7 +88,11 @@ export const useAiRoadmapDraft = () => {
  * AI output survives even though `project_goals` has no dedicated columns.
  */
 export const composeMilestoneDescription = (m: DraftedMilestone): string => {
-  const parts: string[] = [m.deliverables.trim()];
+  const parts: string[] = [];
+  if (m.phase && PHASE_LABELS[m.phase]) {
+    parts.push(`Phase — ${PHASE_LABELS[m.phase]}\n\n`);
+  }
+  parts.push(m.deliverables.trim());
   if (m.timeline_window?.trim()) {
     parts.push(`\n\n🗓 ${m.timeline_window.trim()}`);
   }
