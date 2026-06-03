@@ -275,7 +275,9 @@ const StudioPage = () => {
     onSuccess: ({ title, milestones }) => {
       setDraftedTitle(title);
       setDraftedMilestones(milestones);
-      setPhase("preview");
+      setGenProgress(100);
+      setGenStatus("Ready");
+      setTimeout(() => setPhase("preview"), 350);
     },
     onError: (e: any) => {
       setPhase("brief");
