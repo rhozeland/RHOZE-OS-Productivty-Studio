@@ -44,6 +44,8 @@ import ExploreStudiosPage from "@/pages/ExploreStudiosPage";
 import ExploreCreatorsPage from "@/pages/ExploreCreatorsPage";
 import OnboardingPage from "@/pages/OnboardingPage";
 import RoleSelectPage from "@/pages/RoleSelectPage";
+import FanOnboardingPage from "@/pages/FanOnboardingPage";
+import MusicianOnboardingPage from "@/pages/MusicianOnboardingPage";
 import PortfolioPage from "@/pages/PortfolioPage"; // v10.4: restored as a top-level sidebar destination.
 import MarketplacePage from "@/pages/MarketplacePage";
 import CreatorsPage from "@/pages/CreatorsPage";
