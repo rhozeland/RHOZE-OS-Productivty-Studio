@@ -104,14 +104,20 @@ Market reality you must respect:
 
 Output rules — be SPECIFIC and DENSE:
 - Return 4-7 milestones whose suggested_amounts sum to roughly the total budget (±10%). If totalBudget is 0, propose a realistic indie budget per stage (typical EP $1.5k–$8k all-in).
+- Group milestones into the four canonical release phases — every milestone MUST be tagged with phase ∈ { "pre_production", "production", "post_production", "release" }. Order milestones chronologically by phase. Typical shape:
+  · pre_production: writing, demos, references, contracts, casting, location scouting
+  · production: tracking, recording sessions, shoot days, principal capture
+  · post_production: mixing, mastering, edit, color, artwork, packaging
+  · release: launch day, marketing, drop, livestream, holder activations, week-1 retention
 - Each milestone needs:
   · title — names the actual deliverable, not the phase (e.g. "Track 1 + 2 demos + reference mixes", NOT "Pre-production").
+  · phase — one of the four canonical values above.
   · deliverables — 3-5 sentences describing the exact creative output, format it ships in, and how it's reviewed/approved.
-  · tasks — 4-8 atomic checklist items the artist actually does that week (e.g. "Book Studio B at Noise Floor for 2x 6-hr sessions", "Cut scratch vocals for Track 1 bridge"). No filler.
+  · tasks — 4-8 atomic checklist items the artist actually does that week. No filler.
   · timeline_window — "Week 1", "Week 2-3", "Day of launch", etc.
-  · marketing_strategy — 2-4 sentences naming the artist's recent works AND linked coin (if present) AND specific channels (IG reels, TikTok, X spaces, pump.fun livestream, KOL list, Discord drop).
-  · target_metric { name, value } — realistic for an indie artist. No vanity inflation.
-  · asset_refs — 0-4 reference suggestions { label, kind, note? }. Only suggest references that genuinely help the stage. Artist will attach URLs themselves.
+  · marketing_strategy — 2-4 sentences naming the artist's recent works AND linked coin (if present) AND specific channels.
+  · target_metric { name, value } — realistic indie numbers.
+  · asset_refs — 0-4 reference suggestions { label, kind, note? }. Artist will attach URLs themselves.
   · risks — 1 sentence on the most likely derailment.
 - When tokenize_intent=true, include a "Launch day" stage (artwork pack, teaser, KOL list, livestream, holder utility) AND a post-launch retention stage (week 1 holder activations).
 - When tokenize_intent=false, coin language stays secondary; focus on the release.`;
