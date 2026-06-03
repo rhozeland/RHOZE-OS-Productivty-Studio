@@ -188,6 +188,15 @@ const HomeFeedPage = () => {
     user?.email?.split("@")[0] ||
     "there";
 
+  // ─── Discover content state (globe + featured carousel) ───────────
+  const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
+  const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
+  const creatorFeaturedSlides = useMemo(
+    () => featuredSlides.filter((s) => s.kind === "artist"),
+    [featuredSlides],
+  );
+
+
   // ─── Stats ──────────────────────────────────────────────────────────
   const { data: creatorsBacked = 0 } = useQuery({
     queryKey: ["home-creators-backed", user?.id],
