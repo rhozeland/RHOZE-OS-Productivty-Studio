@@ -49,7 +49,11 @@ import {
   Users,
   Eye,
   EyeOff,
+  Plus,
+  Trash2,
+  Link as LinkIcon,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { fetchCreatorContext } from "@/lib/creator-context";
 import { composeMilestoneDescription, type DraftedMilestone } from "@/hooks/useAiRoadmapDraft";
