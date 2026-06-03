@@ -9,7 +9,7 @@
  * "Start a Coin"    → eligibility check sheet that links into the
  *                     existing token submission flow (`/settings#token`).
  */
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -101,6 +101,34 @@ const StudioPage = () => {
   const [phase, setPhase] = useState<Phase>("brief");
   const [draftedMilestones, setDraftedMilestones] = useState<DraftedMilestone[]>([]);
   const [draftedTitle, setDraftedTitle] = useState("");
+  const [genProgress, setGenProgress] = useState(0);
+  const [genStatus, setGenStatus] = useState("Reading your brief");
+
+  // Simulated progress ticker while AI drafts (asymptotic to 92%).
+  useEffect(() => {
+    if (phase !== "generating") return;
+    setGenProgress(4);
+    setGenStatus("Reading your brief");
+    const stages = [
+      { at: 0, label: "Reading your brief" },
+      { at: 18, label: "Studying your style & recent work" },
+      { at: 38, label: "Shaping milestones" },
+      { at: 60, label: "Writing marketing strategy" },
+      { at: 78, label: "Setting target metrics" },
+      { at: 88, label: "Polishing your roadmap" },
+    ];
+    const interval = setInterval(() => {
+      setGenProgress((p) => {
+        // ease toward 92, slower as it climbs
+        const next = p + Math.max(0.4, (92 - p) * 0.06);
+        const capped = Math.min(92, next);
+        const stage = [...stages].reverse().find((s) => capped >= s.at);
+        if (stage) setGenStatus(stage.label);
+        return capped;
+      });
+    }, 320);
+    return () => clearInterval(interval);
+  }, [phase]);
 
   const resetDialog = () => {
     setPhase("brief");
@@ -108,6 +136,7 @@ const StudioPage = () => {
     setDraftedTitle("");
     setProjectBrief("");
     setCreating(false);
+    setGenProgress(0);
   };
 
   // ── data ───────────────────────────────────────────────────────────
@@ -246,7 +275,9 @@ const StudioPage = () => {
     onSuccess: ({ title, milestones }) => {
       setDraftedTitle(title);
       setDraftedMilestones(milestones);
-      setPhase("preview");
+      setGenProgress(100);
+      setGenStatus("Ready");
+      setTimeout(() => setPhase("preview"), 350);
     },
     onError: (e: any) => {
       setPhase("brief");
@@ -540,7 +571,7 @@ const StudioPage = () => {
           )}
 
           {phase === "generating" && (
-            <div className="py-12 flex flex-col items-center text-center space-y-5">
+            <div className="py-10 flex flex-col items-center text-center space-y-6">
               <div className="relative">
                 <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl animate-pulse" />
                 <div className="relative h-16 w-16 rounded-full bg-foreground text-background flex items-center justify-center">
@@ -552,15 +583,22 @@ const StudioPage = () => {
                   Our AI is drafting your roadmap…
                 </h3>
                 <p className="text-sm text-muted-foreground max-w-sm">
-                  Reading your brief and shaping a custom release plan with milestones, marketing strategy, and target metrics. This takes about 10–20 seconds.
+                  Shaping a custom release plan with milestones, marketing strategy, and target metrics. This takes about 10–20 seconds.
                 </p>
               </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Composing milestones
+              <div className="w-full max-w-sm space-y-2">
+                <Progress value={genProgress} className="h-2" />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    {genStatus}
+                  </span>
+                  <span className="tabular-nums">{Math.round(genProgress)}%</span>
+                </div>
               </div>
             </div>
           )}
+
 
           {phase === "preview" && (
             <>
