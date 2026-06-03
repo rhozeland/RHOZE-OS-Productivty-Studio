@@ -14,7 +14,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCreatorTokenMetrics, fmtUsdCompact } from "@/hooks/useCreatorTokenMetrics";
-import { Coins, ExternalLink, TrendingUp, TrendingDown, Sparkles } from "lucide-react";
+import { ExternalLink, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type TokenProfile = {
@@ -165,19 +165,16 @@ const CoinsInMotionLane = () => {
 
   return (
     <section className="space-y-3">
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 mb-1 inline-flex items-center gap-1.5">
-            <Sparkles className="h-3 w-3" /> Discovery layer · pump.fun
-          </p>
-          <h2 className="font-display text-xl sm:text-2xl text-foreground tracking-tight flex items-center gap-2">
-            <Coins className="h-5 w-5 text-primary" />
-            Coins in motion
-          </h2>
-        </div>
-        <p className="hidden sm:block text-xs text-muted-foreground max-w-xs text-right">
-          Artists with live tokens. Tap any card to back them on pump.fun.
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 font-semibold">
+          Coins in Motion
         </p>
+        <Link
+          to="/charts"
+          className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          See all <ArrowRight className="h-3 w-3" />
+        </Link>
       </div>
 
       <div className="-mx-4 px-4 overflow-x-auto scrollbar-none snap-x snap-mandatory">
