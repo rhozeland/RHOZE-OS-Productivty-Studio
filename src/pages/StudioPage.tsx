@@ -213,23 +213,57 @@ const StudioPage = () => {
     [projects],
   );
 
-  // ── start project ──────────────────────────────────────────────────
-  const startProject = useMutation({
+  // ── draft roadmap (phase 1: AI only, no project saved yet) ─────────
+  const draftRoadmap = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Sign in first");
       const brief = projectBrief.trim();
       if (brief.length < 8) throw new Error("Describe what you want to make.");
 
-      setCreating(true);
-      // 1. derive a title from the first line / first 60 chars.
+      setPhase("generating");
       const firstLine = brief.split(/\n|\.|—|·/)[0].trim();
       const title = firstLine.slice(0, 60) || "Untitled release";
 
-      // 2. create the project (private by default — owner publishes manually).
+      const ctx = await fetchCreatorContext(user.id, "Creator");
+      const { data: drafted, error } = await supabase.functions.invoke(
+        "draft-project-roadmap",
+        {
+          body: {
+            projectName: title,
+            totalBudget: 0,
+            tokenize_intent: !!ctx.token_mint,
+            release_type: "other",
+            brief: { what: brief },
+            specialistProfile: ctx,
+          },
+        },
+      );
+      if (error) throw error;
+      const milestones = ((drafted as any)?.milestones ?? []) as DraftedMilestone[];
+      if (!milestones.length) throw new Error("AI couldn't draft a roadmap — try a more detailed brief.");
+      return { title, milestones };
+    },
+    onSuccess: ({ title, milestones }) => {
+      setDraftedTitle(title);
+      setDraftedMilestones(milestones);
+      setPhase("preview");
+    },
+    onError: (e: any) => {
+      setPhase("brief");
+      toast.error(e?.message || "Could not draft roadmap.");
+    },
+  });
+
+  // ── save project (phase 2: persist after user approves the draft) ──
+  const saveProject = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Sign in first");
+      setCreating(true);
+      const brief = projectBrief.trim();
       const { data: created, error: insErr } = await supabase
         .from("projects")
         .insert({
-          title,
+          title: draftedTitle,
           description: brief,
           user_id: user.id,
           status: "active",
@@ -240,45 +274,25 @@ const StudioPage = () => {
         .single();
       if (insErr) throw insErr;
 
-      // 3. auto-draft milestones using the existing edge fn.
-      try {
-        const ctx = await fetchCreatorContext(user.id, "Creator");
-        const { data: drafted } = await supabase.functions.invoke(
-          "draft-project-roadmap",
-          {
-            body: {
-              projectName: title,
-              totalBudget: 0,
-              tokenize_intent: !!ctx.token_mint,
-              release_type: "other",
-              brief: { what: brief },
-              specialistProfile: ctx,
-            },
-          },
+      if (draftedMilestones.length) {
+        await (supabase as any).from("project_goals").insert(
+          draftedMilestones.map((m, i) => ({
+            project_id: created.id,
+            user_id: user.id,
+            title: m.title,
+            description: composeMilestoneDescription(m),
+            budget_amount: m.suggested_amount,
+            sort_order: i,
+            parent_id: null,
+          })),
         );
-        const milestones = ((drafted as any)?.milestones ?? []) as DraftedMilestone[];
-        if (milestones.length) {
-          await (supabase as any).from("project_goals").insert(
-            milestones.map((m, i) => ({
-              project_id: created.id,
-              user_id: user.id,
-              title: m.title,
-              description: composeMilestoneDescription(m),
-              budget_amount: m.suggested_amount,
-              sort_order: i,
-              parent_id: null,
-            })),
-          );
-        }
-      } catch {
-        /* non-fatal — owner can draft inside project. */
       }
       return created.id as string;
     },
     onSuccess: (projectId) => {
       setCreating(false);
       setStartProjectOpen(false);
-      setProjectBrief("");
+      resetDialog();
       queryClient.invalidateQueries({ queryKey: ["studio-projects", user?.id] });
       toast.success("Project created — review your roadmap.");
       navigate(`/projects/${projectId}`);
