@@ -11,6 +11,7 @@ import WalletButton from "@/components/WalletButton";
 
 import WelcomeModal from "@/components/onboarding/WelcomeModal";
 import RoomsBottomNav from "@/components/RoomsBottomNav";
+import MobileBottomNav from "@/components/MobileBottomNav";
 import InboxDrawer from "@/components/InboxDrawer";
 // FlowLauncher (floating FAB) retired — Flow is now reachable via the Hub view toggle + HubFlowWidget.
 // DockBar retired in v7 (post phase-2) — navigation happens via the left side nav + global ⌘K search.
@@ -469,12 +470,13 @@ const AppLayout = () => {
               )}
             </div>
           </header>
-          <main className="flex-1 p-4 md:p-8 pb-28">
+          <main className="flex-1 p-4 md:p-8 pb-24 md:pb-28">
             <Outlet />
           </main>
           {/* HudDock retired — gamification stats moved to sidebar footer (SidebarHud). */}
 
         </div>
+        {user && <MobileBottomNav />}
       </div>
 
 
