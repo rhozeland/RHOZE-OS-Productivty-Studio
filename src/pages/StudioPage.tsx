@@ -630,48 +630,318 @@ const StudioPage = () => {
                   <Sparkles className="h-5 w-5" /> Your roadmap is ready
                 </DialogTitle>
                 <DialogDescription>
-                  <span className="font-medium text-foreground">{draftedTitle}</span>
-                  {" "}— {draftedMilestones.length} milestone
-                  {draftedMilestones.length === 1 ? "" : "s"}. You can refine everything inside the project.
+                  Edit anything below — title, tasks, budget, references. Every field is yours to refine.
                 </DialogDescription>
               </DialogHeader>
-              <ol className="space-y-3">
-                {draftedMilestones.map((m, i) => (
-                  <li
-                    key={i}
-                    className="rounded-xl border border-border bg-card p-4 space-y-2"
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className="mt-0.5 h-6 w-6 shrink-0 rounded-full bg-foreground text-background text-xs font-semibold flex items-center justify-center">
-                        {i + 1}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-foreground text-sm leading-snug">
-                          {m.title}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">
-                          {m.deliverables}
-                        </p>
+
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
+                  Project title
+                </label>
+                <Input
+                  value={draftedTitle}
+                  onChange={(e) => setDraftedTitle(e.target.value)}
+                  className="font-display text-base"
+                />
+              </div>
+
+              <ol className="space-y-4 max-h-[55vh] overflow-y-auto pr-1">
+                {draftedMilestones.map((m, i) => {
+                  const update = (patch: Partial<DraftedMilestone>) =>
+                    setDraftedMilestones((arr) =>
+                      arr.map((x, idx) => (idx === i ? { ...x, ...patch } : x)),
+                    );
+                  const updateTask = (ti: number, val: string) =>
+                    update({ tasks: (m.tasks ?? []).map((t, idx) => (idx === ti ? val : t)) });
+                  const removeTask = (ti: number) =>
+                    update({ tasks: (m.tasks ?? []).filter((_, idx) => idx !== ti) });
+                  const addTask = () =>
+                    update({ tasks: [...(m.tasks ?? []), ""] });
+                  const updateRef = (ri: number, patch: Partial<AssetRef>) =>
+                    update({
+                      asset_refs: (m.asset_refs ?? []).map((r, idx) =>
+                        idx === ri ? { ...r, ...patch } : r,
+                      ),
+                    });
+                  const removeRef = (ri: number) =>
+                    update({ asset_refs: (m.asset_refs ?? []).filter((_, idx) => idx !== ri) });
+                  const addRef = () =>
+                    update({
+                      asset_refs: [
+                        ...(m.asset_refs ?? []),
+                        { label: "Reference", kind: "other" as const, url: "" },
+                      ],
+                    });
+
+                  return (
+                    <li
+                      key={i}
+                      className="rounded-xl border border-border bg-card p-4 space-y-3"
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="mt-1.5 h-6 w-6 shrink-0 rounded-full bg-foreground text-background text-xs font-semibold flex items-center justify-center">
+                          {i + 1}
+                        </span>
+                        <Input
+                          value={m.title}
+                          onChange={(e) => update({ title: e.target.value })}
+                          className="font-semibold text-sm flex-1"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0"
+                          onClick={() =>
+                            setDraftedMilestones((arr) => arr.filter((_, idx) => idx !== i))
+                          }
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                        </Button>
                       </div>
-                      <Badge variant="secondary" className="shrink-0 text-[10px]">
-                        ~{m.est_days}d
-                      </Badge>
-                    </div>
-                    {m.marketing_strategy && (
-                      <p className="text-xs text-foreground/80 pl-9">
-                        <span className="font-medium">Strategy — </span>
-                        {m.marketing_strategy}
-                      </p>
-                    )}
-                    {m.target_metric?.name && m.target_metric?.value && (
-                      <p className="text-xs text-emerald-600 dark:text-emerald-400 pl-9">
-                        <span className="font-medium">Target — </span>
-                        {m.target_metric.name}: {m.target_metric.value}
-                      </p>
-                    )}
-                  </li>
-                ))}
+
+                      <div className="grid grid-cols-3 gap-2 pl-9">
+                        <div className="space-y-1">
+                          <label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
+                            When
+                          </label>
+                          <Input
+                            value={m.timeline_window ?? ""}
+                            onChange={(e) => update({ timeline_window: e.target.value })}
+                            placeholder="Week 1"
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
+                            Days
+                          </label>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={m.est_days}
+                            onChange={(e) => update({ est_days: Number(e.target.value) || 0 })}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
+                            Budget USD
+                          </label>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={m.suggested_amount}
+                            onChange={(e) =>
+                              update({ suggested_amount: Number(e.target.value) || 0 })
+                            }
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pl-9 space-y-1">
+                        <label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
+                          Deliverables
+                        </label>
+                        <Textarea
+                          value={m.deliverables}
+                          onChange={(e) => update({ deliverables: e.target.value })}
+                          rows={3}
+                          className="text-xs resize-none"
+                        />
+                      </div>
+
+                      <div className="pl-9 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
+                            Tasks
+                          </label>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-[11px] gap-1"
+                            onClick={addTask}
+                          >
+                            <Plus className="h-3 w-3" /> Add task
+                          </Button>
+                        </div>
+                        <div className="space-y-1">
+                          {(m.tasks ?? []).map((t, ti) => (
+                            <div key={ti} className="flex items-center gap-1.5">
+                              <span className="text-muted-foreground text-xs">•</span>
+                              <Input
+                                value={t}
+                                onChange={(e) => updateTask(ti, e.target.value)}
+                                className="h-7 text-xs flex-1"
+                              />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 shrink-0"
+                                onClick={() => removeTask(ti)}
+                              >
+                                <X className="h-3 w-3 text-muted-foreground" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="pl-9 space-y-1">
+                        <label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
+                          Marketing strategy
+                        </label>
+                        <Textarea
+                          value={m.marketing_strategy ?? ""}
+                          onChange={(e) => update({ marketing_strategy: e.target.value })}
+                          rows={2}
+                          className="text-xs resize-none"
+                        />
+                      </div>
+
+                      <div className="pl-9 grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
+                            Target metric
+                          </label>
+                          <Input
+                            value={m.target_metric?.name ?? ""}
+                            onChange={(e) =>
+                              update({
+                                target_metric: {
+                                  name: e.target.value,
+                                  value: m.target_metric?.value ?? "",
+                                },
+                              })
+                            }
+                            placeholder="Holders"
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
+                            Value
+                          </label>
+                          <Input
+                            value={m.target_metric?.value ?? ""}
+                            onChange={(e) =>
+                              update({
+                                target_metric: {
+                                  name: m.target_metric?.name ?? "",
+                                  value: e.target.value,
+                                },
+                              })
+                            }
+                            placeholder="150"
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pl-9 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
+                            Attachments (links, videos, images, docs)
+                          </label>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-[11px] gap-1"
+                            onClick={addRef}
+                          >
+                            <Plus className="h-3 w-3" /> Add link
+                          </Button>
+                        </div>
+                        <div className="space-y-1.5">
+                          {(m.asset_refs ?? []).map((r, ri) => (
+                            <div key={ri} className="grid grid-cols-[80px_1fr_1fr_auto] gap-1.5 items-center">
+                              <select
+                                value={r.kind}
+                                onChange={(e) => updateRef(ri, { kind: e.target.value as AssetRef["kind"] })}
+                                className="h-7 rounded-md border border-input bg-background px-1.5 text-[11px]"
+                              >
+                                <option value="moodboard">Moodboard</option>
+                                <option value="reference_track">Track</option>
+                                <option value="video">Video</option>
+                                <option value="image">Image</option>
+                                <option value="doc">Doc</option>
+                                <option value="contract">Contract</option>
+                                <option value="other">Other</option>
+                              </select>
+                              <Input
+                                value={r.label}
+                                onChange={(e) => updateRef(ri, { label: e.target.value })}
+                                placeholder="Label"
+                                className="h-7 text-xs"
+                              />
+                              <div className="relative">
+                                <LinkIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                                <Input
+                                  value={r.url ?? ""}
+                                  onChange={(e) => updateRef(ri, { url: e.target.value })}
+                                  placeholder="https://…"
+                                  className="h-7 text-xs pl-6"
+                                />
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 shrink-0"
+                                onClick={() => removeRef(ri)}
+                              >
+                                <X className="h-3 w-3 text-muted-foreground" />
+                              </Button>
+                            </div>
+                          ))}
+                          {(m.asset_refs ?? []).length === 0 && (
+                            <p className="text-[11px] text-muted-foreground/70 italic">
+                              No attachments yet. Add reference tracks, moodboards, video drafts, or contracts.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
               </ol>
+
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() =>
+                    setDraftedMilestones((arr) => [
+                      ...arr,
+                      {
+                        title: "New milestone",
+                        deliverables: "",
+                        suggested_amount: 0,
+                        est_days: 7,
+                        tasks: [],
+                        timeline_window: `Week ${arr.length + 1}`,
+                        marketing_strategy: "",
+                        target_metric: { name: "", value: "" },
+                        asset_refs: [],
+                        risks: "",
+                      },
+                    ])
+                  }
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add milestone
+                </Button>
+                <p className="text-[11px] text-muted-foreground tabular-nums">
+                  Total: $
+                  {draftedMilestones
+                    .reduce((s, m) => s + (Number(m.suggested_amount) || 0), 0)
+                    .toLocaleString()}{" "}
+                  · {draftedMilestones.reduce((s, m) => s + (Number(m.est_days) || 0), 0)} days
+                </p>
+              </div>
+
               <DialogFooter className="gap-2">
                 <Button
                   variant="ghost"
@@ -690,7 +960,7 @@ const StudioPage = () => {
                 </Button>
                 <Button
                   onClick={() => saveProject.mutate()}
-                  disabled={creating}
+                  disabled={creating || draftedMilestones.length === 0 || !draftedTitle.trim()}
                   className="gap-2"
                 >
                   {creating ? (
