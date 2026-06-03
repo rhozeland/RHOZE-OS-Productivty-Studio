@@ -8,6 +8,13 @@ export interface RecentWork {
   mime_type?: string | null;
 }
 
+export interface AssetRef {
+  label: string;
+  kind: "moodboard" | "reference_track" | "video" | "doc" | "image" | "contract" | "other";
+  note?: string;
+  url?: string;
+}
+
 export interface DraftedMilestone {
   title: string;
   deliverables: string;
@@ -15,6 +22,10 @@ export interface DraftedMilestone {
   est_days: number;
   marketing_strategy?: string;
   target_metric?: { name: string; value: string };
+  tasks?: string[];
+  timeline_window?: string;
+  asset_refs?: AssetRef[];
+  risks?: string;
 }
 
 export interface ProfileContext {
