@@ -9,7 +9,7 @@
  * "Start a Coin"    → eligibility check sheet that links into the
  *                     existing token submission flow (`/settings#token`).
  */
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
