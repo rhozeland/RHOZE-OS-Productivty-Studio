@@ -52,7 +52,7 @@ import CreatorsPage from "@/pages/CreatorsPage";
 import HomePage from "@/pages/HomePage";
 import HomeFeedPage from "@/pages/HomeFeedPage";
 import DiscoverPage from "@/pages/DiscoverPage";
-// ChartsPage removed — coin momentum table now lives inline in Discover → Creators tab.
+import ChartsPage from "@/pages/ChartsPage";
 import TreasuryPage from "@/pages/TreasuryPage";
 import CardPage from "@/pages/CardPage";
 
@@ -286,7 +286,7 @@ const App = () => (
                 <Route path="/connect/match" element={<Navigate to="/market" replace />} />
                 <Route path="/vault" element={<ProtectedRoute><VaultRoomPage /></ProtectedRoute>} />
                 <Route path="/discover" element={<DiscoverPage />} />
-                <Route path="/charts" element={<Navigate to="/discover?view=creators" replace />} />
+                <Route path="/charts" element={<ChartsPage />} />
                 <Route path="/treasury" element={<TreasuryPage />} />
 
                 {/* v8: Hub/Stream retired — Discover is the unified front
