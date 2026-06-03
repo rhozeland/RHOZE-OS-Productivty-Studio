@@ -165,6 +165,7 @@ Output rules — be SPECIFIC and DENSE:
                   type: "object",
                   properties: {
                     title: { type: "string" },
+                    phase: { type: "string", enum: ["pre_production", "production", "post_production", "release"] },
                     deliverables: { type: "string" },
                     tasks: {
                       type: "array",
