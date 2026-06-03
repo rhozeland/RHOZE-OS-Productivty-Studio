@@ -8,18 +8,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-type Role = "fan" | "creator";
+type Role = "fan" | "musician";
 
 const FAN_BULLETS = [
-  "Discover rising creators",
+  "Discover rising musicians",
   "Back artists and own your rank",
   "Earn $RHOZE rewards",
 ];
 
-const CREATOR_BULLETS = [
+const MUSICIAN_BULLETS = [
   "Get hired and collaborate",
   "Build a fanbase that backs you",
-  "Earn money and $RHOZE",
+  "Launch your coin with Rhozeland",
 ];
 
 const RoleSelectPage = () => {
@@ -36,8 +36,8 @@ const RoleSelectPage = () => {
         .update({ user_type: role } as any)
         .eq("user_id", user.id);
       if (error) throw error;
-      // Role-specific home — fans land on Discover, creators on their Studio.
-      navigate(role === "creator" ? "/dashboard" : "/discover", { replace: true });
+      // Route into the role-specific onboarding wizard.
+      navigate(role === "musician" ? "/onboarding/musician" : "/onboarding/fan", { replace: true });
     } catch (err: any) {
       toast.error(err.message || "Couldn't save your choice. Try again.");
       setSaving(null);
@@ -67,7 +67,7 @@ const RoleSelectPage = () => {
             How do you want to use Rhozeland?
           </h1>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            You can switch anytime — this just personalizes your experience
+            You can switch anytime — this just personalizes your experience.
           </p>
         </div>
 
@@ -84,7 +84,7 @@ const RoleSelectPage = () => {
               I'm a Fan
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-              Discover independent creators, back them before they blow up, and earn rewards for showing up early
+              Discover real musicians. See them building. Back them with a coin before they blow up.
             </p>
             <ul className="space-y-2.5 mb-8 flex-1">
               {FAN_BULLETS.map((b) => (
@@ -103,7 +103,7 @@ const RoleSelectPage = () => {
             </Button>
           </motion.div>
 
-          {/* Creator card */}
+          {/* Musician card */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -111,13 +111,13 @@ const RoleSelectPage = () => {
             className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-8 flex flex-col"
           >
             <h2 className="font-display text-xl font-bold text-foreground mb-2">
-              I'm a Creator
+              I'm a Musician
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-              Get discovered, get hired, build your fanbase and earn real money and $RHOZE doing what you do
+              Get paid for your work. Prove what you ship. Launch a coin with help.
             </p>
             <ul className="space-y-2.5 mb-8 flex-1">
-              {CREATOR_BULLETS.map((b) => (
+              {MUSICIAN_BULLETS.map((b) => (
                 <li key={b} className="flex items-start gap-2.5 text-sm text-foreground/90">
                   <Check className="w-4 h-4 mt-0.5 shrink-0 text-foreground/70" />
                   <span>{b}</span>
@@ -126,11 +126,11 @@ const RoleSelectPage = () => {
             </ul>
             <Button
               variant="outline"
-              onClick={() => choose("creator")}
+              onClick={() => choose("musician")}
               disabled={saving !== null}
               className="rounded-xl h-11 w-full font-semibold"
             >
-              {saving === "creator" ? "Setting up…" : "Continue as Creator"}
+              {saving === "musician" ? "Setting up…" : "Continue as Musician"}
             </Button>
           </motion.div>
         </div>
@@ -141,6 +141,9 @@ const RoleSelectPage = () => {
           <Link to="/auth" className="underline underline-offset-2 hover:text-foreground transition-colors">
             Sign in
           </Link>
+        </p>
+        <p className="text-center text-[11px] text-muted-foreground/70 mt-3 max-w-md mx-auto">
+          Producers, engineers, visual artists, and promoters — select Musician and pick your role inside.
         </p>
       </div>
     </div>
