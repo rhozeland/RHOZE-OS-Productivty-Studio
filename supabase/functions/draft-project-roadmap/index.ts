@@ -94,24 +94,31 @@ Deno.serve(async (req) => {
 
   const systemPrompt = `You are Rhozeland A&R — a music-industry strategist who plans tokenized music releases on pump.fun.
 
-You write roadmaps that feel hand-crafted to the specific artist: their archetype (musician/producer/engineer/visual/promoter), their recent body of work, their region, and (if known) the coin they've already launched. Every milestone you propose should answer "what does THIS artist ship next, and how do we get holders + listeners to care?"
+You write DETAILED, opinionated roadmaps tailored to the specific artist: their archetype (musician/producer/engineer/visual/promoter), recent body of work, region, and (if known) their launched coin. Generic advice is a failure — every milestone must answer "what does THIS artist ship next week, and exactly how do we get holders + listeners to care?"
 
 Market reality you must respect:
 - Pump.fun launches thousands of coins daily; attention is the scarcest resource.
-- Coins succeed when: (a) the artist shows up live (pump.fun livestream), (b) the art/music is genuinely good, (c) early holders get utility (gated stems, behind-the-scenes, IRL access), (d) the launch has a clear narrative beat (single drop, visual, collab, event).
-- Bonding curve graduates around ~$69k market cap → Raydium handoff; plan a "graduation push" stage if tokenize_intent is true.
-- Creator rewards on pump.fun ≈ 0.05% (5 bps) of trading volume — surface this in launch-day metrics.
+- Coins succeed when: (a) the artist shows up live (pump.fun livestream), (b) the art/music is genuinely good, (c) early holders get utility (gated stems, behind-the-scenes, IRL access), (d) the launch has a clear narrative beat.
+- Bonding curve graduates ~$69k MC → Raydium handoff; plan a "graduation push" stage when tokenize_intent is true.
+- Creator rewards on pump.fun ≈ 0.05% (5 bps) of trading volume — surface this in launch-day targets.
 
-Output rules:
-- Return 3-5 milestones whose suggested_amounts sum to roughly the total budget (allow ±10%).
-- Each milestone needs a marketing_strategy paragraph that references the artist's archetype + actual recent works + (when present) their linked coin. Be specific, not generic.
-- Each milestone needs a target_metric { name, value } that's realistic for an indie artist (e.g. "Holders" 150, "Stream-week plays" 8000, "Pump.fun MC" "$25k"). No vanity inflation.
-- When tokenize_intent=true, at least one milestone must be a "Launch day" stage with pump.fun-native deliverables (artwork pack, teaser, KOL list, livestream, holder utility) and another must address post-launch retention (week 1 holder activations).
-- When tokenize_intent=false, focus on the release itself — coin language is fine but secondary.`;
+Output rules — be SPECIFIC and DENSE:
+- Return 4-7 milestones whose suggested_amounts sum to roughly the total budget (±10%). If totalBudget is 0, propose a realistic indie budget per stage (typical EP $1.5k–$8k all-in).
+- Each milestone needs:
+  · title — names the actual deliverable, not the phase (e.g. "Track 1 + 2 demos + reference mixes", NOT "Pre-production").
+  · deliverables — 3-5 sentences describing the exact creative output, format it ships in, and how it's reviewed/approved.
+  · tasks — 4-8 atomic checklist items the artist actually does that week (e.g. "Book Studio B at Noise Floor for 2x 6-hr sessions", "Cut scratch vocals for Track 1 bridge"). No filler.
+  · timeline_window — "Week 1", "Week 2-3", "Day of launch", etc.
+  · marketing_strategy — 2-4 sentences naming the artist's recent works AND linked coin (if present) AND specific channels (IG reels, TikTok, X spaces, pump.fun livestream, KOL list, Discord drop).
+  · target_metric { name, value } — realistic for an indie artist. No vanity inflation.
+  · asset_refs — 0-4 reference suggestions { label, kind, note? }. Only suggest references that genuinely help the stage. Artist will attach URLs themselves.
+  · risks — 1 sentence on the most likely derailment.
+- When tokenize_intent=true, include a "Launch day" stage (artwork pack, teaser, KOL list, livestream, holder utility) AND a post-launch retention stage (week 1 holder activations).
+- When tokenize_intent=false, coin language stays secondary; focus on the release.`;
 
   const userPrompt = [
     `Project: ${projectName}`,
-    `Total budget (USD): $${totalBudget.toFixed(2)}`,
+    `Total budget (USD): ${totalBudget > 0 ? `$${totalBudget.toFixed(2)}` : "(not set — propose a realistic indie budget)"}`,
     `Release type: ${release_type}`,
     `Tokenize intent: ${tokenize_intent ? "YES — plan for a pump.fun coin launch" : "no (release-only)"}`,
     `Target window: ${target_window || "(flexible)"}`,
@@ -124,7 +131,7 @@ Output rules:
     `Timeline / when: ${brief.when || "(flexible)"}`,
     `Vibe / direction: ${brief.vibe || "(open)"}`,
     ``,
-    `Draft 3-5 milestones for this project using the draft_roadmap function. Tie marketing_strategy to the artist's specific recent works.`,
+    `Draft 4-7 DETAILED milestones using the draft_roadmap function. Every milestone must include concrete tasks, a timeline window, asset references, and tie marketing_strategy to the artist's specific recent works.`,
   ].join("\n");
 
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -140,36 +147,55 @@ Output rules:
         type: "function",
         function: {
           name: "draft_roadmap",
-          description: "Return 3-5 music-native milestone stages tied to the artist's actual work.",
+          description: "Return 4-7 detailed music-native milestone stages tied to the artist's actual work.",
           parameters: {
             type: "object",
             properties: {
               milestones: {
                 type: "array",
-                minItems: 3,
-                maxItems: 5,
+                minItems: 4,
+                maxItems: 7,
                 items: {
                   type: "object",
                   properties: {
-                    title: { type: "string", description: "Short milestone title (≤60 chars)" },
-                    deliverables: { type: "string", description: "1-2 sentences: what is delivered at this stage" },
-                    suggested_amount: { type: "number", description: "USD allocated to this stage" },
-                    est_days: { type: "number", description: "Estimated days for this stage" },
-                    marketing_strategy: {
-                      type: "string",
-                      description: "1-2 sentences explaining how this stage builds audience + holder demand, tied to the artist's archetype and recent works."
+                    title: { type: "string" },
+                    deliverables: { type: "string" },
+                    tasks: {
+                      type: "array",
+                      minItems: 4,
+                      maxItems: 8,
+                      items: { type: "string" },
                     },
+                    timeline_window: { type: "string" },
+                    suggested_amount: { type: "number" },
+                    est_days: { type: "number" },
+                    marketing_strategy: { type: "string" },
                     target_metric: {
                       type: "object",
                       properties: {
-                        name: { type: "string", description: "Metric name, e.g. Holders, Stream-week plays, Pump.fun MC, Livestream peak viewers" },
-                        value: { type: "string", description: "Realistic target value as a string, e.g. '150', '8k', '$25k'" },
+                        name: { type: "string" },
+                        value: { type: "string" },
                       },
                       required: ["name", "value"],
                       additionalProperties: false,
                     },
+                    asset_refs: {
+                      type: "array",
+                      maxItems: 4,
+                      items: {
+                        type: "object",
+                        properties: {
+                          label: { type: "string" },
+                          kind: { type: "string", enum: ["moodboard","reference_track","video","doc","image","contract","other"] },
+                          note: { type: "string" },
+                        },
+                        required: ["label", "kind"],
+                        additionalProperties: false,
+                      },
+                    },
+                    risks: { type: "string" },
                   },
-                  required: ["title", "deliverables", "suggested_amount", "est_days", "marketing_strategy", "target_metric"],
+                  required: ["title", "deliverables", "tasks", "timeline_window", "suggested_amount", "est_days", "marketing_strategy", "target_metric", "asset_refs", "risks"],
                   additionalProperties: false,
                 },
               },
