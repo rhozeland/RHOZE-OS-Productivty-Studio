@@ -12,7 +12,7 @@ const FAN_TABS = [
 ];
 
 const MUSICIAN_TABS = [
-  { label: "Home", icon: Home, path: "/flow" },
+  { label: "Home", icon: Home, path: "/home" },
   { label: "Studio", icon: Layers, path: "/my-projects" },
   { label: "Discover", icon: Compass, path: "/discover" },
   { label: "Network", icon: Users, path: "/market" },
