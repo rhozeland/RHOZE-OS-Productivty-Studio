@@ -306,27 +306,35 @@ const StudioPage = () => {
       if (insErr) throw insErr;
 
       if (draftedMilestones.length) {
-        await (supabase as any).from("project_goals").insert(
-          draftedMilestones.map((m, i) => ({
-            project_id: created.id,
-            user_id: user.id,
-            title: m.title,
-            description: composeMilestoneDescription(m),
-            budget_amount: m.suggested_amount,
-            sort_order: i,
-            parent_id: null,
-          })),
-        );
+        const { error: goalsErr } = await (supabase as any)
+          .from("project_goals")
+          .insert(
+            draftedMilestones.map((m, i) => ({
+              project_id: created.id,
+              user_id: user.id,
+              title: m.title,
+              description: composeMilestoneDescription(m),
+              budget_amount: m.suggested_amount,
+              sort_order: i,
+              parent_id: null,
+            })),
+          );
+        if (goalsErr) throw goalsErr;
       }
       return created.id as string;
     },
     onSuccess: (projectId) => {
-      setCreating(false);
-      setStartProjectOpen(false);
-      resetDialog();
       queryClient.invalidateQueries({ queryKey: ["studio-projects", user?.id] });
-      toast.success("Project created — review your roadmap.");
+      toast.success("Project created — opening your roadmap…");
+      // Navigate first so the roadmap page mounts immediately; tear down
+      // the dialog on the next tick so it doesn't steal focus or block the
+      // route change.
       navigate(`/projects/${projectId}`);
+      setTimeout(() => {
+        setCreating(false);
+        setStartProjectOpen(false);
+        resetDialog();
+      }, 50);
     },
     onError: (e: any) => {
       setCreating(false);
