@@ -1,0 +1,793 @@
+/**
+ * Studio — Musician workspace.
+ *
+ * Header counts + two primary CTAs (Start a Project / Start a Coin),
+ * a status card for an active public project, three tabs
+ * (Active · Drafts · Completed) and the project card grid.
+ *
+ * "Start a Project" → existing AI-roadmap flow (description → auto-draft).
+ * "Start a Coin"    → eligibility check sheet that links into the
+ *                     existing token submission flow (`/settings#token`).
+ */
+import { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { format, formatDistanceToNow } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Sparkles,
+  Coins,
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  X,
+  Loader2,
+  CalendarDays,
+  Users,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { fetchCreatorContext } from "@/lib/creator-context";
+import { composeMilestoneDescription, type DraftedMilestone } from "@/hooks/useAiRoadmapDraft";
+
+interface ProjectRow {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  cover_color: string | null;
+  created_at: string;
+  updated_at: string;
+  is_public: boolean | null;
+  public_slug: string | null;
+  cheer_count: number | null;
+  tokenize_ready: boolean | null;
+}
+
+interface GoalRow {
+  id: string;
+  project_id: string;
+  status: string;
+  due_date: string | null;
+  completed_at: string | null;
+}
+
+const startOfWeek = () => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - d.getDay());
+  return d;
+};
+const endOfWeek = () => {
+  const d = startOfWeek();
+  d.setDate(d.getDate() + 7);
+  return d;
+};
+
+const StudioPage = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const [startProjectOpen, setStartProjectOpen] = useState(false);
+  const [coinSheetOpen, setCoinSheetOpen] = useState(false);
+  const [projectBrief, setProjectBrief] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  // ── data ───────────────────────────────────────────────────────────
+  const { data: projects, isLoading } = useQuery<ProjectRow[]>({
+    queryKey: ["studio-projects", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select(
+          "id,title,description,status,cover_color,created_at,updated_at,is_public,public_slug,cheer_count,tokenize_ready",
+        )
+        .eq("user_id", user!.id)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as ProjectRow[];
+    },
+  });
+
+  const projectIds = useMemo(() => (projects ?? []).map((p) => p.id), [projects]);
+
+  const { data: goals } = useQuery<GoalRow[]>({
+    queryKey: ["studio-goals", projectIds.join(",")],
+    enabled: projectIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_goals")
+        .select("id,project_id,status,due_date,completed_at")
+        .in("project_id", projectIds);
+      if (error) throw error;
+      return (data ?? []) as GoalRow[];
+    },
+  });
+
+  // Supporter counts (one query)
+  const { data: supporterCounts } = useQuery<Record<string, number>>({
+    queryKey: ["studio-supporters", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("creator_subscriptions")
+        .select("creator_user_id")
+        .eq("creator_user_id", user!.id);
+      const total = (data ?? []).length;
+      // Whole-creator count, applied to every public project.
+      const map: Record<string, number> = {};
+      (projects ?? [])
+        .filter((p) => p.is_public)
+        .forEach((p) => (map[p.id] = total));
+      return map;
+    },
+  });
+
+  // ── derived ────────────────────────────────────────────────────────
+  const goalsByProject = useMemo(() => {
+    const m = new Map<string, GoalRow[]>();
+    (goals ?? []).forEach((g) => {
+      const arr = m.get(g.project_id) ?? [];
+      arr.push(g);
+      m.set(g.project_id, arr);
+    });
+    return m;
+  }, [goals]);
+
+  const projectStats = (p: ProjectRow) => {
+    const list = goalsByProject.get(p.id) ?? [];
+    const total = list.length;
+    const done = list.filter((g) => g.status === "completed" || g.completed_at).length;
+    const wkStart = startOfWeek();
+    const wkEnd = endOfWeek();
+    const dueThisWeek = list.filter((g) => {
+      if (g.status === "completed" || g.completed_at) return false;
+      if (!g.due_date) return false;
+      const d = new Date(g.due_date);
+      return d >= wkStart && d < wkEnd;
+    }).length;
+    const days = Math.max(
+      0,
+      Math.floor((Date.now() - new Date(p.created_at).getTime()) / 86_400_000),
+    );
+    return { total, done, dueThisWeek, days };
+  };
+
+  const activeProjects = (projects ?? []).filter(
+    (p) => p.status !== "completed" && (p.is_public || (goalsByProject.get(p.id)?.length ?? 0) > 0),
+  );
+  const draftProjects = (projects ?? []).filter(
+    (p) => p.status !== "completed" && !p.is_public && (goalsByProject.get(p.id)?.length ?? 0) === 0,
+  );
+  const completedProjects = (projects ?? []).filter((p) => p.status === "completed");
+
+  const totalActive = activeProjects.length;
+  const milestonesDueThisWeek = (projects ?? []).reduce(
+    (sum, p) => sum + projectStats(p).dueThisWeek,
+    0,
+  );
+
+  const featuredPublic = useMemo(
+    () =>
+      (projects ?? []).find(
+        (p) => p.is_public && p.public_slug && p.status !== "completed",
+      ),
+    [projects],
+  );
+
+  // ── start project ──────────────────────────────────────────────────
+  const startProject = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Sign in first");
+      const brief = projectBrief.trim();
+      if (brief.length < 8) throw new Error("Describe what you want to make.");
+
+      setCreating(true);
+      // 1. derive a title from the first line / first 60 chars.
+      const firstLine = brief.split(/\n|\.|—|·/)[0].trim();
+      const title = firstLine.slice(0, 60) || "Untitled release";
+
+      // 2. create the project (private by default — owner publishes manually).
+      const { data: created, error: insErr } = await supabase
+        .from("projects")
+        .insert({
+          title,
+          description: brief,
+          user_id: user.id,
+          status: "active",
+          project_type: "collaborative",
+          cover_color: "#7c3aed",
+        })
+        .select()
+        .single();
+      if (insErr) throw insErr;
+
+      // 3. auto-draft milestones using the existing edge fn.
+      try {
+        const ctx = await fetchCreatorContext(user.id, "Creator");
+        const { data: drafted } = await supabase.functions.invoke(
+          "draft-project-roadmap",
+          {
+            body: {
+              projectName: title,
+              totalBudget: 0,
+              tokenize_intent: !!ctx.token_mint,
+              release_type: "other",
+              brief: { what: brief },
+              specialistProfile: ctx,
+            },
+          },
+        );
+        const milestones = ((drafted as any)?.milestones ?? []) as DraftedMilestone[];
+        if (milestones.length) {
+          await (supabase as any).from("project_goals").insert(
+            milestones.map((m, i) => ({
+              project_id: created.id,
+              user_id: user.id,
+              title: m.title,
+              description: composeMilestoneDescription(m),
+              budget_amount: m.suggested_amount,
+              sort_order: i,
+              parent_id: null,
+            })),
+          );
+        }
+      } catch {
+        /* non-fatal — owner can draft inside project. */
+      }
+      return created.id as string;
+    },
+    onSuccess: (projectId) => {
+      setCreating(false);
+      setStartProjectOpen(false);
+      setProjectBrief("");
+      queryClient.invalidateQueries({ queryKey: ["studio-projects", user?.id] });
+      toast.success("Project created — review your roadmap.");
+      navigate(`/projects/${projectId}`);
+    },
+    onError: (e: any) => {
+      setCreating(false);
+      toast.error(e?.message || "Could not create project.");
+    },
+  });
+
+  // ── eligibility data ───────────────────────────────────────────────
+  const { data: eligibility } = useQuery({
+    queryKey: ["studio-eligibility", user?.id],
+    enabled: !!user && coinSheetOpen,
+    queryFn: async () => {
+      const [profileRes, worksRes, subsRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("avatar_url,bio,region_code,solana_wallet,verification_status")
+          .eq("user_id", user!.id)
+          .maybeSingle(),
+        supabase
+          .from("works")
+          .select("id,is_verified,content_hash", { count: "exact", head: false })
+          .eq("user_id", user!.id),
+        (supabase as any)
+          .from("creator_subscriptions")
+          .select("id", { count: "exact", head: true })
+          .eq("creator_user_id", user!.id),
+      ]);
+      const profile = profileRes.data as any;
+      const worksList = (worksRes.data ?? []) as any[];
+      const verified = worksList.filter(
+        (w) => w.is_verified || !!w.content_hash,
+      ).length;
+      return {
+        profileComplete:
+          !!profile?.avatar_url && !!profile?.bio && (profile?.bio?.length ?? 0) >= 40,
+        hasWork: worksList.length > 0,
+        walletConnected: !!profile?.solana_wallet,
+        verifiedIp: verified > 0,
+        backers: (subsRes as any).count ?? 0,
+      };
+    },
+  });
+
+  // ── render ─────────────────────────────────────────────────────────
+  return (
+    <div className="max-w-5xl mx-auto pb-20 space-y-8">
+      {/* Header */}
+      <motion.header
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="pt-2"
+      >
+        <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 mb-2">
+          Workspace
+        </p>
+        <h1 className="font-display text-3xl sm:text-4xl leading-[1.05] text-foreground tracking-tight">
+          Studio
+        </h1>
+        <p className="text-sm text-muted-foreground mt-2">
+          {totalActive} active {totalActive === 1 ? "project" : "projects"} ·{" "}
+          {milestonesDueThisWeek} milestone{milestonesDueThisWeek === 1 ? "" : "s"} due this week
+        </p>
+      </motion.header>
+
+      {/* Primary actions */}
+      <section className="space-y-3">
+        <button
+          type="button"
+          onClick={() => setStartProjectOpen(true)}
+          className="group w-full rounded-2xl bg-foreground text-background px-6 py-5 text-left shadow-md hover:opacity-95 transition-opacity"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="font-display text-lg sm:text-xl font-semibold flex items-center gap-2">
+                <Sparkles className="h-4 w-4" /> Start a Project
+              </p>
+              <p className="text-xs opacity-80 mt-1">
+                Build in public. Fans follow your roadmap. Earn your coin.
+              </p>
+            </div>
+            <ArrowRight className="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-0.5" />
+          </div>
+        </button>
+
+        {featuredPublic && (
+          <Link
+            to={`/release/${featuredPublic.public_slug}`}
+            className="block rounded-2xl border border-emerald-500/30 bg-emerald-500/5 px-5 py-3.5 hover:bg-emerald-500/10 transition-colors"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400 font-semibold mb-1">
+                  Live release
+                </p>
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {featuredPublic.title} is live
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {supporterCounts?.[featuredPublic.id] ?? 0} supporter
+                  {(supporterCounts?.[featuredPublic.id] ?? 0) === 1 ? "" : "s"} ·{" "}
+                  {projectStats(featuredPublic).done} of {projectStats(featuredPublic).total} milestones
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground shrink-0">
+                View release <ArrowUpRight className="h-3.5 w-3.5" />
+              </span>
+            </div>
+          </Link>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setCoinSheetOpen(true)}
+          className="group w-full rounded-2xl border border-border bg-background px-6 py-4 text-left hover:border-foreground/40 transition-colors"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="font-display text-base sm:text-lg font-semibold text-foreground flex items-center gap-2">
+                <Coins className="h-4 w-4" /> Start a Coin
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Already have proven work? Launch directly.
+              </p>
+            </div>
+            <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
+          </div>
+        </button>
+      </section>
+
+      {/* Tabs + project cards */}
+      <Tabs defaultValue="active" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="active" className="gap-2">
+            Active
+            {milestonesDueThisWeek > 0 && (
+              <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                {milestonesDueThisWeek} due
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="drafts">Drafts</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
+        </TabsList>
+
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <>
+            <TabsContent value="active">
+              <ProjectList
+                projects={activeProjects}
+                statsFor={projectStats}
+                supporterCounts={supporterCounts ?? {}}
+                emptyLabel="No active projects. Start one above."
+              />
+            </TabsContent>
+            <TabsContent value="drafts">
+              <ProjectList
+                projects={draftProjects}
+                statsFor={projectStats}
+                supporterCounts={supporterCounts ?? {}}
+                emptyLabel="No drafts yet."
+              />
+            </TabsContent>
+            <TabsContent value="completed">
+              <ProjectList
+                projects={completedProjects}
+                statsFor={projectStats}
+                supporterCounts={supporterCounts ?? {}}
+                emptyLabel="Nothing finished yet."
+              />
+            </TabsContent>
+          </>
+        )}
+      </Tabs>
+
+      {/* Start a Project dialog */}
+      <Dialog open={startProjectOpen} onOpenChange={setStartProjectOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">
+              Start a project — describe what you want to make
+            </DialogTitle>
+            <DialogDescription>
+              We'll draft a roadmap you can edit before going live.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={projectBrief}
+            onChange={(e) => setProjectBrief(e.target.value)}
+            placeholder="e.g. I want to record a 5-track EP, shoot a music video for the lead single, and run a campaign to hit 1,000 streams in the first week."
+            rows={6}
+            className="resize-none"
+          />
+          {draftProjects.length > 0 && (
+            <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-1.5 max-h-44 overflow-auto">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
+                Or make an existing draft public
+              </p>
+              {draftProjects.slice(0, 5).map((p) => (
+                <Link
+                  key={p.id}
+                  to={`/projects/${p.id}`}
+                  onClick={() => setStartProjectOpen(false)}
+                  className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-background text-xs"
+                >
+                  <span className="truncate text-foreground">{p.title}</span>
+                  <span className="text-muted-foreground inline-flex items-center gap-1">
+                    Open <ArrowUpRight className="h-3 w-3" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setStartProjectOpen(false)}
+              disabled={creating}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => startProject.mutate()}
+              disabled={creating || projectBrief.trim().length < 8}
+              className="gap-2"
+            >
+              {creating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Building your roadmap…
+                </>
+              ) : (
+                <>
+                  Generate My Roadmap <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Eligibility sheet */}
+      <Sheet open={coinSheetOpen} onOpenChange={setCoinSheetOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="font-display text-xl">
+              Before you can launch a coin
+            </SheetTitle>
+            <SheetDescription>
+              Here's what you need before going live on pump.fun.
+            </SheetDescription>
+          </SheetHeader>
+
+          {!eligibility ? (
+            <div className="py-10 flex justify-center">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <EligibilityChecklist
+              data={eligibility}
+              onAction={(href) => {
+                setCoinSheetOpen(false);
+                navigate(href);
+              }}
+            />
+          )}
+
+          <div className="mt-6 space-y-2 border-t border-border pt-4">
+            <Link
+              to="/why-coin"
+              onClick={() => setCoinSheetOpen(false)}
+              className="block text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Or start a project first — build in public and earn your coin →
+            </Link>
+            <Link
+              to="/label-services"
+              onClick={() => setCoinSheetOpen(false)}
+              className="block text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Apply for A&R — Rhozeland handles everything →
+            </Link>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+};
+
+// ─── Project card list ───────────────────────────────────────────────
+interface ProjectListProps {
+  projects: ProjectRow[];
+  statsFor: (p: ProjectRow) => { total: number; done: number; dueThisWeek: number; days: number };
+  supporterCounts: Record<string, number>;
+  emptyLabel: string;
+}
+
+const ProjectList = ({ projects, statsFor, supporterCounts, emptyLabel }: ProjectListProps) => {
+  if (projects.length === 0) {
+    return (
+      <p className="text-center text-sm text-muted-foreground py-12">{emptyLabel}</p>
+    );
+  }
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {projects.map((p) => (
+        <ProjectCard
+          key={p.id}
+          project={p}
+          stats={statsFor(p)}
+          supporters={supporterCounts[p.id] ?? 0}
+        />
+      ))}
+    </div>
+  );
+};
+
+const ProjectCard = ({
+  project,
+  stats,
+  supporters,
+}: {
+  project: ProjectRow;
+  stats: { total: number; done: number; dueThisWeek: number; days: number };
+  supporters: number;
+}) => {
+  const pct = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
+  const statusLabel =
+    project.status === "completed"
+      ? "Completed"
+      : (project.is_public || stats.total > 0)
+        ? "Active"
+        : "Draft";
+
+  return (
+    <Link
+      to={`/projects/${project.id}`}
+      className="group block rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm p-5 hover:-translate-y-0.5 hover:shadow-lg hover:border-foreground/30 transition-all"
+    >
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 mb-1">
+            {statusLabel}
+          </p>
+          <h3 className="font-display text-lg font-semibold text-foreground truncate">
+            {project.title}
+          </h3>
+        </div>
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0",
+            project.is_public
+              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+              : "bg-muted text-muted-foreground",
+          )}
+        >
+          {project.is_public ? (
+            <>
+              <Eye className="h-3 w-3" /> Public
+            </>
+          ) : (
+            <>
+              <EyeOff className="h-3 w-3" /> Private
+            </>
+          )}
+        </span>
+      </div>
+
+      <div className="space-y-2.5">
+        <div>
+          <div className="flex items-center justify-between text-[11px] mb-1">
+            <span className="text-muted-foreground tabular-nums">
+              {stats.done} of {stats.total} completed
+            </span>
+            <span className="text-foreground tabular-nums font-medium">{pct}%</span>
+          </div>
+          <Progress value={pct} className="h-1.5" />
+        </div>
+
+        <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarDays className="h-3 w-3" /> {stats.days}d active
+          </span>
+          {project.is_public && (
+            <span className="inline-flex items-center gap-1.5">
+              <Users className="h-3 w-3" /> {supporters}
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-[11px] text-muted-foreground">
+            {formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}
+          </span>
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground">
+            View Project <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+};
+
+// ─── Eligibility checklist ───────────────────────────────────────────
+interface EligibilityData {
+  profileComplete: boolean;
+  hasWork: boolean;
+  walletConnected: boolean;
+  verifiedIp: boolean;
+  backers: number;
+}
+
+const EligibilityChecklist = ({
+  data,
+  onAction,
+}: {
+  data: EligibilityData;
+  onAction: (href: string) => void;
+}) => {
+  const items = [
+    {
+      label: "Profile complete",
+      met: data.profileComplete,
+      actionLabel: "Complete profile",
+      href: "/settings",
+    },
+    {
+      label: "At least 1 work posted",
+      met: data.hasWork,
+      actionLabel: "Upload work",
+      href: "/settings#provenance",
+    },
+    {
+      label: "Phantom wallet connected",
+      met: data.walletConnected,
+      actionLabel: "Connect wallet",
+      href: "/settings#wallet",
+    },
+    {
+      label: "At least 1 piece of IP verified",
+      met: data.verifiedIp,
+      actionLabel: "Verify IP",
+      href: "/settings/verification",
+    },
+    {
+      label: "At least 5 backers",
+      met: data.backers >= 5,
+      actionLabel: data.backers > 0 ? `${data.backers} of 5 so far` : "Get backers",
+      href: "/profile",
+    },
+  ];
+
+  const metCount = items.filter((i) => i.met).length;
+  const pct = Math.round((metCount / items.length) * 100);
+  const allMet = metCount === items.length;
+
+  return (
+    <div className="mt-6 space-y-5">
+      <div>
+        <div className="flex items-center justify-between text-xs mb-2">
+          <span className="text-muted-foreground tabular-nums">
+            {metCount} of {items.length} requirements met
+          </span>
+          <span className="font-medium text-foreground tabular-nums">{pct}%</span>
+        </div>
+        <Progress value={pct} className="h-1.5" />
+      </div>
+
+      <ul className="space-y-2">
+        {items.map((item) => (
+          <li
+            key={item.label}
+            className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-card/50 px-3 py-2.5"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span
+                className={cn(
+                  "h-5 w-5 rounded-full flex items-center justify-center shrink-0",
+                  item.met ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground",
+                )}
+              >
+                {item.met ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+              </span>
+              <span
+                className={cn(
+                  "text-sm truncate",
+                  item.met ? "text-foreground" : "text-foreground/80",
+                )}
+              >
+                {item.label}
+              </span>
+            </div>
+            {!item.met && (
+              <button
+                type="button"
+                onClick={() => onAction(item.href)}
+                className="text-[11px] font-medium text-foreground hover:underline underline-offset-2 shrink-0"
+              >
+                {item.actionLabel} →
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+
+      <Button
+        disabled={!allMet}
+        onClick={() => onAction("/settings#token")}
+        className="w-full gap-2"
+      >
+        <Coins className="h-4 w-4" />
+        {allMet ? "Start a Coin" : "Complete requirements to unlock"}
+      </Button>
+    </div>
+  );
+};
+
+export default StudioPage;

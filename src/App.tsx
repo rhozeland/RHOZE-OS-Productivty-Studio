@@ -14,6 +14,7 @@ import AuthPage from "@/pages/AuthPage";
 import LandingPage from "@/pages/LandingPage";
 import DashboardPage from "@/pages/DashboardPage";
 import ProjectsPage from "@/pages/ProjectsPage";
+import StudioPage from "@/pages/StudioPage";
 import ProjectDetailPage from "@/pages/ProjectDetailPage";
 import CalendarPage from "@/pages/CalendarPage";
 // FlowModePage is the public Verified-IP browser.
@@ -316,7 +317,9 @@ const App = () => (
                     detail page stays live so existing thread links and
                     deep-links from Tools tabs still resolve. */}
                 <Route path="/projects" element={<Navigate to="/messages?tab=projects" replace />} />
-                <Route path="/my-projects" element={<ProjectsPage />} />
+                <Route path="/my-projects" element={<StudioPage />} />
+                <Route path="/studio" element={<StudioPage />} />
+                <Route path="/projects-legacy" element={<ProjectsPage />} />
                 <Route path="/projects/:id" element={<ProjectDetailPage />} />
                 {/* v11 Tier 3: public "build in public" release page. Owner
                     flips is_public on the project to surface this URL. */}
