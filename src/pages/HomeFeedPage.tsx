@@ -13,7 +13,7 @@
  *
  * Uses existing card styles + design tokens — no new visual language.
  */
-import { useMemo, useState } from "react";
+import { Suspense, lazy, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -31,6 +31,7 @@ import {
   Users as UsersIcon,
   ArrowRight,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,6 +41,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import RegionPromptBanner from "@/components/discover/RegionPromptBanner";
+import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
+import ConversationsMosaic from "@/components/hub/ConversationsMosaic";
+import CompactFlowFeed from "@/components/hub/CompactFlowFeed";
+import PostMenuButton from "@/components/PostMenuButton";
+import SubscribedFeed from "@/components/discover/SubscribedFeed";
+import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
+import type { RegionMarket } from "@/lib/regions";
+
+const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
 
 type FeedKind =
   | "milestone"
@@ -176,6 +187,15 @@ const HomeFeedPage = () => {
     profile?.username ||
     user?.email?.split("@")[0] ||
     "there";
+
+  // ─── Discover content state (globe + featured carousel) ───────────
+  const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
+  const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
+  const creatorFeaturedSlides = useMemo(
+    () => featuredSlides.filter((s) => s.kind === "artist"),
+    [featuredSlides],
+  );
+
 
   // ─── Stats ──────────────────────────────────────────────────────────
   const { data: creatorsBacked = 0 } = useQuery({
@@ -429,7 +449,7 @@ const HomeFeedPage = () => {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 sm:px-6 py-8 space-y-8">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 space-y-8 pb-20">
       {/* ─── Zone A — Greeting + Stats ───────────────────────────────── */}
       <section className="space-y-4">
         <div>
@@ -619,6 +639,60 @@ const HomeFeedPage = () => {
             ) : null
           )
         )}
+      </section>
+
+      {/* ─── Discover content (merged from /discover) ─────────────────── */}
+      <RegionPromptBanner />
+
+      <section className="grid grid-cols-1">
+        <Suspense
+          fallback={
+            <div className="flex h-[400px] w-full items-center justify-center rounded-[2rem] border border-border/60 bg-card/40">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          }
+        >
+          <DiscoverGlobe
+            marketFilter={marketFilter}
+            onSelectMarket={setMarketFilter}
+            featuredSlides={creatorFeaturedSlides}
+            height={400}
+          />
+        </Suspense>
+      </section>
+
+      <TrendingArtistsLane marketFilter={marketFilter} />
+
+      <section id="discover-stream" className="space-y-5 scroll-mt-20">
+        {user && (
+          <div className="sticky top-14 z-20 -mx-4 px-4 py-3 bg-background/85 backdrop-blur-md border-b border-border/60 flex items-center justify-end">
+            <PostMenuButton
+              trigger={
+                <button
+                  type="button"
+                  className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-foreground text-background px-3 sm:px-4 py-2 text-xs font-semibold hover:opacity-90 transition-opacity shadow-sm"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Post</span>
+                </button>
+              }
+            />
+          </div>
+        )}
+
+        <div className="space-y-8">
+          <SubscribedFeed />
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <h3 className="font-display text-xs font-semibold tracking-[0.18em] uppercase text-foreground/70 shrink-0">
+                Fresh on Rhozeland
+              </h3>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <CompactFlowFeed />
+            <ConversationsMosaic kind="drop" />
+          </div>
+        </div>
       </section>
     </div>
   );
