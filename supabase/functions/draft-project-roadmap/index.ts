@@ -202,7 +202,7 @@ Output rules — be SPECIFIC and DENSE:
                     },
                     risks: { type: "string" },
                   },
-                  required: ["title", "deliverables", "tasks", "timeline_window", "suggested_amount", "est_days", "marketing_strategy", "target_metric", "asset_refs", "risks"],
+                  required: ["title", "phase", "deliverables", "tasks", "timeline_window", "suggested_amount", "est_days", "marketing_strategy", "target_metric", "asset_refs", "risks"],
                   additionalProperties: false,
                 },
               },
