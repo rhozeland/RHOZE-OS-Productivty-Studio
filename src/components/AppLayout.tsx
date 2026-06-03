@@ -470,12 +470,13 @@ const AppLayout = () => {
               )}
             </div>
           </header>
-          <main className="flex-1 p-4 md:p-8 pb-28">
+          <main className="flex-1 p-4 md:p-8 pb-24 md:pb-28">
             <Outlet />
           </main>
           {/* HudDock retired — gamification stats moved to sidebar footer (SidebarHud). */}
 
         </div>
+        {user && <MobileBottomNav />}
       </div>
 
 
