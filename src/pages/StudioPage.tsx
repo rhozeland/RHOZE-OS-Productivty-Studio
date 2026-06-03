@@ -101,6 +101,34 @@ const StudioPage = () => {
   const [phase, setPhase] = useState<Phase>("brief");
   const [draftedMilestones, setDraftedMilestones] = useState<DraftedMilestone[]>([]);
   const [draftedTitle, setDraftedTitle] = useState("");
+  const [genProgress, setGenProgress] = useState(0);
+  const [genStatus, setGenStatus] = useState("Reading your brief");
+
+  // Simulated progress ticker while AI drafts (asymptotic to 92%).
+  useEffect(() => {
+    if (phase !== "generating") return;
+    setGenProgress(4);
+    setGenStatus("Reading your brief");
+    const stages = [
+      { at: 0, label: "Reading your brief" },
+      { at: 18, label: "Studying your style & recent work" },
+      { at: 38, label: "Shaping milestones" },
+      { at: 60, label: "Writing marketing strategy" },
+      { at: 78, label: "Setting target metrics" },
+      { at: 88, label: "Polishing your roadmap" },
+    ];
+    const interval = setInterval(() => {
+      setGenProgress((p) => {
+        // ease toward 92, slower as it climbs
+        const next = p + Math.max(0.4, (92 - p) * 0.06);
+        const capped = Math.min(92, next);
+        const stage = [...stages].reverse().find((s) => capped >= s.at);
+        if (stage) setGenStatus(stage.label);
+        return capped;
+      });
+    }, 320);
+    return () => clearInterval(interval);
+  }, [phase]);
 
   const resetDialog = () => {
     setPhase("brief");
@@ -108,6 +136,7 @@ const StudioPage = () => {
     setDraftedTitle("");
     setProjectBrief("");
     setCreating(false);
+    setGenProgress(0);
   };
 
   // ── data ───────────────────────────────────────────────────────────
