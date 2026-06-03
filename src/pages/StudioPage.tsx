@@ -97,6 +97,18 @@ const StudioPage = () => {
   const [coinSheetOpen, setCoinSheetOpen] = useState(false);
   const [projectBrief, setProjectBrief] = useState("");
   const [creating, setCreating] = useState(false);
+  type Phase = "brief" | "generating" | "preview";
+  const [phase, setPhase] = useState<Phase>("brief");
+  const [draftedMilestones, setDraftedMilestones] = useState<DraftedMilestone[]>([]);
+  const [draftedTitle, setDraftedTitle] = useState("");
+
+  const resetDialog = () => {
+    setPhase("brief");
+    setDraftedMilestones([]);
+    setDraftedTitle("");
+    setProjectBrief("");
+    setCreating(false);
+  };
 
   // ── data ───────────────────────────────────────────────────────────
   const { data: projects, isLoading } = useQuery<ProjectRow[]>({
@@ -201,23 +213,57 @@ const StudioPage = () => {
     [projects],
   );
 
-  // ── start project ──────────────────────────────────────────────────
-  const startProject = useMutation({
+  // ── draft roadmap (phase 1: AI only, no project saved yet) ─────────
+  const draftRoadmap = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Sign in first");
       const brief = projectBrief.trim();
       if (brief.length < 8) throw new Error("Describe what you want to make.");
 
-      setCreating(true);
-      // 1. derive a title from the first line / first 60 chars.
+      setPhase("generating");
       const firstLine = brief.split(/\n|\.|—|·/)[0].trim();
       const title = firstLine.slice(0, 60) || "Untitled release";
 
-      // 2. create the project (private by default — owner publishes manually).
+      const ctx = await fetchCreatorContext(user.id, "Creator");
+      const { data: drafted, error } = await supabase.functions.invoke(
+        "draft-project-roadmap",
+        {
+          body: {
+            projectName: title,
+            totalBudget: 0,
+            tokenize_intent: !!ctx.token_mint,
+            release_type: "other",
+            brief: { what: brief },
+            specialistProfile: ctx,
+          },
+        },
+      );
+      if (error) throw error;
+      const milestones = ((drafted as any)?.milestones ?? []) as DraftedMilestone[];
+      if (!milestones.length) throw new Error("AI couldn't draft a roadmap — try a more detailed brief.");
+      return { title, milestones };
+    },
+    onSuccess: ({ title, milestones }) => {
+      setDraftedTitle(title);
+      setDraftedMilestones(milestones);
+      setPhase("preview");
+    },
+    onError: (e: any) => {
+      setPhase("brief");
+      toast.error(e?.message || "Could not draft roadmap.");
+    },
+  });
+
+  // ── save project (phase 2: persist after user approves the draft) ──
+  const saveProject = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Sign in first");
+      setCreating(true);
+      const brief = projectBrief.trim();
       const { data: created, error: insErr } = await supabase
         .from("projects")
         .insert({
-          title,
+          title: draftedTitle,
           description: brief,
           user_id: user.id,
           status: "active",
@@ -228,45 +274,25 @@ const StudioPage = () => {
         .single();
       if (insErr) throw insErr;
 
-      // 3. auto-draft milestones using the existing edge fn.
-      try {
-        const ctx = await fetchCreatorContext(user.id, "Creator");
-        const { data: drafted } = await supabase.functions.invoke(
-          "draft-project-roadmap",
-          {
-            body: {
-              projectName: title,
-              totalBudget: 0,
-              tokenize_intent: !!ctx.token_mint,
-              release_type: "other",
-              brief: { what: brief },
-              specialistProfile: ctx,
-            },
-          },
+      if (draftedMilestones.length) {
+        await (supabase as any).from("project_goals").insert(
+          draftedMilestones.map((m, i) => ({
+            project_id: created.id,
+            user_id: user.id,
+            title: m.title,
+            description: composeMilestoneDescription(m),
+            budget_amount: m.suggested_amount,
+            sort_order: i,
+            parent_id: null,
+          })),
         );
-        const milestones = ((drafted as any)?.milestones ?? []) as DraftedMilestone[];
-        if (milestones.length) {
-          await (supabase as any).from("project_goals").insert(
-            milestones.map((m, i) => ({
-              project_id: created.id,
-              user_id: user.id,
-              title: m.title,
-              description: composeMilestoneDescription(m),
-              budget_amount: m.suggested_amount,
-              sort_order: i,
-              parent_id: null,
-            })),
-          );
-        }
-      } catch {
-        /* non-fatal — owner can draft inside project. */
       }
       return created.id as string;
     },
     onSuccess: (projectId) => {
       setCreating(false);
       setStartProjectOpen(false);
-      setProjectBrief("");
+      resetDialog();
       queryClient.invalidateQueries({ queryKey: ["studio-projects", user?.id] });
       toast.success("Project created — review your roadmap.");
       navigate(`/projects/${projectId}`);
@@ -450,67 +476,175 @@ const StudioPage = () => {
       </Tabs>
 
       {/* Start a Project dialog */}
-      <Dialog open={startProjectOpen} onOpenChange={setStartProjectOpen}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <DialogTitle className="font-display text-2xl">
-              Start a project — describe what you want to make
-            </DialogTitle>
-            <DialogDescription>
-              We'll draft a roadmap you can edit before going live.
-            </DialogDescription>
-          </DialogHeader>
-          <Textarea
-            value={projectBrief}
-            onChange={(e) => setProjectBrief(e.target.value)}
-            placeholder="e.g. I want to record a 5-track EP, shoot a music video for the lead single, and run a campaign to hit 1,000 streams in the first week."
-            rows={6}
-            className="resize-none"
-          />
-          {draftProjects.length > 0 && (
-            <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-1.5 max-h-44 overflow-auto">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
-                Or make an existing draft public
-              </p>
-              {draftProjects.slice(0, 5).map((p) => (
-                <Link
-                  key={p.id}
-                  to={`/projects/${p.id}`}
+      <Dialog
+        open={startProjectOpen}
+        onOpenChange={(o) => {
+          setStartProjectOpen(o);
+          if (!o) resetDialog();
+        }}
+      >
+        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
+          {phase === "brief" && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-display text-2xl">
+                  Start a project — describe what you want to make
+                </DialogTitle>
+                <DialogDescription>
+                  We'll draft a roadmap you can review before going live.
+                </DialogDescription>
+              </DialogHeader>
+              <Textarea
+                value={projectBrief}
+                onChange={(e) => setProjectBrief(e.target.value)}
+                placeholder="e.g. I want to record a 5-track EP, shoot a music video for the lead single, and run a campaign to hit 1,000 streams in the first week."
+                rows={6}
+                className="resize-none"
+              />
+              {draftProjects.length > 0 && (
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-1.5 max-h-44 overflow-auto">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
+                    Or make an existing draft public
+                  </p>
+                  {draftProjects.slice(0, 5).map((p) => (
+                    <Link
+                      key={p.id}
+                      to={`/projects/${p.id}`}
+                      onClick={() => setStartProjectOpen(false)}
+                      className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-background text-xs"
+                    >
+                      <span className="truncate text-foreground">{p.title}</span>
+                      <span className="text-muted-foreground inline-flex items-center gap-1">
+                        Open <ArrowUpRight className="h-3 w-3" />
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+              <DialogFooter>
+                <Button
+                  variant="ghost"
                   onClick={() => setStartProjectOpen(false)}
-                  className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-background text-xs"
                 >
-                  <span className="truncate text-foreground">{p.title}</span>
-                  <span className="text-muted-foreground inline-flex items-center gap-1">
-                    Open <ArrowUpRight className="h-3 w-3" />
-                  </span>
-                </Link>
-              ))}
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => draftRoadmap.mutate()}
+                  disabled={projectBrief.trim().length < 8}
+                  className="gap-2"
+                >
+                  Generate My Roadmap <ArrowRight className="h-4 w-4" />
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {phase === "generating" && (
+            <div className="py-12 flex flex-col items-center text-center space-y-5">
+              <div className="relative">
+                <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl animate-pulse" />
+                <div className="relative h-16 w-16 rounded-full bg-foreground text-background flex items-center justify-center">
+                  <Sparkles className="h-7 w-7 animate-pulse" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="font-display text-xl text-foreground">
+                  Our AI is drafting your roadmap…
+                </h3>
+                <p className="text-sm text-muted-foreground max-w-sm">
+                  Reading your brief and shaping a custom release plan with milestones, marketing strategy, and target metrics. This takes about 10–20 seconds.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Composing milestones
+              </div>
             </div>
           )}
-          <DialogFooter>
-            <Button
-              variant="ghost"
-              onClick={() => setStartProjectOpen(false)}
-              disabled={creating}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => startProject.mutate()}
-              disabled={creating || projectBrief.trim().length < 8}
-              className="gap-2"
-            >
-              {creating ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Building your roadmap…
-                </>
-              ) : (
-                <>
-                  Generate My Roadmap <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </Button>
-          </DialogFooter>
+
+          {phase === "preview" && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-display text-2xl flex items-center gap-2">
+                  <Sparkles className="h-5 w-5" /> Your roadmap is ready
+                </DialogTitle>
+                <DialogDescription>
+                  <span className="font-medium text-foreground">{draftedTitle}</span>
+                  {" "}— {draftedMilestones.length} milestone
+                  {draftedMilestones.length === 1 ? "" : "s"}. You can refine everything inside the project.
+                </DialogDescription>
+              </DialogHeader>
+              <ol className="space-y-3">
+                {draftedMilestones.map((m, i) => (
+                  <li
+                    key={i}
+                    className="rounded-xl border border-border bg-card p-4 space-y-2"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="mt-0.5 h-6 w-6 shrink-0 rounded-full bg-foreground text-background text-xs font-semibold flex items-center justify-center">
+                        {i + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-foreground text-sm leading-snug">
+                          {m.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">
+                          {m.deliverables}
+                        </p>
+                      </div>
+                      <Badge variant="secondary" className="shrink-0 text-[10px]">
+                        ~{m.est_days}d
+                      </Badge>
+                    </div>
+                    {m.marketing_strategy && (
+                      <p className="text-xs text-foreground/80 pl-9">
+                        <span className="font-medium">Strategy — </span>
+                        {m.marketing_strategy}
+                      </p>
+                    )}
+                    {m.target_metric?.name && m.target_metric?.value && (
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400 pl-9">
+                        <span className="font-medium">Target — </span>
+                        {m.target_metric.name}: {m.target_metric.value}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ol>
+              <DialogFooter className="gap-2">
+                <Button
+                  variant="ghost"
+                  onClick={() => setPhase("brief")}
+                  disabled={creating}
+                >
+                  Back
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => draftRoadmap.mutate()}
+                  disabled={creating}
+                  className="gap-2"
+                >
+                  <Sparkles className="h-4 w-4" /> Regenerate
+                </Button>
+                <Button
+                  onClick={() => saveProject.mutate()}
+                  disabled={creating}
+                  className="gap-2"
+                >
+                  {creating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Creating project…
+                    </>
+                  ) : (
+                    <>
+                      Create project <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 
