@@ -291,7 +291,8 @@ const StudioPage = () => {
       if (!user) throw new Error("Sign in first");
       setCreating(true);
       const brief = projectBrief.trim();
-      const { data: created, error: insErr } = await supabase
+      const createdAfter = new Date().toISOString();
+      const { error: insErr } = await supabase
         .from("projects")
         .insert({
           title: draftedTitle,
@@ -301,9 +302,19 @@ const StudioPage = () => {
           project_type: "collaborative",
           cover_color: "#7c3aed",
         })
-        .select()
-        .single();
       if (insErr) throw insErr;
+
+      const { data: created, error: fetchErr } = await supabase
+        .from("projects")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("title", draftedTitle)
+        .gte("created_at", createdAfter)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (fetchErr) throw fetchErr;
+      if (!created?.id) throw new Error("Project was created, but could not be opened.");
 
       if (draftedMilestones.length) {
         const { error: goalsErr } = await (supabase as any)
