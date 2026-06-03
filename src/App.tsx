@@ -50,6 +50,7 @@ import PortfolioPage from "@/pages/PortfolioPage"; // v10.4: restored as a top-l
 import MarketplacePage from "@/pages/MarketplacePage";
 import CreatorsPage from "@/pages/CreatorsPage";
 import HomePage from "@/pages/HomePage";
+import HomeFeedPage from "@/pages/HomeFeedPage";
 import DiscoverPage from "@/pages/DiscoverPage";
 // ChartsPage removed — coin momentum table now lives inline in Discover → Creators tab.
 import TreasuryPage from "@/pages/TreasuryPage";
