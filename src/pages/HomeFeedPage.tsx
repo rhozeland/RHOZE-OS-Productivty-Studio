@@ -13,7 +13,7 @@
  *
  * Uses existing card styles + design tokens — no new visual language.
  */
-import { useMemo, useState } from "react";
+import { Suspense, lazy, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -31,6 +31,7 @@ import {
   Users as UsersIcon,
   ArrowRight,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,6 +41,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import RegionPromptBanner from "@/components/discover/RegionPromptBanner";
+import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
+import ConversationsMosaic from "@/components/hub/ConversationsMosaic";
+import CompactFlowFeed from "@/components/hub/CompactFlowFeed";
+import PostMenuButton from "@/components/PostMenuButton";
+import SubscribedFeed from "@/components/discover/SubscribedFeed";
+import TrendingArtistsLane from "@/components/discover/TrendingArtistsLane";
+import type { RegionMarket } from "@/lib/regions";
+
+const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
 
 type FeedKind =
   | "milestone"
