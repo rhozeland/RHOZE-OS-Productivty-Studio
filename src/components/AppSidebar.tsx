@@ -172,8 +172,7 @@ const AppSidebar = () => {
         )}
       </Link>
 
-      <SidebarContent className="px-2 pt-1 space-y-2">
-        <SidebarRoleSwitcher collapsed={collapsed} />
+      <SidebarContent className="px-2 pt-2 space-y-2">
         {renderGroup(navItems)}
         {personalItems.length > 0 && renderGroup(personalItems)}
       </SidebarContent>
