@@ -5,10 +5,13 @@ import {
   UserPlus,
   Home,
   Compass,
-  Trophy,
+  TrendingUp,
+  Users,
+  Gem,
+  Layers,
   ShieldCheck,
   Flame,
-  Users,
+  Sparkles,
 } from "lucide-react";
 
 import { motion } from "framer-motion";
@@ -16,6 +19,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useCreatorXP } from "@/hooks/useCreatorXP";
+import { useActiveRole } from "@/hooks/useActiveRole";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveNavLink } from "@/hooks/useNavLink";
 import {
@@ -23,26 +27,38 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
+import SidebarRoleSwitcher from "@/components/SidebarRoleSwitcher";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-// v11 Pillar 7 (May 30 2026 follow-up) — Messages removed from sidebar; the
-// Inbox lives in the top-right header (InboxDrawer). Sidebar = 4 destinations:
-// Discover · Feed · Connect · Creator Pass.
-const pillarItems = [
-  { icon: Compass, label: "Discover", path: "/discover" },
-  { icon: Home, label: "Feed", path: "/flow" },
-  { icon: Users, label: "Connect", path: "/market" },
-  { icon: Trophy, label: "Creator Pass", path: "/credits" },
+type NavSpec = {
+  icon: typeof Home;
+  label: string;
+  description: string;
+  path: string;
+  badgeKey?: string;
+};
+
+const FAN_NAV: NavSpec[] = [
+  { icon: Home, label: "Home", description: "Your feed and activity", path: "/flow" },
+  { icon: Compass, label: "Discover", description: "Find musicians and coins", path: "/discover" },
+  { icon: TrendingUp, label: "Charts", description: "Creator coins ranked live", path: "/charts" },
+  { icon: Users, label: "Network", description: "Listings and open calls", path: "/market" },
+  { icon: Gem, label: "Pass", description: "Your portfolio and badges", path: "/credits" },
 ];
 
-
+const MUSICIAN_NAV: NavSpec[] = [
+  { icon: Home, label: "Home", description: "Your feed and activity", path: "/flow" },
+  { icon: Layers, label: "Studio", description: "Projects and roadmaps", path: "/my-projects", badgeKey: "milestones_due" },
+  { icon: Compass, label: "Discover", description: "Find creators and coins", path: "/discover" },
+  { icon: Users, label: "Network", description: "Listings and inquiries", path: "/market", badgeKey: "pending_inquiries" },
+  { icon: Gem, label: "Pass", description: "Your coin and backers", path: "/credits" },
+];
 
 const AppSidebar = () => {
   const location = useLocation();
@@ -52,24 +68,28 @@ const AppSidebar = () => {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const { data: xp } = useCreatorXP();
+  const [role] = useActiveRole();
 
-  // (pending-inquiries badge moved into InboxDrawer along with the Conversations entry.)
+  const navItems = role === "creator" ? MUSICIAN_NAV : FAN_NAV;
+
+  // Placeholder badge counts — wired to zero by default; data sources can be
+  // attached without changing the UI shape.
   const badgeCounts: Record<string, number> = {};
-
 
   const handleNavClick = () => {
     if (isMobile) setOpenMobile(false);
   };
 
-  const personalItems = user && isAdmin
-    ? [{ icon: ShieldCheck, label: "Admin", path: "/admin" }]
+  const personalItems: NavSpec[] = user && isAdmin
+    ? [{ icon: ShieldCheck, label: "Admin", description: "Platform moderation", path: "/admin" }]
     : [];
 
-  const renderNavItem = (item: any) => {
+  const renderNavItem = (item: NavSpec) => {
     const { to, isActive: active, ariaCurrent } = resolveNavLink(
       { path: item.path },
       location.pathname,
     );
+    const badge = item.badgeKey ? badgeCounts[item.badgeKey] ?? 0 : 0;
 
     return (
       <SidebarMenuItem key={item.path + item.label} className={cn(collapsed && "flex justify-center")}>
@@ -77,28 +97,40 @@ const AppSidebar = () => {
           asChild
           tooltip={collapsed ? item.label : undefined}
           isActive={active}
-          className={cn(collapsed && "mx-auto")}
+          className={cn("h-auto", collapsed && "mx-auto")}
         >
           <Link
             to={to}
             aria-current={ariaCurrent}
             onClick={handleNavClick}
             className={cn(
-              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-250",
+              "flex items-start gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-250",
               active
                 ? "sidebar-active-gradient text-foreground shadow-sm"
                 : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-              collapsed && "justify-center px-2"
+              collapsed && "justify-center px-2 py-2.5 items-center",
             )}
           >
-            <item.icon className={cn(
-              "h-[18px] w-[18px] shrink-0 transition-colors duration-250",
-              active ? "text-primary" : ""
-            )} />
-            {!collapsed && <span className="flex-1">{item.label}</span>}
-            {!collapsed && item.badgeKey && badgeCounts[item.badgeKey] > 0 && (
-              <span className="ml-auto h-5 min-w-5 px-1.5 rounded-full bg-foreground text-background text-[10px] font-semibold flex items-center justify-center">
-                {badgeCounts[item.badgeKey]}
+            <item.icon
+              className={cn(
+                "h-[18px] w-[18px] shrink-0 transition-colors duration-250 mt-0.5",
+                active ? "text-primary" : "",
+                collapsed && "mt-0",
+              )}
+            />
+            {!collapsed && (
+              <span className="flex-1 min-w-0">
+                <span className="flex items-center justify-between gap-2">
+                  <span className="truncate">{item.label}</span>
+                  {badge > 0 && (
+                    <span className="h-5 min-w-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-semibold flex items-center justify-center">
+                      {badge}
+                    </span>
+                  )}
+                </span>
+                <span className="block text-[11px] font-normal text-muted-foreground/70 leading-tight mt-0.5 truncate">
+                  {item.description}
+                </span>
               </span>
             )}
           </Link>
@@ -107,13 +139,8 @@ const AppSidebar = () => {
     );
   };
 
-  const renderGroup = (items: any[], opts?: { label?: string }) => (
+  const renderGroup = (items: NavSpec[]) => (
     <SidebarGroup>
-      {!collapsed && opts?.label && (
-        <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-muted-foreground/60 px-3 mb-1">
-          {opts.label}
-        </SidebarGroupLabel>
-      )}
       <SidebarGroupContent>
         <SidebarMenu className="space-y-0.5">
           {items.map(renderNavItem)}
@@ -132,40 +159,50 @@ const AppSidebar = () => {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
-      <Link to="/discover" className={cn(
-        "flex h-16 items-center gap-3 px-4 border-b border-sidebar-border hover:opacity-80 transition-opacity",
-        collapsed && "justify-center px-2"
-      )}>
-        <img
-          src={rhozelandLogo}
-          alt="Rhozeland"
-          className="h-8 w-8 shrink-0 object-contain"
-        />
+      <Link
+        to="/discover"
+        className={cn(
+          "flex h-16 items-center gap-3 px-4 border-b border-sidebar-border hover:opacity-80 transition-opacity",
+          collapsed && "justify-center px-2",
+        )}
+      >
+        <img src={rhozelandLogo} alt="Rhozeland" className="h-8 w-8 shrink-0 object-contain" />
         {!collapsed && (
-          <span className="font-body text-lg font-bold tracking-tight text-foreground">
-            Rhozeland
-          </span>
+          <span className="font-body text-lg font-bold tracking-tight text-foreground">Rhozeland</span>
         )}
       </Link>
 
-      <SidebarContent className="px-2 pt-3 space-y-2">
-        {renderGroup(pillarItems)}
+      <SidebarContent className="px-2 pt-1 space-y-2">
+        <SidebarRoleSwitcher collapsed={collapsed} />
+        {renderGroup(navItems)}
         {personalItems.length > 0 && renderGroup(personalItems)}
       </SidebarContent>
 
       <SidebarFooter className="px-0 pb-3 mt-auto">
-        {/* ── Player HUD (bottom of sidebar) ── */}
         {user && (
-          <div className="px-2 border-t border-sidebar-border pt-3">
+          <div className="px-2 border-t border-sidebar-border pt-3 space-y-2">
+            {/* Subtle Creator Pass upgrade nudge — sits directly above the HUD */}
+            {!collapsed && (
+              <Link
+                to="/credits"
+                onClick={handleNavClick}
+                className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="flex-1 truncate">Creator Pass</span>
+                <span className="text-foreground/80">Upgrade →</span>
+              </Link>
+            )}
+
+            {/* Contributor / streak HUD */}
             <Link
               to="/credits"
               onClick={handleNavClick}
               className={cn(
                 "flex items-center gap-2 rounded-xl px-2 py-2 hover:bg-muted/40 transition-colors",
-                collapsed && "justify-center px-1"
+                collapsed && "justify-center px-1",
               )}
             >
-              {/* Gem orb */}
               <div
                 className="relative h-8 w-8 rounded-full overflow-hidden shrink-0"
                 style={{
@@ -184,10 +221,7 @@ const AppSidebar = () => {
                   }}
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span
-                    className="text-[10px] font-bold text-white"
-                    style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
-                  >
+                  <span className="text-[10px] font-bold text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}>
                     {level}
                   </span>
                 </div>
@@ -225,7 +259,6 @@ const AppSidebar = () => {
                 </div>
               )}
 
-              {/* Streak chip — only in expanded mode */}
               {!collapsed && streak > 0 && (
                 <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[hsl(var(--orange)/0.12)] border border-[hsl(var(--orange)/0.3)] shrink-0">
                   <Flame className="h-3 w-3" style={{ color: "hsl(var(--orange))" }} />
@@ -238,7 +271,6 @@ const AppSidebar = () => {
           </div>
         )}
 
-        {/* Guest auth links */}
         {!user && (
           <div className="px-2 border-t border-sidebar-border pt-3 space-y-1">
             <SidebarMenu className="space-y-0.5">
@@ -265,9 +297,7 @@ const AppSidebar = () => {
             </SidebarMenu>
           </div>
         )}
-
       </SidebarFooter>
-
     </Sidebar>
   );
 };
