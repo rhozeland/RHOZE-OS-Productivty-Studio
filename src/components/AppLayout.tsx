@@ -11,6 +11,7 @@ import WalletButton from "@/components/WalletButton";
 
 import WelcomeModal from "@/components/onboarding/WelcomeModal";
 import RoomsBottomNav from "@/components/RoomsBottomNav";
+import MobileBottomNav from "@/components/MobileBottomNav";
 import InboxDrawer from "@/components/InboxDrawer";
 // FlowLauncher (floating FAB) retired — Flow is now reachable via the Hub view toggle + HubFlowWidget.
 // DockBar retired in v7 (post phase-2) — navigation happens via the left side nav + global ⌘K search.
