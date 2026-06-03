@@ -8,6 +8,13 @@ export interface RecentWork {
   mime_type?: string | null;
 }
 
+export interface AssetRef {
+  label: string;
+  kind: "moodboard" | "reference_track" | "video" | "doc" | "image" | "contract" | "other";
+  note?: string;
+  url?: string;
+}
+
 export interface DraftedMilestone {
   title: string;
   deliverables: string;
@@ -15,6 +22,10 @@ export interface DraftedMilestone {
   est_days: number;
   marketing_strategy?: string;
   target_metric?: { name: string; value: string };
+  tasks?: string[];
+  timeline_window?: string;
+  asset_refs?: AssetRef[];
+  risks?: string;
 }
 
 export interface ProfileContext {
@@ -66,11 +77,29 @@ export const useAiRoadmapDraft = () => {
  */
 export const composeMilestoneDescription = (m: DraftedMilestone): string => {
   const parts: string[] = [m.deliverables.trim()];
+  if (m.timeline_window?.trim()) {
+    parts.push(`\n\n🗓 ${m.timeline_window.trim()}`);
+  }
+  if (m.tasks?.length) {
+    parts.push(`\n\nTasks\n${m.tasks.map((t) => `• ${t}`).join("\n")}`);
+  }
   if (m.marketing_strategy?.trim()) {
     parts.push(`\n\nStrategy — ${m.marketing_strategy.trim()}`);
   }
   if (m.target_metric?.name && m.target_metric?.value) {
     parts.push(`\nTarget — ${m.target_metric.name}: ${m.target_metric.value}`);
+  }
+  if (m.risks?.trim()) {
+    parts.push(`\n\n⚠ Risk — ${m.risks.trim()}`);
+  }
+  if (m.asset_refs?.length) {
+    const lines = m.asset_refs.map((a) => {
+      const url = a.url?.trim();
+      const link = url ? ` — ${url}` : " — (attach link)";
+      const note = a.note?.trim() ? ` · ${a.note.trim()}` : "";
+      return `• [${a.kind}] ${a.label}${link}${note}`;
+    });
+    parts.push(`\n\nReferences\n${lines.join("\n")}`);
   }
   return parts.join("");
 };
