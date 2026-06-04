@@ -6,12 +6,10 @@ import {
   Home,
   Compass,
   TrendingUp,
-  Users,
   Gem,
   Layers,
   ShieldCheck,
   Flame,
-  Sparkles,
 } from "lucide-react";
 
 import { motion } from "framer-motion";
