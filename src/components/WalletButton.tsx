@@ -102,10 +102,20 @@ const WalletButton = () => {
     );
   }
 
+  return <WalletConnectTrigger />;
+};
+
+const WalletConnectTrigger = () => {
+  const { setVisible } = useWalletModal();
   return (
-    <div className="wallet-adapter-button-wrapper [&_.wallet-adapter-button]:!bg-foreground/10 [&_.wallet-adapter-button]:!text-foreground/70 [&_.wallet-adapter-button]:!text-xs [&_.wallet-adapter-button]:!h-8 [&_.wallet-adapter-button]:!rounded-full [&_.wallet-adapter-button]:!backdrop-blur-sm [&_.wallet-adapter-button]:!border [&_.wallet-adapter-button]:!border-border [&_.wallet-adapter-button]:hover:!bg-foreground/15 [&_.wallet-adapter-button]:!transition-colors">
-      <WalletMultiButton />
-    </div>
+    <button
+      type="button"
+      onClick={() => setVisible(true)}
+      className="inline-flex items-center gap-2 h-8 px-3 rounded-full bg-foreground/10 text-foreground/70 text-xs backdrop-blur-sm border border-border hover:bg-foreground/15 transition-colors"
+    >
+      <WalletIcon className="h-3 w-3" />
+      <span>Wallet</span>
+    </button>
   );
 };
 
