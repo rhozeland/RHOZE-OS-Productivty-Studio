@@ -1387,50 +1387,51 @@ function StudioHeroBox({
         </motion.div>
       </AnimatePresence>
 
-      <div className="relative p-6 sm:p-8 text-white">
-        <p className="text-[10px] uppercase tracking-[0.22em] text-white/80 mb-2">
-          Workspace
-        </p>
-        <h1 className="font-display text-3xl sm:text-5xl leading-[1.05] tracking-tight drop-shadow-sm">
-          Studio
-        </h1>
+      <div className="relative px-5 py-4 sm:px-6 sm:py-5 text-white flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-[9px] uppercase tracking-[0.22em] text-white/80">
+            Workspace
+          </p>
+          <h1 className="font-display text-xl sm:text-2xl leading-tight tracking-tight drop-shadow-sm">
+            Studio
+          </h1>
+        </div>
 
-        <div className="mt-5 flex items-end justify-between gap-4">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={slide.id + "-stat"}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.35 }}
-              className="min-w-0"
-            >
-              <p className="text-[10px] uppercase tracking-[0.2em] text-white/80 font-semibold">
-                {slide.label}
-              </p>
-              <p className="font-display text-4xl sm:text-5xl font-bold tabular-nums leading-none mt-1">
-                {slide.value}
-              </p>
-              <p className="text-xs sm:text-sm text-white/85 mt-1.5">
-                {slide.hint}
-              </p>
-            </motion.div>
-          </AnimatePresence>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={slide.id + "-stat"}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.35 }}
+            className="min-w-0 text-right"
+          >
+            <p className="text-[9px] uppercase tracking-[0.2em] text-white/80 font-semibold">
+              {slide.label}
+            </p>
+            <p className="font-display text-2xl sm:text-3xl font-bold tabular-nums leading-none mt-0.5">
+              {slide.value}
+            </p>
+            <p className="text-[11px] text-white/85 mt-1 truncate">
+              {slide.hint}
+            </p>
+          </motion.div>
+        </AnimatePresence>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            {slides.map((s, i) => (
-              <button
-                key={s.id}
-                onClick={() => setIdx(i)}
-                aria-label={`Show ${s.label}`}
-                className={`h-1.5 rounded-full transition-all ${
-                  i === idx ? "w-6 bg-white" : "w-1.5 bg-white/50 hover:bg-white/70"
-                }`}
-              />
-            ))}
-          </div>
+        <div className="flex items-center gap-1 shrink-0">
+          {slides.map((s, i) => (
+            <button
+              key={s.id}
+              onClick={() => setIdx(i)}
+              aria-label={`Show ${s.label}`}
+              className={`h-1 rounded-full transition-all ${
+                i === idx ? "w-4 bg-white" : "w-1 bg-white/50 hover:bg-white/70"
+              }`}
+            />
+          ))}
         </div>
       </div>
+
     </motion.section>
   );
 }
