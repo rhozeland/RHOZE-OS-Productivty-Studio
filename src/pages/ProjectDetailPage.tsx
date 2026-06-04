@@ -354,6 +354,15 @@ const ProjectDetailPage = () => {
         />
       )}
 
+      {/* Owner-only: nudge to tokenize this release with Rhozeland's help.
+          Auto-hides once a coin has been linked via AttachCoinToProjectCard. */}
+      {canManageProject && (
+        <TokenizeProjectCta
+          projectTitle={project.title}
+          linkedTokenId={(project as any).linked_token_id ?? null}
+        />
+      )}
+
       <Tabs defaultValue="roadmap" className="w-full">
         <TabsList className="mb-6 w-full justify-start overflow-x-auto flex-nowrap shrink-0 h-auto gap-6 rounded-none border-b border-border bg-transparent p-0 text-muted-foreground">
           <TabsTrigger
