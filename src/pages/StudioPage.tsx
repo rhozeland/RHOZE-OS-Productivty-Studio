@@ -444,70 +444,37 @@ const StudioPage = () => {
         </p>
       </motion.header>
 
-      {/* Primary actions */}
-      <section className="space-y-3">
-        <button
-          type="button"
-          onClick={() => setStartProjectOpen(true)}
-          className="group w-full rounded-2xl bg-foreground text-background px-6 py-5 text-left shadow-md hover:opacity-95 transition-opacity"
-        >
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="font-display text-lg sm:text-xl font-semibold flex items-center gap-2">
-                <Sparkles className="h-4 w-4" /> Start a Project
-              </p>
-              <p className="text-xs opacity-80 mt-1">
-                Build in public. Fans follow your roadmap. Earn your coin.
-              </p>
-            </div>
-            <ArrowRight className="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-0.5" />
-          </div>
-        </button>
+      {/* Primary actions — gradient CTA carousel (matches /home) */}
+      <PrimaryCtaCarousel
+        onStartProject={() => setStartProjectOpen(true)}
+        onLaunchCoin={() => setCoinSheetOpen(true)}
+      />
 
-        {featuredPublic && (
-          <Link
-            to={`/release/${featuredPublic.public_slug}`}
-            className="block rounded-2xl border border-emerald-500/30 bg-emerald-500/5 px-5 py-3.5 hover:bg-emerald-500/10 transition-colors"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400 font-semibold mb-1">
-                  Live release
-                </p>
-                <p className="text-sm font-semibold text-foreground truncate">
-                  {featuredPublic.title} is live
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {supporterCounts?.[featuredPublic.id] ?? 0} supporter
-                  {(supporterCounts?.[featuredPublic.id] ?? 0) === 1 ? "" : "s"} ·{" "}
-                  {projectStats(featuredPublic).done} of {projectStats(featuredPublic).total} milestones
-                </p>
-              </div>
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground shrink-0">
-                View release <ArrowUpRight className="h-3.5 w-3.5" />
-              </span>
-            </div>
-          </Link>
-        )}
-
-        <button
-          type="button"
-          onClick={() => setCoinSheetOpen(true)}
-          className="group w-full rounded-2xl border border-border bg-background px-6 py-4 text-left hover:border-foreground/40 transition-colors"
+      {featuredPublic && (
+        <Link
+          to={`/release/${featuredPublic.public_slug}`}
+          className="block rounded-2xl border border-emerald-500/30 bg-emerald-500/5 px-5 py-3.5 hover:bg-emerald-500/10 transition-colors"
         >
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="font-display text-base sm:text-lg font-semibold text-foreground flex items-center gap-2">
-                <Coins className="h-4 w-4" /> Start a Coin
+              <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400 font-semibold mb-1">
+                Live release
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Already have proven work? Launch directly.
+              <p className="text-sm font-semibold text-foreground truncate">
+                {featuredPublic.title} is live
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {supporterCounts?.[featuredPublic.id] ?? 0} supporter
+                {(supporterCounts?.[featuredPublic.id] ?? 0) === 1 ? "" : "s"} ·{" "}
+                {projectStats(featuredPublic).done} of {projectStats(featuredPublic).total} milestones
               </p>
             </div>
-            <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground shrink-0">
+              View release <ArrowUpRight className="h-3.5 w-3.5" />
+            </span>
           </div>
-        </button>
-      </section>
+        </Link>
+      )}
 
       {/* Tabs + project cards */}
       <Tabs defaultValue="active" className="space-y-4">
