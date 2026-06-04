@@ -441,7 +441,7 @@ const StudioPage = () => {
           eyebrow="Build in public"
           title="Start a Project"
           subtitle="Plan a release. Let fans back the work."
-          gradient="linear-gradient(135deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 50%, hsl(38 92% 55%) 100%)"
+          gradient="linear-gradient(120deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 25%, hsl(38 92% 55%) 50%, hsl(292 84% 61%) 75%, hsl(330 85% 60%) 100%)"
         />
         <GradientCtaButton
           onClick={() => setCoinSheetOpen(true)}
@@ -449,7 +449,7 @@ const StudioPage = () => {
           eyebrow="Get backed"
           title="Launch a Coin"
           subtitle="Spin up your artist token on pump.fun."
-          gradient="linear-gradient(135deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 50%, hsl(170 80% 50%) 100%)"
+          gradient="linear-gradient(120deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 25%, hsl(170 80% 50%) 50%, hsl(260 80% 60%) 75%, hsl(200 90% 55%) 100%)"
         />
       </section>
 
@@ -1309,7 +1309,7 @@ function StudioHeroBox({
       value: totalActive,
       hint: `${totalActive === 1 ? "release" : "releases"} in motion`,
       gradient:
-        "linear-gradient(135deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 55%, hsl(38 92% 55%) 100%)",
+        "linear-gradient(120deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 25%, hsl(38 92% 55%) 50%, hsl(292 84% 61%) 75%, hsl(330 85% 60%) 100%)",
     },
     {
       id: "due",
@@ -1317,7 +1317,7 @@ function StudioHeroBox({
       value: milestonesDueThisWeek,
       hint: `${milestonesDueThisWeek === 1 ? "milestone" : "milestones"} on deck`,
       gradient:
-        "linear-gradient(135deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 50%, hsl(170 80% 50%) 100%)",
+        "linear-gradient(120deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 25%, hsl(170 80% 50%) 50%, hsl(260 80% 60%) 75%, hsl(200 90% 55%) 100%)",
     },
     {
       id: "drafts",
@@ -1325,7 +1325,7 @@ function StudioHeroBox({
       value: draftCount,
       hint: `${draftCount === 1 ? "idea" : "ideas"} cooking`,
       gradient:
-        "linear-gradient(135deg, hsl(20 90% 60%) 0%, hsl(340 85% 60%) 50%, hsl(280 80% 55%) 100%)",
+        "linear-gradient(120deg, hsl(20 90% 60%) 0%, hsl(340 85% 60%) 25%, hsl(280 80% 55%) 50%, hsl(340 85% 60%) 75%, hsl(20 90% 60%) 100%)",
     },
     {
       id: "completed",
@@ -1333,7 +1333,7 @@ function StudioHeroBox({
       value: completedCount,
       hint: `${completedCount === 1 ? "release" : "releases"} shipped`,
       gradient:
-        "linear-gradient(135deg, hsl(170 80% 45%) 0%, hsl(200 90% 55%) 50%, hsl(260 80% 60%) 100%)",
+        "linear-gradient(120deg, hsl(170 80% 45%) 0%, hsl(200 90% 55%) 25%, hsl(260 80% 60%) 50%, hsl(200 90% 55%) 75%, hsl(170 80% 45%) 100%)",
     },
   ];
 
@@ -1359,7 +1359,7 @@ function StudioHeroBox({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="absolute inset-0"
+          className="absolute inset-0 bg-[length:300%_300%] animate-gradient-shift"
           style={{ backgroundImage: slide.gradient }}
         >
           <motion.div
@@ -1458,7 +1458,7 @@ function GradientCtaButton({
     <button
       type="button"
       onClick={onClick}
-      className="group relative overflow-hidden rounded-2xl text-left text-white shadow-[0_20px_50px_-20px_hsl(var(--foreground)/0.4)] transition-transform hover:scale-[1.015] active:scale-[0.99]"
+      className="group relative overflow-hidden rounded-2xl text-left text-white shadow-[0_20px_50px_-20px_hsl(var(--foreground)/0.4)] transition-transform hover:scale-[1.015] active:scale-[0.99] bg-[length:300%_300%] animate-gradient-shift"
       style={{ backgroundImage: gradient }}
     >
       <motion.div
