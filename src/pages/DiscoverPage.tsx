@@ -241,8 +241,18 @@ const DiscoverPage = () => {
     FILTERS.find((f) => f.key === filter)?.label.toUpperCase() ?? "ALL";
   const activeSortLabel = SORTS.find((s) => s.key === sort)?.label ?? "Most Recent";
 
+  // Stats for right rail
+  const kindCounts = useMemo(() => {
+    const c = { hire: 0, call: 0, space: 0, event: 0 };
+    rows.forEach((r) => {
+      c[r.kind] = (c[r.kind] ?? 0) + 1;
+    });
+    return c;
+  }, [rows]);
+  const proCount = useMemo(() => rows.filter((r) => r.isPro).length, [rows]);
+
   return (
-    <div className="max-w-6xl mx-auto pb-20 space-y-8">
+    <div className="max-w-7xl mx-auto pb-20 space-y-8">
       {/* SECTION 1 — Hero banner (gradient slider box, matches /studio) */}
       <motion.section
         initial={{ opacity: 0, y: 8 }}
@@ -287,109 +297,209 @@ const DiscoverPage = () => {
             Find your next collaborator.
           </h1>
         </div>
-
       </motion.section>
 
-
-      {/* SECTION 2 — Coins in Motion */}
+      {/* SECTION 2 — Coins in Motion (full width) */}
       <CoinsInMotionLane />
 
-      {/* SECTION 3 — Filter pills + Sort */}
-      <section className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {FILTERS.map((f) => {
-            const active = filter === f.key;
-            return (
-              <button
-                key={f.key}
-                type="button"
-                onClick={() => {
-                  if (f.key === "flow") {
-                    navigate("/flow");
-                    return;
-                  }
-                  setFilter(f.key);
-                }}
-                className={cn(
-                  "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all",
-                  active
-                    ? "bg-foreground text-background border-foreground shadow-sm"
-                    : "bg-background/70 text-foreground/80 border-border hover:border-foreground/30 hover:text-foreground",
-                )}
-              >
-                {f.label}
-              </button>
-            );
-          })}
+      {/* SECTION 3 — Asymmetrical 2/3 + 1/3 split */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
+        {/* LEFT — main scrolling feed (2 cols) */}
+        <div className="lg:col-span-2 space-y-6 min-w-0">
+          {/* Filter pills + Sort */}
+          <section className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {FILTERS.map((f) => {
+                const active = filter === f.key;
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => {
+                      if (f.key === "flow") {
+                        navigate("/flow");
+                        return;
+                      }
+                      setFilter(f.key);
+                    }}
+                    className={cn(
+                      "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all",
+                      active
+                        ? "bg-foreground text-background border-foreground shadow-sm"
+                        : "bg-background/70 text-foreground/80 border-border hover:border-foreground/30 hover:text-foreground",
+                    )}
+                  >
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/70 px-3.5 py-1.5 text-xs font-medium text-foreground/80 hover:border-foreground/30 hover:text-foreground transition-colors">
+                  Sort: {activeSortLabel} <ChevronDown className="h-3 w-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[180px]">
+                {SORTS.map((s) => (
+                  <DropdownMenuItem
+                    key={s.key}
+                    onClick={() => setSort(s.key)}
+                    className="text-xs"
+                  >
+                    <Check
+                      className={cn(
+                        "h-3.5 w-3.5 mr-2",
+                        sort === s.key ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                    {s.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </section>
+
+          {/* Results header */}
+          <div className="flex items-center gap-3">
+            <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 font-semibold tabular-nums">
+              {rows.length} RESULTS · {activeFilterLabel}
+            </p>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          {/* Card grid */}
+          {isLoading && rows.length === 0 ? (
+            <div className="flex justify-center py-16">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : rows.length === 0 ? (
+            <div className="text-center py-16 text-sm text-muted-foreground">
+              Nothing here yet — try another filter.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {rows.map((row, idx) => {
+                const featured = (idx + 1) % 6 === 0;
+                return <DiscoverCard key={`${row.kind}-${row.id}`} row={row} featured={featured} />;
+              })}
+            </div>
+          )}
+
+          {!user && (
+            <section className="text-center pt-6 space-y-2">
+              <Link to="/auth">
+                <Button size="lg" className="rounded-full gap-1.5">
+                  Join the network <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <p className="text-[11px] text-muted-foreground">
+                Free to start. Built for independent creators.
+              </p>
+            </section>
+          )}
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/70 px-3.5 py-1.5 text-xs font-medium text-foreground/80 hover:border-foreground/30 hover:text-foreground transition-colors">
-              Sort: {activeSortLabel} <ChevronDown className="h-3 w-3" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-[180px]">
-            {SORTS.map((s) => (
-              <DropdownMenuItem
-                key={s.key}
-                onClick={() => setSort(s.key)}
-                className="text-xs"
-              >
-                <Check
-                  className={cn(
-                    "h-3.5 w-3.5 mr-2",
-                    sort === s.key ? "opacity-100" : "opacity-0",
-                  )}
-                />
-                {s.label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </section>
-
-      {/* SECTION 4 — Results header */}
-      <div className="flex items-center gap-3">
-        <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 font-semibold tabular-nums">
-          {rows.length} RESULTS · {activeFilterLabel}
-        </p>
-        <div className="h-px flex-1 bg-border" />
+        {/* RIGHT — sticky stats sidebar (1 col) */}
+        <aside className="lg:col-span-1 lg:sticky lg:top-20 space-y-4">
+          <DiscoverStatsRail
+            kindCounts={kindCounts}
+            total={rows.length}
+            proCount={proCount}
+          />
+        </aside>
       </div>
-
-      {/* SECTION 5 — Card grid */}
-      {isLoading && rows.length === 0 ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        </div>
-      ) : rows.length === 0 ? (
-        <div className="text-center py-16 text-sm text-muted-foreground">
-          Nothing here yet — try another filter.
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {rows.map((row, idx) => {
-            // Every 6th card featured (idx 5, 11, 17 …)
-            const featured = (idx + 1) % 6 === 0;
-            return <DiscoverCard key={`${row.kind}-${row.id}`} row={row} featured={featured} />;
-          })}
-        </div>
-      )}
-
-      {!user && (
-        <section className="text-center pt-6 space-y-2">
-          <Link to="/auth">
-            <Button size="lg" className="rounded-full gap-1.5">
-              Join the network <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-          <p className="text-[11px] text-muted-foreground">
-            Free to start. Built for independent creators.
-          </p>
-        </section>
-      )}
     </div>
   );
 };
+
+// ─────────────────────────────────────────────────────────────────────
+// DiscoverStatsRail — sticky right column: live counts + composition bar
+// ─────────────────────────────────────────────────────────────────────
+function DiscoverStatsRail({
+  kindCounts,
+  total,
+  proCount,
+}: {
+  kindCounts: { hire: number; call: number; space: number; event: number };
+  total: number;
+  proCount: number;
+}) {
+  const rows: { key: keyof typeof kindCounts; label: string; color: string }[] = [
+    { key: "hire", label: "Creators", color: "hsl(330 80% 65%)" },
+    { key: "call", label: "Opportunities", color: "hsl(265 75% 65%)" },
+    { key: "space", label: "Spaces", color: "hsl(170 70% 50%)" },
+    { key: "event", label: "Events", color: "hsl(38 92% 60%)" },
+  ];
+  const max = Math.max(1, ...rows.map((r) => kindCounts[r.key]));
+
+  return (
+    <>
+      <div className="rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm p-5">
+        <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 font-semibold mb-3">
+          Live on Discover
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <p className="font-display text-2xl font-bold tabular-nums leading-none">
+              {total}
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-1">total results</p>
+          </div>
+          <div>
+            <p className="font-display text-2xl font-bold tabular-nums leading-none">
+              {proCount}
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-1">Pro creators</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm p-5">
+        <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 font-semibold mb-3">
+          By category
+        </p>
+        <div className="space-y-2.5">
+          {rows.map((r) => {
+            const val = kindCounts[r.key];
+            const pct = (val / max) * 100;
+            return (
+              <div key={r.key}>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="text-foreground/80">{r.label}</span>
+                  <span className="tabular-nums text-muted-foreground">{val}</span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-muted/60 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-[width] duration-500"
+                    style={{ width: `${pct}%`, backgroundColor: r.color }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm p-5">
+        <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 font-semibold mb-3">
+          Quick links
+        </p>
+        <div className="flex flex-col gap-1.5 text-sm">
+          <Link to="/flow" className="text-foreground/80 hover:text-foreground transition-colors">
+            → Open Flow
+          </Link>
+          <Link to="/credits" className="text-foreground/80 hover:text-foreground transition-colors">
+            → Creator Pass
+          </Link>
+          <Link to="/messages" className="text-foreground/80 hover:text-foreground transition-colors">
+            → Messages
+          </Link>
+        </div>
+      </div>
+    </>
+  );
+}
 
 export default DiscoverPage;
