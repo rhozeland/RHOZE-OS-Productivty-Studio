@@ -5,7 +5,7 @@ import {
   UserPlus,
   Home,
   Compass,
-  TrendingUp,
+  Coins,
   Gem,
   Layers,
   ShieldCheck,
@@ -45,7 +45,7 @@ type NavSpec = {
 const FAN_NAV: NavSpec[] = [
   { icon: Home, label: "Home", description: "", path: "/home" },
   { icon: Compass, label: "Discover", description: "", path: "/discover" },
-  { icon: TrendingUp, label: "Charts", description: "", path: "/charts" },
+  { icon: Coins, label: "Coins", description: "", path: "/charts" },
   { icon: Gem, label: "Pass", description: "", path: "/credits" },
 ];
 
@@ -53,6 +53,7 @@ const MUSICIAN_NAV: NavSpec[] = [
   { icon: Home, label: "Home", description: "", path: "/home" },
   { icon: Layers, label: "Studio", description: "", path: "/my-projects", badgeKey: "milestones_due" },
   { icon: Compass, label: "Discover", description: "", path: "/discover" },
+  { icon: Coins, label: "Coins", description: "", path: "/charts" },
   { icon: Gem, label: "Pass", description: "", path: "/credits" },
 ];
 
