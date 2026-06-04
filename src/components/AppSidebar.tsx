@@ -6,12 +6,10 @@ import {
   Home,
   Compass,
   TrendingUp,
-  Users,
   Gem,
   Layers,
   ShieldCheck,
   Flame,
-  Sparkles,
 } from "lucide-react";
 
 import { motion } from "framer-motion";
@@ -45,19 +43,17 @@ type NavSpec = {
 };
 
 const FAN_NAV: NavSpec[] = [
-  { icon: Home, label: "Home", description: "Your feed and activity", path: "/home" },
-  { icon: Compass, label: "Discover", description: "Find musicians and coins", path: "/discover" },
-  { icon: TrendingUp, label: "Charts", description: "Creator coins ranked live", path: "/charts" },
-  { icon: Users, label: "Network", description: "Listings and open calls", path: "/market" },
-  { icon: Gem, label: "Pass", description: "Your portfolio and badges", path: "/credits" },
+  { icon: Home, label: "Home", description: "", path: "/home" },
+  { icon: Compass, label: "Discover", description: "", path: "/discover" },
+  { icon: TrendingUp, label: "Charts", description: "", path: "/charts" },
+  { icon: Gem, label: "Pass", description: "", path: "/credits" },
 ];
 
 const MUSICIAN_NAV: NavSpec[] = [
-  { icon: Home, label: "Home", description: "Your feed and activity", path: "/home" },
-  { icon: Layers, label: "Studio", description: "Projects and roadmaps", path: "/my-projects", badgeKey: "milestones_due" },
-  { icon: Compass, label: "Discover", description: "Find creators and coins", path: "/discover" },
-  { icon: Users, label: "Network", description: "Listings and inquiries", path: "/market", badgeKey: "pending_inquiries" },
-  { icon: Gem, label: "Pass", description: "Your coin and backers", path: "/credits" },
+  { icon: Home, label: "Home", description: "", path: "/home" },
+  { icon: Layers, label: "Studio", description: "", path: "/my-projects", badgeKey: "milestones_due" },
+  { icon: Compass, label: "Discover", description: "", path: "/discover" },
+  { icon: Gem, label: "Pass", description: "", path: "/credits" },
 ];
 
 const AppSidebar = () => {
@@ -128,9 +124,6 @@ const AppSidebar = () => {
                     </span>
                   )}
                 </span>
-                <span className="block text-[11px] font-normal text-muted-foreground/70 leading-tight mt-0.5 truncate">
-                  {item.description}
-                </span>
               </span>
             )}
           </Link>
@@ -180,18 +173,6 @@ const AppSidebar = () => {
       <SidebarFooter className="px-0 pb-3 mt-auto">
         {user && (
           <div className="px-2 border-t border-sidebar-border pt-3 space-y-2">
-            {/* Subtle Creator Pass upgrade nudge — sits directly above the HUD */}
-            {!collapsed && (
-              <Link
-                to="/credits"
-                onClick={handleNavClick}
-                className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
-              >
-                <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
-                <span className="flex-1 truncate">Creator Pass</span>
-                <span className="text-foreground/80">Upgrade →</span>
-              </Link>
-            )}
 
             {/* Contributor / streak HUD */}
             <Link

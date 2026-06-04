@@ -31,6 +31,7 @@ import ArchetypeChip from "@/components/profile/ArchetypeChip";
 import TokenDiscoveryChip from "@/components/profile/TokenDiscoveryChip";
 import NoteBubble from "@/components/notes/NoteBubble";
 import SaveButton from "@/components/saved/SaveButton";
+import MusicianOwnerCTAs from "@/components/profile/MusicianOwnerCTAs";
 import { getRegion } from "@/lib/regions";
 import { cn } from "@/lib/utils";
 import { archetypeBannerGradient } from "@/lib/archetypes";
@@ -297,7 +298,12 @@ export const ProfileGemHeader = ({
         )}
 
         {/* Primary CTAs */}
-        {!isOwnProfile && authedUser && (
+        {isOwnProfile ? (
+          <MusicianOwnerCTAs
+            userId={id}
+            hasLiveCoin={!!p.token_mint_address}
+          />
+        ) : authedUser ? (
           <div className="mt-5 flex flex-wrap items-center gap-2">
             <Button
               size="lg" onClick={onSupport}
@@ -313,7 +319,7 @@ export const ProfileGemHeader = ({
               Share card
             </Button>
           </div>
-        )}
+        ) : null}
 
         {/* ─── Integrated stats strip ─── */}
         <div className="mt-5 rounded-2xl border border-border/60 bg-gradient-to-br from-muted/40 via-card/60 to-muted/30 p-4 sm:p-5">

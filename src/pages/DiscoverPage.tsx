@@ -9,7 +9,7 @@
  *   5. Card grid (2-col desktop, 1 mobile, every 6th featured full-width)
  */
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,7 +30,7 @@ import {
 } from "@/components/connect/useConnectRows";
 import { useAuth } from "@/contexts/AuthContext";
 
-type FilterKey = "all" | "creators" | "calls" | "spaces" | "for-you";
+type FilterKey = "all" | "creators" | "calls" | "spaces" | "for-you" | "flow";
 type SortKey = "recent" | "momentum" | "supporters";
 
 const FILTERS: { key: FilterKey; label: string }[] = [
@@ -39,6 +39,7 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "calls", label: "Opportunities" },
   { key: "spaces", label: "Spaces" }, // spaces + events combined
   { key: "for-you", label: "For You" },
+  { key: "flow", label: "Flow" },
 ];
 
 const SORTS: { key: SortKey; label: string }[] = [
@@ -228,6 +229,7 @@ const DiscoverCard = ({ row, featured }: CardProps) => {
 
 const DiscoverPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [filter, setFilter] = useState<FilterKey>("all");
   const [sort, setSort] = useState<SortKey>("recent");
 
@@ -316,7 +318,13 @@ const DiscoverPage = () => {
               <button
                 key={f.key}
                 type="button"
-                onClick={() => setFilter(f.key)}
+                onClick={() => {
+                  if (f.key === "flow") {
+                    navigate("/flow");
+                    return;
+                  }
+                  setFilter(f.key);
+                }}
                 className={cn(
                   "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all",
                   active
