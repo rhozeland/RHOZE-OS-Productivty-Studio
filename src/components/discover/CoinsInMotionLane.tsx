@@ -33,12 +33,11 @@ const useTokenedProfiles = () =>
     staleTime: 5 * 60_000,
     queryFn: async () => {
       const { data } = await supabase
-        .from("profiles")
+        .from("creator_tokens_public" as any)
         .select("id, display_name, username, avatar_url, token_mint_address, token_ticker, archetype")
-        .not("token_mint_address", "is", null)
-        .eq("show_token_chip", true)
         .limit(24);
       return ((data ?? []) as any[]).filter((p) => !!p.token_mint_address) as TokenProfile[];
+
     },
   });
 

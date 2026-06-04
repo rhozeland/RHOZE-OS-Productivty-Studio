@@ -1019,6 +1019,13 @@ export type Database = {
             foreignKeyName: "creator_subscription_tiers_creator_id_fkey"
             columns: ["creator_id"]
             isOneToOne: false
+            referencedRelation: "creator_tokens_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_subscription_tiers_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1075,7 +1082,21 @@ export type Database = {
             foreignKeyName: "creator_subscriptions_creator_id_fkey"
             columns: ["creator_id"]
             isOneToOne: false
+            referencedRelation: "creator_tokens_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_subscriptions_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_subscriptions_subscriber_id_fkey"
+            columns: ["subscriber_id"]
+            isOneToOne: false
+            referencedRelation: "creator_tokens_public"
             referencedColumns: ["id"]
           },
           {
@@ -1134,6 +1155,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "creator_tips_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creator_tokens_public"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "creator_tips_creator_id_fkey"
             columns: ["creator_id"]
@@ -1662,6 +1690,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "event_attendance_claims_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_tokens_public"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "event_attendance_claims_profile_id_fkey"
             columns: ["profile_id"]
@@ -5443,6 +5478,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      creator_tokens_public: {
+        Row: {
+          archetype: string | null
+          avatar_url: string | null
+          bio: string | null
+          display_name: string | null
+          id: string | null
+          is_public: boolean | null
+          show_token_chip: boolean | null
+          token_mint_address: string | null
+          token_ticker: string | null
+          user_id: string | null
+          username: string | null
+          verification_status: string | null
+        }
+        Insert: {
+          archetype?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          display_name?: string | null
+          id?: string | null
+          is_public?: boolean | null
+          show_token_chip?: boolean | null
+          token_mint_address?: string | null
+          token_ticker?: string | null
+          user_id?: string | null
+          username?: string | null
+          verification_status?: string | null
+        }
+        Update: {
+          archetype?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          display_name?: string | null
+          id?: string | null
+          is_public?: boolean | null
+          show_token_chip?: boolean | null
+          token_mint_address?: string | null
+          token_ticker?: string | null
+          user_id?: string | null
+          username?: string | null
+          verification_status?: string | null
+        }
+        Relationships: []
       }
       profiles_public: {
         Row: {
