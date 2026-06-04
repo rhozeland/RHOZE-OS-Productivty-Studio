@@ -76,33 +76,6 @@ const CATEGORY_STYLE: Record<
   },
 };
 
-// Lightweight deterministic momentum / supporter stand-ins so cards feel
-// alive even before we hook up real per-entity stats. Stable per id.
-const seededInt = (seed: string, max: number, offset = 0) => {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
-  return Math.abs(h + offset) % max;
-};
-
-const SupporterStack = ({ count, seed }: { count: number; seed: string }) => {
-  const dots = Math.min(3, count);
-  return (
-    <div className="flex -space-x-1.5">
-      {Array.from({ length: dots }).map((_, i) => {
-        const hue = seededInt(seed, 360, i * 47);
-        return (
-          <span
-            key={i}
-            className="h-5 w-5 rounded-full border border-background"
-            style={{ background: `hsl(${hue} 70% 65%)` }}
-            aria-hidden
-          />
-        );
-      })}
-    </div>
-  );
-};
-
 interface CardProps {
   row: ConnectRow;
   featured?: boolean;
