@@ -253,11 +253,8 @@ const DiscoverPage = () => {
     if (enableEvent) collected.push(...(event.data ?? []));
 
     // Sort. "Most Recent" keeps source order (each hook already orders newest first).
-    if (sort === "momentum") {
-      collected.sort((a, b) => seededInt(b.id, 40) - seededInt(a.id, 40));
-    } else if (sort === "supporters") {
-      collected.sort((a, b) => seededInt(b.id, 240, 7) - seededInt(a.id, 240, 7));
-    }
+    // Other sorts currently fall back to source order until real per-row signals
+    // are wired in via an RPC (RLS blocks direct counts).
 
     // For You: Pro first, then everyone.
     if (filter === "for-you") {
