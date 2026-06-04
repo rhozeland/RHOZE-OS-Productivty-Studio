@@ -31,7 +31,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 
 type FilterKey = "all" | "creators" | "calls" | "spaces" | "for-you" | "flow";
-type SortKey = "recent" | "momentum" | "supporters";
+type SortKey = "recent";
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "all", label: "All" },
@@ -44,8 +44,6 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 
 const SORTS: { key: SortKey; label: string }[] = [
   { key: "recent", label: "Most Recent" },
-  { key: "momentum", label: "Momentum" },
-  { key: "supporters", label: "Supporters" },
 ];
 
 const CATEGORY_STYLE: Record<
