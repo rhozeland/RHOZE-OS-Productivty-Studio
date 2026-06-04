@@ -72,7 +72,7 @@ const CoinCard = ({ profile }: { profile: TokenProfile }) => {
   const change = metrics?.change24h ?? null;
   const up = change != null && change >= 0;
   const pumpUrl = `https://pump.fun/coin/${profile.token_mint_address}`;
-  const profileHref = profile.username ? `/u/${profile.username}` : `/profiles/${profile.id}`;
+  const profileHref = `/profiles/${profile.id}`;
 
   return (
     <Link
