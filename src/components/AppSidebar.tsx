@@ -32,6 +32,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import SidebarRoleSwitcher from "@/components/SidebarRoleSwitcher";
+import InboxDrawer from "@/components/InboxDrawer";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
 type NavSpec = {
