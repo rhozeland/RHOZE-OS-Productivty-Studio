@@ -468,14 +468,25 @@ const ChartsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-3 pb-12 space-y-8">
       <section>
-        <div className="mb-4">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-0.5">
-            Live from pump.fun
-          </p>
-          <h2 className="font-display text-lg sm:text-xl font-semibold text-foreground flex items-center gap-2">
-            <LineChart className="h-5 w-5 text-primary" />
-            Charts
-          </h2>
+        <div className="relative overflow-hidden rounded-2xl mb-5 shadow-[0_20px_50px_-20px_hsl(var(--foreground)/0.4)]">
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-[length:300%_300%] animate-gradient-shift"
+            style={{
+              backgroundImage:
+                "linear-gradient(120deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 25%, hsl(38 92% 55%) 50%, hsl(292 84% 61%) 75%, hsl(330 85% 60%) 100%)",
+            }}
+          />
+          <div className="absolute inset-0 opacity-50 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle at 20% 30%, hsl(0 0% 100% / 0.25), transparent 40%), radial-gradient(circle at 80% 70%, hsl(0 0% 100% / 0.18), transparent 45%)" }} />
+          <div className="relative px-5 py-4 sm:px-6 sm:py-5 text-white">
+            <p className="text-[9px] uppercase tracking-[0.22em] text-white/80">
+              Live from pump.fun
+            </p>
+            <h1 className="font-display text-xl sm:text-2xl font-bold leading-tight tracking-tight drop-shadow-sm flex items-center gap-2 mt-0.5">
+              <LineChart className="h-5 w-5" />
+              Charts
+            </h1>
+          </div>
         </div>
         <div className="relative rounded-3xl overflow-hidden border border-border/60 bg-card/40 p-4 md:p-6">
           {body}
