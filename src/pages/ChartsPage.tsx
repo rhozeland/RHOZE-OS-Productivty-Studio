@@ -482,8 +482,7 @@ const ChartsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
             <p className="text-[9px] uppercase tracking-[0.22em] text-white/80">
               Live from pump.fun
             </p>
-            <h1 className="font-display text-xl sm:text-2xl font-bold leading-tight tracking-tight drop-shadow-sm flex items-center gap-2 mt-0.5">
-              <LineChart className="h-5 w-5" />
+            <h1 className="font-display text-xl sm:text-2xl font-bold leading-tight tracking-tight drop-shadow-sm mt-0.5">
               Charts
             </h1>
           </div>
