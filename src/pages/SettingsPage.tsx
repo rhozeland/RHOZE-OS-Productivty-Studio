@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useArtistVerification } from "@/hooks/useArtistVerification";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import LogoCustomizer from "@/components/onboarding/LogoCustomizer";
@@ -40,7 +40,7 @@ import { RolePicker } from "@/components/profile/RolePicker";
 import ArchetypePicker from "@/components/profile/ArchetypePicker";
 import type { Archetype } from "@/lib/archetypes";
 import { useActiveRole, ROLE_HOME, type ActiveRole } from "@/hooks/useActiveRole";
-import { useNavigate } from "react-router-dom";
+
 
 /** Broad creator categories — replaces the granular role/specialty grid. */
 const CATEGORY_OPTIONS = [
