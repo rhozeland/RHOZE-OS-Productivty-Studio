@@ -353,7 +353,7 @@ const App = () => (
                 <Route path="/launchpad/:id" element={<Navigate to="/discover" replace />} />
                 <Route path="/coin/:slug" element={<Navigate to="/discover" replace />} />
                 
-                <Route path="/smartboards" element={<Navigate to="/projects" replace />} />
+                <Route path="/smartboards" element={<SmartboardsPage />} />
                 <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
                 <Route path="/drop-rooms" element={<Navigate to="/projects" replace />} />
                 <Route path="/drop-rooms/:id" element={<DropRoomDetailPage />} />
