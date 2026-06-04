@@ -197,23 +197,28 @@ const DiscoverCard = ({ row, featured }: CardProps) => {
               {row.category}
             </span>
           )}
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
-            ↑ {momentum}% this week
-          </span>
+          {row.priceLabel && (
+            <span className="inline-flex items-center rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[10px] font-medium text-foreground tabular-nums">
+              {row.priceLabel}
+            </span>
+          )}
+          {row.isPro && (
+            <span className="inline-flex items-center rounded-full bg-foreground/90 text-background px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+              Verified Pro
+            </span>
+          )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <SupporterStack count={supporters} seed={row.id} />
-          <span className="text-xs text-foreground tabular-nums">
-            <Users className="inline h-3 w-3 mr-0.5 -mt-0.5" />
-            {supporters} supporters
-          </span>
-        </div>
+        {row.subtitle && (
+          <p className="text-xs text-muted-foreground line-clamp-2">
+            {row.subtitle}
+          </p>
+        )}
 
-        <p className="text-[11px] text-muted-foreground">
-          {backersThisWeek} {backersThisWeek === 1 ? "person" : "people"} backed this week ·{" "}
-          <span className="text-foreground/80">You'd be backer #{nextBackerNum}</span>
-        </p>
+        <Button size="sm" variant="secondary" className="w-full rounded-full gap-1.5">
+          {style.cta} <ArrowRight className="h-3.5 w-3.5" />
+        </Button>
+      </div>
 
         <Button size="sm" variant="secondary" className="w-full rounded-full gap-1.5">
           {style.cta} <ArrowRight className="h-3.5 w-3.5" />
