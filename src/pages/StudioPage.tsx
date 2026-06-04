@@ -1458,7 +1458,7 @@ function GradientCtaButton({
     <button
       type="button"
       onClick={onClick}
-      className="group relative overflow-hidden rounded-2xl text-left text-white shadow-[0_20px_50px_-20px_hsl(var(--foreground)/0.4)] transition-transform hover:scale-[1.015] active:scale-[0.99]"
+      className="group relative overflow-hidden rounded-2xl text-left text-white shadow-[0_20px_50px_-20px_hsl(var(--foreground)/0.4)] transition-transform hover:scale-[1.015] active:scale-[0.99] bg-[length:300%_300%] animate-gradient-shift"
       style={{ backgroundImage: gradient }}
     >
       <motion.div
