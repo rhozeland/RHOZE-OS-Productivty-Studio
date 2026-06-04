@@ -112,10 +112,6 @@ interface CardProps {
 
 const DiscoverCard = ({ row, featured }: CardProps) => {
   const style = CATEGORY_STYLE[row.kind];
-  const momentum = 5 + seededInt(row.id, 40); // 5–44%
-  const supporters = 12 + seededInt(row.id, 240, 7); // 12–251
-  const backersThisWeek = 1 + seededInt(row.id, 18, 13); // 1–18
-  const nextBackerNum = supporters + 1;
   const initials = (row.title || "?")
     .split(/\s+/)
     .map((s) => s[0])
