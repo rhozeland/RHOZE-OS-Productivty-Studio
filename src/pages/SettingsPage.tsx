@@ -39,6 +39,8 @@ import { REGIONS } from "@/lib/regions";
 import { RolePicker } from "@/components/profile/RolePicker";
 import ArchetypePicker from "@/components/profile/ArchetypePicker";
 import type { Archetype } from "@/lib/archetypes";
+import { useActiveRole, ROLE_HOME, type ActiveRole } from "@/hooks/useActiveRole";
+import { useNavigate } from "react-router-dom";
 
 /** Broad creator categories — replaces the granular role/specialty grid. */
 const CATEGORY_OPTIONS = [
