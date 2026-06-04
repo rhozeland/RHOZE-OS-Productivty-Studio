@@ -229,6 +229,7 @@ const DiscoverCard = ({ row, featured }: CardProps) => {
 
 const DiscoverPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [filter, setFilter] = useState<FilterKey>("all");
   const [sort, setSort] = useState<SortKey>("recent");
 
