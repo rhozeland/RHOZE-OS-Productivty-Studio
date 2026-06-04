@@ -51,6 +51,17 @@ const SmartboardsPage = () => {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<TabKey>("private");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Auto-open the Create dialog when arriving with ?new=1
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      setOpen(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete("new");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // All boards owned by user (private + public mixed)
   const { data: ownedBoards } = useQuery({
