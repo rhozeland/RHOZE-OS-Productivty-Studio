@@ -45,19 +45,17 @@ type NavSpec = {
 };
 
 const FAN_NAV: NavSpec[] = [
-  { icon: Home, label: "Home", description: "Your feed and activity", path: "/home" },
-  { icon: Compass, label: "Discover", description: "Find musicians and coins", path: "/discover" },
-  { icon: TrendingUp, label: "Charts", description: "Creator coins ranked live", path: "/charts" },
-  { icon: Users, label: "Network", description: "Listings and open calls", path: "/market" },
-  { icon: Gem, label: "Pass", description: "Your portfolio and badges", path: "/credits" },
+  { icon: Home, label: "Home", description: "", path: "/home" },
+  { icon: Compass, label: "Discover", description: "", path: "/discover" },
+  { icon: TrendingUp, label: "Charts", description: "", path: "/charts" },
+  { icon: Gem, label: "Pass", description: "", path: "/credits" },
 ];
 
 const MUSICIAN_NAV: NavSpec[] = [
-  { icon: Home, label: "Home", description: "Your feed and activity", path: "/home" },
-  { icon: Layers, label: "Studio", description: "Projects and roadmaps", path: "/my-projects", badgeKey: "milestones_due" },
-  { icon: Compass, label: "Discover", description: "Find creators and coins", path: "/discover" },
-  { icon: Users, label: "Network", description: "Listings and inquiries", path: "/market", badgeKey: "pending_inquiries" },
-  { icon: Gem, label: "Pass", description: "Your coin and backers", path: "/credits" },
+  { icon: Home, label: "Home", description: "", path: "/home" },
+  { icon: Layers, label: "Studio", description: "", path: "/my-projects", badgeKey: "milestones_due" },
+  { icon: Compass, label: "Discover", description: "", path: "/discover" },
+  { icon: Gem, label: "Pass", description: "", path: "/credits" },
 ];
 
 const AppSidebar = () => {
