@@ -65,6 +65,7 @@ export const AiRoadmapDraftButton = ({
 
       if (!milestones.length) throw new Error("No milestones returned");
 
+      const dates = chainMilestoneDates(milestones);
       const rows = milestones.map((m, i) => ({
         project_id: projectId,
         user_id: user!.id,
@@ -73,6 +74,9 @@ export const AiRoadmapDraftButton = ({
         budget_amount: m.suggested_amount,
         sort_order: existingGoalCount + i,
         parent_id: null,
+        stage_date_start: dates[i].stage_date_start,
+        stage_date_end: dates[i].stage_date_end,
+        due_date: dates[i].due_date,
       })) as any;
       const { error } = await supabase.from("project_goals" as any).insert(rows);
       if (error) throw error;
