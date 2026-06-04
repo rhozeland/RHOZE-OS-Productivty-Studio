@@ -61,7 +61,7 @@ const HomeFeedPage = () => {
       Icon: Coins,
       gradient:
         "linear-gradient(135deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 50%, hsl(170 80% 50%) 100%)",
-      href: "/why-coin",
+      href: "/studio?coin=1",
     },
   ];
 
