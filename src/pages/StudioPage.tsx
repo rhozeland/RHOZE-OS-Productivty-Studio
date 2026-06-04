@@ -425,30 +425,34 @@ const StudioPage = () => {
   // ── render ─────────────────────────────────────────────────────────
   return (
     <div className="max-w-5xl mx-auto pb-20 space-y-8">
-      {/* Header */}
-      <motion.header
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="pt-2"
-      >
-        <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 mb-2">
-          Workspace
-        </p>
-        <h1 className="font-display text-3xl sm:text-4xl leading-[1.05] text-foreground tracking-tight">
-          Studio
-        </h1>
-        <p className="text-sm text-muted-foreground mt-2">
-          {totalActive} active {totalActive === 1 ? "project" : "projects"} ·{" "}
-          {milestonesDueThisWeek} milestone{milestonesDueThisWeek === 1 ? "" : "s"} due this week
-        </p>
-      </motion.header>
-
-      {/* Primary actions — gradient CTA carousel (matches /home) */}
-      <PrimaryCtaCarousel
-        onStartProject={() => setStartProjectOpen(true)}
-        onLaunchCoin={() => setCoinSheetOpen(true)}
+      {/* Header — animated gradient slider box */}
+      <StudioHeroBox
+        totalActive={totalActive}
+        milestonesDueThisWeek={milestonesDueThisWeek}
+        draftCount={draftProjects.length}
+        completedCount={completedProjects.length}
       />
+
+      {/* Primary actions — two gradient buttons side-by-side */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <GradientCtaButton
+          onClick={() => setStartProjectOpen(true)}
+          Icon={Rocket}
+          eyebrow="Build in public"
+          title="Start a Project"
+          subtitle="Plan a release. Let fans back the work."
+          gradient="linear-gradient(135deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 50%, hsl(38 92% 55%) 100%)"
+        />
+        <GradientCtaButton
+          onClick={() => setCoinSheetOpen(true)}
+          Icon={Coins}
+          eyebrow="Get backed"
+          title="Launch a Coin"
+          subtitle="Spin up your artist token on pump.fun."
+          gradient="linear-gradient(135deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 50%, hsl(170 80% 50%) 100%)"
+        />
+      </section>
+
 
       {featuredPublic && (
         <Link
