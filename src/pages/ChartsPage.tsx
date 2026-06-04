@@ -73,30 +73,22 @@ const fetchPumpData = async (mint: string): Promise<{ data: PumpData; sparkline:
   // Browser cannot hit pump.fun directly (Cloudflare 403 + CORS). Go through
   // our `creator-token-metrics` edge function, which proxies pump.fun +
   // Birdeye + Jupiter server-side and returns a normalized payload.
-  const { data, error } = await supabase.functions.invoke("creator-token-metrics", {
-    method: "GET",
-    // supabase-js doesn't support GET query params on invoke; encode in body
-    // by switching to a URL fetch instead.
-  } as any).catch(() => ({ data: null, error: { message: "invoke failed" } } as any));
-
-  // Fallback: hit the function URL directly with query string.
-  if (!data || error) {
-    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/creator-token-metrics?mint=${encodeURIComponent(mint)}`;
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/creator-token-metrics?mint=${encodeURIComponent(mint)}`;
+  const empty = {
+    data: {
+      marketCapUsd: null, change24h: null, holderCount: null,
+      trades24h: null, createdTimestamp: null, lastTradeTimestamp: null,
+    } as PumpData,
+    sparkline: [] as number[],
+  };
+  try {
     const res = await fetch(url, {
       headers: {
         apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
     });
-    if (!res.ok) {
-      return {
-        data: {
-          marketCapUsd: null, change24h: null, holderCount: null,
-          trades24h: null, createdTimestamp: null, lastTradeTimestamp: null,
-        },
-        sparkline: [],
-      };
-    }
+    if (!res.ok) return empty;
     const j: any = await res.json();
     return {
       data: {
@@ -107,22 +99,13 @@ const fetchPumpData = async (mint: string): Promise<{ data: PumpData; sparkline:
         createdTimestamp: num(j?.createdTimestamp),
         lastTradeTimestamp: num(j?.lastTradeTimestamp),
       },
-      sparkline: Array.isArray(j?.sparkline7d) ? j.sparkline7d.map((n: any) => Number(n)).filter((n: number) => Number.isFinite(n)) : [],
+      sparkline: Array.isArray(j?.sparkline7d)
+        ? j.sparkline7d.map((n: any) => Number(n)).filter((n: number) => Number.isFinite(n))
+        : [],
     };
+  } catch {
+    return empty;
   }
-
-  const j: any = data;
-  return {
-    data: {
-      marketCapUsd: num(j?.marketCapUsd),
-      change24h: num(j?.change24h),
-      holderCount: num(j?.holderCount),
-      trades24h: num(j?.trades24h),
-      createdTimestamp: num(j?.createdTimestamp),
-      lastTradeTimestamp: num(j?.lastTradeTimestamp),
-    },
-    sparkline: Array.isArray(j?.sparkline7d) ? j.sparkline7d.map((n: any) => Number(n)).filter((n: number) => Number.isFinite(n)) : [],
-  };
 };
 
 const HolderAvatars = ({ count }: { count: number }) => {
