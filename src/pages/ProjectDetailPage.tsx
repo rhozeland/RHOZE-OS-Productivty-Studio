@@ -43,6 +43,7 @@ import ProjectScopeReview from "@/components/project/ProjectScopeReview";
 import AiRoadmapDraftButton from "@/components/project/AiRoadmapDraftButton";
 import AttachCoinToProjectCard from "@/components/project/AttachCoinToProjectCard";
 import RoadmapCopilot from "@/components/project/RoadmapCopilot";
+import TokenizeProjectCta from "@/components/project/TokenizeProjectCta";
 
 // Tier-based cap on smartboards per project. Play tier is unlimited.
 const SMARTBOARD_CAP_BY_TIER: Record<string, number> = {
@@ -350,6 +351,15 @@ const ProjectDetailPage = () => {
           tokenizeReady={(project as any).tokenize_ready ?? false}
           title={project.title}
           description={(project as any).vision ?? project.description ?? null}
+        />
+      )}
+
+      {/* Owner-only: nudge to tokenize this release with Rhozeland's help.
+          Auto-hides once a coin has been linked via AttachCoinToProjectCard. */}
+      {canManageProject && (
+        <TokenizeProjectCta
+          projectTitle={project.title}
+          linkedTokenId={(project as any).linked_token_id ?? null}
         />
       )}
 
