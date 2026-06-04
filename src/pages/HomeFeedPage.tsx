@@ -204,8 +204,8 @@ const HomeFeedPage = () => {
       </section>
 
       {/* ─── 3. Flow Mode — feed inline ─────────────────────────────────── */}
-      <section>
-        <div className="mb-3">
+      <section className="pt-2">
+        <div className="mb-4">
           <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-0.5">
             Fresh from the network
           </p>
@@ -213,7 +213,17 @@ const HomeFeedPage = () => {
             Flow
           </h2>
         </div>
-        <FlowModePage />
+        {/*
+          FlowModePage uses `-m-4 md:-m-8` + `min-h-[calc(100vh-3.5rem)]` to
+          bleed into the app shell when mounted at /flow. We neutralize both
+          here so the embedded version sits in its own rounded card matching
+          the globe section above.
+        */}
+        <div className="relative rounded-3xl overflow-hidden border border-border/60 bg-card/40 h-[640px] sm:h-[720px]">
+          <div className="absolute inset-0 p-4 md:p-8 overflow-hidden [&>div]:!min-h-full [&>div]:!m-0">
+            <FlowModePage />
+          </div>
+        </div>
       </section>
     </div>
   );
