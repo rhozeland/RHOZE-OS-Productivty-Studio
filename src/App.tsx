@@ -228,7 +228,9 @@ const RootEntry = () => {
       </div>
     );
   }
-  return <Navigate to="/discover" replace />;
+  // Authed → app. Guests → marketing landing page.
+  if (user) return <Navigate to="/discover" replace />;
+  return <LandingPage />;
 };
 
 const App = () => (

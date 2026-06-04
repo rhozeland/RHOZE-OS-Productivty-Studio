@@ -1,411 +1,202 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useAuth } from "@/contexts/AuthContext";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  ArrowRight,
-  Sparkles,
-  ShieldCheck,
-  Coins,
-  Heart,
-  Palette,
-  Search,
-} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { todayGradient } from "@/lib/rhoze-gradients";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-/* ─────────────────────────── Data ─────────────────────────── */
+/**
+ * LandingPage — marketing front door for logged-out visitors at `/`.
+ *
+ * Spec (v11):
+ *  • Top: logo left · Sign up + Log in right.
+ *  • Hero (~60vh): big headline · subline · single gradient CTA.
+ *  • Below: scrolling marquee of REAL public projects, dimmed + blurred,
+ *    with a single "Sign up to follow along →" overlay CTA.
+ *
+ * No additional sections — this IS the marketing page.
+ */
 
-const HOW_FANS = [
-  { icon: Search, title: "Discover", body: "Spin the globe to find verified artists, spaces, and live moments worldwide." },
-  { icon: Heart, title: "Back the work", body: "Follow, collect, book, and tip the artists whose work moves you." },
-  { icon: Coins, title: "Earn $RHOZE", body: "Every meaningful action earns rewards you can reinvest into the artists you love." },
+type PublicProject = {
+  id: string;
+  title: string;
+  vision: string | null;
+  cover_color: string | null;
+  public_slug: string | null;
+  cheer_count: number;
+};
+
+const FALLBACK: PublicProject[] = [
+  { id: "f1", title: "Midnight Tape — Vol. II", vision: "Lo-fi project tracking from demo to vinyl pressing.", cover_color: "#ec4899", public_slug: null, cheer_count: 142 },
+  { id: "f2", title: "Sunroom Sessions", vision: "Living-room studio EP. 6 songs, one room, six weeks.", cover_color: "#8b5cf6", public_slug: null, cheer_count: 88 },
+  { id: "f3", title: "Coast Loop", vision: "Field-recording electronica built on a road trip.", cover_color: "#14b8a6", public_slug: null, cheer_count: 211 },
+  { id: "f4", title: "Brass & Bytes", vision: "Live horns × modular synth. Studio coin launches at release.", cover_color: "#f59e0b", public_slug: null, cheer_count: 64 },
+  { id: "f5", title: "Garden State", vision: "Bedroom indie LP. Backers vote on the closing track.", cover_color: "#22c55e", public_slug: null, cheer_count: 305 },
+  { id: "f6", title: "After Hours Radio", vision: "12-episode mixtape series with rotating producers.", cover_color: "#ef4444", public_slug: null, cheer_count: 47 },
 ];
 
-const HOW_ARTISTS = [
-  { icon: ShieldCheck, title: "Get verified", body: "A quick selfie + bio unlocks the Verified Artist badge and monetization." },
-  { icon: Palette, title: "Prove your work", body: "Upload, content-hash, and anchor your work on-chain — provenance you own forever." },
-  { icon: Sparkles, title: "Sell access & upside", body: "Open commissions, host Spaces, drop events, and let fans co-own your momentum." },
-];
-
-// Aligned with the canonical tier matrix swatches:
-// Spark = blue, Bloom = pink, Glow = orange, Play = yellow.
-const TIERS = [
-  {
-    name: "Spark",
-    hue: "from-sky-400 via-blue-500 to-indigo-600",
-    accent: "text-sky-600",
-    chipBg: "bg-sky-500/10 text-sky-700 border-sky-500/30",
-    blurb: "Welcome in. Earn rewards just by showing up.",
-  },
-  {
-    name: "Bloom",
-    hue: "from-[hsl(330_85%_75%)] via-[hsl(335_75%_60%)] to-[hsl(345_70%_50%)]",
-    accent: "text-[hsl(335_70%_50%)]",
-    chipBg: "bg-[hsl(330_85%_75%/0.15)] text-[hsl(335_70%_45%)] border-[hsl(335_70%_55%/0.4)]",
-    blurb: "Hold a little $RHOZE. Unlock more of the network.",
-  },
-  {
-    name: "Glow",
-    hue: "from-amber-400 via-orange-500 to-red-500",
-    accent: "text-orange-600",
-    chipBg: "bg-orange-500/10 text-orange-700 border-orange-500/30",
-    blurb: "Hold more, get lower fees and louder reach.",
-  },
-  {
-    name: "Play",
-    hue: "from-yellow-300 via-amber-400 to-yellow-600",
-    accent: "text-amber-600",
-    chipBg: "bg-amber-500/10 text-amber-700 border-amber-500/30",
-    blurb: "The top floor — best perks, lowest fees, full studio.",
-  },
-];
-
-/* ─────────────────────── Soft pastel orbs ─────────────────── */
-
-const PastelBackdrop = () => (
-  <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+const ProjectCard = ({ p }: { p: PublicProject }) => (
+  <div
+    className="shrink-0 w-[300px] sm:w-[340px] rounded-2xl border border-border/40 bg-card overflow-hidden shadow-sm"
+    aria-hidden
+  >
     <div
-      className="absolute -top-32 -left-24 h-[520px] w-[520px] rounded-full opacity-70 blur-3xl"
+      className="h-32 w-full"
       style={{
-        background:
-          "radial-gradient(circle at 30% 30%, hsl(330 85% 78% / 0.55), transparent 60%)," +
-          "radial-gradient(circle at 70% 60%, hsl(292 84% 78% / 0.45), transparent 65%)",
+        background: `linear-gradient(135deg, ${p.cover_color ?? "#ec4899"} 0%, hsl(292 84% 60%) 100%)`,
       }}
     />
-    <div
-      className="absolute top-10 -right-20 h-[480px] w-[480px] rounded-full opacity-70 blur-3xl"
-      style={{
-        background:
-          "radial-gradient(circle at 50% 50%, hsl(38 92% 75% / 0.55), transparent 60%)," +
-          "radial-gradient(circle at 70% 30%, hsl(160 65% 70% / 0.40), transparent 65%)",
-      }}
-    />
-    <div
-      className="absolute bottom-[-200px] left-1/3 h-[520px] w-[520px] rounded-full opacity-60 blur-3xl"
-      style={{
-        background:
-          "radial-gradient(circle at 50% 50%, hsl(200 85% 78% / 0.40), transparent 60%)," +
-          "radial-gradient(circle at 30% 70%, hsl(330 85% 78% / 0.45), transparent 65%)",
-      }}
-    />
+    <div className="p-4 space-y-1.5">
+      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">
+        Live release
+      </p>
+      <h3 className="font-display text-base text-foreground leading-tight line-clamp-1">
+        {p.title}
+      </h3>
+      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+        {p.vision ?? "Building in public on Rhozeland."}
+      </p>
+      <p className="pt-1 text-[11px] text-muted-foreground">
+        ♥ {p.cheer_count} backing
+      </p>
+    </div>
   </div>
 );
 
-/* ────────────────────────── Page ──────────────────────────── */
-
 const LandingPage = () => {
-  const { user } = useAuth();
+  const grad = todayGradient();
+  const [projects, setProjects] = useState<PublicProject[]>(FALLBACK);
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase
+      .from("projects")
+      .select("id,title,vision,cover_color,public_slug,cheer_count")
+      .eq("is_public", true)
+      .order("cheer_count", { ascending: false })
+      .limit(12)
+      .then(({ data }) => {
+        if (cancelled) return;
+        if (data && data.length >= 3) setProjects(data as PublicProject[]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Duplicate the row so the marquee can scroll seamlessly.
+  const marquee = [...projects, ...projects];
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground overflow-x-hidden">
-      <PastelBackdrop />
-
-      {/* Nav */}
-      <nav className="relative z-10">
-        <div className="mx-auto flex h-16 items-center justify-between px-5 sm:px-8 max-w-6xl">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={rhozelandLogo} alt="Rhozeland" className="h-8 w-8" />
-            <span className="font-display text-xl font-bold tracking-tight">Rhozeland</span>
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
+      {/* TOP BAR */}
+      <header className="relative z-20 flex items-center justify-between px-5 sm:px-10 py-4">
+        <Link to="/" className="flex items-center gap-2">
+          <img src={rhozelandLogo} alt="Rhozeland" className="h-8 w-8" />
+          <span className="font-display text-lg font-bold tracking-tight">Rhozeland</span>
+        </Link>
+        <div className="flex items-center gap-2">
+          <Link to="/auth?mode=signin">
+            <Button variant="ghost" size="sm" className="rounded-full">Log in</Button>
           </Link>
-          <div className="flex items-center gap-2">
-            <Link to="/discover">
-              <Button size="sm" variant="ghost" className="rounded-full text-sm">Explore</Button>
-            </Link>
-            {user ? (
-              <Link to="/dashboard">
-                <Button size="sm" className="rounded-full text-sm gap-1.5">
-                  Open Studio <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              </Link>
-            ) : (
-              <>
-                <Link to="/auth">
-                  <Button size="sm" variant="ghost" className="rounded-full text-sm">Sign in</Button>
-                </Link>
-                <Link to="/auth">
-                  <Button size="sm" className="rounded-full text-sm gap-1.5">
-                    Join free <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
+          <Link to="/auth?mode=signup">
+            <Button size="sm" className="rounded-full">Sign up</Button>
+          </Link>
         </div>
-      </nav>
+      </header>
 
-      {/* ─── Hero ─── */}
-      <section className="relative z-10 px-5 sm:px-8">
-        <div className="mx-auto max-w-5xl pt-12 sm:pt-20 pb-16 sm:pb-24 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/60 backdrop-blur-md px-3 py-1 mb-6"
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
-            <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-              A home for real artists
-            </span>
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.05 }}
-            className="font-display text-5xl sm:text-7xl leading-[0.98] tracking-tight"
-          >
-            Where{" "}
-            <span
-              style={{
-                backgroundImage:
-                  "linear-gradient(to right, hsl(330 85% 60%), hsl(292 84% 65%), hsl(38 92% 55%))",
-                WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent",
-              }}
-            >
-              real artists
-            </span>
-            <br />
-            and{" "}
-            <span
-              style={{
-                backgroundImage:
-                  "linear-gradient(to right, hsl(38 92% 55%), hsl(160 65% 50%), hsl(200 85% 55%))",
-                WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent",
-              }}
-            >
-              real fans
-            </span>{" "}
-            meet.
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mt-6 max-w-2xl mx-auto text-base sm:text-lg text-muted-foreground leading-relaxed"
-          >
-            Rhozeland is a soft place on the internet for independent artists to
-            prove their work, host Spaces, and grow — while fans discover, back,
-            and earn alongside the people they love.
-          </motion.p>
-
-          {/* Split CTA */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="mt-10 grid sm:grid-cols-2 gap-3 max-w-2xl mx-auto"
-          >
-            <Link to="/auth?intent=fan" className="group">
-              <div className="rounded-2xl border border-border/60 bg-card/70 backdrop-blur-md p-5 text-left hover:border-foreground/30 transition-all hover:-translate-y-0.5">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <Heart className="h-4 w-4 text-pink-500" />
-                  <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">For fans</span>
-                </div>
-                <p className="font-display text-lg font-semibold">Discover & back artists</p>
-                <p className="text-xs text-muted-foreground mt-1">Free to join · earn $RHOZE rewards</p>
-                <div className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium group-hover:gap-2.5 transition-all">
-                  Start exploring <ArrowRight className="h-3.5 w-3.5" />
-                </div>
-              </div>
-            </Link>
-
-            <Link to="/auth?intent=artist" className="group">
-              <div className="rounded-2xl border border-border/60 bg-card/70 backdrop-blur-md p-5 text-left hover:border-foreground/30 transition-all hover:-translate-y-0.5">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <Palette className="h-4 w-4 text-amber-500" />
-                  <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">For artists</span>
-                </div>
-                <p className="font-display text-lg font-semibold">Get verified & monetize</p>
-                <p className="text-xs text-muted-foreground mt-1">Prove your work · keep up to 93%</p>
-                <div className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium group-hover:gap-2.5 transition-all">
-                  Apply to verify <ArrowRight className="h-3.5 w-3.5" />
-                </div>
-              </div>
-            </Link>
-          </motion.div>
-
-          <p className="mt-5 text-xs text-muted-foreground">
-            <Link to="/discover" className="underline-offset-4 hover:underline">
-              Or peek at the world first →
-            </Link>
-          </p>
-        </div>
-      </section>
-
-      {/* ─── How it works (3 steps × 2 audiences) ─── */}
-      <section id="how-it-works" className="relative z-10 px-5 sm:px-8 pb-20">
-        <div className="mx-auto max-w-6xl">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 mb-2">How it works</p>
-            <h2 className="font-display text-3xl sm:text-4xl tracking-tight">Two sides. One soft economy.</h2>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 gap-5">
-            {/* Fans column */}
-            <div className="rounded-3xl border border-border/60 bg-card/60 backdrop-blur-md p-6 sm:p-8">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-pink-500/10 border border-pink-500/20 px-2.5 py-1 mb-5">
-                <Heart className="h-3 w-3 text-pink-500" />
-                <span className="text-[10px] uppercase tracking-[0.18em] text-pink-600 dark:text-pink-300">Fans</span>
-              </div>
-              <ol className="space-y-5">
-                {HOW_FANS.map((s, i) => (
-                  <li key={s.title} className="flex gap-4">
-                    <div className="shrink-0 h-9 w-9 rounded-full bg-foreground/5 border border-border/60 flex items-center justify-center text-xs font-bold">
-                      {i + 1}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <s.icon className="h-3.5 w-3.5 text-muted-foreground" />
-                        <h3 className="font-semibold text-sm">{s.title}</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{s.body}</p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </div>
-
-            {/* Artists column */}
-            <div className="rounded-3xl border border-border/60 bg-card/60 backdrop-blur-md p-6 sm:p-8">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 mb-5">
-                <Palette className="h-3 w-3 text-amber-500" />
-                <span className="text-[10px] uppercase tracking-[0.18em] text-amber-600 dark:text-amber-300">Artists</span>
-              </div>
-              <ol className="space-y-5">
-                {HOW_ARTISTS.map((s, i) => (
-                  <li key={s.title} className="flex gap-4">
-                    <div className="shrink-0 h-9 w-9 rounded-full bg-foreground/5 border border-border/60 flex items-center justify-center text-xs font-bold">
-                      {i + 1}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <s.icon className="h-3.5 w-3.5 text-muted-foreground" />
-                        <h3 className="font-semibold text-sm">{s.title}</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{s.body}</p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Tier ladder (Creator Pass) ─── */}
-      <section className="relative z-10 px-5 sm:px-8 pb-20">
-        <div className="mx-auto max-w-6xl">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-10"
-          >
-            <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 mb-2">Creator Pass</p>
-            <h2 className="font-display text-3xl sm:text-4xl tracking-tight">Earned, never paid.</h2>
-            <p className="mt-3 max-w-xl mx-auto text-sm text-muted-foreground leading-relaxed">
-              Show up, hold a little $RHOZE, climb the ladder. Lower fees, louder
-              reach, more perks — at every tier.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {TIERS.map((t, i) => (
-              <motion.div
-                key={t.name}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.06 }}
-                className="relative rounded-2xl border border-border/60 bg-card/70 backdrop-blur-md p-5 overflow-hidden group"
-              >
-                {/* Big soft tier-colored glow */}
-                <div className={`absolute -top-12 -right-12 h-40 w-40 rounded-full bg-gradient-to-br ${t.hue} opacity-60 blur-2xl group-hover:opacity-80 transition-opacity`} />
-                <div className={`absolute -bottom-16 -left-10 h-32 w-32 rounded-full bg-gradient-to-br ${t.hue} opacity-25 blur-3xl`} />
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className={`text-[10px] uppercase tracking-[0.2em] font-semibold px-2 py-0.5 rounded-full border ${t.chipBg}`}>
-                      Tier {i + 1}
-                    </span>
-                    <span
-                      className={`h-8 w-8 rounded-xl shadow-md ring-1 ring-white/40 bg-gradient-to-br ${t.hue}`}
-                      aria-hidden
-                    />
-                  </div>
-                  <div className={`font-display text-2xl font-bold bg-gradient-to-br ${t.hue} bg-clip-text text-transparent`}>
-                    {t.name}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{t.blurb}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="text-center mt-8">
-            <Link to="/credits?tab=how" className="text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
-              How rewards work →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Closing CTA ─── */}
-      <section className="relative z-10 px-5 sm:px-8 pb-24">
+      {/* HERO — ~60vh */}
+      <section className="relative flex items-center justify-center px-5 sm:px-10"
+               style={{ minHeight: "60vh" }}>
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-10 opacity-80"
+          style={{ background: grad.surface }}
+        />
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mx-auto max-w-3xl text-center rounded-[2rem] border border-border/60 bg-card/70 backdrop-blur-xl p-10 sm:p-14 relative overflow-hidden"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="max-w-4xl text-center space-y-6 py-16"
         >
-          <div
-            aria-hidden
-            className="absolute inset-0 opacity-70 blur-2xl"
-            style={{
-              background:
-                "radial-gradient(circle at 30% 40%, hsl(330 85% 78% / 0.40), transparent 60%)," +
-                "radial-gradient(circle at 70% 60%, hsl(38 92% 75% / 0.40), transparent 65%)",
-            }}
-          />
-          <div className="relative">
-            <h2 className="font-display text-3xl sm:text-5xl tracking-tight leading-[1.05]">
-              Bring your work.
-              <br />
-              We'll bring the world.
-            </h2>
-            <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link to="/auth">
-                <Button size="lg" className="rounded-full gap-2">
-                  Join Rhozeland — it's free <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link to="/discover">
-                <Button size="lg" variant="ghost" className="rounded-full">
-                  Explore first
-                </Button>
-              </Link>
-            </div>
+          <h1 className="font-display text-4xl sm:text-6xl md:text-7xl font-bold leading-[1.05] tracking-tight">
+            Where musicians build in public
+            <br className="hidden sm:block" />
+            <span> and fans back the work.</span>
+          </h1>
+          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            Follow a project. Support the roadmap. Back the coin when it launches.
+          </p>
+          <div className="pt-2">
+            <Link to="/auth?mode=signup">
+              <button
+                className="group inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm sm:text-base font-semibold text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                style={{ backgroundImage: grad.text }}
+              >
+                Get started free
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </button>
+            </Link>
           </div>
         </motion.div>
       </section>
 
-      <footer className="relative z-10 border-t border-border/60 py-6">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 flex items-center justify-between text-xs text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <img src={rhozelandLogo} alt="" className="h-4 w-4 opacity-60" />
-            <span>© 2026 Rhozeland</span>
+      {/* SCROLLING FEED — dimmed/blurred preview with single overlay CTA */}
+      <section className="relative py-10">
+        <div className="relative">
+          {/* Marquee track */}
+          <div
+            className="flex gap-4 marquee-track py-4"
+            style={{
+              width: "max-content",
+              animation: "rhz-marquee 50s linear infinite",
+            }}
+          >
+            {marquee.map((p, i) => (
+              <ProjectCard key={`${p.id}-${i}`} p={p} />
+            ))}
           </div>
-          <Link to="/auth" className="hover:text-foreground transition-colors">Sign in →</Link>
+
+          {/* Dim + blur overlay (does not block clicks on the CTA) */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 backdrop-blur-[2px] bg-background/40"
+          />
+          {/* Edge fades */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background to-transparent"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background to-transparent"
+          />
+
+          {/* CTA overlay */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Link to="/auth?mode=signup">
+              <div className="inline-flex items-center gap-2 rounded-full bg-card/90 border border-border/60 px-5 py-2.5 text-sm font-semibold text-foreground shadow-md backdrop-blur-md hover:bg-card transition-colors">
+                <Sparkles className="h-4 w-4 text-primary" />
+                Sign up to follow along
+                <ArrowRight className="h-4 w-4" />
+              </div>
+            </Link>
+          </div>
         </div>
-      </footer>
+
+        {/* Marquee keyframes — scoped inline so we don't touch global CSS */}
+        <style>{`
+          @keyframes rhz-marquee {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .marquee-track { animation: none !important; }
+          }
+        `}</style>
+      </section>
     </div>
   );
 };
