@@ -308,13 +308,8 @@ const ChartsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
                   key={r.id}
                   className="cursor-pointer border-border/40 transition-colors hover:bg-muted/40"
                   onClick={(e) => {
-                    // honor middle-click / cmd-click on inner links by ignoring those
                     if ((e.target as HTMLElement).closest("a")) return;
-                    window.open(
-                      `https://pump.fun/coin/${r.token_mint_address}`,
-                      "_blank",
-                      "noopener,noreferrer",
-                    );
+                    window.location.assign(profileHref);
                   }}
                 >
                   <TableCell className="text-xs font-medium text-muted-foreground tabular-nums">
