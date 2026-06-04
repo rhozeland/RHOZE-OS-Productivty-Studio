@@ -69,7 +69,7 @@ export default function AttachCoinToProjectCard({ projectId, linkedTokenId }: Pr
   const current = tokens.find((t: any) => t.id === linkedTokenId);
 
   return (
-    <div className="rounded-xl border border-border bg-card/60 px-4 py-3 flex flex-wrap items-center gap-3">
+    <div className="rounded-2xl border border-border bg-card px-4 py-3 flex flex-wrap items-center gap-3 shadow-sm">
       <Coins className="h-4 w-4 text-emerald-500 shrink-0" />
       <div className="flex-1 min-w-[180px]">
         <div className="text-sm font-medium">Linked coin</div>
@@ -89,7 +89,7 @@ export default function AttachCoinToProjectCard({ projectId, linkedTokenId }: Pr
               variant={active ? "default" : "outline"}
               onClick={() => setLink.mutate(active ? null : t.id)}
               disabled={setLink.isPending}
-              className="h-8 gap-1.5"
+              className="h-7 rounded-full px-3 gap-1.5 text-xs"
             >
               <Badge variant="secondary" className="px-1 py-0 text-[10px]">${t.ticker}</Badge>
               {active ? "Linked" : "Link"}
@@ -102,7 +102,7 @@ export default function AttachCoinToProjectCard({ projectId, linkedTokenId }: Pr
             variant="ghost"
             onClick={() => setLink.mutate(null)}
             disabled={setLink.isPending}
-            className="h-8 gap-1"
+            className="h-7 rounded-full px-3 gap-1 text-xs"
           >
             <Link2Off className="h-3.5 w-3.5" /> Unlink
           </Button>
