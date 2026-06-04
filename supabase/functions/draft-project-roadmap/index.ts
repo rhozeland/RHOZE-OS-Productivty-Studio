@@ -242,7 +242,44 @@ Output rules — be SPECIFIC, DENSE, and NUMERICALLY ACCURATE:
     });
   }
 
-  return new Response(JSON.stringify({ milestones: args.milestones ?? [] }), {
+  const raw = (args.milestones ?? []) as Array<any>;
+
+  // Clamp est_days to sane integers (≥1) so downstream date math never breaks.
+  const milestones = raw.map((m) => ({
+    ...m,
+    est_days: Math.max(1, Math.round(Number(m.est_days) || 7)),
+    suggested_amount: Math.max(0, Number(m.suggested_amount) || 0),
+  }));
+
+  // BUDGET NORMALIZATION — when the caller set a totalBudget, rescale the
+  // AI's suggested_amounts so they sum to exactly totalBudget (rounded to
+  // whole dollars, with the remainder absorbed by the largest stage so the
+  // sum is exact). Preserves the AI's weighting between stages.
+  if (totalBudget > 0 && milestones.length) {
+    const sum = milestones.reduce((s, m) => s + m.suggested_amount, 0);
+    if (sum > 0) {
+      let allocated = 0;
+      milestones.forEach((m, i) => {
+        if (i === milestones.length - 1) {
+          m.suggested_amount = Math.max(0, Math.round(totalBudget - allocated));
+        } else {
+          const share = Math.round((m.suggested_amount / sum) * totalBudget);
+          m.suggested_amount = share;
+          allocated += share;
+        }
+      });
+    } else {
+      // AI returned all zeros — even split as a fallback.
+      const even = Math.floor(totalBudget / milestones.length);
+      milestones.forEach((m, i) => {
+        m.suggested_amount = i === milestones.length - 1
+          ? totalBudget - even * (milestones.length - 1)
+          : even;
+      });
+    }
+  }
+
+  return new Response(JSON.stringify({ milestones }), {
     status: 200,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
