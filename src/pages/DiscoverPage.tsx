@@ -9,7 +9,7 @@
  *   5. Card grid (2-col desktop, 1 mobile, every 6th featured full-width)
  */
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
