@@ -33,7 +33,27 @@ async function fetchPumpFun(mint: string) {
       name: typeof j?.name === "string" ? j.name : null,
       symbol: typeof j?.symbol === "string" ? j.symbol : null,
       imageUri: typeof j?.image_uri === "string" ? j.image_uri : null,
+      createdTimestamp: num(j?.created_timestamp),
+      lastTradeTimestamp: num(j?.last_trade_timestamp),
+      trades24h: num(j?.trades_24h ?? j?.txns_24h),
+      priceChange24hPump: num(j?.price_change_24h ?? j?.priceChange24h),
+      virtualSolReserves: num(j?.virtual_sol_reserves),
+      virtualTokenReserves: num(j?.virtual_token_reserves),
     };
+  } catch {
+    return null;
+  }
+}
+
+async function fetchPumpHolders(mint: string): Promise<number | null> {
+  try {
+    const res = await fetch(`https://frontend-api-v3.pump.fun/coins/holders/${mint}`, {
+      headers: { "user-agent": "Mozilla/5.0 (compatible; Rhozeland/1.0)" },
+    });
+    if (!res.ok) return null;
+    const j: any = await res.json();
+    const arr = Array.isArray(j?.holders) ? j.holders : Array.isArray(j) ? j : [];
+    return arr.length || null;
   } catch {
     return null;
   }
