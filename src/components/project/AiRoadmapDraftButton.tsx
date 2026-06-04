@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAiRoadmapDraft, composeMilestoneDescription } from "@/hooks/useAiRoadmapDraft";
+import { useAiRoadmapDraft, composeMilestoneDescription, chainMilestoneDates } from "@/hooks/useAiRoadmapDraft";
 import { fetchCreatorContext } from "@/lib/creator-context";
 import { ConciergeIntakeSheet } from "@/components/concierge/ConciergeIntakeSheet";
 import { trackConciergeCta } from "@/lib/concierge-analytics";
