@@ -32,6 +32,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import SidebarRoleSwitcher from "@/components/SidebarRoleSwitcher";
+import InboxDrawer from "@/components/InboxDrawer";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
 type NavSpec = {
@@ -167,6 +168,17 @@ const AppSidebar = () => {
 
       <SidebarContent className="px-2 pt-2 space-y-2">
         {renderGroup(navItems)}
+        {user && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-0.5">
+                <SidebarMenuItem className={cn(collapsed && "flex justify-center")}>
+                  <InboxDrawer variant="sidebar" collapsed={collapsed} />
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
         {personalItems.length > 0 && renderGroup(personalItems)}
       </SidebarContent>
 
