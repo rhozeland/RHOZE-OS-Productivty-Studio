@@ -33,7 +33,7 @@ const ProjectTools = ({
   const capLabel = Number.isFinite(smartboardCap) ? `${boards.length} / ${smartboardCap}` : `${boards.length}`;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
       <div className="flex items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
           <Palette className="h-4 w-4 text-primary" />
@@ -43,8 +43,8 @@ const ProjectTools = ({
         {onCreateSmartboard && (
           <Button
             size="sm"
-            variant="ghost"
-            className="rounded-full h-7 gap-1 text-xs"
+            variant="outline"
+            className="rounded-full h-7 px-3 gap-1 text-xs"
             onClick={onCreateSmartboard}
             disabled={atCap || isCreating}
             title={atCap ? "You've hit your tier's smartboard cap for this project. Upgrade for more." : undefined}

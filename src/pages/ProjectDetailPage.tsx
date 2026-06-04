@@ -354,11 +354,33 @@ const ProjectDetailPage = () => {
       )}
 
       <Tabs defaultValue="roadmap" className="w-full">
-        <TabsList className="mb-4 w-full justify-start overflow-x-auto flex-nowrap shrink-0">
-          <TabsTrigger value="roadmap" className="shrink-0">Roadmap</TabsTrigger>
-          <TabsTrigger value="vision" className="shrink-0">Scope</TabsTrigger>
-          {isPaid && <TabsTrigger value="budget" className="shrink-0">Budget</TabsTrigger>}
-          <TabsTrigger value="team" className="shrink-0">Team</TabsTrigger>
+        <TabsList className="mb-6 w-full justify-start overflow-x-auto flex-nowrap shrink-0 h-auto gap-6 rounded-none border-b border-border bg-transparent p-0 text-muted-foreground">
+          <TabsTrigger
+            value="roadmap"
+            className="shrink-0 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-2.5 pt-0 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+          >
+            Roadmap
+          </TabsTrigger>
+          <TabsTrigger
+            value="vision"
+            className="shrink-0 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-2.5 pt-0 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+          >
+            Scope
+          </TabsTrigger>
+          {isPaid && (
+            <TabsTrigger
+              value="budget"
+              className="shrink-0 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-2.5 pt-0 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+            >
+              Budget
+            </TabsTrigger>
+          )}
+          <TabsTrigger
+            value="team"
+            className="shrink-0 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-2.5 pt-0 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+          >
+            Team
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="roadmap" className="space-y-6">
@@ -394,14 +416,23 @@ const ProjectDetailPage = () => {
 
 
           <Tabs defaultValue="stages" className="w-full">
-            <TabsList className="h-9">
-              <TabsTrigger value="stages" className="gap-1.5 text-xs">
+            <TabsList className="h-auto gap-5 rounded-none border-b border-border bg-transparent p-0">
+              <TabsTrigger
+                value="stages"
+                className="gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-2 pt-0 text-xs font-medium text-muted-foreground shadow-none hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+              >
                 <Milestone className="h-3.5 w-3.5" /> Stages
               </TabsTrigger>
-              <TabsTrigger value="list" className="gap-1.5 text-xs">
+              <TabsTrigger
+                value="list"
+                className="gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-2 pt-0 text-xs font-medium text-muted-foreground shadow-none hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+              >
                 <ListTodo className="h-3.5 w-3.5" /> List
               </TabsTrigger>
-              <TabsTrigger value="calendar" className="gap-1.5 text-xs">
+              <TabsTrigger
+                value="calendar"
+                className="gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-2 pt-0 text-xs font-medium text-muted-foreground shadow-none hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+              >
                 <CalendarDays className="h-3.5 w-3.5" /> Calendar
               </TabsTrigger>
             </TabsList>

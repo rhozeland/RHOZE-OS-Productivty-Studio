@@ -153,7 +153,7 @@ export default function RoadmapCopilot({ projectId }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full rounded-xl border border-border bg-card/60 hover:bg-card px-4 py-3 flex items-center gap-3 text-left transition"
+        className="w-full rounded-2xl border border-border bg-card hover:bg-card/80 px-4 py-3 flex items-center gap-3 text-left transition shadow-sm"
       >
         <div className="h-9 w-9 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 grid place-items-center">
           <Sparkles className="h-4 w-4 text-white" />
@@ -162,7 +162,9 @@ export default function RoadmapCopilot({ projectId }: Props) {
           <div className="text-sm font-medium">Roadmap Copilot</div>
           <div className="text-xs text-muted-foreground">Chat with AI about your release — sequencing, marketing, holder utility.</div>
         </div>
-        <Bot className="h-4 w-4 text-muted-foreground" />
+        <span className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-3 h-7 text-xs font-medium text-foreground">
+          <Bot className="h-3 w-3" /> Open
+        </span>
       </button>
     );
   }
