@@ -138,13 +138,12 @@ const ChartsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
     staleTime: 60_000,
     queryFn: async (): Promise<CreatorRow[]> => {
       const { data: profiles } = await supabase
-        .from("profiles")
+        .from("creator_tokens_public" as any)
         .select(
           "id, user_id, username, display_name, avatar_url, bio, verification_status, token_mint_address, token_ticker, show_token_chip, is_public",
         )
-        .not("token_mint_address", "is", null)
-        .neq("is_public", false)
         .limit(100);
+
 
       if (!profiles?.length) return [];
 
