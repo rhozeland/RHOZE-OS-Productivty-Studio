@@ -423,8 +423,44 @@ const SettingsPage = () => {
     return url.replace(/^https?:\/\//, "").replace(stripped, "").replace(/^@/, "");
   };
 
+  const navigateRole = useNavigate();
+  const [activeRole, setActiveRole] = useActiveRole();
+
   const renderProfile = () => (
     <form onSubmit={(e) => { e.preventDefault(); updateProfile.mutate(); }} className="space-y-6">
+      {/* 0. View mode — Fan ↔ Musician */}
+      <div className="space-y-2">
+        <Label>Viewing as</Label>
+        <div role="tablist" aria-label="View as role" className="grid grid-cols-2 gap-1 rounded-xl bg-muted/60 p-1">
+          {(["fan", "creator"] as ActiveRole[]).map((r) => {
+            const active = activeRole === r;
+            const label = r === "creator" ? "Musician" : "Fan";
+            return (
+              <button
+                key={r}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => {
+                  if (r === activeRole) return;
+                  setActiveRole(r);
+                  navigateRole(ROLE_HOME[r]);
+                }}
+                className={cn(
+                  "rounded-lg px-3 py-2 text-xs font-semibold transition-all",
+                  active ? "bg-foreground text-background shadow-sm" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          Switch to {activeRole === "creator" ? "Fan" : "Musician"} mode to change what the sidebar and home feed show.
+        </p>
+      </div>
+
       {/* 1. Display name + Username */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
