@@ -335,30 +335,6 @@ const DiscoverPage = () => {
               })}
             </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/70 px-3.5 py-1.5 text-xs font-medium text-foreground/80 hover:border-foreground/30 hover:text-foreground transition-colors">
-                  Sort: {activeSortLabel} <ChevronDown className="h-3 w-3" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[180px]">
-                {SORTS.map((s) => (
-                  <DropdownMenuItem
-                    key={s.key}
-                    onClick={() => setSort(s.key)}
-                    className="text-xs"
-                  >
-                    <Check
-                      className={cn(
-                        "h-3.5 w-3.5 mr-2",
-                        sort === s.key ? "opacity-100" : "opacity-0",
-                      )}
-                    />
-                    {s.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
           </section>
 
           {/* Results header */}
