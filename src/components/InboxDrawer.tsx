@@ -29,7 +29,12 @@ const NOTIF_META: Record<string, { icon: any; color: string }> = {
   general: { icon: Sparkles, color: "text-primary" },
 };
 
-const InboxDrawer = () => {
+interface InboxDrawerProps {
+  variant?: "icon" | "sidebar";
+  collapsed?: boolean;
+}
+
+const InboxDrawer = ({ variant = "icon", collapsed = false }: InboxDrawerProps = {}) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
