@@ -18,7 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ArrowRight, ChevronDown, Check, Loader2, Users } from "lucide-react";
+import { ArrowRight, ChevronDown, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CoinsInMotionLane from "@/components/discover/CoinsInMotionLane";
 import {
