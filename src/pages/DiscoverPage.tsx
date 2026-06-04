@@ -18,7 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ArrowRight, ChevronDown, Check, Loader2, Users } from "lucide-react";
+import { ArrowRight, ChevronDown, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CoinsInMotionLane from "@/components/discover/CoinsInMotionLane";
 import {
@@ -31,7 +31,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 
 type FilterKey = "all" | "creators" | "calls" | "spaces" | "for-you" | "flow";
-type SortKey = "recent" | "momentum" | "supporters";
+type SortKey = "recent";
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "all", label: "All" },
@@ -44,8 +44,6 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 
 const SORTS: { key: SortKey; label: string }[] = [
   { key: "recent", label: "Most Recent" },
-  { key: "momentum", label: "Momentum" },
-  { key: "supporters", label: "Supporters" },
 ];
 
 const CATEGORY_STYLE: Record<
@@ -78,33 +76,6 @@ const CATEGORY_STYLE: Record<
   },
 };
 
-// Lightweight deterministic momentum / supporter stand-ins so cards feel
-// alive even before we hook up real per-entity stats. Stable per id.
-const seededInt = (seed: string, max: number, offset = 0) => {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
-  return Math.abs(h + offset) % max;
-};
-
-const SupporterStack = ({ count, seed }: { count: number; seed: string }) => {
-  const dots = Math.min(3, count);
-  return (
-    <div className="flex -space-x-1.5">
-      {Array.from({ length: dots }).map((_, i) => {
-        const hue = seededInt(seed, 360, i * 47);
-        return (
-          <span
-            key={i}
-            className="h-5 w-5 rounded-full border border-background"
-            style={{ background: `hsl(${hue} 70% 65%)` }}
-            aria-hidden
-          />
-        );
-      })}
-    </div>
-  );
-};
-
 interface CardProps {
   row: ConnectRow;
   featured?: boolean;
@@ -112,10 +83,6 @@ interface CardProps {
 
 const DiscoverCard = ({ row, featured }: CardProps) => {
   const style = CATEGORY_STYLE[row.kind];
-  const momentum = 5 + seededInt(row.id, 40); // 5–44%
-  const supporters = 12 + seededInt(row.id, 240, 7); // 12–251
-  const backersThisWeek = 1 + seededInt(row.id, 18, 13); // 1–18
-  const nextBackerNum = supporters + 1;
   const initials = (row.title || "?")
     .split(/\s+/)
     .map((s) => s[0])
@@ -201,23 +168,23 @@ const DiscoverCard = ({ row, featured }: CardProps) => {
               {row.category}
             </span>
           )}
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
-            ↑ {momentum}% this week
-          </span>
+          {row.priceLabel && (
+            <span className="inline-flex items-center rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[10px] font-medium text-foreground tabular-nums">
+              {row.priceLabel}
+            </span>
+          )}
+          {row.isPro && (
+            <span className="inline-flex items-center rounded-full bg-foreground/90 text-background px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+              Verified Pro
+            </span>
+          )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <SupporterStack count={supporters} seed={row.id} />
-          <span className="text-xs text-foreground tabular-nums">
-            <Users className="inline h-3 w-3 mr-0.5 -mt-0.5" />
-            {supporters} supporters
-          </span>
-        </div>
-
-        <p className="text-[11px] text-muted-foreground">
-          {backersThisWeek} {backersThisWeek === 1 ? "person" : "people"} backed this week ·{" "}
-          <span className="text-foreground/80">You'd be backer #{nextBackerNum}</span>
-        </p>
+        {row.subtitle && (
+          <p className="text-xs text-muted-foreground line-clamp-2">
+            {row.subtitle}
+          </p>
+        )}
 
         <Button size="sm" variant="secondary" className="w-full rounded-full gap-1.5">
           {style.cta} <ArrowRight className="h-3.5 w-3.5" />
@@ -257,11 +224,8 @@ const DiscoverPage = () => {
     if (enableEvent) collected.push(...(event.data ?? []));
 
     // Sort. "Most Recent" keeps source order (each hook already orders newest first).
-    if (sort === "momentum") {
-      collected.sort((a, b) => seededInt(b.id, 40) - seededInt(a.id, 40));
-    } else if (sort === "supporters") {
-      collected.sort((a, b) => seededInt(b.id, 240, 7) - seededInt(a.id, 240, 7));
-    }
+    // Other sorts currently fall back to source order until real per-row signals
+    // are wired in via an RPC (RLS blocks direct counts).
 
     // For You: Pro first, then everyone.
     if (filter === "for-you") {
