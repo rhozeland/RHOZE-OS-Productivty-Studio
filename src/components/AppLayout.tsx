@@ -414,8 +414,6 @@ const AppLayout = () => {
               </button>
 
               {user && <PostMenuButton />}
-              {/* Inbox drawer merges messages + notifications (v10.5) */}
-              {user && <InboxDrawer />}
               {user && <WalletButton />}
 
               {/* Profile dropdown — top-right */}
