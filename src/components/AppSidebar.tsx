@@ -173,7 +173,7 @@ const AppSidebar = () => {
             <SidebarGroupContent>
               <SidebarMenu className="space-y-0.5">
                 <SidebarMenuItem className={cn(collapsed && "flex justify-center")}>
-                  <InboxDrawer variant="sidebar" collapsed={collapsed} />
+                  <InboxNavLink collapsed={collapsed} onNavigate={handleNavClick} />
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
