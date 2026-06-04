@@ -441,7 +441,7 @@ const StudioPage = () => {
           eyebrow="Build in public"
           title="Start a Project"
           subtitle="Plan a release. Let fans back the work."
-          gradient="linear-gradient(135deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 50%, hsl(38 92% 55%) 100%)"
+          gradient="linear-gradient(120deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 25%, hsl(38 92% 55%) 50%, hsl(292 84% 61%) 75%, hsl(330 85% 60%) 100%)"
         />
         <GradientCtaButton
           onClick={() => setCoinSheetOpen(true)}
@@ -449,7 +449,7 @@ const StudioPage = () => {
           eyebrow="Get backed"
           title="Launch a Coin"
           subtitle="Spin up your artist token on pump.fun."
-          gradient="linear-gradient(135deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 50%, hsl(170 80% 50%) 100%)"
+          gradient="linear-gradient(120deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 25%, hsl(170 80% 50%) 50%, hsl(260 80% 60%) 75%, hsl(200 90% 55%) 100%)"
         />
       </section>
 
