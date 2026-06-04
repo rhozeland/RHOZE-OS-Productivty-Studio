@@ -243,32 +243,52 @@ const DiscoverPage = () => {
 
   return (
     <div className="max-w-6xl mx-auto pb-20 space-y-8">
-      {/* SECTION 1 — Hero banner */}
-      <motion.header
+      {/* SECTION 1 — Hero banner (gradient slider box, matches /studio) */}
+      <motion.section
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="relative pt-2 overflow-hidden"
+        className="relative w-full rounded-3xl overflow-hidden shadow-[0_30px_80px_-30px_hsl(var(--foreground)/0.4)]"
       >
         <div
-          aria-hidden
-          className="pointer-events-none absolute -top-24 -right-16 h-[360px] w-[360px] rounded-full opacity-60 blur-3xl"
+          className="absolute inset-0"
           style={{
-            background:
-              "radial-gradient(circle at 30% 30%, hsl(330 85% 70% / 0.5), transparent 55%)," +
-              "radial-gradient(circle at 70% 60%, hsl(38 92% 65% / 0.5), transparent 60%)," +
-              "radial-gradient(circle at 50% 90%, hsl(160 65% 60% / 0.35), transparent 60%)",
+            backgroundImage:
+              "linear-gradient(135deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 50%, hsl(38 92% 55%) 100%)",
           }}
         />
-        <div className="relative">
-          <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 mb-2">
+        <motion.div
+          aria-hidden
+          className="absolute inset-0 opacity-50"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 20% 30%, hsl(0 0% 100% / 0.25), transparent 40%), radial-gradient(circle at 80% 70%, hsl(0 0% 100% / 0.18), transparent 45%)",
+          }}
+          animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
+          transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
+        />
+        <motion.div
+          aria-hidden
+          className="absolute -top-10 -right-8 h-40 w-40 rounded-full bg-white/20 blur-3xl"
+          animate={{ y: [0, 16, 0], x: [0, -10, 0] }}
+          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          aria-hidden
+          className="absolute -bottom-12 -left-8 h-48 w-48 rounded-full bg-white/15 blur-3xl"
+          animate={{ y: [0, -12, 0], x: [0, 12, 0] }}
+          transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <div className="relative px-5 py-5 sm:px-7 sm:py-6 text-white">
+          <p className="text-[10px] uppercase tracking-[0.22em] text-white/80 mb-1.5">
             Connect
           </p>
-          <h1 className="font-display text-3xl sm:text-4xl leading-[1.05] text-foreground tracking-tight max-w-2xl">
+          <h1 className="font-display text-2xl sm:text-3xl leading-[1.05] tracking-tight drop-shadow-sm max-w-2xl">
             Find your next collaborator.
           </h1>
         </div>
-      </motion.header>
+      </motion.section>
+
 
       {/* SECTION 2 — Coins in Motion */}
       <CoinsInMotionLane />
