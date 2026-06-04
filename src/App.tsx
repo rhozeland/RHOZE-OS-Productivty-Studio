@@ -18,7 +18,7 @@ import StudioPage from "@/pages/StudioPage";
 import ProjectDetailPage from "@/pages/ProjectDetailPage";
 import CalendarPage from "@/pages/CalendarPage";
 // FlowModePage is the public Verified-IP browser.
-// SmartboardsPage retained as a file but no longer routed at /smartboards.
+import SmartboardsPage from "@/pages/SmartboardsPage";
 import CreatorsHubPage from "@/pages/CreatorsHubPage";
 import ListingDetailPage from "@/pages/ListingDetailPage";
 import SmartboardDetailPage from "@/pages/SmartboardDetailPage";
