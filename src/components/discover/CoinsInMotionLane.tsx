@@ -72,11 +72,15 @@ const CoinCard = ({ profile }: { profile: TokenProfile }) => {
   const change = metrics?.change24h ?? null;
   const up = change != null && change >= 0;
   const pumpUrl = `https://pump.fun/coin/${profile.token_mint_address}`;
+  const profileHref = profile.username ? `/u/${profile.username}` : `/profiles/${profile.id}`;
 
   return (
-    <div className="snap-start shrink-0 w-[260px] rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm p-3.5 hover:border-foreground/30 transition-colors">
+    <Link
+      to={profileHref}
+      className="snap-start shrink-0 w-[260px] rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm p-3.5 hover:border-foreground/30 transition-colors block"
+    >
       <div className="flex items-center gap-2.5">
-        <Link to={`/profile/${profile.id}`} className="shrink-0">
+        <div className="shrink-0">
           {profile.avatar_url ? (
             <img
               src={profile.avatar_url}
@@ -88,14 +92,11 @@ const CoinCard = ({ profile }: { profile: TokenProfile }) => {
               {name.slice(0, 1).toUpperCase()}
             </div>
           )}
-        </Link>
+        </div>
         <div className="min-w-0 flex-1">
-          <Link
-            to={`/profile/${profile.id}`}
-            className="text-sm font-semibold text-foreground truncate block hover:underline underline-offset-2"
-          >
+          <span className="text-sm font-semibold text-foreground truncate block">
             {name}
-          </Link>
+          </span>
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-mono">
             ${ticker}
           </p>
@@ -140,13 +141,14 @@ const CoinCard = ({ profile }: { profile: TokenProfile }) => {
           href={pumpUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
           className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
           title={`Trade $${ticker} on pump.fun`}
         >
           pump.fun <ExternalLink className="h-3 w-3" />
         </a>
       </div>
-    </div>
+    </Link>
   );
 };
 
