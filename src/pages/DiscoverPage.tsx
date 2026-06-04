@@ -261,12 +261,13 @@ const DiscoverPage = () => {
         className="relative w-full rounded-3xl overflow-hidden shadow-[0_30px_80px_-30px_hsl(var(--foreground)/0.4)]"
       >
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 bg-[length:300%_300%] animate-gradient-shift"
           style={{
             backgroundImage:
-              "linear-gradient(135deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 50%, hsl(38 92% 55%) 100%)",
+              "linear-gradient(120deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 25%, hsl(38 92% 55%) 50%, hsl(292 84% 61%) 75%, hsl(330 85% 60%) 100%)",
           }}
         />
+
         <motion.div
           aria-hidden
           className="absolute inset-0 opacity-50"
