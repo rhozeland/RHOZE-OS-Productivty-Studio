@@ -120,6 +120,7 @@ const ProjectsPage = () => {
         if (draftErr) throw draftErr;
         const milestones = ((drafted as any)?.milestones ?? []) as DraftedMilestone[];
         if (milestones.length) {
+          const dates = chainMilestoneDates(milestones);
           const rows = milestones.map((m, i) => ({
             project_id: newProject.id,
             user_id: user!.id,
@@ -128,6 +129,9 @@ const ProjectsPage = () => {
             budget_amount: m.suggested_amount,
             sort_order: i,
             parent_id: null,
+            stage_date_start: dates[i].stage_date_start,
+            stage_date_end: dates[i].stage_date_end,
+            due_date: dates[i].due_date,
           })) as any;
           await supabase.from("project_goals" as any).insert(rows);
         }
