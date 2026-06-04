@@ -159,20 +159,13 @@ Output rules — be SPECIFIC and DENSE:
             properties: {
               milestones: {
                 type: "array",
-                minItems: 4,
-                maxItems: 7,
                 items: {
                   type: "object",
                   properties: {
                     title: { type: "string" },
-                    phase: { type: "string", enum: ["pre_production", "production", "post_production", "release"] },
+                    phase: { type: "string" },
                     deliverables: { type: "string" },
-                    tasks: {
-                      type: "array",
-                      minItems: 4,
-                      maxItems: 8,
-                      items: { type: "string" },
-                    },
+                    tasks: { type: "array", items: { type: "string" } },
                     timeline_window: { type: "string" },
                     suggested_amount: { type: "number" },
                     est_days: { type: "number" },
@@ -184,11 +177,9 @@ Output rules — be SPECIFIC and DENSE:
                         value: { type: "string" },
                       },
                       required: ["name", "value"],
-                      additionalProperties: false,
                     },
                     asset_refs: {
                       type: "array",
-                      maxItems: 4,
                       items: {
                         type: "object",
                         properties: {
