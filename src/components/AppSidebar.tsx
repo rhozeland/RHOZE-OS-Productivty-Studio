@@ -175,18 +175,6 @@ const AppSidebar = () => {
       <SidebarFooter className="px-0 pb-3 mt-auto">
         {user && (
           <div className="px-2 border-t border-sidebar-border pt-3 space-y-2">
-            {/* Subtle Creator Pass upgrade nudge — sits directly above the HUD */}
-            {!collapsed && (
-              <Link
-                to="/credits"
-                onClick={handleNavClick}
-                className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
-              >
-                <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
-                <span className="flex-1 truncate">Creator Pass</span>
-                <span className="text-foreground/80">Upgrade →</span>
-              </Link>
-            )}
 
             {/* Contributor / streak HUD */}
             <Link
