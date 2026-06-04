@@ -12,7 +12,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,6 +52,9 @@ import {
   Plus,
   Trash2,
   Link as LinkIcon,
+  Rocket,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -441,70 +444,37 @@ const StudioPage = () => {
         </p>
       </motion.header>
 
-      {/* Primary actions */}
-      <section className="space-y-3">
-        <button
-          type="button"
-          onClick={() => setStartProjectOpen(true)}
-          className="group w-full rounded-2xl bg-foreground text-background px-6 py-5 text-left shadow-md hover:opacity-95 transition-opacity"
-        >
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="font-display text-lg sm:text-xl font-semibold flex items-center gap-2">
-                <Sparkles className="h-4 w-4" /> Start a Project
-              </p>
-              <p className="text-xs opacity-80 mt-1">
-                Build in public. Fans follow your roadmap. Earn your coin.
-              </p>
-            </div>
-            <ArrowRight className="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-0.5" />
-          </div>
-        </button>
+      {/* Primary actions — gradient CTA carousel (matches /home) */}
+      <PrimaryCtaCarousel
+        onStartProject={() => setStartProjectOpen(true)}
+        onLaunchCoin={() => setCoinSheetOpen(true)}
+      />
 
-        {featuredPublic && (
-          <Link
-            to={`/release/${featuredPublic.public_slug}`}
-            className="block rounded-2xl border border-emerald-500/30 bg-emerald-500/5 px-5 py-3.5 hover:bg-emerald-500/10 transition-colors"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400 font-semibold mb-1">
-                  Live release
-                </p>
-                <p className="text-sm font-semibold text-foreground truncate">
-                  {featuredPublic.title} is live
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {supporterCounts?.[featuredPublic.id] ?? 0} supporter
-                  {(supporterCounts?.[featuredPublic.id] ?? 0) === 1 ? "" : "s"} ·{" "}
-                  {projectStats(featuredPublic).done} of {projectStats(featuredPublic).total} milestones
-                </p>
-              </div>
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground shrink-0">
-                View release <ArrowUpRight className="h-3.5 w-3.5" />
-              </span>
-            </div>
-          </Link>
-        )}
-
-        <button
-          type="button"
-          onClick={() => setCoinSheetOpen(true)}
-          className="group w-full rounded-2xl border border-border bg-background px-6 py-4 text-left hover:border-foreground/40 transition-colors"
+      {featuredPublic && (
+        <Link
+          to={`/release/${featuredPublic.public_slug}`}
+          className="block rounded-2xl border border-emerald-500/30 bg-emerald-500/5 px-5 py-3.5 hover:bg-emerald-500/10 transition-colors"
         >
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="font-display text-base sm:text-lg font-semibold text-foreground flex items-center gap-2">
-                <Coins className="h-4 w-4" /> Start a Coin
+              <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400 font-semibold mb-1">
+                Live release
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Already have proven work? Launch directly.
+              <p className="text-sm font-semibold text-foreground truncate">
+                {featuredPublic.title} is live
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {supporterCounts?.[featuredPublic.id] ?? 0} supporter
+                {(supporterCounts?.[featuredPublic.id] ?? 0) === 1 ? "" : "s"} ·{" "}
+                {projectStats(featuredPublic).done} of {projectStats(featuredPublic).total} milestones
               </p>
             </div>
-            <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground shrink-0">
+              View release <ArrowUpRight className="h-3.5 w-3.5" />
+            </span>
           </div>
-        </button>
-      </section>
+        </Link>
+      )}
 
       {/* Tabs + project cards */}
       <Tabs defaultValue="active" className="space-y-4">
@@ -1313,3 +1283,155 @@ const EligibilityChecklist = ({
 };
 
 export default StudioPage;
+
+// ─────────────────────────────────────────────────────────────────────
+// PrimaryCtaCarousel — gradient hero slider matching /home
+// ─────────────────────────────────────────────────────────────────────
+type CtaSlide = {
+  id: string;
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  cta: string;
+  Icon: typeof Rocket;
+  gradient: string;
+  onClick: () => void;
+};
+
+function PrimaryCtaCarousel({
+  onStartProject,
+  onLaunchCoin,
+}: {
+  onStartProject: () => void;
+  onLaunchCoin: () => void;
+}) {
+  const slides: CtaSlide[] = [
+    {
+      id: "project",
+      eyebrow: "Build in public",
+      title: "Start a Project",
+      subtitle:
+        "Plan a release. Share the roadmap. Let fans back the work as you ship it.",
+      cta: "Start a Project",
+      Icon: Rocket,
+      gradient:
+        "linear-gradient(135deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 50%, hsl(38 92% 55%) 100%)",
+      onClick: onStartProject,
+    },
+    {
+      id: "coin",
+      eyebrow: "Get backed",
+      title: "Launch a Coin",
+      subtitle:
+        "Spin up your artist token on pump.fun. Turn supporters into co-owners.",
+      cta: "Launch a Coin",
+      Icon: Coins,
+      gradient:
+        "linear-gradient(135deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 50%, hsl(170 80% 50%) 100%)",
+      onClick: onLaunchCoin,
+    },
+  ];
+
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setIdx((i) => (i + 1) % slides.length), 6000);
+    return () => clearInterval(t);
+  }, [slides.length]);
+
+  const slide = slides[idx];
+
+  return (
+    <section className="relative">
+      <div className="relative w-full aspect-[21/9] sm:aspect-[24/9] rounded-3xl overflow-hidden shadow-[0_30px_80px_-30px_hsl(var(--foreground)/0.4)]">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={slide.id}
+            initial={{ opacity: 0, scale: 1.04 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute inset-0"
+            style={{ backgroundImage: slide.gradient }}
+          >
+            <motion.div
+              aria-hidden
+              className="absolute inset-0 opacity-50"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 20% 30%, hsl(0 0% 100% / 0.25), transparent 40%), radial-gradient(circle at 80% 70%, hsl(0 0% 100% / 0.18), transparent 45%)",
+              }}
+              animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
+              transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+            />
+            <motion.div
+              aria-hidden
+              className="absolute -top-10 -right-10 h-48 w-48 rounded-full bg-white/20 blur-3xl"
+              animate={{ y: [0, 20, 0], x: [0, -10, 0] }}
+              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <motion.div
+              aria-hidden
+              className="absolute -bottom-12 -left-12 h-56 w-56 rounded-full bg-white/15 blur-3xl"
+              animate={{ y: [0, -16, 0], x: [0, 12, 0] }}
+              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+            />
+
+            <div className="relative h-full w-full p-5 sm:p-8 flex flex-col justify-between text-white">
+              <div className="flex items-center justify-between">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-md px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-semibold">
+                  <slide.Icon className="h-3 w-3" />
+                  {slide.eyebrow}
+                </span>
+              </div>
+
+              <div className="space-y-2 sm:space-y-3 max-w-xl">
+                <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-bold leading-[1.05] drop-shadow-sm">
+                  {slide.title}
+                </h2>
+                <p className="text-xs sm:text-sm md:text-base opacity-95 leading-snug max-w-md">
+                  {slide.subtitle}
+                </p>
+                <button
+                  type="button"
+                  onClick={slide.onClick}
+                  className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white text-foreground px-4 py-2 text-xs sm:text-sm font-semibold shadow-lg hover:scale-[1.03] active:scale-[0.98] transition-transform"
+                >
+                  {slide.cta}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        <button
+          onClick={() => setIdx((i) => (i - 1 + slides.length) % slides.length)}
+          className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/20 hover:bg-white/35 backdrop-blur-md text-white flex items-center justify-center transition"
+          aria-label="Previous"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <button
+          onClick={() => setIdx((i) => (i + 1) % slides.length)}
+          className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/20 hover:bg-white/35 backdrop-blur-md text-white flex items-center justify-center transition"
+          aria-label="Next"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+          {slides.map((s, i) => (
+            <button
+              key={s.id}
+              onClick={() => setIdx(i)}
+              aria-label={`Slide ${i + 1}`}
+              className={`h-1.5 rounded-full transition-all ${
+                i === idx ? "w-6 bg-white" : "w-1.5 bg-white/50 hover:bg-white/70"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
