@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -50,6 +51,17 @@ const SmartboardsPage = () => {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<TabKey>("private");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Auto-open the Create dialog when arriving with ?new=1
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      setOpen(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete("new");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // All boards owned by user (private + public mixed)
   const { data: ownedBoards } = useQuery({

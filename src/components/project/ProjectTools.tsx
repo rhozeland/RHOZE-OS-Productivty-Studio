@@ -35,23 +35,24 @@ const ProjectTools = ({
   return (
     <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
       <div className="flex items-center justify-between gap-2 mb-2">
-        <div className="flex items-center gap-2">
+        <Link
+          to="/smartboards"
+          className="flex items-center gap-2 group"
+        >
           <Palette className="h-4 w-4 text-primary" />
-          <h4 className="font-display text-sm font-semibold">Smartboards</h4>
+          <h4 className="font-display text-sm font-semibold group-hover:text-primary transition-colors">Smartboards</h4>
           <span className="text-[10px] text-muted-foreground">· {capLabel}</span>
-        </div>
-        {onCreateSmartboard && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="rounded-full h-7 px-3 gap-1 text-xs"
-            onClick={onCreateSmartboard}
-            disabled={atCap || isCreating}
-            title={atCap ? "You've hit your tier's smartboard cap for this project. Upgrade for more." : undefined}
-          >
-            <Plus className="h-3 w-3" /> {isCreating ? "Creating…" : "New"}
-          </Button>
-        )}
+        </Link>
+        <Button
+          asChild
+          size="sm"
+          variant="outline"
+          className="rounded-full h-7 px-3 gap-1 text-xs"
+        >
+          <Link to="/smartboards?new=1">
+            <Plus className="h-3 w-3" /> New
+          </Link>
+        </Button>
       </div>
       {boards.length > 0 ? (
         <div className="flex flex-wrap gap-2">
