@@ -14,7 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { fetchCreatorContext } from "@/lib/creator-context";
-import { composeMilestoneDescription, type DraftedMilestone } from "@/hooks/useAiRoadmapDraft";
+import { composeMilestoneDescription, chainMilestoneDates, type DraftedMilestone } from "@/hooks/useAiRoadmapDraft";
 
 const COLORS = ["#7c3aed", "#06b6d4", "#f59e0b", "#ef4444", "#10b981", "#ec4899"];
 
