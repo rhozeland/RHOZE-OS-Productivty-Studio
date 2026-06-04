@@ -6002,6 +6002,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      recompute_tokenize_ready: {
+        Args: { _project_id: string }
+        Returns: undefined
+      }
       record_contribution_proof: {
         Args: { _action_type: string; _metadata?: Json; _reference_id: string }
         Returns: string
