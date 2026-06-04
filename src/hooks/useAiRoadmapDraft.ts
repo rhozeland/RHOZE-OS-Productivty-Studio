@@ -119,3 +119,30 @@ export const composeMilestoneDescription = (m: DraftedMilestone): string => {
   }
   return parts.join("");
 };
+
+/**
+ * Chain stage_date_start / stage_date_end across drafted milestones, starting
+ * from `startFrom` (defaults to today) and walking forward by each milestone's
+ * `est_days`. Returns ISO strings ready for `project_goals` inserts.
+ */
+export const chainMilestoneDates = (
+  milestones: DraftedMilestone[],
+  startFrom: Date = new Date(),
+): Array<{ stage_date_start: string; stage_date_end: string; due_date: string }> => {
+  const out: Array<{ stage_date_start: string; stage_date_end: string; due_date: string }> = [];
+  let cursor = new Date(startFrom);
+  cursor.setHours(9, 0, 0, 0);
+  for (const m of milestones) {
+    const days = Math.max(1, Math.round(Number(m.est_days) || 7));
+    const start = new Date(cursor);
+    const end = new Date(cursor);
+    end.setDate(end.getDate() + days);
+    out.push({
+      stage_date_start: start.toISOString(),
+      stage_date_end: end.toISOString(),
+      due_date: end.toISOString(),
+    });
+    cursor = end;
+  }
+  return out;
+};
