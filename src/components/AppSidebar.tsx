@@ -33,8 +33,58 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import SidebarRoleSwitcher from "@/components/SidebarRoleSwitcher";
-import InboxDrawer from "@/components/InboxDrawer";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
+
+const InboxNavLink = ({ collapsed, onNavigate }: { collapsed: boolean; onNavigate: () => void }) => {
+  const { user } = useAuth();
+  const location = useLocation();
+  const active = location.pathname.startsWith("/messages");
+  const { data: unread = 0 } = useQuery({
+    queryKey: ["sidebar-inbox-unread", user?.id],
+    enabled: !!user,
+    refetchInterval: 30000,
+    queryFn: async () => {
+      const sb: any = supabase;
+      const [msgs, inq] = await Promise.all([
+        sb.from("messages").select("id", { count: "exact", head: true })
+          .eq("recipient_id", user!.id).eq("read", false),
+        sb.from("listing_inquiries").select("id", { count: "exact", head: true })
+          .eq("receiver_id", user!.id).eq("status", "pending"),
+      ]);
+      return (msgs.count ?? 0) + (inq.count ?? 0);
+    },
+  });
+
+  return (
+    <Link
+      to="/messages"
+      onClick={onNavigate}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-250",
+        active
+          ? "sidebar-active-gradient text-foreground shadow-sm"
+          : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+        collapsed && "justify-center px-2 py-2.5",
+      )}
+    >
+      <span className="relative flex items-center justify-center">
+        <MessageSquare className={cn("h-[18px] w-[18px] shrink-0", active && "text-primary")} />
+        {unread > 0 && (
+          <span
+            className={cn(
+              "absolute -top-1 -right-1 flex items-center justify-center rounded-full bg-primary text-primary-foreground",
+              unread > 9 ? "h-4 min-w-4 px-1 text-[9px] font-bold" : "h-2 w-2",
+            )}
+          >
+            {unread > 9 ? (unread > 99 ? "99+" : unread) : ""}
+          </span>
+        )}
+      </span>
+      {!collapsed && <span className="flex-1">Inbox</span>}
+    </Link>
+  );
+};
 
 type NavSpec = {
   icon: typeof Home;
