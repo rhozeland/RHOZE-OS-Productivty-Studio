@@ -10,6 +10,7 @@ import {
   Layers,
   ShieldCheck,
   Flame,
+  MessageSquare,
 } from "lucide-react";
 
 import { motion } from "framer-motion";
