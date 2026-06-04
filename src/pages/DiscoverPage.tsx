@@ -279,14 +279,15 @@ const DiscoverPage = () => {
           animate={{ y: [0, -12, 0], x: [0, 12, 0] }}
           transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
         />
-        <div className="relative px-5 py-5 sm:px-7 sm:py-6 text-white">
-          <p className="text-[10px] uppercase tracking-[0.22em] text-white/80 mb-1.5">
+        <div className="relative px-5 py-4 sm:px-6 sm:py-5 text-white">
+          <p className="text-[9px] uppercase tracking-[0.22em] text-white/80">
             Connect
           </p>
-          <h1 className="font-display text-2xl sm:text-3xl leading-[1.05] tracking-tight drop-shadow-sm max-w-2xl">
+          <h1 className="font-display text-xl sm:text-2xl leading-tight tracking-tight drop-shadow-sm">
             Find your next collaborator.
           </h1>
         </div>
+
       </motion.section>
 
 
