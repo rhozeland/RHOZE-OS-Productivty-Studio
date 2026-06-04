@@ -30,7 +30,7 @@ import {
 } from "@/components/connect/useConnectRows";
 import { useAuth } from "@/contexts/AuthContext";
 
-type FilterKey = "all" | "creators" | "calls" | "spaces" | "for-you";
+type FilterKey = "all" | "creators" | "calls" | "spaces" | "for-you" | "flow";
 type SortKey = "recent" | "momentum" | "supporters";
 
 const FILTERS: { key: FilterKey; label: string }[] = [
@@ -39,6 +39,7 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "calls", label: "Opportunities" },
   { key: "spaces", label: "Spaces" }, // spaces + events combined
   { key: "for-you", label: "For You" },
+  { key: "flow", label: "Flow" },
 ];
 
 const SORTS: { key: SortKey; label: string }[] = [
