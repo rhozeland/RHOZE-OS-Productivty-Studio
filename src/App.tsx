@@ -18,7 +18,7 @@ import StudioPage from "@/pages/StudioPage";
 import ProjectDetailPage from "@/pages/ProjectDetailPage";
 import CalendarPage from "@/pages/CalendarPage";
 // FlowModePage is the public Verified-IP browser.
-// SmartboardsPage retained as a file but no longer routed at /smartboards.
+import SmartboardsPage from "@/pages/SmartboardsPage";
 import CreatorsHubPage from "@/pages/CreatorsHubPage";
 import ListingDetailPage from "@/pages/ListingDetailPage";
 import SmartboardDetailPage from "@/pages/SmartboardDetailPage";
@@ -353,7 +353,7 @@ const App = () => (
                 <Route path="/launchpad/:id" element={<Navigate to="/discover" replace />} />
                 <Route path="/coin/:slug" element={<Navigate to="/discover" replace />} />
                 
-                <Route path="/smartboards" element={<Navigate to="/projects" replace />} />
+                <Route path="/smartboards" element={<SmartboardsPage />} />
                 <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
                 <Route path="/drop-rooms" element={<Navigate to="/projects" replace />} />
                 <Route path="/drop-rooms/:id" element={<DropRoomDetailPage />} />
