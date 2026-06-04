@@ -318,7 +318,13 @@ const DiscoverPage = () => {
               <button
                 key={f.key}
                 type="button"
-                onClick={() => setFilter(f.key)}
+                onClick={() => {
+                  if (f.key === "flow") {
+                    navigate("/flow");
+                    return;
+                  }
+                  setFilter(f.key);
+                }}
                 className={cn(
                   "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all",
                   active
