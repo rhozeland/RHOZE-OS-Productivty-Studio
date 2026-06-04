@@ -54,12 +54,12 @@ export default function AttachCoinToProjectCard({ projectId, linkedTokenId }: Pr
 
   if (!tokens || tokens.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border bg-muted/30 px-4 py-3 flex items-center gap-3">
+      <div className="rounded-2xl border border-border bg-card px-4 py-3 flex items-center gap-3 shadow-sm">
         <Coins className="h-4 w-4 text-muted-foreground shrink-0" />
         <div className="flex-1 text-sm text-muted-foreground">
           Link an approved coin to showcase it on this release.
         </div>
-        <Button asChild size="sm" variant="outline">
+        <Button asChild size="sm" variant="outline" className="rounded-full h-7 px-3 text-xs">
           <a href="/settings#token">Add coin</a>
         </Button>
       </div>
