@@ -43,6 +43,7 @@ import ProjectScopeReview from "@/components/project/ProjectScopeReview";
 import AiRoadmapDraftButton from "@/components/project/AiRoadmapDraftButton";
 import AttachCoinToProjectCard from "@/components/project/AttachCoinToProjectCard";
 import RoadmapCopilot from "@/components/project/RoadmapCopilot";
+import TokenizeProjectCta from "@/components/project/TokenizeProjectCta";
 
 // Tier-based cap on smartboards per project. Play tier is unlimited.
 const SMARTBOARD_CAP_BY_TIER: Record<string, number> = {
