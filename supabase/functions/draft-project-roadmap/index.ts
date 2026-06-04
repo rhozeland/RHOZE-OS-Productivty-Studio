@@ -102,8 +102,10 @@ Market reality you must respect:
 - Bonding curve graduates ~$69k MC → Raydium handoff; plan a "graduation push" stage when tokenize_intent is true.
 - Creator rewards on pump.fun ≈ 0.05% (5 bps) of trading volume — surface this in launch-day targets.
 
-Output rules — be SPECIFIC and DENSE:
-- Return 4-7 milestones whose suggested_amounts sum to roughly the total budget (±10%). If totalBudget is 0, propose a realistic indie budget per stage (typical EP $1.5k–$8k all-in).
+Output rules — be SPECIFIC, DENSE, and NUMERICALLY ACCURATE:
+- Return 4-7 milestones.
+- BUDGET DISCIPLINE: When totalBudget > 0, the suggested_amounts MUST sum to exactly totalBudget — distribute it by actual cost weight (e.g. studio time, mixing engineer day rates, mastering ~$60-150/track, artwork $150-600, music video $500-5000, marketing/KOLs $200-2000). NEVER pad. NEVER round all stages to the same number. Show your work by making bigger production stages cost more than admin/release stages. If totalBudget is 0, propose a realistic indie budget per stage and let the sum reflect a credible total (typical single $800-2500, EP $2.5k-8k, album $8k-25k all-in).
+- TIMELINE DISCIPLINE: Every milestone MUST include est_days as a realistic integer count of CALENDAR days that stage takes (NOT cumulative — days for THAT stage only). Be honest: demoing 1 track ≈ 3-5 days, tracking a band ≈ 2-4 days, mixing a single ≈ 5-10 days, mastering ≈ 2-5 days, artwork ≈ 5-10 days, launch day = 1, week-1 holder activations = 7. Stages run sequentially. Total est_days across all milestones should be a plausible delivery window for the release scope (single ~3-6 weeks, EP ~6-12 weeks, album ~3-6 months). timeline_window is a human label like "Week 1" or "Day of launch" — it must match est_days.
 - Group milestones into the four canonical release phases — every milestone MUST be tagged with phase ∈ { "pre_production", "production", "post_production", "release" }. Order milestones chronologically by phase. Typical shape:
   · pre_production: writing, demos, references, contracts, casting, location scouting
   · production: tracking, recording sessions, shoot days, principal capture
@@ -114,7 +116,9 @@ Output rules — be SPECIFIC and DENSE:
   · phase — one of the four canonical values above.
   · deliverables — 3-5 sentences describing the exact creative output, format it ships in, and how it's reviewed/approved.
   · tasks — 4-8 atomic checklist items the artist actually does that week. No filler.
-  · timeline_window — "Week 1", "Week 2-3", "Day of launch", etc.
+  · timeline_window — short human label aligned to est_days ("Week 1", "Week 2-3", "Day of launch").
+  · est_days — integer ≥ 1, calendar days for THIS stage only.
+  · suggested_amount — USD whole-dollar cost of THIS stage; must contribute to the budget-sum rule above.
   · marketing_strategy — 2-4 sentences naming the artist's recent works AND linked coin (if present) AND specific channels.
   · target_metric { name, value } — realistic indie numbers.
   · asset_refs — 0-4 reference suggestions { label, kind, note? }. Artist will attach URLs themselves.
