@@ -36,8 +36,7 @@ const HomeFeedPage = () => {
   const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
 
   const startProject = () => {
-    sessionStorage.setItem("newProjectPrefill", JSON.stringify({ open: true }));
-    navigate("/messages?tab=projects&new=1");
+    navigate("/studio?start=1");
   };
 
   const ctaSlides: Slide[] = [

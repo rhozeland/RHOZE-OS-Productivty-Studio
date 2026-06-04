@@ -10,7 +10,7 @@
  *                     existing token submission flow (`/settings#token`).
  */
 import { useMemo, useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -97,7 +97,21 @@ const StudioPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [startProjectOpen, setStartProjectOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [startProjectOpen, setStartProjectOpen] = useState(
+    searchParams.get("start") === "1",
+  );
+
+  // Open the Start-a-Project dialog when navigated with ?start=1
+  useEffect(() => {
+    if (searchParams.get("start") === "1") {
+      setStartProjectOpen(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete("start");
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [coinSheetOpen, setCoinSheetOpen] = useState(false);
   const [projectBrief, setProjectBrief] = useState("");
   const [creating, setCreating] = useState(false);
