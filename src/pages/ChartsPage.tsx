@@ -294,7 +294,7 @@ const ChartsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
             {rows.map((r, idx) => {
               const change = r.pump?.change24h ?? null;
               const up = change != null ? change >= 0 : null;
-              const profileHref = `/profiles/${r.id}`;
+              const profileHref = `/profiles/${r.user_id}`;
               const name = r.display_name || r.username || "Creator";
               const signalPct = Math.min(
                 100,

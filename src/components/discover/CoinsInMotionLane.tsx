@@ -9,8 +9,8 @@
  * Read-only — every card deeplinks to `pump.fun/coin/<mint>` for the trade
  * itself. No swap UI on Rhozeland.
  */
-import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { KeyboardEvent, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCreatorTokenMetrics, fmtUsdCompact } from "@/hooks/useCreatorTokenMetrics";
@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 
 type TokenProfile = {
   id: string;
+  user_id: string;
   display_name: string | null;
   username: string | null;
   avatar_url: string | null;
@@ -34,7 +35,7 @@ const useTokenedProfiles = () =>
     queryFn: async () => {
       const { data } = await supabase
         .from("creator_tokens_public" as any)
-        .select("id, display_name, username, avatar_url, token_mint_address, token_ticker, archetype")
+        .select("id, user_id, display_name, username, avatar_url, token_mint_address, token_ticker, archetype")
         .limit(24);
       return ((data ?? []) as any[]).filter((p) => !!p.token_mint_address) as TokenProfile[];
 
@@ -66,17 +67,29 @@ const Sparkline = ({ points }: { points: number[] }) => {
 };
 
 const CoinCard = ({ profile }: { profile: TokenProfile }) => {
+  const navigate = useNavigate();
   const { data: metrics } = useCreatorTokenMetrics(profile.token_mint_address);
   const ticker = profile.token_ticker || "TOKEN";
   const name = profile.display_name || profile.username || "Artist";
   const change = metrics?.change24h ?? null;
   const up = change != null && change >= 0;
   const pumpUrl = `https://pump.fun/coin/${profile.token_mint_address}`;
-  const profileHref = `/profiles/${profile.id}`;
+  const profileHref = `/profiles/${profile.user_id}`;
+
+  const openProfile = () => navigate(profileHref);
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openProfile();
+    }
+  };
 
   return (
-    <Link
-      to={profileHref}
+    <div
+      role="link"
+      tabIndex={0}
+      onClick={openProfile}
+      onKeyDown={handleKeyDown}
       className="snap-start shrink-0 w-[260px] rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm p-3.5 hover:border-foreground/30 transition-colors block"
     >
       <div className="flex items-center gap-2.5">
@@ -148,7 +161,7 @@ const CoinCard = ({ profile }: { profile: TokenProfile }) => {
           pump.fun <ExternalLink className="h-3 w-3" />
         </a>
       </div>
-    </Link>
+    </div>
   );
 };
 
