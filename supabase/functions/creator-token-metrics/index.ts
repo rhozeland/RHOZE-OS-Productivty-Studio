@@ -129,6 +129,12 @@ Deno.serve(async (req) => {
     priceUsd = jup?.priceUsd ?? null;
   }
 
+  // pump.fun /coins often returns num_holders=null. Backfill from /coins/holders.
+  let holderCount = pump?.holderCount ?? null;
+  if (holderCount == null) {
+    holderCount = await fetchPumpHolders(mint);
+  }
+
   const mc = pump?.marketCapUsd ?? null;
   const ath = pump?.athMarketCapUsd ?? null;
   const athChangePct = mc != null && ath != null && ath > 0 ? ((mc - ath) / ath) * 100 : null;
@@ -139,17 +145,20 @@ Deno.serve(async (req) => {
 
   const payload = {
     priceUsd,
-    change24h: birdeye?.change24h ?? null,
+    change24h: birdeye?.change24h ?? pump?.priceChange24hPump ?? null,
     marketCapUsd: mc,
     athMarketCapUsd: ath,
     athChangePct,
-    holderCount: pump?.holderCount ?? null,
+    holderCount,
     volumeUsd: pump?.volumeUsd ?? null,
     creatorWallet: pump?.creatorWallet ?? null,
     sparkline7d: sparkline,
     name: pump?.name ?? null,
     symbol: pump?.symbol ?? null,
     imageUri: pump?.imageUri ?? null,
+    createdTimestamp: pump?.createdTimestamp ?? null,
+    lastTradeTimestamp: pump?.lastTradeTimestamp ?? null,
+    trades24h: pump?.trades24h ?? null,
     source: sources.join("+") || "—",
     fetchedAt: Date.now(),
   };
