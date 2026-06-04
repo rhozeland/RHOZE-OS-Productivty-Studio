@@ -123,25 +123,52 @@ const InboxDrawer = ({ variant = "icon", collapsed = false }: InboxDrawerProps =
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setOpen(true)}
-        className={cn("relative transition-opacity", totalUnread === 0 && "opacity-50 hover:opacity-100")}
-        aria-label={totalUnread > 0 ? `${totalUnread} new updates` : "Inbox"}
-      >
-        <MessageSquare className="h-5 w-5" />
-        {totalUnread > 0 && (
-          <span
-            className={cn(
-              "absolute top-1 right-1 flex items-center justify-center rounded-full bg-primary text-primary-foreground animate-in zoom-in-50",
-              totalUnread > 9 ? "h-4 min-w-4 px-1 text-[9px] font-bold" : "h-2 w-2",
+      {variant === "sidebar" ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label={totalUnread > 0 ? `Inbox, ${totalUnread} new updates` : "Inbox"}
+          className={cn(
+            "relative flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-all duration-250 hover:bg-muted/60 hover:text-foreground",
+            collapsed && "justify-center px-2 py-2.5",
+          )}
+        >
+          <span className="relative flex items-center justify-center">
+            <MessageSquare className="h-[18px] w-[18px] shrink-0" />
+            {totalUnread > 0 && (
+              <span
+                className={cn(
+                  "absolute -top-1 -right-1 flex items-center justify-center rounded-full bg-primary text-primary-foreground",
+                  totalUnread > 9 ? "h-4 min-w-4 px-1 text-[9px] font-bold" : "h-2 w-2",
+                )}
+              >
+                {totalUnread > 9 ? (totalUnread > 99 ? "99+" : totalUnread) : ""}
+              </span>
             )}
-          >
-            {totalUnread > 9 ? (totalUnread > 99 ? "99+" : totalUnread) : ""}
           </span>
-        )}
-      </Button>
+          {!collapsed && <span className="flex-1 text-left">Inbox</span>}
+        </button>
+      ) : (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setOpen(true)}
+          className={cn("relative transition-opacity", totalUnread === 0 && "opacity-50 hover:opacity-100")}
+          aria-label={totalUnread > 0 ? `${totalUnread} new updates` : "Inbox"}
+        >
+          <MessageSquare className="h-5 w-5" />
+          {totalUnread > 0 && (
+            <span
+              className={cn(
+                "absolute top-1 right-1 flex items-center justify-center rounded-full bg-primary text-primary-foreground animate-in zoom-in-50",
+                totalUnread > 9 ? "h-4 min-w-4 px-1 text-[9px] font-bold" : "h-2 w-2",
+              )}
+            >
+              {totalUnread > 9 ? (totalUnread > 99 ? "99+" : totalUnread) : ""}
+            </span>
+          )}
+        </Button>
+      )}
 
       <SheetContent side="right" className="w-full sm:max-w-[420px] p-0 flex flex-col">
         {/* Header */}
