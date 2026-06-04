@@ -215,25 +215,16 @@ const ChartsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
     })),
   });
 
-  // 3) 24h sparkline per token
-  const sparkQueries = useQueries({
-    queries: creators.map((c) => ({
-      queryKey: ["charts-spark", c.token_mint_address],
-      queryFn: () => fetchSparkline7d(c.token_mint_address),
-      enabled: !!c.token_mint_address,
-      staleTime: 5 * 60_000,
-      refetchInterval: 5 * 60_000,
-      refetchOnWindowFocus: false,
-    })),
-  });
-
   const enriched = useMemo(() => {
-    return creators.map((c, i) => ({
-      ...c,
-      pump: (pumpQueries[i]?.data as PumpData | undefined) ?? null,
-      sparkline: (sparkQueries[i]?.data as number[] | undefined) ?? [],
-    }));
-  }, [creators, pumpQueries, sparkQueries]);
+    return creators.map((c, i) => {
+      const q = pumpQueries[i]?.data as { data: PumpData; sparkline: number[] } | undefined;
+      return {
+        ...c,
+        pump: q?.data ?? null,
+        sparkline: q?.sparkline ?? [],
+      };
+    });
+  }, [creators, pumpQueries]);
 
   const sortFor = (
     tab: "trending" | "new" | "holders" | "traded",
