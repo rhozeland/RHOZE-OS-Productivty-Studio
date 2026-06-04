@@ -112,7 +112,19 @@ const StudioPage = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const [coinSheetOpen, setCoinSheetOpen] = useState(false);
+  const [coinSheetOpen, setCoinSheetOpen] = useState(
+    searchParams.get("coin") === "1",
+  );
+
+  useEffect(() => {
+    if (searchParams.get("coin") === "1") {
+      setCoinSheetOpen(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete("coin");
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [projectBrief, setProjectBrief] = useState("");
   const [creating, setCreating] = useState(false);
   type Phase = "brief" | "generating" | "preview";
