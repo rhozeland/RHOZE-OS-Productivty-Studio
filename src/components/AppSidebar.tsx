@@ -126,9 +126,6 @@ const AppSidebar = () => {
                     </span>
                   )}
                 </span>
-                <span className="block text-[11px] font-normal text-muted-foreground/70 leading-tight mt-0.5 truncate">
-                  {item.description}
-                </span>
               </span>
             )}
           </Link>
