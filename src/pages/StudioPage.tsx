@@ -1337,13 +1337,7 @@ function StudioHeroBox({
     },
   ];
 
-  const [idx, setIdx] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setIdx((i) => (i + 1) % slides.length), 5000);
-    return () => clearInterval(t);
-  }, [slides.length]);
-
-  const slide = slides[idx];
+  const slide = slides[0];
 
   return (
     <motion.section
@@ -1352,40 +1346,31 @@ function StudioHeroBox({
       transition={{ duration: 0.4 }}
       className="relative w-full rounded-3xl overflow-hidden shadow-[0_30px_80px_-30px_hsl(var(--foreground)/0.4)]"
     >
-      <AnimatePresence mode="wait">
+      <div
+        className="absolute inset-0 bg-[length:300%_300%] animate-gradient-shift"
+        style={{ backgroundImage: slide.gradient }}
+      >
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-50"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 20% 30%, hsl(0 0% 100% / 0.25), transparent 40%), radial-gradient(circle at 80% 70%, hsl(0 0% 100% / 0.18), transparent 45%)",
+          }}
+        />
         <motion.div
-          key={slide.id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="absolute inset-0 bg-[length:300%_300%] animate-gradient-shift"
-          style={{ backgroundImage: slide.gradient }}
-        >
-          <motion.div
-            aria-hidden
-            className="absolute inset-0 opacity-50"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 20% 30%, hsl(0 0% 100% / 0.25), transparent 40%), radial-gradient(circle at 80% 70%, hsl(0 0% 100% / 0.18), transparent 45%)",
-            }}
-            animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
-            transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
-          />
-          <motion.div
-            aria-hidden
-            className="absolute -top-12 -right-10 h-48 w-48 rounded-full bg-white/20 blur-3xl"
-            animate={{ y: [0, 18, 0], x: [0, -10, 0] }}
-            transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.div
-            aria-hidden
-            className="absolute -bottom-14 -left-10 h-56 w-56 rounded-full bg-white/15 blur-3xl"
-            animate={{ y: [0, -14, 0], x: [0, 12, 0] }}
-            transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
-          />
-        </motion.div>
-      </AnimatePresence>
+          aria-hidden
+          className="absolute -top-12 -right-10 h-48 w-48 rounded-full bg-white/20 blur-3xl"
+          animate={{ y: [0, 18, 0], x: [0, -10, 0] }}
+          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          aria-hidden
+          className="absolute -bottom-14 -left-10 h-56 w-56 rounded-full bg-white/15 blur-3xl"
+          animate={{ y: [0, -14, 0], x: [0, 12, 0] }}
+          transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </div>
 
       <div className="relative px-5 py-4 sm:px-6 sm:py-5 text-white flex items-center justify-between gap-4">
         <div className="min-w-0">
@@ -1397,41 +1382,18 @@ function StudioHeroBox({
           </h1>
         </div>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={slide.id + "-stat"}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.35 }}
-            className="min-w-0 text-right"
-          >
-            <p className="text-[9px] uppercase tracking-[0.2em] text-white/80 font-semibold">
-              {slide.label}
-            </p>
-            <p className="font-display text-2xl sm:text-3xl font-bold tabular-nums leading-none mt-0.5">
-              {slide.value}
-            </p>
-            <p className="text-[11px] text-white/85 mt-1 truncate">
-              {slide.hint}
-            </p>
-          </motion.div>
-        </AnimatePresence>
-
-        <div className="flex items-center gap-1 shrink-0">
-          {slides.map((s, i) => (
-            <button
-              key={s.id}
-              onClick={() => setIdx(i)}
-              aria-label={`Show ${s.label}`}
-              className={`h-1 rounded-full transition-all ${
-                i === idx ? "w-4 bg-white" : "w-1 bg-white/50 hover:bg-white/70"
-              }`}
-            />
-          ))}
+        <div className="min-w-0 text-right">
+          <p className="text-[9px] uppercase tracking-[0.2em] text-white/80 font-semibold">
+            {slide.label}
+          </p>
+          <p className="font-display text-2xl sm:text-3xl font-bold tabular-nums leading-none mt-0.5">
+            {slide.value}
+          </p>
+          <p className="text-[11px] text-white/85 mt-1 truncate">
+            {slide.hint}
+          </p>
         </div>
       </div>
-
     </motion.section>
   );
 }
