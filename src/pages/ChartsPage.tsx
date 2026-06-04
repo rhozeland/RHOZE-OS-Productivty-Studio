@@ -68,77 +68,44 @@ const num = (v: unknown): number | null => {
   const n = typeof v === "string" ? parseFloat(v) : (v as number);
   return Number.isFinite(n) ? n : null;
 };
-const fetchPumpData = async (mint: string): Promise<PumpData> => {
-  // Pump.fun's /coins/{mint} returns market cap + timestamps reliably, but
-  // `num_holders`, `trades_24h`, and `price_change_24h` are frequently null.
-  // We backfill holder count from /coins/holders/{mint} (still public).
-  // Trades + candlesticks endpoints have been removed from pump's public API,
-  // so trades_24h / change_24h will fall back to whatever /coins reports.
-  const [coinRes, holdersRes] = await Promise.all([
-    fetch(`https://frontend-api-v3.pump.fun/coins/${mint}`).catch(() => null),
-    fetch(`https://frontend-api-v3.pump.fun/coins/holders/${mint}`).catch(() => null),
-  ]);
 
-  let coin: any = null;
-  try {
-    if (coinRes?.ok) coin = await coinRes.json();
-  } catch {
-    /* noop */
-  }
-
-  let holderCount: number | null = num(coin?.num_holders ?? coin?.holder_count);
-  try {
-    if (holdersRes?.ok) {
-      const hj = await holdersRes.json();
-      const arr = Array.isArray(hj?.holders) ? hj.holders : Array.isArray(hj) ? hj : [];
-      if (arr.length) holderCount = arr.length;
-    }
-  } catch {
-    /* noop */
-  }
-
-  // If pump didn't return usd_market_cap (rare), derive from virtual reserves.
-  let marketCapUsd = num(coin?.usd_market_cap);
-  if (
-    marketCapUsd == null &&
-    coin?.virtual_sol_reserves &&
-    coin?.virtual_token_reserves
-  ) {
-    try {
-      const solRes = await fetch(
-        "https://lite-api.jup.ag/price/v3?ids=So11111111111111111111111111111111111111112",
-      );
-      const sj = await solRes.json();
-      const solUsd = num(
-        sj?.So11111111111111111111111111111111111111112?.usdPrice,
-      );
-      if (solUsd) {
-        const supply = 1_000_000_000; // pump.fun standard
-        const priceSol =
-          Number(coin.virtual_sol_reserves) / 1e9 /
-          (Number(coin.virtual_token_reserves) / 1e6);
-        marketCapUsd = priceSol * solUsd * supply;
-      }
-    } catch {
-      /* noop */
-    }
-  }
-
-  return {
-    marketCapUsd,
-    change24h: num(coin?.price_change_24h ?? coin?.priceChange24h),
-    holderCount,
-    trades24h: num(coin?.trades_24h ?? coin?.txns_24h),
-    createdTimestamp: num(coin?.created_timestamp),
-    lastTradeTimestamp: num(coin?.last_trade_timestamp),
+const fetchPumpData = async (mint: string): Promise<{ data: PumpData; sparkline: number[] }> => {
+  // Browser cannot hit pump.fun directly (Cloudflare 403 + CORS). Go through
+  // our `creator-token-metrics` edge function, which proxies pump.fun +
+  // Birdeye + Jupiter server-side and returns a normalized payload.
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/creator-token-metrics?mint=${encodeURIComponent(mint)}`;
+  const empty = {
+    data: {
+      marketCapUsd: null, change24h: null, holderCount: null,
+      trades24h: null, createdTimestamp: null, lastTradeTimestamp: null,
+    } as PumpData,
+    sparkline: [] as number[],
   };
-};
-
-const fetchSparkline7d = async (_mint: string): Promise<number[]> => {
-  // Birdeye public history_price requires an API key, and pump.fun removed
-  // its public candlesticks endpoint. Returning [] makes <Sparkline /> render
-  // a flat placeholder rather than show stale/fake data.
-  return [];
+  try {
+    const res = await fetch(url, {
+      headers: {
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+    });
+    if (!res.ok) return empty;
+    const j: any = await res.json();
+    return {
+      data: {
+        marketCapUsd: num(j?.marketCapUsd),
+        change24h: num(j?.change24h),
+        holderCount: num(j?.holderCount),
+        trades24h: num(j?.trades24h),
+        createdTimestamp: num(j?.createdTimestamp),
+        lastTradeTimestamp: num(j?.lastTradeTimestamp),
+      },
+      sparkline: Array.isArray(j?.sparkline7d)
+        ? j.sparkline7d.map((n: any) => Number(n)).filter((n: number) => Number.isFinite(n))
+        : [],
+    };
+  } catch {
+    return empty;
+  }
 };
 
 const HolderAvatars = ({ count }: { count: number }) => {
@@ -231,25 +198,16 @@ const ChartsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
     })),
   });
 
-  // 3) 24h sparkline per token
-  const sparkQueries = useQueries({
-    queries: creators.map((c) => ({
-      queryKey: ["charts-spark", c.token_mint_address],
-      queryFn: () => fetchSparkline7d(c.token_mint_address),
-      enabled: !!c.token_mint_address,
-      staleTime: 5 * 60_000,
-      refetchInterval: 5 * 60_000,
-      refetchOnWindowFocus: false,
-    })),
-  });
-
   const enriched = useMemo(() => {
-    return creators.map((c, i) => ({
-      ...c,
-      pump: (pumpQueries[i]?.data as PumpData | undefined) ?? null,
-      sparkline: (sparkQueries[i]?.data as number[] | undefined) ?? [],
-    }));
-  }, [creators, pumpQueries, sparkQueries]);
+    return creators.map((c, i) => {
+      const q = pumpQueries[i]?.data as { data: PumpData; sparkline: number[] } | undefined;
+      return {
+        ...c,
+        pump: q?.data ?? null,
+        sparkline: q?.sparkline ?? [],
+      };
+    });
+  }, [creators, pumpQueries]);
 
   const sortFor = (
     tab: "trending" | "new" | "holders" | "traded",
