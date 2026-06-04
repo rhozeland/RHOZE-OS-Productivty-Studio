@@ -416,14 +416,23 @@ const ProjectDetailPage = () => {
 
 
           <Tabs defaultValue="stages" className="w-full">
-            <TabsList className="h-9">
-              <TabsTrigger value="stages" className="gap-1.5 text-xs">
+            <TabsList className="h-auto gap-5 rounded-none border-b border-border bg-transparent p-0">
+              <TabsTrigger
+                value="stages"
+                className="gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-2 pt-0 text-xs font-medium text-muted-foreground shadow-none hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+              >
                 <Milestone className="h-3.5 w-3.5" /> Stages
               </TabsTrigger>
-              <TabsTrigger value="list" className="gap-1.5 text-xs">
+              <TabsTrigger
+                value="list"
+                className="gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-2 pt-0 text-xs font-medium text-muted-foreground shadow-none hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+              >
                 <ListTodo className="h-3.5 w-3.5" /> List
               </TabsTrigger>
-              <TabsTrigger value="calendar" className="gap-1.5 text-xs">
+              <TabsTrigger
+                value="calendar"
+                className="gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-2 pt-0 text-xs font-medium text-muted-foreground shadow-none hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+              >
                 <CalendarDays className="h-3.5 w-3.5" /> Calendar
               </TabsTrigger>
             </TabsList>
