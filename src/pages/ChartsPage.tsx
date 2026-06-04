@@ -310,7 +310,11 @@ const ChartsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
                   onClick={(e) => {
                     // honor middle-click / cmd-click on inner links by ignoring those
                     if ((e.target as HTMLElement).closest("a")) return;
-                    window.location.assign(profileHref);
+                    window.open(
+                      `https://pump.fun/coin/${r.token_mint_address}`,
+                      "_blank",
+                      "noopener,noreferrer",
+                    );
                   }}
                 >
                   <TableCell className="text-xs font-medium text-muted-foreground tabular-nums">
