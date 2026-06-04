@@ -219,11 +219,6 @@ const DiscoverCard = ({ row, featured }: CardProps) => {
           {style.cta} <ArrowRight className="h-3.5 w-3.5" />
         </Button>
       </div>
-
-        <Button size="sm" variant="secondary" className="w-full rounded-full gap-1.5">
-          {style.cta} <ArrowRight className="h-3.5 w-3.5" />
-        </Button>
-      </div>
     </Link>
   );
 };
