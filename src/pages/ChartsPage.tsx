@@ -466,17 +466,21 @@ const ChartsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
   }
 
   return (
-    <div className="container mx-auto max-w-6xl px-4 py-6 md:py-8 space-y-6">
-      <header className="space-y-1">
-        <h1 className="font-display text-2xl md:text-3xl font-semibold tracking-tight flex items-center gap-2">
-          <LineChart className="h-6 w-6 text-primary" />
-          Charts
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Creator coins ranked by momentum.
-        </p>
-      </header>
-      {body}
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-3 pb-12 space-y-8">
+      <section>
+        <div className="mb-4">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-0.5">
+            Live from pump.fun
+          </p>
+          <h2 className="font-display text-lg sm:text-xl font-semibold text-foreground flex items-center gap-2">
+            <LineChart className="h-5 w-5 text-primary" />
+            Charts
+          </h2>
+        </div>
+        <div className="relative rounded-3xl overflow-hidden border border-border/60 bg-card/40 p-4 md:p-6">
+          {body}
+        </div>
+      </section>
     </div>
   );
 };
