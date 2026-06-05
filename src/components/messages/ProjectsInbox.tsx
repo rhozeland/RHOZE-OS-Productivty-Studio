@@ -100,6 +100,7 @@ type ProjectPrefill = {
 const ProjectsInbox = ({ userId }: { userId: string }) => {
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const selectedId = params.get("p");
   const showNew = params.get("new") === "1";
   const [openProposalId, setOpenProposalId] = useState<string | null>(null);
