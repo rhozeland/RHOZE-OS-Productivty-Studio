@@ -279,7 +279,7 @@ const App = () => (
               <Route element={<AppLayout />}>
                 {/* v9.9: Home = personalized fan feed (DashboardPage). */}
                 <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-                <Route path="/home" element={<ProtectedRoute><HomeFeedPage /></ProtectedRoute>} />
+                <Route path="/home" element={<HomeFeedPage />} />
                 {/* Three-Room front doors (Scene · Market · Vault) — additive,
                     organize existing routes without removing any. */}
                 <Route path="/scene" element={<SceneRoomPage />} />
