@@ -363,8 +363,14 @@ const ProjectDetailPage = () => {
         />
       )}
 
-      <Tabs defaultValue="roadmap" className="w-full">
+      <Tabs defaultValue="description" className="w-full">
         <TabsList className="mb-6 w-full justify-start overflow-x-auto flex-nowrap shrink-0 h-auto gap-6 rounded-none border-b border-border bg-transparent p-0 text-muted-foreground">
+          <TabsTrigger
+            value="description"
+            className="shrink-0 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-2.5 pt-0 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+          >
+            Description
+          </TabsTrigger>
           <TabsTrigger
             value="roadmap"
             className="shrink-0 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-2.5 pt-0 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
@@ -372,10 +378,22 @@ const ProjectDetailPage = () => {
             Roadmap
           </TabsTrigger>
           <TabsTrigger
-            value="vision"
+            value="list"
             className="shrink-0 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-2.5 pt-0 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
           >
-            Scope
+            List
+          </TabsTrigger>
+          <TabsTrigger
+            value="timeline"
+            className="shrink-0 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-2.5 pt-0 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+          >
+            Timeline
+          </TabsTrigger>
+          <TabsTrigger
+            value="smartboard"
+            className="shrink-0 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-2.5 pt-0 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+          >
+            Smartboard
           </TabsTrigger>
           {isPaid && (
             <TabsTrigger
@@ -393,16 +411,95 @@ const ProjectDetailPage = () => {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="description" className="space-y-6">
+          <ProjectVision project={project} projectId={id!} />
+        </TabsContent>
+
         <TabsContent value="roadmap" className="space-y-6">
-          {/* Signed agreement — surfaces the locked rhozeland-agreement-v1-2026
-              terms + both signers + on-chain anchor links the moment the
-              proposal flips to status='signed'. Renders nothing for legacy
-              projects without a linked proposal. */}
           <SignedAgreementCard projectId={id!} contractId={contract?.id} />
 
-          {/* Drop Rooms + Smartboards live above the roadmap so they're one
-              click away — anyone on the project can spin up a quick collab
-              space or pin a moodboard without hunting for a separate tab. */}
+          {canManageProject && (
+            <AttachCoinToProjectCard
+              projectId={project.id}
+              linkedTokenId={(project as any).linked_token_id ?? null}
+            />
+          )}
+
+          <RoadmapCopilot projectId={id!} />
+
+          {isPaid && (
+            <ProjectScopeReview
+              projectId={id!}
+              projectTitle={project.title}
+              goals={goals as any}
+              contract={contract as any}
+              collaborators={collaborators as any}
+              ownerId={project.user_id}
+            />
+          )}
+
+          {!isLocked && (goals?.filter((g: any) => !g.parent_id).length ?? 0) < 2 && (
+            <AiRoadmapDraftButton
+              projectId={id!}
+              projectTitle={project.title}
+              totalBudget={Number(project.total_budget ?? 0)}
+              clientId={(collaborators as any)?.find?.((c: any) => c.project_role === "client")?.user_id ?? null}
+              specialistId={(collaborators as any)?.find?.((c: any) => c.project_role === "specialist")?.user_id ?? project.user_id}
+              existingGoalCount={goals?.filter((g: any) => !g.parent_id).length ?? 0}
+            />
+          )}
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <StageRoadmap
+                goals={goals}
+                projectId={id!}
+                projectTitle={project.title}
+                contract={contract}
+                milestones={milestones}
+                collaborators={collaborators}
+                isCollaborative={project.project_type === "collaborative"}
+                isLocked={isLocked}
+              />
+            </div>
+            <div className="space-y-4">
+              <Timeline goals={goals} />
+              {isPaid && (
+                <RoadmapLockFlow
+                  projectId={id!}
+                  project={project}
+                  goals={goals}
+                  contract={contract}
+                  collaborators={collaborators}
+                />
+              )}
+              {isPaid && contract && (
+                <ProjectControls
+                  projectId={id!}
+                  contractId={contract.id}
+                  contractStatus={contract.status}
+                />
+              )}
+              {isPaid && contract && (
+                <ProjectDisputes
+                  projectId={id!}
+                  contractId={contract.id}
+                  milestones={milestones}
+                />
+              )}
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="list" className="space-y-6">
+          <RoadmapListView goals={goals} projectId={id!} />
+        </TabsContent>
+
+        <TabsContent value="timeline" className="space-y-6">
+          <RoadmapCalendarView goals={goals} projectId={id!} />
+        </TabsContent>
+
+        <TabsContent value="smartboard" className="space-y-6">
           <ProjectTools
             projectId={id!}
             projectTitle={project.title}
@@ -412,123 +509,6 @@ const ProjectDetailPage = () => {
             smartboardCap={smartboardCap}
             isCreating={createSmartboard.isPending}
           />
-
-          {/* Owner-only: link an approved coin so it surfaces on the public release page. */}
-          {canManageProject && (
-            <AttachCoinToProjectCard
-              projectId={project.id}
-              linkedTokenId={(project as any).linked_token_id ?? null}
-            />
-          )}
-
-          {/* AI Copilot — chat with Gemini about this roadmap (sequencing, marketing, holder utility). */}
-          <RoadmapCopilot projectId={id!} />
-
-
-          <Tabs defaultValue="stages" className="w-full">
-            <TabsList className="h-auto gap-5 rounded-none border-b border-border bg-transparent p-0">
-              <TabsTrigger
-                value="stages"
-                className="gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-2 pt-0 text-xs font-medium text-muted-foreground shadow-none hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
-              >
-                <Milestone className="h-3.5 w-3.5" /> Stages
-              </TabsTrigger>
-              <TabsTrigger
-                value="list"
-                className="gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-2 pt-0 text-xs font-medium text-muted-foreground shadow-none hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
-              >
-                <ListTodo className="h-3.5 w-3.5" /> List
-              </TabsTrigger>
-              <TabsTrigger
-                value="calendar"
-                className="gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-2 pt-0 text-xs font-medium text-muted-foreground shadow-none hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
-              >
-                <CalendarDays className="h-3.5 w-3.5" /> Calendar
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="stages" className="space-y-6 mt-4">
-              {/* Square-style scope review — gates RoadmapLockFlow until both sides accept */}
-              {isPaid && (
-                <ProjectScopeReview
-                  projectId={id!}
-                  projectTitle={project.title}
-                  goals={goals as any}
-                  contract={contract as any}
-                  collaborators={collaborators as any}
-                  ownerId={project.user_id}
-                />
-              )}
-
-              {/* AI roadmap drafter (voice + concierge CTA) — only when not yet locked */}
-              {!isLocked && (goals?.filter((g: any) => !g.parent_id).length ?? 0) < 2 && (
-                <AiRoadmapDraftButton
-                  projectId={id!}
-                  projectTitle={project.title}
-                  totalBudget={Number(project.total_budget ?? 0)}
-                  clientId={(collaborators as any)?.find?.((c: any) => c.project_role === "client")?.user_id ?? null}
-                  specialistId={(collaborators as any)?.find?.((c: any) => c.project_role === "specialist")?.user_id ?? project.user_id}
-                  existingGoalCount={goals?.filter((g: any) => !g.parent_id).length ?? 0}
-                />
-              )}
-
-              <div className="grid gap-6 lg:grid-cols-3">
-                <div className="lg:col-span-2">
-                  <StageRoadmap
-                    goals={goals}
-                    projectId={id!}
-                    projectTitle={project.title}
-                    contract={contract}
-                    milestones={milestones}
-                    collaborators={collaborators}
-                    isCollaborative={project.project_type === "collaborative"}
-                    isLocked={isLocked}
-                  />
-                </div>
-                <div className="space-y-4">
-                  <Timeline goals={goals} />
-                  {/* Roadmap Lock Flow - only for paid projects */}
-                  {isPaid && (
-                    <RoadmapLockFlow
-                      projectId={id!}
-                      project={project}
-                      goals={goals}
-                      contract={contract}
-                      collaborators={collaborators}
-                    />
-                  )}
-                  {/* Project Controls - early completion */}
-                  {isPaid && contract && (
-                    <ProjectControls
-                      projectId={id!}
-                      contractId={contract.id}
-                      contractStatus={contract.status}
-                    />
-                  )}
-                  {/* Disputes */}
-                  {isPaid && contract && (
-                    <ProjectDisputes
-                      projectId={id!}
-                      contractId={contract.id}
-                      milestones={milestones}
-                    />
-                  )}
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="list" className="mt-4 space-y-6">
-              <RoadmapListView goals={goals} projectId={id!} />
-            </TabsContent>
-
-            <TabsContent value="calendar" className="mt-4">
-              <RoadmapCalendarView goals={goals} projectId={id!} />
-            </TabsContent>
-          </Tabs>
-        </TabsContent>
-
-        <TabsContent value="vision" className="space-y-6">
-          <ProjectVision project={project} projectId={id!} />
         </TabsContent>
 
         {isPaid && (
