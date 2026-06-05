@@ -15,6 +15,7 @@ import { Rocket, Coins, ArrowRight, Loader2, ChevronLeft, ChevronRight } from "l
 import FlowModePage from "@/pages/FlowModePage";
 import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import type { RegionMarket } from "@/lib/regions";
+import StartProjectPicker from "@/components/project/StartProjectPicker";
 
 const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
 
@@ -34,9 +35,10 @@ const HomeFeedPage = () => {
   const navigate = useNavigate();
   const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
   const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const startProject = () => {
-    navigate("/studio?start=1");
+    setPickerOpen(true);
   };
 
   const ctaSlides: Slide[] = [
@@ -224,6 +226,8 @@ const HomeFeedPage = () => {
           </div>
         </div>
       </section>
+
+      <StartProjectPicker open={pickerOpen} onOpenChange={setPickerOpen} />
     </div>
   );
 };

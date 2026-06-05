@@ -55,11 +55,18 @@ export const AiRoadmapDraftButton = ({
 
       const tokenize_intent = !!specialistCtx.token_mint;
 
+      // v11 Pillar 9 — if the project was created from the StartProjectPicker
+      // "Build with AI" prompt, pass that brief through so the roadmap is
+      // tailored to what the user actually described.
+      let briefText: string | null = null;
+      try { briefText = sessionStorage.getItem("startProjectAiPrompt"); } catch { /* ignore */ }
+
       const milestones = await draft.mutateAsync({
         projectName: projectTitle,
         totalBudget,
         tokenize_intent,
         release_type: "other",
+        brief: briefText ? { what: briefText } : undefined,
         clientProfile: clientCtx,
         specialistProfile: specialistCtx,
       });
@@ -88,8 +95,12 @@ export const AiRoadmapDraftButton = ({
       toast.success("Roadmap drafted — edit anything you want.");
       setShowConcierge(true);
       trackConciergeCta("impression", { projectId, source: "ai-draft-button" });
+      try { sessionStorage.removeItem("startProjectAiPrompt"); } catch { /* ignore */ }
     },
-    onError: (e: any) => toast.error(e.message ?? "Couldn't draft roadmap"),
+    onError: (e: any) => {
+      toast.error(e.message ?? "Couldn't draft roadmap");
+      try { sessionStorage.removeItem("startProjectAiPrompt"); } catch { /* ignore */ }
+    },
     onSettled: () => setBusy(false),
   });
 
