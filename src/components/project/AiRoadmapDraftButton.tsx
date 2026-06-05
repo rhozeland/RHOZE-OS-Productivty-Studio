@@ -95,8 +95,12 @@ export const AiRoadmapDraftButton = ({
       toast.success("Roadmap drafted — edit anything you want.");
       setShowConcierge(true);
       trackConciergeCta("impression", { projectId, source: "ai-draft-button" });
+      try { sessionStorage.removeItem("startProjectAiPrompt"); } catch { /* ignore */ }
     },
-    onError: (e: any) => toast.error(e.message ?? "Couldn't draft roadmap"),
+    onError: (e: any) => {
+      toast.error(e.message ?? "Couldn't draft roadmap");
+      try { sessionStorage.removeItem("startProjectAiPrompt"); } catch { /* ignore */ }
+    },
     onSettled: () => setBusy(false),
   });
 
