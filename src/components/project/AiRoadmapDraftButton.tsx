@@ -9,15 +9,17 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Wand2, Loader2, Sparkles } from "lucide-react";
+import { Wand2, Loader2, Sparkles, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAiRoadmapDraft, composeMilestoneDescription, chainMilestoneDates } from "@/hooks/useAiRoadmapDraft";
+import { useAiRoadmapDraft, composeMilestoneDescription, chainMilestoneDates, type DraftedMilestone } from "@/hooks/useAiRoadmapDraft";
 import { fetchCreatorContext } from "@/lib/creator-context";
 import { ConciergeIntakeSheet } from "@/components/concierge/ConciergeIntakeSheet";
 import { trackConciergeCta } from "@/lib/concierge-analytics";
+import { todayGradient } from "@/lib/rhoze-gradients";
 
 interface Props {
   projectId: string;
@@ -27,6 +29,15 @@ interface Props {
   specialistId?: string | null;
   existingGoalCount: number;
 }
+
+const PROGRESS_STEPS = [
+  "Reading your brief…",
+  "Pulling your recent work and style…",
+  "Drafting milestones…",
+  "Budgeting each stage…",
+  "Mapping marketing strategy…",
+  "Finalising your roadmap…",
+];
 
 export const AiRoadmapDraftButton = ({
   projectId,
@@ -39,11 +50,17 @@ export const AiRoadmapDraftButton = ({
   const { user } = useAuth();
   const qc = useQueryClient();
   const draft = useAiRoadmapDraft();
+  const grad = todayGradient();
 
   const [busy, setBusy] = useState(false);
   const [showConcierge, setShowConcierge] = useState(false);
   const [conciergeOpen, setConciergeOpen] = useState(false);
+  const [progressOpen, setProgressOpen] = useState(false);
+  const [progressPct, setProgressPct] = useState(0);
+  const [stepIdx, setStepIdx] = useState(0);
+  const [doneMilestones, setDoneMilestones] = useState<DraftedMilestone[] | null>(null);
   const autoFiredRef = useRef(false);
+
 
   const generate = useMutation({
     mutationFn: async () => {
