@@ -713,6 +713,29 @@ const ProjectThread = ({
 };
 
 /* ─── Lightweight create dialog (name + accent color) ─── */
+
+const TIMELINE_OPTIONS = [
+  { value: "2_weeks", label: "2 weeks" },
+  { value: "1_month", label: "1 month" },
+  { value: "2_months", label: "2 months" },
+  { value: "3_months", label: "3 months" },
+  { value: "custom", label: "Custom" },
+] as const;
+
+const BUDGET_OPTIONS = [
+  { value: "under_500", label: "Under $500", amount: 400 },
+  { value: "500_2k",    label: "$500 – $2k",  amount: 1250 },
+  { value: "2k_5k",     label: "$2k – $5k",   amount: 3500 },
+  { value: "5k_10k",    label: "$5k – $10k",  amount: 7500 },
+  { value: "10k_plus",  label: "$10k+",       amount: 15000 },
+] as const;
+
+const TEAM_OPTIONS = [
+  { value: "solo", label: "Solo" },
+  { value: "small", label: "2–3 people" },
+  { value: "full", label: "Full team" },
+] as const;
+
 const NewProjectDialog = ({
   open,
   onOpenChange,
@@ -730,9 +753,12 @@ const NewProjectDialog = ({
   const [aiPrompt, setAiPrompt] = useState<string | null>(null);
   const [autoCreating, setAutoCreating] = useState(false);
 
-  // v10.3 — pick up prefill stashed by ListingLightbox / SupportSheet "Commission" flow.
-  // v11 Pillar 9 — also pick up the AI brief stashed by StartProjectPicker so we can
-  // auto-create the project without making the user fill the dialog.
+  // Empty-page brief fields
+  const [brief, setBrief] = useState("");
+  const [timeline, setTimeline] = useState<typeof TIMELINE_OPTIONS[number]["value"]>("1_month");
+  const [budget, setBudget] = useState<typeof BUDGET_OPTIONS[number]["value"]>("500_2k");
+  const [team, setTeam] = useState<typeof TEAM_OPTIONS[number]["value"]>("solo");
+
   useEffect(() => {
     if (!open) return;
     try {
@@ -750,23 +776,36 @@ const NewProjectDialog = ({
       if (aiText && aiText.trim()) {
         const trimmed = aiText.trim();
         setAiPrompt(trimmed);
-        // Derive a clean title from the first line / first ~60 chars.
         const firstLine = trimmed.split(/\n/)[0].trim();
         const derived = firstLine.length > 60 ? firstLine.slice(0, 60).trim() + "…" : firstLine;
         setTitle(derived);
-        // Auto-create shortly after — gives state a tick to settle.
         setAutoCreating(true);
       }
     } catch { /* ignore */ }
   }, [open]);
 
+  const composedBrief = () => {
+    if (aiPrompt) return aiPrompt;
+    if (!brief.trim()) return null;
+    const tl = TIMELINE_OPTIONS.find(t => t.value === timeline)?.label ?? "";
+    const bd = BUDGET_OPTIONS.find(b => b.value === budget)?.label ?? "";
+    const tm = TEAM_OPTIONS.find(t => t.value === team)?.label ?? "";
+    return `${brief.trim()}\n\n— Timeline: ${tl}\n— Budget: ${bd}\n— Team: ${tm}`;
+  };
+
+  const budgetAmount = () => {
+    const b = BUDGET_OPTIONS.find(b => b.value === budget);
+    return b?.amount ?? 0;
+  };
+
   const create = useMutation({
     mutationFn: async () => {
       if (!title.trim()) throw new Error("Title required.");
+      const description = composedBrief();
       const { data, error } = await (supabase.rpc as any)("create_project_with_owner", {
         _title: title.trim(),
-        _description: aiPrompt ?? null,
-        _vision: aiPrompt ?? null,
+        _description: description,
+        _vision: description,
         _scope_of_work: prefill?.scope ?? null,
         _project_type: "collaborative",
         _status: "active",
@@ -775,6 +814,12 @@ const NewProjectDialog = ({
       if (error) throw error;
       const project = Array.isArray(data) ? data[0] : data;
       if (!project?.id) throw new Error("Project creation returned no project.");
+
+      // If user picked a budget range from the empty-page form, persist it
+      // so the AI roadmap drafter (and budget UI) have a number to work with.
+      if (!aiPrompt && budgetAmount() > 0) {
+        await supabase.from("projects").update({ total_budget: budgetAmount() }).eq("id", project.id);
+      }
 
       if (prefill?.collaboratorId) {
         const { error: collabError } = await supabase
@@ -793,6 +838,7 @@ const NewProjectDialog = ({
     },
     onSuccess: (p: any) => {
       setTitle("");
+      setBrief("");
       setCoverColor(COVER_COLORS[0]);
       setPrefill(null);
       setAiPrompt(null);
@@ -807,7 +853,6 @@ const NewProjectDialog = ({
     },
   });
 
-  // Auto-fire the create mutation once the AI brief has populated state.
   useEffect(() => {
     if (!autoCreating) return;
     if (!title.trim()) return;
@@ -816,8 +861,6 @@ const NewProjectDialog = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoCreating, title]);
 
-  // While auto-creating from an AI brief, show a brief loading state instead
-  // of the full dialog so the user lands in their workspace as fast as possible.
   if (autoCreating || aiPrompt) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -840,13 +883,15 @@ const NewProjectDialog = ({
     );
   }
 
+  const selectCls = "h-11 w-full rounded-xl border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md border-border/70">
+      <DialogContent className="max-w-lg border-border/70 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display">New project</DialogTitle>
           <DialogDescription>
-              Start the roadmap cleanly, then shape scope, milestones, and terms inside the workspace.
+            Lay out the brief, timeline, and budget — you can refine everything inside the workspace.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -879,6 +924,69 @@ const NewProjectDialog = ({
               autoFocus
               className="h-12 rounded-2xl"
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              What are you building?
+            </label>
+            <Textarea
+              value={brief}
+              onChange={(e) => setBrief(e.target.value)}
+              rows={5}
+              placeholder="e.g. I want to record a 5-track EP, shoot a music video for the lead single, and run a campaign to hit 1,000 streams in the first week."
+              className="rounded-2xl resize-none"
+            />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                Timeline
+              </label>
+              <select
+                value={timeline}
+                onChange={(e) => setTimeline(e.target.value as any)}
+                className={selectCls}
+              >
+                {TIMELINE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                Budget range
+              </label>
+              <select
+                value={budget}
+                onChange={(e) => setBudget(e.target.value as any)}
+                className={selectCls}
+              >
+                {BUDGET_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              Team size
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {TEAM_OPTIONS.map(o => (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => setTeam(o.value)}
+                  className={cn(
+                    "h-11 rounded-xl border text-sm font-medium transition-colors",
+                    team === o.value
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border bg-background hover:border-foreground/40",
+                  )}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -919,5 +1027,6 @@ const NewProjectDialog = ({
     </Dialog>
   );
 };
+
 
 export default ProjectsInbox;
