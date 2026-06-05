@@ -794,12 +794,27 @@ const NewProjectDialog = ({
     onSuccess: (p: any) => {
       setTitle("");
       setCoverColor(COVER_COLORS[0]);
-       setPrefill(null);
+      setPrefill(null);
+      setAiPrompt(null);
+      setAutoCreating(false);
+      try { sessionStorage.removeItem("startProjectAiPrompt"); } catch { /* ignore */ }
       onOpenChange(false);
       onCreated(p.id);
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => {
+      setAutoCreating(false);
+      toast.error(e.message);
+    },
   });
+
+  // Auto-fire the create mutation once the AI brief has populated state.
+  useEffect(() => {
+    if (!autoCreating) return;
+    if (!title.trim()) return;
+    if (create.isPending || create.isSuccess) return;
+    create.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoCreating, title]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
