@@ -816,6 +816,30 @@ const NewProjectDialog = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoCreating, title]);
 
+  // While auto-creating from an AI brief, show a brief loading state instead
+  // of the full dialog so the user lands in their workspace as fast as possible.
+  if (autoCreating || aiPrompt) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md border-border/70">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" /> Spinning up your release…
+            </DialogTitle>
+            <DialogDescription>
+              Creating the project from your brief — the AI roadmap drafts next.
+            </DialogDescription>
+          </DialogHeader>
+          {aiPrompt && (
+            <p className="text-xs text-muted-foreground italic border-l-2 border-border pl-3 mt-2 line-clamp-3">
+              "{aiPrompt}"
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md border-border/70">
