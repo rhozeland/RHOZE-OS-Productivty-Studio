@@ -27,29 +27,29 @@ const ProgressChart = ({ goals, tasks, headerAction }: ProgressChartProps) => {
   ];
 
   return (
-    <div className="surface-card p-6">
-      <div className="mb-4 flex items-center justify-between gap-3">
+    <div className="surface-card p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-primary" />
-          <h2 className="font-display text-lg font-semibold text-foreground">Progress Overview</h2>
+          <BarChart3 className="h-4 w-4 text-primary" />
+          <h2 className="font-display text-sm font-semibold text-foreground">Progress Overview</h2>
         </div>
         {headerAction}
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {stats.map((stat, i) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="rounded-xl border border-border bg-muted/30 p-4"
+            className="rounded-lg border border-border bg-muted/30 p-3"
           >
-            <div className="flex items-center gap-2 mb-2">
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
-              <span className="text-xs text-muted-foreground">{stat.label}</span>
+            <div className="flex items-center gap-1.5 mb-1">
+              <stat.icon className={`h-3 w-3 ${stat.color}`} />
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground truncate">{stat.label}</span>
             </div>
-            <p className="text-2xl font-display font-bold text-foreground">{stat.value}</p>
-            <Progress value={stat.progress} className="mt-2 h-1.5" />
+            <p className="text-lg font-display font-bold text-foreground leading-tight">{stat.value}</p>
+            <Progress value={stat.progress} className="mt-1.5 h-1" />
           </motion.div>
         ))}
       </div>
