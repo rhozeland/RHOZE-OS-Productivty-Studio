@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import RoomHero from "@/components/rooms/RoomHero";
-import PostMenuButton from "@/components/PostMenuButton";
+import StartProjectPicker from "@/components/project/StartProjectPicker";
 import ConnectBoard, { type BoardKind } from "@/components/connect/ConnectBoard";
 
 /**
