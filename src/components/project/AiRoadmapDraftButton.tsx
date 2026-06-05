@@ -7,7 +7,7 @@
  * This button is now purely an AI re-draft from existing project context,
  * plus a Concierge handoff banner on success.
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Wand2, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -43,6 +43,7 @@ export const AiRoadmapDraftButton = ({
   const [busy, setBusy] = useState(false);
   const [showConcierge, setShowConcierge] = useState(false);
   const [conciergeOpen, setConciergeOpen] = useState(false);
+  const autoFiredRef = useRef(false);
 
   const generate = useMutation({
     mutationFn: async () => {
@@ -93,6 +94,20 @@ export const AiRoadmapDraftButton = ({
   });
 
   const isWorking = busy || generate.isPending;
+
+  // Auto-fire once when the project was created via "Build with AI" picker.
+  useEffect(() => {
+    if (autoFiredRef.current) return;
+    if (existingGoalCount > 0) return;
+    if (!user?.id) return;
+    let mode: string | null = null;
+    try { mode = sessionStorage.getItem("startProjectMode"); } catch { /* ignore */ }
+    if (mode !== "ai") return;
+    autoFiredRef.current = true;
+    try { sessionStorage.removeItem("startProjectMode"); } catch { /* ignore */ }
+    generate.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, existingGoalCount]);
 
   return (
     <div className="space-y-3">

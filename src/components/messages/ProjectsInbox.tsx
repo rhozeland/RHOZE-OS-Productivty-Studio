@@ -19,7 +19,7 @@
  *     if the table is empty or the user can't read it).
  */
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
@@ -100,6 +100,7 @@ type ProjectPrefill = {
 const ProjectsInbox = ({ userId }: { userId: string }) => {
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const selectedId = params.get("p");
   const showNew = params.get("new") === "1";
   const [openProposalId, setOpenProposalId] = useState<string | null>(null);
@@ -397,8 +398,17 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
         userId={userId}
         onCreated={(id) => {
           queryClient.invalidateQueries({ queryKey: ["inbox-owned-projects"] });
-          setSelected(id);
-          toast.success("Project created.");
+          let aiMode = false;
+          try { aiMode = sessionStorage.getItem("startProjectMode") === "ai"; } catch { /* ignore */ }
+          if (aiMode) {
+            // Leave the flag set — AiRoadmapDraftButton picks it up on mount,
+            // auto-drafts, then clears it.
+            toast.success("Project created — drafting your roadmap…");
+            navigate(`/projects/${id}`);
+          } else {
+            setSelected(id);
+            toast.success("Project created.");
+          }
         }}
       />
 
