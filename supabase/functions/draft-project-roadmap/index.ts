@@ -150,61 +150,12 @@ Output rules — be SPECIFIC, DENSE, and NUMERICALLY ACCURATE:
     body: JSON.stringify({
       model: "google/gemini-2.5-pro",
       messages: [
-        { role: "system", content: systemPrompt },
+        { role: "system", content: systemPrompt + `\n\nReturn ONLY valid JSON of the shape:\n{ "milestones": [ { "title": string, "phase": "pre_production"|"production"|"post_production"|"release", "deliverables": string, "tasks": string[], "timeline_window": string, "suggested_amount": number, "est_days": number, "marketing_strategy": string, "target_metric": { "name": string, "value": string }, "asset_refs": [{ "label": string, "kind": string, "note"?: string }], "risks": string } ] }\nNo prose, no markdown, no code fences — just the JSON object.` },
         { role: "user", content: userPrompt },
       ],
-      tools: [{
-        type: "function",
-        function: {
-          name: "draft_roadmap",
-          description: "Return 4-7 detailed music-native milestone stages tied to the artist's actual work.",
-          parameters: {
-            type: "object",
-            properties: {
-              milestones: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    title: { type: "string" },
-                    phase: { type: "string" },
-                    deliverables: { type: "string" },
-                    tasks: { type: "array", items: { type: "string" } },
-                    timeline_window: { type: "string" },
-                    suggested_amount: { type: "number" },
-                    est_days: { type: "number" },
-                    marketing_strategy: { type: "string" },
-                    target_metric: {
-                      type: "object",
-                      properties: {
-                        name: { type: "string" },
-                        value: { type: "string" },
-                      },
-                      required: ["name", "value"],
-                    },
-                    asset_refs: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          label: { type: "string" },
-                          kind: { type: "string" },
-                          note: { type: "string" },
-                        },
-                        required: ["label", "kind"],
-                      },
-                    },
-                    risks: { type: "string" },
-                  },
-                  required: ["title", "phase", "deliverables", "tasks", "timeline_window", "suggested_amount", "est_days", "marketing_strategy", "target_metric", "asset_refs", "risks"],
-                },
-              },
-            },
-            required: ["milestones"],
-          },
-        },
-      }],
-      tool_choice: { type: "function", function: { name: "draft_roadmap" } },
+      response_format: { type: "json_object" },
+      max_tokens: 8000,
+      temperature: 0.7,
     }),
   });
 
@@ -227,20 +178,26 @@ Output rules — be SPECIFIC, DENSE, and NUMERICALLY ACCURATE:
   }
 
   const json = await res.json();
-  const call = json?.choices?.[0]?.message?.tool_calls?.[0];
-  if (!call?.function?.arguments) {
-    return new Response(JSON.stringify({ error: "AI returned no structured output" }), {
+  const content: string | undefined = json?.choices?.[0]?.message?.content;
+  if (!content) {
+    console.error("AI returned no content", JSON.stringify(json).slice(0, 500));
+    return new Response(JSON.stringify({ error: "AI returned no content" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  let args;
-  try { args = JSON.parse(call.function.arguments); }
-  catch {
+  let args: any;
+  try {
+    // Strip code fences if the model added them despite instructions
+    const cleaned = content.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "");
+    args = JSON.parse(cleaned);
+  } catch (e) {
+    console.error("AI returned invalid JSON", content.slice(0, 800));
     return new Response(JSON.stringify({ error: "AI returned invalid JSON" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
 
   const raw = (args.milestones ?? []) as Array<any>;
 
