@@ -65,6 +65,11 @@ export const AiRoadmapDraftButton = ({
   const generate = useMutation({
     mutationFn: async () => {
       setBusy(true);
+      setProgressOpen(true);
+      setProgressPct(8);
+      setStepIdx(0);
+      setDoneMilestones(null);
+
       const [clientCtx, specialistCtx] = await Promise.all([
         fetchCreatorContext(clientId, "Client"),
         fetchCreatorContext(specialistId, "Creator"),
@@ -72,9 +77,6 @@ export const AiRoadmapDraftButton = ({
 
       const tokenize_intent = !!specialistCtx.token_mint;
 
-      // v11 Pillar 9 — if the project was created from the StartProjectPicker
-      // "Build with AI" prompt, pass that brief through so the roadmap is
-      // tailored to what the user actually described.
       let briefText: string | null = null;
       try { briefText = sessionStorage.getItem("startProjectAiPrompt"); } catch { /* ignore */ }
 
@@ -105,16 +107,21 @@ export const AiRoadmapDraftButton = ({
       })) as any;
       const { error } = await supabase.from("project_goals" as any).insert(rows);
       if (error) throw error;
+      return milestones;
     },
-    onSuccess: () => {
+    onSuccess: (milestones) => {
       qc.invalidateQueries({ queryKey: ["project-goals", projectId] });
       qc.invalidateQueries({ queryKey: ["project", projectId] });
-      toast.success("Roadmap drafted — edit anything you want.");
+      setProgressPct(100);
+      setStepIdx(PROGRESS_STEPS.length - 1);
+      setDoneMilestones(milestones ?? []);
+      toast.success("Roadmap ready.");
       setShowConcierge(true);
       trackConciergeCta("impression", { projectId, source: "ai-draft-button" });
       try { sessionStorage.removeItem("startProjectAiPrompt"); } catch { /* ignore */ }
     },
     onError: (e: any) => {
+      setProgressOpen(false);
       toast.error(e.message ?? "Couldn't draft roadmap");
       try { sessionStorage.removeItem("startProjectAiPrompt"); } catch { /* ignore */ }
     },
@@ -122,6 +129,18 @@ export const AiRoadmapDraftButton = ({
   });
 
   const isWorking = busy || generate.isPending;
+
+  // Animate progress + cycle status copy while the AI is working.
+  useEffect(() => {
+    if (!isWorking) return;
+    const stepTimer = setInterval(() => {
+      setStepIdx((i) => Math.min(i + 1, PROGRESS_STEPS.length - 2));
+    }, 1800);
+    const pctTimer = setInterval(() => {
+      setProgressPct((p) => (p >= 92 ? 92 : p + Math.max(1, Math.round((92 - p) * 0.08))));
+    }, 350);
+    return () => { clearInterval(stepTimer); clearInterval(pctTimer); };
+  }, [isWorking]);
 
   // Auto-fire once when the project was created via "Build with AI" picker.
   useEffect(() => {
@@ -136,6 +155,14 @@ export const AiRoadmapDraftButton = ({
     generate.mutate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, existingGoalCount]);
+
+  const closeProgress = () => {
+    setProgressOpen(false);
+    setDoneMilestones(null);
+    setProgressPct(0);
+    setStepIdx(0);
+  };
+
 
   return (
     <div className="space-y-3">
