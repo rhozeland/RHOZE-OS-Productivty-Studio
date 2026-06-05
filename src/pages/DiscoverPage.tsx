@@ -21,6 +21,7 @@ import {
 import { ArrowRight, ChevronDown, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CoinsInMotionLane from "@/components/discover/CoinsInMotionLane";
+import ActiveProjectsLane from "@/components/discover/ActiveProjectsLane";
 import {
   useHireRows,
   useSpaceRows,
@@ -300,7 +301,10 @@ const DiscoverPage = () => {
         </div>
       </motion.section>
 
-      {/* SECTION 2 — Coins in Motion (full width) */}
+      {/* SECTION 2 — Active projects (building in public) */}
+      <ActiveProjectsLane />
+
+      {/* SECTION 3 — Coins in Motion (full width) */}
       <CoinsInMotionLane />
 
       {/* SECTION 3 — Asymmetrical 2/3 + 1/3 split */}
