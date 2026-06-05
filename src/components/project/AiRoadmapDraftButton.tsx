@@ -7,7 +7,7 @@
  * This button is now purely an AI re-draft from existing project context,
  * plus a Concierge handoff banner on success.
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Wand2, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
