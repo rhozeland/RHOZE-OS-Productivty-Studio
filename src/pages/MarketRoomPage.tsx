@@ -100,19 +100,18 @@ const MarketRoomPage = () => {
             );
           })}
         </div>
-        <PostMenuButton
-          intent="listing"
-          trigger={
-            <button
-              type="button"
-              className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-foreground text-background px-3 sm:px-4 py-2 text-xs font-semibold hover:opacity-90 transition-opacity shadow-sm"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Start a Project</span>
-              <span className="sm:hidden">Start</span>
-            </button>
-          }
-        />
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-foreground text-background px-3 sm:px-4 py-2 text-xs font-semibold hover:opacity-90 transition-opacity shadow-sm"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Start a Project</span>
+          <span className="sm:hidden">Start</span>
+        </button>
+      </div>
+
+      <StartProjectPicker open={pickerOpen} onOpenChange={setPickerOpen} />
       </div>
 
       {/* Search + sort */}
