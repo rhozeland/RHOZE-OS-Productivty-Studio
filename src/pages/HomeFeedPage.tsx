@@ -15,6 +15,7 @@ import { Rocket, Coins, ArrowRight, Loader2, ChevronLeft, ChevronRight } from "l
 import FlowModePage from "@/pages/FlowModePage";
 import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import type { RegionMarket } from "@/lib/regions";
+import StartProjectPicker from "@/components/project/StartProjectPicker";
 
 const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
 
