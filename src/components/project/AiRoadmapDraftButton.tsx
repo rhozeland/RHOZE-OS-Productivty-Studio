@@ -95,6 +95,20 @@ export const AiRoadmapDraftButton = ({
 
   const isWorking = busy || generate.isPending;
 
+  // Auto-fire once when the project was created via "Build with AI" picker.
+  useEffect(() => {
+    if (autoFiredRef.current) return;
+    if (existingGoalCount > 0) return;
+    if (!user?.id) return;
+    let mode: string | null = null;
+    try { mode = sessionStorage.getItem("startProjectMode"); } catch { /* ignore */ }
+    if (mode !== "ai") return;
+    autoFiredRef.current = true;
+    try { sessionStorage.removeItem("startProjectMode"); } catch { /* ignore */ }
+    generate.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, existingGoalCount]);
+
   return (
     <div className="space-y-3">
       <div className="flex flex-col gap-3 rounded-xl border border-dashed border-primary/30 bg-primary/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
