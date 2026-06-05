@@ -727,17 +727,36 @@ const NewProjectDialog = ({
   const [title, setTitle] = useState("");
   const [coverColor, setCoverColor] = useState(COVER_COLORS[0]);
   const [prefill, setPrefill] = useState<ProjectPrefill | null>(null);
+  const [aiPrompt, setAiPrompt] = useState<string | null>(null);
+  const [autoCreating, setAutoCreating] = useState(false);
 
   // v10.3 — pick up prefill stashed by ListingLightbox / SupportSheet "Commission" flow.
+  // v11 Pillar 9 — also pick up the AI brief stashed by StartProjectPicker so we can
+  // auto-create the project without making the user fill the dialog.
   useEffect(() => {
     if (!open) return;
     try {
       const raw = sessionStorage.getItem("newProjectPrefill");
-      if (!raw) return;
-      const pref = JSON.parse(raw);
-      if (pref?.title) setTitle(pref.title);
-      setPrefill(pref);
-      sessionStorage.removeItem("newProjectPrefill");
+      if (raw) {
+        const pref = JSON.parse(raw);
+        if (pref?.title) setTitle(pref.title);
+        setPrefill(pref);
+        sessionStorage.removeItem("newProjectPrefill");
+      }
+    } catch { /* ignore */ }
+
+    try {
+      const aiText = sessionStorage.getItem("startProjectAiPrompt");
+      if (aiText && aiText.trim()) {
+        const trimmed = aiText.trim();
+        setAiPrompt(trimmed);
+        // Derive a clean title from the first line / first ~60 chars.
+        const firstLine = trimmed.split(/\n/)[0].trim();
+        const derived = firstLine.length > 60 ? firstLine.slice(0, 60).trim() + "…" : firstLine;
+        setTitle(derived);
+        // Auto-create shortly after — gives state a tick to settle.
+        setAutoCreating(true);
+      }
     } catch { /* ignore */ }
   }, [open]);
 
@@ -746,8 +765,8 @@ const NewProjectDialog = ({
       if (!title.trim()) throw new Error("Title required.");
       const { data, error } = await (supabase.rpc as any)("create_project_with_owner", {
         _title: title.trim(),
-        _description: null,
-        _vision: null,
+        _description: aiPrompt ?? null,
+        _vision: aiPrompt ?? null,
         _scope_of_work: prefill?.scope ?? null,
         _project_type: "collaborative",
         _status: "active",
