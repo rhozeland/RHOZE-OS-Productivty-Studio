@@ -226,6 +226,8 @@ const HomeFeedPage = () => {
           </div>
         </div>
       </section>
+
+      <StartProjectPicker open={pickerOpen} onOpenChange={setPickerOpen} />
     </div>
   );
 };
