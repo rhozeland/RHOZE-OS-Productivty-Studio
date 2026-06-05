@@ -57,6 +57,7 @@ const MarketRoomPage = () => {
   const urlFilter = URL_TO_FILTER[(searchParams.get("kind") || "").toLowerCase()];
   const [filter, setFilter] = useState<FilterKey>(urlFilter ?? "all");
   const [search, setSearch] = useState("");
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
     if (urlFilter && urlFilter !== filter) setFilter(urlFilter);
