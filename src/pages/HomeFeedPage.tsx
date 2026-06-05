@@ -35,9 +35,10 @@ const HomeFeedPage = () => {
   const navigate = useNavigate();
   const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
   const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const startProject = () => {
-    navigate("/studio?start=1");
+    setPickerOpen(true);
   };
 
   const ctaSlides: Slide[] = [
