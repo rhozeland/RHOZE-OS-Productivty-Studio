@@ -1,4 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuthGate } from "@/components/AuthGateDialog";
+
 import { cn } from "@/lib/utils";
 import {
   LogIn,
