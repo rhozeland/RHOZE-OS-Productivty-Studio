@@ -112,7 +112,6 @@ const MarketRoomPage = () => {
       </div>
 
       <StartProjectPicker open={pickerOpen} onOpenChange={setPickerOpen} />
-      </div>
 
       {/* Search + sort */}
       <div className="space-y-3">
