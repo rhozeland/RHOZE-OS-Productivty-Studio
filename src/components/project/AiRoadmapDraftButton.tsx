@@ -43,6 +43,7 @@ export const AiRoadmapDraftButton = ({
   const [busy, setBusy] = useState(false);
   const [showConcierge, setShowConcierge] = useState(false);
   const [conciergeOpen, setConciergeOpen] = useState(false);
+  const autoFiredRef = useRef(false);
 
   const generate = useMutation({
     mutationFn: async () => {
