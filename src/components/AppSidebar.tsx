@@ -40,6 +40,7 @@ import rhozelandLogo from "@/assets/rhozeland-logo.png";
 const InboxNavLink = ({ collapsed, onNavigate }: { collapsed: boolean; onNavigate: () => void }) => {
   const { user } = useAuth();
   const location = useLocation();
+  const { requireAuth } = useAuthGate();
   const active = location.pathname.startsWith("/messages");
   const { data: unread = 0 } = useQuery({
     queryKey: ["sidebar-inbox-unread", user?.id],
@@ -57,10 +58,19 @@ const InboxNavLink = ({ collapsed, onNavigate }: { collapsed: boolean; onNavigat
     },
   });
 
+  const handleClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault();
+      requireAuth("Sign up to access your inbox and message creators.");
+      return;
+    }
+    onNavigate();
+  };
+
   return (
     <Link
       to="/messages"
-      onClick={onNavigate}
+      onClick={handleClick}
       aria-current={active ? "page" : undefined}
       className={cn(
         "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-250",
@@ -87,6 +97,7 @@ const InboxNavLink = ({ collapsed, onNavigate }: { collapsed: boolean; onNavigat
     </Link>
   );
 };
+
 
 type NavSpec = {
   icon: typeof Home;
