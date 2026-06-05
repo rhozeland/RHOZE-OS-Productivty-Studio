@@ -398,8 +398,17 @@ const ProjectsInbox = ({ userId }: { userId: string }) => {
         userId={userId}
         onCreated={(id) => {
           queryClient.invalidateQueries({ queryKey: ["inbox-owned-projects"] });
-          setSelected(id);
-          toast.success("Project created.");
+          let aiMode = false;
+          try { aiMode = sessionStorage.getItem("startProjectMode") === "ai"; } catch { /* ignore */ }
+          if (aiMode) {
+            // Leave the flag set — AiRoadmapDraftButton picks it up on mount,
+            // auto-drafts, then clears it.
+            toast.success("Project created — drafting your roadmap…");
+            navigate(`/projects/${id}`);
+          } else {
+            setSelected(id);
+            toast.success("Project created.");
+          }
         }}
       />
 
