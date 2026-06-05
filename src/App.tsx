@@ -217,10 +217,10 @@ const AuthGateWrapper = ({ children }: { children: React.ReactNode }) => {
 
 /**
  * Root entry — `/`
- * v9.9: Authed users land on Home (personalized feed). Guests on Discover.
+ * Everyone (authed + guests) lands on Home. Landing page retired.
  */
 const RootEntry = () => {
-  const { loading, user } = useAuth();
+  const { loading } = useAuth();
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -228,10 +228,9 @@ const RootEntry = () => {
       </div>
     );
   }
-  // Authed → app. Guests → marketing landing page.
-  if (user) return <Navigate to="/discover" replace />;
-  return <LandingPage />;
+  return <Navigate to="/home" replace />;
 };
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
