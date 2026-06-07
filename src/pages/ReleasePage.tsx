@@ -231,7 +231,7 @@ const ReleasePage = () => {
               <TabsTrigger value="overview" className={TAB_TRIGGER}>Overview</TabsTrigger>
               <TabsTrigger value="roadmap" className={TAB_TRIGGER}>Roadmap</TabsTrigger>
               <TabsTrigger value="timeline" className={TAB_TRIGGER}>Timeline</TabsTrigger>
-              {hasBoard && <TabsTrigger value="board" className={TAB_TRIGGER}>Board</TabsTrigger>}
+              <TabsTrigger value="board" className={TAB_TRIGGER}>Board</TabsTrigger>
               <TabsTrigger value="story" className={TAB_TRIGGER}>Story</TabsTrigger>
               <TabsTrigger value="team" className={TAB_TRIGGER}>Team</TabsTrigger>
             </TabsList>
@@ -276,12 +276,28 @@ const ReleasePage = () => {
               </div>
             </TabsContent>
 
-            {/* ROADMAP — read-only stage list (no vision/scope boxes per spec) */}
-            <TabsContent value="roadmap" className="space-y-3">
+            {/* ROADMAP — vision + scope + milestones */}
+            <TabsContent value="roadmap" className="space-y-6">
+              {(project.vision || project.scope_of_work) && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {project.vision && (
+                    <div className="rounded-2xl border border-border bg-card/40 p-5">
+                      <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Vision</h3>
+                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{project.vision}</p>
+                    </div>
+                  )}
+                  {project.scope_of_work && (
+                    <div className="rounded-2xl border border-border bg-card/40 p-5">
+                      <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Scope of work</h3>
+                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{project.scope_of_work}</p>
+                    </div>
+                  )}
+                </div>
+              )}
               {hasMilestones ? (
                 <>
                   <MilestoneTrack milestones={milestones as any} contractId={contract?.id} />
-                  <ol className="mt-6 space-y-2">
+                  <ol className="mt-2 space-y-2">
                     {milestones!.map((m: any, i: number) => {
                       const done = m.status === "approved" || m.status === "released";
                       return (
@@ -305,9 +321,9 @@ const ReleasePage = () => {
                     })}
                   </ol>
                 </>
-              ) : (
+              ) : !(project.vision || project.scope_of_work) ? (
                 <p className="text-sm text-muted-foreground text-center py-8">Roadmap coming soon.</p>
-              )}
+              ) : null}
             </TabsContent>
 
             {/* TIMELINE — thin progress + read-only calendar */}
@@ -325,20 +341,35 @@ const ReleasePage = () => {
               <p className="text-[10px] text-muted-foreground text-center">Read-only timeline of public milestones.</p>
             </TabsContent>
 
-            {/* BOARD */}
-            {hasBoard && (
-              <TabsContent value="board">
+            {/* BOARD — always visible in public view */}
+            <TabsContent value="board">
+              {hasBoard ? (
                 <BoardMasonry deliverables={deliverables as any} showFilters />
-              </TabsContent>
-            )}
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-12">
+                  No board items have been shared yet.
+                </p>
+              )}
+            </TabsContent>
 
-            {/* STORY — description paragraph then chronological feed */}
+            {/* STORY — description + background then chronological feed */}
             <TabsContent value="story" className="space-y-6">
-              <div className="max-w-3xl">
-                {(project.description || project.vision) && (
-                  <p className="text-base text-foreground whitespace-pre-wrap leading-relaxed mb-6">
-                    {project.description ?? project.vision}
-                  </p>
+              <div className="max-w-3xl space-y-6">
+                {project.description && (
+                  <section>
+                    <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">About this release</h3>
+                    <p className="text-base text-foreground whitespace-pre-wrap leading-relaxed">
+                      {project.description}
+                    </p>
+                  </section>
+                )}
+                {project.vision && (
+                  <section>
+                    <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Background</h3>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                      {project.vision}
+                    </p>
+                  </section>
                 )}
                 <StoryFeed items={storyItems} publicOnly hideWhenEmpty />
               </div>
