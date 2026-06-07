@@ -230,6 +230,92 @@ const StudioPage = () => {
     },
   });
 
+  // User type — fan vs creator drives section ordering + CTA copy.
+  const { data: userType } = useQuery<"fan" | "creator">({
+    queryKey: ["studio-user-type", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_type")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return ((data as any)?.user_type ?? "creator") as "fan" | "creator";
+    },
+  });
+  const isFan = userType === "fan";
+
+  // Backing — projects this user has cheered (project_cheers).
+  const { data: backedProjects } = useQuery({
+    queryKey: ["studio-backed", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("project_cheers")
+        .select(
+          "created_at, project:projects(id,title,is_public,public_slug,user_id,status,profiles:profiles!projects_user_id_fkey(display_name,avatar_url,username))",
+        )
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false })
+        .limit(24);
+      if (error) return [];
+      return ((data ?? []) as any[])
+        .map((r) => ({ cheered_at: r.created_at, ...(r.project ?? {}) }))
+        .filter((p) => p && p.id);
+    },
+  });
+  const backedIds = useMemo(
+    () => (backedProjects ?? []).map((p: any) => p.id),
+    [backedProjects],
+  );
+  const { data: backedGoals } = useQuery<GoalRow[]>({
+    queryKey: ["studio-backed-goals", backedIds.join(",")],
+    enabled: backedIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("project_goals")
+        .select("id,project_id,status,completed_at,due_date")
+        .in("project_id", backedIds);
+      return (data ?? []) as GoalRow[];
+    },
+  });
+
+  // Holdings — simulated coin holdings.
+  const { data: holdings } = useQuery({
+    queryKey: ["studio-holdings", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("coin_holdings")
+        .select(
+          "balance, sol_invested, launch:coin_launches(id,name,ticker,image_url,virtual_sol_reserves,virtual_token_reserves,total_supply,creator:profiles!coin_launches_creator_id_fkey(display_name,avatar_url,username,user_id))",
+        )
+        .eq("trader_id", user!.id)
+        .gt("balance", 0)
+        .order("updated_at", { ascending: false })
+        .limit(20);
+      if (error) return [];
+      return (data ?? []) as any[];
+    },
+  });
+
+  // Weekly $RHOZE earnings — sum positive credit_transactions in last 7d.
+  const { data: weekEarnings = 0 } = useQuery<number>({
+    queryKey: ["studio-week-earnings", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const since = new Date(Date.now() - 7 * 86_400_000).toISOString();
+      const { data } = await supabase
+        .from("credit_transactions")
+        .select("amount,type")
+        .eq("user_id", user!.id)
+        .gte("created_at", since);
+      return (data ?? [])
+        .filter((r: any) => Number(r.amount) > 0)
+        .reduce((s: number, r: any) => s + Number(r.amount), 0);
+    },
+
+
   // ── derived ────────────────────────────────────────────────────────
   const goalsByProject = useMemo(() => {
     const m = new Map<string, GoalRow[]>();
