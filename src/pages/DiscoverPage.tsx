@@ -410,12 +410,31 @@ const DiscoverPage = () => {
               Nothing here yet — try another filter.
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {rows.map((row, idx) => {
-                const featured = (idx + 1) % 6 === 0;
-                return <DiscoverCard key={`${row.kind}-${row.id}`} row={row} featured={featured} />;
-              })}
-            </div>
+            (() => {
+              const creatorRows = rows.filter((r) => r.kind === "hire");
+              const otherRows = rows.filter((r) => r.kind !== "hire");
+              return (
+                <div className="space-y-6">
+                  {creatorRows.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {creatorRows.map((row) => (
+                        <CreatorCircleCard key={`${row.kind}-${row.id}`} row={row} />
+                      ))}
+                    </div>
+                  )}
+                  {otherRows.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {otherRows.map((row, idx) => {
+                        const featured = (idx + 1) % 6 === 0;
+                        return (
+                          <DiscoverCard key={`${row.kind}-${row.id}`} row={row} featured={featured} />
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })()
           )}
 
           {!user && (
