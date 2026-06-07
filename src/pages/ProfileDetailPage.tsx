@@ -344,10 +344,6 @@ const ProfileDetailPage = () => {
                       />
                     ))}
                   </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
                 )}
               </section>
             )}
