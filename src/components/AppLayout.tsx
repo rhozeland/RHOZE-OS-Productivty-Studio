@@ -362,12 +362,8 @@ const AppLayout = () => {
             if (hoverCloseTimer.id) window.clearTimeout(hoverCloseTimer.id);
             hoverCloseTimer.id = window.setTimeout(() => setSidebarOpen(false), 150);
           }}
-          className="hidden md:contents"
+          className="contents"
         >
-          <AppSidebar />
-        </div>
-        {/* Mobile keeps the off-canvas Sheet behavior, no hover needed */}
-        <div className="contents md:hidden">
           <AppSidebar />
         </div>
         <div className="flex-1 flex flex-col min-w-0">
