@@ -831,7 +831,7 @@ const NewProjectDialog = ({
       const coverUrl = coverFile
         ? await uploadCover()
         : `data:image/svg+xml;utf8,${encodeURIComponent(
-            `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='${coverColor}'/><stop offset='1' stop-color='#0a0a0a'/></linearGradient></defs><rect width='600' height='600' fill='url(%23g)'/></svg>`
+            `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='${coverColor}'/><stop offset='1' stop-color='#0a0a0a'/></linearGradient></defs><rect width='600' height='600' fill='url(#g)'/></svg>`
           )}`;
       const { data, error } = await (supabase.rpc as any)("create_project_with_owner", {
         _title: title.trim(),
