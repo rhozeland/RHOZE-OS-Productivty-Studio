@@ -16,6 +16,7 @@ type Row = {
   cheer_count: number | null;
   tokenize_ready: boolean | null;
   cover_color: string | null;
+  cover_image_url: string | null;
   status: string | null;
   owner: {
     display_name: string | null;
@@ -31,7 +32,7 @@ const ActiveProjectsLane = () => {
       const { data, error } = await supabase
         .from("projects")
         .select(
-          "id, title, public_slug, vision, cheer_count, tokenize_ready, cover_color, status, user_id"
+          "id, title, public_slug, vision, cheer_count, tokenize_ready, cover_color, cover_image_url, status, user_id"
         )
         .eq("is_public", true)
         .not("public_slug", "is", null)
@@ -94,13 +95,18 @@ const ActiveProjectsLane = () => {
               className="group relative shrink-0 w-[220px] sm:w-[240px] snap-start rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-xl hover:border-foreground/30"
             >
               <div
-                className="relative aspect-square w-full"
-                style={{
-                  backgroundImage: `linear-gradient(135deg, ${p.cover_color ?? "hsl(292 84% 61%)"}, hsl(330 85% 60%))`,
-                }}
+                className="relative aspect-square w-full bg-muted"
+                style={
+                  p.cover_image_url
+                    ? undefined
+                    : { backgroundImage: `linear-gradient(135deg, ${p.cover_color ?? "hsl(292 84% 61%)"}, hsl(330 85% 60%))` }
+                }
               >
+                {p.cover_image_url && (
+                  <img src={p.cover_image_url} alt={p.title} className="absolute inset-0 w-full h-full object-cover" />
+                )}
                 {p.tokenize_ready && (
-                  <span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-foreground/90 text-background px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                  <span className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 rounded-full bg-foreground/90 text-background px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
                     <Rocket className="h-2.5 w-2.5" /> Tokenize
                   </span>
                 )}

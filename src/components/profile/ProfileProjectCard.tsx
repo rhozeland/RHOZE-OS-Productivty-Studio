@@ -21,6 +21,7 @@ interface Props {
     description?: string | null;
     status?: string | null;
     cover_color?: string | null;
+    cover_image_url?: string | null;
     intake_tier?: string | null;
   };
   collaborators?: Collaborator[];
@@ -46,7 +47,10 @@ export default function ProfileProjectCard({ project, collaborators = [], onOpen
       className="group relative w-full text-left overflow-hidden rounded-3xl border border-border/40 bg-card shadow-sm hover:shadow-xl transition-all hover:-translate-y-0.5"
     >
       {/* Image / cover */}
-      <div className="relative h-56 w-full" style={{ background: bg }}>
+      <div className="relative h-56 w-full bg-muted" style={project.cover_image_url ? undefined : { background: bg }}>
+        {project.cover_image_url && (
+          <img src={project.cover_image_url} alt={project.title} className="absolute inset-0 w-full h-full object-cover" />
+        )}
         {/* status pill top-left */}
         <div className="absolute top-3 left-3 z-10">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-black/75 backdrop-blur-sm px-3 py-1.5 text-[11px] font-medium text-white">

@@ -52,6 +52,8 @@ import {
   Link as LinkIcon,
   Users,
   Sparkles,
+  ImagePlus,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -749,6 +751,9 @@ const NewProjectDialog = ({
 }) => {
   const [title, setTitle] = useState("");
   const [coverColor, setCoverColor] = useState(COVER_COLORS[0]);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [prefill, setPrefill] = useState<ProjectPrefill | null>(null);
   const [aiPrompt, setAiPrompt] = useState<string | null>(null);
   const [autoCreating, setAutoCreating] = useState(false);
@@ -798,10 +803,36 @@ const NewProjectDialog = ({
     return b?.amount ?? 0;
   };
 
+  const uploadCover = async (): Promise<string> => {
+    if (!coverFile) throw new Error("A cover image is required.");
+    setUploadingCover(true);
+    try {
+      const ext = (coverFile.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `project-covers/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("listing-media")
+        .upload(path, coverFile, { cacheControl: "3600", upsert: false, contentType: coverFile.type });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("listing-media").getPublicUrl(path);
+      return pub.publicUrl;
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
   const create = useMutation({
     mutationFn: async () => {
       if (!title.trim()) throw new Error("Title required.");
+      // Cover image required for manual flow; AI auto-create generates a branded gradient fallback.
+      if (!aiPrompt && !coverFile) {
+        throw new Error("Please upload a cover image for your project.");
+      }
       const description = composedBrief();
+      const coverUrl = coverFile
+        ? await uploadCover()
+        : `data:image/svg+xml;utf8,${encodeURIComponent(
+            `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='${coverColor}'/><stop offset='1' stop-color='#0a0a0a'/></linearGradient></defs><rect width='600' height='600' fill='url(#g)'/></svg>`
+          )}`;
       const { data, error } = await (supabase.rpc as any)("create_project_with_owner", {
         _title: title.trim(),
         _description: description,
@@ -810,6 +841,7 @@ const NewProjectDialog = ({
         _project_type: "collaborative",
         _status: "active",
         _cover_color: coverColor,
+        _cover_image_url: coverUrl,
       });
       if (error) throw error;
       const project = Array.isArray(data) ? data[0] : data;
@@ -840,6 +872,8 @@ const NewProjectDialog = ({
       setTitle("");
       setBrief("");
       setCoverColor(COVER_COLORS[0]);
+      setCoverFile(null);
+      setCoverPreview(null);
       setPrefill(null);
       setAiPrompt(null);
       setAutoCreating(false);
@@ -924,6 +958,44 @@ const NewProjectDialog = ({
               autoFocus
               className="h-12 rounded-2xl"
             />
+          </div>
+
+          {/* Cover image — required */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              Cover image <span className="text-destructive normal-case tracking-normal">*</span>
+            </label>
+            {coverPreview ? (
+              <div className="relative rounded-2xl overflow-hidden border border-border aspect-[16/9] bg-muted">
+                <img src={coverPreview} alt="Cover preview" className="absolute inset-0 w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => { setCoverFile(null); setCoverPreview(null); }}
+                  className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/70 text-white grid place-items-center hover:bg-black"
+                  aria-label="Remove cover"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center gap-2 aspect-[16/9] rounded-2xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:border-foreground/40 hover:bg-muted/50 transition-colors">
+                <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">Upload cover image</span>
+                <span className="text-[11px] text-muted-foreground">Shown on project cards · 16:9 recommended</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    if (f.size > 8 * 1024 * 1024) { toast.error("Image must be under 8MB"); return; }
+                    setCoverFile(f);
+                    setCoverPreview(URL.createObjectURL(f));
+                  }}
+                />
+              </label>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -1013,14 +1085,14 @@ const NewProjectDialog = ({
           <Button
             type="submit"
             className="w-full rounded-full gap-1.5"
-            disabled={create.isPending || !title.trim()}
+            disabled={create.isPending || uploadingCover || !title.trim() || !coverFile}
           >
-            {create.isPending ? (
+            {create.isPending || uploadingCover ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Plus className="h-4 w-4" />
             )}
-            Create project
+            {uploadingCover ? "Uploading cover…" : "Create project"}
           </Button>
         </form>
       </DialogContent>
