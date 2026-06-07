@@ -540,109 +540,161 @@ const StudioPage = () => {
   // ── render ─────────────────────────────────────────────────────────
   return (
     <div className="max-w-5xl mx-auto pb-20 space-y-8">
-      {/* Header — animated gradient slider box */}
+      {/* Header — gradient banner */}
       <StudioHeroBox
         totalActive={totalActive}
         milestonesDueThisWeek={milestonesDueThisWeek}
         draftCount={draftProjects.length}
         completedCount={completedProjects.length}
+        emptyMode={!hasAnyActivity}
       />
 
-      {/* Primary actions — two gradient buttons side-by-side */}
+      {/* Primary actions — role-adaptive */}
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <GradientCtaButton
-          onClick={() => setStartProjectOpen(true)}
-          Icon={Rocket}
-          eyebrow="Build in public"
-          title="Start a Project"
-          subtitle="Plan a release. Let fans back the work."
-          gradient="linear-gradient(120deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 25%, hsl(38 92% 55%) 50%, hsl(292 84% 61%) 75%, hsl(330 85% 60%) 100%)"
-        />
-        <GradientCtaButton
-          onClick={() => setCoinSheetOpen(true)}
-          Icon={Coins}
-          eyebrow="Get backed"
-          title="Launch a Coin"
-          subtitle="Spin up your artist token on pump.fun."
-          gradient="linear-gradient(120deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 25%, hsl(170 80% 50%) 50%, hsl(260 80% 60%) 75%, hsl(200 90% 55%) 100%)"
-        />
+        {isFan ? (
+          <GradientCtaButton
+            onClick={() => navigate("/discover")}
+            Icon={Compass}
+            eyebrow="Build in public"
+            title="Discover Artists"
+            subtitle="Find creators worth backing."
+            gradient="linear-gradient(120deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 25%, hsl(38 92% 55%) 50%, hsl(292 84% 61%) 75%, hsl(330 85% 60%) 100%)"
+          />
+        ) : (
+          <GradientCtaButton
+            onClick={() => setStartProjectOpen(true)}
+            Icon={Rocket}
+            eyebrow="Build in public"
+            title="Start a Project"
+            subtitle="Plan a release. Let fans back the work."
+            gradient="linear-gradient(120deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 25%, hsl(38 92% 55%) 50%, hsl(292 84% 61%) 75%, hsl(330 85% 60%) 100%)"
+          />
+        )}
+        {isFan ? (
+          <GradientCtaButton
+            onClick={() => navigate("/discover?filter=projects")}
+            Icon={Heart}
+            eyebrow="Get backed"
+            title="Back a Project"
+            subtitle="Cheer on releases in motion."
+            gradient="linear-gradient(120deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 25%, hsl(170 80% 50%) 50%, hsl(260 80% 60%) 75%, hsl(200 90% 55%) 100%)"
+          />
+        ) : (
+          <GradientCtaButton
+            onClick={() => setCoinSheetOpen(true)}
+            Icon={Coins}
+            eyebrow="Get backed"
+            title="Launch a Coin"
+            subtitle="Spin up your artist token on pump.fun."
+            gradient="linear-gradient(120deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 25%, hsl(170 80% 50%) 50%, hsl(260 80% 60%) 75%, hsl(200 90% 55%) 100%)"
+          />
+        )}
       </section>
 
-
+      {/* Live release banner — only if user owns a live public project */}
       {featuredPublic && (
-        <Link
-          to={`/release/${featuredPublic.public_slug}`}
-          className="block rounded-2xl border border-emerald-500/30 bg-emerald-500/5 px-5 py-3.5 hover:bg-emerald-500/10 transition-colors"
-        >
+        <div className="relative rounded-2xl overflow-hidden border border-border bg-foreground text-background dark:bg-card dark:text-foreground px-5 py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400 font-semibold mb-1">
+              <span className="inline-flex items-center gap-1 rounded-full bg-background/15 px-2 py-0.5 text-[9px] uppercase tracking-[0.2em] font-semibold mb-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 Live release
-              </p>
-              <p className="text-sm font-semibold text-foreground truncate">
-                {featuredPublic.title} is live
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              </span>
+              <p className="text-sm font-semibold truncate">{featuredPublic.title}</p>
+              <p className="text-[11px] opacity-75 mt-0.5">
                 {supporterCounts?.[featuredPublic.id] ?? 0} supporter
                 {(supporterCounts?.[featuredPublic.id] ?? 0) === 1 ? "" : "s"} ·{" "}
                 {projectStats(featuredPublic).done} of {projectStats(featuredPublic).total} milestones
               </p>
             </div>
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground shrink-0">
-              View release <ArrowUpRight className="h-3.5 w-3.5" />
-            </span>
+            <div className="flex items-center gap-2 shrink-0">
+              {livePublicProjects.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setLiveIdx((i) => i + 1)}
+                  className="h-7 w-7 rounded-full bg-background/10 hover:bg-background/20 flex items-center justify-center transition-colors"
+                  aria-label="Next live release"
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              )}
+              <Link
+                to={`/release/${featuredPublic.public_slug}`}
+                className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
+              >
+                View release <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
           </div>
+        </div>
+      )}
+
+      {/* Brand-new user empty state */}
+      {!hasAnyActivity && !isLoading && (
+        <EmptyStudioCard
+          onStart={() => setStartProjectOpen(true)}
+          onDiscover={() => navigate("/discover")}
+        />
+      )}
+
+      {/* Three sections — order depends on role */}
+      {hasAnyActivity && (
+        <div className="space-y-10">
+          {(() => {
+            const sectionBuilding = (projects ?? []).length > 0 ? (
+              <BuildingSection
+                key="building"
+                activeProjects={activeProjects}
+                draftProjects={draftProjects}
+                completedProjects={completedProjects}
+                statsFor={projectStats}
+                supporterCounts={supporterCounts ?? {}}
+                milestonesDueThisWeek={milestonesDueThisWeek}
+                onStart={() => setStartProjectOpen(true)}
+              />
+            ) : (
+              <BuildingEmpty key="building" onStart={() => setStartProjectOpen(true)} />
+            );
+
+            const sectionBacking = (backedProjects ?? []).length > 0 ? (
+              <BackingSection
+                key="backing"
+                projects={backedProjects ?? []}
+                goalsByProject={backedGoalsByProject}
+              />
+            ) : null;
+
+            const sectionHolding = (holdings ?? []).length > 0 ? (
+              <HoldingSection key="holding" holdings={holdings ?? []} />
+            ) : null;
+
+            const ordered = isFan
+              ? [sectionBacking, sectionBuilding, sectionHolding]
+              : [sectionBuilding, sectionBacking, sectionHolding];
+            return ordered.filter(Boolean);
+          })()}
+        </div>
+      )}
+
+      {/* Weekly $RHOZE earnings prompt */}
+      {weekEarnings > 0 && (
+        <Link
+          to="/credits"
+          className="flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-muted/40 hover:bg-muted/60 transition-colors px-5 py-3.5"
+        >
+          <p className="text-sm text-foreground">
+            You've earned{" "}
+            <span className="font-semibold tabular-nums">
+              {Math.round(weekEarnings).toLocaleString()}
+            </span>{" "}
+            <span className="text-muted-foreground">$RHOZE</span> this week
+          </p>
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground shrink-0">
+            View your Pass <ArrowRight className="h-3 w-3" />
+          </span>
         </Link>
       )}
 
-      {/* Tabs + project cards */}
-      <Tabs defaultValue="active" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="active" className="gap-2">
-            Active
-            {milestonesDueThisWeek > 0 && (
-              <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
-                {milestonesDueThisWeek} due
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="drafts">Drafts</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-        </TabsList>
-
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
-          <>
-            <TabsContent value="active">
-              <ProjectList
-                projects={activeProjects}
-                statsFor={projectStats}
-                supporterCounts={supporterCounts ?? {}}
-                emptyLabel="No active projects. Start one above."
-              />
-            </TabsContent>
-            <TabsContent value="drafts">
-              <ProjectList
-                projects={draftProjects}
-                statsFor={projectStats}
-                supporterCounts={supporterCounts ?? {}}
-                emptyLabel="No drafts yet."
-              />
-            </TabsContent>
-            <TabsContent value="completed">
-              <ProjectList
-                projects={completedProjects}
-                statsFor={projectStats}
-                supporterCounts={supporterCounts ?? {}}
-                emptyLabel="Nothing finished yet."
-              />
-            </TabsContent>
-          </>
-        )}
-      </Tabs>
 
       {/* Start a Project picker (v11 Pillar 9 — AI prompt or empty page) */}
       <StartProjectPicker
