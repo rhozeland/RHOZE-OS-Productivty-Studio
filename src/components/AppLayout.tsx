@@ -18,7 +18,9 @@ import NotificationsBell from "@/components/NotificationsBell";
 // FlowLauncher (floating FAB) retired — Flow is now reachable via the Hub view toggle + HubFlowWidget.
 // DockBar retired in v7 (post phase-2) — navigation happens via the left side nav + global ⌘K search.
 // v10.4: top-bar Inbox restored as a slide-out drawer sibling to NotificationBell (with unread ticker).
-import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Settings as SettingsIcon, LogOut, Coins, ChevronDown } from "lucide-react";
+import { Workflow, Search, Building2, ShoppingBag, User, Palette, Radio, FolderKanban, Calendar, Settings as SettingsIcon, LogOut, Coins, ChevronDown, Sun, Moon } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -127,6 +129,8 @@ const AppLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+
   
 
   const [searchOpen, setSearchOpen] = useState(false);
@@ -465,6 +469,22 @@ const AppLayout = () => {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={(e) => { e.preventDefault(); toggleTheme(); }}
+                      className="cursor-pointer"
+                    >
+                      {theme === "dark" ? (
+                        <Sun className="mr-2 h-4 w-4" />
+                      ) : (
+                        <Moon className="mr-2 h-4 w-4" />
+                      )}
+                      Switch appearance
+                      <span className="ml-auto text-[10px] text-muted-foreground capitalize">
+                        {theme === "dark" ? "Light" : "Dark"}
+                      </span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+
                     <DropdownMenuItem onClick={signOut} className="cursor-pointer text-destructive focus:text-destructive">
                       <LogOut className="mr-2 h-4 w-4" />
                       Sign out
