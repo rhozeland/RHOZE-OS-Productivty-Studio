@@ -42,6 +42,8 @@ import {
   Coins,
   ArrowRight,
   ArrowUpRight,
+  ArrowUp,
+  ArrowDown,
   Check,
   X,
   Loader2,
@@ -55,6 +57,10 @@ import {
   Rocket,
   ChevronLeft,
   ChevronRight,
+  Pencil,
+  Heart,
+  Compass,
+
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
