@@ -26,6 +26,8 @@ export interface ConnectRow {
   ownerId?: string | null;
   ownerName?: string | null;
   ownerAvatar?: string | null;
+  /** Username/handle (without @). Used for the compact Discover creator chip. */
+  handle?: string | null;
   category?: string | null;
   description?: string | null;
   detailHref: string;
