@@ -49,20 +49,19 @@ const ActiveProjectsLane = () => {
       const userIds = Array.from(new Set(rows.map((r: any) => r.user_id)));
       const projectIds = rows.map((r: any) => r.id);
 
-      const [profilesRes, milestonesRes] = await Promise.all([
-        userIds.length
-          ? supabase
-              .from("profiles")
-              .select("user_id, display_name, username, avatar_url")
-              .in("user_id", userIds)
-          : Promise.resolve({ data: [] as any[] }),
-        projectIds.length
-          ? supabase
-              .from("project_milestones")
-              .select("project_id, status")
-              .in("project_id", projectIds)
-          : Promise.resolve({ data: [] as any[] }),
-      ]);
+      const profilesRes = userIds.length
+        ? await supabase
+            .from("profiles")
+            .select("user_id, display_name, username, avatar_url")
+            .in("user_id", userIds)
+        : { data: [] as any[] };
+      const milestonesRes = projectIds.length
+        ? await supabase
+            .from("project_milestones")
+            .select("project_id, status")
+            .in("project_id", projectIds)
+        : { data: [] as any[] };
+
 
       const profileMap = new Map<string, Owner>();
       (profilesRes.data ?? []).forEach((p: any) =>
