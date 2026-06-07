@@ -49,18 +49,19 @@ const ActiveProjectsLane = () => {
       const userIds = Array.from(new Set(rows.map((r: any) => r.user_id)));
       const projectIds = rows.map((r: any) => r.id);
 
-      const profilesRes = userIds.length
-        ? await supabase
+      const profilesRes: { data: any[] | null } = userIds.length
+        ? await (supabase as any)
             .from("profiles")
             .select("user_id, display_name, username, avatar_url")
             .in("user_id", userIds)
-        : { data: [] as any[] };
-      const milestonesRes = projectIds.length
-        ? await supabase
+        : { data: [] };
+      const milestonesRes: { data: any[] | null } = projectIds.length
+        ? await (supabase as any)
             .from("project_milestones")
             .select("project_id, status")
             .in("project_id", projectIds)
-        : { data: [] as any[] };
+        : { data: [] };
+
 
 
       const profileMap = new Map<string, Owner>();
