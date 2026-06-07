@@ -418,47 +418,28 @@ const ProfileDetailPage = () => {
                   <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] opacity-90">
                     <Heart className="h-3.5 w-3.5" /> Back this artist
                   </div>
-                  <p className="font-display text-lg font-bold mt-2">Support {p.display_name || p.username}</p>
-                  <p className="text-xs opacity-90 mt-1">Subscribe, tip, or fund the next milestone.</p>
                 </button>
-
-                {/* Token widget */}
-                {p.token_mint_address && (
-                  <div className="rounded-2xl border border-border/50 bg-card/70 p-4 space-y-3">
-                    <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      <Coins className="h-3.5 w-3.5" /> Trade {p.token_ticker ? `$${p.token_ticker}` : "coin"}
-                    </div>
-                    <TokenDiscoveryChip creatorId={id!} />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full gap-1.5"
-                      onClick={() => handleTabChange("coin")}
-                    >
-                      View coin details <ArrowRight className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                )}
               </>
             )}
 
-            {/* Token / Coin */}
+            {/* Token / Coin — full chart panel */}
             {p.token_mint_address ? (
-              <div className="rounded-2xl border border-border/50 bg-card/70 p-4 space-y-3">
-                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                  <Coins className="h-3.5 w-3.5" /> {p.token_ticker ? `$${p.token_ticker}` : "Creator coin"}
-                </div>
-                <TokenDiscoveryChip creatorId={id!} />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full gap-1.5"
-                  onClick={() => handleTabChange("coin")}
-                >
-                  View coin details <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              </div>
+              <CreatorCoinsGallery
+                userId={p.user_id}
+                creatorName={p.display_name || p.username}
+                isOwner={isOwnProfile}
+                fallbackWallet={p.solana_wallet ?? null}
+              />
             ) : isOwnProfile ? null : (
+              <div className="rounded-2xl border border-dashed border-border/50 bg-card/40 p-4">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground mb-2">
+                  <Coins className="h-3.5 w-3.5" /> Creator coin
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {p.display_name || p.username} hasn't launched a coin yet.
+                </p>
+              </div>
+            )}
               <div className="rounded-2xl border border-dashed border-border/50 bg-card/40 p-4">
                 <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground mb-2">
                   <Coins className="h-3.5 w-3.5" /> Creator coin
