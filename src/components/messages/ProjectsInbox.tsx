@@ -803,10 +803,29 @@ const NewProjectDialog = ({
     return b?.amount ?? 0;
   };
 
+  const uploadCover = async (): Promise<string> => {
+    if (!coverFile) throw new Error("A cover image is required.");
+    setUploadingCover(true);
+    try {
+      const ext = (coverFile.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `project-covers/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("listing-media")
+        .upload(path, coverFile, { cacheControl: "3600", upsert: false, contentType: coverFile.type });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("listing-media").getPublicUrl(path);
+      return pub.publicUrl;
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
   const create = useMutation({
     mutationFn: async () => {
       if (!title.trim()) throw new Error("Title required.");
+      if (!coverFile) throw new Error("Please upload a cover image for your project.");
       const description = composedBrief();
+      const coverUrl = await uploadCover();
       const { data, error } = await (supabase.rpc as any)("create_project_with_owner", {
         _title: title.trim(),
         _description: description,
@@ -815,6 +834,7 @@ const NewProjectDialog = ({
         _project_type: "collaborative",
         _status: "active",
         _cover_color: coverColor,
+        _cover_image_url: coverUrl,
       });
       if (error) throw error;
       const project = Array.isArray(data) ? data[0] : data;
@@ -845,6 +865,8 @@ const NewProjectDialog = ({
       setTitle("");
       setBrief("");
       setCoverColor(COVER_COLORS[0]);
+      setCoverFile(null);
+      setCoverPreview(null);
       setPrefill(null);
       setAiPrompt(null);
       setAutoCreating(false);
