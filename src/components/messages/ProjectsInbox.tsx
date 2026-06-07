@@ -1085,14 +1085,14 @@ const NewProjectDialog = ({
           <Button
             type="submit"
             className="w-full rounded-full gap-1.5"
-            disabled={create.isPending || !title.trim()}
+            disabled={create.isPending || uploadingCover || !title.trim() || !coverFile}
           >
-            {create.isPending ? (
+            {create.isPending || uploadingCover ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Plus className="h-4 w-4" />
             )}
-            Create project
+            {uploadingCover ? "Uploading cover…" : "Create project"}
           </Button>
         </form>
       </DialogContent>
