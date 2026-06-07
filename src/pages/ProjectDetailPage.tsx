@@ -56,6 +56,8 @@ import AiRoadmapDraftButton from "@/components/project/AiRoadmapDraftButton";
 import AttachCoinToProjectCard from "@/components/project/AttachCoinToProjectCard";
 import RoadmapCopilot from "@/components/project/RoadmapCopilot";
 import TokenizeProjectCta from "@/components/project/TokenizeProjectCta";
+import EditorSideRail from "@/components/project/shared/EditorSideRail";
+import { Progress } from "@/components/ui/progress";
 
 const SMARTBOARD_CAP_BY_TIER: Record<string, number> = {
   spark: 2,
