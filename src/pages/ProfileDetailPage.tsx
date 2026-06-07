@@ -28,7 +28,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import ShareCardModal from "@/components/share/ShareCardModal";
 import ProfileProjectCard from "@/components/profile/ProfileProjectCard";
 
-type TabKey = "projects" | "works" | "coin";
+type TabKey = "projects" | "works";
 
 const ProfileDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -46,7 +46,7 @@ const ProfileDetailPage = () => {
 
   const initialTab = (searchParams.get("tab") as TabKey) || "projects";
   const [tab, setTab] = useState<TabKey>(
-    ["projects", "works", "coin"].includes(initialTab) ? initialTab : "projects",
+    ["projects", "works"].includes(initialTab) ? initialTab : "projects",
   );
 
   const [subscribeOpen, setSubscribeOpen] = useState(
@@ -253,7 +253,6 @@ const ProfileDetailPage = () => {
   const TABS: { key: TabKey; label: string; Icon: any }[] = [
     { key: "works", label: "Works", Icon: ImageIcon },
     { key: "projects", label: "Projects", Icon: FolderKanban },
-    { key: "coin", label: "Token / Coin", Icon: Coins },
   ];
 
   return (
@@ -354,16 +353,6 @@ const ProfileDetailPage = () => {
               </section>
             )}
 
-            {tab === "coin" && (
-              <section className="space-y-3">
-                <CreatorCoinsGallery
-                  userId={p.user_id}
-                  creatorName={p.display_name || p.username}
-                  isOwner={isOwnProfile}
-                  fallbackWallet={p.solana_wallet ?? null}
-                />
-              </section>
-            )}
           </div>
 
           {/* RIGHT — Action & Utility Hub */}
@@ -432,43 +421,17 @@ const ProfileDetailPage = () => {
                   <p className="font-display text-lg font-bold mt-2">Support {p.display_name || p.username}</p>
                   <p className="text-xs opacity-90 mt-1">Subscribe, tip, or fund the next milestone.</p>
                 </button>
-
-                {/* Token widget */}
-                {p.token_mint_address && (
-                  <div className="rounded-2xl border border-border/50 bg-card/70 p-4 space-y-3">
-                    <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      <Coins className="h-3.5 w-3.5" /> Trade {p.token_ticker ? `$${p.token_ticker}` : "coin"}
-                    </div>
-                    <TokenDiscoveryChip creatorId={id!} />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full gap-1.5"
-                      onClick={() => handleTabChange("coin")}
-                    >
-                      View coin details <ArrowRight className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                )}
               </>
             )}
 
-            {/* Token / Coin */}
+            {/* Token / Coin — full chart panel */}
             {p.token_mint_address ? (
-              <div className="rounded-2xl border border-border/50 bg-card/70 p-4 space-y-3">
-                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                  <Coins className="h-3.5 w-3.5" /> {p.token_ticker ? `$${p.token_ticker}` : "Creator coin"}
-                </div>
-                <TokenDiscoveryChip creatorId={id!} />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full gap-1.5"
-                  onClick={() => handleTabChange("coin")}
-                >
-                  View coin details <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              </div>
+              <CreatorCoinsGallery
+                userId={p.user_id}
+                creatorName={p.display_name || p.username}
+                isOwner={isOwnProfile}
+                fallbackWallet={p.solana_wallet ?? null}
+              />
             ) : isOwnProfile ? null : (
               <div className="rounded-2xl border border-dashed border-border/50 bg-card/40 p-4">
                 <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground mb-2">
