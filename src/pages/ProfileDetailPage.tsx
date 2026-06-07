@@ -334,20 +334,16 @@ const ProfileDetailPage = () => {
                 {(buildingProjects?.length ?? 0) === 0 ? (
                   <EmptyState icon={FolderKanban} title="No projects yet" description="Releases this creator is building will appear here." size="sm" />
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {(buildingProjects ?? []).map((pr: any) => (
-                      <button
+                      <ProfileProjectCard
                         key={pr.id}
-                        type="button"
-                        onClick={() => navigate(`/projects/${pr.id}`)}
-                        className="text-left rounded-2xl border border-border/50 bg-card/60 hover:bg-card transition-colors p-4 space-y-2"
-                      >
-                        <div className="h-1.5 rounded-full" style={{ background: pr.cover_color || "hsl(var(--primary))" }} />
-                        <p className="font-display text-base font-semibold text-foreground line-clamp-2">{pr.title}</p>
-                        {pr.description && <p className="text-xs text-muted-foreground line-clamp-2">{pr.description}</p>}
-                        <div className="flex items-center gap-2 pt-1">
-                          <Badge variant="outline" className="text-[10px] capitalize">{pr.status || "active"}</Badge>
-                          {pr.created_at && <span className="text-[10px] text-muted-foreground">{format(new Date(pr.created_at), "MMM d, yyyy")}</span>}
+                        project={pr}
+                        collaborators={projectCollaborators?.[pr.id] ?? []}
+                        onOpen={() => navigate(`/projects/${pr.id}`)}
+                      />
+                    ))}
+                  </div>
                         </div>
                       </button>
                     ))}
