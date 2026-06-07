@@ -26,12 +26,17 @@ interface Props {
   publicOnly?: boolean;
   /** Compact preview for the Overview column (limit to 3, no add button). */
   preview?: boolean;
+  /** When true and the resulting list is empty, render nothing (public surfaces). */
+  hideWhenEmpty?: boolean;
   onAdd?: () => void;
 }
 
-const StoryFeed = ({ items, canManage, publicOnly, preview, onAdd }: Props) => {
+const StoryFeed = ({ items, canManage, publicOnly, preview, hideWhenEmpty, onAdd }: Props) => {
   const all = (items ?? []).filter((it) => (publicOnly ? it.is_public !== false : true));
   const list = preview ? all.slice(0, 3) : all;
+
+  if (!list.length && hideWhenEmpty) return null;
+
 
   return (
     <div className="space-y-4">

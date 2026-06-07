@@ -56,6 +56,8 @@ import AiRoadmapDraftButton from "@/components/project/AiRoadmapDraftButton";
 import AttachCoinToProjectCard from "@/components/project/AttachCoinToProjectCard";
 import RoadmapCopilot from "@/components/project/RoadmapCopilot";
 import TokenizeProjectCta from "@/components/project/TokenizeProjectCta";
+import EditorSideRail from "@/components/project/shared/EditorSideRail";
+import { Progress } from "@/components/ui/progress";
 
 const SMARTBOARD_CAP_BY_TIER: Record<string, number> = {
   spark: 2,
@@ -392,91 +394,114 @@ const ProjectDetailPage = () => {
         </div>
       </div>
 
-      {/* TABS */}
-      <Tabs value={activeTab} onValueChange={setTab} className="w-full mt-6">
-        <TabsList
-          className="sticky top-0 z-20 -mx-4 px-4 md:mx-0 md:px-0 mb-6 w-[calc(100%+2rem)] md:w-full justify-start overflow-x-auto flex-nowrap shrink-0 h-auto gap-6 rounded-none border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-0"
-        >
-          <TabsTrigger value="overview" className={TAB_TRIGGER}>Overview</TabsTrigger>
-          <TabsTrigger value="roadmap" className={TAB_TRIGGER}>Roadmap</TabsTrigger>
-          <TabsTrigger value="timeline" className={TAB_TRIGGER}>Timeline</TabsTrigger>
-          <TabsTrigger value="board" className={TAB_TRIGGER}>Board</TabsTrigger>
-          <TabsTrigger value="story" className={TAB_TRIGGER}>Story</TabsTrigger>
-          <TabsTrigger value="team" className={TAB_TRIGGER}>Team</TabsTrigger>
-          {isPaid && <TabsTrigger value="budget" className={TAB_TRIGGER}>Budget</TabsTrigger>}
-        </TabsList>
+      {/* TABS + EDITOR SIDE RAIL */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr,320px]">
+        <Tabs value={activeTab} onValueChange={setTab} className="w-full min-w-0">
+          <TabsList
+            className="sticky top-0 z-20 -mx-4 px-4 md:mx-0 md:px-0 mb-6 w-[calc(100%+2rem)] md:w-full justify-start overflow-x-auto flex-nowrap shrink-0 h-auto gap-6 rounded-none border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-0"
+          >
+            <TabsTrigger value="overview" className={TAB_TRIGGER}>Overview</TabsTrigger>
+            <TabsTrigger value="roadmap" className={TAB_TRIGGER}>Roadmap</TabsTrigger>
+            <TabsTrigger value="timeline" className={TAB_TRIGGER}>Timeline</TabsTrigger>
+            <TabsTrigger value="board" className={TAB_TRIGGER}>Board</TabsTrigger>
+            <TabsTrigger value="story" className={TAB_TRIGGER}>Story</TabsTrigger>
+            <TabsTrigger value="team" className={TAB_TRIGGER}>Team</TabsTrigger>
+            {isPaid && <TabsTrigger value="budget" className={TAB_TRIGGER}>Budget</TabsTrigger>}
+          </TabsList>
 
-        {/* OVERVIEW */}
-        <TabsContent value="overview" className="space-y-8">
-          <section>
-            <div className="flex items-end justify-between gap-3 mb-3">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Milestones</h2>
-              <button onClick={() => setTab("roadmap")} className="text-[11px] text-muted-foreground hover:text-foreground">
-                Open roadmap →
-              </button>
-            </div>
-            <MilestoneTrack milestones={milestones as any} contractId={contract?.id} canManage={canManageProject} />
-          </section>
+          {/* OVERVIEW */}
+          <TabsContent value="overview" className="space-y-8">
+            {/* Thin progress bar — replaces the old stat boxes */}
+            {(milestones?.length ?? 0) > 0 && (() => {
+              const ms = milestones ?? [];
+              const done = ms.filter((m: any) => m.status === "approved" || m.status === "released").length;
+              const pct = ms.length ? Math.round((done / ms.length) * 100) : 0;
+              return (
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Progress</span>
+                    <span className="text-[10px] text-muted-foreground tabular-nums">{done} / {ms.length} · {pct}%</span>
+                  </div>
+                  <Progress value={pct} className="h-1" />
+                </div>
+              );
+            })()}
 
-          <ProgressChart goals={goals} headerAction={<DropRoomLauncher projectId={id!} projectTitle={project.title} />} />
-
-          {canManageProject && (
-            <PublishReleaseCard
-              projectId={project.id}
-              isPublic={(project as any).is_public ?? false}
-              publicSlug={(project as any).public_slug ?? null}
-              cheerCount={(project as any).cheer_count ?? 0}
-              tokenizeReady={(project as any).tokenize_ready ?? false}
-              title={project.title}
-              description={(project as any).vision ?? project.description ?? null}
-            />
-          )}
-
-          <div className="grid gap-6 md:grid-cols-3">
-            {/* Story preview */}
-            <section className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Story</h3>
-                <button onClick={() => setTab("story")} className="text-[11px] text-muted-foreground hover:text-foreground">
-                  All →
-                </button>
-              </div>
-              <StoryFeed items={storyItems} canManage={canManageProject} preview />
-            </section>
-
-            {/* Board preview */}
-            <section className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Board</h3>
-                <button onClick={() => setTab("board")} className="text-[11px] text-muted-foreground hover:text-foreground">
-                  All →
-                </button>
-              </div>
-              <BoardMasonry
-                deliverables={deliverables as any}
-                limit={6}
-                onSeeMore={() => setTab("board")}
-              />
-            </section>
-
-            {/* Team + Supporters */}
             <section>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Crew & Supporters</h3>
+              <div className="flex items-end justify-between gap-3 mb-3">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Milestones</h2>
+                <button onClick={() => setTab("roadmap")} className="text-[11px] text-muted-foreground hover:text-foreground">
+                  Open roadmap →
+                </button>
               </div>
-              <SupportersStrip
-                projectId={id!}
-                ownerId={project.user_id}
-                owner={owner ?? null}
-                team={teamWithProfiles as any}
-                milestones={milestones as any}
-              />
+              <MilestoneTrack milestones={milestones as any} contractId={contract?.id} canManage={canManageProject} />
             </section>
-          </div>
-        </TabsContent>
+
+            {canManageProject && (
+              <PublishReleaseCard
+                projectId={project.id}
+                isPublic={(project as any).is_public ?? false}
+                publicSlug={(project as any).public_slug ?? null}
+                cheerCount={(project as any).cheer_count ?? 0}
+                tokenizeReady={(project as any).tokenize_ready ?? false}
+                title={project.title}
+                description={(project as any).vision ?? project.description ?? null}
+              />
+            )}
+
+            <div className="grid gap-6 md:grid-cols-3">
+              {/* Story preview */}
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Story</h3>
+                  <button onClick={() => setTab("story")} className="text-[11px] text-muted-foreground hover:text-foreground">
+                    All →
+                  </button>
+                </div>
+                <StoryFeed items={storyItems} canManage={canManageProject} preview />
+              </section>
+
+              {/* Board preview */}
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Board</h3>
+                  <button onClick={() => setTab("board")} className="text-[11px] text-muted-foreground hover:text-foreground">
+                    All →
+                  </button>
+                </div>
+                <BoardMasonry
+                  deliverables={deliverables as any}
+                  limit={6}
+                  onSeeMore={() => setTab("board")}
+                />
+              </section>
+
+              {/* Team + Supporters */}
+              <section>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Crew & Supporters</h3>
+                </div>
+                <SupportersStrip
+                  projectId={id!}
+                  ownerId={project.user_id}
+                  owner={owner ?? null}
+                  team={teamWithProfiles as any}
+                  milestones={milestones as any}
+                />
+              </section>
+            </div>
+          </TabsContent>
+
 
         {/* ROADMAP */}
         <TabsContent value="roadmap" className="space-y-6">
+          {canManageProject && (
+            <TokenizeProjectCta
+              projectTitle={project.title}
+              linkedTokenId={(project as any).linked_token_id ?? null}
+            />
+          )}
+
           <SignedAgreementCard projectId={id!} contractId={contract?.id} />
 
           {canManageProject && (
@@ -486,14 +511,8 @@ const ProjectDetailPage = () => {
             />
           )}
 
-          {canManageProject && (
-            <TokenizeProjectCta
-              projectTitle={project.title}
-              linkedTokenId={(project as any).linked_token_id ?? null}
-            />
-          )}
-
           <RoadmapCopilot projectId={id!} />
+
 
           {isPaid && (
             <ProjectScopeReview
@@ -625,7 +644,18 @@ const ProjectDetailPage = () => {
             )}
           </TabsContent>
         )}
-      </Tabs>
+        </Tabs>
+
+        {/* Editor side rail — sticky on desktop */}
+        <aside className="space-y-4 lg:sticky lg:top-6 self-start order-first lg:order-none">
+          <EditorSideRail
+            isPublic={(project as any).is_public ?? false}
+            publicSlug={(project as any).public_slug ?? null}
+            projectTitle={project.title}
+            cheerCount={(project as any).cheer_count ?? 0}
+          />
+        </aside>
+      </div>
 
       <TokenizeBottomCta
         project={project as any}
@@ -634,5 +664,6 @@ const ProjectDetailPage = () => {
     </div>
   );
 };
+
 
 export default ProjectDetailPage;

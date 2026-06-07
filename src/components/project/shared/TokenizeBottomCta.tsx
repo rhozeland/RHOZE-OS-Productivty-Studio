@@ -9,12 +9,15 @@ import { toast } from "sonner";
 import { pumpFunCreateUrl, pumpFunDetailsJson } from "@/lib/pump-fun";
 
 interface Props {
-  project: { title: string; vision?: string | null; description?: string | null; tokenize_ready?: boolean };
+  project: { title: string; vision?: string | null; description?: string | null; tokenize_ready?: boolean; is_public?: boolean };
   linkedTokenTicker?: string | null;
+  /** Public surfaces only render the CTA when the release is opted-in to public mode. */
+  publicView?: boolean;
 }
 
-const TokenizeBottomCta = ({ project, linkedTokenTicker }: Props) => {
+const TokenizeBottomCta = ({ project, linkedTokenTicker, publicView }: Props) => {
   if (linkedTokenTicker) return null; // already coined
+  if (publicView && !project.is_public) return null;
 
   const headline = project.tokenize_ready
     ? "A&R flagged this release for tokenization"

@@ -198,6 +198,17 @@ const ProjectHero = ({ project, owner, status, isOwner, publicView }: ProjectHer
             {statusMeta.label}
           </span>
         </motion.div>
+
+        {status === "live" && (
+          <div className="pointer-events-none absolute right-4 bottom-16 md:right-6 md:bottom-20 hidden md:flex items-center gap-1.5 rounded-full bg-black/45 backdrop-blur px-2.5 py-1 border border-white/15">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            </span>
+            <span className="text-[10px] uppercase tracking-wider text-white/90 font-medium">Live</span>
+          </div>
+        )}
+
       </div>
 
       <input
