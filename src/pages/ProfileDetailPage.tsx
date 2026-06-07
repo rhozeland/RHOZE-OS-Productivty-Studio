@@ -424,24 +424,13 @@ const ProfileDetailPage = () => {
               </>
             )}
 
-            {/* Token / Coin — full chart panel */}
-            {p.token_mint_address ? (
-              <CreatorCoinsGallery
-                userId={p.user_id}
-                creatorName={p.display_name || p.username}
-                isOwner={isOwnProfile}
-                fallbackWallet={p.solana_wallet ?? null}
-              />
-            ) : isOwnProfile ? null : (
-              <div className="rounded-2xl border border-dashed border-border/50 bg-card/40 p-4">
-                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground mb-2">
-                  <Coins className="h-3.5 w-3.5" /> Creator coin
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {p.display_name || p.username} hasn't launched a coin yet.
-                </p>
-              </div>
-            )}
+            {/* Token / Coin — full chart panel (renders its own empty state) */}
+            <CreatorCoinsGallery
+              userId={p.user_id}
+              creatorName={p.display_name || p.username}
+              isOwner={isOwnProfile}
+              fallbackWallet={p.solana_wallet ?? null}
+            />
           </aside>
         </div>
 
