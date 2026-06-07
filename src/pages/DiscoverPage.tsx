@@ -82,6 +82,56 @@ interface CardProps {
   featured?: boolean;
 }
 
+const CreatorCircleCard = ({ row }: { row: ConnectRow }) => {
+  const initials = (row.ownerName || row.title || "?")
+    .split(/\s+/)
+    .map((s) => s[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+  const handle = row.handle ? `@${row.handle}` : null;
+
+  return (
+    <Link
+      to={row.detailHref}
+      className="group flex flex-col items-center text-center gap-2 rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm p-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:border-foreground/30"
+    >
+      <div className="relative">
+        {row.ownerAvatar ? (
+          <img
+            src={row.ownerAvatar}
+            alt={row.ownerName || row.title}
+            className="h-20 w-20 rounded-full object-cover ring-2 ring-border/60 group-hover:ring-foreground/40 transition-all"
+          />
+        ) : (
+          <div className="h-20 w-20 rounded-full bg-gradient-to-br from-muted to-muted-foreground/20 flex items-center justify-center font-display text-lg font-bold text-foreground/80 ring-2 ring-border/60">
+            {initials || "·"}
+          </div>
+        )}
+        {row.isPro && (
+          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full bg-foreground text-background px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider shadow-sm">
+            Pro
+          </span>
+        )}
+      </div>
+      <div className="min-w-0 w-full pt-1">
+        <p className="text-sm font-semibold text-foreground truncate">
+          {row.title}
+        </p>
+        {handle && (
+          <p className="text-[11px] text-muted-foreground truncate">{handle}</p>
+        )}
+        {row.subtitle && (
+          <p className="text-[11px] text-muted-foreground/90 line-clamp-2 mt-1 leading-snug">
+            {row.subtitle}
+          </p>
+        )}
+      </div>
+    </Link>
+  );
+};
+
 const DiscoverCard = ({ row, featured }: CardProps) => {
   const style = CATEGORY_STYLE[row.kind];
   const initials = (row.title || "?")
