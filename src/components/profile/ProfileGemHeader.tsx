@@ -173,27 +173,6 @@ export const ProfileGemHeader = ({
             <p className="text-sm text-muted-foreground mt-1">@{p.username}</p>
           )}
 
-          {/* Inline metrics row — bolder pill chips */}
-          <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-            {signalsLoading ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-            ) : (
-              metrics.map((m) => (
-                <div
-                  key={m.label}
-                  className="flex items-center gap-1.5 shrink-0 rounded-full border border-border/60 bg-gradient-to-br from-muted/40 to-background px-2.5 py-1 shadow-sm hover:shadow-md hover:border-foreground/30 transition-all"
-                >
-                  <m.Icon className={cn("h-3.5 w-3.5", m.accent ?? "text-muted-foreground")} />
-                  <span className={cn("font-mono text-sm font-bold tabular-nums leading-none", m.accent ?? "text-foreground")}>
-                    {m.value}
-                  </span>
-                  <span className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground leading-none">
-                    {m.label}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
 
           {/* Secondary chips */}
           {(locationLabel || p.archetype || (reviewStats && reviewStats.count > 0)) && (
