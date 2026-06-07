@@ -24,7 +24,7 @@ import ListingDetailPage from "@/pages/ListingDetailPage";
 import SmartboardDetailPage from "@/pages/SmartboardDetailPage";
 import SmartboardPresentationPage from "@/pages/SmartboardPresentationPage";
 import ProfileDetailPage from "@/pages/ProfileDetailPage";
-import ProfilesPage from "@/pages/ProfilesPage";
+
 import MessagesPage from "@/pages/MessagesPage";
 import MyWorkPage from "@/pages/MyWorkPage";
 import SettingsPage from "@/pages/SettingsPage";
