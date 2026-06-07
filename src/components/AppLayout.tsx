@@ -340,11 +340,32 @@ const AppLayout = () => {
     setTimeout(() => navigate(path), 0);
   }, [navigate]);
 
+  // Sidebar starts collapsed (icon-only) and auto-expands on hover.
+  // Controlled here so a hover wrapper can drive open state without
+  // breaking mobile (Sheet) or the manual SidebarTrigger toggle.
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const hoverCloseTimer = useState<{ id: number | null }>({ id: null })[0];
+
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <CelebrationProvider>
       <div className="min-h-screen flex w-full">
-        <AppSidebar />
+        <div
+          onMouseEnter={() => {
+            if (hoverCloseTimer.id) {
+              window.clearTimeout(hoverCloseTimer.id);
+              hoverCloseTimer.id = null;
+            }
+            setSidebarOpen(true);
+          }}
+          onMouseLeave={() => {
+            if (hoverCloseTimer.id) window.clearTimeout(hoverCloseTimer.id);
+            hoverCloseTimer.id = window.setTimeout(() => setSidebarOpen(false), 150);
+          }}
+          className="flex"
+        >
+          <AppSidebar />
+        </div>
         <div className="flex-1 flex flex-col min-w-0">
           <PaymentTestModeBanner />
           <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/90 backdrop-blur-sm px-4 md:px-6 gap-4">
