@@ -90,7 +90,7 @@ const CoinCard = ({ profile }: { profile: TokenProfile }) => {
       tabIndex={0}
       onClick={openProfile}
       onKeyDown={handleKeyDown}
-      className="snap-start shrink-0 w-[260px] rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm p-3.5 hover:border-foreground/30 transition-colors block"
+      className="rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm p-3.5 hover:border-foreground/30 transition-colors block w-full"
     >
       <div className="flex items-center gap-2.5">
         <div className="shrink-0">
@@ -191,13 +191,12 @@ const CoinsInMotionLane = () => {
         </Link>
       </div>
 
-      <div className="-mx-4 px-4 overflow-x-auto scrollbar-none snap-x snap-mandatory">
-        <div className="flex gap-3 pb-1">
-          {ordered.map((p) => (
-            <CoinCard key={p.id} profile={p} />
-          ))}
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 [&>*]:w-full">
+        {ordered.map((p) => (
+          <CoinCard key={p.id} profile={p} />
+        ))}
       </div>
+
     </section>
   );
 };

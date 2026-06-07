@@ -114,7 +114,7 @@ const ActiveProjectsLane = () => {
         </Link>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory scrollbar-thin">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {data.map((p) => {
           const ownerName = p.owner?.display_name ?? p.owner?.username ?? "Creator";
           const total = p.milestonesTotal;
@@ -126,8 +126,9 @@ const ActiveProjectsLane = () => {
             <Link
               key={p.id}
               to={`/release/${p.public_slug}`}
-              className="group relative shrink-0 w-[260px] sm:w-[280px] snap-start rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-xl hover:border-foreground/30 flex flex-col"
+              className="group relative rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-xl hover:border-foreground/30 flex flex-col"
             >
+
               {/* Cover */}
               <div
                 className="relative aspect-[16/10] w-full bg-muted"

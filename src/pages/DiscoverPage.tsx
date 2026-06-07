@@ -1,31 +1,32 @@
 /**
  * Discover — single continuous freeflowing feed.
  *
- * Layout (top → bottom):
+ * Structure:
  *   1. Hero gradient banner
- *   2. Coins in Motion lane
+ *   2. Building Now (Projects) — always-visible grid
  *   3. Sticky filter bar (All · Projects · Coins · Artists · Opportunities · Spaces)
- *   4. Continuous feed — sections rendered inline with no headers/cards around them.
- *        • Projects     → ActiveProjectsLane (existing design)
- *        • Coins        → CoinsInMotionLane (existing design, repeated when filter=coins)
- *        • Artists      → 56px circle avatars, horizontal scroll
- *        • Opportunities → clean list rows w/ thin dividers
- *        • Spaces       → spaces + events grid
+ *   4. Continuous feed (grids, no horizontal scroll):
+ *        • Coins         → CoinsInMotionLane (grid)
+ *        • Artists       → profiles with an archetype (musicians/producers/etc.)
+ *        • Opportunities → editorial cards w/ cover gradient + tags
+ *        • Spaces        → spaces + events grid
  */
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowRight, Loader2, Sparkles, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 import CoinsInMotionLane from "@/components/discover/CoinsInMotionLane";
 import ActiveProjectsLane from "@/components/discover/ActiveProjectsLane";
 import {
-  useHireRows,
   useSpaceRows,
   useCallRows,
   useEventRows,
   type ConnectRow,
 } from "@/components/connect/useConnectRows";
+import { ARCHETYPE_BY_ID, normalizeArchetype } from "@/lib/archetypes";
 
 type FilterKey = "all" | "projects" | "coins" | "artists" | "opportunities" | "spaces";
 
@@ -38,102 +39,164 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "spaces", label: "Spaces" },
 ];
 
-// ─── Artists row — circular avatars, horizontal scroll ─────────────────
-const ArtistsRow = ({ rows }: { rows: ConnectRow[] }) => {
+// ─── Artists grid — circular avatars wrapped, only real musicians/artists ──
+type ArtistProfile = {
+  user_id: string;
+  display_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  archetype: string | null;
+};
+
+const useArtistProfiles = (enabled: boolean) =>
+  useQuery({
+    enabled,
+    queryKey: ["discover-artists-archetype"],
+    staleTime: 60_000,
+    queryFn: async (): Promise<ArtistProfile[]> => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, username, avatar_url, archetype")
+        .not("archetype", "is", null)
+        .eq("is_public", true)
+        .order("featured_pin_until", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false })
+        .limit(60);
+      return (data ?? []) as ArtistProfile[];
+    },
+  });
+
+const ArtistsGrid = ({ rows }: { rows: ArtistProfile[] }) => {
   if (!rows.length) return null;
   return (
-    <div className="-mx-4 px-4 overflow-x-auto scrollbar-none">
-      <div className="flex gap-5 pb-1">
-        {rows.map((row) => {
-          const initials = (row.ownerName || row.title || "?")
-            .split(/\s+/)
-            .map((s) => s[0])
-            .filter(Boolean)
-            .slice(0, 2)
-            .join("")
-            .toUpperCase();
-          return (
-            <Link
-              key={`artist-${row.id}`}
-              to={row.detailHref}
-              className="group shrink-0 flex flex-col items-center gap-1.5 w-[68px]"
-            >
-              {row.ownerAvatar ? (
-                <img
-                  src={row.ownerAvatar}
-                  alt={row.ownerName || row.title}
-                  className="h-14 w-14 rounded-full object-cover ring-2 ring-transparent group-hover:ring-foreground/30 transition-all"
-                />
-              ) : (
-                <div
-                  className="h-14 w-14 rounded-full flex items-center justify-center font-display text-sm font-bold text-white shadow-sm"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(135deg, hsl(330 80% 65%), hsl(292 75% 60%), hsl(38 92% 60%))",
-                  }}
-                >
-                  {initials || "·"}
-                </div>
-              )}
-              <p className="text-[11px] text-foreground/85 leading-tight text-center truncate w-full">
-                {row.ownerName || row.title}
+    <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-y-5 gap-x-3">
+      {rows.map((p) => {
+        const name = p.display_name || p.username || "Artist";
+        const initials = name
+          .split(/\s+/)
+          .map((s) => s[0])
+          .filter(Boolean)
+          .slice(0, 2)
+          .join("")
+          .toUpperCase();
+        const arche = normalizeArchetype(p.archetype);
+        const meta = arche ? ARCHETYPE_BY_ID.get(arche) : null;
+        return (
+          <Link
+            key={p.user_id}
+            to={`/profiles/${p.user_id}`}
+            className="group flex flex-col items-center gap-1.5 min-w-0"
+          >
+            {p.avatar_url ? (
+              <img
+                src={p.avatar_url}
+                alt={name}
+                className="h-14 w-14 rounded-full object-cover ring-2 ring-transparent group-hover:ring-foreground/30 transition-all"
+              />
+            ) : (
+              <div
+                className="h-14 w-14 rounded-full flex items-center justify-center font-display text-sm font-bold text-white shadow-sm"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(135deg, hsl(330 80% 65%), hsl(292 75% 60%), hsl(38 92% 60%))",
+                }}
+              >
+                {initials || "·"}
+              </div>
+            )}
+            <p className="text-[11px] font-medium text-foreground/90 leading-tight text-center truncate w-full">
+              {name}
+            </p>
+            {meta && (
+              <p className="text-[9px] uppercase tracking-wider text-muted-foreground/80 truncate w-full text-center">
+                {meta.label}
               </p>
-            </Link>
-          );
-        })}
-      </div>
+            )}
+          </Link>
+        );
+      })}
     </div>
   );
 };
 
-// ─── Opportunities — clean list rows, thin dividers ─────────────────────
-const OpportunitiesList = ({ rows }: { rows: ConnectRow[] }) => {
+// ─── Opportunities — editorial cards ────────────────────────────────────
+const OPPORTUNITY_GRADIENTS = [
+  "linear-gradient(135deg, hsl(265 75% 65%), hsl(292 75% 60%))",
+  "linear-gradient(135deg, hsl(330 80% 65%), hsl(20 90% 65%))",
+  "linear-gradient(135deg, hsl(200 85% 60%), hsl(265 75% 65%))",
+  "linear-gradient(135deg, hsl(38 92% 60%), hsl(330 80% 65%))",
+  "linear-gradient(135deg, hsl(170 70% 50%), hsl(200 85% 60%))",
+];
+
+const OpportunitiesGrid = ({ rows }: { rows: ConnectRow[] }) => {
   if (!rows.length) return null;
   return (
-    <div className="divide-y divide-border/60">
-      {rows.map((row) => {
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+      {rows.map((row, idx) => {
         const isPaid = row.priceLabel && !/free|collab/i.test(row.priceLabel);
         const tagLabel = isPaid ? "Paid" : "Collab";
+        const gradient = OPPORTUNITY_GRADIENTS[idx % OPPORTUNITY_GRADIENTS.length];
+        const ownerName = row.ownerName || "Open";
         return (
           <Link
             key={`call-${row.id}`}
             to={row.detailHref}
-            className="flex items-center gap-3 py-3.5 group"
+            className="group relative rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-xl hover:border-foreground/30 flex flex-col"
           >
-            <div className="min-w-0 flex-1">
-              <p className="text-sm sm:text-[15px] font-semibold text-foreground truncate group-hover:text-foreground/80 transition-colors">
+            {/* Decorative gradient strip */}
+            <div
+              className="relative h-20 w-full"
+              style={{ backgroundImage: row.coverUrl ? `url(${row.coverUrl})` : gradient, backgroundSize: "cover", backgroundPosition: "center" }}
+            >
+              <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md",
+                    isPaid
+                      ? "bg-emerald-500/90 text-white"
+                      : "bg-white/85 text-foreground",
+                  )}
+                >
+                  {tagLabel}
+                </span>
+                {row.category && (
+                  <span className="inline-flex items-center rounded-full bg-background/80 backdrop-blur-md px-2 py-0.5 text-[10px] font-medium text-foreground/80 capitalize">
+                    {row.category}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="p-3.5 space-y-2.5 flex-1 flex flex-col">
+              <p className="text-[15px] font-bold text-foreground leading-snug line-clamp-2">
                 {row.title}
               </p>
               {row.subtitle && (
-                <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                <p className="text-xs text-muted-foreground line-clamp-2 leading-snug">
                   {row.subtitle}
                 </p>
               )}
-            </div>
-            <div className="flex items-center gap-2.5 shrink-0">
-              <span
-                className={cn(
-                  "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
-                  isPaid
-                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300"
-                    : "bg-violet-500/15 text-violet-600 dark:text-violet-300",
+              <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {row.ownerAvatar ? (
+                    <img
+                      src={row.ownerAvatar}
+                      alt={ownerName}
+                      className="h-6 w-6 rounded-full object-cover shrink-0"
+                    />
+                  ) : (
+                    <div className="h-6 w-6 rounded-full bg-muted shrink-0" />
+                  )}
+                  <span className="text-[11px] font-medium text-foreground/85 truncate">
+                    {ownerName}
+                  </span>
+                </div>
+                {row.priceLabel && (
+                  <span className="text-[11px] tabular-nums text-foreground/80 shrink-0">
+                    {row.priceLabel}
+                  </span>
                 )}
-              >
-                {tagLabel}
-              </span>
-              <div className="flex items-center gap-1.5 min-w-0 max-w-[140px]">
-                {row.ownerAvatar ? (
-                  <img
-                    src={row.ownerAvatar}
-                    alt={row.ownerName || ""}
-                    className="h-6 w-6 rounded-full object-cover shrink-0"
-                  />
-                ) : (
-                  <div className="h-6 w-6 rounded-full bg-muted shrink-0" />
-                )}
-                <span className="text-[11px] text-muted-foreground truncate">
-                  {row.ownerName || "—"}
-                </span>
               </div>
             </div>
           </Link>
@@ -143,21 +206,21 @@ const OpportunitiesList = ({ rows }: { rows: ConnectRow[] }) => {
   );
 };
 
-// ─── Spaces (spaces + events) — small editorial grid ────────────────────
+// ─── Spaces (spaces + events) ───────────────────────────────────────────
 const SpacesGrid = ({ rows }: { rows: ConnectRow[] }) => {
   if (!rows.length) return null;
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
       {rows.map((row) => {
         const isEvent = row.kind === "event";
         return (
           <Link
             key={`${row.kind}-${row.id}`}
             to={row.detailHref}
-            className="group flex gap-3 rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm p-3 hover:border-foreground/30 hover:-translate-y-0.5 transition-all"
+            className="group flex flex-col rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm overflow-hidden hover:border-foreground/30 hover:-translate-y-0.5 hover:shadow-xl transition-all"
           >
             <div
-              className="h-20 w-20 shrink-0 rounded-xl bg-cover bg-center"
+              className="aspect-[16/10] w-full bg-cover bg-center"
               style={{
                 backgroundImage: row.coverUrl
                   ? `url(${row.coverUrl})`
@@ -166,10 +229,10 @@ const SpacesGrid = ({ rows }: { rows: ConnectRow[] }) => {
                     : "linear-gradient(135deg, hsl(170 70% 55%), hsl(190 70% 55%))",
               }}
             />
-            <div className="min-w-0 flex-1 py-0.5">
+            <div className="p-3.5 space-y-1.5">
               <span
                 className={cn(
-                  "inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider",
+                  "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
                   isEvent
                     ? "bg-amber-500/15 text-amber-600 dark:text-amber-300"
                     : "bg-teal-500/15 text-teal-600 dark:text-teal-300",
@@ -177,19 +240,20 @@ const SpacesGrid = ({ rows }: { rows: ConnectRow[] }) => {
               >
                 {isEvent ? "Event" : "Space"}
               </span>
-              <p className="text-sm font-semibold text-foreground truncate mt-1.5 leading-tight">
+              <p className="text-sm font-semibold text-foreground leading-tight line-clamp-2">
                 {row.title}
               </p>
-              {row.metaLabel && (
-                <p className="text-[11px] text-muted-foreground truncate mt-0.5">
-                  {row.metaLabel}
-                </p>
-              )}
-              {row.priceLabel && (
-                <p className="text-[11px] text-foreground/80 tabular-nums mt-0.5">
-                  {row.priceLabel}
-                </p>
-              )}
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                {row.metaLabel ? (
+                  <span className="inline-flex items-center gap-1 truncate">
+                    <MapPin className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{row.metaLabel}</span>
+                  </span>
+                ) : <span />}
+                {row.priceLabel && (
+                  <span className="tabular-nums text-foreground/80">{row.priceLabel}</span>
+                )}
+              </div>
             </div>
           </Link>
         );
@@ -201,13 +265,13 @@ const SpacesGrid = ({ rows }: { rows: ConnectRow[] }) => {
 const DiscoverPage = () => {
   const [filter, setFilter] = useState<FilterKey>("all");
 
+  const showCoins = filter === "all" || filter === "coins";
   const showArtists = filter === "all" || filter === "artists";
   const showOpps = filter === "all" || filter === "opportunities";
   const showSpaces = filter === "all" || filter === "spaces";
-  const showProjects = filter === "all" || filter === "projects";
-  const showCoins = filter === "coins"; // coins lane always renders above filter; repeat here only when filtered
+  const showProjectsExtra = filter === "projects"; // projects already render above; this is for explicit filter
 
-  const hire = useHireRows(showArtists);
+  const artists = useArtistProfiles(showArtists);
   const call = useCallRows(showOpps);
   const space = useSpaceRows(showSpaces);
   const event = useEventRows(showSpaces);
@@ -222,20 +286,13 @@ const DiscoverPage = () => {
   }, [showSpaces, space.data, event.data]);
 
   const isLoading =
-    (showArtists && hire.isLoading) ||
+    (showArtists && artists.isLoading) ||
     (showOpps && call.isLoading) ||
     (showSpaces && (space.isLoading || event.isLoading));
 
-  const hasAny =
-    (showArtists && (hire.data?.length ?? 0) > 0) ||
-    (showOpps && (call.data?.length ?? 0) > 0) ||
-    (showSpaces && spacesRows.length > 0) ||
-    showProjects ||
-    showCoins;
-
   return (
-    <div className="max-w-4xl mx-auto pb-20 space-y-6 px-1">
-      {/* Hero banner — gradient */}
+    <div className="max-w-5xl mx-auto pb-20 space-y-8 px-1">
+      {/* Hero banner */}
       <motion.section
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -281,11 +338,11 @@ const DiscoverPage = () => {
         </div>
       </motion.section>
 
-      {/* Coins in Motion */}
-      <CoinsInMotionLane />
+      {/* Building Now — always visible grid */}
+      {(filter === "all" || filter === "projects") && <ActiveProjectsLane />}
 
-      {/* Sticky filter bar */}
-      <div className="sticky top-0 z-20 -mx-1 px-1 py-2 bg-background/85 backdrop-blur-md border-b border-border/60">
+      {/* Sticky filter bar — sits below the Projects section */}
+      <div className="sticky top-0 z-20 -mx-1 px-1 py-2 bg-background/85 backdrop-blur-md border-y border-border/60">
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
           {FILTERS.map((f) => {
             const active = filter === f.key;
@@ -308,20 +365,73 @@ const DiscoverPage = () => {
         </div>
       </div>
 
-      {/* Continuous feed — no section headers */}
-      <div className="space-y-8">
-        {showProjects && <ActiveProjectsLane />}
-
+      {/* Feed */}
+      <div className="space-y-10">
         {showCoins && <CoinsInMotionLane />}
 
-        {showArtists && <ArtistsRow rows={hire.data ?? []} />}
+        {showArtists && (
+          <section className="space-y-3">
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 font-semibold mb-0.5">
+                  Support an artist
+                </p>
+                <h2 className="font-display text-lg sm:text-xl font-semibold text-foreground">
+                  Artists & musicians
+                </h2>
+              </div>
+              <Link
+                to="/profiles"
+                className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5"
+              >
+                Browse all <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+            <ArtistsGrid rows={artists.data ?? []} />
+          </section>
+        )}
 
-        {showOpps && <OpportunitiesList rows={call.data ?? []} />}
+        {showOpps && (
+          <section className="space-y-3">
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 font-semibold mb-0.5">
+                  Get hired · collab
+                </p>
+                <h2 className="font-display text-lg sm:text-xl font-semibold text-foreground">
+                  Opportunities
+                </h2>
+              </div>
+            </div>
+            <OpportunitiesGrid rows={call.data ?? []} />
+          </section>
+        )}
 
-        {showSpaces && <SpacesGrid rows={spacesRows} />}
+        {showSpaces && (
+          <section className="space-y-3">
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 font-semibold mb-0.5">
+                  Book a room · catch a show
+                </p>
+                <h2 className="font-display text-lg sm:text-xl font-semibold text-foreground">
+                  Spaces & events
+                </h2>
+              </div>
+            </div>
+            <SpacesGrid rows={spacesRows} />
+          </section>
+        )}
 
-        {isLoading && !hasAny && (
-          <div className="flex justify-center py-16">
+        {showProjectsExtra && (
+          <p className="text-center text-xs text-muted-foreground py-4">
+            <Sparkles className="inline h-3 w-3 mr-1" />
+            All public projects are shown above.
+          </p>
+        )}
+
+        {isLoading && (
+          <div className="flex justify-center py-10">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           </div>
         )}
