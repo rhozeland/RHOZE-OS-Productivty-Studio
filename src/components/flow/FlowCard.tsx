@@ -192,10 +192,28 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         whileHover={prefersReducedMotion ? undefined : { y: -2 }}
         className="relative rounded-[32px] bg-card shadow-2xl shadow-foreground/10 overflow-hidden border border-border/30 select-none"
       >
+        {/* Owner-only floating menu — always visible at top-right of the
+            card so creators can edit/archive/delete without hunting for it
+            in the action bar. z-30 keeps it above the watermark + media. */}
+        {isOwner && (
+          <div className="absolute top-3 right-3 z-30">
+            <FlowPostOwnerMenu
+              post={{
+                id: item.id,
+                title: item.title ?? "",
+                description: item.description ?? null,
+                archived_at: (item as any).archived_at ?? null,
+                solana_signature: (item as any).solana_signature ?? null,
+              }}
+              triggerClassName="inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md hover:bg-black/75 transition-colors shadow-lg ring-1 ring-white/10"
+            />
+          </div>
+        )}
         <FlowUnlockGate
           artistId={item.user_id}
           artistName={(item as any).profiles?.display_name ?? item.creator_name ?? null}
         >
+
         {/* Verified-IP watermark — when an asset is anchored on Solana,
             we stamp a translucent fingerprint onto the artwork itself. The
             mark IS the verification signal; no chip / "Verified" text needed
