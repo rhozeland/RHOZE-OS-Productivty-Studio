@@ -363,13 +363,32 @@ const StudioPage = () => {
     0,
   );
 
-  const featuredPublic = useMemo(
+  const livePublicProjects = useMemo(
     () =>
-      (projects ?? []).find(
+      (projects ?? []).filter(
         (p) => p.is_public && p.public_slug && p.status !== "completed",
       ),
     [projects],
   );
+  const [liveIdx, setLiveIdx] = useState(0);
+  const featuredPublic = livePublicProjects[liveIdx % Math.max(1, livePublicProjects.length)];
+
+  // Group backed-project goals for milestone progress on Backing cards.
+  const backedGoalsByProject = useMemo(() => {
+    const m = new Map<string, GoalRow[]>();
+    (backedGoals ?? []).forEach((g) => {
+      const arr = m.get(g.project_id) ?? [];
+      arr.push(g);
+      m.set(g.project_id, arr);
+    });
+    return m;
+  }, [backedGoals]);
+
+  const hasAnyActivity =
+    (projects ?? []).length > 0 ||
+    (backedProjects ?? []).length > 0 ||
+    (holdings ?? []).length > 0;
+
 
   // ── draft roadmap (phase 1: AI only, no project saved yet) ─────────
   const draftRoadmap = useMutation({
