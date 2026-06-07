@@ -124,14 +124,23 @@ const ProfileDetailPage = () => {
     queryKey: ["profile-project-collaborators", projectIds.join(",")],
     enabled: projectIds.length > 0,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: rows } = await supabase
         .from("project_collaborators")
-        .select("project_id, user_id, profiles:profiles!project_collaborators_user_id_fkey(user_id, display_name, username, avatar_url)")
+        .select("project_id, user_id")
         .in("project_id", projectIds);
+      const userIds = Array.from(new Set((rows ?? []).map((r: any) => r.user_id)));
+      const { data: profs } = userIds.length
+        ? await supabase
+            .from("profiles")
+            .select("user_id, display_name, username, avatar_url")
+            .in("user_id", userIds)
+        : { data: [] as any[] };
+      const byUser: Record<string, any> = {};
+      (profs ?? []).forEach((p: any) => { byUser[p.user_id] = p; });
       const map: Record<string, any[]> = {};
-      (data ?? []).forEach((row: any) => {
+      (rows ?? []).forEach((row: any) => {
         const list = map[row.project_id] || (map[row.project_id] = []);
-        const pr = row.profiles || {};
+        const pr = byUser[row.user_id] || {};
         list.push({
           user_id: row.user_id,
           display_name: pr.display_name,
