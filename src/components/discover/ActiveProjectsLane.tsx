@@ -16,6 +16,7 @@ type Row = {
   cheer_count: number | null;
   tokenize_ready: boolean | null;
   cover_color: string | null;
+  cover_image_url: string | null;
   status: string | null;
   owner: {
     display_name: string | null;
