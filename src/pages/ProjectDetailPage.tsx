@@ -495,6 +495,13 @@ const ProjectDetailPage = () => {
 
         {/* ROADMAP */}
         <TabsContent value="roadmap" className="space-y-6">
+          {canManageProject && (
+            <TokenizeProjectCta
+              projectTitle={project.title}
+              linkedTokenId={(project as any).linked_token_id ?? null}
+            />
+          )}
+
           <SignedAgreementCard projectId={id!} contractId={contract?.id} />
 
           {canManageProject && (
@@ -504,14 +511,8 @@ const ProjectDetailPage = () => {
             />
           )}
 
-          {canManageProject && (
-            <TokenizeProjectCta
-              projectTitle={project.title}
-              linkedTokenId={(project as any).linked_token_id ?? null}
-            />
-          )}
-
           <RoadmapCopilot projectId={id!} />
+
 
           {isPaid && (
             <ProjectScopeReview
@@ -643,7 +644,18 @@ const ProjectDetailPage = () => {
             )}
           </TabsContent>
         )}
-      </Tabs>
+        </Tabs>
+
+        {/* Editor side rail — sticky on desktop */}
+        <aside className="space-y-4 lg:sticky lg:top-6 self-start order-first lg:order-none">
+          <EditorSideRail
+            isPublic={(project as any).is_public ?? false}
+            publicSlug={(project as any).public_slug ?? null}
+            projectTitle={project.title}
+            cheerCount={(project as any).cheer_count ?? 0}
+          />
+        </aside>
+      </div>
 
       <TokenizeBottomCta
         project={project as any}
@@ -652,5 +664,6 @@ const ProjectDetailPage = () => {
     </div>
   );
 };
+
 
 export default ProjectDetailPage;
