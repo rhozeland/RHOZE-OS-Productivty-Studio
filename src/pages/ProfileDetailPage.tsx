@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,10 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   EyeOff, Loader2, Sparkles, Image as ImageIcon, Play, Music, FileText,
-  Calendar as CalendarIcon, FolderKanban, ExternalLink,
+  Calendar as CalendarIcon, FolderKanban, ExternalLink, Coins, Heart,
+  Rocket, Inbox, Users, ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import SupportSheet from "@/components/profile/SupportSheet";
@@ -20,9 +22,12 @@ import ProfileGemHeader from "@/components/profile/ProfileGemHeader";
 import { BoostProfileSheet } from "@/components/profile/BoostProfileSheet";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import FlowPostOwnerMenu from "@/components/profile/FlowPostOwnerMenu";
+import TokenDiscoveryChip from "@/components/profile/TokenDiscoveryChip";
 import { useUserNote } from "@/hooks/useNotes";
 import { EmptyState } from "@/components/ui/empty-state";
 import ShareCardModal from "@/components/share/ShareCardModal";
+
+type TabKey = "projects" | "works" | "coin";
 
 const ProfileDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,6 +43,11 @@ const ProfileDetailPage = () => {
   const [boostOpen, setBoostOpen] = useState(false);
   const [shareCardOpen, setShareCardOpen] = useState(false);
 
+  const initialTab = (searchParams.get("tab") as TabKey) || "projects";
+  const [tab, setTab] = useState<TabKey>(
+    ["projects", "works", "coin"].includes(initialTab) ? initialTab : "projects",
+  );
+
   const [subscribeOpen, setSubscribeOpen] = useState(
     searchParams.get("subscribe") === "1" || searchParams.get("back") === "1",
   );
@@ -52,7 +62,7 @@ const ProfileDetailPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ─── Data fetching ───
+  // ─── Data ───
   const { data: profile, isLoading, error: profileError } = useQuery({
     queryKey: ["profile", id],
     queryFn: async () => {
@@ -108,7 +118,47 @@ const ProfileDetailPage = () => {
     enabled: !!id,
   });
 
-  // ─── Connection logic ───
+  // Priority project + milestones (top of left column)
+  const activeProject = (buildingProjects ?? []).find((p: any) => p.status !== "completed") ?? (buildingProjects ?? [])[0];
+  const { data: milestones } = useQuery({
+    queryKey: ["profile-project-milestones", activeProject?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("project_goals")
+        .select("id, title, status, position")
+        .eq("project_id", activeProject!.id)
+        .order("position", { ascending: true });
+      return data ?? [];
+    },
+    enabled: !!activeProject?.id,
+  });
+
+  // "Works mostly with" — creators this user follows
+  const { data: collaborators } = useQuery({
+    queryKey: ["profile-collaborators", id],
+    queryFn: async () => {
+      const { data: conns } = await supabase.from("connections")
+        .select("following_id").eq("follower_id", id!).eq("type", "follow").eq("status", "active").limit(6);
+      const ids = (conns ?? []).map((c: any) => c.following_id);
+      if (ids.length === 0) return [];
+      const { data: people } = await supabase.from("profiles")
+        .select("user_id, display_name, username, avatar_url, headline").in("user_id", ids);
+      return people ?? [];
+    },
+    enabled: !!id,
+  });
+
+  // Owner-only pending inbox count
+  const { data: inboxCount } = useQuery({
+    queryKey: ["profile-inbox-count", id],
+    queryFn: async () => {
+      const { count } = await supabase.from("messages").select("id", { count: "exact", head: true })
+        .eq("receiver_id", id!).eq("read", false);
+      return count ?? 0;
+    },
+    enabled: !!id && isOwnProfile,
+  });
+
+  // ─── Follow logic ───
   const isFollowing = connectionStatus?.some((c: any) => c.follower_id === user?.id && c.following_id === id && c.type === "follow" && c.status === "active");
 
   const followMutation = useMutation({
@@ -129,7 +179,6 @@ const ProfileDetailPage = () => {
   if (isLoading) {
     return <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
-
   if (!profile) {
     const errored = !!profileError;
     return (
@@ -138,17 +187,12 @@ const ProfileDetailPage = () => {
           {errored ? "Couldn't load this profile. Please try again." : "Profile not found"}
         </p>
         <div className="mt-4 flex items-center justify-center gap-2">
-          {errored && (
-            <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ["profile", id] })}>
-              Retry
-            </Button>
-          )}
+          {errored && <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ["profile", id] })}>Retry</Button>}
           <Button variant="outline" onClick={() => navigate(-1)}>Back</Button>
         </div>
       </div>
     );
   }
-
   if (!isOwnProfile && profile.is_public === false) {
     return (
       <div className="text-center py-20">
@@ -161,12 +205,27 @@ const ProfileDetailPage = () => {
 
   const p = profile as any;
   const profileBg = p.profile_background;
+  const completedMs = (milestones ?? []).filter((m: any) => m.status === "done" || m.status === "completed").length;
+  const totalMs = (milestones ?? []).length;
+
+  const handleTabChange = (next: TabKey) => {
+    setTab(next);
+    const sp = new URLSearchParams(searchParams);
+    sp.set("tab", next);
+    setSearchParams(sp, { replace: true });
+  };
+
+  const TABS: { key: TabKey; label: string; Icon: any }[] = [
+    { key: "projects", label: "Projects", Icon: FolderKanban },
+    { key: "works", label: "Works", Icon: ImageIcon },
+    { key: "coin", label: "Token / Coin", Icon: Coins },
+  ];
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8 p-4 md:p-8 transition-colors duration-500" style={{ background: profileBg || undefined }}>
       <div className="space-y-5 max-w-6xl mx-auto">
 
-        {/* ─── Unified Gem Header (banner + identity + stats integrated) ─── */}
+        {/* ─── Header ─── */}
         <ProfileGemHeader
           profile={p}
           isOwnProfile={isOwnProfile}
@@ -183,58 +242,223 @@ const ProfileDetailPage = () => {
           reviewStats={reviewStats}
         />
 
-        {/* ─── Coins ─── */}
-        <CreatorCoinsGallery
-          userId={p.user_id}
-          creatorName={p.display_name || p.username}
-          isOwner={isOwnProfile}
-          fallbackWallet={p.solana_wallet ?? null}
-        />
-
-        {/* ─── Works grid ─── */}
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-              <ImageIcon className="h-4 w-4 text-muted-foreground" /> Works
-              {flowPosts && flowPosts.length > 0 && (
-                <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-normal ml-1">
-                  · {flowPosts.length}
-                </span>
-              )}
-            </h2>
+        {/* ─── Sticky tabs ─── */}
+        <div className="sticky top-14 z-30 -mx-4 md:-mx-8 px-4 md:px-8 bg-background/85 backdrop-blur-md border-b border-border/50">
+          <div className="max-w-6xl mx-auto flex items-center gap-1">
+            {TABS.map(({ key, label, Icon }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => handleTabChange(key)}
+                className={cn(
+                  "relative inline-flex items-center gap-1.5 px-4 py-3 text-sm font-medium transition-colors",
+                  tab === key ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" /> {label}
+                {tab === key && (
+                  <span className="absolute left-2 right-2 -bottom-px h-0.5 bg-foreground rounded-full" />
+                )}
+              </button>
+            ))}
           </div>
-          <PostsGrid posts={flowPosts ?? []} isOwnProfile={isOwnProfile} navigate={navigate} />
-        </section>
+        </div>
 
-        {/* ─── Projects ─── */}
-        {(buildingProjects?.length ?? 0) > 0 && (
-          <section className="space-y-3">
-            <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-              <FolderKanban className="h-4 w-4 text-muted-foreground" /> Projects
-              <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-normal ml-1">
-                · {buildingProjects!.length}
-              </span>
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {(buildingProjects ?? []).map((pr: any) => (
+        {/* ─── 65/35 grid ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1.85fr_1fr] gap-5">
+
+          {/* LEFT — Active Engine */}
+          <div className="space-y-4 min-w-0">
+            {/* Priority Tracker */}
+            {activeProject && totalMs > 0 && (
+              <Link
+                to={`/projects/${activeProject.id}`}
+                className="block rounded-2xl border border-border/60 bg-card/70 hover:bg-card transition-colors p-4 sm:p-5"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Priority release</p>
+                    <p className="font-display text-base font-semibold text-foreground mt-1 truncate">{activeProject.title}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {completedMs} of {totalMs} milestones completed
+                    </p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                </div>
+                <div className="mt-3 h-1.5 rounded-full bg-muted/50 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-primary to-fuchsia-500 transition-all"
+                    style={{ width: `${totalMs ? (completedMs / totalMs) * 100 : 0}%` }}
+                  />
+                </div>
+              </Link>
+            )}
+
+            {/* Tab content */}
+            {tab === "projects" && (
+              <section className="space-y-3">
+                {(buildingProjects?.length ?? 0) === 0 ? (
+                  <EmptyState icon={FolderKanban} title="No projects yet" description="Releases this creator is building will appear here." size="sm" />
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {(buildingProjects ?? []).map((pr: any) => (
+                      <button
+                        key={pr.id}
+                        type="button"
+                        onClick={() => navigate(`/projects/${pr.id}`)}
+                        className="text-left rounded-2xl border border-border/50 bg-card/60 hover:bg-card transition-colors p-4 space-y-2"
+                      >
+                        <div className="h-1.5 rounded-full" style={{ background: pr.cover_color || "hsl(var(--primary))" }} />
+                        <p className="font-display text-base font-semibold text-foreground line-clamp-2">{pr.title}</p>
+                        {pr.description && <p className="text-xs text-muted-foreground line-clamp-2">{pr.description}</p>}
+                        <div className="flex items-center gap-2 pt-1">
+                          <Badge variant="outline" className="text-[10px] capitalize">{pr.status || "active"}</Badge>
+                          {pr.created_at && <span className="text-[10px] text-muted-foreground">{format(new Date(pr.created_at), "MMM d, yyyy")}</span>}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {tab === "works" && (
+              <section className="space-y-3">
+                <PostsGrid posts={flowPosts ?? []} isOwnProfile={isOwnProfile} navigate={navigate} />
+              </section>
+            )}
+
+            {tab === "coin" && (
+              <section className="space-y-3">
+                <CreatorCoinsGallery
+                  userId={p.user_id}
+                  creatorName={p.display_name || p.username}
+                  isOwner={isOwnProfile}
+                  fallbackWallet={p.solana_wallet ?? null}
+                />
+              </section>
+            )}
+          </div>
+
+          {/* RIGHT — Action & Utility Hub */}
+          <aside className="space-y-3 min-w-0">
+            {isOwnProfile ? (
+              <>
+                {/* Start a project */}
                 <button
-                  key={pr.id}
                   type="button"
-                  onClick={() => navigate(`/projects/${pr.id}`)}
-                  className="text-left rounded-2xl border border-border/50 bg-card/60 hover:bg-card transition-colors p-4 space-y-2"
+                  onClick={() => navigate("/projects/new")}
+                  className="w-full text-left rounded-2xl p-5 bg-gradient-to-br from-primary via-fuchsia-500 to-amber-500 text-primary-foreground shadow-lg hover:opacity-95 transition-opacity"
                 >
-                  <div className="h-1.5 rounded-full" style={{ background: pr.cover_color || "hsl(var(--primary))" }} />
-                  <p className="font-display text-base font-semibold text-foreground line-clamp-2">{pr.title}</p>
-                  {pr.description && <p className="text-xs text-muted-foreground line-clamp-2">{pr.description}</p>}
-                  <div className="flex items-center gap-2 pt-1">
-                    <Badge variant="outline" className="text-[10px] capitalize">{pr.status || "active"}</Badge>
-                    {pr.created_at && <span className="text-[10px] text-muted-foreground">{format(new Date(pr.created_at), "MMM d, yyyy")}</span>}
+                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] opacity-90">
+                    <Sparkles className="h-3.5 w-3.5" /> Build in public
+                  </div>
+                  <p className="font-display text-lg font-bold mt-2">Start a project</p>
+                  <p className="text-xs opacity-90 mt-1">Spin up a release with milestones, scope and collaborators.</p>
+                </button>
+
+                {/* Start a coin */}
+                {!p.token_mint_address && (
+                  <a
+                    href="https://pump.fun/create"
+                    target="_blank"
+                    rel="noopener"
+                    className="block rounded-2xl p-5 bg-zinc-950 text-white shadow-lg hover:bg-zinc-900 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] opacity-75">
+                      <Rocket className="h-3.5 w-3.5" /> Monetize
+                    </div>
+                    <p className="font-display text-lg font-bold mt-2">Launch on pump.fun</p>
+                    <p className="text-xs opacity-75 mt-1">Start a coin and earn 5bps on every trade.</p>
+                  </a>
+                )}
+
+                {/* Pending inbox */}
+                <button
+                  type="button"
+                  onClick={() => navigate("/messages")}
+                  className="w-full text-left rounded-2xl border border-border/50 bg-card/70 hover:bg-card p-4 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Inbox className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium text-foreground">Inbox</span>
+                    </div>
+                    {(inboxCount ?? 0) > 0 ? (
+                      <Badge className="text-[10px]">{inboxCount} new</Badge>
+                    ) : (
+                      <span className="text-[11px] text-muted-foreground">All caught up</span>
+                    )}
                   </div>
                 </button>
-              ))}
-            </div>
-          </section>
-        )}
+              </>
+            ) : (
+              <>
+                {/* Support */}
+                <button
+                  type="button"
+                  onClick={() => user ? setSubscribeOpen(true) : navigate("/auth")}
+                  className="w-full text-left rounded-2xl p-5 bg-gradient-to-br from-primary via-fuchsia-500 to-amber-500 text-primary-foreground shadow-lg hover:opacity-95 transition-opacity"
+                >
+                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] opacity-90">
+                    <Heart className="h-3.5 w-3.5" /> Back this artist
+                  </div>
+                  <p className="font-display text-lg font-bold mt-2">Support {p.display_name || p.username}</p>
+                  <p className="text-xs opacity-90 mt-1">Subscribe, tip, or fund the next milestone.</p>
+                </button>
+
+                {/* Token widget */}
+                {p.token_mint_address && (
+                  <div className="rounded-2xl border border-border/50 bg-card/70 p-4 space-y-3">
+                    <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      <Coins className="h-3.5 w-3.5" /> Trade {p.token_ticker ? `$${p.token_ticker}` : "coin"}
+                    </div>
+                    <TokenDiscoveryChip creatorId={id!} />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-1.5"
+                      onClick={() => handleTabChange("coin")}
+                    >
+                      View coin details <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Works mostly with */}
+            {(collaborators?.length ?? 0) > 0 && (
+              <div className="rounded-2xl border border-border/50 bg-card/70 p-4">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground mb-3">
+                  <Users className="h-3.5 w-3.5" /> Works mostly with
+                </div>
+                <div className="space-y-2">
+                  {(collaborators ?? []).map((c: any) => {
+                    const init = (c.display_name || c.username || "?").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+                    return (
+                      <button
+                        key={c.user_id}
+                        type="button"
+                        onClick={() => navigate(`/profiles/${c.user_id}`)}
+                        className="w-full flex items-center gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-muted/60 transition-colors text-left"
+                      >
+                        <div className="h-8 w-8 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center">
+                          {c.avatar_url ? <img src={c.avatar_url} alt="" className="h-full w-full object-cover" /> :
+                            <span className="text-[10px] font-semibold text-muted-foreground">{init}</span>}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-foreground truncate">{c.display_name || c.username}</p>
+                          {c.headline && <p className="text-[11px] text-muted-foreground truncate">{c.headline}</p>}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </aside>
+        </div>
 
         {/* Sheets / dialogs */}
         {!isOwnProfile && id && (
@@ -246,15 +470,9 @@ const ProfileDetailPage = () => {
           />
         )}
         {id && (
-          <ShareCardModal
-            open={shareCardOpen}
-            onOpenChange={setShareCardOpen}
-            creatorId={id}
-          />
+          <ShareCardModal open={shareCardOpen} onOpenChange={setShareCardOpen} creatorId={id} />
         )}
-        {isOwnProfile && (
-          <BoostProfileSheet open={boostOpen} onOpenChange={setBoostOpen} />
-        )}
+        {isOwnProfile && <BoostProfileSheet open={boostOpen} onOpenChange={setBoostOpen} />}
         <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
           <DialogContent className="max-w-6xl w-[95vw] max-h-[92vh] overflow-y-auto p-0">
             <DialogHeader className="px-6 pt-6 pb-3 border-b border-border/40">
@@ -264,10 +482,7 @@ const ProfileDetailPage = () => {
               </DialogTitle>
             </DialogHeader>
             <div className="p-4 sm:p-6">
-              <CreatorAvailabilityCalendar
-                creatorId={id!}
-                creatorName={p.display_name || p.username}
-              />
+              <CreatorAvailabilityCalendar creatorId={id!} creatorName={p.display_name || p.username} />
             </div>
           </DialogContent>
         </Dialog>
@@ -306,7 +521,7 @@ const PostsGrid = ({
     return <p className="text-xs text-muted-foreground italic">{emptyTitle}.</p>;
   }
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-2.5">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
       {posts.map((post: any) => {
         const cat = (post.category || "").toLowerCase();
         const CatIcon =
