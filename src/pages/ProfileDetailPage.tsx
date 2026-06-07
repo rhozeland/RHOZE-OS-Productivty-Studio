@@ -112,7 +112,7 @@ const ProfileDetailPage = () => {
     queryKey: ["profile-building-projects", id],
     queryFn: async () => {
       const { data } = await supabase.from("projects")
-        .select("id, title, description, status, cover_color, categories, created_at, intake_tier")
+        .select("id, title, description, status, cover_color, cover_image_url, categories, created_at, intake_tier")
         .eq("user_id", id!).order("created_at", { ascending: false }).limit(12);
       return data ?? [];
     },
