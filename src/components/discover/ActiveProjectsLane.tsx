@@ -106,10 +106,10 @@ const ActiveProjectsLane = ({ limit = 12, title = "Building Now", eyebrow = "Liv
       <div className="flex items-end justify-between gap-3">
         <div>
           <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 font-semibold mb-0.5">
-            Live progress
+            {eyebrow}
           </p>
           <h2 className="font-display text-lg sm:text-xl font-semibold text-foreground">
-            Building Now
+            {title}
           </h2>
         </div>
         <Link
