@@ -253,7 +253,6 @@ const ProfileDetailPage = () => {
   const TABS: { key: TabKey; label: string; Icon: any }[] = [
     { key: "works", label: "Works", Icon: ImageIcon },
     { key: "projects", label: "Projects", Icon: FolderKanban },
-    { key: "coin", label: "Token / Coin", Icon: Coins },
   ];
 
   return (
