@@ -429,13 +429,6 @@ const ReleasePage = () => {
         </aside>
       </div>
 
-      <div className="container mx-auto px-4 pb-10">
-        <TokenizeBottomCta
-          project={project as any}
-          linkedTokenTicker={linkedToken?.ticker ?? null}
-          publicView
-        />
-      </div>
     </div>
   );
 };
