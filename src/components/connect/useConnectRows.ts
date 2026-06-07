@@ -80,6 +80,7 @@ export const useHireRows = (enabled = true) =>
           ownerId: p.user_id,
           ownerName: p.display_name || p.username || null,
           ownerAvatar: p.avatar_url || null,
+          handle: p.username || null,
           isPro: !!p.verified_pro_at,
           category: p.archetype,
           description: p.bio,
