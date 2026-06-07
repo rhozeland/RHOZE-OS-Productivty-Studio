@@ -231,7 +231,7 @@ const ReleasePage = () => {
               <TabsTrigger value="overview" className={TAB_TRIGGER}>Overview</TabsTrigger>
               <TabsTrigger value="roadmap" className={TAB_TRIGGER}>Roadmap</TabsTrigger>
               <TabsTrigger value="timeline" className={TAB_TRIGGER}>Timeline</TabsTrigger>
-              {hasBoard && <TabsTrigger value="board" className={TAB_TRIGGER}>Board</TabsTrigger>}
+              <TabsTrigger value="board" className={TAB_TRIGGER}>Board</TabsTrigger>
               <TabsTrigger value="story" className={TAB_TRIGGER}>Story</TabsTrigger>
               <TabsTrigger value="team" className={TAB_TRIGGER}>Team</TabsTrigger>
             </TabsList>
