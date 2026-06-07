@@ -42,6 +42,8 @@ import {
   Coins,
   ArrowRight,
   ArrowUpRight,
+  ArrowUp,
+  ArrowDown,
   Check,
   X,
   Loader2,
@@ -55,6 +57,10 @@ import {
   Rocket,
   ChevronLeft,
   ChevronRight,
+  Pencil,
+  Heart,
+  Compass,
+
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -224,6 +230,95 @@ const StudioPage = () => {
     },
   });
 
+  // User type — fan vs creator drives section ordering + CTA copy.
+  const { data: userType } = useQuery<"fan" | "creator">({
+    queryKey: ["studio-user-type", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_type")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return ((data as any)?.user_type ?? "creator") as "fan" | "creator";
+    },
+  });
+  const isFan = userType === "fan";
+
+  // Backing — projects this user has cheered (project_cheers).
+  const { data: backedProjects } = useQuery({
+    queryKey: ["studio-backed", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("project_cheers")
+        .select(
+          "created_at, project:projects(id,title,is_public,public_slug,user_id,status,profiles:profiles!projects_user_id_fkey(display_name,avatar_url,username))",
+        )
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false })
+        .limit(24);
+      if (error) return [];
+      return ((data ?? []) as any[])
+        .map((r) => ({ cheered_at: r.created_at, ...(r.project ?? {}) }))
+        .filter((p) => p && p.id);
+    },
+  });
+  const backedIds = useMemo(
+    () => (backedProjects ?? []).map((p: any) => p.id),
+    [backedProjects],
+  );
+  const { data: backedGoals } = useQuery<GoalRow[]>({
+    queryKey: ["studio-backed-goals", backedIds.join(",")],
+    enabled: backedIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("project_goals")
+        .select("id,project_id,status,completed_at,due_date")
+        .in("project_id", backedIds);
+      return (data ?? []) as GoalRow[];
+    },
+  });
+
+  // Holdings — simulated coin holdings.
+  const { data: holdings } = useQuery({
+    queryKey: ["studio-holdings", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("coin_holdings")
+        .select(
+          "balance, sol_invested, launch:coin_launches(id,name,ticker,image_url,virtual_sol_reserves,virtual_token_reserves,total_supply,creator:profiles!coin_launches_creator_id_fkey(display_name,avatar_url,username,user_id))",
+        )
+        .eq("trader_id", user!.id)
+        .gt("balance", 0)
+        .order("updated_at", { ascending: false })
+        .limit(20);
+      if (error) return [];
+      return (data ?? []) as any[];
+    },
+  });
+
+  // Weekly $RHOZE earnings — sum positive credit_transactions in last 7d.
+  const { data: weekEarnings = 0 } = useQuery<number>({
+    queryKey: ["studio-week-earnings", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const since = new Date(Date.now() - 7 * 86_400_000).toISOString();
+      const { data } = await supabase
+        .from("credit_transactions")
+        .select("amount,type")
+        .eq("user_id", user!.id)
+        .gte("created_at", since);
+      return (data ?? [])
+        .filter((r: any) => Number(r.amount) > 0)
+        .reduce((s: number, r: any) => s + Number(r.amount), 0);
+    },
+  });
+
+
+
+
   // ── derived ────────────────────────────────────────────────────────
   const goalsByProject = useMemo(() => {
     const m = new Map<string, GoalRow[]>();
@@ -268,13 +363,32 @@ const StudioPage = () => {
     0,
   );
 
-  const featuredPublic = useMemo(
+  const livePublicProjects = useMemo(
     () =>
-      (projects ?? []).find(
+      (projects ?? []).filter(
         (p) => p.is_public && p.public_slug && p.status !== "completed",
       ),
     [projects],
   );
+  const [liveIdx, setLiveIdx] = useState(0);
+  const featuredPublic = livePublicProjects[liveIdx % Math.max(1, livePublicProjects.length)];
+
+  // Group backed-project goals for milestone progress on Backing cards.
+  const backedGoalsByProject = useMemo(() => {
+    const m = new Map<string, GoalRow[]>();
+    (backedGoals ?? []).forEach((g) => {
+      const arr = m.get(g.project_id) ?? [];
+      arr.push(g);
+      m.set(g.project_id, arr);
+    });
+    return m;
+  }, [backedGoals]);
+
+  const hasAnyActivity =
+    (projects ?? []).length > 0 ||
+    (backedProjects ?? []).length > 0 ||
+    (holdings ?? []).length > 0;
+
 
   // ── draft roadmap (phase 1: AI only, no project saved yet) ─────────
   const draftRoadmap = useMutation({
@@ -426,109 +540,161 @@ const StudioPage = () => {
   // ── render ─────────────────────────────────────────────────────────
   return (
     <div className="max-w-5xl mx-auto pb-20 space-y-8">
-      {/* Header — animated gradient slider box */}
+      {/* Header — gradient banner */}
       <StudioHeroBox
         totalActive={totalActive}
         milestonesDueThisWeek={milestonesDueThisWeek}
         draftCount={draftProjects.length}
         completedCount={completedProjects.length}
+        emptyMode={!hasAnyActivity}
       />
 
-      {/* Primary actions — two gradient buttons side-by-side */}
+      {/* Primary actions — role-adaptive */}
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <GradientCtaButton
-          onClick={() => setStartProjectOpen(true)}
-          Icon={Rocket}
-          eyebrow="Build in public"
-          title="Start a Project"
-          subtitle="Plan a release. Let fans back the work."
-          gradient="linear-gradient(120deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 25%, hsl(38 92% 55%) 50%, hsl(292 84% 61%) 75%, hsl(330 85% 60%) 100%)"
-        />
-        <GradientCtaButton
-          onClick={() => setCoinSheetOpen(true)}
-          Icon={Coins}
-          eyebrow="Get backed"
-          title="Launch a Coin"
-          subtitle="Spin up your artist token on pump.fun."
-          gradient="linear-gradient(120deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 25%, hsl(170 80% 50%) 50%, hsl(260 80% 60%) 75%, hsl(200 90% 55%) 100%)"
-        />
+        {isFan ? (
+          <GradientCtaButton
+            onClick={() => navigate("/discover")}
+            Icon={Compass}
+            eyebrow="Build in public"
+            title="Discover Artists"
+            subtitle="Find creators worth backing."
+            gradient="linear-gradient(120deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 25%, hsl(38 92% 55%) 50%, hsl(292 84% 61%) 75%, hsl(330 85% 60%) 100%)"
+          />
+        ) : (
+          <GradientCtaButton
+            onClick={() => setStartProjectOpen(true)}
+            Icon={Rocket}
+            eyebrow="Build in public"
+            title="Start a Project"
+            subtitle="Plan a release. Let fans back the work."
+            gradient="linear-gradient(120deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 25%, hsl(38 92% 55%) 50%, hsl(292 84% 61%) 75%, hsl(330 85% 60%) 100%)"
+          />
+        )}
+        {isFan ? (
+          <GradientCtaButton
+            onClick={() => navigate("/discover?filter=projects")}
+            Icon={Heart}
+            eyebrow="Get backed"
+            title="Back a Project"
+            subtitle="Cheer on releases in motion."
+            gradient="linear-gradient(120deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 25%, hsl(170 80% 50%) 50%, hsl(260 80% 60%) 75%, hsl(200 90% 55%) 100%)"
+          />
+        ) : (
+          <GradientCtaButton
+            onClick={() => setCoinSheetOpen(true)}
+            Icon={Coins}
+            eyebrow="Get backed"
+            title="Launch a Coin"
+            subtitle="Spin up your artist token on pump.fun."
+            gradient="linear-gradient(120deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 25%, hsl(170 80% 50%) 50%, hsl(260 80% 60%) 75%, hsl(200 90% 55%) 100%)"
+          />
+        )}
       </section>
 
-
+      {/* Live release banner — only if user owns a live public project */}
       {featuredPublic && (
-        <Link
-          to={`/release/${featuredPublic.public_slug}`}
-          className="block rounded-2xl border border-emerald-500/30 bg-emerald-500/5 px-5 py-3.5 hover:bg-emerald-500/10 transition-colors"
-        >
+        <div className="relative rounded-2xl overflow-hidden border border-border bg-foreground text-background dark:bg-card dark:text-foreground px-5 py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400 font-semibold mb-1">
+              <span className="inline-flex items-center gap-1 rounded-full bg-background/15 px-2 py-0.5 text-[9px] uppercase tracking-[0.2em] font-semibold mb-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 Live release
-              </p>
-              <p className="text-sm font-semibold text-foreground truncate">
-                {featuredPublic.title} is live
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              </span>
+              <p className="text-sm font-semibold truncate">{featuredPublic.title}</p>
+              <p className="text-[11px] opacity-75 mt-0.5">
                 {supporterCounts?.[featuredPublic.id] ?? 0} supporter
                 {(supporterCounts?.[featuredPublic.id] ?? 0) === 1 ? "" : "s"} ·{" "}
                 {projectStats(featuredPublic).done} of {projectStats(featuredPublic).total} milestones
               </p>
             </div>
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground shrink-0">
-              View release <ArrowUpRight className="h-3.5 w-3.5" />
-            </span>
+            <div className="flex items-center gap-2 shrink-0">
+              {livePublicProjects.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setLiveIdx((i) => i + 1)}
+                  className="h-7 w-7 rounded-full bg-background/10 hover:bg-background/20 flex items-center justify-center transition-colors"
+                  aria-label="Next live release"
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              )}
+              <Link
+                to={`/release/${featuredPublic.public_slug}`}
+                className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
+              >
+                View release <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
           </div>
+        </div>
+      )}
+
+      {/* Brand-new user empty state */}
+      {!hasAnyActivity && !isLoading && (
+        <EmptyStudioCard
+          onStart={() => setStartProjectOpen(true)}
+          onDiscover={() => navigate("/discover")}
+        />
+      )}
+
+      {/* Three sections — order depends on role */}
+      {hasAnyActivity && (
+        <div className="space-y-10">
+          {(() => {
+            const sectionBuilding = (projects ?? []).length > 0 ? (
+              <BuildingSection
+                key="building"
+                activeProjects={activeProjects}
+                draftProjects={draftProjects}
+                completedProjects={completedProjects}
+                statsFor={projectStats}
+                supporterCounts={supporterCounts ?? {}}
+                milestonesDueThisWeek={milestonesDueThisWeek}
+                onStart={() => setStartProjectOpen(true)}
+              />
+            ) : (
+              <BuildingEmpty key="building" onStart={() => setStartProjectOpen(true)} />
+            );
+
+            const sectionBacking = (backedProjects ?? []).length > 0 ? (
+              <BackingSection
+                key="backing"
+                projects={backedProjects ?? []}
+                goalsByProject={backedGoalsByProject}
+              />
+            ) : null;
+
+            const sectionHolding = (holdings ?? []).length > 0 ? (
+              <HoldingSection key="holding" holdings={holdings ?? []} />
+            ) : null;
+
+            const ordered = isFan
+              ? [sectionBacking, sectionBuilding, sectionHolding]
+              : [sectionBuilding, sectionBacking, sectionHolding];
+            return ordered.filter(Boolean);
+          })()}
+        </div>
+      )}
+
+      {/* Weekly $RHOZE earnings prompt */}
+      {weekEarnings > 0 && (
+        <Link
+          to="/credits"
+          className="flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-muted/40 hover:bg-muted/60 transition-colors px-5 py-3.5"
+        >
+          <p className="text-sm text-foreground">
+            You've earned{" "}
+            <span className="font-semibold tabular-nums">
+              {Math.round(weekEarnings).toLocaleString()}
+            </span>{" "}
+            <span className="text-muted-foreground">$RHOZE</span> this week
+          </p>
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground shrink-0">
+            View your Pass <ArrowRight className="h-3 w-3" />
+          </span>
         </Link>
       )}
 
-      {/* Tabs + project cards */}
-      <Tabs defaultValue="active" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="active" className="gap-2">
-            Active
-            {milestonesDueThisWeek > 0 && (
-              <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
-                {milestonesDueThisWeek} due
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="drafts">Drafts</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-        </TabsList>
-
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
-          <>
-            <TabsContent value="active">
-              <ProjectList
-                projects={activeProjects}
-                statsFor={projectStats}
-                supporterCounts={supporterCounts ?? {}}
-                emptyLabel="No active projects. Start one above."
-              />
-            </TabsContent>
-            <TabsContent value="drafts">
-              <ProjectList
-                projects={draftProjects}
-                statsFor={projectStats}
-                supporterCounts={supporterCounts ?? {}}
-                emptyLabel="No drafts yet."
-              />
-            </TabsContent>
-            <TabsContent value="completed">
-              <ProjectList
-                projects={completedProjects}
-                statsFor={projectStats}
-                supporterCounts={supporterCounts ?? {}}
-                emptyLabel="Nothing finished yet."
-              />
-            </TabsContent>
-          </>
-        )}
-      </Tabs>
 
       {/* Start a Project picker (v11 Pillar 9 — AI prompt or empty page) */}
       <StartProjectPicker
@@ -822,12 +988,15 @@ function StudioHeroBox({
   milestonesDueThisWeek,
   draftCount,
   completedCount,
+  emptyMode = false,
 }: {
   totalActive: number;
   milestonesDueThisWeek: number;
   draftCount: number;
   completedCount: number;
+  emptyMode?: boolean;
 }) {
+
   const slides = [
     {
       id: "active",
@@ -908,17 +1077,23 @@ function StudioHeroBox({
           </h1>
         </div>
 
-        <div className="min-w-0 text-right">
-          <p className="text-[9px] uppercase tracking-[0.2em] text-white/80 font-semibold">
-            {slide.label}
-          </p>
-          <p className="font-display text-2xl sm:text-3xl font-bold tabular-nums leading-none mt-0.5">
-            {slide.value}
-          </p>
-          <p className="text-[11px] text-white/85 mt-1 truncate">
-            {slide.hint}
-          </p>
-        </div>
+        {emptyMode ? (
+          <div className="min-w-0 text-right">
+            <p className="font-display text-lg sm:text-xl font-bold leading-tight drop-shadow-sm">
+              Let's build something
+            </p>
+          </div>
+        ) : (
+          <div className="min-w-0 text-right">
+            <p className="font-display text-2xl sm:text-3xl font-bold tabular-nums leading-none">
+              {slide.value}
+            </p>
+            <p className="text-[11px] text-white/85 mt-1 truncate">
+              {slide.hint}
+            </p>
+          </div>
+        )}
+
       </div>
     </motion.section>
   );
@@ -982,6 +1157,308 @@ function GradientCtaButton({
         </span>
       </div>
     </button>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Empty Studio card — brand new user
+// ─────────────────────────────────────────────────────────────────────
+function EmptyStudioCard({ onStart, onDiscover }: { onStart: () => void; onDiscover: () => void }) {
+  return (
+    <div
+      className="relative overflow-hidden rounded-2xl border border-border p-6 sm:p-8 text-center bg-[length:300%_300%] animate-gradient-shift"
+      style={{
+        backgroundImage:
+          "linear-gradient(120deg, hsl(330 85% 60% / 0.12) 0%, hsl(292 84% 61% / 0.12) 50%, hsl(200 90% 55% / 0.12) 100%)",
+      }}
+    >
+      <p className="font-display text-lg sm:text-xl font-semibold text-foreground max-w-md mx-auto">
+        Your Studio is empty — start building or back an artist to see your work here.
+      </p>
+      <div className="mt-5 flex flex-wrap gap-3 justify-center">
+        <Button onClick={onStart} className="gap-2">
+          <Rocket className="h-4 w-4" /> Start a Project
+        </Button>
+        <Button variant="outline" onClick={onDiscover} className="gap-2">
+          <Compass className="h-4 w-4" /> Discover Artists
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Section shell
+// ─────────────────────────────────────────────────────────────────────
+function SectionHeader({ icon: Icon, label }: { icon: typeof Pencil; label: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <Icon className="h-4 w-4 text-foreground/70" />
+      <h2 className="font-display text-lg font-semibold text-foreground">{label}</h2>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Building section
+// ─────────────────────────────────────────────────────────────────────
+function BuildingSection({
+  activeProjects,
+  draftProjects,
+  completedProjects,
+  statsFor,
+  supporterCounts,
+  milestonesDueThisWeek,
+  onStart,
+}: {
+  activeProjects: ProjectRow[];
+  draftProjects: ProjectRow[];
+  completedProjects: ProjectRow[];
+  statsFor: (p: ProjectRow) => { total: number; done: number; dueThisWeek: number; days: number };
+  supporterCounts: Record<string, number>;
+  milestonesDueThisWeek: number;
+  onStart: () => void;
+}) {
+  return (
+    <section>
+      <SectionHeader icon={Pencil} label="Building" />
+      <Tabs defaultValue="active" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="active" className="gap-2">
+            Active
+            {milestonesDueThisWeek > 0 && (
+              <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                {milestonesDueThisWeek} due
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="drafts">Drafts</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
+        </TabsList>
+        <TabsContent value="active">
+          {activeProjects.length > 0 ? (
+            <ProjectList
+              projects={activeProjects}
+              statsFor={statsFor}
+              supporterCounts={supporterCounts}
+              emptyLabel=""
+            />
+          ) : (
+            <DashedAddCard onClick={onStart} />
+          )}
+        </TabsContent>
+        <TabsContent value="drafts">
+          {draftProjects.length > 0 ? (
+            <div className="opacity-75">
+              <ProjectList
+                projects={draftProjects}
+                statsFor={statsFor}
+                supporterCounts={supporterCounts}
+                emptyLabel=""
+              />
+            </div>
+          ) : (
+            <DashedAddCard onClick={onStart} label="+ Draft a new release" />
+          )}
+        </TabsContent>
+        <TabsContent value="completed">
+          {completedProjects.length > 0 ? (
+            <div className="relative">
+              <ProjectList
+                projects={completedProjects}
+                statsFor={statsFor}
+                supporterCounts={supporterCounts}
+                emptyLabel=""
+              />
+            </div>
+          ) : (
+            <p className="text-center text-sm text-muted-foreground py-10">
+              Nothing shipped yet — keep building.
+            </p>
+          )}
+        </TabsContent>
+      </Tabs>
+    </section>
+  );
+}
+
+function BuildingEmpty({ onStart }: { onStart: () => void }) {
+  return (
+    <section>
+      <SectionHeader icon={Pencil} label="Building" />
+      <DashedAddCard onClick={onStart} />
+    </section>
+  );
+}
+
+function DashedAddCard({ onClick, label = "+ Start your first project" }: { onClick: () => void; label?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full rounded-2xl border-2 border-dashed border-border hover:border-foreground/40 bg-transparent px-6 py-10 text-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+    >
+      {label}
+    </button>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Backing section
+// ─────────────────────────────────────────────────────────────────────
+function BackingSection({
+  projects,
+  goalsByProject,
+}: {
+  projects: any[];
+  goalsByProject: Map<string, GoalRow[]>;
+}) {
+  return (
+    <section>
+      <SectionHeader icon={Heart} label="Backing" />
+      <div className="-mx-1 px-1 overflow-x-auto">
+        <div className="flex gap-3 pb-2 min-w-min">
+          {projects.map((p) => {
+            const goals = goalsByProject.get(p.id) ?? [];
+            const total = goals.length;
+            const done = goals.filter((g) => g.status === "completed" || g.completed_at).length;
+            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+            const artist = p.profiles ?? {};
+            return (
+              <Link
+                key={p.id}
+                to={p.public_slug ? `/release/${p.public_slug}` : `/projects/${p.id}`}
+                className="shrink-0 w-[260px] rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm p-4 hover:-translate-y-0.5 hover:shadow-lg hover:border-foreground/30 transition-all"
+              >
+                <div className="flex items-center gap-2 mb-3 min-w-0">
+                  <span className="h-7 w-7 rounded-full overflow-hidden bg-muted shrink-0">
+                    {artist.avatar_url && (
+                      <img src={artist.avatar_url} alt="" className="h-full w-full object-cover" />
+                    )}
+                  </span>
+                  <span className="text-xs text-muted-foreground truncate">
+                    {artist.display_name || artist.username || "Artist"}
+                  </span>
+                </div>
+                <h3 className="font-display text-sm font-semibold text-foreground line-clamp-2 min-h-[2.5rem]">
+                  {p.title}
+                </h3>
+                {total > 0 && (
+                  <div className="mt-2.5">
+                    <div className="flex items-center justify-between text-[10px] mb-1">
+                      <span className="text-muted-foreground tabular-nums">{done}/{total}</span>
+                      <span className="text-foreground tabular-nums font-medium">{pct}%</span>
+                    </div>
+                    <Progress value={pct} className="h-1" />
+                  </div>
+                )}
+                <div className="flex items-center justify-between pt-3">
+                  <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <Heart className="h-3 w-3" /> Backer
+                  </span>
+                  <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-foreground">
+                    View project <ArrowRight className="h-3 w-3" />
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+      <Link
+        to="/discover?filter=projects"
+        className="inline-flex items-center gap-1 mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        See all backed projects <ArrowRight className="h-3 w-3" />
+      </Link>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Holding section
+// ─────────────────────────────────────────────────────────────────────
+function HoldingSection({ holdings }: { holdings: any[] }) {
+  // Spot price from constant-product reserves.
+  const cards = holdings
+    .map((h) => {
+      const l = h.launch;
+      if (!l) return null;
+      const vsr = Number(l.virtual_sol_reserves || 0);
+      const vtr = Number(l.virtual_token_reserves || 1);
+      const supply = Number(l.total_supply || 1);
+      const priceSol = vsr / vtr;
+      const mcSol = priceSol * supply;
+      const balance = Number(h.balance || 0);
+      const valueSol = priceSol * balance;
+      const investedSol = Number(h.sol_invested || 0);
+      const pnlPct = investedSol > 0 ? ((valueSol - investedSol) / investedSol) * 100 : 0;
+      return { ...h, launch: l, priceSol, mcSol, valueSol, pnlPct, balance };
+    })
+    .filter(Boolean) as any[];
+
+  const totalValueSol = cards.reduce((s, c) => s + c.valueSol, 0);
+
+  return (
+    <section>
+      <SectionHeader icon={Coins} label="Holding" />
+      <div className="-mx-1 px-1 overflow-x-auto">
+        <div className="flex gap-3 pb-2 min-w-min">
+          {cards.map((c) => {
+            const creator = c.launch.creator ?? {};
+            const up = c.pnlPct >= 0;
+            return (
+              <div
+                key={c.launch.id}
+                className="shrink-0 w-[260px] rounded-2xl border border-border bg-foreground text-background dark:bg-card dark:text-foreground p-4"
+              >
+                <div className="flex items-center gap-2 mb-3 min-w-0">
+                  <span className="h-7 w-7 rounded-full overflow-hidden bg-background/20 shrink-0">
+                    {creator.avatar_url && (
+                      <img src={creator.avatar_url} alt="" className="h-full w-full object-cover" />
+                    )}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold truncate">{c.launch.name}</p>
+                    <p className="text-[10px] opacity-70 uppercase tracking-wider">${c.launch.ticker}</p>
+                  </div>
+                </div>
+                <p className="text-[10px] opacity-70">Market cap</p>
+                <p className="text-sm font-semibold tabular-nums">{c.mcSol.toFixed(2)} SOL</p>
+                <p className="mt-2 text-[10px] opacity-70">Your holdings</p>
+                <p className="text-sm font-semibold tabular-nums">
+                  {c.balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </p>
+                <div className="mt-2 flex items-center justify-between">
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-0.5 text-[11px] font-semibold tabular-nums",
+                      up ? "text-emerald-400" : "text-rose-400",
+                    )}
+                  >
+                    {up ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                    {Math.abs(c.pnlPct).toFixed(1)}%
+                  </span>
+                  {c.launch.mint_address ? (
+                    <a
+                      href={`https://pump.fun/${c.launch.mint_address}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[10px] underline-offset-2 hover:underline opacity-90"
+                    >
+                      pump.fun ↗
+                    </a>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <p className="mt-2 text-[11px] text-muted-foreground tabular-nums">
+        Portfolio value · {totalValueSol.toFixed(3)} SOL
+      </p>
+    </section>
   );
 }
 
