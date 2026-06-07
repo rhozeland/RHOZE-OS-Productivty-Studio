@@ -3774,6 +3774,7 @@ export type Database = {
           cheer_count: number
           client_name: string | null
           cover_color: string | null
+          cover_image_url: string | null
           created_at: string
           curator_id: string | null
           currency: string
@@ -3801,6 +3802,7 @@ export type Database = {
           cheer_count?: number
           client_name?: string | null
           cover_color?: string | null
+          cover_image_url?: string | null
           created_at?: string
           curator_id?: string | null
           currency?: string
@@ -3828,6 +3830,7 @@ export type Database = {
           cheer_count?: number
           client_name?: string | null
           cover_color?: string | null
+          cover_image_url?: string | null
           created_at?: string
           curator_id?: string | null
           currency?: string
@@ -5678,50 +5681,98 @@ export type Database = {
         }
         Returns: string
       }
-      create_project_with_owner: {
-        Args: {
-          _cover_color?: string
-          _description?: string
-          _project_type?: string
-          _scope_of_work?: string
-          _status?: string
-          _title: string
-          _vision?: string
-        }
-        Returns: {
-          categories: string[] | null
-          cheer_count: number
-          client_name: string | null
-          cover_color: string | null
-          created_at: string
-          curator_id: string | null
-          currency: string
-          description: string | null
-          id: string
-          intake_tier: Database["public"]["Enums"]["project_intake_tier"]
-          is_estimate: boolean
-          is_public: boolean
-          linked_token_id: string | null
-          platform_fee_bps_override: number | null
-          project_type: string | null
-          public_slug: string | null
-          runtime_notes: string | null
-          scope_of_work: string | null
-          status: string
-          title: string
-          tokenize_ready: boolean
-          total_budget: number
-          updated_at: string
-          user_id: string
-          vision: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "projects"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+      create_project_with_owner:
+        | {
+            Args: {
+              _cover_color?: string
+              _description?: string
+              _project_type?: string
+              _scope_of_work?: string
+              _status?: string
+              _title: string
+              _vision?: string
+            }
+            Returns: {
+              categories: string[] | null
+              cheer_count: number
+              client_name: string | null
+              cover_color: string | null
+              cover_image_url: string | null
+              created_at: string
+              curator_id: string | null
+              currency: string
+              description: string | null
+              id: string
+              intake_tier: Database["public"]["Enums"]["project_intake_tier"]
+              is_estimate: boolean
+              is_public: boolean
+              linked_token_id: string | null
+              platform_fee_bps_override: number | null
+              project_type: string | null
+              public_slug: string | null
+              runtime_notes: string | null
+              scope_of_work: string | null
+              status: string
+              title: string
+              tokenize_ready: boolean
+              total_budget: number
+              updated_at: string
+              user_id: string
+              vision: string | null
+            }
+            SetofOptions: {
+              from: "*"
+              to: "projects"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: {
+              _cover_color?: string
+              _cover_image_url?: string
+              _description?: string
+              _project_type?: string
+              _scope_of_work?: string
+              _status?: string
+              _title: string
+              _vision?: string
+            }
+            Returns: {
+              categories: string[] | null
+              cheer_count: number
+              client_name: string | null
+              cover_color: string | null
+              cover_image_url: string | null
+              created_at: string
+              curator_id: string | null
+              currency: string
+              description: string | null
+              id: string
+              intake_tier: Database["public"]["Enums"]["project_intake_tier"]
+              is_estimate: boolean
+              is_public: boolean
+              linked_token_id: string | null
+              platform_fee_bps_override: number | null
+              project_type: string | null
+              public_slug: string | null
+              runtime_notes: string | null
+              scope_of_work: string | null
+              status: string
+              title: string
+              tokenize_ready: boolean
+              total_budget: number
+              updated_at: string
+              user_id: string
+              vision: string | null
+            }
+            SetofOptions: {
+              from: "*"
+              to: "projects"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       decline_project_proposal: {
         Args: { _proposal_id: string; _reason?: string }
         Returns: undefined
