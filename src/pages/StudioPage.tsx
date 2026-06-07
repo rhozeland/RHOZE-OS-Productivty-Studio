@@ -314,6 +314,9 @@ const StudioPage = () => {
         .filter((r: any) => Number(r.amount) > 0)
         .reduce((s: number, r: any) => s + Number(r.amount), 0);
     },
+  });
+
+
 
 
   // ── derived ────────────────────────────────────────────────────────
