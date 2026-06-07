@@ -608,18 +608,9 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             )}
           </div>
           )}
-          {isOwner && (
-            <FlowPostOwnerMenu
-              post={{
-                id: item.id,
-                title: item.title ?? "",
-                description: item.description ?? null,
-                archived_at: (item as any).archived_at ?? null,
-                solana_signature: (item as any).solana_signature ?? null,
-              }}
-              triggerClassName="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted/60 text-foreground hover:bg-muted transition-colors"
-            />
-          )}
+          {/* Owner menu lives as a floating overlay at the top-right of the
+              card (see above) so it stays reachable in every layout. */}
+
         </div>
 
         {/* ═══ POSTER INFO ═══ */}
