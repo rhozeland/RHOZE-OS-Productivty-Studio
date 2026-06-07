@@ -52,6 +52,8 @@ import {
   Link as LinkIcon,
   Users,
   Sparkles,
+  ImagePlus,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
