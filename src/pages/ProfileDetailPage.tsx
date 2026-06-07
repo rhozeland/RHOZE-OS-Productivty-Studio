@@ -278,7 +278,7 @@ const ProfileDetailPage = () => {
         />
 
         {/* ─── Floating icon tabs (no bar, free-flowing) ─── */}
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-start gap-2">
           {TABS.map(({ key, label, Icon }) => (
             <button
               key={key}
@@ -453,34 +453,30 @@ const ProfileDetailPage = () => {
               </>
             )}
 
-            {/* Works mostly with */}
-            {(collaborators?.length ?? 0) > 0 && (
-              <div className="rounded-2xl border border-border/50 bg-card/70 p-4">
-                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground mb-3">
-                  <Users className="h-3.5 w-3.5" /> Works mostly with
+            {/* Token / Coin */}
+            {p.token_mint_address ? (
+              <div className="rounded-2xl border border-border/50 bg-card/70 p-4 space-y-3">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  <Coins className="h-3.5 w-3.5" /> {p.token_ticker ? `$${p.token_ticker}` : "Creator coin"}
                 </div>
-                <div className="space-y-2">
-                  {(collaborators ?? []).map((c: any) => {
-                    const init = (c.display_name || c.username || "?").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
-                    return (
-                      <button
-                        key={c.user_id}
-                        type="button"
-                        onClick={() => navigate(`/profiles/${c.user_id}`)}
-                        className="w-full flex items-center gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-muted/60 transition-colors text-left"
-                      >
-                        <div className="h-8 w-8 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center">
-                          {c.avatar_url ? <img src={c.avatar_url} alt="" className="h-full w-full object-cover" /> :
-                            <span className="text-[10px] font-semibold text-muted-foreground">{init}</span>}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-foreground truncate">{c.display_name || c.username}</p>
-                          {c.headline && <p className="text-[11px] text-muted-foreground truncate">{c.headline}</p>}
-                        </div>
-                      </button>
-                    );
-                  })}
+                <TokenDiscoveryChip creatorId={id!} />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full gap-1.5"
+                  onClick={() => handleTabChange("coin")}
+                >
+                  View coin details <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ) : isOwnProfile ? null : (
+              <div className="rounded-2xl border border-dashed border-border/50 bg-card/40 p-4">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground mb-2">
+                  <Coins className="h-3.5 w-3.5" /> Creator coin
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  {p.display_name || p.username} hasn't launched a coin yet.
+                </p>
               </div>
             )}
           </aside>

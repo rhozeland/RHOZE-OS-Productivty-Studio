@@ -173,27 +173,6 @@ export const ProfileGemHeader = ({
             <p className="text-sm text-muted-foreground mt-1">@{p.username}</p>
           )}
 
-          {/* Inline metrics row — bolder pill chips */}
-          <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-            {signalsLoading ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-            ) : (
-              metrics.map((m) => (
-                <div
-                  key={m.label}
-                  className="flex items-center gap-1.5 shrink-0 rounded-full border border-border/60 bg-gradient-to-br from-muted/40 to-background px-2.5 py-1 shadow-sm hover:shadow-md hover:border-foreground/30 transition-all"
-                >
-                  <m.Icon className={cn("h-3.5 w-3.5", m.accent ?? "text-muted-foreground")} />
-                  <span className={cn("font-mono text-sm font-bold tabular-nums leading-none", m.accent ?? "text-foreground")}>
-                    {m.value}
-                  </span>
-                  <span className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground leading-none">
-                    {m.label}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
 
           {/* Secondary chips */}
           {(locationLabel || p.archetype || (reviewStats && reviewStats.count > 0)) && (
@@ -311,6 +290,30 @@ export const ProfileGemHeader = ({
           )}
         </div>
       )}
+
+      {/* Reputation metrics — under bio + socials */}
+      <div className="mt-5 rounded-2xl border border-border/50 bg-gradient-to-br from-muted/30 via-background to-background p-3 sm:p-4">
+        <div className="flex items-center justify-between mb-2.5">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium">Reputation signals</p>
+          {signalsLoading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+        </div>
+        <div className="grid grid-cols-4 gap-2 sm:gap-3">
+          {metrics.map((m) => (
+            <div
+              key={m.label}
+              className="group relative rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm px-2 py-2.5 sm:px-3 sm:py-3 hover:border-foreground/30 hover:bg-card hover:shadow-md transition-all"
+            >
+              <m.Icon className={cn("h-3.5 w-3.5 mb-1.5", m.accent ?? "text-muted-foreground")} />
+              <p className={cn("font-display text-xl sm:text-2xl font-bold tabular-nums leading-none", m.accent ?? "text-foreground")}>
+                {m.value}
+              </p>
+              <p className="mt-1.5 text-[9px] sm:text-[10px] uppercase tracking-wider font-medium text-muted-foreground leading-tight">
+                {m.label}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
     </motion.div>
   );
 };
