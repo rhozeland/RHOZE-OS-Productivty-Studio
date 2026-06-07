@@ -238,7 +238,7 @@ const FeedMetrics = ({
                 and DMs land here first.
               </p>
               <Link
-                to="/profiles"
+                to="/discover"
                 className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-foreground hover:gap-1.5 transition-all"
               >
                 Find creators to back <ArrowRight className="h-3 w-3" />

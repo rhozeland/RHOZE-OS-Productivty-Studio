@@ -333,7 +333,7 @@ const DiscoverTable = ({
 
       <div className="flex justify-center pt-2">
         <Link
-          to="/profiles"
+          to="/discover"
           className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           Browse all creators <ArrowRight className="h-3 w-3" />

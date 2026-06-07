@@ -30,7 +30,7 @@ const CreatorSpotlight = () => {
     <div>
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-display font-bold text-foreground text-lg">Creators</h2>
-        <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => navigate("/profiles")}>
+        <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => navigate("/discover")}>
           View all <ArrowRight className="h-3 w-3" />
         </Button>
       </div>

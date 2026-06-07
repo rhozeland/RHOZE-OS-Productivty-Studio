@@ -207,7 +207,7 @@ const CreatorsGrid = ({
               ? `No one in this branch has been featured yet. Check back soon — or browse all creators.`
               : `Featured creators need an avatar, a bio, and a few works first.`
         }
-        cta={!term && archetype ? { label: "Browse all creators", to: "/profiles" } : undefined}
+        cta={!term && archetype ? { label: "Browse all creators", to: "/discover" } : undefined}
         size="lg"
       />
     );
@@ -333,7 +333,7 @@ const CreatorsGrid = ({
       {/* Escape hatch into the full list */}
       <div className="flex justify-center pt-1">
         <Link
-          to="/profiles"
+          to="/discover"
           className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           Browse all {noun} <ArrowRight className="h-3 w-3" />
