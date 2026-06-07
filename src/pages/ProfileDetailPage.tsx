@@ -278,7 +278,7 @@ const ProfileDetailPage = () => {
         />
 
         {/* ─── Floating icon tabs (no bar, free-flowing) ─── */}
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-start gap-2">
           {TABS.map(({ key, label, Icon }) => (
             <button
               key={key}
