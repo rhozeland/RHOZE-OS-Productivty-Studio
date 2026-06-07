@@ -1,17 +1,13 @@
 /**
- * ReleasePage — public `/release/:slug` view, redesigned to match the
- * owner ProjectDetailPage layout (full-bleed hero + 6 tabs). Read-only:
- * no edit affordances, board shows only files the artist exposed, story
- * shows only public updates, team shows team + supporters.
+ * ReleasePage — public `/release/:slug` view.
  *
- * Tabs: Overview · Roadmap · Timeline · Board · Story · Team.
- *
- * Right rail keeps the existing SupportPanel (cheer / share / coin) and the
- * comments thread renders below the tabs. Tokenize CTA pinned at bottom.
+ * Mirrors the owner ProjectDetailPage layout (full-bleed hero + tab bar)
+ * but read-only. Empty states are HIDDEN from fans across every tab so the
+ * page never feels broken. The Board tab itself is hidden when empty.
  */
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ListChecks, Check, Target, Clock } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,7 +27,7 @@ import ReleaseComments from "@/components/release/ReleaseComments";
 import RoadmapCalendarView from "@/components/project/RoadmapCalendarView";
 
 const TAB_TRIGGER =
-  "shrink-0 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 pt-0 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none";
+  "shrink-0 rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 pt-0 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none";
 
 const ReleasePage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -138,7 +134,7 @@ const ReleasePage = () => {
     queryFn: async () => {
       const { data: rows } = await supabase
         .from("project_collaborators")
-        .select("user_id, project_role")
+        .select("user_id, project_role, created_at")
         .eq("project_id", project!.id);
       if (!rows?.length) return [] as any[];
       const ids = rows.map((r) => r.user_id);
@@ -170,15 +166,12 @@ const ReleasePage = () => {
 
   const status = useMemo(() => computeProjectStatus(milestones as any), [milestones]);
 
-  const stats = useMemo(() => {
+  const overallPct = useMemo(() => {
     const ms = milestones ?? [];
-    const dlv = deliverables ?? [];
+    if (!ms.length) return 0;
     const done = ms.filter((m) => m.status === "approved" || m.status === "released").length;
-    const inProgress = ms.filter((m) => m.status === "in_progress" || m.status === "submitted").length;
-    const overall = ms.length ? Math.round((done / ms.length) * 100) : 0;
-    const tasksDone = dlv.filter((d: any) => d.completed).length;
-    return { done, inProgress, overall, tasksDone, tasksTotal: dlv.length, goalsTotal: ms.length };
-  }, [milestones, deliverables]);
+    return Math.round((done / ms.length) * 100);
+  }, [milestones]);
 
   const storyItems = useMemo(
     () =>
@@ -193,6 +186,10 @@ const ReleasePage = () => {
         })),
     [goals],
   );
+
+  const hasMilestones = (milestones?.length ?? 0) > 0;
+  const hasStory = storyItems.length > 0;
+  const hasBoard = (deliverables ?? []).some((d: any) => d.file_url || d.title);
 
   const commentsRef = useRef<HTMLDivElement>(null);
   const scrollToComments = () => commentsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -234,108 +231,116 @@ const ReleasePage = () => {
               <TabsTrigger value="overview" className={TAB_TRIGGER}>Overview</TabsTrigger>
               <TabsTrigger value="roadmap" className={TAB_TRIGGER}>Roadmap</TabsTrigger>
               <TabsTrigger value="timeline" className={TAB_TRIGGER}>Timeline</TabsTrigger>
-              <TabsTrigger value="board" className={TAB_TRIGGER}>Board</TabsTrigger>
+              {hasBoard && <TabsTrigger value="board" className={TAB_TRIGGER}>Board</TabsTrigger>}
               <TabsTrigger value="story" className={TAB_TRIGGER}>Story</TabsTrigger>
               <TabsTrigger value="team" className={TAB_TRIGGER}>Team</TabsTrigger>
             </TabsList>
 
             {/* OVERVIEW */}
             <TabsContent value="overview" className="space-y-8">
-              <section>
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Milestones</h2>
-                <MilestoneTrack milestones={milestones as any} contractId={contract?.id} />
-              </section>
-
-              <section className="rounded-2xl border border-border bg-card/40 p-5">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Progress</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <StatCard icon={<ListChecks className="h-3.5 w-3.5" />} label="Overall" value={`${stats.overall}%`} bar={stats.overall} />
-                  <StatCard icon={<Check className="h-3.5 w-3.5" />} label="Tasks" value={`${stats.tasksDone}/${stats.tasksTotal}`} bar={stats.tasksTotal ? (stats.tasksDone / stats.tasksTotal) * 100 : 0} />
-                  <StatCard icon={<Target className="h-3.5 w-3.5" />} label="Milestones" value={`${stats.done}/${stats.goalsTotal}`} bar={stats.goalsTotal ? (stats.done / stats.goalsTotal) * 100 : 0} />
-                  <StatCard icon={<Clock className="h-3.5 w-3.5" />} label="In progress" value={`${stats.inProgress}`} />
-                </div>
-              </section>
-
-              <div className="grid gap-6 md:grid-cols-3">
-                <section className="space-y-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Story</h3>
-                  <StoryFeed items={storyItems} publicOnly preview />
-                </section>
-                <section className="space-y-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Board</h3>
-                  <BoardMasonry deliverables={deliverables as any} limit={6} />
-                </section>
+              {hasMilestones && (
                 <section>
-                  <SupportersStrip
-                    projectId={project.id}
-                    ownerId={project.user_id}
-                    owner={owner ?? null}
-                    team={team as any}
-                    milestones={milestones as any}
-                  />
+                  <MilestoneTrack milestones={milestones as any} contractId={contract?.id} />
                 </section>
+              )}
+
+              {(hasStory || hasBoard) && (
+                <div className={`grid gap-6 ${hasStory && hasBoard ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
+                  {hasStory && (
+                    <section className="space-y-3">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Story</h3>
+                      <StoryFeed items={storyItems} publicOnly preview hideWhenEmpty />
+                    </section>
+                  )}
+                  {hasBoard && (
+                    <section className="space-y-3">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Board</h3>
+                      <BoardMasonry deliverables={deliverables as any} limit={6} hideWhenEmpty />
+                    </section>
+                  )}
+                  <section>
+                    <SupportersStrip
+                      projectId={project.id}
+                      ownerId={project.user_id}
+                      owner={owner ?? null}
+                      team={team as any}
+                      milestones={milestones as any}
+                      hideSupportersWhenEmpty
+                    />
+                  </section>
+                </div>
+              )}
+
+              <div ref={commentsRef}>
+                <ReleaseComments projectId={project.id} />
               </div>
             </TabsContent>
 
-            {/* ROADMAP — read-only milestone stack */}
+            {/* ROADMAP — read-only stage list (no vision/scope boxes per spec) */}
             <TabsContent value="roadmap" className="space-y-3">
-              {project.vision && (
-                <section className="rounded-2xl border border-border bg-card/40 p-5 mb-4">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Vision</h3>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{project.vision}</p>
-                </section>
-              )}
-              {project.scope_of_work && (
-                <section className="rounded-2xl border border-border bg-card/40 p-5 mb-4">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Scope</h3>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{project.scope_of_work}</p>
-                </section>
-              )}
-              <MilestoneTrack milestones={milestones as any} contractId={contract?.id} />
-              {!!milestones?.length && (
-                <ol className="mt-6 space-y-2">
-                  {milestones.map((m: any, i: number) => {
-                    const done = m.status === "approved" || m.status === "released";
-                    return (
-                      <li key={m.id} className="flex items-start gap-3 rounded-xl border border-border bg-card/40 p-4">
-                        <div className={["h-6 w-6 rounded-full grid place-items-center text-[10px] font-semibold shrink-0", done ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-muted text-muted-foreground"].join(" ")}>
-                          {done ? <Check className="h-3 w-3" /> : i + 1}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium">{m.title}</div>
-                          {m.description && (
-                            <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{m.description}</p>
-                          )}
-                          {m.due_date && (
-                            <div className="text-[10px] text-muted-foreground mt-1">
-                              Due {new Date(m.due_date).toLocaleDateString()}
-                            </div>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ol>
+              {hasMilestones ? (
+                <>
+                  <MilestoneTrack milestones={milestones as any} contractId={contract?.id} />
+                  <ol className="mt-6 space-y-2">
+                    {milestones!.map((m: any, i: number) => {
+                      const done = m.status === "approved" || m.status === "released";
+                      return (
+                        <li key={m.id} className="flex items-start gap-3 rounded-xl border border-border bg-card/40 p-4">
+                          <div className={["h-6 w-6 rounded-full grid place-items-center text-[10px] font-semibold shrink-0", done ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-muted text-muted-foreground"].join(" ")}>
+                            {done ? <Check className="h-3 w-3" /> : i + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium">{m.title}</div>
+                            {m.description && (
+                              <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{m.description}</p>
+                            )}
+                            {m.due_date && (
+                              <div className="text-[10px] text-muted-foreground mt-1">
+                                Due {new Date(m.due_date).toLocaleDateString()}
+                              </div>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-8">Roadmap coming soon.</p>
               )}
             </TabsContent>
 
-            {/* TIMELINE — read-only calendar */}
-            <TabsContent value="timeline">
+            {/* TIMELINE — thin progress + read-only calendar */}
+            <TabsContent value="timeline" className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Overall</span>
+                  <span className="text-[10px] text-muted-foreground tabular-nums">{overallPct}%</span>
+                </div>
+                <Progress value={overallPct} className="h-1" />
+              </div>
               <div className="pointer-events-none opacity-95">
                 <RoadmapCalendarView goals={goals as any} projectId={project.id} />
               </div>
-              <p className="mt-3 text-[10px] text-muted-foreground text-center">Read-only timeline of public milestones.</p>
+              <p className="text-[10px] text-muted-foreground text-center">Read-only timeline of public milestones.</p>
             </TabsContent>
 
             {/* BOARD */}
-            <TabsContent value="board">
-              <BoardMasonry deliverables={deliverables as any} showFilters />
-            </TabsContent>
+            {hasBoard && (
+              <TabsContent value="board">
+                <BoardMasonry deliverables={deliverables as any} showFilters />
+              </TabsContent>
+            )}
 
-            {/* STORY */}
-            <TabsContent value="story">
+            {/* STORY — description paragraph then chronological feed */}
+            <TabsContent value="story" className="space-y-6">
               <div className="max-w-3xl">
-                <StoryFeed items={storyItems} publicOnly />
+                {(project.description || project.vision) && (
+                  <p className="text-base text-foreground whitespace-pre-wrap leading-relaxed mb-6">
+                    {project.description ?? project.vision}
+                  </p>
+                )}
+                <StoryFeed items={storyItems} publicOnly hideWhenEmpty />
               </div>
             </TabsContent>
 
@@ -347,11 +352,10 @@ const ReleasePage = () => {
                 owner={owner ?? null}
                 team={team as any}
                 milestones={milestones as any}
+                hideSupportersWhenEmpty
               />
             </TabsContent>
           </Tabs>
-
-          <ReleaseComments ref={commentsRef} projectId={project.id} />
         </div>
 
         {/* Sticky support rail */}
@@ -376,22 +380,11 @@ const ReleasePage = () => {
         <TokenizeBottomCta
           project={project as any}
           linkedTokenTicker={linkedToken?.ticker ?? null}
+          publicView
         />
       </div>
     </div>
   );
 };
-
-const StatCard = ({
-  icon, label, value, bar,
-}: { icon: React.ReactNode; label: string; value: string; bar?: number }) => (
-  <div className="rounded-xl border border-border bg-background/40 p-3">
-    <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
-      {icon} {label}
-    </div>
-    <div className="mt-1.5 text-2xl font-display font-bold tabular-nums">{value}</div>
-    {typeof bar === "number" && <Progress value={bar} className="h-1 mt-2" />}
-  </div>
-);
 
 export default ReleasePage;
