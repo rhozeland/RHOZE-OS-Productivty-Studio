@@ -353,16 +353,6 @@ const ProfileDetailPage = () => {
               </section>
             )}
 
-            {tab === "coin" && (
-              <section className="space-y-3">
-                <CreatorCoinsGallery
-                  userId={p.user_id}
-                  creatorName={p.display_name || p.username}
-                  isOwner={isOwnProfile}
-                  fallbackWallet={p.solana_wallet ?? null}
-                />
-              </section>
-            )}
           </div>
 
           {/* RIGHT — Action & Utility Hub */}
