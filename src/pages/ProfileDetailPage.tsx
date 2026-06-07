@@ -152,7 +152,7 @@ const ProfileDetailPage = () => {
     queryKey: ["profile-inbox-count", id],
     queryFn: async () => {
       const { count } = await supabase.from("messages").select("id", { count: "exact", head: true })
-        .eq("recipient_id", id!).is("read_at", null);
+        .eq("receiver_id", id!).eq("read", false);
       return count ?? 0;
     },
     enabled: !!id && isOwnProfile,
