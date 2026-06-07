@@ -26,6 +26,7 @@ import TokenDiscoveryChip from "@/components/profile/TokenDiscoveryChip";
 import { useUserNote } from "@/hooks/useNotes";
 import { EmptyState } from "@/components/ui/empty-state";
 import ShareCardModal from "@/components/share/ShareCardModal";
+import ProfileProjectCard from "@/components/profile/ProfileProjectCard";
 
 type TabKey = "projects" | "works" | "coin";
 
@@ -111,11 +112,45 @@ const ProfileDetailPage = () => {
     queryKey: ["profile-building-projects", id],
     queryFn: async () => {
       const { data } = await supabase.from("projects")
-        .select("id, title, description, status, cover_color, categories, created_at")
+        .select("id, title, description, status, cover_color, categories, created_at, intake_tier")
         .eq("user_id", id!).order("created_at", { ascending: false }).limit(12);
       return data ?? [];
     },
     enabled: !!id,
+  });
+
+  // Collaborators for all projects on this profile — one round-trip
+  const projectIds = (buildingProjects ?? []).map((p: any) => p.id);
+  const { data: projectCollaborators } = useQuery({
+    queryKey: ["profile-project-collaborators", projectIds.join(",")],
+    enabled: projectIds.length > 0,
+    queryFn: async () => {
+      const { data: rows } = await supabase
+        .from("project_collaborators")
+        .select("project_id, user_id")
+        .in("project_id", projectIds);
+      const userIds = Array.from(new Set((rows ?? []).map((r: any) => r.user_id)));
+      const { data: profs } = userIds.length
+        ? await supabase
+            .from("profiles")
+            .select("user_id, display_name, username, avatar_url")
+            .in("user_id", userIds)
+        : { data: [] as any[] };
+      const byUser: Record<string, any> = {};
+      (profs ?? []).forEach((p: any) => { byUser[p.user_id] = p; });
+      const map: Record<string, any[]> = {};
+      (rows ?? []).forEach((row: any) => {
+        const list = map[row.project_id] || (map[row.project_id] = []);
+        const pr = byUser[row.user_id] || {};
+        list.push({
+          user_id: row.user_id,
+          display_name: pr.display_name,
+          username: pr.username,
+          avatar_url: pr.avatar_url,
+        });
+      });
+      return map;
+    },
   });
 
   // Priority project + milestones (top of left column)
@@ -299,22 +334,14 @@ const ProfileDetailPage = () => {
                 {(buildingProjects?.length ?? 0) === 0 ? (
                   <EmptyState icon={FolderKanban} title="No projects yet" description="Releases this creator is building will appear here." size="sm" />
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {(buildingProjects ?? []).map((pr: any) => (
-                      <button
+                      <ProfileProjectCard
                         key={pr.id}
-                        type="button"
-                        onClick={() => navigate(`/projects/${pr.id}`)}
-                        className="text-left rounded-2xl border border-border/50 bg-card/60 hover:bg-card transition-colors p-4 space-y-2"
-                      >
-                        <div className="h-1.5 rounded-full" style={{ background: pr.cover_color || "hsl(var(--primary))" }} />
-                        <p className="font-display text-base font-semibold text-foreground line-clamp-2">{pr.title}</p>
-                        {pr.description && <p className="text-xs text-muted-foreground line-clamp-2">{pr.description}</p>}
-                        <div className="flex items-center gap-2 pt-1">
-                          <Badge variant="outline" className="text-[10px] capitalize">{pr.status || "active"}</Badge>
-                          {pr.created_at && <span className="text-[10px] text-muted-foreground">{format(new Date(pr.created_at), "MMM d, yyyy")}</span>}
-                        </div>
-                      </button>
+                        project={pr}
+                        collaborators={projectCollaborators?.[pr.id] ?? []}
+                        onOpen={() => navigate(`/projects/${pr.id}`)}
+                      />
                     ))}
                   </div>
                 )}
