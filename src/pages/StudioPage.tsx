@@ -1160,3 +1160,305 @@ function GradientCtaButton({
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// Empty Studio card — brand new user
+// ─────────────────────────────────────────────────────────────────────
+function EmptyStudioCard({ onStart, onDiscover }: { onStart: () => void; onDiscover: () => void }) {
+  return (
+    <div
+      className="relative overflow-hidden rounded-2xl border border-border p-6 sm:p-8 text-center bg-[length:300%_300%] animate-gradient-shift"
+      style={{
+        backgroundImage:
+          "linear-gradient(120deg, hsl(330 85% 60% / 0.12) 0%, hsl(292 84% 61% / 0.12) 50%, hsl(200 90% 55% / 0.12) 100%)",
+      }}
+    >
+      <p className="font-display text-lg sm:text-xl font-semibold text-foreground max-w-md mx-auto">
+        Your Studio is empty — start building or back an artist to see your work here.
+      </p>
+      <div className="mt-5 flex flex-wrap gap-3 justify-center">
+        <Button onClick={onStart} className="gap-2">
+          <Rocket className="h-4 w-4" /> Start a Project
+        </Button>
+        <Button variant="outline" onClick={onDiscover} className="gap-2">
+          <Compass className="h-4 w-4" /> Discover Artists
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Section shell
+// ─────────────────────────────────────────────────────────────────────
+function SectionHeader({ icon: Icon, label }: { icon: typeof Pencil; label: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <Icon className="h-4 w-4 text-foreground/70" />
+      <h2 className="font-display text-lg font-semibold text-foreground">{label}</h2>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Building section
+// ─────────────────────────────────────────────────────────────────────
+function BuildingSection({
+  activeProjects,
+  draftProjects,
+  completedProjects,
+  statsFor,
+  supporterCounts,
+  milestonesDueThisWeek,
+  onStart,
+}: {
+  activeProjects: ProjectRow[];
+  draftProjects: ProjectRow[];
+  completedProjects: ProjectRow[];
+  statsFor: (p: ProjectRow) => { total: number; done: number; dueThisWeek: number; days: number };
+  supporterCounts: Record<string, number>;
+  milestonesDueThisWeek: number;
+  onStart: () => void;
+}) {
+  return (
+    <section>
+      <SectionHeader icon={Pencil} label="Building" />
+      <Tabs defaultValue="active" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="active" className="gap-2">
+            Active
+            {milestonesDueThisWeek > 0 && (
+              <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                {milestonesDueThisWeek} due
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="drafts">Drafts</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
+        </TabsList>
+        <TabsContent value="active">
+          {activeProjects.length > 0 ? (
+            <ProjectList
+              projects={activeProjects}
+              statsFor={statsFor}
+              supporterCounts={supporterCounts}
+              emptyLabel=""
+            />
+          ) : (
+            <DashedAddCard onClick={onStart} />
+          )}
+        </TabsContent>
+        <TabsContent value="drafts">
+          {draftProjects.length > 0 ? (
+            <div className="opacity-75">
+              <ProjectList
+                projects={draftProjects}
+                statsFor={statsFor}
+                supporterCounts={supporterCounts}
+                emptyLabel=""
+              />
+            </div>
+          ) : (
+            <DashedAddCard onClick={onStart} label="+ Draft a new release" />
+          )}
+        </TabsContent>
+        <TabsContent value="completed">
+          {completedProjects.length > 0 ? (
+            <div className="relative">
+              <ProjectList
+                projects={completedProjects}
+                statsFor={statsFor}
+                supporterCounts={supporterCounts}
+                emptyLabel=""
+              />
+            </div>
+          ) : (
+            <p className="text-center text-sm text-muted-foreground py-10">
+              Nothing shipped yet — keep building.
+            </p>
+          )}
+        </TabsContent>
+      </Tabs>
+    </section>
+  );
+}
+
+function BuildingEmpty({ onStart }: { onStart: () => void }) {
+  return (
+    <section>
+      <SectionHeader icon={Pencil} label="Building" />
+      <DashedAddCard onClick={onStart} />
+    </section>
+  );
+}
+
+function DashedAddCard({ onClick, label = "+ Start your first project" }: { onClick: () => void; label?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full rounded-2xl border-2 border-dashed border-border hover:border-foreground/40 bg-transparent px-6 py-10 text-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+    >
+      {label}
+    </button>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Backing section
+// ─────────────────────────────────────────────────────────────────────
+function BackingSection({
+  projects,
+  goalsByProject,
+}: {
+  projects: any[];
+  goalsByProject: Map<string, GoalRow[]>;
+}) {
+  return (
+    <section>
+      <SectionHeader icon={Heart} label="Backing" />
+      <div className="-mx-1 px-1 overflow-x-auto">
+        <div className="flex gap-3 pb-2 min-w-min">
+          {projects.map((p) => {
+            const goals = goalsByProject.get(p.id) ?? [];
+            const total = goals.length;
+            const done = goals.filter((g) => g.status === "completed" || g.completed_at).length;
+            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+            const artist = p.profiles ?? {};
+            return (
+              <Link
+                key={p.id}
+                to={p.public_slug ? `/release/${p.public_slug}` : `/projects/${p.id}`}
+                className="shrink-0 w-[260px] rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm p-4 hover:-translate-y-0.5 hover:shadow-lg hover:border-foreground/30 transition-all"
+              >
+                <div className="flex items-center gap-2 mb-3 min-w-0">
+                  <span className="h-7 w-7 rounded-full overflow-hidden bg-muted shrink-0">
+                    {artist.avatar_url && (
+                      <img src={artist.avatar_url} alt="" className="h-full w-full object-cover" />
+                    )}
+                  </span>
+                  <span className="text-xs text-muted-foreground truncate">
+                    {artist.display_name || artist.username || "Artist"}
+                  </span>
+                </div>
+                <h3 className="font-display text-sm font-semibold text-foreground line-clamp-2 min-h-[2.5rem]">
+                  {p.title}
+                </h3>
+                {total > 0 && (
+                  <div className="mt-2.5">
+                    <div className="flex items-center justify-between text-[10px] mb-1">
+                      <span className="text-muted-foreground tabular-nums">{done}/{total}</span>
+                      <span className="text-foreground tabular-nums font-medium">{pct}%</span>
+                    </div>
+                    <Progress value={pct} className="h-1" />
+                  </div>
+                )}
+                <div className="flex items-center justify-between pt-3">
+                  <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <Heart className="h-3 w-3" /> Backer
+                  </span>
+                  <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-foreground">
+                    View project <ArrowRight className="h-3 w-3" />
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+      <Link
+        to="/discover?filter=projects"
+        className="inline-flex items-center gap-1 mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        See all backed projects <ArrowRight className="h-3 w-3" />
+      </Link>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Holding section
+// ─────────────────────────────────────────────────────────────────────
+function HoldingSection({ holdings }: { holdings: any[] }) {
+  // Spot price from constant-product reserves.
+  const cards = holdings
+    .map((h) => {
+      const l = h.launch;
+      if (!l) return null;
+      const vsr = Number(l.virtual_sol_reserves || 0);
+      const vtr = Number(l.virtual_token_reserves || 1);
+      const supply = Number(l.total_supply || 1);
+      const priceSol = vsr / vtr;
+      const mcSol = priceSol * supply;
+      const balance = Number(h.balance || 0);
+      const valueSol = priceSol * balance;
+      const investedSol = Number(h.sol_invested || 0);
+      const pnlPct = investedSol > 0 ? ((valueSol - investedSol) / investedSol) * 100 : 0;
+      return { ...h, launch: l, priceSol, mcSol, valueSol, pnlPct, balance };
+    })
+    .filter(Boolean) as any[];
+
+  const totalValueSol = cards.reduce((s, c) => s + c.valueSol, 0);
+
+  return (
+    <section>
+      <SectionHeader icon={Coins} label="Holding" />
+      <div className="-mx-1 px-1 overflow-x-auto">
+        <div className="flex gap-3 pb-2 min-w-min">
+          {cards.map((c) => {
+            const creator = c.launch.creator ?? {};
+            const up = c.pnlPct >= 0;
+            return (
+              <div
+                key={c.launch.id}
+                className="shrink-0 w-[260px] rounded-2xl border border-border bg-foreground text-background dark:bg-card dark:text-foreground p-4"
+              >
+                <div className="flex items-center gap-2 mb-3 min-w-0">
+                  <span className="h-7 w-7 rounded-full overflow-hidden bg-background/20 shrink-0">
+                    {creator.avatar_url && (
+                      <img src={creator.avatar_url} alt="" className="h-full w-full object-cover" />
+                    )}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold truncate">{c.launch.name}</p>
+                    <p className="text-[10px] opacity-70 uppercase tracking-wider">${c.launch.ticker}</p>
+                  </div>
+                </div>
+                <p className="text-[10px] opacity-70">Market cap</p>
+                <p className="text-sm font-semibold tabular-nums">{c.mcSol.toFixed(2)} SOL</p>
+                <p className="mt-2 text-[10px] opacity-70">Your holdings</p>
+                <p className="text-sm font-semibold tabular-nums">
+                  {c.balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </p>
+                <div className="mt-2 flex items-center justify-between">
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-0.5 text-[11px] font-semibold tabular-nums",
+                      up ? "text-emerald-400" : "text-rose-400",
+                    )}
+                  >
+                    {up ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                    {Math.abs(c.pnlPct).toFixed(1)}%
+                  </span>
+                  {c.launch.mint_address ? (
+                    <a
+                      href={`https://pump.fun/${c.launch.mint_address}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[10px] underline-offset-2 hover:underline opacity-90"
+                    >
+                      pump.fun ↗
+                    </a>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <p className="mt-2 text-[11px] text-muted-foreground tabular-nums">
+        Portfolio value · {totalValueSol.toFixed(3)} SOL
+      </p>
+    </section>
+  );
+}
+
