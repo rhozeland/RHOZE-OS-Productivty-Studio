@@ -28,7 +28,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import ShareCardModal from "@/components/share/ShareCardModal";
 import ProfileProjectCard from "@/components/profile/ProfileProjectCard";
 
-type TabKey = "projects" | "works" | "coin";
+type TabKey = "projects" | "works";
 
 const ProfileDetailPage = () => {
   const { id } = useParams<{ id: string }>();
