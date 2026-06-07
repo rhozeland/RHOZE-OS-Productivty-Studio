@@ -213,8 +213,6 @@ export const ProfileGemHeader = ({
               )}
             </div>
           )}
-            </div>
-          )}
         </div>
 
         {/* Action cluster (top-right) */}
