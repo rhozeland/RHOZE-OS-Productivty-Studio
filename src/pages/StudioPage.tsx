@@ -988,12 +988,15 @@ function StudioHeroBox({
   milestonesDueThisWeek,
   draftCount,
   completedCount,
+  emptyMode = false,
 }: {
   totalActive: number;
   milestonesDueThisWeek: number;
   draftCount: number;
   completedCount: number;
+  emptyMode?: boolean;
 }) {
+
   const slides = [
     {
       id: "active",
