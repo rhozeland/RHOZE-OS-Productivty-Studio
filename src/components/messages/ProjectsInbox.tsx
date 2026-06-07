@@ -960,6 +960,44 @@ const NewProjectDialog = ({
             />
           </div>
 
+          {/* Cover image — required */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              Cover image <span className="text-destructive normal-case tracking-normal">*</span>
+            </label>
+            {coverPreview ? (
+              <div className="relative rounded-2xl overflow-hidden border border-border aspect-[16/9] bg-muted">
+                <img src={coverPreview} alt="Cover preview" className="absolute inset-0 w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => { setCoverFile(null); setCoverPreview(null); }}
+                  className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/70 text-white grid place-items-center hover:bg-black"
+                  aria-label="Remove cover"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center gap-2 aspect-[16/9] rounded-2xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:border-foreground/40 hover:bg-muted/50 transition-colors">
+                <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">Upload cover image</span>
+                <span className="text-[11px] text-muted-foreground">Shown on project cards · 16:9 recommended</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    if (f.size > 8 * 1024 * 1024) { toast.error("Image must be under 8MB"); return; }
+                    setCoverFile(f);
+                    setCoverPreview(URL.createObjectURL(f));
+                  }}
+                />
+              </label>
+            )}
+          </div>
+
           <div className="space-y-2">
             <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
               What are you building?
