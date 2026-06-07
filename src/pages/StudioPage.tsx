@@ -1077,17 +1077,23 @@ function StudioHeroBox({
           </h1>
         </div>
 
-        <div className="min-w-0 text-right">
-          <p className="text-[9px] uppercase tracking-[0.2em] text-white/80 font-semibold">
-            {slide.label}
-          </p>
-          <p className="font-display text-2xl sm:text-3xl font-bold tabular-nums leading-none mt-0.5">
-            {slide.value}
-          </p>
-          <p className="text-[11px] text-white/85 mt-1 truncate">
-            {slide.hint}
-          </p>
-        </div>
+        {emptyMode ? (
+          <div className="min-w-0 text-right">
+            <p className="font-display text-lg sm:text-xl font-bold leading-tight drop-shadow-sm">
+              Let's build something
+            </p>
+          </div>
+        ) : (
+          <div className="min-w-0 text-right">
+            <p className="font-display text-2xl sm:text-3xl font-bold tabular-nums leading-none">
+              {slide.value}
+            </p>
+            <p className="text-[11px] text-white/85 mt-1 truncate">
+              {slide.hint}
+            </p>
+          </div>
+        )}
+
       </div>
     </motion.section>
   );
