@@ -6048,6 +6048,28 @@ export type Database = {
         }
         Returns: number
       }
+      notify_artist_followers: {
+        Args: {
+          _artist_id: string
+          _body: string
+          _exclude_user: string
+          _link: string
+          _title: string
+          _type: string
+        }
+        Returns: undefined
+      }
+      notify_project_supporters: {
+        Args: {
+          _body: string
+          _exclude_user: string
+          _link: string
+          _project_id: string
+          _title: string
+          _type: string
+        }
+        Returns: undefined
+      }
       process_streaks_and_holds: { Args: never; Returns: Json }
       process_wallet_change: {
         Args: {
