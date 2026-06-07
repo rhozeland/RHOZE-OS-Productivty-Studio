@@ -111,11 +111,36 @@ const ProfileDetailPage = () => {
     queryKey: ["profile-building-projects", id],
     queryFn: async () => {
       const { data } = await supabase.from("projects")
-        .select("id, title, description, status, cover_color, categories, created_at")
+        .select("id, title, description, status, cover_color, categories, created_at, intake_tier")
         .eq("user_id", id!).order("created_at", { ascending: false }).limit(12);
       return data ?? [];
     },
     enabled: !!id,
+  });
+
+  // Collaborators for all projects on this profile — one round-trip
+  const projectIds = (buildingProjects ?? []).map((p: any) => p.id);
+  const { data: projectCollaborators } = useQuery({
+    queryKey: ["profile-project-collaborators", projectIds.join(",")],
+    enabled: projectIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("project_collaborators")
+        .select("project_id, user_id, profiles:profiles!project_collaborators_user_id_fkey(user_id, display_name, username, avatar_url)")
+        .in("project_id", projectIds);
+      const map: Record<string, any[]> = {};
+      (data ?? []).forEach((row: any) => {
+        const list = map[row.project_id] || (map[row.project_id] = []);
+        const pr = row.profiles || {};
+        list.push({
+          user_id: row.user_id,
+          display_name: pr.display_name,
+          username: pr.username,
+          avatar_url: pr.avatar_url,
+        });
+      });
+      return map;
+    },
   });
 
   // Priority project + milestones (top of left column)
