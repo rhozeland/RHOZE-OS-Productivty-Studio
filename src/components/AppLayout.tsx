@@ -414,8 +414,10 @@ const AppLayout = () => {
               </button>
 
               {user && <PostMenuButton />}
+              {user && <NotificationsBell />}
               {user && <InboxDrawer />}
               {user && <WalletButton />}
+
 
               {/* Profile dropdown — top-right */}
               {user && (

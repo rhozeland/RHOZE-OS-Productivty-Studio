@@ -85,12 +85,13 @@ const NotificationsBell = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("project_cheers")
-        .select("project_id, projects!inner(id, name, owner_id, public_slug)")
+        .select("project_id, projects(id, name, owner_id, public_slug)")
         .eq("user_id", user!.id);
       return (data as any[]) ?? [];
     },
     enabled: !!user,
   });
+
 
   const backedProjectIds = useMemo(
     () => (cheers ?? []).map((c: any) => c.project_id),
@@ -118,16 +119,25 @@ const NotificationsBell = () => {
         .select("id, name, public_slug")
         .eq("owner_id", user!.id)
         .limit(50);
-      const ownedIds = (ownedProjects ?? []).map((p: any) => p.id);
+      const ownedIds = ((ownedProjects as any[]) ?? []).map((p) => p.id);
       const allProjectIds = Array.from(new Set([...backedProjectIds, ...ownedIds]));
       if (allProjectIds.length === 0) return [];
 
       const { data: contracts } = await supabase
         .from("project_contracts")
-        .select("id, project_id, projects!inner(id, name, public_slug)")
+        .select("id, project_id")
         .in("project_id", allProjectIds);
-      const contractIds = (contracts ?? []).map((c: any) => c.id);
+      const contractRows = (contracts as any[]) ?? [];
+      const contractIds = contractRows.map((c) => c.id);
       if (contractIds.length === 0) return [];
+
+      const { data: projectRows } = await supabase
+        .from("projects")
+        .select("id, name, public_slug")
+        .in("id", allProjectIds);
+      const projectMap = new Map(
+        ((projectRows as any[]) ?? []).map((p) => [p.id, p]),
+      );
 
       const { data: ms } = await supabase
         .from("project_milestones")
@@ -137,10 +147,11 @@ const NotificationsBell = () => {
         .order("updated_at", { ascending: false })
         .limit(15);
 
-      return (ms ?? []).map((m: any) => {
-        const c = (contracts ?? []).find((x: any) => x.id === m.contract_id);
-        return { ...m, project: c?.projects };
+      return ((ms as any[]) ?? []).map((m) => {
+        const c = contractRows.find((x) => x.id === m.contract_id);
+        return { ...m, project: c ? projectMap.get(c.project_id) : null };
       });
+
     },
     enabled: !!user,
   });
@@ -152,11 +163,12 @@ const NotificationsBell = () => {
       if (backedCreatorIds.length === 0) return [];
       const { data } = await supabase
         .from("works")
-        .select("id, title, kind, user_id, created_at, profiles!works_user_id_fkey(display_name, username)")
+        .select("id, title, kind, user_id, created_at, profiles(display_name, username)")
         .in("user_id", backedCreatorIds)
         .order("created_at", { ascending: false })
         .limit(10);
       return (data as any[]) ?? [];
+
     },
     enabled: !!user && backedCreatorIds.length > 0,
   });
@@ -187,13 +199,14 @@ const NotificationsBell = () => {
       const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const { data } = await supabase
         .from("coin_swap_ledger")
-        .select("id, side, launch_id, rhoze_amount, created_at, coin_launches!inner(ticker, name)")
+        .select("id, side, launch_id, rhoze_amount, created_at, coin_launches(ticker, name)")
         .in("launch_id", heldLaunchIds)
         .gte("created_at", since)
         .neq("user_id", user!.id)
         .order("created_at", { ascending: false })
         .limit(10);
       return (data as any[]) ?? [];
+
     },
     enabled: !!user && heldLaunchIds.length > 0,
   });
