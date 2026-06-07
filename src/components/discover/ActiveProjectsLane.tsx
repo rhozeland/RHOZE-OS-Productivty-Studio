@@ -32,7 +32,7 @@ const ActiveProjectsLane = () => {
       const { data, error } = await supabase
         .from("projects")
         .select(
-          "id, title, public_slug, vision, cheer_count, tokenize_ready, cover_color, status, user_id"
+          "id, title, public_slug, vision, cheer_count, tokenize_ready, cover_color, cover_image_url, status, user_id"
         )
         .eq("is_public", true)
         .not("public_slug", "is", null)
